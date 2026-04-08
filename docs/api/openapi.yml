@@ -431,18 +431,6 @@ components:
       required:
       - connectionUrl
       type: object
-    CloudintegrationtypesAWSConnectionArtifactRequest:
-      properties:
-        deploymentRegion:
-          type: string
-        regions:
-          items:
-            type: string
-          type: array
-      required:
-      - deploymentRegion
-      - regions
-      type: object
     CloudintegrationtypesAWSIntegrationConfig:
       properties:
         enabledRegions:
@@ -472,6 +460,18 @@ components:
           type: array
       required:
       - streamFilters
+      type: object
+    CloudintegrationtypesAWSPostableAccountConfig:
+      properties:
+        deploymentRegion:
+          type: string
+        regions:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentRegion
+      - regions
       type: object
     CloudintegrationtypesAWSServiceConfig:
       properties:
@@ -619,23 +619,6 @@ components:
       required:
       - aws
       type: object
-    CloudintegrationtypesConnectionArtifactRequest:
-      properties:
-        config:
-          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequestConfig'
-        credentials:
-          $ref: '#/components/schemas/CloudintegrationtypesCredentials'
-      required:
-      - config
-      - credentials
-      type: object
-    CloudintegrationtypesConnectionArtifactRequestConfig:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
-      required:
-      - aws
-      type: object
     CloudintegrationtypesCredentials:
       properties:
         ingestionKey:
@@ -695,7 +678,7 @@ components:
       required:
       - accounts
       type: object
-    CloudintegrationtypesGettableAgentCheckInResponse:
+    CloudintegrationtypesGettableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -792,7 +775,24 @@ components:
           nullable: true
           type: array
       type: object
-    CloudintegrationtypesPostableAgentCheckInRequest:
+    CloudintegrationtypesPostableAccount:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesPostableAccountConfig'
+        credentials:
+          $ref: '#/components/schemas/CloudintegrationtypesCredentials'
+      required:
+      - config
+      - credentials
+      type: object
+    CloudintegrationtypesPostableAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesPostableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -3198,7 +3198,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3206,7 +3206,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:
@@ -3307,7 +3307,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAccount'
       responses:
         "200":
           content:
@@ -3581,7 +3581,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3589,7 +3589,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:

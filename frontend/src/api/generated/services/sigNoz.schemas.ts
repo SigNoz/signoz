@@ -541,17 +541,6 @@ export interface CloudintegrationtypesAWSConnectionArtifactDTO {
 	connectionUrl: string;
 }
 
-export interface CloudintegrationtypesAWSConnectionArtifactRequestDTO {
-	/**
-	 * @type string
-	 */
-	deploymentRegion: string;
-	/**
-	 * @type array
-	 */
-	regions: string[];
-}
-
 export interface CloudintegrationtypesAWSIntegrationConfigDTO {
 	/**
 	 * @type array
@@ -572,6 +561,17 @@ export interface CloudintegrationtypesAWSMetricsCollectionStrategyDTO {
 	 * @type array
 	 */
 	streamFilters: CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO[];
+}
+
+export interface CloudintegrationtypesAWSPostableAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	regions: string[];
 }
 
 export interface CloudintegrationtypesAWSServiceConfigDTO {
@@ -751,15 +751,6 @@ export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
 }
 
-export interface CloudintegrationtypesConnectionArtifactRequestDTO {
-	config: CloudintegrationtypesConnectionArtifactRequestConfigDTO;
-	credentials: CloudintegrationtypesCredentialsDTO;
-}
-
-export interface CloudintegrationtypesConnectionArtifactRequestConfigDTO {
-	aws: CloudintegrationtypesAWSConnectionArtifactRequestDTO;
-}
-
 export interface CloudintegrationtypesCredentialsDTO {
 	/**
 	 * @type string
@@ -823,7 +814,7 @@ export interface CloudintegrationtypesGettableAccountsDTO {
 	accounts: CloudintegrationtypesAccountDTO[];
 }
 
-export interface CloudintegrationtypesGettableAgentCheckInResponseDTO {
+export interface CloudintegrationtypesGettableAgentCheckInDTO {
 	/**
 	 * @type string
 	 */
@@ -933,14 +924,23 @@ export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
 		| null;
 }
 
+export interface CloudintegrationtypesPostableAccountDTO {
+	config: CloudintegrationtypesPostableAccountConfigDTO;
+	credentials: CloudintegrationtypesCredentialsDTO;
+}
+
+export interface CloudintegrationtypesPostableAccountConfigDTO {
+	aws: CloudintegrationtypesAWSPostableAccountConfigDTO;
+}
+
 /**
  * @nullable
  */
-export type CloudintegrationtypesPostableAgentCheckInRequestDTOData = {
+export type CloudintegrationtypesPostableAgentCheckInDTOData = {
 	[key: string]: unknown;
 } | null;
 
-export interface CloudintegrationtypesPostableAgentCheckInRequestDTO {
+export interface CloudintegrationtypesPostableAgentCheckInDTO {
 	/**
 	 * @type string
 	 */
@@ -957,7 +957,7 @@ export interface CloudintegrationtypesPostableAgentCheckInRequestDTO {
 	 * @type object
 	 * @nullable true
 	 */
-	data: CloudintegrationtypesPostableAgentCheckInRequestDTOData;
+	data: CloudintegrationtypesPostableAgentCheckInDTOData;
 	/**
 	 * @type string
 	 */
@@ -3568,7 +3568,7 @@ export type AgentCheckInDeprecatedPathParameters = {
 	cloudProvider: string;
 };
 export type AgentCheckInDeprecated200 = {
-	data: CloudintegrationtypesGettableAgentCheckInResponseDTO;
+	data: CloudintegrationtypesGettableAgentCheckInDTO;
 	/**
 	 * @type string
 	 */
@@ -3626,7 +3626,7 @@ export type AgentCheckInPathParameters = {
 	cloudProvider: string;
 };
 export type AgentCheckIn200 = {
-	data: CloudintegrationtypesGettableAgentCheckInResponseDTO;
+	data: CloudintegrationtypesGettableAgentCheckInDTO;
 	/**
 	 * @type string
 	 */

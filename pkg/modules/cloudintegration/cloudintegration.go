@@ -28,7 +28,7 @@ type Module interface {
 
 	// GetConnectionArtifact returns cloud provider specific connection information,
 	// client side handles how this information is shown
-	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
+	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.GetConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
 	// ListServicesMetadata returns the list of supported services' metadata for a cloud provider with optional filtering for a specific integration
 	// This just returns a summary of the service and not the whole service definition.
@@ -58,7 +58,7 @@ type Module interface {
 }
 
 type CloudProviderModule interface {
-	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
+	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.GetConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
 	// ListServiceDefinitions returns all service definitions for this cloud provider.
 	ListServiceDefinitions(ctx context.Context) ([]*citypes.ServiceDefinition, error)
