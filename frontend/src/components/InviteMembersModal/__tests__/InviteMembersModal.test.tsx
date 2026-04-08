@@ -23,6 +23,16 @@ jest.mock('@signozhq/ui', () => ({
 	},
 }));
 
+const showErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal,
+		isErrorModalVisible: false,
+	})),
+}));
+
 const mockSendInvite = jest.mocked(sendInvite);
 const mockInviteUsers = jest.mocked(inviteUsers);
 
@@ -35,6 +45,7 @@ const defaultProps = {
 describe('InviteMembersModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		showErrorModal.mockClear();
 		mockSendInvite.mockResolvedValue({
 			httpStatusCode: 200,
 			data: { data: 'test', status: 'success' },
@@ -155,9 +166,10 @@ describe('InviteMembersModal', () => {
 	describe('error handling', () => {
 		it('shows BE message on single invite 409', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockSendInvite.mockRejectedValue(
-				makeApiError('An invite already exists for this email: single@signoz.io'),
+			const error = makeApiError(
+				'An invite already exists for this email: single@signoz.io',
 			);
+			mockSendInvite.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -172,18 +184,16 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'An invite already exists for this email: single@signoz.io',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 
 		it('shows BE message on bulk invite 409', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockInviteUsers.mockRejectedValue(
-				makeApiError('An invite already exists for this email: alice@signoz.io'),
+			const error = makeApiError(
+				'An invite already exists for this email: alice@signoz.io',
 			);
+			mockInviteUsers.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -202,18 +212,17 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'An invite already exists for this email: alice@signoz.io',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 
 		it('shows BE message on generic error', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockSendInvite.mockRejectedValue(
-				makeApiError('Internal server error', StatusCodes.INTERNAL_SERVER_ERROR),
+			const error = makeApiError(
+				'Internal server error',
+				StatusCodes.INTERNAL_SERVER_ERROR,
 			);
+			mockSendInvite.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -228,10 +237,7 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'Internal server error',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 	});

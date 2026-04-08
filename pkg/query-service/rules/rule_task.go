@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
@@ -308,7 +309,10 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			g.logger.ErrorContext(ctx, "panic during threshold rule evaluation", "panic", r)
+			g.logger.ErrorContext(
+				ctx, "panic during rule evaluation", slog.Any("panic", r),
+				slog.String("stack", string(debug.Stack())),
+			)
 		}
 	}()
 

@@ -6,6 +6,12 @@ import {
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { retryOn429 } from 'utils/errorUtils';
+
+const enum PromiseStatus {
+	Fulfilled = 'fulfilled',
+	Rejected = 'rejected',
+}
 
 export interface RoleUpdateFailure {
 	roleName: string;
@@ -34,7 +40,9 @@ export function useServiceAccountRoleManager(
 	]);
 
 	// the retry for these mutations is safe due to being idempotent on backend
-	const { mutateAsync: createRole } = useCreateServiceAccountRole();
+	const { mutateAsync: createRole } = useCreateServiceAccountRole({
+		mutation: { retry: retryOn429 },
+	});
 
 	const invalidateRoles = useCallback(
 		() =>
@@ -73,11 +81,16 @@ export function useServiceAccountRoleManager(
 				allOperations.map((op) => op.run()),
 			);
 
-			await invalidateRoles();
+			const successCount = results.filter(
+				(r) => r.status === PromiseStatus.Fulfilled,
+			).length;
+			if (successCount > 0) {
+				await invalidateRoles();
+			}
 
 			const failures: RoleUpdateFailure[] = [];
 			results.forEach((result, index) => {
-				if (result.status === 'rejected') {
+				if (result.status === PromiseStatus.Rejected) {
 					const { role, run } = allOperations[index];
 					failures.push({
 						roleName: role.name ?? 'unknown',

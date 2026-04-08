@@ -17,7 +17,7 @@ interface OverviewTabProps {
 	localName: string;
 	onNameChange: (v: string) => void;
 	localRole: string;
-	onRoleChange: (v: string) => void;
+	onRoleChange: (v: string | undefined) => void;
 	isDisabled: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;

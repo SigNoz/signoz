@@ -511,7 +511,8 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 	}
 	telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
-	querier := prepareQuerierForMetrics(t, telemetryStore)
+	querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
+	mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
 	cols := []cmock.ColumnType{
 		{Name: "ts", Type: "DateTime"},
@@ -727,7 +728,8 @@ func TestThresholdRuleNoData(t *testing.T) {
 			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
-		querier := prepareQuerierForMetrics(t, telemetryStore)
+		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
+		mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
 		var target float64 = 0
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
@@ -1115,7 +1117,8 @@ func TestMultipleThresholdRule(t *testing.T) {
 			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
-		querier := prepareQuerierForMetrics(t, telemetryStore)
+		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
+		mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
 		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = c.matchType
@@ -1903,7 +1906,8 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
-		querier := prepareQuerierForMetrics(t, telemetryStore)
+		querier, mockMetadataStore := prepareQuerierForMetrics(t, telemetryStore)
+		mockMetadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
 
 		rc := postableRule.RuleCondition
 		rc.Target = &c.target

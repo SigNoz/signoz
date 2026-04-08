@@ -85,7 +85,8 @@ interface BaseProps {
 interface SingleProps extends BaseProps {
 	mode?: 'single';
 	value?: string;
-	onChange?: (role: string) => void;
+	onChange?: (role: string | undefined) => void;
+	allowClear?: boolean;
 }
 
 interface MultipleProps extends BaseProps {
@@ -154,13 +155,14 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		);
 	}
 
-	const { value, onChange } = props as SingleProps;
+	const { value, onChange, allowClear = true } = props as SingleProps;
 	return (
 		<Select
 			id={id}
 			value={value || undefined}
 			onChange={onChange}
 			placeholder={placeholder}
+			allowClear={allowClear}
 			className={cx('roles-single-select', className)}
 			loading={loading}
 			notFoundContent={notFoundContent}
