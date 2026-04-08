@@ -21,6 +21,26 @@ jest.mock('@signozhq/drawer', () => ({
 	}): JSX.Element | null => (open ? <div>{content}</div> : null),
 }));
 
+jest.mock('@signozhq/dialog', () => ({
+	DialogWrapper: ({
+		children,
+		open,
+		title,
+	}: {
+		children?: ReactNode;
+		open: boolean;
+		title?: string;
+	}): JSX.Element | null =>
+		open ? (
+			<div role="dialog" aria-label={title}>
+				{children}
+			</div>
+		) : null,
+	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
+}));
+
 const mockServiceAccountsAPI = [
 	{
 		id: 'sa-1',

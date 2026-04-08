@@ -19,7 +19,8 @@ jest.mock('react-router-dom', () => ({
 	useLocation: jest.fn(),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

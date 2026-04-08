@@ -5,7 +5,8 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 

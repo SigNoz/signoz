@@ -12,6 +12,7 @@ const config: Config.InitialOptions = {
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
+		'\\.module\\.mjs$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
 		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
