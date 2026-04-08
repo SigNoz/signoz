@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
+import { PersistedAnnouncementBanner } from '@signozhq/ui';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
-import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -16,7 +16,6 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -265,22 +264,21 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			{IS_SERVICE_ACCOUNTS_ENABLED && (
+			{user?.role === USER_ROLES.ADMIN && (
 				<PersistedAnnouncementBanner
-					type="warning"
+					type="info"
 					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					message={
-						<>
-							<strong>API Keys</strong> have been deprecated and replaced by{' '}
-							<strong>Service Accounts</strong>. Please migrate to Service Accounts for
-							programmatic API access.
-						</>
-					}
 					action={{
 						label: 'Go to Service Accounts',
 						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
 					}}
-				/>
+				>
+					<>
+						<strong>API keys</strong> have been deprecated in favour of{' '}
+						<strong>Service accounts</strong>. The existing API Keys have been
+						migrated to service accounts.
+					</>
+				</PersistedAnnouncementBanner>
 			)}
 
 			<div className="sticky-header">

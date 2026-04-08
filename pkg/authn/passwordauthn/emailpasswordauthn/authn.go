@@ -21,7 +21,7 @@ func New(store authtypes.AuthNStore) *AuthN {
 }
 
 func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
-	user, factorPassword, userRoles, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	user, factorPassword, _, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,11 +30,5 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
-	if len(userRoles) == 0 {
-		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
-	}
-
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
-
-	return authtypes.NewIdentity(user.ID, orgID, user.Email, role, authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewPrincipalUserIdentity(user.ID, orgID, user.Email, authtypes.IdentNProviderTokenizer), nil
 }

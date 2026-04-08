@@ -838,22 +838,20 @@ function FormAlertRules({
 			>
 				<div className="overview-header">
 					<div className="alert-type-container">
-						{isNewRule && (
-							<Typography.Title level={5} className="alert-type-title">
-								<BellDot size={14} />
+						<Typography.Title level={5} className="alert-type-title">
+							<BellDot size={14} />
 
-								{alertDef.alertType === AlertTypes.ANOMALY_BASED_ALERT &&
-									'Anomaly Detection Alert'}
-								{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT &&
-									'Metrics Based Alert'}
-								{alertDef.alertType === AlertTypes.LOGS_BASED_ALERT &&
-									'Logs Based Alert'}
-								{alertDef.alertType === AlertTypes.TRACES_BASED_ALERT &&
-									'Traces Based Alert'}
-								{alertDef.alertType === AlertTypes.EXCEPTIONS_BASED_ALERT &&
-									'Exceptions Based Alert'}
-							</Typography.Title>
-						)}
+							{alertDef.alertType === AlertTypes.ANOMALY_BASED_ALERT &&
+								'Anomaly Detection Alert'}
+							{alertDef.alertType === AlertTypes.METRICS_BASED_ALERT &&
+								'Metrics Based Alert'}
+							{alertDef.alertType === AlertTypes.LOGS_BASED_ALERT &&
+								'Logs Based Alert'}
+							{alertDef.alertType === AlertTypes.TRACES_BASED_ALERT &&
+								'Traces Based Alert'}
+							{alertDef.alertType === AlertTypes.EXCEPTIONS_BASED_ALERT &&
+								'Exceptions Based Alert'}
+						</Typography.Title>
 					</div>
 
 					<Button

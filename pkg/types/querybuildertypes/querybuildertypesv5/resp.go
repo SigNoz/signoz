@@ -96,6 +96,21 @@ type TimeSeries struct {
 	Values []*TimeSeriesValue `json:"values"`
 }
 
+// EvaluableValues returns only the values where Partial is false and value is not NaN or +/- Inf.
+// TODO(srikanthccv): should we skip them in the consume.go?
+func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
+	if ts == nil {
+		return nil
+	}
+	result := make([]*TimeSeriesValue, 0, len(ts.Values))
+	for _, v := range ts.Values {
+		if !v.Partial && !math.IsNaN(v.Value) && !math.IsInf(v.Value, 0) {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
 type Label struct {
 	Key   telemetrytypes.TelemetryFieldKey `json:"key"`
 	Value any                              `json:"value"`

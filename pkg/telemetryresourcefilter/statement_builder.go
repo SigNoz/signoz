@@ -1,0 +1,172 @@
+package telemetryresourcefilter
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/huandu/go-sqlbuilder"
+)
+
+// resourceFilterStatementBuilder builds resource fingerprint filter CTEs.
+type resourceFilterStatementBuilder[T any] struct {
+	logger           *slog.Logger
+	dbName           string
+	tableName        string
+	fieldMapper      qbtypes.FieldMapper
+	conditionBuilder qbtypes.ConditionBuilder
+	metadataStore    telemetrytypes.MetadataStore
+	signal           telemetrytypes.Signal
+
+	fullTextColumn *telemetrytypes.TelemetryFieldKey
+	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
+}
+
+// Ensure interface compliance at compile time.
+var (
+	_ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*resourceFilterStatementBuilder[qbtypes.TraceAggregation])(nil)
+	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*resourceFilterStatementBuilder[qbtypes.LogAggregation])(nil)
+)
+
+func New[T any](
+	settings factory.ProviderSettings,
+	dbName string,
+	tableName string,
+	signal telemetrytypes.Signal,
+	metadataStore telemetrytypes.MetadataStore,
+	fullTextColumn *telemetrytypes.TelemetryFieldKey,
+	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+) *resourceFilterStatementBuilder[T] {
+	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+	return &resourceFilterStatementBuilder[T]{
+		logger:           set.Logger(),
+		dbName:           dbName,
+		tableName:        tableName,
+		fieldMapper:      fm,
+		conditionBuilder: cb,
+		metadataStore:    metadataStore,
+		signal:           signal,
+		fullTextColumn:   fullTextColumn,
+		jsonKeyToKey:     jsonKeyToKey,
+	}
+}
+
+func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryBuilderQuery[T]) []*telemetrytypes.FieldKeySelector {
+	var keySelectors []*telemetrytypes.FieldKeySelector
+
+	if query.Filter != nil && query.Filter.Expression != "" {
+		whereClauseSelectors := querybuilder.QueryStringToKeysSelectors(query.Filter.Expression)
+		keySelectors = append(keySelectors, whereClauseSelectors...)
+	}
+
+	// exclude out the body related key selectors
+	filteredKeySelectors := []*telemetrytypes.FieldKeySelector{}
+	for idx := range keySelectors {
+		if keySelectors[idx].FieldContext == telemetrytypes.FieldContextBody {
+			continue
+		}
+		keySelectors[idx].Signal = b.signal
+		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+		filteredKeySelectors = append(filteredKeySelectors, keySelectors[idx])
+	}
+
+	return filteredKeySelectors
+}
+
+// Build builds a SQL query based on the given parameters.
+func (b *resourceFilterStatementBuilder[T]) Build(
+	ctx context.Context,
+	start uint64,
+	end uint64,
+	requestType qbtypes.RequestType,
+	query qbtypes.QueryBuilderQuery[T],
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	q := sqlbuilder.NewSelectBuilder()
+	q.Select("fingerprint")
+	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
+
+	keySelectors := b.getKeySelectors(query)
+	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := b.addConditions(ctx, q, start, end, query, keys, variables); err != nil {
+		return nil, err
+	}
+
+	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{
+		Query: stmt,
+		Args:  args,
+	}, nil
+}
+
+// addConditions adds both filter and time conditions to the query.
+func (b *resourceFilterStatementBuilder[T]) addConditions(
+	ctx context.Context,
+	sb *sqlbuilder.SelectBuilder,
+	start, end uint64,
+	query qbtypes.QueryBuilderQuery[T],
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) error {
+	// Add filter condition if present
+	if query.Filter != nil && query.Filter.Expression != "" {
+
+		// warnings would be encountered as part of the main condition already
+		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
+			Logger:             b.logger,
+			FieldMapper:        b.fieldMapper,
+			ConditionBuilder:   b.conditionBuilder,
+			FieldKeys:          keys,
+			FullTextColumn:     b.fullTextColumn,
+			JsonKeyToKey:       b.jsonKeyToKey,
+			SkipFullTextFilter: true,
+			SkipFunctionCalls:  true,
+			// there is no need for "key" not found error for resource filtering
+			IgnoreNotFoundKeys: true,
+			Variables:          variables,
+			StartNs:            start,
+			EndNs:              end,
+		})
+
+		if err != nil {
+			return err
+		}
+		if filterWhereClause != nil {
+			sb.AddWhereClause(filterWhereClause.WhereClause)
+		}
+	}
+
+	// Add time filter
+	b.addTimeFilter(sb, start, end)
+	return nil
+}
+
+// addTimeFilter adds time-based filtering conditions.
+func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
+	// Convert nanoseconds to seconds and adjust start bucket
+	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment
+	var endBucket uint64
+	if end != 0 {
+		endBucket = end / querybuilder.NsToSeconds
+	}
+
+	sb.Where(
+		sb.GE("seen_at_ts_bucket_start", startBucket),
+	)
+	if end != 0 {
+		sb.Where(
+			sb.LE("seen_at_ts_bucket_start", endBucket),
+		)
+	}
+}

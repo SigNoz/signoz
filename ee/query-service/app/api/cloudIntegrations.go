@@ -14,10 +14,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -50,7 +49,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		return
 	}
 
-	apiKey, apiErr := ah.getOrCreateCloudIntegrationPAT(r.Context(), claims.OrgID, cloudProvider)
+	apiKey, apiErr := ah.getOrCreateCloudIntegrationFactorAPIKey(r.Context(), valuer.MustNewUUID(claims.OrgID), cloudProvider)
 	if apiErr != nil {
 		RespondError(w, basemodel.WrapApiError(
 			apiErr, "couldn't provision PAT for cloud integration:",
@@ -110,84 +109,44 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 	ah.Respond(w, result)
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId string, cloudProvider string) (
+func (ah *APIHandler) getOrCreateCloudIntegrationFactorAPIKey(ctx context.Context, orgID valuer.UUID, cloudProvider string) (
 	string, *basemodel.ApiError,
 ) {
-	integrationPATName := fmt.Sprintf("%s integration", cloudProvider)
-
-	integrationUser, apiErr := ah.getOrCreateCloudIntegrationUser(ctx, orgId, cloudProvider)
+	integrationPATName := fmt.Sprintf("%s", cloudProvider)
+	serviceAccount, apiErr := ah.getOrCreateCloudIntegrationServiceAccount(ctx, orgID)
 	if apiErr != nil {
 		return "", apiErr
 	}
 
-	orgIdUUID, err := valuer.NewUUID(orgId)
-	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't parse orgId: %w", err,
-		))
-	}
-
-	allPats, err := ah.Signoz.Modules.UserSetter.ListAPIKeys(ctx, orgIdUUID)
-	if err != nil {
-		return "", basemodel.InternalError(fmt.Errorf(
-			"couldn't list PATs: %w", err,
-		))
-	}
-	for _, p := range allPats {
-		if p.UserID == integrationUser.ID && p.Name == integrationPATName {
-			return p.Token, nil
-		}
-	}
-
-	slog.InfoContext(ctx, "no PAT found for cloud integration, creating a new one",
-		"cloud_provider", cloudProvider,
-	)
-
-	newPAT, err := types.NewStorableAPIKey(
-		integrationPATName,
-		integrationUser.ID,
-		types.RoleViewer,
-		0,
-	)
+	factorAPIKey, err := serviceAccount.NewFactorAPIKey(integrationPATName, 0)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
 		))
 	}
 
-	err = ah.Signoz.Modules.UserSetter.CreateAPIKey(ctx, newPAT)
+	factorAPIKey, err = ah.Signoz.Modules.ServiceAccount.GetOrCreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
 		))
 	}
-	return newPAT.Token, nil
+	return factorAPIKey.Key, nil
 }
 
-func (ah *APIHandler) getOrCreateCloudIntegrationUser(
-	ctx context.Context, orgId string, cloudProvider string,
-) (*types.User, *basemodel.ApiError) {
-	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
-	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
-
-	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, valuer.MustNewUUID(orgId), types.UserStatusActive)
+func (ah *APIHandler) getOrCreateCloudIntegrationServiceAccount(ctx context.Context, orgId valuer.UUID) (*serviceaccounttypes.ServiceAccount, *basemodel.ApiError) {
+	domain := ah.Signoz.Modules.ServiceAccount.Config().Email.Domain
+	cloudIntegrationServiceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgId)
+	cloudIntegrationServiceAccount, err := ah.Signoz.Modules.ServiceAccount.GetOrCreate(ctx, orgId, cloudIntegrationServiceAccount)
 	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
+	}
+	err = ah.Signoz.Modules.ServiceAccount.SetRoleByName(ctx, orgId, cloudIntegrationServiceAccount.ID, authtypes.SigNozViewerRoleName)
+	if err != nil {
+		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration service account: %w", err))
 	}
 
-	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
-
-	cloudIntegrationUser, err = ah.Signoz.Modules.UserSetter.GetOrCreateUser(
-		ctx,
-		cloudIntegrationUser,
-		user.WithFactorPassword(password),
-		user.WithRoleNames([]string{authtypes.SigNozViewerRoleName}),
-	)
-	if err != nil {
-		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration user: %w", err))
-	}
-
-	return cloudIntegrationUser, nil
+	return cloudIntegrationServiceAccount, nil
 }
 
 func (ah *APIHandler) getIngestionUrlAndSigNozAPIUrl(ctx context.Context, licenseKey string) (

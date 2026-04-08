@@ -155,6 +155,28 @@ func (r *provider) GetAllRoutePolicies(ctx context.Context, orgID string) ([]*al
 	return r.routeStore.GetAllByKind(ctx, orgID, alertmanagertypes.PolicyBasedExpression)
 }
 
+func (r *provider) GetRoutePoliciesByChannel(ctx context.Context, orgID string, channelName string) ([]*alertmanagertypes.RoutePolicy, error) {
+	if orgID == "" {
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "orgID cannot be empty")
+	}
+
+	allRoutes, err := r.routeStore.GetAll(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	var matched []*alertmanagertypes.RoutePolicy
+	for _, route := range allRoutes {
+		for _, ch := range route.Channels {
+			if ch == channelName {
+				matched = append(matched, route)
+				break
+			}
+		}
+	}
+	return matched, nil
+}
+
 func (r *provider) DeleteRoutePolicy(ctx context.Context, orgID string, routeID string) error {
 	if routeID == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "routeID cannot be empty")

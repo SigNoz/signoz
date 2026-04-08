@@ -36,8 +36,8 @@ const HOVER_DISMISS_DELAY_MS = 100;
 export default function TooltipPlugin({
 	config,
 	render,
-	maxWidth = 300,
-	maxHeight = 400,
+	maxWidth = 450,
+	maxHeight = 600,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
 	pinnedTooltipElement,

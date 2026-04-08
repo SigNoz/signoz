@@ -18,6 +18,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -1257,7 +1258,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			}
 		}
 
-		selectedSpans = tracedetail.GetSelectedSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
+		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
 		traceCache := model.GetFlamegraphSpansForTraceCache{
 			StartTime:     startTime,
 			EndTime:       endTime,
@@ -1274,12 +1275,25 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	}
 
 	processingPostCache := time.Now()
-	selectedSpansForRequest := tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, startTime, endTime)
-	r.logger.Info("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID)
+	selectedSpansForRequest := selectedSpans
+	clientLimit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
+	totalSpanCount := tracedetail.GetTotalSpanCount(selectedSpans)
+	if totalSpanCount > uint64(clientLimit) {
+		// using trace start and end time if boundary ts are set to zero (or not set)
+		boundaryStart := max(timestamp.MilliToNano(req.BoundaryStartTS), startTime)
+		boundaryEnd := timestamp.MilliToNano(req.BoundaryEndTS)
+		if boundaryEnd == 0 {
+			boundaryEnd = endTime
+		}
+
+		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
+	}
+	r.logger.Debug("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID, "totalSpans", totalSpanCount, "limit", clientLimit)
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
 	trace.EndTimestampMillis = endTime / 1000000
+	trace.HasMore = totalSpanCount > uint64(clientLimit)
 	return trace, nil
 }
 

@@ -15,14 +15,16 @@ type ServeOpenAPIFunc func(openapi.OperationContext)
 type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
+	AuditDef() *AuditDef
 }
 
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
+	auditDef    *AuditDef
 }
 
-func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
+func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
 	// Remove duplicate error status codes
 	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
 		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
@@ -36,10 +38,16 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
 		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
 	}
 
-	return &handler{
+	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
 	}
+
+	for _, opt := range opts {
+		opt(handler)
+	}
+
+	return handler
 }
 
 func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -120,5 +128,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(statusCode),
 		)
 	}
+}
 
+func (handler *handler) AuditDef() *AuditDef {
+	return handler.auditDef
 }

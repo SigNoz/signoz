@@ -2,7 +2,7 @@ package rules
 
 import (
 	"context"
-	"fmt"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
@@ -12,10 +12,9 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -95,7 +94,7 @@ func (g *RuleTask) Pause(b bool) {
 
 type QueryOrigin struct{}
 
-func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) context.Context {
+func NewQueryOriginContext(ctx context.Context, data map[string]any) context.Context {
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
@@ -111,7 +110,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 		return
 	}
 
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+	ctx = NewQueryOriginContext(ctx, map[string]any{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
@@ -163,8 +162,8 @@ func (g *RuleTask) Stop() {
 }
 
 func (g *RuleTask) hash() uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: g.name},
+	l := ruletypes.New(
+		ruletypes.Label{Name: "name", Value: g.name},
 	)
 	return l.Hash()
 }
@@ -180,7 +179,7 @@ func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -265,7 +264,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return fmt.Errorf("invalid from task for copy")
+		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation
@@ -310,7 +309,10 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			g.logger.ErrorContext(ctx, "panic during threshold rule evaluation", "panic", r)
+			g.logger.ErrorContext(
+				ctx, "panic during rule evaluation", slog.Any("panic", r),
+				slog.String("stack", string(debug.Stack())),
+			)
 		}
 	}()
 
@@ -329,7 +331,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -337,7 +339,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
+			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 
@@ -369,7 +371,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

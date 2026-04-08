@@ -9,5 +9,5 @@ export const SA_QUERY_PARAMS = {
 	ADD_KEY: 'add-key',
 	EDIT_KEY: 'edit-key',
 	REVOKE_KEY: 'revoke-key',
-	DISABLE_SA: 'disable-sa',
+	DELETE_SA: 'delete-sa',
 } as const;

@@ -21,11 +21,15 @@ func newTestSettings() factory.ScopedProviderSettings {
 
 func newTestEvent(resource string, action audittypes.Action) audittypes.AuditEvent {
 	return audittypes.AuditEvent{
-		Timestamp:    time.Now(),
-		EventName:    audittypes.NewEventName(resource, action),
-		ResourceName: resource,
-		Action:       action,
-		Outcome:      audittypes.OutcomeSuccess,
+		Timestamp: time.Now(),
+		EventName: audittypes.NewEventName(resource, action),
+		AuditAttributes: audittypes.AuditAttributes{
+			Action:  action,
+			Outcome: audittypes.OutcomeSuccess,
+		},
+		ResourceAttributes: audittypes.ResourceAttributes{
+			ResourceKind: resource,
+		},
 	}
 }
 

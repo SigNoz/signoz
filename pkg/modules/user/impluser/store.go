@@ -3,7 +3,6 @@ package impluser
 import (
 	"context"
 	"database/sql"
-	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -182,15 +181,6 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
-	// delete api keys
-	_, err = tx.NewDelete().
-		Model(&types.StorableAPIKey{}).
-		Where("user_id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
-	}
-
 	// delete user_preference
 	_, err = tx.NewDelete().
 		Model(new(preferencetypes.StorableUserPreference)).
@@ -266,15 +256,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
-	// delete api keys
-	_, err = tx.NewDelete().
-		Model(&types.StorableAPIKey{}).
-		Where("user_id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
-	}
-
 	// delete user_preference
 	_, err = tx.NewDelete().
 		Model(new(preferencetypes.StorableUserPreference)).
@@ -298,7 +279,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	_, err = tx.NewUpdate().
 		Model(new(types.User)).
 		Set("status = ?", types.UserStatusDeleted).
-		Set("deleted_at = ?", now).
 		Set("updated_at = ?", now).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
@@ -421,111 +401,6 @@ func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.Fa
 	return nil
 }
 
-// CreateAPIKey creates a new API key.
-func (store *store) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	_, err := store.sqlstore.BunDB().NewInsert().
-		Model(apiKey).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrAPIKeyAlreadyExists, "API key with token: %s already exists", apiKey.Token)
-	}
-
-	return nil
-}
-
-func (store *store) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
-	apiKey.UpdatedBy = updaterID.String()
-	apiKey.UpdatedAt = time.Now()
-	_, err := store.sqlstore.BunDB().NewUpdate().
-		Model(apiKey).
-		Column("role", "name", "updated_at", "updated_by").
-		Where("id = ?", id).
-		Where("revoked = false").
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
-	}
-	return nil
-}
-
-func (store *store) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
-	orgUserAPIKeys := new(types.OrgUserAPIKey)
-
-	if err := store.sqlstore.BunDB().NewSelect().
-		Model(orgUserAPIKeys).
-		Relation("Users").
-		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("revoked = false")
-		},
-		).
-		Relation("Users.APIKeys.CreatedByUser").
-		Relation("Users.APIKeys.UpdatedByUser").
-		Where("id = ?", orgID).
-		Scan(ctx); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch API keys")
-	}
-
-	// Flatten the API keys from all users
-	var allAPIKeys []*types.StorableAPIKeyUser
-	for _, user := range orgUserAPIKeys.Users {
-		if user.APIKeys != nil {
-			allAPIKeys = append(allAPIKeys, user.APIKeys...)
-		}
-	}
-
-	// sort the API keys by updated_at
-	sort.Slice(allAPIKeys, func(i, j int) bool {
-		return allAPIKeys[i].UpdatedAt.After(allAPIKeys[j].UpdatedAt)
-	})
-
-	return allAPIKeys, nil
-}
-
-func (store *store) RevokeAPIKey(ctx context.Context, id, revokedByUserID valuer.UUID) error {
-	updatedAt := time.Now().Unix()
-	_, err := store.sqlstore.BunDB().NewUpdate().
-		Model(&types.StorableAPIKey{}).
-		Set("revoked = ?", true).
-		Set("updated_by = ?", revokedByUserID).
-		Set("updated_at = ?", updatedAt).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to revoke API key")
-	}
-	return nil
-}
-
-func (store *store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
-	apiKey := new(types.OrgUserAPIKey)
-	if err := store.sqlstore.BunDB().NewSelect().
-		Model(apiKey).
-		Relation("Users").
-		Relation("Users.APIKeys", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("revoked = false").Where("storable_api_key.id = ?", id).
-				OrderExpr("storable_api_key.updated_at DESC").Limit(1)
-		},
-		).
-		Relation("Users.APIKeys.CreatedByUser").
-		Relation("Users.APIKeys.UpdatedByUser").
-		Scan(ctx); err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
-	}
-
-	// flatten the API keys
-	flattenedAPIKeys := []*types.StorableAPIKeyUser{}
-	for _, user := range apiKey.Users {
-		if user.APIKeys != nil {
-			flattenedAPIKeys = append(flattenedAPIKeys, user.APIKeys...)
-		}
-	}
-	if len(flattenedAPIKeys) == 0 {
-		return nil, store.sqlstore.WrapNotFoundErrf(errors.New(errors.TypeNotFound, errors.CodeNotFound, "API key with id: %s does not exist"), types.ErrAPIKeyNotFound, "API key with id: %s does not exist", id)
-	}
-
-	return flattenedAPIKeys[0], nil
-}
-
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	user := new(types.User)
 
@@ -571,24 +446,6 @@ func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UU
 	}
 
 	return counts, nil
-}
-
-func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	apiKey := new(types.StorableAPIKey)
-
-	count, err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(apiKey).
-		Join("JOIN users ON users.id = storable_api_key.user_id").
-		Where("org_id = ?", orgID).
-		Count(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	return int64(count), nil
 }
 
 func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {

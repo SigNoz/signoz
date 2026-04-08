@@ -14,8 +14,8 @@ QUERY_TIMEOUT = 30  # seconds
 @dataclass
 class TelemetryFieldKey:
     name: str
-    field_data_type: str
-    field_context: str
+    field_data_type: Optional[str] = None
+    field_context: Optional[str] = None
 
     def to_dict(self) -> Dict:
         return {
@@ -245,6 +245,14 @@ def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
     if values:
         return values[0].get("value")
     return None
+
+
+def get_all_warnings(response_json: Dict) -> List[Dict]:
+    return response_json.get("data", {}).get("warning", {}).get("warnings", [])
+
+
+def get_error_message(response_json: Dict) -> str:
+    return response_json.get("error", {}).get("message", "")
 
 
 def compare_values(

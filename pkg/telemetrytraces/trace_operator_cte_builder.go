@@ -624,7 +624,10 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -740,7 +743,10 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 		sb.GroupBy(groupByKeys...)
 	}
 
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
@@ -883,7 +889,10 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -892,12 +901,16 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) {
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
 	if b.operator.Having != nil && b.operator.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		if err != nil {
+			return err
+		}
 		sb.Having(rewrittenExpr)
 	}
+	return nil
 }
 
 func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {
