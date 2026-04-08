@@ -33,6 +33,7 @@ import {
 	useInfraMonitoringQueryFilters,
 } from '../hooks';
 import { usePageSize } from '../utils';
+import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
 import K8sHeader from './K8sHeader';
 import { K8sBaseFilters, K8sRenderedRowData } from './types';
@@ -370,36 +371,14 @@ export function K8sBaseList<T>({
 
 	const showTableLoadingState = isLoading;
 
-	const defaultEmptyState = (
-		<div className={styles.noFilteredHostsMessageContainer}>
-			<div className={styles.noFilteredHostsMessageContent}>
-				<img
-					src="/Icons/emptyState.svg"
-					alt="thinking-emoji"
-					className={styles.emptyStateSvg}
-				/>
-
-				<Typography.Text className={styles.noFilteredHostsMessage}>
-					This query had no results. Edit your query and try again!
-				</Typography.Text>
-			</div>
-		</div>
-	);
-
-	let emptyTableMessage: React.ReactNode = defaultEmptyState;
-	if (renderEmptyState) {
-		const custom = renderEmptyState({
-			isError,
-			error: data?.error,
-			totalCount,
-			hasFilters,
-			isLoading: showTableLoadingState,
-			rawData: data?.rawData,
-		});
-		if (custom != null) {
-			emptyTableMessage = custom;
-		}
-	}
+	const emptyTableMessage: React.ReactNode = renderEmptyState?.({
+		isError,
+		error: data?.error,
+		totalCount,
+		hasFilters,
+		isLoading: showTableLoadingState,
+		rawData: data?.rawData,
+	}) || <K8sEmptyState />;
 
 	return (
 		<>
