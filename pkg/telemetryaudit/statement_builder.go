@@ -232,6 +232,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(AttributesStringColumn)
 		sb.SelectMore(AttributesNumberColumn)
 		sb.SelectMore(AttributesBoolColumn)
+		sb.SelectMore(ResourceColumn)
 		sb.SelectMore(ScopeStringColumn)
 	} else {
 		for index := range query.SelectFields {
@@ -247,7 +248,7 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		}
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsTableName))
+	sb.From(fmt.Sprintf("%s.%s", DBName, AuditLogsTableName))
 
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
@@ -339,7 +340,7 @@ func (b *auditQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsTableName))
+	sb.From(fmt.Sprintf("%s.%s", DBName, AuditLogsTableName))
 
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {
@@ -479,7 +480,7 @@ func (b *auditQueryStatementBuilder) buildScalarQuery(
 		}
 	}
 
-	sb.From(fmt.Sprintf("%s.%s", DBName, LogsTableName))
+	sb.From(fmt.Sprintf("%s.%s", DBName, AuditLogsTableName))
 
 	preparedWhereClause, err := b.addFilterCondition(ctx, sb, start, end, query, keys, variables)
 	if err != nil {

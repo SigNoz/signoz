@@ -53,7 +53,7 @@ type telemetryMetaStore struct {
 	logResourceKeysTblName         string
 	logsV2TblName                  string
 	auditDBName                    string
-	auditV2TblName                 string
+	auditLogsTblName                 string
 	auditFieldsTblName             string
 	auditAttributeKeysTblName      string
 	auditResourceKeysTblName       string
@@ -87,7 +87,7 @@ func NewTelemetryMetaStore(
 	logAttributeKeysTblName string,
 	logResourceKeysTblName string,
 	auditDBName string,
-	auditV2TblName string,
+	auditLogsTblName string,
 	auditFieldsTblName string,
 	auditAttributeKeysTblName string,
 	auditResourceKeysTblName string,
@@ -114,7 +114,7 @@ func NewTelemetryMetaStore(
 		logAttributeKeysTblName:        logAttributeKeysTblName,
 		logResourceKeysTblName:         logResourceKeysTblName,
 		auditDBName:                    auditDBName,
-		auditV2TblName:                 auditV2TblName,
+		auditLogsTblName:                 auditLogsTblName,
 		auditFieldsTblName:             auditFieldsTblName,
 		auditAttributeKeysTblName:      auditAttributeKeysTblName,
 		auditResourceKeysTblName:       auditResourceKeysTblName,
@@ -616,7 +616,7 @@ func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) (
 		instrumentationtypes.CodeFunctionName: "auditTblStatementToFieldKeys",
 	})
 
-	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.auditDBName, t.auditV2TblName)
+	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.auditDBName, t.auditLogsTblName)
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
 	if err != nil {
@@ -676,9 +676,10 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 	tablesToQuery := []struct {
 		fieldContext telemetrytypes.FieldContext
 		shouldQuery  bool
+		tblName     string
 	}{
-		{telemetrytypes.FieldContextAttribute, queryAttributeTable},
-		{telemetrytypes.FieldContextResource, queryResourceTable},
+		{telemetrytypes.FieldContextAttribute, queryAttributeTable, t.auditDBName + "." + t.auditAttributeKeysTblName},
+		{telemetrytypes.FieldContextResource, queryResourceTable, t.auditDBName + "." + t.auditResourceKeysTblName},
 	}
 
 	for _, table := range tablesToQuery {
@@ -687,13 +688,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 		}
 
 		fieldContext := table.fieldContext
-
-		var tblName string
-		if fieldContext == telemetrytypes.FieldContextAttribute {
-			tblName = t.auditDBName + "." + t.auditAttributeKeysTblName
-		} else {
-			tblName = t.auditDBName + "." + t.auditResourceKeysTblName
-		}
+		tblName := table.tblName
 
 		sb := sqlbuilder.Select(
 			"name AS tag_key",
@@ -1638,6 +1633,7 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		}
 	}
 
+	// fetch one extra row to detect whether the result set is complete
 	sb.Limit(limit + 1)
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

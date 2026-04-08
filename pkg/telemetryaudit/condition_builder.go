@@ -184,15 +184,11 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	buildExistCondition := operator.AddDefaultExistsFilter()
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
+	if key.FieldContext == telemetrytypes.FieldContextLog || key.FieldContext == telemetrytypes.FieldContextScope {
 		return condition, nil
-	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
-		// build exist condition for resource and attribute fields based on filter operator
 	}
 
-	if buildExistCondition {
+	if operator.AddDefaultExistsFilter() {
 		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err

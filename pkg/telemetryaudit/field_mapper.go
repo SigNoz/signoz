@@ -3,7 +3,6 @@ package telemetryaudit
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -23,26 +22,26 @@ func NewFieldMapper() qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{logsV2Columns["resource"]}, nil
+		return []*schema.Column{auditLogColumns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":
-			return []*schema.Column{logsV2Columns["scope_name"]}, nil
+			return []*schema.Column{auditLogColumns["scope_name"]}, nil
 		case "version", "scope.version", "scope_version":
-			return []*schema.Column{logsV2Columns["scope_version"]}, nil
+			return []*schema.Column{auditLogColumns["scope_version"]}, nil
 		}
-		return []*schema.Column{logsV2Columns["scope_string"]}, nil
+		return []*schema.Column{auditLogColumns["scope_string"]}, nil
 	case telemetrytypes.FieldContextAttribute:
 		switch key.FieldDataType {
 		case telemetrytypes.FieldDataTypeString:
-			return []*schema.Column{logsV2Columns["attributes_string"]}, nil
+			return []*schema.Column{auditLogColumns["attributes_string"]}, nil
 		case telemetrytypes.FieldDataTypeInt64, telemetrytypes.FieldDataTypeFloat64, telemetrytypes.FieldDataTypeNumber:
-			return []*schema.Column{logsV2Columns["attributes_number"]}, nil
+			return []*schema.Column{auditLogColumns["attributes_number"]}, nil
 		case telemetrytypes.FieldDataTypeBool:
-			return []*schema.Column{logsV2Columns["attributes_bool"]}, nil
+			return []*schema.Column{auditLogColumns["attributes_bool"]}, nil
 		}
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
-		col, ok := logsV2Columns[key.Name]
+		col, ok := auditLogColumns[key.Name]
 		if !ok {
 			return nil, qbtypes.ErrColumnNotFound
 		}
@@ -57,62 +56,39 @@ func (m *fieldMapper) FieldFor(ctx context.Context, _, _ uint64, key *telemetryt
 	if err != nil {
 		return "", err
 	}
+	if len(columns) != 1 {
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+	}
+	column := columns[0]
 
-	exprs := []string{}
-	existExpr := []string{}
-	for _, column := range columns {
-		switch column.Type.GetType() {
-		case schema.ColumnTypeEnumJSON:
-			if key.FieldContext == telemetrytypes.FieldContextResource {
-				exprs = append(exprs, fmt.Sprintf("%s.`%s`::String", column.Name, key.Name))
-				existExpr = append(existExpr, fmt.Sprintf("%s.`%s` IS NOT NULL", column.Name, key.Name))
-			} else {
-				return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
-			}
-		case schema.ColumnTypeEnumLowCardinality:
-			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-			case schema.ColumnTypeEnumString:
-				exprs = append(exprs, column.Name)
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported low cardinality element type %s", elementType)
-			}
-		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-			exprs = append(exprs, column.Name)
-		case schema.ColumnTypeEnumMap:
-			keyType := column.Type.(schema.MapColumnType).KeyType
-			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
-			}
+	switch column.Type.GetType() {
+	case schema.ColumnTypeEnumJSON:
+		if key.FieldContext != telemetrytypes.FieldContextResource {
+			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource context fields are supported for json columns in audit, got %s", key.FieldContext.String)
+		}
+		return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
+	case schema.ColumnTypeEnumLowCardinality:
+		return column.Name, nil
+	case schema.ColumnTypeEnumString, schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
+		return column.Name, nil
+	case schema.ColumnTypeEnumMap:
+		keyType := column.Type.(schema.MapColumnType).KeyType
+		if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+		}
 
-			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
-			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
-				if key.Materialized {
-					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExpr = append(existExpr, fmt.Sprintf("%s==true", telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)))
-				} else {
-					exprs = append(exprs, fmt.Sprintf("%s['%s']", column.Name, key.Name))
-					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", column.Name, key.Name))
-				}
-			default:
-				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported map value type %s", valueType)
+		switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
+		case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
+			if key.Materialized {
+				return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
 			}
+			return fmt.Sprintf("%s['%s']", column.Name, key.Name), nil
+		default:
+			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported map value type %s", valueType)
 		}
 	}
 
-	if len(exprs) == 1 {
-		return exprs[0], nil
-	} else if len(exprs) > 1 {
-		if len(existExpr) != len(exprs) {
-			return "", errors.New(errors.TypeInternal, errors.CodeInternal, "length of exist exprs doesn't match to that of exprs")
-		}
-		finalExprs := []string{}
-		for i, expr := range exprs {
-			finalExprs = append(finalExprs, fmt.Sprintf("%s, %s", existExpr[i], expr))
-		}
-		return "multiIf(" + strings.Join(finalExprs, ", ") + ", NULL)", nil
-	}
-
-	return columns[0].Name, nil
+	return column.Name, nil
 }
 
 func (m *fieldMapper) ColumnFor(ctx context.Context, _, _ uint64, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
@@ -129,7 +105,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		keysForField := keys[field.Name]
 		if len(keysForField) == 0 {
-			if _, ok := logsV2Columns[field.Name]; ok {
+			if _, ok := auditLogColumns[field.Name]; ok {
 				field.FieldContext = telemetrytypes.FieldContextLog
 				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
@@ -139,15 +115,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 				}
 				return "", errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "field `%s` not found", field.Name)
 			}
-		} else if len(keysForField) == 1 {
-			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		} else {
-			args := []string{}
-			for _, key := range keysForField {
-				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
-				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", fieldExpression, fieldExpression))
-			}
-			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
+			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		}
 	}
 

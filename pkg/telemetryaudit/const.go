@@ -29,6 +29,7 @@ const (
 	AttributesStringColumn = "attributes_string"
 	AttributesNumberColumn = "attributes_number"
 	AttributesBoolColumn   = "attributes_bool"
+	ResourceColumn         = "resource"
 	ScopeStringColumn      = "scope_string"
 )
 
@@ -105,7 +106,7 @@ var (
 	}
 )
 
-var logsV2Columns = map[string]*schema.Column{
+var auditLogColumns = map[string]*schema.Column{
 	"ts_bucket_start":      {Name: "ts_bucket_start", Type: schema.ColumnTypeUInt64},
 	"resource_fingerprint": {Name: "resource_fingerprint", Type: schema.ColumnTypeString},
 	"timestamp":            {Name: "timestamp", Type: schema.ColumnTypeUInt64},

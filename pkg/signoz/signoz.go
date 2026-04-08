@@ -397,7 +397,7 @@ func New(
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
 		telemetryaudit.DBName,
-		telemetryaudit.LogsTableName,
+		telemetryaudit.AuditLogsTableName,
 		telemetryaudit.TagAttributesTableName,
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,
