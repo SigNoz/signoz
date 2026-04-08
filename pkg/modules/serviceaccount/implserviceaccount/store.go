@@ -105,6 +105,24 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 	return storable, nil
 }
 
+func (store *store) GetActiveByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
+	storable := new(serviceaccounttypes.ServiceAccount)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("id = ?", id).
+		Where("status = ?", serviceaccounttypes.ServiceAccountStatusActive).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
+	}
+
+	return storable, nil
+}
+
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	storable := new(serviceaccounttypes.ServiceAccount)
 

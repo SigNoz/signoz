@@ -361,7 +361,7 @@ func (module *module) getOrGetSetIdentity(ctx context.Context, serviceAccountID 
 		return identity, nil
 	}
 
-	storableServiceAccount, err := module.store.GetByID(ctx, serviceAccountID)
+	storableServiceAccount, err := module.store.GetActiveByID(ctx, serviceAccountID)
 	if err != nil {
 		return nil, err
 	}
