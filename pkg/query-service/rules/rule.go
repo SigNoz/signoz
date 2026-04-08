@@ -41,11 +41,7 @@ type Rule interface {
 	SetEvaluationTimestamp(time.Time)
 	GetEvaluationTimestamp() time.Time
 
-	RecordRuleStateHistory(
-		ctx context.Context,
-		prevState, currentState ruletypes.AlertState,
-		itemsToAdd []rulestatehistorytypes.RuleStateHistory,
-	) error
+	RecordRuleStateHistory(ctx context.Context, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error
 
 	SendAlerts(
 		ctx context.Context,

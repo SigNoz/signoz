@@ -7,12 +7,14 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTimezone } from 'providers/Timezone';
 
 import { TooltipProps } from '../types';
+import TooltipItem from './components/TooltipItem/TooltipItem';
 
-import './Tooltip.styles.scss';
+import Styles from './Tooltip.module.scss';
 
-const TOOLTIP_LIST_MAX_HEIGHT = 330;
+// Fallback per-item height used for the initial size estimate before
+// Virtuoso reports the real total height via totalListHeightChanged.
 const TOOLTIP_ITEM_HEIGHT = 38;
-const TOOLTIP_LIST_PADDING = 10;
+const LIST_MAX_HEIGHT = 300;
 
 export default function Tooltip({
 	uPlotInstance,
@@ -21,27 +23,26 @@ export default function Tooltip({
 	showTooltipHeader = true,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [listHeight, setListHeight] = useState(0);
-	const tooltipContent = content ?? [];
 	const { timezone: userTimezone } = useTimezone();
+	const [totalListHeight, setTotalListHeight] = useState(0);
 
-	const resolvedTimezone = useMemo(() => {
-		if (!timezone) {
-			return userTimezone.value;
-		}
-		return timezone.value;
-	}, [timezone, userTimezone]);
+	const tooltipContent = useMemo(() => content ?? [], [content]);
+
+	const resolvedTimezone = timezone?.value ?? userTimezone.value;
 
 	const headerTitle = useMemo(() => {
 		if (!showTooltipHeader) {
 			return null;
 		}
-		const data = uPlotInstance.data;
 		const cursorIdx = uPlotInstance.cursor.idx;
 		if (cursorIdx == null) {
 			return null;
 		}
-		return dayjs(data[0][cursorIdx] * 1000)
+		const timestamp = uPlotInstance.data[0]?.[cursorIdx];
+		if (timestamp == null) {
+			return null;
+		}
+		return dayjs(timestamp * 1000)
 			.tz(resolvedTimezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 	}, [
@@ -51,60 +52,68 @@ export default function Tooltip({
 		showTooltipHeader,
 	]);
 
-	const virtuosoStyle = useMemo(() => {
-		return {
-			height:
-				listHeight > 0
-					? Math.min(listHeight + TOOLTIP_LIST_PADDING, TOOLTIP_LIST_MAX_HEIGHT)
-					: Math.min(
-							tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
-							TOOLTIP_LIST_MAX_HEIGHT,
-					  ),
-			width: '100%',
-		};
-	}, [listHeight, tooltipContent.length]);
+	const activeItem = useMemo(
+		() => tooltipContent.find((item) => item.isActive) ?? null,
+		[tooltipContent],
+	);
+
+	// Use the measured height from Virtuoso when available; fall back to a
+	// per-item estimate on the first render.  Math.ceil prevents a 1 px
+	// subpixel rounding gap from triggering a spurious scrollbar.
+	const virtuosoHeight = useMemo(() => {
+		return totalListHeight > 0
+			? Math.ceil(Math.min(totalListHeight, LIST_MAX_HEIGHT))
+			: Math.min(tooltipContent.length * TOOLTIP_ITEM_HEIGHT, LIST_MAX_HEIGHT);
+	}, [totalListHeight, tooltipContent.length]);
+
+	const showHeader = showTooltipHeader || activeItem != null;
+	// With a single series the active item is fully represented in the header —
+	// hide the divider and list to avoid showing a duplicate row.
+	const showList = tooltipContent.length > 1;
+	const showDivider = showList && showHeader;
 
 	return (
 		<div
-			className={cx(
-				'uplot-tooltip-container',
-				isDarkMode ? 'darkMode' : 'lightMode',
-			)}
+			className={cx(Styles.uplotTooltipContainer, !isDarkMode && Styles.lightMode)}
 			data-testid="uplot-tooltip-container"
 		>
-			{showTooltipHeader && (
-				<div className="uplot-tooltip-header" data-testid="uplot-tooltip-header">
-					<span>{headerTitle}</span>
+			{showHeader && (
+				<div className={Styles.uplotTooltipHeaderContainer}>
+					{showTooltipHeader && headerTitle && (
+						<div
+							className={Styles.uplotTooltipHeader}
+							data-testid="uplot-tooltip-header"
+						>
+							<span>{headerTitle}</span>
+						</div>
+					)}
+
+					{activeItem && (
+						<TooltipItem
+							item={activeItem}
+							isItemActive={true}
+							containerTestId="uplot-tooltip-pinned"
+							markerTestId="uplot-tooltip-pinned-marker"
+							contentTestId="uplot-tooltip-pinned-content"
+						/>
+					)}
 				</div>
 			)}
-			<div className="uplot-tooltip-list-container">
-				{tooltipContent.length > 0 ? (
-					<Virtuoso
-						className="uplot-tooltip-list"
-						data-testid="uplot-tooltip-list"
-						data={tooltipContent}
-						style={virtuosoStyle}
-						totalListHeightChanged={setListHeight}
-						itemContent={(_, item): JSX.Element => (
-							<div className="uplot-tooltip-item" data-testid="uplot-tooltip-item">
-								<div
-									className="uplot-tooltip-item-marker"
-									style={{ borderColor: item.color }}
-									data-is-legend-marker={true}
-									data-testid="uplot-tooltip-item-marker"
-								/>
-								<div
-									className="uplot-tooltip-item-content"
-									style={{ color: item.color, fontWeight: item.isActive ? 700 : 400 }}
-									data-testid="uplot-tooltip-item-content"
-								>
-									{item.label}: {item.tooltipValue}
-								</div>
-							</div>
-						)}
-					/>
-				) : null}
-			</div>
+
+			{showDivider && <span className={Styles.uplotTooltipDivider} />}
+
+			{showList && (
+				<Virtuoso
+					className={Styles.uplotTooltipList}
+					data-testid="uplot-tooltip-list"
+					data={tooltipContent}
+					style={{ height: virtuosoHeight, width: '100%' }}
+					totalListHeightChanged={setTotalListHeight}
+					itemContent={(_, item): JSX.Element => (
+						<TooltipItem item={item} isItemActive={false} />
+					)}
+				/>
+			)}
 		</div>
 	);
 }

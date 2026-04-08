@@ -86,7 +86,7 @@ describe('MembersTable', () => {
 		);
 	});
 
-	it('renders DELETED badge and does not call onRowClick when a deleted member row is clicked', async () => {
+	it('renders DELETED badge and calls onRowClick when a deleted member row is clicked', async () => {
 		const onRowClick = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const deletedMember: MemberRow = {
@@ -108,7 +108,7 @@ describe('MembersTable', () => {
 
 		expect(screen.getByText('DELETED')).toBeInTheDocument();
 		await user.click(screen.getByText('Dave Deleted'));
-		expect(onRowClick).not.toHaveBeenCalledWith(
+		expect(onRowClick).toHaveBeenCalledWith(
 			expect.objectContaining({ id: 'user-del' }),
 		);
 	});

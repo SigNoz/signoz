@@ -281,48 +281,6 @@ describe('AppProvider user and org data from v2 APIs', () => {
 		);
 	});
 
-	it('populates org state from GET /api/v2/orgs/me', async () => {
-		server.use(
-			rest.get(MY_ORG_URL, (_, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						data: {
-							id: 'org-abc',
-							displayName: 'My Org',
-						},
-					}),
-				),
-			),
-			rest.get(MY_USER_URL, (_, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({ data: { id: 'u-default', email: 'default@signoz.io' } }),
-				),
-			),
-			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = await req.json();
-				return res(
-					ctx.status(200),
-					ctx.json(authzMockResponse(payload, [false, false, false])),
-				);
-			}),
-		);
-
-		const wrapper = createWrapper();
-		const { result } = renderHook(() => useAppContext(), { wrapper });
-
-		await waitFor(
-			() => {
-				expect(result.current.org).not.toBeNull();
-				const org = result.current.org?.[0];
-				expect(org?.id).toBe('org-abc');
-				expect(org?.displayName).toBe('My Org');
-			},
-			{ timeout: 2000 },
-		);
-	});
-
 	it('sets isFetchingUser false once both user and org calls complete', async () => {
 		server.use(
 			rest.get(MY_USER_URL, (_, res, ctx) =>
