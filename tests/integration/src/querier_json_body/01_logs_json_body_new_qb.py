@@ -29,6 +29,10 @@ def _get_rows(response: requests.Response) -> List[Dict[str, Any]]:
     return results[0]["rows"]
 
 
+def _get_bodies(response: requests.Response) -> List[Dict[str, Any]]:
+    return [json.loads(row["data"]["body"]) for row in _get_rows(response)]
+
+
 def _run_query_case(
     signoz: types.SigNoz, token: str, now: datetime, case: Dict[str, Any]
 ) -> None:
@@ -238,7 +242,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.status = 200",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all(b["status"] == 200 for b in _get_bodies(r)),
         },
         # height only exists in log1,log3 — tests comparison on sparse field
         {
@@ -265,7 +270,9 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.active = true",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and {b["user"]["name"] for b in _get_bodies(r)}
+            == {"alice", "charlie", "diana"},
         },
         # CONTAINS uses ILIKE — distinct from =
         {
@@ -273,7 +280,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": 'body.user.name CONTAINS "ali"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "alice",
         },
         # CONTAINS on Float uses toString() wrapping — distinct code path
         {
@@ -281,7 +289,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.height Contains 5.4",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["height"] == 5.4,
         },
         # LIKE — distinct operator (sb.Like)
         {
@@ -289,7 +298,9 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.name LIKE '%li%'",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,  # alice, charlie
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and {b["user"]["name"] for b in _get_bodies(r)}
+            == {"alice", "charlie"},
         },
         # REGEXP — distinct operator (match() function)
         {
@@ -297,7 +308,9 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.name REGEXP '^[a-b].*'",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,  # alice, bob
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and {b["user"]["name"] for b in _get_bodies(r)}
+            == {"alice", "bob"},
         },
         # IN — distinct operator (sb.In)
         {
@@ -305,7 +318,9 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.name IN ['alice', 'diana']",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and {b["user"]["name"] for b in _get_bodies(r)}
+            == {"alice", "diana"},
         },
         # BETWEEN — distinct operator + type ambiguity (log5 "unknown" excluded)
         {
@@ -313,7 +328,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.age BETWEEN 25 AND 30",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and {b["user"]["age"] for b in _get_bodies(r)} == {25, 30},
         },
         # EXISTS on sparse field — only log1 has email
         {
@@ -321,7 +337,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.email EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["email"] == "alice@test.com",
         },
         # Deep non-array nesting (a.b.c)
         {
@@ -329,7 +346,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.address.zip = 110001",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["address"]["zip"] == 110001,
         },
         # Hyphen in key name — special character path escaping
         {
@@ -337,7 +355,8 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.http-status = 200",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(b["http-status"] == 200 for b in _get_bodies(r)),
         },
         # ── negative operators ─────────────────────────────────────────────
         # != uses assumeNotNull wrapping
@@ -346,7 +365,11 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": 'body.user.name != "alice"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) >= 3,
+            "validate": lambda r: len(_get_rows(r)) >= 3
+            and all(
+                b.get("user", {}).get("name") != "alice"
+                for b in _get_bodies(r)
+            ),
         },
         # NOT CONTAINS uses NOT ILIKE — distinct from !=
         {
@@ -354,9 +377,10 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": 'body.user.name NOT CONTAINS "ali"',
             "aggregation": "count()",
-            "validate": lambda r: all(
-                "ali" not in json.loads(row["data"]["body"]).get("user", {}).get("name", "")
-                for row in _get_rows(r)
+            "validate": lambda r: len(_get_rows(r)) >= 3
+            and all(
+                "ali" not in b.get("user", {}).get("name", "")
+                for b in _get_bodies(r)
             ),
         },
         # NOT EXISTS — IS NULL
@@ -365,7 +389,11 @@ def test_primitive_path_operations(
             "requestType": "raw",
             "expression": "body.user.email NOT EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) >= 2,
+            "validate": lambda r: len(_get_rows(r)) >= 2
+            and all(
+                "email" not in b.get("user", {})
+                for b in _get_bodies(r)
+            ),
         },
     ]
 
@@ -566,21 +594,32 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].name EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all(
+                all("name" in e for e in b["education"])
+                for b in _get_bodies(r)
+            ),
         },
         {
             "name": "arr.single_string_equal",
             "requestType": "raw",
             "expression": 'body.education[].name = "IIT"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                e["name"] == "IIT" for e in _get_bodies(r)[0]["education"]
+            ),
         },
         {
             "name": "arr.single_string_contains",
             "requestType": "raw",
             "expression": 'body.education[].name Contains "Stan"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                "Stan" in e.get("name", "")
+                for e in _get_bodies(r)[0]["education"]
+            ),
         },
         # education[].type: "engineering" (string) in log1[0], 10001 (int!) in log1[1],
         #                    absent in log2, "research" in log3 — type ambiguity
@@ -589,7 +628,11 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].type = "engineering"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                e.get("type") == "engineering"
+                for e in _get_bodies(r)[0]["education"]
+            ),
         },
         # Terminal Array(Float64) + Array(Dynamic) dual branch traversal
         {
@@ -597,7 +640,11 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].parameters CONTAINS 1.65",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                any(1.65 in e.get("parameters", []) for e in b["education"])
+                for b in _get_bodies(r)
+            ),
         },
         # IN on terminal Array(Int64)
         {
@@ -605,7 +652,14 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].scores IN [90, 95]",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                any(
+                    set(e.get("scores", [])) & {90, 95}
+                    for e in b["education"]
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # ── single-hop negative ────────────────────────────────────────────
         # != wraps NOT at outer arrayExists level
@@ -614,7 +668,13 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].name != "IIT"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all(
+                not any(
+                    e.get("name") == "IIT" for e in b.get("education", [])
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # NOT EXISTS on array path — log4 has no education at all
         {
@@ -622,7 +682,8 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].name NOT EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and all("education" not in b for b in _get_bodies(r)),
         },
         # Negative on dual-branch terminal (Array(Float64) + Array(Dynamic))
         {
@@ -630,7 +691,14 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].parameters NOT CONTAINS 1.65",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                not any(
+                    1.65 in e.get("parameters", [])
+                    for e in b.get("education", [])
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # ── double-hop: education[].awards[].field ─────────────────────────
         # Only log1 and log3 have awards; log2 has no awards (sparse)
@@ -639,7 +707,14 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].awards[].name EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                any(
+                    any("name" in a for a in e.get("awards", []))
+                    for e in b["education"]
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # Array(JSON) + Array(Dynamic) dual branch at awards[] hop
         {
@@ -647,7 +722,11 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].awards[].name = "Iron Award"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                any(a.get("name") == "Iron Award" for a in e.get("awards", []))
+                for e in _get_bodies(r)[0]["education"]
+            ),
         },
         # NOT at double-hop level
         {
@@ -655,7 +734,14 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].awards[].type != "sports"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all(
+                not any(
+                    any(a.get("type") == "sports" for a in e.get("awards", []))
+                    for e in b.get("education", [])
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # ── multi-hop: 4+ hops deep (participated[].team[].branch) ────────
         {
@@ -663,7 +749,23 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].awards[].participated[].team[].branch Contains "Civil"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                any(
+                    any(
+                        any(
+                            any(
+                                "Civil" in t.get("branch", "")
+                                for t in p.get("team", [])
+                            )
+                            for p in a.get("participated", [])
+                        )
+                        for a in e.get("awards", [])
+                    )
+                    for e in b["education"]
+                )
+                for b in _get_bodies(r)
+            ),
         },
         # ── non-array intermediate: http-events[].request-info.host ────────
         {
@@ -671,7 +773,11 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.http-events[].request-info.host = "example.com"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                e["request-info"]["host"] == "example.com"
+                for e in _get_bodies(r)[0]["http-events"]
+            ),
         },
         # ── super deep: 6-hop interests[]...ratings ────────────────────────
         {
@@ -679,7 +785,26 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.interests[].entities[].reviews[].entries[].metadata[].positions[].ratings Contains 4",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                any(
+                    any(
+                        any(
+                            any(
+                                any(
+                                    4 in pos.get("ratings", [])
+                                    for pos in meta.get("positions", [])
+                                )
+                                for meta in entry.get("metadata", [])
+                            )
+                            for entry in rev.get("entries", [])
+                        )
+                        for rev in ent.get("reviews", [])
+                    )
+                    for ent in interest.get("entities", [])
+                )
+                for interest in _get_bodies(r)[0]["interests"]
+            ),
         },
     ]
 
@@ -806,7 +931,8 @@ def test_array_membership_operations(
             "requestType": "raw",
             "expression": 'has(body.tags, "production")',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all("production" in b["tags"] for b in _get_bodies(r)),
         },
         # has(flags, true): only log1 (log2 has [false], log3/log4 have no flags)
         {
@@ -814,7 +940,8 @@ def test_array_membership_operations(
             "requestType": "raw",
             "expression": "has(body.flags, true)",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and True in _get_bodies(r)[0]["flags"],
         },
         # has() on nested array terminal: parameters contains 1.65 → log1 only
         {
@@ -822,21 +949,42 @@ def test_array_membership_operations(
             "requestType": "raw",
             "expression": "has(body.education[].parameters, 1.65)",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and any(
+                1.65 in e.get("parameters", [])
+                for e in _get_bodies(r)[0]["education"]
+            ),
         },
         {
             "name": "membership.hasall_permissions",
             "requestType": "raw",
             "expression": "hasAll(body.user.permissions, ['read', 'write'])",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                {"read", "write"}.issubset(set(b["user"]["permissions"]))
+                for b in _get_bodies(r)
+            ),
         },
         {
             "name": "membership.hasany_deep_members",
             "requestType": "raw",
             "expression": "hasAny(body.education[].awards[].participated[].members, ['Piyush', 'Tushar'])",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                any(
+                    any(
+                        any(
+                            {"Piyush", "Tushar"} & set(p.get("members", []))
+                            for p in a.get("participated", [])
+                        )
+                        for a in e.get("awards", [])
+                    )
+                    for e in b["education"]
+                )
+                for b in _get_bodies(r)
+            ),
         },
     ]
 
@@ -958,7 +1106,10 @@ def test_message_searches(
             "requestType": "raw",
             "expression": '"Payment"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 2
+            and all(
+                "Payment" in b.get("message", "") for b in _get_bodies(r)
+            ),
         },
         # = operator via body.message — tests exact match path
         {
@@ -977,7 +1128,8 @@ def test_message_searches(
             "requestType": "raw",
             "expression": "message EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3,
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all("message" in b for b in _get_bodies(r)),
         },
         # ── negative ──────────────────────────────────────────────────────
         # NOT CONTAINS "Payment": control_log and no_msg_log
@@ -988,7 +1140,7 @@ def test_message_searches(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) >= 1
             and all(
-                "Payment" not in _body_messages(r)
+                "Payment" not in msg
                 for msg in _body_messages(r)
             ),
         },
@@ -1108,36 +1260,3 @@ def test_groupby_timeseries(
 
     for case in cases:
         _run_query_case(signoz, token, now, case)
-
-
-# ============================================================================
-# Promoted time windows — temporarily disabled
-# ============================================================================
-
-
-@pytest.mark.skip(
-    reason="Promotion is temporarily not supported; uncomment when promotion is back"
-)
-def test_promoted_time_windows(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
-    export_promoted_paths: Callable[[List[str]], None],
-) -> None:
-    pass
-
-
-@pytest.mark.skip(
-    reason="Promotion is temporarily not supported; uncomment when promotion is back"
-)
-def test_groupby_timeseries_promoted(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
-    export_promoted_paths: Callable[[List[str]], None],
-) -> None:
-    pass
