@@ -32,21 +32,23 @@ const SERVICE_AND_ENVIRONMENT_KEYS = [
 ];
 
 export const getFiltersFromResources = (
-	resources: ILog['resources_string'],
+	resources: ILog['resources_string'] | null | undefined,
 ): TagFilterItem[] =>
-	Object.keys(resources).map((key: string) => {
-		const resourceValue = resources[key] as string;
-		return {
-			id: uuid(),
-			key: {
-				key,
-				dataType: DataTypes.String,
-				type: 'resource',
-			},
-			op: OPERATORS['='],
-			value: resourceValue,
-		};
-	});
+	!resources || typeof resources !== 'object'
+		? []
+		: Object.keys(resources).map((key: string) => {
+				const resourceValue = resources[key] as string;
+				return {
+					id: uuid(),
+					key: {
+						key,
+						dataType: DataTypes.String,
+						type: 'resource',
+					},
+					op: OPERATORS['='],
+					value: resourceValue,
+				};
+		  });
 
 export const isServiceOrEnvironmentAttribute = (key: string): boolean =>
 	SERVICE_AND_ENVIRONMENT_KEYS.includes(key);

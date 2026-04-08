@@ -375,4 +375,40 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 			expect(mockUpdateAllQueriesOperators).toHaveBeenCalledTimes(1);
 		});
 	});
+
+	describe('Missing Resources Guard', () => {
+		it('should not crash when resources_string is undefined', () => {
+			const testLog = {
+				...createTestLog({}),
+				resources_string: (undefined as unknown) as Record<string, never>,
+			};
+
+			const { result } = renderHook(() => useInitialQuery(testLog));
+
+			expect(result.current).toBeDefined();
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledWith(
+				expect.objectContaining({
+					items: [],
+					op: 'AND',
+				}),
+			);
+		});
+
+		it('should not crash when resources_string is null', () => {
+			const testLog = {
+				...createTestLog({}),
+				resources_string: (null as unknown) as Record<string, never>,
+			};
+
+			const { result } = renderHook(() => useInitialQuery(testLog));
+
+			expect(result.current).toBeDefined();
+			expect(mockedConvertFiltersToExpression).toHaveBeenCalledWith(
+				expect.objectContaining({
+					items: [],
+					op: 'AND',
+				}),
+			);
+		});
+	});
 });
