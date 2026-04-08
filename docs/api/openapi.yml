@@ -620,7 +620,7 @@ components:
         config:
           $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequestConfig'
         credentials:
-          $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+          $ref: '#/components/schemas/CloudintegrationtypesCredentials'
       required:
       - config
       - credentials
@@ -631,6 +631,22 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
       required:
       - aws
+      type: object
+    CloudintegrationtypesCredentials:
+      properties:
+        ingestionKey:
+          type: string
+        ingestionUrl:
+          type: string
+        sigNozApiKey:
+          type: string
+        sigNozApiUrl:
+          type: string
+      required:
+      - sigNozApiUrl
+      - sigNozApiKey
+      - ingestionUrl
+      - ingestionKey
       type: object
     CloudintegrationtypesDashboard:
       properties:
@@ -865,22 +881,6 @@ components:
       - title
       - icon
       - enabled
-      type: object
-    CloudintegrationtypesSignozCredentials:
-      properties:
-        ingestionKey:
-          type: string
-        ingestionUrl:
-          type: string
-        sigNozApiKey:
-          type: string
-        sigNozApiURL:
-          type: string
-      required:
-      - sigNozApiURL
-      - sigNozApiKey
-      - ingestionUrl
-      - ingestionKey
       type: object
     CloudintegrationtypesSupportedSignals:
       properties:
@@ -3631,7 +3631,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+                    $ref: '#/components/schemas/CloudintegrationtypesCredentials'
                   status:
                     type: string
                 required:

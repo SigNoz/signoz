@@ -7,8 +7,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type SignozCredentials struct {
-	SigNozAPIURL string `json:"sigNozApiURL" required:"true"`
+type Credentials struct {
+	SigNozAPIURL string `json:"sigNozApiUrl" required:"true"`
 	SigNozAPIKey string `json:"sigNozApiKey" required:"true"` // PAT
 	IngestionURL string `json:"ingestionUrl" required:"true"`
 	IngestionKey string `json:"ingestionKey" required:"true"`
@@ -16,7 +16,7 @@ type SignozCredentials struct {
 
 type ConnectionArtifactRequest struct {
 	Config      *ConnectionArtifactRequestConfig `json:"config" required:"true"`
-	Credentials *SignozCredentials               `json:"credentials" required:"true"`
+	Credentials *Credentials                     `json:"credentials" required:"true"`
 }
 
 type ConnectionArtifactRequestConfig struct {
@@ -38,12 +38,12 @@ type ConnectionArtifact struct {
 }
 
 type AWSConnectionArtifact struct {
-	ConnectionURL string `json:"connectionURL" required:"true"`
+	ConnectionURL string `json:"connectionUrl" required:"true"`
 }
 
-type GettableAccountWithArtifact struct {
-	ID       valuer.UUID         `json:"id" required:"true"`
-	Artifact *ConnectionArtifact `json:"connectionArtifact" required:"true"`
+type GettableAccountWithConnectionArtifact struct {
+	ID                 valuer.UUID         `json:"id" required:"true"`
+	ConnectionArtifact *ConnectionArtifact `json:"connectionArtifact" required:"true"`
 }
 
 type AgentCheckInRequest struct {
@@ -55,8 +55,8 @@ type AgentCheckInRequest struct {
 
 type PostableAgentCheckInRequest struct {
 	AgentCheckInRequest
-	// following are backward compatible fields for older running agents
-	// which gets mapped to new fields in AgentCheckInRequest
+	// following are backward compatible fields for older running agents, hence snake case JSON keys.
+	// Which get mapped to new fields in AgentCheckInRequest
 	ID        string `json:"account_id" required:"false"`       // => CloudIntegrationID
 	AccountID string `json:"cloud_account_id" required:"false"` // => ProviderAccountID
 }
@@ -90,8 +90,8 @@ type ProviderIntegrationConfig struct {
 }
 
 type AWSIntegrationConfig struct {
-	EnabledRegions []string               `json:"enabledRegions" required:"true" nullable:"false"`
-	Telemetry      *AWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`
+	EnabledRegions              []string                        `json:"enabledRegions" required:"true" nullable:"false"`
+	TelemetryCollectionStrategy *AWSTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
 
 // NewGettableAgentCheckInResponse constructs a backward-compatible response from an AgentCheckInResponse.

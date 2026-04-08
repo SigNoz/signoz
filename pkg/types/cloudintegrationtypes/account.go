@@ -143,9 +143,6 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 
 	switch provider {
 	case CloudProviderTypeAWS:
-		if artifact.Config.Aws == nil {
-			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
-		}
 		req.Config = &ConnectionArtifactRequestConfig{
 			Aws: &AWSConnectionArtifactRequest{
 				DeploymentRegion: artifact.Config.Aws.DeploymentRegion,
@@ -154,9 +151,9 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 		}
 
 		return req, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
-
-	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
 func NewAgentReport(data map[string]any) *AgentReport {

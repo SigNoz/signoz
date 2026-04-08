@@ -10,7 +10,7 @@ import (
 )
 
 type Module interface {
-	GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType) (*citypes.SignozCredentials, error)
+	GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType) (*citypes.Credentials, error)
 
 	CreateAccount(ctx context.Context, account *citypes.Account) error
 
@@ -30,12 +30,12 @@ type Module interface {
 	// client side handles how this information is shown
 	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
-	// ListServicesMetadata returns the list of services metadata for a cloud provider attached with the integrationID.
-	// This just returns a summary of the service and not the whole service definition
+	// ListServicesMetadata returns the list of supported services' metadata for a cloud provider with optional filtering for a specific integration
+	// This just returns a summary of the service and not the whole service definition.
 	ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, integrationID *valuer.UUID) ([]*citypes.ServiceMetadata, error)
 
-	// GetService returns service definition details for a serviceID. This returns config and
-	// other details required to show in service details page on web client.
+	// GetService returns service definition details for a serviceID. This optionally returns the service config
+	// for integrationID if provided.
 	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID citypes.ServiceID, provider citypes.CloudProviderType) (*citypes.Service, error)
 
 	// CreateService creates a new service for a cloud integration account.
@@ -44,7 +44,7 @@ type Module interface {
 	// UpdateService updates cloud integration service
 	UpdateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
 
-	// AgentCheckIn is called by agent to heartbeat and get latest config in response.
+	// AgentCheckIn is called by agent to send heartbeat and get latest config in response.
 	AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, req *citypes.AgentCheckInRequest) (*citypes.AgentCheckInResponse, error)
 
 	// GetDashboardByID returns dashboard JSON for a given dashboard id.

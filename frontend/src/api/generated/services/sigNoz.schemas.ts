@@ -763,11 +763,30 @@ export interface CloudintegrationtypesConnectionArtifactDTO {
 
 export interface CloudintegrationtypesConnectionArtifactRequestDTO {
 	config: CloudintegrationtypesConnectionArtifactRequestConfigDTO;
-	credentials: CloudintegrationtypesSignozCredentialsDTO;
+	credentials: CloudintegrationtypesCredentialsDTO;
 }
 
 export interface CloudintegrationtypesConnectionArtifactRequestConfigDTO {
 	aws: CloudintegrationtypesAWSConnectionArtifactRequestDTO;
+}
+
+export interface CloudintegrationtypesCredentialsDTO {
+	/**
+	 * @type string
+	 */
+	ingestionKey: string;
+	/**
+	 * @type string
+	 */
+	ingestionUrl: string;
+	/**
+	 * @type string
+	 */
+	sigNozApiKey: string;
+	/**
+	 * @type string
+	 */
+	sigNozApiUrl: string;
 }
 
 export interface CloudintegrationtypesDashboardDTO {
@@ -1019,25 +1038,6 @@ export interface CloudintegrationtypesServiceMetadataDTO {
 	 * @type string
 	 */
 	title: string;
-}
-
-export interface CloudintegrationtypesSignozCredentialsDTO {
-	/**
-	 * @type string
-	 */
-	ingestionKey: string;
-	/**
-	 * @type string
-	 */
-	ingestionUrl: string;
-	/**
-	 * @type string
-	 */
-	sigNozApiKey: string;
-	/**
-	 * @type string
-	 */
-	sigNozApiURL: string;
 }
 
 export interface CloudintegrationtypesSupportedSignalsDTO {
@@ -3643,7 +3643,7 @@ export type GetConnectionCredentialsPathParameters = {
 	cloudProvider: string;
 };
 export type GetConnectionCredentials200 = {
-	data: CloudintegrationtypesSignozCredentialsDTO;
+	data: CloudintegrationtypesCredentialsDTO;
 	/**
 	 * @type string
 	 */

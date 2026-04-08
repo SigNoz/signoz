@@ -26,6 +26,22 @@ type ServiceConfig struct {
 	AWS *AWSServiceConfig `json:"aws" required:"true" nullable:"false"`
 }
 
+type AWSServiceConfig struct {
+	Logs    *AWSServiceLogsConfig    `json:"logs"`
+	Metrics *AWSServiceMetricsConfig `json:"metrics"`
+}
+
+// AWSServiceLogsConfig is AWS specific logs config for a service
+// NOTE: the JSON keys are snake case for backward compatibility with existing agents.
+type AWSServiceLogsConfig struct {
+	Enabled   bool                `json:"enabled"`
+	S3Buckets map[string][]string `json:"s3Buckets,omitempty"`
+}
+
+type AWSServiceMetricsConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
 // As getting complete service definition is a heavy operation and the response is also large,
 // initial integration page load can be very slow.
@@ -59,11 +75,11 @@ type UpdatableService struct {
 
 type ServiceDefinition struct {
 	ServiceDefinitionMetadata
-	Overview         string              `json:"overview" required:"true"` // markdown
-	Assets           Assets              `json:"assets" required:"true"`
-	SupportedSignals SupportedSignals    `json:"supportedSignals" required:"true"`
-	DataCollected    DataCollected       `json:"dataCollected" required:"true"`
-	Strategy         *CollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
+	Overview                    string                       `json:"overview" required:"true"` // markdown
+	Assets                      Assets                       `json:"assets" required:"true"`
+	SupportedSignals            SupportedSignals             `json:"supportedSignals" required:"true"`
+	DataCollected               DataCollected                `json:"dataCollected" required:"true"`
+	TelemetryCollectionStrategy *TelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
 
 // SupportedSignals for cloud provider's service.
@@ -78,26 +94,10 @@ type DataCollected struct {
 	Metrics []CollectedMetric       `json:"metrics"`
 }
 
-// CollectionStrategy is cloud provider specific configuration for signal collection,
+// TelemetryCollectionStrategy is cloud provider specific configuration for signal collection,
 // this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
-type CollectionStrategy struct {
-	AWS *AWSCollectionStrategy `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSServiceConfig struct {
-	Logs    *AWSServiceLogsConfig    `json:"logs"`
-	Metrics *AWSServiceMetricsConfig `json:"metrics"`
-}
-
-// AWSServiceLogsConfig is AWS specific logs config for a service
-// NOTE: the JSON keys are snake case for backward compatibility with existing agents.
-type AWSServiceLogsConfig struct {
-	Enabled   bool                `json:"enabled"`
-	S3Buckets map[string][]string `json:"s3Buckets,omitempty"`
-}
-
-type AWSServiceMetricsConfig struct {
-	Enabled bool `json:"enabled"`
+type TelemetryCollectionStrategy struct {
+	AWS *AWSTelemetryCollectionStrategy `json:"aws" required:"true" nullable:"false"`
 }
 
 // Assets represents the collection of dashboards.
@@ -119,13 +119,6 @@ type CollectedMetric struct {
 	Type        string `json:"type"`
 	Unit        string `json:"unit"`
 	Description string `json:"description"`
-}
-
-// AWSCollectionStrategy represents signal collection strategy for AWS services.
-type AWSCollectionStrategy struct {
-	Metrics   *AWSMetricsStrategy `json:"metrics,omitempty"`
-	Logs      *AWSLogsStrategy    `json:"logs,omitempty"`
-	S3Buckets map[string][]string `json:"s3Buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
 }
 
 // OldAWSCollectionStrategy is the backward-compatible snake_case form of AWSCollectionStrategy,
@@ -153,28 +146,38 @@ type OldAWSLogsStrategy struct {
 	} `json:"cloudwatch_logs_subscriptions"`
 }
 
-// AWSMetricsStrategy represents metrics collection strategy for AWS services.
-type AWSMetricsStrategy struct {
-	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
-	StreamFilters []struct {
-		// json tags here are in the shape expected by AWS API as detailed at
-		// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
-		Namespace   string   `json:"Namespace"`
-		MetricNames []string `json:"MetricNames,omitempty"`
-	} `json:"cloudwatchMetricStreamFilters"`
+// AWSTelemetryCollectionStrategy represents signal collection strategy for AWS services.
+type AWSTelemetryCollectionStrategy struct {
+	Metrics   *AWSMetricsCollectionStrategy `json:"metrics,omitempty"`
+	Logs      *AWSLogsCollectionStrategy    `json:"logs,omitempty"`
+	S3Buckets map[string][]string           `json:"s3Buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
 }
 
-// AWSLogsStrategy represents logs collection strategy for AWS services.
-type AWSLogsStrategy struct {
-	Subscriptions []struct {
-		// subscribe to all logs groups with specified prefix.
-		// eg: `/aws/rds/`
-		LogGroupNamePrefix string `json:"logGroupNamePrefix"`
+// AWSMetricsCollectionStrategy represents metrics collection strategy for AWS services.
+type AWSMetricsCollectionStrategy struct {
+	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
+	StreamFilters []*AWSCloudWatchMetricStreamFilter `json:"streamFilters"`
+}
 
-		// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
-		// "" implies no filtering is required.
-		FilterPattern string `json:"filterPattern"`
-	} `json:"cloudwatchLogsSubscriptions"`
+type AWSCloudWatchMetricStreamFilter struct {
+	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
+	Namespace   string   `json:"namespace"`
+	MetricNames []string `json:"metricNames,omitempty"`
+}
+
+// AWSLogsCollectionStrategy represents logs collection strategy for AWS services.
+type AWSLogsCollectionStrategy struct {
+	Subscriptions []*AWSCloudWatchLogsSubscription `json:"subscriptions"`
+}
+
+type AWSCloudWatchLogsSubscription struct {
+	// subscribe to all logs groups with specified prefix.
+	// eg: `/aws/rds/`
+	LogGroupNamePrefix string `json:"logGroupNamePrefix"`
+
+	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
+	// "" implies no filtering is required
+	FilterPattern string `json:"filterPattern"`
 }
 
 // Dashboard represents a dashboard definition for cloud integration.
@@ -263,7 +266,7 @@ func (service *CloudIntegrationService) Update(config *ServiceConfig) {
 
 // IsServiceEnabled returns true if the service has at least one signal (logs or metrics) enabled
 // for the given cloud provider.
-func IsServiceEnabled(provider CloudProviderType, config *ServiceConfig) bool {
+func (config *ServiceConfig) IsServiceEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		logsEnabled := config.AWS.Logs != nil && config.AWS.Logs.Enabled
@@ -276,7 +279,7 @@ func IsServiceEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 
 // IsMetricsEnabled returns true if metrics are explicitly enabled for the given cloud provider.
 // Used to gate dashboard availability — dashboards are only shown when metrics are enabled.
-func IsMetricsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
+func (config *ServiceConfig) IsMetricsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
@@ -286,7 +289,7 @@ func IsMetricsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 }
 
 // IsLogsEnabled returns true if logs are explicitly enabled for the given cloud provider.
-func IsLogsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
+func (config *ServiceConfig) IsLogsEnabled(provider CloudProviderType) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
 		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
@@ -295,8 +298,8 @@ func IsLogsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 	}
 }
 
-func (serviceConfig *ServiceConfig) ToJSON(provider CloudProviderType, serviceID ServiceID, supportedSignals *SupportedSignals) ([]byte, error) {
-	storableServiceConfig := newStorableServiceConfig(provider, serviceID, serviceConfig, supportedSignals)
+func (config *ServiceConfig) ToJSON(provider CloudProviderType, serviceID ServiceID, supportedSignals *SupportedSignals) ([]byte, error) {
+	storableServiceConfig := newStorableServiceConfig(provider, serviceID, config, supportedSignals)
 	return storableServiceConfig.toJSON(provider)
 }
 
@@ -382,20 +385,20 @@ func awsOlderIntegrationConfig(cfg *ProviderIntegrationConfig) *IntegrationConfi
 		EnabledRegions: awsCfg.EnabledRegions,
 	}
 
-	if awsCfg.Telemetry == nil {
+	if awsCfg.TelemetryCollectionStrategy == nil {
 		return older
 	}
 
 	// Older agents expect a "provider" field and fully snake_case keys inside telemetry.
 	oldTelemetry := &OldAWSCollectionStrategy{
 		Provider:  CloudProviderTypeAWS.StringValue(),
-		S3Buckets: awsCfg.Telemetry.S3Buckets,
+		S3Buckets: awsCfg.TelemetryCollectionStrategy.S3Buckets,
 	}
 
-	if awsCfg.Telemetry.Metrics != nil {
+	if awsCfg.TelemetryCollectionStrategy.Metrics != nil {
 		// Convert camelCase cloudwatchMetricStreamFilters → snake_case cloudwatch_metric_stream_filters
 		oldMetrics := &OldAWSMetricsStrategy{}
-		for _, f := range awsCfg.Telemetry.Metrics.StreamFilters {
+		for _, f := range awsCfg.TelemetryCollectionStrategy.Metrics.StreamFilters {
 			oldMetrics.StreamFilters = append(oldMetrics.StreamFilters, struct {
 				Namespace   string   `json:"Namespace"`
 				MetricNames []string `json:"MetricNames,omitempty"`
@@ -404,10 +407,10 @@ func awsOlderIntegrationConfig(cfg *ProviderIntegrationConfig) *IntegrationConfi
 		oldTelemetry.Metrics = oldMetrics
 	}
 
-	if awsCfg.Telemetry.Logs != nil {
+	if awsCfg.TelemetryCollectionStrategy.Logs != nil {
 		// Convert camelCase cloudwatchLogsSubscriptions → snake_case cloudwatch_logs_subscriptions
 		oldLogs := &OldAWSLogsStrategy{}
-		for _, s := range awsCfg.Telemetry.Logs.Subscriptions {
+		for _, s := range awsCfg.TelemetryCollectionStrategy.Logs.Subscriptions {
 			oldLogs.Subscriptions = append(oldLogs.Subscriptions, struct {
 				LogGroupNamePrefix string `json:"log_group_name_prefix"`
 				FilterPattern      string `json:"filter_pattern"`
