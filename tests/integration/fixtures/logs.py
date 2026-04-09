@@ -521,7 +521,9 @@ def insert_logs(
             data = [log.np_arr() for log in logs]
         else:
             json_body_cols = {"body_v2", "body_promoted"}
-            keep_indices = [i for i, c in enumerate(all_column_names) if c not in json_body_cols]
+            keep_indices = [
+                i for i, c in enumerate(all_column_names) if c not in json_body_cols
+            ]
             column_names = [all_column_names[i] for i in keep_indices]
             data = [log.np_arr()[keep_indices] for log in logs]
 

@@ -3,10 +3,21 @@ Simpler version of jsontypeexporter for test fixtures.
 This exports JSON type metadata to the path_types table by parsing JSON bodies
 and extracting all paths with their types, similar to how the real jsontypeexporter works.
 """
+
 import datetime
 import json
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Set,
+    Union,
+)
 
 import numpy as np
 import pytest
@@ -14,11 +25,12 @@ import pytest
 from fixtures import types
 
 if TYPE_CHECKING:
-    from fixtures.logs import Logs
+    pass
 
 
 class JSONPathType(ABC):
     """Represents a JSON path with its type information"""
+
     path: str
     type: str
     last_seen: np.uint64
@@ -42,7 +54,7 @@ class JSONPathType(ABC):
 
 # Constants matching jsontypeexporter
 ARRAY_SEPARATOR = "[]."  # Used in paths like "education[].name"
-ARRAY_SUFFIX = "[]"      # Used when traversing into array element objects
+ARRAY_SUFFIX = "[]"  # Used when traversing into array element objects
 
 
 def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
@@ -123,7 +135,7 @@ def _python_type_to_clickhouse_type(value: Any) -> str:
     """
     if value is None:
         return "String"  # Default for null values
-    
+
     if isinstance(value, bool):
         return "Bool"
     elif isinstance(value, int):
@@ -151,13 +163,13 @@ def _extract_json_paths(
     """
     Recursively extract all paths and their types from a JSON object.
     Matches jsontypeexporter's analyzePValue logic.
-    
+
     Args:
         obj: The JSON object to traverse
         current_path: Current path being built (e.g., "user.name")
         path_types: Dictionary mapping paths to sets of types found
         level: Current nesting level (for depth limiting)
-    
+
     Returns:
         Dictionary mapping paths to sets of type strings
     """
@@ -170,32 +182,32 @@ def _extract_json_paths(
                 path_types[current_path] = set()
             path_types[current_path].add("String")  # Null defaults to String
         return path_types
-    
+
     if isinstance(obj, dict):
         # For objects, add the object itself and recurse into keys
         if current_path:
             if current_path not in path_types:
                 path_types[current_path] = set()
             path_types[current_path].add("JSON")
-        
+
         for key, value in obj.items():
             # Build the path for this key
             if current_path:
                 new_path = f"{current_path}.{key}"
             else:
                 new_path = key
-            
+
             # Recurse into the value
             _extract_json_paths(value, new_path, path_types, level + 1)
-    
+
     elif isinstance(obj, list):
         # Skip empty arrays
         if len(obj) == 0:
             return path_types
-        
+
         # Collect types from array elements (matching Go: types := make([]pcommon.ValueType, 0, s.Len()))
         types = []
-        
+
         for item in obj:
             if isinstance(item, dict):
                 # When traversing into array element objects, use ArraySuffix ([])
@@ -223,7 +235,7 @@ def _extract_json_paths(
                 types.append("Float64")
             elif isinstance(item, int):
                 types.append("Int64")
-        
+
         # Infer array type from collected types (matching Go: if mask := inferArrayMask(types); mask != 0)
         if len(types) > 0:
             array_type = _infer_array_type_from_type_strings(types)
@@ -231,7 +243,7 @@ def _extract_json_paths(
                 if current_path not in path_types:
                     path_types[current_path] = set()
                 path_types[current_path].add(array_type)
-    
+
     else:
         # Primitive value (string, number, bool)
         if current_path:
@@ -239,7 +251,7 @@ def _extract_json_paths(
                 path_types[current_path] = set()
             obj_type = _python_type_to_clickhouse_type(obj)
             path_types[current_path].add(obj_type)
-    
+
     return path_types
 
 
@@ -250,20 +262,20 @@ def _parse_json_bodies_and_extract_paths(
     """
     Parse JSON bodies and extract all paths with their types.
     This mimics the behavior of jsontypeexporter.
-    
+
     Args:
         json_bodies: List of JSON body strings to parse
         timestamp: Timestamp to use for last_seen (defaults to now)
-    
+
     Returns:
         List of JSONPathType objects with all discovered paths and types
     """
     if timestamp is None:
         timestamp = datetime.datetime.now()
-    
+
     # Aggregate all paths and their types across all JSON bodies
     all_path_types: Dict[str, Set[str]] = {}
-    
+
     for json_body in json_bodies:
         try:
             parsed = json.loads(json_body)
@@ -271,7 +283,7 @@ def _parse_json_bodies_and_extract_paths(
         except (json.JSONDecodeError, TypeError):
             # Skip invalid JSON
             continue
-    
+
     # Convert to list of JSONPathType objects
     # Each path can have multiple types, so we create one JSONPathType per type
     path_type_objects: List[JSONPathType] = []
@@ -280,7 +292,7 @@ def _parse_json_bodies_and_extract_paths(
             path_type_objects.append(
                 JSONPathType(path=path, type=type_str, last_seen=timestamp)
             )
-    
+
     return path_type_objects
 
 
@@ -288,29 +300,31 @@ def _parse_json_bodies_and_extract_paths(
 def export_json_types(
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,  # To access migrator fixture
-) -> Generator[Callable[[Union[List[JSONPathType], List[str], List[Any]]], None], Any, None]:
+) -> Generator[
+    Callable[[Union[List[JSONPathType], List[str], List[Any]]], None], Any, None
+]:
     """
     Fixture for exporting JSON type metadata to the path_types table.
     This is a simpler version of jsontypeexporter for test fixtures.
-    
+
     The function can accept:
     1. List of JSONPathType objects (manual specification)
     2. List of JSON body strings (auto-extract paths)
     3. List of Logs objects (extract from body_json field)
-    
+
     Usage examples:
         # Manual specification
         export_json_types([
             JSONPathType(path="user.name", type="String"),
             JSONPathType(path="user.age", type="Int64"),
         ])
-        
+
         # Auto-extract from JSON strings
         export_json_types([
             '{"user": {"name": "alice", "age": 25}}',
             '{"user": {"name": "bob", "age": 30}}',
         ])
-        
+
         # Auto-extract from Logs objects
         export_json_types(logs_list)
     """
@@ -320,22 +334,24 @@ def export_json_types(
     except Exception:
         # If migrator fixture is not available, that's okay - table might already exist
         pass
-    
+
     def _export_json_types(
-        data: Union[List[JSONPathType], List[str], List[Any]],  # List[Logs] but avoiding circular import
+        data: Union[
+            List[JSONPathType], List[str], List[Any]
+        ],  # List[Logs] but avoiding circular import
     ) -> None:
         """
         Export JSON type metadata to signoz_metadata.distributed_json_path_types table.
         This table stores path and type information for body JSON fields.
         """
         path_types: List[JSONPathType] = []
-        
+
         if len(data) == 0:
             return
-        
+
         # Determine input type and convert to JSONPathType list
         first_item = data[0]
-        
+
         if isinstance(first_item, JSONPathType):
             # Already JSONPathType objects
             path_types = data  # type: ignore
@@ -357,10 +373,10 @@ def export_json_types(
                         json_bodies.append(log.body)
                     except (json.JSONDecodeError, TypeError):
                         pass
-            
+
             if json_bodies:
                 path_types = _parse_json_bodies_and_extract_paths(json_bodies)
-        
+
         if len(path_types) == 0:
             return
 
