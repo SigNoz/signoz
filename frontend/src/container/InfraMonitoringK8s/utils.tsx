@@ -4,8 +4,6 @@ import set from 'api/browser/localstorage/set';
 
 import { DEFAULT_PAGE_SIZE } from './constants';
 
-import './InfraMonitoringK8s.styles.scss';
-
 export interface IEntityColumn {
 	label: string;
 	value: string;

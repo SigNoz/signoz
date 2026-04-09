@@ -25,7 +25,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
 	useInfraMonitoringGroupBy,
@@ -33,6 +33,7 @@ import {
 	useInfraMonitoringQueryFilters,
 } from '../hooks';
 import { usePageSize } from '../utils';
+import { K8sEmptyState } from './K8sEmptyState';
 import { K8sExpandedRow } from './K8sExpandedRow';
 import K8sHeader from './K8sHeader';
 import { K8sBaseFilters, K8sRenderedRowData } from './types';
@@ -44,9 +45,18 @@ import {
 
 import styles from './K8sBaseList.module.scss';
 
+export type K8sBaseListEmptyStateContext = {
+	isError: boolean;
+	error?: string | null;
+	totalCount: number;
+	hasFilters: boolean;
+	isLoading: boolean;
+	rawData?: unknown;
+};
+
 export type K8sBaseListProps<T = unknown> = {
 	controlListPrefix?: React.ReactNode;
-	entity: K8sCategory;
+	entity: InfraMonitoringEntity;
 	tableColumnsDefinitions: IEntityColumn[];
 	tableColumns: ColumnType<K8sRenderedRowData>[];
 	fetchListData: (
@@ -56,12 +66,16 @@ export type K8sBaseListProps<T = unknown> = {
 		data: T[];
 		total: number;
 		error?: string | null;
+		rawData?: unknown;
 	}>;
 	renderRowData: (
 		record: T,
 		groupBy: BaseAutocompleteData[],
 	) => K8sRenderedRowData;
 	eventCategory: InfraMonitoringEvents;
+	renderEmptyState?: (
+		context: K8sBaseListEmptyStateContext,
+	) => React.ReactNode | null;
 };
 
 export function K8sBaseList<T>({
@@ -72,6 +86,7 @@ export function K8sBaseList<T>({
 	fetchListData,
 	renderRowData,
 	eventCategory,
+	renderEmptyState,
 }: K8sBaseListProps<T>): JSX.Element {
 	const queryFilters = useInfraMonitoringQueryFilters();
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
@@ -145,6 +160,7 @@ export function K8sBaseList<T>({
 
 	const pageData = data?.data;
 	const totalCount = data?.total || 0;
+	const hasFilters = (queryFilters?.items?.length ?? 0) > 0;
 
 	const formattedItemsData = useMemo(() => {
 		if (!pageData) {
@@ -355,6 +371,15 @@ export function K8sBaseList<T>({
 
 	const showTableLoadingState = isLoading;
 
+	const emptyTableMessage: React.ReactNode = renderEmptyState?.({
+		isError,
+		error: data?.error,
+		totalCount,
+		hasFilters,
+		isLoading: showTableLoadingState,
+		rawData: data?.rawData,
+	}) || <K8sEmptyState />;
+
 	return (
 		<>
 			<K8sHeader
@@ -377,27 +402,14 @@ export function K8sBaseList<T>({
 					showSizeChanger: true,
 					hideOnSinglePage: false,
 					onChange: onPaginationChange,
+					className: styles.paginationDock,
 				}}
 				loading={{
 					spinning: showTableLoadingState,
 					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 				}}
 				locale={{
-					emptyText: showTableLoadingState ? null : (
-						<div className={styles.noFilteredHostsMessageContainer}>
-							<div className={styles.noFilteredHostsMessageContent}>
-								<img
-									src="/Icons/emptyState.svg"
-									alt="thinking-emoji"
-									className={styles.emptyStateSvg}
-								/>
-
-								<Typography.Text className={styles.noFilteredHostsMessage}>
-									This query had no results. Edit your query and try again!
-								</Typography.Text>
-							</div>
-						</div>
-					),
+					emptyText: showTableLoadingState ? null : emptyTableMessage,
 				}}
 				scroll={{ x: true }}
 				tableLayout="fixed"

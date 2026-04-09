@@ -16,7 +16,7 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
 import { v4 as uuidv4 } from 'uuid';
 
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 
 export const QUERY_KEYS = {
 	K8S_OBJECT_KIND: 'k8s.object.kind',
@@ -97,7 +97,7 @@ export function EntityDetailsEmptyContainer({
 	category,
 }: {
 	view: 'logs' | 'traces' | 'events';
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 }): React.ReactElement {
 	const label = category.slice(0, category.length);
 

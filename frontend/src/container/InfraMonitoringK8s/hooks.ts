@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	Options,
@@ -16,10 +15,10 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
+import { VIEWS } from './constants';
 import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategories } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
 
-const defaultFilters: IBuilderQuery['filters'] = { items: [], op: 'and' };
 const defaultNuqsOptions: Options = {
 	history: 'push',
 };
@@ -40,20 +39,6 @@ export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
 		parseAsJson(orderBySchema).withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringOrderByHosts = (): UseQueryStateReturn<
-	OrderBySchemaType,
-	OrderBySchemaType
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
-		parseAsJson(orderBySchema)
-			.withDefault({
-				columnName: 'cpu',
-				order: 'desc',
-			})
-			.withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringGroupBy = (): UseQueryStateReturn<
@@ -131,17 +116,6 @@ export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
 		parseAsJsonNoValidate<TagFilter>().withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringFiltersHosts = (): UseQueryStateReturn<
-	TagFilter,
-	TagFilter | undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		parseAsJsonNoValidate<IBuilderQuery['filters']>()
-			.withDefault(defaultFilters)
-			.withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringQueryFilters = (): TagFilter => {

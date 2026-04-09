@@ -20,7 +20,7 @@ import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
 import { BaseAutocompleteData } from '../../../types/api/queryBuilder/queryAutocompleteResponse';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
 	useInfraMonitoringFilters,
@@ -37,7 +37,7 @@ import styles from './K8sExpandedRow.module.scss';
 
 export type K8sExpandedRowProps<T> = {
 	record: K8sRenderedRowData;
-	entity: K8sCategory;
+	entity: InfraMonitoringEntity;
 	tableColumns: ColumnType<K8sRenderedRowData>[];
 	fetchListData: (
 		filters: K8sBaseFilters,
@@ -46,6 +46,7 @@ export type K8sExpandedRowProps<T> = {
 		data: T[];
 		total: number;
 		error?: string | null;
+		rawData?: unknown;
 	}>;
 	renderRowData: (
 		record: T,

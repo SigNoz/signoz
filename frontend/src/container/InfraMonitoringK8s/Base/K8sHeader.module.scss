@@ -7,7 +7,7 @@
 
 	:global(.ant-select-selector) {
 		border-radius: 2px;
-		border: 1px solid var(--l1-border) !important;
+		border: 1px solid var(--border) !important;
 		background-color: var(--l2-background) !important;
 
 		input {
@@ -50,7 +50,7 @@
 	letter-spacing: -0.07px;
 
 	border-radius: 2px 0px 0px 2px;
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--border);
 	border-right: none;
 	border-top-right-radius: 0px;
 	border-bottom-right-radius: 0px;

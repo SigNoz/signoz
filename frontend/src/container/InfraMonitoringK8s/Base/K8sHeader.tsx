@@ -14,7 +14,10 @@ import { useAppContext } from 'providers/App/App';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { GetK8sEntityToAggregateAttribute, K8sCategory } from '../constants';
+import {
+	GetK8sEntityToAggregateAttribute,
+	InfraMonitoringEntity,
+} from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
 	useInfraMonitoringFiltersK8s,
@@ -26,7 +29,7 @@ import styles from './K8sHeader.module.scss';
 
 interface K8sHeaderProps {
 	controlListPrefix?: React.ReactNode;
-	entity: K8sCategory;
+	entity: InfraMonitoringEntity;
 	showAutoRefresh: boolean;
 }
 

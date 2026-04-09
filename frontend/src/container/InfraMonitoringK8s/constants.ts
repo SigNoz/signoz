@@ -7,7 +7,7 @@ import { DataSource } from 'types/common/queryBuilder';
 
 export const DEFAULT_PAGE_SIZE = 10;
 
-export enum K8sCategory {
+export enum InfraMonitoringEntity {
 	HOSTS = 'hosts',
 	PODS = 'pods',
 	NODES = 'nodes',
@@ -20,6 +20,24 @@ export enum K8sCategory {
 	JOBS = 'jobs',
 	VOLUMES = 'volumes',
 }
+
+export enum VIEWS {
+	METRICS = 'metrics',
+	LOGS = 'logs',
+	TRACES = 'traces',
+	CONTAINERS = 'containers',
+	PROCESSES = 'processes',
+	EVENTS = 'events',
+}
+
+export const VIEW_TYPES = {
+	METRICS: VIEWS.METRICS,
+	LOGS: VIEWS.LOGS,
+	TRACES: VIEWS.TRACES,
+	CONTAINERS: VIEWS.CONTAINERS,
+	PROCESSES: VIEWS.PROCESSES,
+	EVENTS: VIEWS.EVENTS,
+};
 
 export const K8sCategories = {
 	HOSTS: 'hosts',
@@ -36,35 +54,35 @@ export const K8sCategories = {
 };
 
 export const underscoreMap = {
-	[K8sCategory.HOSTS]: 'system_cpu_load_average_15m',
-	[K8sCategory.PODS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.NODES]: 'k8s_node_cpu_usage',
-	[K8sCategory.NAMESPACES]: 'k8s_pod_cpu_usage',
-	[K8sCategory.CLUSTERS]: 'k8s_node_cpu_usage',
-	[K8sCategory.DEPLOYMENTS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.STATEFULSETS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.DAEMONSETS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.CONTAINERS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.JOBS]: 'k8s_job_desired_successful_pods',
-	[K8sCategory.VOLUMES]: 'k8s_volume_capacity',
+	[InfraMonitoringEntity.HOSTS]: 'system_cpu_load_average_15m',
+	[InfraMonitoringEntity.PODS]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.NODES]: 'k8s_node_cpu_usage',
+	[InfraMonitoringEntity.NAMESPACES]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.CLUSTERS]: 'k8s_node_cpu_usage',
+	[InfraMonitoringEntity.DEPLOYMENTS]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.STATEFULSETS]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.DAEMONSETS]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.CONTAINERS]: 'k8s_pod_cpu_usage',
+	[InfraMonitoringEntity.JOBS]: 'k8s_job_desired_successful_pods',
+	[InfraMonitoringEntity.VOLUMES]: 'k8s_volume_capacity',
 };
 
 export const dotMap = {
-	[K8sCategory.HOSTS]: 'system.cpu.load_average.15m',
-	[K8sCategory.PODS]: 'k8s.pod.cpu.usage',
-	[K8sCategory.NODES]: 'k8s.node.cpu.usage',
-	[K8sCategory.NAMESPACES]: 'k8s.pod.cpu.usage',
-	[K8sCategory.CLUSTERS]: 'k8s.node.cpu.usage',
-	[K8sCategory.DEPLOYMENTS]: 'k8s.pod.cpu.usage',
-	[K8sCategory.STATEFULSETS]: 'k8s.pod.cpu.usage',
-	[K8sCategory.DAEMONSETS]: 'k8s.pod.cpu.usage',
-	[K8sCategory.CONTAINERS]: 'k8s.pod.cpu.usage',
-	[K8sCategory.JOBS]: 'k8s.job.desired_successful_pods',
-	[K8sCategory.VOLUMES]: 'k8s.volume.capacity',
+	[InfraMonitoringEntity.HOSTS]: 'system.cpu.load_average.15m',
+	[InfraMonitoringEntity.PODS]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.NODES]: 'k8s.node.cpu.usage',
+	[InfraMonitoringEntity.NAMESPACES]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.CLUSTERS]: 'k8s.node.cpu.usage',
+	[InfraMonitoringEntity.DEPLOYMENTS]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.STATEFULSETS]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.DAEMONSETS]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.CONTAINERS]: 'k8s.pod.cpu.usage',
+	[InfraMonitoringEntity.JOBS]: 'k8s.job.desired_successful_pods',
+	[InfraMonitoringEntity.VOLUMES]: 'k8s.volume.capacity',
 };
 
 export function GetK8sEntityToAggregateAttribute(
-	category: K8sCategory,
+	category: InfraMonitoringEntity,
 	dotMetricsEnabled: boolean,
 ): string {
 	return dotMetricsEnabled ? dotMap[category] : underscoreMap[category];
@@ -767,7 +785,7 @@ export function GetJobsQuickFiltersConfig(
 }
 
 export const getInvalidValueTooltipText = (
-	entity: K8sCategory,
+	entity: InfraMonitoringEntity,
 	attribute: string,
 ): string => `Some ${entity} do not have ${attribute}s.`;
 

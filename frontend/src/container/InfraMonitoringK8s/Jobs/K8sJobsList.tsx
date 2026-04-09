@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sJobsList, K8sJobsData } from './api';
 import {
 	getJobMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sJobsList({
 		<>
 			<K8sBaseList<K8sJobsData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.JOBS}
+				entity={InfraMonitoringEntity.JOBS}
 				tableColumnsDefinitions={k8sJobsColumns}
 				tableColumns={k8sJobsColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sJobsList({
 			/>
 
 			<K8sBaseDetails<K8sJobsData>
-				category={K8sCategory.JOBS}
+				category={InfraMonitoringEntity.JOBS}
 				eventCategory={InfraMonitoringEvents.Job}
 				getSelectedItemFilters={k8sJobGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

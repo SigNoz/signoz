@@ -1,13 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { HostData, TimeSeries } from 'api/infraMonitoring/getHostLists';
 
-import {
-	formatDataForTable,
-	GetHostsQuickFiltersConfig,
-	HostnameCell,
-} from '../utils';
-
-const PROGRESS_BAR_CLASS = '.progress-bar';
+import { hostRenderRowData } from '../table.config';
+import { getHostsQuickFiltersConfig, HostnameCell } from '../utils';
 
 const emptyTimeSeries: TimeSeries = {
 	labels: {},
@@ -16,94 +11,79 @@ const emptyTimeSeries: TimeSeries = {
 };
 
 describe('InfraMonitoringHosts utils', () => {
-	describe('formatDataForTable', () => {
+	describe('hostRenderRowData', () => {
 		it('should format host data correctly', () => {
-			const mockData: HostData[] = [
-				{
-					hostName: 'test-host',
-					active: true,
-					cpu: 0.95,
-					memory: 0.85,
-					wait: 0.05,
-					load15: 2.5,
-					os: 'linux',
-					cpuTimeSeries: emptyTimeSeries,
-					memoryTimeSeries: emptyTimeSeries,
-					waitTimeSeries: emptyTimeSeries,
-					load15TimeSeries: emptyTimeSeries,
-				},
-			];
+			const host: HostData = {
+				hostName: 'test-host',
+				active: true,
+				cpu: 0.95,
+				memory: 0.85,
+				wait: 0.05,
+				load15: 2.5,
+				os: 'linux',
+				cpuTimeSeries: emptyTimeSeries,
+				memoryTimeSeries: emptyTimeSeries,
+				waitTimeSeries: emptyTimeSeries,
+				load15TimeSeries: emptyTimeSeries,
+			};
 
-			const result = formatDataForTable(mockData);
+			const result = hostRenderRowData(host, []);
 
-			expect(result[0].hostName).toBe('test-host');
-			expect(result[0].wait).toBe('5%');
-			expect(result[0].load15).toBe(2.5);
+			expect(result.wait).toBe('5%');
+			expect(result.load15).toBe(2.5);
+			expect(result.itemKey).toBe('test-host');
+			expect(result.hostName).toBe('test-host');
 
-			// Test active tag rendering
-			const activeTag = render(result[0].active as JSX.Element);
+			const activeTag = render(result.active as JSX.Element);
 			expect(activeTag.container.textContent).toBe('ACTIVE');
-			expect(activeTag.container.querySelector('.active')).toBeTruthy();
+			expect(activeTag.getByText('ACTIVE')).toBeTruthy();
 
-			// Test CPU progress bar
-			const cpuProgress = render(result[0].cpu as JSX.Element);
-			const cpuProgressBar = cpuProgress.container.querySelector(
-				PROGRESS_BAR_CLASS,
-			);
-			expect(cpuProgressBar).toBeTruthy();
+			const cpuProgress = render(result.cpu as JSX.Element);
+			expect(cpuProgress.container.querySelector('.ant-progress')).toBeTruthy();
 
-			// Test memory progress bar
-			const memoryProgress = render(result[0].memory as JSX.Element);
-			const memoryProgressBar = memoryProgress.container.querySelector(
-				PROGRESS_BAR_CLASS,
-			);
-			expect(memoryProgressBar).toBeTruthy();
+			const memoryProgress = render(result.memory as JSX.Element);
+			expect(memoryProgress.container.querySelector('.ant-progress')).toBeTruthy();
 		});
 
 		it('should handle inactive hosts', () => {
-			const mockData: HostData[] = [
-				{
-					hostName: 'test-host',
-					active: false,
-					cpu: 0.3,
-					memory: 0.4,
-					wait: 0.02,
-					load15: 1.2,
-					os: 'linux',
-					cpuTimeSeries: emptyTimeSeries,
-					memoryTimeSeries: emptyTimeSeries,
-					waitTimeSeries: emptyTimeSeries,
-					load15TimeSeries: emptyTimeSeries,
-				},
-			];
+			const host: HostData = {
+				hostName: 'test-host',
+				active: false,
+				cpu: 0.3,
+				memory: 0.4,
+				wait: 0.02,
+				load15: 1.2,
+				os: 'linux',
+				cpuTimeSeries: emptyTimeSeries,
+				memoryTimeSeries: emptyTimeSeries,
+				waitTimeSeries: emptyTimeSeries,
+				load15TimeSeries: emptyTimeSeries,
+			};
 
-			const result = formatDataForTable(mockData);
+			const result = hostRenderRowData(host, []);
 
-			const inactiveTag = render(result[0].active as JSX.Element);
+			const inactiveTag = render(result.active as JSX.Element);
 			expect(inactiveTag.container.textContent).toBe('INACTIVE');
-			expect(inactiveTag.container.querySelector('.inactive')).toBeTruthy();
+			expect(inactiveTag.getByText('INACTIVE')).toBeTruthy();
 		});
 
-		it('should set hostName to empty string when host has no hostname', () => {
-			const mockData: HostData[] = [
-				{
-					hostName: '',
-					active: true,
-					cpu: 0.5,
-					memory: 0.4,
-					wait: 0.01,
-					load15: 1.0,
-					os: 'linux',
-					cpuTimeSeries: emptyTimeSeries,
-					memoryTimeSeries: emptyTimeSeries,
-					waitTimeSeries: emptyTimeSeries,
-					load15TimeSeries: emptyTimeSeries,
-				},
-			];
+		it('should use empty itemKey when host has no hostname', () => {
+			const host: HostData = {
+				hostName: '',
+				active: true,
+				cpu: 0.5,
+				memory: 0.4,
+				wait: 0.01,
+				load15: 1.0,
+				os: 'linux',
+				cpuTimeSeries: emptyTimeSeries,
+				memoryTimeSeries: emptyTimeSeries,
+				waitTimeSeries: emptyTimeSeries,
+				load15TimeSeries: emptyTimeSeries,
+			};
 
-			const result = formatDataForTable(mockData);
-			expect(result[0].hostName).toBe('');
-			expect(result[0].key).toBe('-0');
+			const result = hostRenderRowData(host, []);
+			expect(result.itemKey).toBe('');
 		});
 	});
 
@@ -126,7 +106,6 @@ describe('InfraMonitoringHosts utils', () => {
 				'Missing host.name metadata',
 			);
 			expect(iconWrapper?.getAttribute('tabindex')).toBe('0');
-			// Tooltip with "Learn how to configure →" link is shown on hover/focus
 		});
 
 		it('should render placeholder and icon when hostName is whitespace only (case C)', () => {
@@ -144,9 +123,9 @@ describe('InfraMonitoringHosts utils', () => {
 		});
 	});
 
-	describe('GetHostsQuickFiltersConfig', () => {
+	describe('getHostsQuickFiltersConfig', () => {
 		it('should return correct config when dotMetricsEnabled is true', () => {
-			const result = GetHostsQuickFiltersConfig(true);
+			const result = getHostsQuickFiltersConfig(true);
 
 			expect(result[0].attributeKey.key).toBe('host.name');
 			expect(result[1].attributeKey.key).toBe('os.type');
@@ -154,7 +133,7 @@ describe('InfraMonitoringHosts utils', () => {
 		});
 
 		it('should return correct config when dotMetricsEnabled is false', () => {
-			const result = GetHostsQuickFiltersConfig(false);
+			const result = getHostsQuickFiltersConfig(false);
 
 			expect(result[0].attributeKey.key).toBe('host_name');
 			expect(result[1].attributeKey.key).toBe('os_type');

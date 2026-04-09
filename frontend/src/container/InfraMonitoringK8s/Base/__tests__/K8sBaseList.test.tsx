@@ -23,7 +23,7 @@ import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { openInNewTab } from 'utils/navigation';
 
-import { K8sCategory } from '../../constants';
+import { InfraMonitoringEntity } from '../../constants';
 import { K8sBaseList, K8sBaseListProps } from '../K8sBaseList';
 import {
 	IEntityColumn,
@@ -122,7 +122,7 @@ describe('K8sBaseList', () => {
 
 			renderComponent<{ id: string; title: string }>({
 				onUrlUpdate: onUrlUpdateMock,
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -319,7 +319,7 @@ describe('K8sBaseList', () => {
 
 			renderComponent<{ id: string }>({
 				onUrlUpdate: onUrlUpdateMock,
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
@@ -405,7 +405,7 @@ describe('K8sBaseList', () => {
 			});
 
 			renderComponent<{ id: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -456,7 +456,7 @@ describe('K8sBaseList', () => {
 			});
 
 			renderComponent<{ id: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -554,7 +554,7 @@ describe('K8sBaseList', () => {
 
 		it('should show columns with defaultVisibility=true', async () => {
 			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -584,7 +584,7 @@ describe('K8sBaseList', () => {
 
 		it('should hide columns with defaultVisibility=false', async () => {
 			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -614,16 +614,16 @@ describe('K8sBaseList', () => {
 			act(() => {
 				useInfraMonitoringTableColumnsStore.setState({
 					columns: {
-						[K8sCategory.PODS]: tableColumnsDefinitions,
+						[InfraMonitoringEntity.PODS]: tableColumnsDefinitions,
 					},
 					columnsHidden: {
-						[K8sCategory.PODS]: ['name', 'description'],
+						[InfraMonitoringEntity.PODS]: ['name', 'description'],
 					},
 				});
 			});
 
 			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -720,7 +720,7 @@ describe('K8sBaseList', () => {
 
 		it('should hide "hidden-on-collapse" columns when NOT grouped', async () => {
 			renderComponent<{ id: string; name: string; group: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {}, // No groupBy
@@ -760,7 +760,7 @@ describe('K8sBaseList', () => {
 			];
 
 			renderComponent<{ id: string; name: string; group: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
@@ -799,7 +799,7 @@ describe('K8sBaseList', () => {
 		it('should show "always-visible" columns regardless of groupBy state', async () => {
 			// Test without groupBy
 			renderComponent<{ id: string; name: string; group: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {},
@@ -897,7 +897,7 @@ describe('K8sBaseList', () => {
 			];
 
 			renderComponent<{ id: string; name: string; group: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
@@ -1014,7 +1014,7 @@ describe('K8sBaseList', () => {
 				name: string;
 				desc: string;
 			}>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -1066,7 +1066,7 @@ describe('K8sBaseList', () => {
 				name: string;
 				desc: string;
 			}>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -1112,7 +1112,7 @@ describe('K8sBaseList', () => {
 
 		it('should not allow removing column with canBeHidden=false', async () => {
 			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: K8sCategory.PODS,
+				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				renderRowData: (data) => ({
@@ -1136,7 +1136,7 @@ describe('K8sBaseList', () => {
 				// eslint-disable-next-line no-restricted-syntax
 				useInfraMonitoringTableColumnsStore
 					.getState()
-					.removeColumn(K8sCategory.PODS, 'id');
+					.removeColumn(InfraMonitoringEntity.PODS, 'id');
 			});
 
 			// Id column should still be visible (canBeHidden=false prevents removal)

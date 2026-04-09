@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sPodsList, K8sPodsData } from './api';
 import {
 	getPodMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sPodsList({
 		<>
 			<K8sBaseList<K8sPodsData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.PODS}
+				entity={InfraMonitoringEntity.PODS}
 				tableColumnsDefinitions={k8sPodColumns}
 				tableColumns={k8sPodColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sPodsList({
 			/>
 
 			<K8sBaseDetails<K8sPodsData>
-				category={K8sCategory.PODS}
+				category={InfraMonitoringEntity.PODS}
 				eventCategory={InfraMonitoringEvents.Pod}
 				getSelectedItemFilters={k8sPodGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

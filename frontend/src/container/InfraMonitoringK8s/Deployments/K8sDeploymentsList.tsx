@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sDeploymentsList, K8sDeploymentsData } from './api';
 import {
 	deploymentWidgetInfo,
@@ -89,7 +89,7 @@ function K8sDeploymentsList({
 		<>
 			<K8sBaseList<K8sDeploymentsData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.DEPLOYMENTS}
+				entity={InfraMonitoringEntity.DEPLOYMENTS}
 				tableColumnsDefinitions={k8sDeploymentsColumns}
 				tableColumns={k8sDeploymentsColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sDeploymentsList({
 			/>
 
 			<K8sBaseDetails<K8sDeploymentsData>
-				category={K8sCategory.DEPLOYMENTS}
+				category={InfraMonitoringEntity.DEPLOYMENTS}
 				eventCategory={InfraMonitoringEvents.Deployment}
 				getSelectedItemFilters={k8sDeploymentGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

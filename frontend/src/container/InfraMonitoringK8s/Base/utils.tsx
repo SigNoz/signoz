@@ -5,6 +5,9 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import styles from './utils.module.scss';
 
 const dotToUnder: Record<string, string> = {
+	'os.type': 'os_type',
+	'host.name': 'host_name',
+	'deployment.environment': 'deployment_environment',
 	'k8s.node.name': 'k8s_node_name',
 	'k8s.cluster.name': 'k8s_cluster_name',
 	'k8s.node.uid': 'k8s_node_uid',

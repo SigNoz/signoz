@@ -10,7 +10,7 @@ import {
 	formatBytes,
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sStatefulSetsData } from './api';
 
 import styles from './table.module.scss';
@@ -228,7 +228,7 @@ export const k8sStatefulSetsRenderRowData = (
 	cpu_request: (
 		<ValidateColumnValueWrapper
 			value={statefulSet.cpuRequest}
-			entity={K8sCategory.STATEFULSETS}
+			entity={InfraMonitoringEntity.STATEFULSETS}
 			attribute="CPU Request"
 		>
 			<div className={styles.progressBar}>
@@ -239,7 +239,7 @@ export const k8sStatefulSetsRenderRowData = (
 	cpu_limit: (
 		<ValidateColumnValueWrapper
 			value={statefulSet.cpuLimit}
-			entity={K8sCategory.STATEFULSETS}
+			entity={InfraMonitoringEntity.STATEFULSETS}
 			attribute="CPU Limit"
 		>
 			<div className={styles.progressBar}>
@@ -255,7 +255,7 @@ export const k8sStatefulSetsRenderRowData = (
 	memory_request: (
 		<ValidateColumnValueWrapper
 			value={statefulSet.memoryRequest}
-			entity={K8sCategory.STATEFULSETS}
+			entity={InfraMonitoringEntity.STATEFULSETS}
 			attribute="Memory Request"
 		>
 			<div className={styles.progressBar}>
@@ -266,7 +266,7 @@ export const k8sStatefulSetsRenderRowData = (
 	memory_limit: (
 		<ValidateColumnValueWrapper
 			value={statefulSet.memoryLimit}
-			entity={K8sCategory.STATEFULSETS}
+			entity={InfraMonitoringEntity.STATEFULSETS}
 			attribute="Memory Limit"
 		>
 			<div className={styles.progressBar}>

@@ -1,17 +1,16 @@
 import { useTranslation } from 'react-i18next';
 import { Space, Typography } from 'antd';
+import WaitlistFragment from 'components/HostMetricsDetail/WaitlistFragment/WaitlistFragment';
 
-import WaitlistFragment from '../WaitlistFragment/WaitlistFragment';
-
-import './Processes.styles.scss';
+import 'components/HostMetricsDetail/Containers/Containers.styles.scss';
 
 const { Text } = Typography;
 
-function Processes(): JSX.Element {
+function EntityContainers(): JSX.Element {
 	const { t } = useTranslation(['infraMonitoring']);
 
 	return (
-		<Space direction="vertical" className="host-processes" size={24}>
+		<Space direction="vertical" className="host-containers" size={24}>
 			<div className="infra-container-card-container">
 				<div className="dev-status-container">
 					<div className="infra-container-card">
@@ -21,8 +20,9 @@ function Processes(): JSX.Element {
 							width={32}
 							height={32}
 						/>
+
 						<Text className="infra-container-card-text">
-							{t('processes_visualization_message')}
+							{t('containers_visualization_message')}
 						</Text>
 					</div>
 
@@ -34,10 +34,10 @@ function Processes(): JSX.Element {
 					</div>
 				</div>
 
-				<WaitlistFragment entityType="processes" />
+				<WaitlistFragment entityType="containers" />
 			</div>
 		</Space>
 	);
 }
 
-export default Processes;
+export default EntityContainers;
