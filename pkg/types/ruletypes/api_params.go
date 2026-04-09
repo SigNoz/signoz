@@ -425,6 +425,14 @@ func (r *PostableRule) Validate() error {
 			}
 		}
 		if !found {
+			for _, formula := range r.RuleCondition.CompositeQuery.QueryFormulas {
+				if formula.Name == r.RuleCondition.SelectedQuery && !formula.Disabled {
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"condition.selectedQueryName: %q does not match any query in compositeQuery",
 				r.RuleCondition.SelectedQuery))
