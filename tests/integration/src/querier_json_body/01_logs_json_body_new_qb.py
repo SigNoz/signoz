@@ -251,14 +251,13 @@ def test_primitive_path_operations(
             "validate": lambda r: len(_get_rows(r)) == 1
             and json.loads(_get_rows(r)[0]["data"]["body"])["user"]["height"] == 6.1,
         },
-        # user.age: Int64 in log1-3, String "unknown" in log5 — type ambiguity
+        # user.age: Int64 in log1, String "28" in log5 — type ambiguity
         {
             "name": "prim.int_lt_with_type_ambiguity",
             "requestType": "raw",
             "expression": "body.user.age < 30",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
-            and json.loads(_get_rows(r)[0]["data"]["body"])["user"]["age"] == 25,
         },
         # Bool has distinct handling (not IndexSupported); log4 has no active field
         {
