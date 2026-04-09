@@ -90,8 +90,10 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 		},
 		NoCache: true,
 	}
-	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
-	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
+	// include both regular queries and converted formula queries
+	queriesWithFormulas := r.Condition().CompositeQuery.QueriesWithFormulas()
+	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(queriesWithFormulas))
+	copy(req.CompositeQuery.Queries, queriesWithFormulas)
 	return req, nil
 }
 
