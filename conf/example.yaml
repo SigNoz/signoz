@@ -355,6 +355,16 @@ identn:
     # toggle impersonation identN, when enabled, all requests will impersonate the root user
     enabled: false
 
+##################### Service Account #####################
+serviceaccount:
+  email:
+    # email domain for the service account principal
+    domain: signozserviceaccount.com
+
+  analytics:
+    # toggle service account analytics
+    enabled: true
+
 ##################### Auditor #####################
 auditor:
   # Specifies the auditor provider to use.
@@ -385,13 +395,3 @@ auditor:
       max_interval: 30s
       # The total maximum time spent retrying.
       max_elapsed_time: 60s
-
-##################### Service Account #####################
-serviceaccount:
-  email:
-    # email domain for the service account principal
-    domain: signozserviceaccount.com
-
-  analytics:
-    # toggle service account analytics
-    enabled: true
