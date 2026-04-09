@@ -46,6 +46,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // prometheus
 		nil, // traceStmtBuilder
 		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
 		metricStmtBuilder,
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
@@ -91,6 +92,7 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 		nil,            // prometheus
 		nil,            // traceStmtBuilder
 		logStmtBuilder, // logStmtBuilder
+		nil,            // auditStmtBuilder
 		nil,            // metricStmtBuilder
 		nil,            // meterStmtBuilder
 		nil,            // traceOperatorStmtBuilder
@@ -131,6 +133,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 		nil,              // prometheus
 		traceStmtBuilder, // traceStmtBuilder
 		nil,              // logStmtBuilder
+		nil,              // auditStmtBuilder
 		nil,              // metricStmtBuilder
 		nil,              // meterStmtBuilder
 		nil,              // traceOperatorStmtBuilder

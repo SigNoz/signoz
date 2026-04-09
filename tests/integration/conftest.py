@@ -12,6 +12,7 @@ pytest_plugins = [
     "fixtures.sqlite",
     "fixtures.zookeeper",
     "fixtures.signoz",
+    "fixtures.audit",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
