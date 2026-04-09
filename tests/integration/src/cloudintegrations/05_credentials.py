@@ -52,7 +52,7 @@ def test_get_credentials_success(
     ), f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
-    for field in ("sigNozApiURL", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
+    for field in ("sigNozApiUrl", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
         assert field in data, f"Response should contain '{field}'"
         assert isinstance(data[field], str), f"'{field}' should be a string"
         assert (
@@ -75,13 +75,13 @@ def test_get_credentials_partial_when_zeus_unavailable(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Reset Zeus mappings so no prior mock bleeds into this test,
-    # ensuring sigNozApiURL cannot be resolved and will be returned as empty.
+    # ensuring sigNozApiUrl cannot be resolved and will be returned as empty.
     requests.post(
         signoz.zeus.host_configs["8080"].get("/__admin/reset"),
         timeout=10,
     )
 
-    # Only set up Gateway mocks — Zeus has no mapping, so sigNozApiURL will be empty
+    # Only set up Gateway mocks — Zeus has no mapping, so sigNozApiUrl will be empty
     make_http_mocks(
         signoz.gateway,
         [
@@ -132,14 +132,14 @@ def test_get_credentials_partial_when_zeus_unavailable(
     ), f"Expected 200 even without Zeus, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
-    for field in ("sigNozApiURL", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
+    for field in ("sigNozApiUrl", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
         assert field in data, f"Response should always contain '{field}' key"
         assert isinstance(data[field], str), f"'{field}' should be a string"
 
-    # sigNozApiURL comes from Zeus, which is unavailable, so it should be empty
+    # sigNozApiUrl comes from Zeus, which is unavailable, so it should be empty
     assert (
-        data["sigNozApiURL"] == ""
-    ), "sigNozApiURL should be empty when Zeus is unavailable"
+        data["sigNozApiUrl"] == ""
+    ), "sigNozApiUrl should be empty when Zeus is unavailable"
 
 
 def test_get_credentials_unsupported_provider(

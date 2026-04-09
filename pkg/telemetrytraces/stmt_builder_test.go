@@ -8,26 +8,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
 )
-
-func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
-	fm := resourcefilter.NewFieldMapper()
-	cb := resourcefilter.NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
-
-	return resourcefilter.NewTraceResourceFilterStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		fm,
-		cb,
-		mockMetadataStore,
-	)
-}
 
 func TestStatementBuilder(t *testing.T) {
 	cases := []struct {
@@ -372,14 +357,11 @@ func TestStatementBuilder(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -668,14 +650,11 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -778,14 +757,11 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			}
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-			resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 			statementBuilder := NewTraceQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
 				fm,
 				cb,
-				resourceFilterStmtBuilder,
 				aggExprRewriter,
 				nil,
 			)
@@ -931,14 +907,11 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -1147,14 +1120,11 @@ func TestAdjustKey(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -1422,14 +1392,11 @@ func TestAdjustKeys(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
-
 	statementBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)

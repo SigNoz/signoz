@@ -230,9 +230,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/SQS"
+            "namespace": "AWS/SQS"
           }
         ]
       }

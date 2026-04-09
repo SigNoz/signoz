@@ -18,6 +18,7 @@ var (
 	CodeUnknown                 = Code{"unknown"}
 	CodeFatal                   = Code{"fatal"}
 	CodeLicenseUnavailable      = Code{"license_unavailable"}
+	CodeTooManyRequests         = Code{"too_many_requests"}
 )
 
 var (

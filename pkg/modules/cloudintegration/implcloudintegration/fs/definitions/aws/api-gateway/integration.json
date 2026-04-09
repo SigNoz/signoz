@@ -171,14 +171,14 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/ApiGateway"
+            "namespace": "AWS/ApiGateway"
           }
         ]
       },
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "API-Gateway",
             "filterPattern": ""

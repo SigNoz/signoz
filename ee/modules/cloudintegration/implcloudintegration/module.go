@@ -56,7 +56,7 @@ func NewModule(
 
 // GetConnectionCredentials returns credentials required to generate connection artifact. eg. apiKey, ingestionKey etc.
 // It will return creds it can deduce and return empty value for others.
-func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.SignozCredentials, error) {
+func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Credentials, error) {
 	// get license to get the deployment details
 	license, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -89,7 +89,7 @@ func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer
 	// ignore error
 	ingestionKey, _ := module.getOrCreateIngestionKey(ctx, orgID, provider)
 
-	return &cloudintegrationtypes.SignozCredentials{
+	return &cloudintegrationtypes.Credentials{
 		SigNozAPIURL: signozAPIURL,
 		SigNozAPIKey: apiKey,
 		IngestionURL: ingestionURL,
@@ -111,7 +111,7 @@ func (module *module) CreateAccount(ctx context.Context, account *cloudintegrati
 	return module.store.CreateAccount(ctx, storableCloudIntegration)
 }
 
-func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	cloudProviderModule, err := module.getCloudProvider(account.Provider)
 	if err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 				return nil, err
 			}
 
-			if cloudintegrationtypes.IsServiceEnabled(provider, serviceConfig) {
+			if serviceConfig.IsServiceEnabled(provider) {
 				enabledServiceIDs[svc.Type.StringValue()] = true
 			}
 		}
@@ -484,7 +484,7 @@ func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]
 
 			for _, storedSvc := range storedServices {
 				serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedSvc.Config)
-				if err != nil || !cloudintegrationtypes.IsMetricsEnabled(provider, serviceConfig) {
+				if err != nil || !serviceConfig.IsMetricsEnabled(provider) {
 					continue
 				}
 

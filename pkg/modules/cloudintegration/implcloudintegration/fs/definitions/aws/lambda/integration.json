@@ -271,14 +271,14 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/Lambda"
+            "namespace": "AWS/Lambda"
           }
         ]
       },
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "/aws/lambda",
             "filterPattern": ""

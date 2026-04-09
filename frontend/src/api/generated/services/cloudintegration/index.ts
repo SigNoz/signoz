@@ -24,8 +24,8 @@ import type {
 	AgentCheckInDeprecated200,
 	AgentCheckInDeprecatedPathParameters,
 	AgentCheckInPathParameters,
-	CloudintegrationtypesConnectionArtifactRequestDTO,
-	CloudintegrationtypesPostableAgentCheckInRequestDTO,
+	CloudintegrationtypesPostableAccountDTO,
+	CloudintegrationtypesPostableAgentCheckInDTO,
 	CloudintegrationtypesUpdatableAccountDTO,
 	CloudintegrationtypesUpdatableServiceDTO,
 	CreateAccount200,
@@ -53,14 +53,14 @@ import type {
  */
 export const agentCheckInDeprecated = (
 	{ cloudProvider }: AgentCheckInDeprecatedPathParameters,
-	cloudintegrationtypesPostableAgentCheckInRequestDTO: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>,
+	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AgentCheckInDeprecated200>({
 		url: `/api/v1/cloud-integrations/${cloudProvider}/agent-check-in`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesPostableAgentCheckInRequestDTO,
+		data: cloudintegrationtypesPostableAgentCheckInDTO,
 		signal,
 	});
 };
@@ -74,7 +74,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -83,7 +83,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -100,7 +100,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		Awaited<ReturnType<typeof agentCheckInDeprecated>>,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -114,7 +114,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 export type AgentCheckInDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckInDeprecated>>
 >;
-export type AgentCheckInDeprecatedMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+export type AgentCheckInDeprecatedMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 export type AgentCheckInDeprecatedMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -130,7 +130,7 @@ export const useAgentCheckInDeprecated = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -139,7 +139,7 @@ export const useAgentCheckInDeprecated = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -257,14 +257,14 @@ export const invalidateListAccounts = async (
  */
 export const createAccount = (
 	{ cloudProvider }: CreateAccountPathParameters,
-	cloudintegrationtypesConnectionArtifactRequestDTO: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>,
+	cloudintegrationtypesPostableAccountDTO: BodyType<CloudintegrationtypesPostableAccountDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateAccount200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesConnectionArtifactRequestDTO,
+		data: cloudintegrationtypesPostableAccountDTO,
 		signal,
 	});
 };
@@ -278,7 +278,7 @@ export const getCreateAccountMutationOptions = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -287,7 +287,7 @@ export const getCreateAccountMutationOptions = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
@@ -304,7 +304,7 @@ export const getCreateAccountMutationOptions = <
 		Awaited<ReturnType<typeof createAccount>>,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -318,7 +318,7 @@ export const getCreateAccountMutationOptions = <
 export type CreateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAccount>>
 >;
-export type CreateAccountMutationBody = BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+export type CreateAccountMutationBody = BodyType<CloudintegrationtypesPostableAccountDTO>;
 export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -333,7 +333,7 @@ export const useCreateAccount = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -342,7 +342,7 @@ export const useCreateAccount = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
@@ -733,14 +733,14 @@ export const useUpdateService = <
  */
 export const agentCheckIn = (
 	{ cloudProvider }: AgentCheckInPathParameters,
-	cloudintegrationtypesPostableAgentCheckInRequestDTO: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>,
+	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AgentCheckIn200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/check_in`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesPostableAgentCheckInRequestDTO,
+		data: cloudintegrationtypesPostableAgentCheckInDTO,
 		signal,
 	});
 };
@@ -754,7 +754,7 @@ export const getAgentCheckInMutationOptions = <
 		TError,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -763,7 +763,7 @@ export const getAgentCheckInMutationOptions = <
 	TError,
 	{
 		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -780,7 +780,7 @@ export const getAgentCheckInMutationOptions = <
 		Awaited<ReturnType<typeof agentCheckIn>>,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -794,7 +794,7 @@ export const getAgentCheckInMutationOptions = <
 export type AgentCheckInMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckIn>>
 >;
-export type AgentCheckInMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+export type AgentCheckInMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -809,7 +809,7 @@ export const useAgentCheckIn = <
 		TError,
 		{
 			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -818,7 +818,7 @@ export const useAgentCheckIn = <
 	TError,
 	{
 		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {

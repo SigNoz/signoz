@@ -437,7 +437,7 @@ func (h *handler) GetRolesByUserID(w http.ResponseWriter, r *http.Request) {
 
 	roles := make([]*authtypes.Role, len(userRoles))
 	for idx, userRole := range userRoles {
-		roles[idx] = authtypes.NewRoleFromStorableRole(userRole.Role)
+		roles[idx] = userRole.Role
 	}
 
 	render.Success(w, http.StatusOK, roles)

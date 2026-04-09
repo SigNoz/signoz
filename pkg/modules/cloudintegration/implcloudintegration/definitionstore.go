@@ -104,7 +104,7 @@ func readServiceDefinition(svcDir string) (*citypes.ServiceDefinition, error) {
 }
 
 func validateServiceDefinition(def *citypes.ServiceDefinition) error {
-	if def.Strategy == nil {
+	if def.TelemetryCollectionStrategy == nil {
 		return errors.NewInternalf(errors.CodeInternal, "telemetryCollectionStrategy is required")
 	}
 

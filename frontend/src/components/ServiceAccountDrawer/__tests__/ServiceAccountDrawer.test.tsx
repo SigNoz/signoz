@@ -139,18 +139,18 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
-		const updateSpy = jest.fn();
+	it('changing roles enables Save; clicking Save sends role add request without delete', async () => {
 		const roleSpy = jest.fn();
+		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
-				updateSpy(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
-			}),
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
 				roleSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -167,12 +167,12 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(updateSpy).not.toHaveBeenCalled();
 			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					id: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
+			expect(deleteSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -350,7 +350,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		).toBeInTheDocument();
 	});
 
-	it('role update failure shows SaveErrorItem with the role name context', async () => {
+	it('role add failure shows SaveErrorItem with the role name context', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -388,6 +388,42 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 				},
 			),
 		).toBeInTheDocument();
+	});
+
+	it('role add retries on 429 then succeeds without showing an error', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let roleAddCallCount = 0;
+
+		// First call → 429, second call → 200
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) => {
+				roleAddCallCount += 1;
+				if (roleAddCallCount === 1) {
+					return res(ctx.status(429), ctx.json({ message: 'Too Many Requests' }));
+				}
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		// Retried after 429 — at least 2 calls, no error shown
+		await waitFor(
+			() => {
+				expect(roleAddCallCount).toBeGreaterThanOrEqual(2);
+			},
+			{ timeout: 5000 },
+		);
+		expect(screen.queryByText(/role assign failed/i)).not.toBeInTheDocument();
 	});
 
 	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {

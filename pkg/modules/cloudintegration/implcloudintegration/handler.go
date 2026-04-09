@@ -68,20 +68,20 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postableConnectionArtifact := new(cloudintegrationtypes.PostableConnectionArtifact)
+	postableAccount := new(cloudintegrationtypes.PostableAccount)
 
-	err = binding.JSON.BindBody(r.Body, postableConnectionArtifact)
+	err = binding.JSON.BindBody(r.Body, postableAccount)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	if err := postableConnectionArtifact.Validate(provider); err != nil {
+	if err := postableAccount.Validate(provider); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	accountConfig, err := cloudintegrationtypes.NewAccountConfigFromPostableArtifact(provider, postableConnectionArtifact)
+	accountConfig, err := cloudintegrationtypes.NewAccountConfigFromPostable(provider, postableAccount.Config)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -94,21 +94,15 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	connectionArtifactRequest, err := cloudintegrationtypes.NewArtifactRequestFromPostableArtifact(provider, postableConnectionArtifact)
+	connectionArtifact, err := handler.module.GetConnectionArtifact(ctx, account, postableAccount)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	connectionArtifact, err := handler.module.GetConnectionArtifact(ctx, account, connectionArtifactRequest)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, &cloudintegrationtypes.GettableAccountWithArtifact{
-		ID:       account.ID,
-		Artifact: connectionArtifact,
+	render.Success(rw, http.StatusOK, &cloudintegrationtypes.GettableAccountWithConnectionArtifact{
+		ID:                 account.ID,
+		ConnectionArtifact: connectionArtifact,
 	})
 }
 
@@ -465,7 +459,7 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(cloudintegrationtypes.PostableAgentCheckInRequest)
+	req := new(cloudintegrationtypes.PostableAgentCheckIn)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -495,5 +489,5 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAgentCheckInResponse(provider, resp))
+	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAgentCheckIn(provider, resp))
 }

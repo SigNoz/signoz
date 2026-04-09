@@ -16,7 +16,7 @@ func NewModule() cloudintegration.Module {
 	return &module{}
 }
 
-func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.SignozCredentials, error) {
+func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Credentials, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get connection credentials is not supported")
 }
 
@@ -56,7 +56,7 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, serv
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "update service is not supported")
 }
 
-func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get connection artifact is not supported")
 }
 

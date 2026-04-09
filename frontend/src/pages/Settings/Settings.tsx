@@ -143,7 +143,9 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
+							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
+							item.key === ROUTES.ROLES_SETTINGS ||
+							item.key === ROUTES.ROLE_DETAILS
 								? true
 								: item.isEnabled,
 					}));

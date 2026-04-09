@@ -2,23 +2,14 @@ package rules
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/pkg/cache"
-	"github.com/SigNoz/signoz/pkg/cache/cachetest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -27,22 +18,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// createTestSeries creates a *v3.Series with the given labels and optional points
+// createTestSeries creates a *qbtypes.TimeSeries with the given labels and optional points
 // so we don't exactly need the points in the series because the labels are used to determine if the series is new or old
 // we use the labels to create a lookup key for the series and then check the first_seen timestamp for the series in the metadata table
-func createTestSeries(labels map[string]string, points []v3.Point) *v3.Series {
-	if points == nil {
-		points = []v3.Point{}
+func createTestSeries(kvMap map[string]string, values []*qbtypes.TimeSeriesValue) *qbtypes.TimeSeries {
+	if values == nil {
+		values = []*qbtypes.TimeSeriesValue{}
 	}
-	return &v3.Series{
-		Labels: labels,
-		Points: points,
+	lbls := make([]*qbtypes.Label, 0)
+	for k, v := range kvMap {
+		lbls = append(lbls, &qbtypes.Label{
+			Key:   telemetrytypes.TelemetryFieldKey{Name: k},
+			Value: v,
+		})
+	}
+	return &qbtypes.TimeSeries{
+		Labels: lbls,
+		Values: values,
 	}
 }
 
 // seriesEqual compares two v3.Series by their labels
 // Returns true if the series have the same labels (order doesn't matter)
-func seriesEqual(s1, s2 *v3.Series) bool {
+func seriesEqual(s1, s2 *qbtypes.TimeSeries) bool {
 	if s1 == nil && s2 == nil {
 		return true
 	}
@@ -117,7 +115,7 @@ func mergeFirstSeenMaps(maps ...map[telemetrytypes.MetricMetadataLookupKey]int64
 }
 
 // createPostableRule creates a PostableRule with the given CompositeQuery
-func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRule {
+func createPostableRule(compositeQuery *ruletypes.AlertCompositeQuery) ruletypes.PostableRule {
 	return ruletypes.PostableRule{
 		AlertName: "Test Rule",
 		AlertType: ruletypes.AlertTypeMetric,
@@ -135,10 +133,10 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{
 					{
-						Name:        "test-threshold",
-						TargetValue: func() *float64 { v := 1.0; return &v }(),
-						CompareOp:   ruletypes.ValueIsAbove,
-						MatchType:   ruletypes.AtleastOnce,
+						Name:            "test-threshold",
+						TargetValue:     func() *float64 { v := 1.0; return &v }(),
+						CompareOperator: ruletypes.ValueIsAbove,
+						MatchType:       ruletypes.AtleastOnce,
 					},
 				},
 			},
@@ -149,12 +147,12 @@ func createPostableRule(compositeQuery *v3.CompositeQuery) ruletypes.PostableRul
 // filterNewSeriesTestCase represents a test case for FilterNewSeries
 type filterNewSeriesTestCase struct {
 	name              string
-	compositeQuery    *v3.CompositeQuery
-	series            []*v3.Series
+	compositeQuery    *ruletypes.AlertCompositeQuery
+	series            []*qbtypes.TimeSeries
 	firstSeenMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 	newGroupEvalDelay valuer.TextDuration
 	evalTime          time.Time
-	expectedFiltered  []*v3.Series // series that should be in the final filtered result (old enough)
+	expectedFiltered  []*qbtypes.TimeSeries // series that should be in the final filtered result (old enough)
 	expectError       bool
 }
 
@@ -170,8 +168,8 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 	tests := []filterNewSeriesTestCase{
 		{
 			name: "mixed old and new series - Builder query",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -194,7 +192,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
@@ -206,15 +204,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-missing", "env": "stage"}, nil),
 			}, // svc-old and svc-missing should be included; svc-new is filtered out
 		},
 		{
 			name: "all new series - PromQL query",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -228,7 +226,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-new1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-new2", "env": "stage"}, nil),
 			},
@@ -238,12 +236,12 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{}, // all should be filtered out (new series)
+			expectedFiltered:  []*qbtypes.TimeSeries{}, // all should be filtered out (new series)
 		},
 		{
 			name: "all old series - ClickHouse query",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeClickHouseSQL,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeClickHouseSQL,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeClickHouseSQL,
@@ -255,7 +253,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			},
@@ -265,15 +263,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old1", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-old2", "env": "stage"}, nil),
 			}, // all should be included (old series)
 		},
 		{
 			name: "no grouping in query - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -293,20 +291,20 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // early return, no filtering - all series included
 		},
 		{
 			name: "no metric names - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -323,20 +321,20 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // early return, no filtering - all series included
 		},
 		{
 			name: "series with no matching labels - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -359,20 +357,20 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"status": "200"}, nil), // no service_name or env
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"status": "200"}, nil),
 			}, // series included as we can't decide if it's new or old
 		},
 		{
 			name: "series with missing metadata - PromQL",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypePromQL,
@@ -386,7 +384,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			},
@@ -394,15 +392,15 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// svc-no-metadata has no entry in firstSeenMap
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-old", "env": "prod"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc-no-metadata", "env": "prod"}, nil),
 			}, // both should be included - svc-old is old, svc-no-metadata can't be decided
 		},
 		{
 			name: "series with partial metadata - ClickHouse",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeClickHouseSQL,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeClickHouseSQL,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeClickHouseSQL,
@@ -414,7 +412,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			},
 			// Only provide metadata for service_name, not env
@@ -424,14 +422,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			},
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc-partial", "env": "prod"}, nil),
 			}, // has some metadata, uses max first_seen which is old
 		},
 		{
 			name: "empty series array - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -454,16 +452,16 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series:            []*v3.Series{},
+			series:            []*qbtypes.TimeSeries{},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{},
+			expectedFiltered:  []*qbtypes.TimeSeries{},
 		},
 		{
 			name: "zero delay - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -486,20 +484,20 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap:      createFirstSeenMap("request_total", defaultGroupByFields, defaultEvalTime, defaultDelay, true, "svc1", "prod"),
 			newGroupEvalDelay: valuer.TextDuration{}, // zero delay
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			}, // with zero delay, all series pass
 		},
 		{
 			name: "multiple metrics with same groupBy keys - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -527,7 +525,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			firstSeenMap: mergeFirstSeenMaps(
@@ -536,14 +534,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 		},
 		{
 			name: "series with multiple groupBy attributes where one is new and one is old - Builder",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -566,7 +564,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1", "env": "prod"}, nil),
 			},
 			// service_name is old, env is new - should use max (new)
@@ -576,12 +574,12 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered:  []*v3.Series{}, // max first_seen is new, so should be filtered out
+			expectedFiltered:  []*qbtypes.TimeSeries{}, // max first_seen is new, so should be filtered out
 		},
 		{
 			name: "Logs query - should skip filtering and return empty skip indexes",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -601,22 +599,22 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			}, // Logs queries should return early, no filtering - all included
 		},
 		{
 			name: "Traces query - should skip filtering and return empty skip indexes",
-			compositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
+			compositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
 				Queries: []qbtypes.QueryEnvelope{
 					{
 						Type: qbtypes.QueryTypeBuilder,
@@ -636,14 +634,14 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 					},
 				},
 			},
-			series: []*v3.Series{
+			series: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			},
 			firstSeenMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 			newGroupEvalDelay: defaultNewGroupEvalDelay,
 			evalTime:          defaultEvalTime,
-			expectedFiltered: []*v3.Series{
+			expectedFiltered: []*qbtypes.TimeSeries{
 				createTestSeries(map[string]string{"service_name": "svc1"}, nil),
 				createTestSeries(map[string]string{"service_name": "svc2"}, nil),
 			}, // Traces queries should return early, no filtering - all included
@@ -654,9 +652,6 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create postableRule from compositeQuery
 			postableRule := createPostableRule(tt.compositeQuery)
-
-			// Setup telemetry store mock
-			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 			// Setup mock metadata store
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -681,37 +676,12 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			// Setup metadata query mock
 			mockMetadataStore.SetFirstSeenFromMetricMetadata(tt.firstSeenMap)
 
-			// Create reader with mocked telemetry store
-			readerCache, err := cachetest.New(
-				cache.Config{
-					Provider: "memory",
-					Memory: cache.Memory{
-						NumCounters: 10 * 1000,
-						MaxCost:     1 << 26,
-					},
-				},
-			)
-			require.NoError(t, err)
-
-			options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-			reader := clickhouseReader.NewReader(
-				slog.Default(),
-				nil,
-				telemetryStore,
-				prometheustest.New(context.Background(), settings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
-				"",
-				time.Second,
-				nil,
-				readerCache,
-				options,
-			)
-
 			postableRule.NotificationSettings = &ruletypes.NotificationSettings{
 				NewGroupEvalDelay: tt.newGroupEvalDelay,
 			}
 
 			// Create BaseRule using NewBaseRule
-			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, reader, WithQueryParser(queryParser), WithLogger(logger), WithMetadataStore(mockMetadataStore))
+			rule, err := NewBaseRule("test-rule", valuer.GenerateUUID(), &postableRule, WithQueryParser(queryParser), WithLogger(logger), WithMetadataStore(mockMetadataStore))
 			require.NoError(t, err)
 
 			filteredSeries, err := rule.FilterNewSeries(context.Background(), tt.evalTime, tt.series)
@@ -755,9 +725,13 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 
 // labelsKey creates a deterministic string key from a labels map
 // This is used to group series by their unique label combinations
-func labelsKey(lbls map[string]string) string {
+func labelsKey(lbls []*qbtypes.Label) string {
 	if len(lbls) == 0 {
 		return ""
 	}
-	return labels.FromMap(lbls).String()
+	temp := ruletypes.NewBuilder()
+	for _, item := range lbls {
+		temp.Set(item.Key.Name, fmt.Sprint(item.Value))
+	}
+	return temp.Labels().String()
 }

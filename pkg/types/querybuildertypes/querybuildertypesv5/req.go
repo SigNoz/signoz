@@ -305,7 +305,7 @@ func (q *QueryRangeRequest) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
+func (r *QueryRangeRequest) StepIntervalForQuery(name string) (int64, error) {
 	stepsMap := make(map[string]int64)
 	for _, query := range r.CompositeQuery.Queries {
 		switch spec := query.Spec.(type) {
@@ -317,11 +317,13 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		case PromQuery:
 			stepsMap[spec.Name] = spec.Step.Milliseconds()
+		case QueryBuilderTraceOperator:
+			stepsMap[spec.Name] = spec.StepInterval.Milliseconds()
 		}
 	}
 
 	if step, ok := stepsMap[name]; ok {
-		return step
+		return step, nil
 	}
 
 	exprStr := ""
@@ -335,12 +337,15 @@ func (r *QueryRangeRequest) StepIntervalForQuery(name string) int64 {
 		}
 	}
 
-	expression, _ := govaluate.NewEvaluableExpressionWithFunctions(exprStr, EvalFuncs())
+	expression, err := govaluate.NewEvaluableExpressionWithFunctions(exprStr, EvalFuncs())
+	if err != nil {
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse expression for formula query %q: %s", name, err.Error())
+	}
 	steps := []int64{}
 	for _, v := range expression.Vars() {
 		steps = append(steps, stepsMap[v])
 	}
-	return LCMList(steps)
+	return LCMList(steps), nil
 }
 
 func (r *QueryRangeRequest) NumAggregationForQuery(name string) int64 {

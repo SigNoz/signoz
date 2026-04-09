@@ -62,12 +62,16 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...membersSettings(t), ...serviceAccountsSettings(t));
+		settings.push(
+			...membersSettings(t),
+			...serviceAccountsSettings(t),
+			...rolesSettings(t),
+			...roleDetails(t),
+		);
 	}
 
-	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...billingSettings(t), ...rolesSettings(t), ...roleDetails(t));
+		settings.push(...billingSettings(t));
 	}
 
 	settings.push(

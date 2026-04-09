@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	grammar "github.com/SigNoz/signoz/pkg/parser/grammar"
+	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
@@ -818,9 +818,9 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			case "has":
 				cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
 			case "hasAny":
-				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
+				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value[0]))
 			case "hasAll":
-				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value[0]))
 			}
 			conds = append(conds, cond)
 		}

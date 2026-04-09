@@ -133,14 +133,14 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 	for _, storedRule := range storedRules {
 		var ruleData ruletypes.PostableRule
 		if err := json.Unmarshal([]byte(storedRule.Data), &ruleData); err != nil {
-			r.logger.WarnContext(ctx, "failed to unmarshal rule data", slog.String("rule_id", storedRule.ID.StringValue()), errors.Attr(err))
+			//nolint:sloglint
+			r.logger.WarnContext(ctx, "failed to unmarshal rule data", slog.String("rule.id", storedRule.ID.StringValue()), errors.Attr(err))
 			continue
 		}
 
 		// Check conditions: must be metric-based alert with valid composite query
 		if ruleData.AlertType != ruletypes.AlertTypeMetric ||
-			ruleData.RuleCondition == nil ||
-			ruleData.RuleCondition.CompositeQuery == nil {
+			ruleData.RuleCondition == nil {
 			continue
 		}
 

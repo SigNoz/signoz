@@ -18,7 +18,7 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 	return &awscloudprovider{serviceDefinitions: defStore}, nil
 }
 
-func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
@@ -73,8 +73,8 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		return services[i].Type.StringValue() < services[j].Type.StringValue()
 	})
 
-	compiledMetrics := new(cloudintegrationtypes.AWSMetricsStrategy)
-	compiledLogs := new(cloudintegrationtypes.AWSLogsStrategy)
+	compiledMetrics := new(cloudintegrationtypes.AWSMetricsCollectionStrategy)
+	compiledLogs := new(cloudintegrationtypes.AWSLogsCollectionStrategy)
 	var compiledS3Buckets map[string][]string
 
 	for _, storedSvc := range services {
@@ -88,8 +88,8 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 			return nil, err
 		}
 
-		strategy := svcDef.Strategy.AWS
-		logsEnabled := cloudintegrationtypes.IsLogsEnabled(cloudintegrationtypes.CloudProviderTypeAWS, svcCfg)
+		strategy := svcDef.TelemetryCollectionStrategy.AWS
+		logsEnabled := svcCfg.IsLogsEnabled(cloudintegrationtypes.CloudProviderTypeAWS)
 
 		// S3Sync: logs come directly from configured S3 buckets, not CloudWatch subscriptions
 		if storedSvc.Type == cloudintegrationtypes.AWSServiceS3Sync {
@@ -104,29 +104,29 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 			compiledLogs.Subscriptions = append(compiledLogs.Subscriptions, strategy.Logs.Subscriptions...)
 		}
 
-		metricsEnabled := cloudintegrationtypes.IsMetricsEnabled(cloudintegrationtypes.CloudProviderTypeAWS, svcCfg)
+		metricsEnabled := svcCfg.IsMetricsEnabled(cloudintegrationtypes.CloudProviderTypeAWS)
 
 		if metricsEnabled && strategy.Metrics != nil {
 			compiledMetrics.StreamFilters = append(compiledMetrics.StreamFilters, strategy.Metrics.StreamFilters...)
 		}
 	}
 
-	awsTelemetry := new(cloudintegrationtypes.AWSCollectionStrategy)
+	collectionStrategy := new(cloudintegrationtypes.AWSTelemetryCollectionStrategy)
 
 	if len(compiledMetrics.StreamFilters) > 0 {
-		awsTelemetry.Metrics = compiledMetrics
+		collectionStrategy.Metrics = compiledMetrics
 	}
 	if len(compiledLogs.Subscriptions) > 0 {
-		awsTelemetry.Logs = compiledLogs
+		collectionStrategy.Logs = compiledLogs
 	}
 	if compiledS3Buckets != nil {
-		awsTelemetry.S3Buckets = compiledS3Buckets
+		collectionStrategy.S3Buckets = compiledS3Buckets
 	}
 
 	return &cloudintegrationtypes.ProviderIntegrationConfig{
 		AWS: &cloudintegrationtypes.AWSIntegrationConfig{
-			EnabledRegions: account.Config.AWS.Regions,
-			Telemetry:      awsTelemetry,
+			EnabledRegions:              account.Config.AWS.Regions,
+			TelemetryCollectionStrategy: collectionStrategy,
 		},
 	}, nil
 }

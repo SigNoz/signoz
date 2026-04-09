@@ -36,6 +36,7 @@ var friendly = map[string]string{
 
 	// literals / identifiers
 	"NUMBER":      "number",
+	"STRING":      "string",
 	"BOOL":        "boolean",
 	"QUOTED_TEXT": "quoted text",
 	"KEY":         "field name (ex: service.name)",
@@ -88,6 +89,8 @@ func (e *SyntaxErr) Error() string {
 	exp := ""
 	if len(e.Expected) > 0 {
 		exp = "expecting one of {" + strings.Join(e.Expected, ", ") + "}" + " but got " + e.TokenTxt
+	} else if e.Msg != "" {
+		exp = e.Msg
 	}
 	return fmt.Sprintf("line %d:%d %s", e.Line, e.Col, exp)
 }
@@ -154,9 +157,48 @@ func (l *ErrorListener) SyntaxError(
 			}
 		}
 
+		// Check which "closing" tokens are in the expected set so we can suppress
+		// context-inappropriate tokens from the displayed set:
+		//   - When RPAREN is expected, hide LBRACK/RBRACK (IN-list brackets confuse
+		//     unclosed-paren errors, e.g. "{), [}" → "{)}")
+		//   - When RBRACK is expected, hide COMMA (inside an IN bracket list the only
+		//     meaningful fix is to close the bracket, e.g. "{,, ]}" → "{]}")
+		rparenType := pGetTokenType(p, "RPAREN")
+		lbrackType := pGetTokenType(p, "LBRACK")
+		rbrackType := pGetTokenType(p, "RBRACK")
+		commaType := pGetTokenType(p, "COMMA")
+		hasRParen, hasRBrack := false, false
+		for _, iv := range set.GetIntervals() {
+			for t := iv.Start; t <= iv.Stop; t++ {
+				if t == rparenType {
+					hasRParen = true
+				}
+				if t == rbrackType {
+					hasRBrack = true
+				}
+			}
+		}
+
 		uniq := map[string]struct{}{}
 		for _, iv := range set.GetIntervals() {
 			for t := iv.Start; t <= iv.Stop; t++ {
+				// Exclude the offending token itself from the expected set.
+				// ANTLR's error recovery sometimes leaves the offending token in
+				// the follow-set, producing a contradictory message like
+				// "expecting NOT but got 'NOT'".
+				if t == err.TokenType {
+					continue
+				}
+				// When RPAREN is expected, suppress LBRACK/RBRACK — they only
+				// appear in IN-list contexts and confuse unclosed-paren errors.
+				if hasRParen && (t == lbrackType || t == rbrackType) {
+					continue
+				}
+				// When RBRACK is expected (inside an IN bracket list), suppress
+				// COMMA — the only useful fix is closing the bracket.
+				if hasRBrack && t == commaType {
+					continue
+				}
 				sym := tokenName(p, t)
 				if sym == "KEY" {
 					if !hasValueLiterals {

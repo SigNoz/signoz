@@ -45,16 +45,16 @@ def test_create_account(
     artifact = data["connectionArtifact"]
     assert "aws" in artifact, "connectionArtifact should contain 'aws' field"
     assert (
-        "connectionURL" in artifact["aws"]
-    ), "connectionArtifact.aws should contain 'connectionURL'"
+        "connectionUrl" in artifact["aws"]
+    ), "connectionArtifact.aws should contain 'connectionUrl'"
 
-    connection_url = artifact["aws"]["connectionURL"]
+    connection_url = artifact["aws"]["connectionUrl"]
     assert (
         "console.aws.amazon.com/cloudformation" in connection_url
-    ), "connectionURL should be an AWS CloudFormation URL"
+    ), "connectionUrl should be an AWS CloudFormation URL"
     assert (
         "region=us-east-1" in connection_url
-    ), "connectionURL should contain the deployment region"
+    ), "connectionUrl should contain the deployment region"
 
 
 def test_create_account_unsupported_provider(
