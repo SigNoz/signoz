@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -123,6 +124,9 @@ type Config struct {
 
 	// ServiceAccount config
 	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
+
+	// Auditor config
+	Auditor auditor.Config `mapstructure:"auditor"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -153,6 +157,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
+		auditor.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

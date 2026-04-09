@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
@@ -24,6 +25,7 @@ import (
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -132,6 +134,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)
+		},
+		func(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
+			return otlphttpauditor.NewFactory(licensing, version.Info)
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)
