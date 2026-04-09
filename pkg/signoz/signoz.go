@@ -96,7 +96,7 @@ func New(
 	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
-	auditorProviderFactory func(licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config],
+	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
@@ -374,9 +374,8 @@ func New(
 		return nil, err
 	}
 
-	// Initialize auditor from the variant-specific provider factory callback
-	auditorFactory := auditorProviderFactory(licensing)
-	auditor, err := auditorFactory.New(ctx, providerSettings, config.Auditor)
+	// Initialize auditor from the variant-specific provider factories
+	auditor, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Auditor, auditorProviderFactories(licensing), config.Auditor.Provider)
 	if err != nil {
 		return nil, err
 	}
