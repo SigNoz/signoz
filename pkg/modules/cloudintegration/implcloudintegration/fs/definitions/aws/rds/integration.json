@@ -775,14 +775,14 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/RDS"
+            "namespace": "AWS/RDS"
           }
         ]
       },
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "/aws/rds",
             "filterPattern": ""

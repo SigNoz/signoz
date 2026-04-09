@@ -110,9 +110,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/SNS"
+            "namespace": "AWS/SNS"
           }
         ]
       }
