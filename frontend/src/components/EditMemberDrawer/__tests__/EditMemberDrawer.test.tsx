@@ -84,6 +84,16 @@ const ROLES_ENDPOINT = '*/api/v1/roles';
 const mockDeleteMutate = jest.fn();
 const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
 
+const showErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal,
+		isErrorModalVisible: false,
+	})),
+}));
+
 const mockFetchedUser = {
 	data: {
 		id: 'user-1',
@@ -147,6 +157,7 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		showErrorModal.mockClear();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
@@ -459,7 +470,6 @@ describe('EditMemberDrawer', () => {
 
 		it('shows API error message when deleteUser fails for active member', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 				mutate: mockDeleteMutate.mockImplementation(() => {
@@ -477,16 +487,20 @@ describe('EditMemberDrawer', () => {
 			await user.click(confirmBtns[confirmBtns.length - 1]);
 
 			await waitFor(() => {
-				expect(mockToast.error).toHaveBeenCalledWith(
-					'Failed to delete member: Something went wrong on server',
-					expect.anything(),
+				expect(showErrorModal).toHaveBeenCalledWith(
+					expect.objectContaining({
+						getErrorMessage: expect.any(Function),
+					}),
+				);
+				const passedError = showErrorModal.mock.calls[0][0] as any;
+				expect(passedError.getErrorMessage()).toBe(
+					'Something went wrong on server',
 				);
 			});
 		});
 
 		it('shows API error message when deleteUser fails for invited member', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 				mutate: mockDeleteMutate.mockImplementation(() => {
@@ -504,9 +518,14 @@ describe('EditMemberDrawer', () => {
 			await user.click(confirmBtns[confirmBtns.length - 1]);
 
 			await waitFor(() => {
-				expect(mockToast.error).toHaveBeenCalledWith(
-					'Failed to revoke invite: Something went wrong on server',
-					expect.anything(),
+				expect(showErrorModal).toHaveBeenCalledWith(
+					expect.objectContaining({
+						getErrorMessage: expect.any(Function),
+					}),
+				);
+				const passedError = showErrorModal.mock.calls[0][0] as any;
+				expect(passedError.getErrorMessage()).toBe(
+					'Something went wrong on server',
 				);
 			});
 		});

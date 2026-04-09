@@ -403,27 +403,65 @@ components:
       required:
       - regions
       type: object
-    CloudintegrationtypesAWSCollectionStrategy:
+    CloudintegrationtypesAWSCloudWatchLogsSubscription:
       properties:
-        aws_logs:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
-        aws_metrics:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
-        s3_buckets:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          type: object
+        filterPattern:
+          type: string
+        logGroupNamePrefix:
+          type: string
+      required:
+      - logGroupNamePrefix
+      - filterPattern
+      type: object
+    CloudintegrationtypesAWSCloudWatchMetricStreamFilter:
+      properties:
+        metricNames:
+          items:
+            type: string
+          type: array
+        namespace:
+          type: string
+      required:
+      - namespace
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionURL:
+        connectionUrl:
           type: string
       required:
-      - connectionURL
+      - connectionUrl
       type: object
-    CloudintegrationtypesAWSConnectionArtifactRequest:
+    CloudintegrationtypesAWSIntegrationConfig:
+      properties:
+        enabledRegions:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
+      required:
+      - enabledRegions
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesAWSLogsCollectionStrategy:
+      properties:
+        subscriptions:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchLogsSubscription'
+          type: array
+      required:
+      - subscriptions
+      type: object
+    CloudintegrationtypesAWSMetricsCollectionStrategy:
+      properties:
+        streamFilters:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchMetricStreamFilter'
+          type: array
+      required:
+      - streamFilters
+      type: object
+    CloudintegrationtypesAWSPostableAccountConfig:
       properties:
         deploymentRegion:
           type: string
@@ -434,46 +472,6 @@ components:
       required:
       - deploymentRegion
       - regions
-      type: object
-    CloudintegrationtypesAWSIntegrationConfig:
-      properties:
-        enabledRegions:
-          items:
-            type: string
-          type: array
-        telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
-      required:
-      - enabledRegions
-      - telemetry
-      type: object
-    CloudintegrationtypesAWSLogsStrategy:
-      properties:
-        cloudwatch_logs_subscriptions:
-          items:
-            properties:
-              filter_pattern:
-                type: string
-              log_group_name_prefix:
-                type: string
-            type: object
-          nullable: true
-          type: array
-      type: object
-    CloudintegrationtypesAWSMetricsStrategy:
-      properties:
-        cloudwatch_metric_stream_filters:
-          items:
-            properties:
-              MetricNames:
-                items:
-                  type: string
-                type: array
-              Namespace:
-                type: string
-            type: object
-          nullable: true
-          type: array
       type: object
     CloudintegrationtypesAWSServiceConfig:
       properties:
@@ -486,7 +484,7 @@ components:
       properties:
         enabled:
           type: boolean
-        s3_buckets:
+        s3Buckets:
           additionalProperties:
             items:
               type: string
@@ -497,6 +495,19 @@ components:
       properties:
         enabled:
           type: boolean
+      type: object
+    CloudintegrationtypesAWSTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsCollectionStrategy'
+        s3Buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
       type: object
     CloudintegrationtypesAccount:
       properties:
@@ -561,6 +572,26 @@ components:
           nullable: true
           type: array
       type: object
+    CloudintegrationtypesCloudIntegrationService:
+      nullable: true
+      properties:
+        cloudIntegrationId:
+          type: string
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceID'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     CloudintegrationtypesCollectedLogAttribute:
       properties:
         name:
@@ -581,13 +612,6 @@ components:
         unit:
           type: string
       type: object
-    CloudintegrationtypesCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
-      required:
-      - aws
-      type: object
     CloudintegrationtypesConnectionArtifact:
       properties:
         aws:
@@ -595,12 +619,21 @@ components:
       required:
       - aws
       type: object
-    CloudintegrationtypesConnectionArtifactRequest:
+    CloudintegrationtypesCredentials:
       properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
+        ingestionKey:
+          type: string
+        ingestionUrl:
+          type: string
+        sigNozApiKey:
+          type: string
+        sigNozApiUrl:
+          type: string
       required:
-      - aws
+      - sigNozApiUrl
+      - sigNozApiKey
+      - ingestionUrl
+      - ingestionKey
       type: object
     CloudintegrationtypesDashboard:
       properties:
@@ -626,7 +659,7 @@ components:
           nullable: true
           type: array
       type: object
-    CloudintegrationtypesGettableAccountWithArtifact:
+    CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
         connectionArtifact:
           $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
@@ -645,7 +678,7 @@ components:
       required:
       - accounts
       type: object
-    CloudintegrationtypesGettableAgentCheckInResponse:
+    CloudintegrationtypesGettableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -694,12 +727,72 @@ components:
             type: string
           type: array
         telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSCollectionStrategy'
       required:
       - enabled_regions
       - telemetry
       type: object
-    CloudintegrationtypesPostableAgentCheckInRequest:
+    CloudintegrationtypesOldAWSCollectionStrategy:
+      properties:
+        aws_logs:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSLogsStrategy'
+        aws_metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSMetricsStrategy'
+        provider:
+          type: string
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesOldAWSLogsStrategy:
+      properties:
+        cloudwatch_logs_subscriptions:
+          items:
+            properties:
+              filter_pattern:
+                type: string
+              log_group_name_prefix:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesOldAWSMetricsStrategy:
+      properties:
+        cloudwatch_metric_stream_filters:
+          items:
+            properties:
+              MetricNames:
+                items:
+                  type: string
+                type: array
+              Namespace:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesPostableAccount:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesPostableAccountConfig'
+        credentials:
+          $ref: '#/components/schemas/CloudintegrationtypesCredentials'
+      required:
+      - config
+      - credentials
+      type: object
+    CloudintegrationtypesPostableAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesPostableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -727,6 +820,8 @@ components:
       properties:
         assets:
           $ref: '#/components/schemas/CloudintegrationtypesAssets'
+        cloudIntegrationService:
+          $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
           $ref: '#/components/schemas/CloudintegrationtypesDataCollected'
         icon:
@@ -735,12 +830,10 @@ components:
           type: string
         overview:
           type: string
-        serviceConfig:
-          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
-        supported_signals:
+        supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
         telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -749,9 +842,10 @@ components:
       - icon
       - overview
       - assets
-      - supported_signals
+      - supportedSignals
       - dataCollected
       - telemetryCollectionStrategy
+      - cloudIntegrationService
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -760,6 +854,22 @@ components:
       required:
       - aws
       type: object
+    CloudintegrationtypesServiceID:
+      enum:
+      - alb
+      - api-gateway
+      - dynamodb
+      - ec2
+      - ecs
+      - eks
+      - elasticache
+      - lambda
+      - msk
+      - rds
+      - s3sync
+      - sns
+      - sqs
+      type: string
     CloudintegrationtypesServiceMetadata:
       properties:
         enabled:
@@ -782,6 +892,13 @@ components:
           type: boolean
         metrics:
           type: boolean
+      type: object
+    CloudintegrationtypesTelemetryCollectionStrategy:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
+      required:
+      - aws
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -3081,7 +3198,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3089,7 +3206,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:
@@ -3190,7 +3307,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAccount'
       responses:
         "200":
           content:
@@ -3198,7 +3315,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithConnectionArtifact'
                   status:
                     type: string
                 required:
@@ -3394,6 +3511,61 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    put:
+      deprecated: false
+      description: This endpoint updates a service for the specified cloud provider
+      operationId: UpdateService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update service
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
     post:
       deprecated: false
@@ -3409,7 +3581,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3417,7 +3589,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:
@@ -3449,6 +3621,59 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/credentials:
+    get:
+      deprecated: false
+      description: This endpoint retrieves the connection credentials required for
+        integration
+      operationId: GetConnectionCredentials
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesCredentials'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get connection credentials
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/services:
@@ -3559,55 +3784,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Get service
-      tags:
-      - cloudintegration
-    put:
-      deprecated: false
-      description: This endpoint updates a service for the specified cloud provider
-      operationId: UpdateService
-      parameters:
-      - in: path
-        name: cloud_provider
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: service_id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update service
       tags:
       - cloudintegration
   /api/v1/complete/google:

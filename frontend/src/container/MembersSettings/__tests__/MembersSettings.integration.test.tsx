@@ -117,14 +117,14 @@ describe('MembersSettings (integration)', () => {
 		await screen.findByText('Member Details');
 	});
 
-	it('does not open EditMemberDrawer when a deleted member row is clicked', async () => {
+	it('opens EditMemberDrawer when a deleted member row is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(<MembersSettings />);
 
 		await user.click(await screen.findByText('Dave Deleted'));
 
-		expect(screen.queryByText('Member Details')).not.toBeInTheDocument();
+		expect(screen.queryByText('Member Details')).toBeInTheDocument();
 	});
 
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {

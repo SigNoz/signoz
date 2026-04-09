@@ -1070,9 +1070,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/Kafka"
+            "namespace": "AWS/Kafka"
           }
         ]
       }

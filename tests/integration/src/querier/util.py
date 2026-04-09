@@ -4,6 +4,7 @@ from typing import List
 
 import requests
 
+from fixtures.logs import Logs
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
@@ -36,6 +37,101 @@ def assert_identical_query_response(
             response1.json()["data"]["data"]["results"]
             == response2.json()["data"]["data"]["results"]
         ), "Response data do not match"
+
+
+def generate_logs_with_corrupt_metadata() -> List[Logs]:
+    """
+    Specifically, entries with 'id', 'timestamp', 'severity_text', 'severity_number' and 'body' fields in metadata
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+
+    return [
+        Logs(
+            timestamp=now - timedelta(seconds=4),
+            body="POST /integration request received",
+            severity_text="INFO",
+            resources={
+                "deployment.environment": "production",
+                "service.name": "http-service",
+                "os.type": "linux",
+                "host.name": "linux-000",
+                "cloud.provider": "integration",
+                "cloud.account.id": "000",
+                "timestamp": "corrupt_data",
+            },
+            attributes={
+                "net.transport": "IP.TCP",
+                "http.scheme": "http",
+                "http.user_agent": "Integration Test",
+                "http.request.method": "POST",
+                "http.response.status_code": "200",
+                "severity_text": "corrupt_data",
+                "timestamp": "corrupt_data",
+            },
+            trace_id="1",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=3),
+            body="SELECT query executed",
+            severity_text="DEBUG",
+            resources={
+                "deployment.environment": "production",
+                "service.name": "http-service",
+                "os.type": "linux",
+                "host.name": "linux-000",
+                "cloud.provider": "integration",
+                "cloud.account.id": "000",
+                "severity_number": "corrupt_data",
+                "id": "corrupt_data",
+            },
+            attributes={
+                "db.name": "integration",
+                "db.operation": "SELECT",
+                "db.statement": "SELECT * FROM integration",
+                "trace_id": "2",
+            },
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=2),
+            body="HTTP PATCH failed with 404",
+            severity_text="WARN",
+            resources={
+                "deployment.environment": "production",
+                "service.name": "http-service",
+                "os.type": "linux",
+                "host.name": "linux-000",
+                "cloud.provider": "integration",
+                "cloud.account.id": "000",
+                "body": "corrupt_data",
+                "trace_id": "3",
+            },
+            attributes={
+                "http.request.method": "PATCH",
+                "http.status_code": "404",
+                "id": "1",
+            },
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=1),
+            body="{'trace_id': '4'}",
+            severity_text="ERROR",
+            resources={
+                "deployment.environment": "production",
+                "service.name": "topic-service",
+                "os.type": "linux",
+                "host.name": "linux-001",
+                "cloud.provider": "integration",
+                "cloud.account.id": "001",
+            },
+            attributes={
+                "message.type": "SENT",
+                "messaging.operation": "publish",
+                "messaging.message.id": "001",
+                "body": "corrupt_data",
+                "timestamp": "corrupt_data",
+            },
+        ),
+    ]
 
 
 def generate_traces_with_corrupt_metadata() -> List[Traces]:

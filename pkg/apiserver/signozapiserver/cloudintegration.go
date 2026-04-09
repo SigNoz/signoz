@@ -10,6 +10,26 @@ import (
 )
 
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/credentials", handler.New(
+		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionCredentials),
+		handler.OpenAPIDef{
+			ID:                  "GetConnectionCredentials",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "Get connection credentials",
+			Description:         "This endpoint retrieves the connection credentials required for integration",
+			Request:             nil,
+			RequestContentType:  "application/json",
+			Response:            new(citypes.Credentials),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.CreateAccount),
 		handler.OpenAPIDef{
@@ -17,9 +37,9 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Tags:                []string{"cloudintegration"},
 			Summary:             "Create account",
 			Description:         "This endpoint creates a new cloud integration account for the specified cloud provider",
-			Request:             new(citypes.PostableConnectionArtifact),
+			Request:             new(citypes.PostableAccount),
 			RequestContentType:  "application/json",
-			Response:            new(citypes.GettableAccountWithArtifact),
+			Response:            new(citypes.GettableAccountWithConnectionArtifact),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
@@ -59,7 +79,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Description:         "This endpoint gets an account for the specified cloud provider",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(citypes.GettableAccount),
+			Response:            new(citypes.Account),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -139,7 +159,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Description:         "This endpoint gets a service for the specified cloud provider",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(citypes.GettableService),
+			Response:            new(citypes.Service),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
@@ -150,7 +170,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.UpdateService),
 		handler.OpenAPIDef{
 			ID:                  "UpdateService",
@@ -179,9 +199,9 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Tags:                []string{"cloudintegration"},
 			Summary:             "Agent check-in",
 			Description:         "[Deprecated] This endpoint is called by the deployed agent to check in",
-			Request:             new(citypes.PostableAgentCheckInRequest),
+			Request:             new(citypes.PostableAgentCheckIn),
 			RequestContentType:  "application/json",
-			Response:            new(citypes.GettableAgentCheckInResponse),
+			Response:            new(citypes.GettableAgentCheckIn),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
@@ -199,9 +219,9 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Tags:                []string{"cloudintegration"},
 			Summary:             "Agent check-in",
 			Description:         "This endpoint is called by the deployed agent to check in",
-			Request:             new(citypes.PostableAgentCheckInRequest),
+			Request:             new(citypes.PostableAgentCheckIn),
 			RequestContentType:  "application/json",
-			Response:            new(citypes.GettableAgentCheckInResponse),
+			Response:            new(citypes.GettableAgentCheckIn),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
