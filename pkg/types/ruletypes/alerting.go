@@ -94,6 +94,25 @@ type AlertCompositeQuery struct {
 	Unit string `json:"unit,omitempty"`
 }
 
+// QueriesWithFormulas returns all queries including converted formula queries.
+// formulas are converted to QueryEnvelope entries of type builder_formula so they
+// can be included in query execution alongside regular queries.
+func (acq *AlertCompositeQuery) QueriesWithFormulas() []qbtypes.QueryEnvelope {
+	result := make([]qbtypes.QueryEnvelope, len(acq.Queries), len(acq.Queries)+len(acq.QueryFormulas))
+	copy(result, acq.Queries)
+
+	for _, formula := range acq.QueryFormulas {
+		if !formula.Disabled {
+			result = append(result, qbtypes.QueryEnvelope{
+				Type: qbtypes.QueryTypeFormula,
+				Spec: formula,
+			})
+		}
+	}
+
+	return result
+}
+
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery"`
 	CompareOperator   CompareOperator      `json:"op"`
@@ -114,7 +133,8 @@ func (rc *RuleCondition) SelectedQueryName() string {
 
 	queryNames := map[string]struct{}{}
 
-	for _, query := range rc.CompositeQuery.Queries {
+	allQueries := rc.CompositeQuery.QueriesWithFormulas()
+	for _, query := range allQueries {
 		switch spec := query.Spec.(type) {
 		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
 			if !spec.Disabled {
