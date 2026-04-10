@@ -823,17 +823,17 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/ECS"
+            "namespace": "AWS/ECS"
           },
           {
-            "Namespace": "ECS/ContainerInsights"
+            "namespace": "ECS/ContainerInsights"
           }
         ]
       },
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "/ecs",
             "filterPattern": ""

@@ -374,9 +374,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/DynamoDB"
+            "namespace": "AWS/DynamoDB"
           }
         ]
       }

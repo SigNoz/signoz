@@ -447,9 +447,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/ApplicationELB"
+            "namespace": "AWS/ApplicationELB"
           }
         ]
       }
