@@ -314,14 +314,14 @@ def test_primitive_path_operations(
             "validate": lambda r: len(_get_rows(r)) == 2
             and {b["user"]["name"] for b in _get_bodies(r)} == {"alice", "diana"},
         },
-        # BETWEEN — distinct operator + type ambiguity (log5 "unknown" excluded)
+        # BETWEEN — distinct operator + type ambiguity (log5 "28" included)
         {
             "name": "prim.int_between_with_type_ambiguity",
             "requestType": "raw",
             "expression": "body.user.age BETWEEN 25 AND 30",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
-            and {b["user"]["age"] for b in _get_bodies(r)} == {25, 30},
+            and {b["user"]["age"] for b in _get_bodies(r)} == {25, 30, "28"},
         },
         # EXISTS on sparse field — only log1 has email
         {
