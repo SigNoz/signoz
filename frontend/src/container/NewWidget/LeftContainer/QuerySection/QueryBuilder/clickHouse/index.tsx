@@ -26,9 +26,9 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 								target="_blank"
 								rel="noreferrer"
 							>
-								Learn how to write optimized queries
+								Learn to write faster, optimized queries
 							</a>
-							{' · Using an LLM? '}
+							{' · Using AI? '}
 							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noreferrer">
 								Install the SigNoz ClickHouse query agent skill
 							</a>
