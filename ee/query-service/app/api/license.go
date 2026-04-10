@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
 )
 
@@ -45,15 +44,12 @@ type details struct {
 	BillTotal float64         `json:"billTotal"`
 }
 
-type billingDetails struct {
-	Status string `json:"status"`
-	Data   struct {
-		BillingPeriodStart int64   `json:"billingPeriodStart"`
-		BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
-		Details            details `json:"details"`
-		Discount           float64 `json:"discount"`
-		SubscriptionStatus string  `json:"subscriptionStatus"`
-	} `json:"data"`
+type billingData struct {
+	BillingPeriodStart int64   `json:"billingPeriodStart"`
+	BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
+	Details            details `json:"details"`
+	Discount           float64 `json:"discount"`
+	SubscriptionStatus string  `json:"subscriptionStatus"`
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -64,28 +60,17 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	billingURL := fmt.Sprintf("%s/usage?licenseKey=%s", constants.LicenseSignozIo, licenseKey)
-
-	hClient := &http.Client{}
-	req, err := http.NewRequest("GET", billingURL, nil)
-	if err != nil {
-		RespondError(w, model.InternalError(err), nil)
-		return
-	}
-	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
-	billingResp, err := hClient.Do(req)
+	data, err := ah.Signoz.Zeus.GetMeters(r.Context(), licenseKey)
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	// decode response body
-	var billingResponse billingDetails
-	if err := json.NewDecoder(billingResp.Body).Decode(&billingResponse); err != nil {
+	var billing billingData
+	if err := json.Unmarshal(data, &billing); err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	// TODO(srikanthccv):Fetch the current day usage and add it to the response
-	ah.Respond(w, billingResponse.Data)
+	ah.Respond(w, billing)
 }
