@@ -106,11 +106,3 @@ func validateAWSRegion(region string) error {
 	}
 	return nil
 }
-
-func validateAzureRegion(region string) error {
-	_, ok := ValidAzureRegions[region]
-	if !ok {
-		return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid Azure region: %s", region)
-	}
-	return nil
-}
