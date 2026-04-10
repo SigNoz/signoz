@@ -56,10 +56,10 @@ exports[`Table panel wrappper tests table should render fine with the query resp
       class="query-table"
     >
       <div
-        class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-2i2tap"
+        class="ant-table-wrapper resize-main-table css-dev-only-do-not-override-1l6e01l"
       >
         <div
-          class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+          class="ant-spin-nested-loading css-dev-only-do-not-override-1l6e01l"
         >
           <div
             class="ant-spin-container"

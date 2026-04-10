@@ -46,7 +46,7 @@ exports[`PipelinePage container test should render CreatePipelineButton section 
       </svg>
     </span>
     <button
-      class="ant-btn css-dev-only-do-not-override-2i2tap ant-btn-default c1"
+      class="ant-btn css-dev-only-do-not-override-1l6e01l ant-btn-default c1"
       type="button"
     >
       <span
