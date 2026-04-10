@@ -6,10 +6,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authn/authnstore/sqlauthnstore"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -467,7 +467,8 @@ func New(
 		tokenizer,
 		config,
 		modules.AuthDomain,
-		modules.ServiceAccount,
+		serviceAccount,
+		cloudIntegrationModule,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories

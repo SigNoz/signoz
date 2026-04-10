@@ -73,6 +73,26 @@ func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID
 	return accounts, nil
 }
 
+func (store *store) CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (int, error) {
+	storable := new(cloudintegrationtypes.StorableCloudIntegration)
+	count, err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("removed_at IS NULL").
+		Where("account_id IS NOT NULL").
+		Where("last_agent_report IS NOT NULL").
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (store *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
 	_, err := store.
 		store.

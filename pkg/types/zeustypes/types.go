@@ -1,8 +1,9 @@
 package zeustypes
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/url"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -60,22 +61,51 @@ func NewGettableHost(data []byte) *GettableHost {
 }
 
 // GettableDeployment represents the parsed deployment info from zeus.GetDeployment.
+// NOTE: break down deployment into multiple structs if needed.
 type GettableDeployment struct {
-	Name         string
-	SignozAPIUrl string
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	State     string    `json:"state"`
+	Tier      string    `json:"tier"`
+	User      string    `json:"user"`
+	LicenseID string    `json:"license_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ClusterID string    `json:"cluster_id"`
+	Hosts     []struct {
+		Name      string `json:"name"`
+		IsDefault bool   `json:"is_default"`
+	} `json:"hosts"`
+	Cluster struct {
+		ID             string    `json:"id"`
+		Name           string    `json:"name"`
+		CloudProvider  string    `json:"cloud_provider"`
+		CloudAccountID string    `json:"cloud_account_id"`
+		CloudRegion    string    `json:"cloud_region"`
+		Address        string    `json:"address"`
+		Ca             string    `json:"ca"`
+		Buffer         int       `json:"buffer"`
+		CreatedAt      time.Time `json:"created_at"`
+		UpdatedAt      time.Time `json:"updated_at"`
+		RegionID       string    `json:"region_id"`
+		Region         struct {
+			ID        string    `json:"id"`
+			Name      string    `json:"name"`
+			Category  string    `json:"category"`
+			DNS       string    `json:"dns"`
+			CreatedAt time.Time `json:"created_at"`
+			UpdatedAt time.Time `json:"updated_at"`
+		} `json:"region"`
+	} `json:"cluster"`
 }
 
 // NewGettableDeployment parses raw GetDeployment bytes into a GettableDeployment.
 func NewGettableDeployment(data []byte) (*GettableDeployment, error) {
-	parsed := gjson.ParseBytes(data)
-	name := parsed.Get("name").String()
-	dns := parsed.Get("cluster.region.dns").String()
-	if name == "" || dns == "" {
-		return nil, errors.NewInternalf(errors.CodeInternal,
-			"deployment info response missing name or cluster region dns")
+	deployment := new(GettableDeployment)
+	err := json.Unmarshal(data, deployment)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to unmarshal deployment response")
 	}
-	return &GettableDeployment{
-		Name:         name,
-		SignozAPIUrl: fmt.Sprintf("https://%s.%s", name, dns),
-	}, nil
+
+	return deployment, nil
 }

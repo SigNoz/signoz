@@ -16,6 +16,9 @@ type Store interface {
 	// ListConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
 	ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
 
+	// CountConnectedAccounts returns the count of connected accounts for the org and cloud provider
+	CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) (int, error)
+
 	// CreateAccount creates a new cloud integration account
 	CreateAccount(ctx context.Context, account *StorableCloudIntegration) error
 

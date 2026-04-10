@@ -63,13 +63,6 @@ func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	var ingestionURL string
-
-	globalConfig := module.global.GetConfig(ctx)
-	if globalConfig != nil {
-		ingestionURL = globalConfig.IngestionURL
-	}
-
 	// get deployment details from zeus, ignore error
 	respBytes, _ := module.zeus.GetDeployment(ctx, license.Key)
 
@@ -79,7 +72,7 @@ func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer
 		// parse deployment details, ignore error, if client is asking api url every time check for possible error
 		deployment, _ := zeustypes.NewGettableDeployment(respBytes)
 		if deployment != nil {
-			signozAPIURL = deployment.SignozAPIUrl
+			signozAPIURL, _ = cloudintegrationtypes.GetSigNozAPIURLFromDeployment(deployment)
 		}
 	}
 
@@ -92,7 +85,7 @@ func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer
 	return &cloudintegrationtypes.Credentials{
 		SigNozAPIURL: signozAPIURL,
 		SigNozAPIKey: apiKey,
-		IngestionURL: ingestionURL,
+		IngestionURL: module.global.GetConfig(ctx).IngestionURL,
 		IngestionKey: ingestionKey,
 	}, nil
 }
@@ -117,8 +110,7 @@ func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudi
 		return nil, err
 	}
 
-	req.Config.AddAgentVersion(module.config.Agent.Version)
-
+	req.Config.SetAgentVersion(module.config.Agent.Version)
 	return cloudProviderModule.GetConnectionArtifact(ctx, account, req)
 }
 
@@ -246,7 +238,7 @@ func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, 
 	return module.store.RemoveAccount(ctx, orgID, accountID, provider)
 }
 
-func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
+func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -263,8 +255,8 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 	}
 
 	enabledServiceIDs := map[string]bool{}
-	if integrationID != nil {
-		storedServices, err := module.store.ListServices(ctx, *integrationID)
+	if !integrationID.IsZero() {
+		storedServices, err := module.store.ListServices(ctx, integrationID)
 		if err != nil {
 			return nil, err
 		}
@@ -289,7 +281,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 	return resp, nil
 }
 
-func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Service, error) {
+func (module *module) GetService(ctx context.Context, orgID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType, cloudIntegrationID valuer.UUID) (*cloudintegrationtypes.Service, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -307,8 +299,8 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 
 	var integrationService *cloudintegrationtypes.CloudIntegrationService
 
-	if integrationID != nil {
-		storedService, err := module.store.GetServiceByServiceID(ctx, *integrationID, serviceID)
+	if !cloudIntegrationID.IsZero() {
+		storedService, err := module.store.GetServiceByServiceID(ctx, cloudIntegrationID, serviceID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
@@ -407,6 +399,22 @@ func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]
 	}
 
 	return module.listDashboards(ctx, orgID)
+}
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	stats := make(map[string]any)
+
+	// get connected accounts for AWS
+	awsAccountsCount, err := module.store.CountConnectedAccounts(ctx, orgID, cloudintegrationtypes.CloudProviderTypeAWS)
+	if err == nil {
+		stats["cloudintegration.aws.connectedaccounts.count"] = awsAccountsCount
+	}
+
+	// NOTE: not adding stats for services for now.
+
+	// TODO: add more cloud providers when supported
+
+	return stats, nil
 }
 
 func (module *module) getCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {

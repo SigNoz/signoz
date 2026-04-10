@@ -35,8 +35,7 @@ func (handler *handler) GetConnectionCredentials(rw http.ResponseWriter, r *http
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -61,22 +60,15 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	postableAccount := new(cloudintegrationtypes.PostableAccount)
-
 	err = binding.JSON.BindBody(r.Body, postableAccount)
 	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := postableAccount.Validate(provider); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -100,10 +92,7 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, &cloudintegrationtypes.GettableAccountWithConnectionArtifact{
-		ID:                 account.ID,
-		ConnectionArtifact: connectionArtifact,
-	})
+	render.Success(rw, http.StatusCreated, cloudintegrationtypes.NewGettableAccountWithConnectionArtifact(account, connectionArtifact))
 }
 
 func (handler *handler) GetAccount(rw http.ResponseWriter, r *http.Request) {
@@ -116,15 +105,13 @@ func (handler *handler) GetAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	accountIDString := mux.Vars(r)["id"]
-	accountID, err := valuer.NewUUID(accountIDString)
+	accountID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -149,8 +136,7 @@ func (handler *handler) ListAccounts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -162,9 +148,7 @@ func (handler *handler) ListAccounts(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, &cloudintegrationtypes.GettableAccounts{
-		Accounts: accounts,
-	})
+	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAccounts(accounts))
 }
 
 func (handler *handler) UpdateAccount(rw http.ResponseWriter, r *http.Request) {
@@ -177,15 +161,13 @@ func (handler *handler) UpdateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	id := mux.Vars(r)["id"]
-	cloudIntegrationID, err := valuer.NewUUID(id)
+	cloudIntegrationID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -197,18 +179,24 @@ func (handler *handler) UpdateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := req.Validate(provider); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	account, err := handler.module.GetAccount(ctx, valuer.MustNewUUID(claims.OrgID), cloudIntegrationID, provider)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	if err := account.Update(req.Config); err != nil {
+	if account.IsRemoved() {
+		render.Error(rw, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration account is removed"))
+		return
+	}
+
+	accountConfig, err := cloudintegrationtypes.NewAccountConfigFromUpdatable(provider, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := account.Update(provider, accountConfig); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -232,15 +220,13 @@ func (handler *handler) DisconnectAccount(rw http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	id := mux.Vars(r)["id"]
-	cloudIntegrationID, err := valuer.NewUUID(id)
+	cloudIntegrationID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -265,28 +251,22 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	var integrationID *valuer.UUID
-	if idStr := r.URL.Query().Get("cloud_integration_id"); idStr != "" {
-		id, err := valuer.NewUUID(idStr)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		integrationID = &id
+	queryParams := new(cloudintegrationtypes.ListServicesMetadataParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), queryParams); err != nil {
+		render.Error(rw, err)
+		return
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-
 	// check if integration account exists and is not removed.
-	if integrationID != nil {
-		account, err := handler.module.GetAccount(ctx, orgID, *integrationID, provider)
+	if !queryParams.CloudIntegrationID.IsZero() {
+		account, err := handler.module.GetAccount(ctx, orgID, queryParams.CloudIntegrationID, provider)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -298,15 +278,13 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 		}
 	}
 
-	services, err := handler.module.ListServicesMetadata(ctx, orgID, provider, integrationID)
+	services, err := handler.module.ListServicesMetadata(ctx, orgID, provider, queryParams.CloudIntegrationID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, &cloudintegrationtypes.GettableServicesMetadata{
-		Services: services,
-	})
+	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableServicesMetadata(services))
 }
 
 func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
@@ -319,33 +297,27 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceIDString := mux.Vars(r)["service_id"]
-	serviceID, err := cloudintegrationtypes.NewServiceID(provider, serviceIDString)
+	serviceID, err := cloudintegrationtypes.NewServiceID(provider, mux.Vars(r)["service_id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	var integrationID *valuer.UUID
-	if idStr := r.URL.Query().Get("cloud_integration_id"); idStr != "" {
-		id, err := valuer.NewUUID(idStr)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
-		integrationID = &id
+	queryParams := new(cloudintegrationtypes.GetServiceParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), queryParams); err != nil {
+		render.Error(rw, err)
+		return
 	}
 
 	// check if integration account exists and is not removed.
-	if integrationID != nil {
-		account, err := handler.module.GetAccount(ctx, valuer.MustNewUUID(claims.OrgID), *integrationID, provider)
+	if !queryParams.CloudIntegrationID.IsZero() {
+		account, err := handler.module.GetAccount(ctx, valuer.MustNewUUID(claims.OrgID), queryParams.CloudIntegrationID, provider)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -357,7 +329,7 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	svc, err := handler.module.GetService(ctx, valuer.MustNewUUID(claims.OrgID), integrationID, serviceID, provider)
+	svc, err := handler.module.GetService(ctx, valuer.MustNewUUID(claims.OrgID), serviceID, provider, queryParams.CloudIntegrationID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -376,15 +348,13 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	serviceIDString := mux.Vars(r)["service_id"]
-	serviceID, err := cloudintegrationtypes.NewServiceID(provider, serviceIDString)
+	serviceID, err := cloudintegrationtypes.NewServiceID(provider, mux.Vars(r)["service_id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -392,11 +362,6 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 
 	req := new(cloudintegrationtypes.UpdatableService)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := req.Validate(provider, serviceID); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -421,17 +386,23 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	svc, err := handler.module.GetService(ctx, orgID, &cloudIntegrationID, serviceID, provider)
+	svc, err := handler.module.GetService(ctx, orgID, serviceID, provider, cloudIntegrationID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
+	// update or create service
 	if svc.CloudIntegrationService == nil {
 		cloudIntegrationService := cloudintegrationtypes.NewCloudIntegrationService(serviceID, cloudIntegrationID, req.Config)
 		err = handler.module.CreateService(ctx, orgID, cloudIntegrationService, provider)
 	} else {
-		svc.CloudIntegrationService.Update(req.Config)
+		err = svc.CloudIntegrationService.Update(provider, serviceID, req.Config)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
 		err = handler.module.UpdateService(ctx, orgID, svc.CloudIntegrationService, provider)
 	}
 	if err != nil {
@@ -452,8 +423,7 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	providerString := mux.Vars(r)["cloud_provider"]
-	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	provider, err := cloudintegrationtypes.NewCloudProvider(mux.Vars(r)["cloud_provider"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -461,11 +431,6 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 
 	req := new(cloudintegrationtypes.PostableAgentCheckIn)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if err := req.Validate(); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -482,8 +447,7 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 		req.ProviderAccountID = req.AccountID
 	}
 
-	orgID := valuer.MustNewUUID(claims.OrgID)
-	resp, err := handler.module.AgentCheckIn(ctx, orgID, provider, &req.AgentCheckInRequest)
+	resp, err := handler.module.AgentCheckIn(ctx, valuer.MustNewUUID(claims.OrgID), provider, &req.AgentCheckInRequest)
 	if err != nil {
 		render.Error(rw, err)
 		return

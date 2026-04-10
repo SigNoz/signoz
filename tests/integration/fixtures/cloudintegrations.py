@@ -121,7 +121,7 @@ def create_cloud_integration_account(
         )
 
         assert (
-            response.status_code == HTTPStatus.OK
+            response.status_code == HTTPStatus.CREATED
         ), f"Failed to create test account: {response.status_code}: {response.text}"
 
         data = response.json()["data"]

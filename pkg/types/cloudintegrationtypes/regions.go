@@ -98,3 +98,19 @@ var ValidAzureRegions = map[string]struct{}{
 	"westus2":            {}, // West US 2
 	"westus3":            {}, // West US 3
 }
+
+func validateAWSRegion(region string) error {
+	_, ok := ValidAWSRegions[region]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid AWS region: %s", region)
+	}
+	return nil
+}
+
+func validateAzureRegion(region string) error {
+	_, ok := ValidAzureRegions[region]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid Azure region: %s", region)
+	}
+	return nil
+}

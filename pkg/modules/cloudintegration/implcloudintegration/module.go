@@ -44,11 +44,11 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "create service is not supported")
 }
 
-func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Service, error) {
+func (module *module) GetService(ctx context.Context, orgID valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) (*cloudintegrationtypes.Service, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get service is not supported")
 }
 
-func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
+func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list services metadata is not supported")
 }
 
@@ -70,4 +70,8 @@ func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, i
 
 func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list dashboards is not supported")
+}
+
+func (module *module) Collect(context.Context, valuer.UUID) (map[string]any, error) {
+	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "stats collection is not supported")
 }

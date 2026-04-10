@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	citypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -32,11 +33,11 @@ type Module interface {
 
 	// ListServicesMetadata returns the list of supported services' metadata for a cloud provider with optional filtering for a specific integration
 	// This just returns a summary of the service and not the whole service definition.
-	ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, integrationID *valuer.UUID) ([]*citypes.ServiceMetadata, error)
+	ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, integrationID valuer.UUID) ([]*citypes.ServiceMetadata, error)
 
 	// GetService returns service definition details for a serviceID. This optionally returns the service config
 	// for integrationID if provided.
-	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID citypes.ServiceID, provider citypes.CloudProviderType) (*citypes.Service, error)
+	GetService(ctx context.Context, orgID valuer.UUID, serviceID citypes.ServiceID, provider citypes.CloudProviderType, integrationID valuer.UUID) (*citypes.Service, error)
 
 	// CreateService creates a new service for a cloud integration account.
 	CreateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService, provider citypes.CloudProviderType) error
@@ -55,6 +56,8 @@ type Module interface {
 	// ListDashboards returns list of dashboards across all connected cloud integration accounts
 	// for enabled services in the org. This list gets added to dashboard list page
 	ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
+
+	statsreporter.StatsCollector
 }
 
 type CloudProviderModule interface {
