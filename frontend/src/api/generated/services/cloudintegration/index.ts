@@ -28,7 +28,7 @@ import type {
 	CloudintegrationtypesPostableAgentCheckInDTO,
 	CloudintegrationtypesUpdatableAccountDTO,
 	CloudintegrationtypesUpdatableServiceDTO,
-	CreateAccount200,
+	CreateAccount201,
 	CreateAccountPathParameters,
 	DisconnectAccountPathParameters,
 	GetAccount200,
@@ -36,10 +36,12 @@ import type {
 	GetConnectionCredentials200,
 	GetConnectionCredentialsPathParameters,
 	GetService200,
+	GetServiceParams,
 	GetServicePathParameters,
 	ListAccounts200,
 	ListAccountsPathParameters,
 	ListServicesMetadata200,
+	ListServicesMetadataParams,
 	ListServicesMetadataPathParameters,
 	RenderErrorResponseDTO,
 	UpdateAccountPathParameters,
@@ -260,7 +262,7 @@ export const createAccount = (
 	cloudintegrationtypesPostableAccountDTO: BodyType<CloudintegrationtypesPostableAccountDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAccount200>({
+	return GeneratedAPIInstance<CreateAccount201>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -940,19 +942,25 @@ export const invalidateGetConnectionCredentials = async (
  */
 export const listServicesMetadata = (
 	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<ListServicesMetadata200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/services`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getListServicesMetadataQueryKey = ({
-	cloudProvider,
-}: ListServicesMetadataPathParameters) => {
-	return [`/api/v1/cloud_integrations/${cloudProvider}/services`] as const;
+export const getListServicesMetadataQueryKey = (
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/services`,
+		...(params ? [params] : []),
+	] as const;
 };
 
 export const getListServicesMetadataQueryOptions = <
@@ -960,6 +968,7 @@ export const getListServicesMetadataQueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -971,11 +980,12 @@ export const getListServicesMetadataQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getListServicesMetadataQueryKey({ cloudProvider });
+		queryOptions?.queryKey ??
+		getListServicesMetadataQueryKey({ cloudProvider }, params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listServicesMetadata>>
-	> = ({ signal }) => listServicesMetadata({ cloudProvider }, signal);
+	> = ({ signal }) => listServicesMetadata({ cloudProvider }, params, signal);
 
 	return {
 		queryKey,
@@ -1003,6 +1013,7 @@ export function useListServicesMetadata<
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof listServicesMetadata>>,
@@ -1013,6 +1024,7 @@ export function useListServicesMetadata<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getListServicesMetadataQueryOptions(
 		{ cloudProvider },
+		params,
 		options,
 	);
 
@@ -1031,10 +1043,11 @@ export function useListServicesMetadata<
 export const invalidateListServicesMetadata = async (
 	queryClient: QueryClient,
 	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }) },
+		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }, params) },
 		options,
 	);
 
@@ -1047,21 +1060,24 @@ export const invalidateListServicesMetadata = async (
  */
 export const getService = (
 	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetService200>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getGetServiceQueryKey = ({
-	cloudProvider,
-	serviceId,
-}: GetServicePathParameters) => {
+export const getGetServiceQueryKey = (
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+) => {
 	return [
 		`/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
+		...(params ? [params] : []),
 	] as const;
 };
 
@@ -1070,6 +1086,7 @@ export const getGetServiceQueryOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getService>>,
@@ -1081,11 +1098,12 @@ export const getGetServiceQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getGetServiceQueryKey({ cloudProvider, serviceId });
+		queryOptions?.queryKey ??
+		getGetServiceQueryKey({ cloudProvider, serviceId }, params);
 
 	const queryFn: QueryFunction<Awaited<ReturnType<typeof getService>>> = ({
 		signal,
-	}) => getService({ cloudProvider, serviceId }, signal);
+	}) => getService({ cloudProvider, serviceId }, params, signal);
 
 	return {
 		queryKey,
@@ -1111,6 +1129,7 @@ export function useGetService<
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof getService>>,
@@ -1121,6 +1140,7 @@ export function useGetService<
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 	const queryOptions = getGetServiceQueryOptions(
 		{ cloudProvider, serviceId },
+		params,
 		options,
 	);
 
@@ -1139,10 +1159,11 @@ export function useGetService<
 export const invalidateGetService = async (
 	queryClient: QueryClient,
 	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }) },
+		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }, params) },
 		options,
 	);
 
