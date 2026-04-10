@@ -3589,7 +3589,7 @@ export type ListAccounts200 = {
 export type CreateAccountPathParameters = {
 	cloudProvider: string;
 };
-export type CreateAccount200 = {
+export type CreateAccount201 = {
 	data: CloudintegrationtypesGettableAccountWithConnectionArtifactDTO;
 	/**
 	 * @type string

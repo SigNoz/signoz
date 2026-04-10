@@ -41,7 +41,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			RequestContentType:  "application/json",
 			Response:            new(citypes.GettableAccountWithConnectionArtifact),
 			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
+			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),

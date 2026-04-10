@@ -28,7 +28,7 @@ import type {
 	CloudintegrationtypesPostableAgentCheckInDTO,
 	CloudintegrationtypesUpdatableAccountDTO,
 	CloudintegrationtypesUpdatableServiceDTO,
-	CreateAccount200,
+	CreateAccount201,
 	CreateAccountPathParameters,
 	DisconnectAccountPathParameters,
 	GetAccount200,
@@ -262,7 +262,7 @@ export const createAccount = (
 	cloudintegrationtypesPostableAccountDTO: BodyType<CloudintegrationtypesPostableAccountDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAccount200>({
+	return GeneratedAPIInstance<CreateAccount201>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
