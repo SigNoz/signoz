@@ -1,5 +1,169 @@
 components:
   schemas:
+    Aio11YtypesCacheMode:
+      enum:
+      - subtract
+      - additive
+      - unknown
+      nullable: true
+      type: string
+    Aio11YtypesGettablePricingRule:
+      properties:
+        cache_mode:
+          $ref: '#/components/schemas/Aio11YtypesCacheMode'
+        cost_cache_read:
+          format: double
+          type: number
+        cost_cache_write:
+          format: double
+          type: number
+        cost_input:
+          format: double
+          type: number
+        cost_output:
+          format: double
+          type: number
+        created_at:
+          format: date-time
+          type: string
+        created_by:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        is_override:
+          type: boolean
+        model_name:
+          type: string
+        model_pattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        synced_at:
+          format: date-time
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/Aio11YtypesUnit'
+        updated_at:
+          format: date-time
+          type: string
+        updated_by:
+          type: string
+      required:
+      - id
+      - model_name
+      - model_pattern
+      - unit
+      - cache_mode
+      - cost_input
+      - cost_output
+      - cost_cache_read
+      - cost_cache_write
+      - is_override
+      - enabled
+      - created_at
+      - updated_at
+      - created_by
+      - updated_by
+      type: object
+    Aio11YtypesListPricingRulesResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Aio11YtypesGettablePricingRule'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - total
+      - offset
+      - limit
+      type: object
+    Aio11YtypesPostablePricingRule:
+      properties:
+        cache_mode:
+          $ref: '#/components/schemas/Aio11YtypesCacheMode'
+        cost_cache_read:
+          format: double
+          type: number
+        cost_cache_write:
+          format: double
+          type: number
+        cost_input:
+          format: double
+          type: number
+        cost_output:
+          format: double
+          type: number
+        enabled:
+          type: boolean
+        model_name:
+          type: string
+        model_pattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        unit:
+          $ref: '#/components/schemas/Aio11YtypesUnit'
+      required:
+      - model_name
+      - model_pattern
+      - unit
+      - cache_mode
+      - cost_input
+      - cost_output
+      - cost_cache_read
+      - cost_cache_write
+      - enabled
+      type: object
+    Aio11YtypesUnit:
+      enum:
+      - per_million_tokens
+      - per_token
+      nullable: true
+      type: string
+    Aio11YtypesUpdatablePricingRule:
+      properties:
+        cache_mode:
+          $ref: '#/components/schemas/Aio11YtypesCacheMode'
+        cost_cache_read:
+          nullable: true
+          type: number
+        cost_cache_write:
+          nullable: true
+          type: number
+        cost_input:
+          nullable: true
+          type: number
+        cost_output:
+          nullable: true
+          type: number
+        enabled:
+          nullable: true
+          type: boolean
+        is_override:
+          nullable: true
+          type: boolean
+        model_name:
+          nullable: true
+          type: string
+        model_pattern:
+          items:
+            type: string
+          type: array
+        unit:
+          $ref: '#/components/schemas/Aio11YtypesUnit'
+      type: object
     AuthtypesAttributeMapping:
       properties:
         email:
@@ -3058,6 +3222,303 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/ai-o11y/pricing/rules:
+    get:
+      deprecated: false
+      description: Returns all LLM pricing rules for the authenticated org, with pagination.
+      operationId: ListPricingRules
+      parameters:
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Aio11YtypesListPricingRulesResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List pricing rules
+      tags:
+      - ai-o11y
+    post:
+      deprecated: false
+      description: Creates a new LLM pricing rule for the org. Always sets is_override
+        = true.
+      operationId: CreatePricingRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aio11YtypesPostablePricingRule'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Aio11YtypesGettablePricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a pricing rule
+      tags:
+      - ai-o11y
+  /api/v1/ai-o11y/pricing/rules/{id}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a pricing rule. If auto-synced, it will be recreated
+        on the next sync cycle.
+      operationId: DeletePricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a pricing rule
+      tags:
+      - ai-o11y
+    get:
+      deprecated: false
+      description: Returns a single LLM pricing rule by ID.
+      operationId: GetPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Aio11YtypesGettablePricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a pricing rule
+      tags:
+      - ai-o11y
+    put:
+      deprecated: false
+      description: Partially updates an existing pricing rule. Changing any cost field
+        sets is_override = true.
+      operationId: UpdatePricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aio11YtypesUpdatablePricingRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Aio11YtypesGettablePricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a pricing rule
+      tags:
+      - ai-o11y
   /api/v1/authz/check:
     post:
       deprecated: false
