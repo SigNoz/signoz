@@ -103,6 +103,14 @@ function Wrapper({
 }
 
 describe('CustomTimePicker', () => {
+	it('disables browser autocomplete for time input', () => {
+		render(<Wrapper />);
+
+		const input = screen.getByRole('textbox');
+
+		expect(input).toHaveAttribute('autocomplete', 'off');
+	});
+
 	it('does not close or reset when clicking input while open', () => {
 		render(<Wrapper />);
 

@@ -622,6 +622,7 @@ function CustomTimePicker({
 						onChange={handleInputChange}
 						onPressEnter={handleInputPressEnter}
 						onBlur={handleInputBlur}
+						autoComplete="off"
 						data-1p-ignore
 						prefix={getInputPrefix()}
 						suffix={
