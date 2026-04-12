@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
+	"github.com/SigNoz/signoz/pkg/modules/aio11ymapping"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -57,6 +58,7 @@ type provider struct {
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
+	aio11yMappingHandler    aio11ymapping.Handler
 }
 
 func NewFactory(
@@ -83,6 +85,7 @@ func NewFactory(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	aio11yMappingHandler    aio11ymapping.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -112,6 +115,7 @@ func NewFactory(
 			factoryHandler,
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
+			aio11yMappingHandler,
 		)
 	})
 }
@@ -143,6 +147,7 @@ func newProvider(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	aio11yMappingHandler    aio11ymapping.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -172,6 +177,7 @@ func newProvider(
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
+		aio11yMappingHandler:    aio11yMappingHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -269,6 +275,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRuleStateHistoryRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addAIO11yMappingRoutes(router); err != nil {
 		return err
 	}
 
