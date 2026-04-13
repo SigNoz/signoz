@@ -440,15 +440,23 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	}
 }
 
-// ComparisonOperator: ">" | "<" | ">=" | "<=" | "=".
+// ComparisonOperator: ">" | "<" | ">=" | "<=" | "=" | "above" | "below" | "above_or_equal" | "below_or_equal" | "equal" | "not_equal".
+// We don't use ruletypes.CompareOperator here because it uses valuer.String
+// which accepts any string at unmarshal time, bypassing validation.
 type ComparisonOperator string
 
 const (
-	ComparisonOperatorGT  ComparisonOperator = ">"
-	ComparisonOperatorLT  ComparisonOperator = "<"
-	ComparisonOperatorGTE ComparisonOperator = ">="
-	ComparisonOperatorLTE ComparisonOperator = "<="
-	ComparisonOperatorEQ  ComparisonOperator = "="
+	ComparisonOperatorGT             ComparisonOperator = ">"
+	ComparisonOperatorLT             ComparisonOperator = "<"
+	ComparisonOperatorGTE            ComparisonOperator = ">="
+	ComparisonOperatorLTE            ComparisonOperator = "<="
+	ComparisonOperatorEQ             ComparisonOperator = "="
+	ComparisonOperatorAbove          ComparisonOperator = "above"
+	ComparisonOperatorBelow          ComparisonOperator = "below"
+	ComparisonOperatorAboveOrEqual   ComparisonOperator = "above_or_equal"
+	ComparisonOperatorBelowOrEqual   ComparisonOperator = "below_or_equal"
+	ComparisonOperatorEqual          ComparisonOperator = "equal"
+	ComparisonOperatorNotEqual       ComparisonOperator = "not_equal"
 )
 
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
@@ -457,7 +465,9 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch ComparisonOperator(v) {
-	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ:
+	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
+		ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
+		ComparisonOperatorEqual, ComparisonOperatorNotEqual:
 		*o = ComparisonOperator(v)
 		return nil
 	default:
