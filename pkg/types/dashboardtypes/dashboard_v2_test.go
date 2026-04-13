@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestValidateBigExample(t *testing.T) {
@@ -357,7 +358,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			wantContain: "fill mode",
 		},
 		{
-			name: "bad spanGaps",
+			name: "bad spanGaps fillLessThan",
 			data: `{
 				"panels": {
 					"p1": {
@@ -365,14 +366,14 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoztimeseriespanel",
-								"spec": {"chartAppearance": {"spanGaps": "yes"}}
+								"spec": {"chartAppearance": {"spanGaps": {"fillLessThan": "notaduration"}}}
 							}
 						}
 					}
 				},
 				"layouts": []
 			}`,
-			wantContain: "spanGaps",
+			wantContain: "duration",
 		},
 		{
 			name: "bad time preference",
@@ -616,8 +617,8 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	if spec.ChartAppearance.FillMode.Value() != "solid" {
 		t.Fatalf("expected FillMode default solid, got %v", spec.ChartAppearance.FillMode.Value())
 	}
-	if spec.ChartAppearance.SpanGaps.Value() != true {
-		t.Fatalf("expected SpanGaps default true, got %v", spec.ChartAppearance.SpanGaps.Value())
+	if spec.ChartAppearance.SpanGaps.FillOnlyBelow != false {
+		t.Fatalf("expected SpanGaps.FillOnlyBelow default false, got %v", spec.ChartAppearance.SpanGaps.FillOnlyBelow)
 	}
 	if spec.Visualization.TimePreference.Value() != "globalTime" {
 		t.Fatalf("expected TimePreference default globalTime, got %v", spec.Visualization.TimePreference.Value())
@@ -662,6 +663,57 @@ func TestNumberPanelDefaults(t *testing.T) {
 	if spec.Thresholds[0].Format.Value() != "text" {
 		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.Value())
 	}
+}
+
+func TestSpanGaps(t *testing.T) {
+	unmarshal := func(val string) (SpanGaps, error) {
+		var sg SpanGaps
+		err := json.Unmarshal([]byte(val), &sg)
+		return sg, err
+	}
+
+	t.Run("defaults", func(t *testing.T) {
+		var sg SpanGaps
+		if sg.FillOnlyBelow != false {
+			t.Fatalf("expected FillOnlyBelow default false, got %v", sg.FillOnlyBelow)
+		}
+		if !sg.FillLessThan.IsZero() {
+			t.Fatalf("expected FillLessThan default zero, got %v", sg.FillLessThan)
+		}
+	})
+
+	t.Run("fillOnlyBelow true", func(t *testing.T) {
+		sg, err := unmarshal(`{"fillOnlyBelow": true}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !sg.FillOnlyBelow {
+			t.Fatalf("expected FillOnlyBelow true, got false")
+		}
+	})
+
+	t.Run("fillLessThan duration", func(t *testing.T) {
+		sg, err := unmarshal(`{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sg.FillOnlyBelow {
+			t.Fatalf("expected FillOnlyBelow false, got true")
+		}
+		if sg.FillLessThan.Duration() != 5*time.Minute {
+			t.Fatalf("expected FillLessThan 5m, got %v", sg.FillLessThan.Duration())
+		}
+	})
+
+	t.Run("fillLessThan compound duration", func(t *testing.T) {
+		sg, err := unmarshal(`{"fillLessThan": "1h30m"}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sg.FillLessThan.Duration() != 90*time.Minute {
+			t.Fatalf("expected FillLessThan 1h30m, got %v", sg.FillLessThan.Duration())
+		}
+	})
 }
 
 func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
