@@ -303,6 +303,78 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 			wantContain: "signal",
 		},
 		{
+			name: "bad line interpolation",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoztimeseriespanel",
+								"spec": {"chartAppearance": {"lineInterpolation": "cubic"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "line interpolation",
+		},
+		{
+			name: "bad line style",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoztimeseriespanel",
+								"spec": {"chartAppearance": {"lineStyle": "dotted"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "line style",
+		},
+		{
+			name: "bad fill mode",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoztimeseriespanel",
+								"spec": {"chartAppearance": {"fillMode": "striped"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "fill mode",
+		},
+		{
+			name: "bad spanGaps",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoztimeseriespanel",
+								"spec": {"chartAppearance": {"spanGaps": "yes"}}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "spanGaps",
+		},
+		{
 			name: "bad time preference",
 			data: `{
 				"panels": {
