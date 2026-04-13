@@ -32,6 +32,7 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 			defaultValue={dataSourceOptions[0].value}
 			options={dataSourceOptions}
 			onChange={onChange}
+			data-testid={props['data-testid']}
 			value={value}
 			style={style}
 		/>
