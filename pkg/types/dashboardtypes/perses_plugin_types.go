@@ -271,116 +271,8 @@ type TableThreshold struct {
 }
 
 // ══════════════════════════════════════════════
-// Constrained scalar types (enum validation via custom UnmarshalJSON)
+// Constrained scalar types — no default value
 // ══════════════════════════════════════════════
-
-// LineInterpolation: "linear" | "spline" | "stepAfter" | "stepBefore". Default is "spline".
-type LineInterpolation struct {
-	value string
-}
-
-const (
-	LineInterpolationLinear     = "linear"
-	LineInterpolationSpline     = "spline"
-	LineInterpolationStepAfter  = "stepAfter"
-	LineInterpolationStepBefore = "stepBefore"
-)
-
-func (li LineInterpolation) Value() string {
-	if li.value == "" {
-		return LineInterpolationSpline
-	}
-	return li.value
-}
-
-func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
-		li.value = v
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be linear, spline, stepAfter, or stepBefore", v)
-	}
-}
-
-func (li LineInterpolation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(li.Value())
-}
-
-// LineStyle: "solid" | "dashed". Default is "solid".
-type LineStyle struct {
-	value string
-}
-
-const (
-	LineStyleSolid  = "solid"
-	LineStyleDashed = "dashed"
-)
-
-func (ls LineStyle) Value() string {
-	if ls.value == "" {
-		return LineStyleSolid
-	}
-	return ls.value
-}
-
-func (ls *LineStyle) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case LineStyleSolid, LineStyleDashed:
-		ls.value = v
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be solid or dashed", v)
-	}
-}
-
-func (ls LineStyle) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ls.Value())
-}
-
-// FillMode: "solid" | "gradient" | "none". Default is "solid".
-type FillMode struct {
-	value string
-}
-
-const (
-	FillModeSolid    = "solid"
-	FillModeGradient = "gradient"
-	FillModeNone     = "none"
-)
-
-func (fm FillMode) Value() string {
-	if fm.value == "" {
-		return FillModeSolid
-	}
-	return fm.value
-}
-
-func (fm *FillMode) UnmarshalJSON(data []byte) error {
-	var v string
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	switch v {
-	case FillModeSolid, FillModeGradient, FillModeNone:
-		fm.value = v
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be solid, gradient, or none", v)
-	}
-}
-
-func (fm FillMode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(fm.Value())
-}
 
 // TimePreference: "globalTime" | "last5Min" | "last15Min" | "last30Min" | "last1Hr" | "last6Hr" | "last1Day" | "last3Days" | "last1Week" | "last1Month".
 type TimePreference string
@@ -489,6 +381,118 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q", v)
 	}
+}
+
+// ══════════════════════════════════════════════
+// Constrained scalar types — with default value
+// ══════════════════════════════════════════════
+
+// LineInterpolation: "linear" | "spline" | "stepAfter" | "stepBefore". Default is "spline".
+type LineInterpolation struct {
+	value string
+}
+
+const (
+	LineInterpolationLinear     = "linear"
+	LineInterpolationSpline     = "spline"
+	LineInterpolationStepAfter  = "stepAfter"
+	LineInterpolationStepBefore = "stepBefore"
+)
+
+func (li LineInterpolation) Value() string {
+	if li.value == "" {
+		return LineInterpolationSpline
+	}
+	return li.value
+}
+
+func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
+		li.value = v
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be linear, spline, stepAfter, or stepBefore", v)
+	}
+}
+
+func (li LineInterpolation) MarshalJSON() ([]byte, error) {
+	return json.Marshal(li.Value())
+}
+
+// LineStyle: "solid" | "dashed". Default is "solid".
+type LineStyle struct {
+	value string
+}
+
+const (
+	LineStyleSolid  = "solid"
+	LineStyleDashed = "dashed"
+)
+
+func (ls LineStyle) Value() string {
+	if ls.value == "" {
+		return LineStyleSolid
+	}
+	return ls.value
+}
+
+func (ls *LineStyle) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case LineStyleSolid, LineStyleDashed:
+		ls.value = v
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be solid or dashed", v)
+	}
+}
+
+func (ls LineStyle) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ls.Value())
+}
+
+// FillMode: "solid" | "gradient" | "none". Default is "solid".
+type FillMode struct {
+	value string
+}
+
+const (
+	FillModeSolid    = "solid"
+	FillModeGradient = "gradient"
+	FillModeNone     = "none"
+)
+
+func (fm FillMode) Value() string {
+	if fm.value == "" {
+		return FillModeSolid
+	}
+	return fm.value
+}
+
+func (fm *FillMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case FillModeSolid, FillModeGradient, FillModeNone:
+		fm.value = v
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be solid, gradient, or none", v)
+	}
+}
+
+func (fm FillMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fm.Value())
 }
 
 // SpanGaps: bool | number. Default is true.
