@@ -105,7 +105,7 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 	return storable, nil
 }
 
-func (store *store) GetActiveByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
+func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status serviceaccounttypes.ServiceAccountStatus) (*serviceaccounttypes.ServiceAccount, error) {
 	storable := new(serviceaccounttypes.ServiceAccount)
 
 	err := store.
@@ -114,10 +114,10 @@ func (store *store) GetActiveByID(ctx context.Context, id valuer.UUID) (*service
 		NewSelect().
 		Model(storable).
 		Where("id = ?", id).
-		Where("status = ?", serviceaccounttypes.ServiceAccountStatusActive).
+		Where("status = ?", status.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s and status: %s doesn't exist", id, status.StringValue())
 	}
 
 	return storable, nil
