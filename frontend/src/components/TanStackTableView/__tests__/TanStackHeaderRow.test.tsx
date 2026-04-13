@@ -116,7 +116,7 @@ describe('TanStackHeaderRow', () => {
 			</table>,
 		);
 		await user.click(screen.getByRole('button', { name: /column actions/i }));
-		await user.click(screen.getByText(/remove column/i));
+		await user.click(await screen.findByText(/remove column/i));
 		expect(onRemoveColumn).toHaveBeenCalledWith('name');
 	});
 

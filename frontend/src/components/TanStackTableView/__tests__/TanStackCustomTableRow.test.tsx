@@ -24,7 +24,7 @@ const virtuosoAttrs = {
 } as const;
 
 describe('TanStackCustomTableRow', () => {
-	it('renders children', () => {
+	it('renders children', async () => {
 		render(
 			<table>
 				<tbody>
@@ -38,7 +38,7 @@ describe('TanStackCustomTableRow', () => {
 				</tbody>
 			</table>,
 		);
-		expect(screen.getByText('cell')).toBeInTheDocument();
+		expect(await screen.findByText('cell')).toBeInTheDocument();
 	});
 
 	it('applies active class when isRowActive returns true', () => {

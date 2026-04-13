@@ -154,7 +154,7 @@ describe('TanStackRowCells', () => {
 		expect(screen.getByRole('cell')).toHaveTextContent('content-col-a');
 	});
 
-	it('renders expansion cell with renderExpandedRow content', () => {
+	it('renders expansion cell with renderExpandedRow content', async () => {
 		const row = {
 			original: { id: 'r1' },
 			getVisibleCells: () => [],
@@ -177,6 +177,6 @@ describe('TanStackRowCells', () => {
 				</tbody>
 			</table>,
 		);
-		expect(screen.getByText('expanded-r1')).toBeInTheDocument();
+		expect(await screen.findByText('expanded-r1')).toBeInTheDocument();
 	});
 });
