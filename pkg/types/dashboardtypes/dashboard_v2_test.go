@@ -54,7 +54,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 						"kind": "SigNozDynamicVariable",
 						"spec": {
 							"name": "service.name",
-							"source": "Metrics"
+							"signal": "metrics"
 						}
 					}
 				}
@@ -246,7 +246,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						"allowMultiple": false,
 						"plugin": {
 							"kind": "SigNozDynamicVariable",
-							"spec": {"name": 123, "source": "Metrics"}
+							"spec": {"name": 123, "signal": "metrics"}
 						}
 					}
 				}],
@@ -356,7 +356,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "SigNozTimeSeriesPanel",
-								"spec": {"formatting": {"decimalPrecision": 9}}
+								"spec": {"formatting": {"decimalPrecision": "9"}}
 							}
 						}
 					}
@@ -416,13 +416,8 @@ func TestValidateRequiredFields(t *testing.T) {
 	}{
 		{
 			name:        "DynamicVariable missing name",
-			data:        wrapVariable("SigNozDynamicVariable", `{"source": "Metrics"}`),
+			data:        wrapVariable("SigNozDynamicVariable", `{"signal": "metrics"}`),
 			wantContain: "Name",
-		},
-		{
-			name:        "DynamicVariable missing source",
-			data:        wrapVariable("SigNozDynamicVariable", `{"name": "http.method"}`),
-			wantContain: "Source",
 		},
 		{
 			name:        "QueryVariable missing queryValue",
@@ -500,7 +495,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		t.Fatalf("unmarshal spec failed: %v", err)
 	}
 
-	if spec.Formatting.DecimalPrecision.Value() != 2 {
+	if spec.Formatting.DecimalPrecision.Value() != "2" {
 		t.Fatalf("expected DecimalPrecision default 2, got %v", spec.Formatting.DecimalPrecision.Value())
 	}
 	if spec.ChartAppearance.LineInterpolation.Value() != "spline" {

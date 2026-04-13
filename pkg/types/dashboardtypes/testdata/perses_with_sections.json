@@ -24,7 +24,7 @@
                     "spec": {
                         "formatting": {
                             "unit": "s",
-                            "decimalPrecision": 2
+                            "decimalPrecision": "2"
                         }
                     }
                 },
@@ -69,7 +69,7 @@
                         },
                         "formatting": {
                             "unit": "recommendations",
-                            "decimalPrecision": 2
+                            "decimalPrecision": "2"
                         },
                         "chartAppearance": {
                             "lineInterpolation": "spline",

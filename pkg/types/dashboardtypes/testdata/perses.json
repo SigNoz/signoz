@@ -28,7 +28,7 @@
                     "kind": "SigNozDynamicVariable",
                     "spec": {
                         "name": "service.name",
-                        "source": "Metrics"
+                        "signal": "metrics"
                     }
                 }
             }
@@ -100,7 +100,7 @@
                         },
                         "formatting": {
                             "unit": "By",
-                            "decimalPrecision": 3
+                            "decimalPrecision": "3"
                         },
                         "axes": {
                             "softMax": 800,
@@ -182,7 +182,7 @@
                             "fillSpans": true
                         },
                         "formatting": {
-                            "decimalPrecision": 1
+                            "decimalPrecision": "1"
                         },
                         "thresholds": [
                             {
@@ -316,7 +316,7 @@
                     "spec": {
                         "formatting": {
                             "unit": "none",
-                            "decimalPrecision": 1
+                            "decimalPrecision": "1"
                         },
                         "thresholds": [
                             {
@@ -371,7 +371,7 @@
                     "spec": {
                         "formatting": {
                             "unit": "none",
-                            "decimalPrecision": 1
+                            "decimalPrecision": "1"
                         }
                     }
                 },
@@ -409,7 +409,7 @@
                     "kind": "SigNozPieChartPanel",
                     "spec": {
                         "formatting": {
-                            "decimalPrecision": 1
+                            "decimalPrecision": "1"
                         },
                         "legend": {
                             "customColors": {

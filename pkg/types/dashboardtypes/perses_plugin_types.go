@@ -500,40 +500,39 @@ func (sg SpanGaps) MarshalJSON() ([]byte, error) {
 	return json.Marshal(sg.Value())
 }
 
-// PrecisionOption: 0 | 1 | 2 | 3 | 4 | "full". Default is 2.
+// PrecisionOption: "0" | "1" | "2" | "3" | "4" | "full". Default is "2".
 type PrecisionOption struct {
-	value any
+	value string
 }
 
-const PrecisionOptionFull = "full"
+const (
+	PrecisionOption0    = "0"
+	PrecisionOption1    = "1"
+	PrecisionOption2    = "2"
+	PrecisionOption3    = "3"
+	PrecisionOption4    = "4"
+	PrecisionOptionFull = "full"
+)
 
-func (p PrecisionOption) Value() any {
-	if p.value == nil {
-		return 2
+func (p PrecisionOption) Value() string {
+	if p.value == "" {
+		return PrecisionOption2
 	}
 	return p.value
 }
 
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err == nil {
-		if s != PrecisionOptionFull {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: string value must be %q", s, PrecisionOptionFull)
-		}
-		p.value = s
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	switch v {
+	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
+		p.value = v
 		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be 0, 1, 2, 3, 4, or full", v)
 	}
-	var n int
-	if err := json.Unmarshal(data, &n); err == nil {
-		switch n {
-		case 0, 1, 2, 3, 4:
-			p.value = n
-			return nil
-		default:
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be 0, 1, 2, 3, or 4", n)
-		}
-	}
-	return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option: must be an int (0-4) or \"full\"")
 }
 
 func (p PrecisionOption) MarshalJSON() ([]byte, error) {
