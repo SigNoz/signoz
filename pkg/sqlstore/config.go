@@ -41,7 +41,7 @@ type ConnectionConfig struct {
 	MaxOpenConns int `mapstructure:"max_open_conns"`
 
 	// MaxConnLifetime is the maximum amount of time a connection may be reused.
-	// If conn_max_lifetime == 0, connections are not closed due to a connection's age.
+	// If max_conn_lifetime == 0, connections are not closed due to a connection's age.
 	MaxConnLifetime time.Duration `mapstructure:"max_conn_lifetime"`
 }
 
