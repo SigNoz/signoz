@@ -218,7 +218,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		if err != nil {
 			return err
 		}
-		// not possible to reach here since  but still adding a check.
+		// not possible for whereClause to be nil here but still adding a check.
 		if whereClause == nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid predicate argument for %q: %q", name, origPred)
 		}
