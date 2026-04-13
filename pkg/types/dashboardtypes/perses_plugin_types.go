@@ -23,9 +23,9 @@ const (
 
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
-	// source. This could be extended to a richer selector in the future.
+	// signal. This could be extended to a richer selector in the future.
 	Name   string `json:"name" validate:"required" required:"true"`
-	Source string `json:"source" validate:"required" required:"true"`
+	Signal string `json:"signal"`
 }
 
 type QueryVariableSpec struct {
