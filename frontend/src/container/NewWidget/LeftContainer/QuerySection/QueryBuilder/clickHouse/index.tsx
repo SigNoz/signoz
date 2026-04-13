@@ -7,6 +7,8 @@ import DOCLINKS from 'utils/docLinks';
 import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
 
+import './ClickHouse.styles.scss';
+
 function ClickHouseQueryContainer(): JSX.Element | null {
 	const { currentQuery, addNewQueryItem } = useQueryBuilder();
 	const addQueryHandler = (): void => {
@@ -15,7 +17,7 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 
 	return (
 		<>
-			<div style={{ margin: '8px 8px 16px 16px' }}>
+			<div className="info-banner-wrapper">
 				<Callout
 					type="info"
 					showIcon
