@@ -39,7 +39,7 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "x/signoz/forwarder",
             "filterPattern": ""
