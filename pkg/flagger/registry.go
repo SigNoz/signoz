@@ -3,9 +3,9 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval  = featuretypes.MustNewName("kafka_span_eval")
-	FeatureHideRootUser   = featuretypes.MustNewName("hide_root_user")
+	FeatureUseSpanMetrics    = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval     = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
 )
 
