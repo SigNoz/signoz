@@ -3309,7 +3309,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CloudintegrationtypesPostableAccount'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -3322,7 +3322,7 @@ paths:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "401":
           content:
             application/json:
@@ -3683,6 +3683,11 @@ paths:
         provider
       operationId: ListServicesMetadata
       parameters:
+      - in: query
+        name: cloud_integration_id
+        required: false
+        schema:
+          type: string
       - in: path
         name: cloud_provider
         required: true
@@ -3735,6 +3740,11 @@ paths:
       description: This endpoint gets a service for the specified cloud provider
       operationId: GetService
       parameters:
+      - in: query
+        name: cloud_integration_id
+        required: false
+        schema:
+          type: string
       - in: path
         name: cloud_provider
         required: true

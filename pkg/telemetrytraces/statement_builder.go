@@ -49,6 +49,7 @@ func NewTraceQueryStatementBuilder(
 		DBName,
 		TracesResourceV3TableName,
 		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		nil,
 		nil,
