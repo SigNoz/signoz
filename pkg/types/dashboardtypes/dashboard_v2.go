@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
+	"github.com/perses/perses/pkg/model/api/v1/dashboard"
 )
 
 // StorableDashboardDataV2 wraps v1.DashboardSpec (Perses) with additional SigNoz-specific fields.
@@ -103,16 +104,8 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 		}
 	}
 
-	// Validate variable plugins (only ListVariables have plugins; TextVariables do not).
 	for i, v := range d.Variables {
-		plugin, err := extractPluginFromVariable(v)
-		if err != nil {
-			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "spec.variables[%d]", i)
-		}
-		if plugin == nil {
-			continue
-		}
-		if err := validateVariablePlugin(*plugin, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
+		if err := validateVariablePlugin(v, fmt.Sprintf("spec.variables[%d]", i)); err != nil {
 			return err
 		}
 	}
@@ -151,13 +144,22 @@ func validateDatasourcePlugin(plugin common.Plugin, path string) error {
 	return validatePluginSpec(plugin, factory, path)
 }
 
-func validateVariablePlugin(plugin common.Plugin, path string) error {
-	factory, ok := variablePluginSpecs[VariablePluginKind{valuer.NewString(plugin.Kind)}]
-	if !ok {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown variable plugin kind %q; allowed values: %v", path, plugin.Kind, VariablePluginKind{}.Enum())
+func validateVariablePlugin(v dashboard.Variable, path string) error {
+	switch spec := v.Spec.(type) {
+	case *dashboard.ListVariableSpec:
+		pluginPath := path + ".spec.plugin"
+		factory, ok := variablePluginSpecs[VariablePluginKind{valuer.NewString(spec.Plugin.Kind)}]
+		if !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+				"%s: unknown variable plugin kind %q; allowed values: %v", pluginPath, spec.Plugin.Kind, VariablePluginKind{}.Enum())
+		}
+		return validatePluginSpec(spec.Plugin, factory, pluginPath)
+	case *dashboard.TextVariableSpec:
+		// TextVariables have no plugin, nothing to validate.
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: unsupported variable kind %q", path, v.Kind)
 	}
-	return validatePluginSpec(plugin, factory, path)
 }
 
 func validatePanelPlugin(plugin common.Plugin, path string) error {
@@ -237,22 +239,4 @@ func validateQueryAllowedForPanel(plugin common.Plugin, allowed []QueryPluginKin
 		}
 	}
 	return nil
-}
-
-// extractPluginFromVariable extracts the plugin from a variable.
-// Returns nil if the variable has no plugin (e.g. TextVariable).
-func extractPluginFromVariable(v any) (*common.Plugin, error) {
-	data, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	var raw struct {
-		Spec struct {
-			Plugin *common.Plugin `json:"plugin,omitempty"`
-		} `json:"spec"`
-	}
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, err
-	}
-	return raw.Spec.Plugin, nil
 }
