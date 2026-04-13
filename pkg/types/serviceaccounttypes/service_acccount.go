@@ -23,7 +23,7 @@ var (
 	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
 	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
 	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
-	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must contain only lowercase letters (a-z), numbers (0-9), dot(.), underscores (_), and hyphens (-)")
+	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must contain only lowercase letters (a-z), numbers (0-9), underscores (_), and hyphens (-)")
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 )
 
 var (
-	serviceAccountNameRegex = regexp.MustCompile("^[a-z0-9._-]+$")
+	serviceAccountNameRegex = regexp.MustCompile("^[a-z0-9_-]+$")
 )
 
 type ServiceAccountStatus struct{ valuer.String }
