@@ -78,7 +78,7 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	useZeus := ah.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureBillingZeus, evalCtx)
+	useZeus := ah.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureGetMetersFromZeus, evalCtx)
 
 	if useZeus {
 		data, err := ah.Signoz.Zeus.GetMeters(r.Context(), licenseKey)
