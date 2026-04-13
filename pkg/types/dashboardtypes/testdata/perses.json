@@ -503,21 +503,18 @@
                 "plugin": {
                     "kind": "signozlistpanel",
                     "spec": {
-                        "selectedLogFields": [
+                        "selectFields": [
                             {
                                 "name": "timestamp",
-                                "type": "log",
-                                "dataType": ""
+                                "signal": "logs"
                             },
                             {
                                 "name": "body",
-                                "type": "log",
-                                "dataType": ""
+                                "signal": "logs"
                             },
                             {
                                 "name": "error",
-                                "type": "",
-                                "dataType": "string"
+                                "fieldDataType": "string"
                             }
                         ]
                     }

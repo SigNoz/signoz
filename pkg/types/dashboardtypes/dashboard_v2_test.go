@@ -465,8 +465,8 @@ func TestValidateRequiredFields(t *testing.T) {
 			wantContain: "ColumnName",
 		},
 		{
-			name:        "LogField missing name",
-			data:        wrapPanel("signozlistpanel", `{"selectedLogFields": [{"name": "", "type": "log", "dataType": "string"}]}`),
+			name:        "SelectField missing name",
+			data:        wrapPanel("signozlistpanel", `{"selectFields": [{"name": ""}]}`),
 			wantContain: "Name",
 		},
 	}

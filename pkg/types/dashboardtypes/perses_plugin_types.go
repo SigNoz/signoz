@@ -201,8 +201,7 @@ type HistogramBuckets struct {
 }
 
 type ListPanelSpec struct {
-	SelectedLogFields    []LogField                         `json:"selectedLogFields" validate:"dive"`
-	SelectedTracesFields []telemetrytypes.TelemetryFieldKey `json:"selectedTracesFields"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
 }
 
 type LogField struct {
