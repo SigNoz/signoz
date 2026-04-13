@@ -235,15 +235,15 @@ type Legend struct {
 }
 
 type ThresholdWithLabel struct {
-	Value float64 `json:"value"`
+	Value float64 `json:"value" validate:"required" required:"true"`
 	Unit  string  `json:"unit"`
 	Color string  `json:"color" validate:"required" required:"true"`
 	Label string  `json:"label" validate:"required" required:"true"`
 }
 
 type ComparisonThreshold struct {
-	Value    float64            `json:"value"`
-	Operator ComparisonOperator `json:"operator"`
+	Value    float64            `json:"value" validate:"required" required:"true"`
+	Operator ComparisonOperator `json:"operator" validate:"required" required:"true"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
 	Format   ThresholdFormat    `json:"format"`
@@ -446,17 +446,17 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 type ComparisonOperator string
 
 const (
-	ComparisonOperatorGT             ComparisonOperator = ">"
-	ComparisonOperatorLT             ComparisonOperator = "<"
-	ComparisonOperatorGTE            ComparisonOperator = ">="
-	ComparisonOperatorLTE            ComparisonOperator = "<="
-	ComparisonOperatorEQ             ComparisonOperator = "="
-	ComparisonOperatorAbove          ComparisonOperator = "above"
-	ComparisonOperatorBelow          ComparisonOperator = "below"
-	ComparisonOperatorAboveOrEqual   ComparisonOperator = "above_or_equal"
-	ComparisonOperatorBelowOrEqual   ComparisonOperator = "below_or_equal"
-	ComparisonOperatorEqual          ComparisonOperator = "equal"
-	ComparisonOperatorNotEqual       ComparisonOperator = "not_equal"
+	ComparisonOperatorGT           ComparisonOperator = ">"
+	ComparisonOperatorLT           ComparisonOperator = "<"
+	ComparisonOperatorGTE          ComparisonOperator = ">="
+	ComparisonOperatorLTE          ComparisonOperator = "<="
+	ComparisonOperatorEQ           ComparisonOperator = "="
+	ComparisonOperatorAbove        ComparisonOperator = "above"
+	ComparisonOperatorBelow        ComparisonOperator = "below"
+	ComparisonOperatorAboveOrEqual ComparisonOperator = "above_or_equal"
+	ComparisonOperatorBelowOrEqual ComparisonOperator = "below_or_equal"
+	ComparisonOperatorEqual        ComparisonOperator = "equal"
+	ComparisonOperatorNotEqual     ComparisonOperator = "not_equal"
 )
 
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {

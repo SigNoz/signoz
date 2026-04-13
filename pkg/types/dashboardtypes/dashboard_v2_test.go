@@ -430,6 +430,11 @@ func TestValidateRequiredFields(t *testing.T) {
 			wantContain: "CustomValue",
 		},
 		{
+			name:        "ThresholdWithLabel missing value",
+			data:        wrapPanel("SigNozTimeSeriesPanel", `{"thresholds": [{"color": "Red", "label": "high"}]}`),
+			wantContain: "Value",
+		},
+		{
 			name:        "ThresholdWithLabel missing color",
 			data:        wrapPanel("SigNozTimeSeriesPanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
 			wantContain: "Color",
@@ -438,6 +443,16 @@ func TestValidateRequiredFields(t *testing.T) {
 			name:        "ThresholdWithLabel missing label",
 			data:        wrapPanel("SigNozTimeSeriesPanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
 			wantContain: "Label",
+		},
+		{
+			name:        "ComparisonThreshold missing value",
+			data:        wrapPanel("SigNozNumberPanel", `{"thresholds": [{"operator": ">", "format": "Text", "color": "Red"}]}`),
+			wantContain: "Value",
+		},
+		{
+			name:        "ComparisonThreshold missing operator",
+			data:        wrapPanel("SigNozNumberPanel", `{"thresholds": [{"value": 100, "format": "Text", "color": "Red"}]}`),
+			wantContain: "Operator",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
