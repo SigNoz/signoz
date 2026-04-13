@@ -30,7 +30,7 @@ function OptionsMenu({
 }: LogsFormatOptionsMenuProps): JSX.Element {
 	const { maxLines, format, addColumn, fontSize } = config;
 	const [selectedItem, setSelectedItem] = useState(selectedOptionFormat);
-	const maxLinesNumber = (maxLines?.value as number) ?? 1;
+	const maxLinesNumber = (maxLines?.value as number) || 1;
 	const [maxLinesPerRow, setMaxLinesPerRow] = useState<number>(maxLinesNumber);
 	const [fontSizeValue, setFontSizeValue] = useState<FontSize>(
 		fontSize?.value || FontSize.SMALL,
@@ -65,11 +65,15 @@ function OptionsMenu({
 	};
 
 	const incrementMaxLinesPerRow = (): void => {
-		setMaxLinesPerRow((prev) => (prev < 10 ? prev + 1 : prev));
+		if (maxLinesPerRow < 10) {
+			setMaxLinesPerRow(maxLinesPerRow + 1);
+		}
 	};
 
 	const decrementMaxLinesPerRow = (): void => {
-		setMaxLinesPerRow((prev) => (prev > 1 ? prev - 1 : prev));
+		if (maxLinesPerRow > 1) {
+			setMaxLinesPerRow(maxLinesPerRow - 1);
+		}
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
@@ -96,39 +100,17 @@ function OptionsMenu({
 		}
 	};
 
-	// Sync local state → preferences when local state changes
 	useEffect(() => {
 		if (maxLinesPerRow && config && config.maxLines?.onChange) {
 			config.maxLines.onChange(maxLinesPerRow);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [maxLinesPerRow]);
 
-	// Sync preferences → local state when external value changes
-	useEffect(() => {
-		const externalValue = (maxLines?.value as number) ?? 1;
-		if (externalValue !== maxLinesPerRow) {
-			setMaxLinesPerRow(externalValue);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [maxLines?.value]);
-
-	// Sync local state → preferences when local state changes
 	useEffect(() => {
 		if (fontSizeValue && config && config.fontSize?.onChange) {
 			config.fontSize.onChange(fontSizeValue);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fontSizeValue]);
-
-	// Sync preferences → local state when external value changes
-	useEffect(() => {
-		const externalValue = fontSize?.value || FontSize.SMALL;
-		if (externalValue !== fontSizeValue) {
-			setFontSizeValue(externalValue);
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [fontSize?.value]);
 
 	function handleColumnSelection(
 		currentIndex: number,

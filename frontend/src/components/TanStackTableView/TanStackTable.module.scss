@@ -5,7 +5,9 @@
 }
 
 .tanStackTable {
-	composes: table;
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
 	table-layout: fixed;
 	width: 100%;
 	min-width: 100%;
@@ -17,55 +19,6 @@
 		min-width: 0;
 		box-sizing: border-box;
 		vertical-align: middle;
-	}
-
-	& td:global(.table-actions-cell) {
-		overflow: visible;
-	}
-
-	& td:global(.body) {
-		word-break: break-word;
-		overflow-wrap: anywhere;
-	}
-
-	& td:global(.body) > * {
-		min-width: 0;
-		max-width: 100%;
-	}
-
-	& thead th :global(.tanstack-header-title) {
-		min-width: 0;
-		flex: 1 1 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	& thead th :global(.tanstack-header-title) > * {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-		max-width: 100%;
-	}
-
-	& td:global(.logs-table-filler-cell),
-	& th:global(.logs-table-filler-header) {
-		padding: 0 !important;
-		min-width: 0;
-		border-left: none;
-	}
-
-	& th:global(.logs-table-actions-header) {
-		position: sticky;
-		right: 0;
-		z-index: 2;
-		width: 0 !important;
-		min-width: 0 !important;
-		max-width: 0 !important;
-		padding: 0 !important;
-		overflow: visible;
-		white-space: nowrap;
-		border-left: none;
 	}
 }
 
@@ -95,17 +48,6 @@
 	transform: translateY(-50%);
 	margin: 0;
 	z-index: 5;
-	// Hidden by default, shown on row hover via CSS
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 80ms linear;
-}
-
-// Show row actions on hover or when row is active
-.tableRow:hover .tableViewRowActions,
-.tableRowActive .tableViewRowActions {
-	opacity: 1;
-	pointer-events: auto;
 }
 
 .tableCell {
@@ -116,53 +58,15 @@
 	font-size: var(--tanstack-plain-cell-font-size, 14px);
 	line-height: var(--tanstack-plain-cell-line-height, 18px);
 	color: var(--l2-foreground);
-
-	&:global(.state-indicator) {
-		padding: 0 0 0 8px;
-		width: 1%;
-	}
-
-	&:global(.timestamp):not([data-single-column]) {
-		width: 10%;
-	}
-
-	&:global(.timestamp)[data-single-column] {
-		width: 100%;
-	}
-
-	&:global(.table-actions-cell) {
-		position: sticky;
-		right: 0;
-		z-index: 2;
-		width: 0;
-		min-width: 0;
-		max-width: 0;
-		padding: 0 !important;
-		white-space: nowrap;
-		overflow: visible;
-		background-color: inherit;
-	}
 }
 
 .tableRow {
 	cursor: pointer;
 	position: relative;
 
-	:global(.log-line-action-buttons) {
-		display: flex;
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 80ms linear;
-	}
-
 	&:hover {
 		.tableCell {
 			background-color: var(--row-hover-bg) !important;
-		}
-
-		:global(.log-line-action-buttons) {
-			opacity: 1;
-			pointer-events: auto;
 		}
 	}
 }
@@ -170,11 +74,6 @@
 .tableRowActive {
 	td {
 		background-color: var(--row-active-bg) !important;
-	}
-
-	:global(.log-line-action-buttons) {
-		opacity: 1;
-		pointer-events: auto;
 	}
 }
 
@@ -189,33 +88,17 @@
 	letter-spacing: -0.07px;
 	border-top: 1px solid var(--l2-border);
 	border-bottom: 1px solid var(--l2-border);
+	border-left: 1px solid var(--l2-border);
 	box-shadow: inset 0 -1px 0 var(--l2-border);
+	color: var(--l1-foreground);
 
-	&:first-child {
-		border-left: 1px solid var(--l2-border);
-	}
-
+	// TODO: Remove this once background color (l1) is matching the actual background color of the page
 	&[data-dark-mode='true'] {
 		background: #0b0c0d;
-		color: var(--bg-vanilla-100, #fff);
 	}
 
 	&[data-dark-mode='false'] {
 		background: #fdfdfd;
-		color: #1d1d1d;
-	}
-
-	&:global(.state-indicator) {
-		padding: 0px;
-		width: 1%;
-	}
-
-	&:global(.timestamp):not([data-single-column]) {
-		width: 10%;
-	}
-
-	&:global(.timestamp)[data-single-column] {
-		width: 100%;
 	}
 }
 

@@ -17,6 +17,11 @@
 	&.isResizing {
 		background: var(--l2-background-hover);
 	}
+
+	&:last-child .cursorColResize {
+		display: none;
+		border-right: 1px solid var(--l2-border);
+	}
 }
 
 .tanstackHeaderContent {
@@ -72,6 +77,8 @@
 	cursor: pointer;
 	flex-shrink: 0;
 	color: var(--l2-foreground);
+
+	margin-left: auto;
 }
 
 .tanstackColumnActionsContent {

@@ -92,7 +92,6 @@ export function useLogsTableColumns({
 					accessorFn: (log): string => log.body,
 					width: { min: 640 },
 					cell: ({ value, isActive }): ReactElement => (
-						// <TanStackTable.Text>{value as string}</TanStackTable.Text>
 						<div
 							// eslint-disable-next-line react/no-danger
 							dangerouslySetInnerHTML={{
