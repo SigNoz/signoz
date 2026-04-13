@@ -437,7 +437,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"spec": {
 							"plugin": {
 								"kind": "signoznumberpanel",
-								"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "Text"}]}
+								"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "text"}]}
 							}
 						}
 					}
@@ -545,22 +545,17 @@ func TestValidateRequiredFields(t *testing.T) {
 		},
 		{
 			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"operator": ">", "format": "Text", "color": "Red"}]}`),
+			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"operator": ">", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
 		},
 		{
-			name:        "ComparisonThreshold missing operator",
-			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"value": 100, "format": "Text", "color": "Red"}]}`),
-			wantContain: "Operator",
-		},
-		{
 			name:        "ComparisonThreshold missing color",
-			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "Text", "color": ""}]}`),
+			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": ""}]}`),
 			wantContain: "Color",
 		},
 		{
 			name:        "TableThreshold missing columnName",
-			data:        wrapPanel("signoztablepanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "Text", "color": "Red", "columnName": ""}]}`),
+			data:        wrapPanel("signoztablepanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": "Red", "columnName": ""}]}`),
 			wantContain: "ColumnName",
 		},
 		{
@@ -623,6 +618,49 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	}
 	if spec.ChartAppearance.SpanGaps.Value() != true {
 		t.Fatalf("expected SpanGaps default true, got %v", spec.ChartAppearance.SpanGaps.Value())
+	}
+	if spec.Visualization.TimePreference.Value() != "globalTime" {
+		t.Fatalf("expected TimePreference default globalTime, got %v", spec.Visualization.TimePreference.Value())
+	}
+	if spec.Legend.Position.Value() != "bottom" {
+		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.Value())
+	}
+}
+
+func TestNumberPanelDefaults(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {
+						"kind": "signoznumberpanel",
+						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
+					}
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	var d StorableDashboardDataV2
+	if err := json.Unmarshal(data, &d); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+
+	specJSON, _ := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
+	var spec NumberPanelSpec
+	if err := json.Unmarshal(specJSON, &spec); err != nil {
+		t.Fatalf("unmarshal spec failed: %v", err)
+	}
+
+	if len(spec.Thresholds) != 1 {
+		t.Fatalf("expected 1 threshold, got %d", len(spec.Thresholds))
+	}
+	if spec.Thresholds[0].Operator.Value() != ">" {
+		t.Fatalf("expected ComparisonOperator default >, got %v", spec.Thresholds[0].Operator.Value())
+	}
+	if spec.Thresholds[0].Format.Value() != "text" {
+		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.Value())
 	}
 }
 

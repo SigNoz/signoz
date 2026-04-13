@@ -324,14 +324,14 @@
                                 "operator": ">",
                                 "unit": "none",
                                 "color": "Red",
-                                "format": "Text"
+                                "format": "text"
                             },
                             {
                                 "value": 1200000,
                                 "operator": "<=",
                                 "unit": "none",
                                 "color": "Green",
-                                "format": "Text"
+                                "format": "text"
                             }
                         ]
                     }
@@ -472,7 +472,7 @@
                                 "operator": ">",
                                 "unit": "min",
                                 "color": "Red",
-                                "format": "Text",
+                                "format": "text",
                                 "columnName": "A"
                             }
                         ]

@@ -259,7 +259,7 @@ type ThresholdWithLabel struct {
 
 type ComparisonThreshold struct {
 	Value    float64            `json:"value" validate:"required" required:"true"`
-	Operator ComparisonOperator `json:"operator" validate:"required" required:"true"`
+	Operator ComparisonOperator `json:"operator"`
 	Unit     string             `json:"unit"`
 	Color    string             `json:"color" validate:"required" required:"true"`
 	Format   ThresholdFormat    `json:"format"`
@@ -271,130 +271,173 @@ type TableThreshold struct {
 }
 
 // ══════════════════════════════════════════════
-// Constrained scalar types — no default value
+// Constrained scalar types — with default value
 // ══════════════════════════════════════════════
 
-// TimePreference: "globalTime" | "last5Min" | "last15Min" | "last30Min" | "last1Hr" | "last6Hr" | "last1Day" | "last3Days" | "last1Week" | "last1Month".
-type TimePreference string
+type TimePreference struct {
+	value string
+}
 
 const (
-	TimePreferenceGlobalTime TimePreference = "globalTime"
-	TimePreferenceLast5Min   TimePreference = "last5Min"
-	TimePreferenceLast15Min  TimePreference = "last15Min"
-	TimePreferenceLast30Min  TimePreference = "last30Min"
-	TimePreferenceLast1Hr    TimePreference = "last1Hr"
-	TimePreferenceLast6Hr    TimePreference = "last6Hr"
-	TimePreferenceLast1Day   TimePreference = "last1Day"
-	TimePreferenceLast3Days  TimePreference = "last3Days"
-	TimePreferenceLast1Week  TimePreference = "last1Week"
-	TimePreferenceLast1Month TimePreference = "last1Month"
+	TimePreferenceGlobalTime = "globalTime" // default
+	TimePreferenceLast5Min   = "last5Min"
+	TimePreferenceLast15Min  = "last15Min"
+	TimePreferenceLast30Min  = "last30Min"
+	TimePreferenceLast1Hr    = "last1Hr"
+	TimePreferenceLast6Hr    = "last6Hr"
+	TimePreferenceLast1Day   = "last1Day"
+	TimePreferenceLast3Days  = "last3Days"
+	TimePreferenceLast1Week  = "last1Week"
+	TimePreferenceLast1Month = "last1Month"
 )
+
+func (t TimePreference) Value() string {
+	if t.value == "" {
+		return TimePreferenceGlobalTime
+	}
+	return t.value
+}
 
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch TimePreference(v) {
+	switch v {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
-		*t = TimePreference(v)
+		t.value = v
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q", v)
 	}
 }
 
-// LegendPosition: "bottom" | "right".
-type LegendPosition string
+func (t TimePreference) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Value())
+}
+
+type LegendPosition struct {
+	value string
+}
 
 const (
-	LegendPositionBottom LegendPosition = "bottom"
-	LegendPositionRight  LegendPosition = "right"
+	LegendPositionBottom = "bottom" // default
+	LegendPositionRight  = "right"
 )
+
+func (l LegendPosition) Value() string {
+	if l.value == "" {
+		return LegendPositionBottom
+	}
+	return l.value
+}
 
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch LegendPosition(v) {
+	switch v {
 	case LegendPositionBottom, LegendPositionRight:
-		*l = LegendPosition(v)
+		l.value = v
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be bottom or right", v)
 	}
 }
 
-// ThresholdFormat: "Text" | "Background".
-type ThresholdFormat string
+func (l LegendPosition) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.Value())
+}
+
+type ThresholdFormat struct {
+	value string
+}
 
 const (
-	ThresholdFormatText       ThresholdFormat = "Text"
-	ThresholdFormatBackground ThresholdFormat = "Background"
+	ThresholdFormatText       = "text" // default
+	ThresholdFormatBackground = "background"
 )
+
+func (f ThresholdFormat) Value() string {
+	if f.value == "" {
+		return ThresholdFormatText
+	}
+	return f.value
+}
 
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch ThresholdFormat(v) {
+	switch v {
 	case ThresholdFormatText, ThresholdFormatBackground:
-		*f = ThresholdFormat(v)
+		f.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be Text or Background", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be text or background", v)
 	}
 }
 
-// ComparisonOperator: ">" | "<" | ">=" | "<=" | "=" | "above" | "below" | "above_or_equal" | "below_or_equal" | "equal" | "not_equal".
-// We don't use ruletypes.CompareOperator here because it uses valuer.String
+func (f ThresholdFormat) MarshalJSON() ([]byte, error) {
+	return json.Marshal(f.Value())
+}
+
+// Not using ruletypes.CompareOperator here because it uses valuer.String
 // which accepts any string at unmarshal time, bypassing validation.
-type ComparisonOperator string
+type ComparisonOperator struct {
+	value string
+}
 
 const (
-	ComparisonOperatorGT           ComparisonOperator = ">"
-	ComparisonOperatorLT           ComparisonOperator = "<"
-	ComparisonOperatorGTE          ComparisonOperator = ">="
-	ComparisonOperatorLTE          ComparisonOperator = "<="
-	ComparisonOperatorEQ           ComparisonOperator = "="
-	ComparisonOperatorAbove        ComparisonOperator = "above"
-	ComparisonOperatorBelow        ComparisonOperator = "below"
-	ComparisonOperatorAboveOrEqual ComparisonOperator = "above_or_equal"
-	ComparisonOperatorBelowOrEqual ComparisonOperator = "below_or_equal"
-	ComparisonOperatorEqual        ComparisonOperator = "equal"
-	ComparisonOperatorNotEqual     ComparisonOperator = "not_equal"
+	ComparisonOperatorGT           = ">" // default
+	ComparisonOperatorLT           = "<"
+	ComparisonOperatorGTE          = ">="
+	ComparisonOperatorLTE          = "<="
+	ComparisonOperatorEQ           = "="
+	ComparisonOperatorAbove        = "above"
+	ComparisonOperatorBelow        = "below"
+	ComparisonOperatorAboveOrEqual = "above_or_equal"
+	ComparisonOperatorBelowOrEqual = "below_or_equal"
+	ComparisonOperatorEqual        = "equal"
+	ComparisonOperatorNotEqual     = "not_equal"
 )
+
+func (o ComparisonOperator) Value() string {
+	if o.value == "" {
+		return ComparisonOperatorGT
+	}
+	return o.value
+}
 
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	switch ComparisonOperator(v) {
+	switch v {
 	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
 		ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
 		ComparisonOperatorEqual, ComparisonOperatorNotEqual:
-		*o = ComparisonOperator(v)
+		o.value = v
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q", v)
 	}
 }
 
-// ══════════════════════════════════════════════
-// Constrained scalar types — with default value
-// ══════════════════════════════════════════════
+func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(o.Value())
+}
 
-// LineInterpolation: "linear" | "spline" | "stepAfter" | "stepBefore". Default is "spline".
 type LineInterpolation struct {
 	value string
 }
 
 const (
 	LineInterpolationLinear     = "linear"
-	LineInterpolationSpline     = "spline"
+	LineInterpolationSpline     = "spline" // default
 	LineInterpolationStepAfter  = "stepAfter"
 	LineInterpolationStepBefore = "stepBefore"
 )
@@ -424,13 +467,12 @@ func (li LineInterpolation) MarshalJSON() ([]byte, error) {
 	return json.Marshal(li.Value())
 }
 
-// LineStyle: "solid" | "dashed". Default is "solid".
 type LineStyle struct {
 	value string
 }
 
 const (
-	LineStyleSolid  = "solid"
+	LineStyleSolid  = "solid" // default
 	LineStyleDashed = "dashed"
 )
 
@@ -459,13 +501,12 @@ func (ls LineStyle) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ls.Value())
 }
 
-// FillMode: "solid" | "gradient" | "none". Default is "solid".
 type FillMode struct {
 	value string
 }
 
 const (
-	FillModeSolid    = "solid"
+	FillModeSolid    = "solid" // default
 	FillModeGradient = "gradient"
 	FillModeNone     = "none"
 )
@@ -530,7 +571,6 @@ func (sg SpanGaps) MarshalJSON() ([]byte, error) {
 	return json.Marshal(sg.Value())
 }
 
-// PrecisionOption: "0" | "1" | "2" | "3" | "4" | "full". Default is "2".
 type PrecisionOption struct {
 	value string
 }
@@ -538,7 +578,7 @@ type PrecisionOption struct {
 const (
 	PrecisionOption0    = "0"
 	PrecisionOption1    = "1"
-	PrecisionOption2    = "2"
+	PrecisionOption2    = "2" // default
 	PrecisionOption3    = "3"
 	PrecisionOption4    = "4"
 	PrecisionOptionFull = "full"
