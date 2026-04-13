@@ -19,11 +19,11 @@ const (
 // ============================================================================
 
 // makeKey creates a TelemetryFieldKey for testing.
-func makeKey(name string, dataType JSONDataType, materialized bool) *TelemetryFieldKey {
+func makeKey(name string, dataType FieldDataType, materialized bool) *TelemetryFieldKey {
 	return &TelemetryFieldKey{
-		Name:         name,
-		JSONDataType: &dataType,
-		Materialized: materialized,
+		Name:          name,
+		FieldDataType: dataType,
+		Materialized:  materialized,
 	}
 }
 
@@ -242,7 +242,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 	}{
 		{
 			name: "Simple path not promoted",
-			key:  makeKey("user.name", String, false),
+			key:  makeKey("user.name", FieldDataTypeString, false),
 			expectedYAML: fmt.Sprintf(`
 - name: user.name
   column: %s
@@ -255,7 +255,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 		},
 		{
 			name: "Simple path promoted",
-			key:  makeKey("user.name", String, true),
+			key:  makeKey("user.name", FieldDataTypeString, true),
 			expectedYAML: fmt.Sprintf(`
 - name: user.name
   column: %s
@@ -276,7 +276,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 		},
 		{
 			name:         "Empty path returns error",
-			key:          makeKey("", String, false),
+			key:          makeKey("", FieldDataTypeString, false),
 			expectErr:    true,
 			expectedYAML: "",
 		},
@@ -431,7 +431,7 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key := makeKey(tt.path, String, false)
+			key := makeKey(tt.path, FieldDataTypeString, false)
 			err := key.SetJSONAccessPlan(JSONColumnMetadata{
 				BaseColumn:     bodyV2Column,
 				PromotedColumn: bodyPromotedColumn,
@@ -450,7 +450,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 	path := "education[].awards[].type"
 
 	t.Run("Non-promoted plan", func(t *testing.T) {
-		key := makeKey(path, String, false)
+		key := makeKey(path, FieldDataTypeString, false)
 		err := key.SetJSONAccessPlan(JSONColumnMetadata{
 			BaseColumn:     bodyV2Column,
 			PromotedColumn: bodyPromotedColumn,
@@ -493,7 +493,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 	})
 
 	t.Run("Promoted plan", func(t *testing.T) {
-		key := makeKey(path, String, true)
+		key := makeKey(path, FieldDataTypeString, true)
 		err := key.SetJSONAccessPlan(JSONColumnMetadata{
 			BaseColumn:     bodyV2Column,
 			PromotedColumn: bodyPromotedColumn,
@@ -666,12 +666,12 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Choose key type based on path; operator does not affect the tree shape asserted here.
-			keyType := String
+			keyType := FieldDataTypeString
 			switch tt.path {
 			case "education":
-				keyType = ArrayJSON
+				keyType = FieldDataTypeArrayJSON
 			case "education[].type":
-				keyType = String
+				keyType = FieldDataTypeString
 			}
 			key := makeKey(tt.path, keyType, false)
 			err := key.SetJSONAccessPlan(JSONColumnMetadata{
@@ -692,7 +692,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 func TestPlanJSON_TreeStructure(t *testing.T) {
 	types, _ := TestJSONTypeSet()
 	path := "education[].awards[].participated[].team[].branch"
-	key := makeKey(path, String, false)
+	key := makeKey(path, FieldDataTypeString, false)
 	err := key.SetJSONAccessPlan(JSONColumnMetadata{
 		BaseColumn:     bodyV2Column,
 		PromotedColumn: bodyPromotedColumn,

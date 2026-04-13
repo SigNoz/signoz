@@ -43,7 +43,7 @@ type JSONAccessNode struct {
 	isRoot     bool // marked true for only body_v2 and body_promoted
 
 	// Precomputed type information (single source of truth)
-	AvailableTypes []JSONDataType
+	AvailableTypes []FieldDataType
 
 	// Array type branches (Array(JSON) vs Array(Dynamic))
 	Branches map[JSONAccessBranchType]*JSONAccessNode
@@ -106,7 +106,7 @@ type planBuilder struct {
 	paths      []string // cumulative paths for type cache lookups
 	segments   []string // individual path segments for node names
 	isPromoted bool
-	typeCache  map[string][]JSONDataType
+	typeCache  map[string][]FieldDataType
 }
 
 // buildPlan recursively builds the path plan tree.
@@ -155,14 +155,14 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		MaxDynamicPaths: maxPaths,
 	}
 
-	hasJSON := slices.Contains(node.AvailableTypes, ArrayJSON)
-	hasDynamic := slices.Contains(node.AvailableTypes, ArrayDynamic)
+	hasJSON := slices.Contains(node.AvailableTypes, FieldDataTypeArrayJSON)
+	hasDynamic := slices.Contains(node.AvailableTypes, FieldDataTypeArrayDynamic)
 
 	// Configure terminal if this is the last part
 	if isTerminal {
 		node.TerminalConfig = &TerminalConfig{
 			Key:      pb.key,
-			ElemType: *pb.key.JSONDataType,
+			ElemType: pb.key.GetJSONDataType(),
 		}
 	} else {
 		var err error
@@ -185,7 +185,7 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 
 // buildJSONAccessPlan builds a tree structure representing the complete JSON path traversal
 // that precomputes all possible branches and their types.
-func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]JSONDataType,
+func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]FieldDataType,
 ) error {
 	// if path is empty, return nil
 	if key.Name == "" {

@@ -368,6 +368,19 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	return materialisedKeys, nil
 }
 
+// logKeysUnionArm declares one arm of the UNION ALL in getLogsKeys.
+// All per-table variance is captured here so the loop body can stay uniform.
+type logKeysUnionArm struct {
+	shouldQuery        bool
+	fieldContext       telemetrytypes.FieldContext
+	table              string
+	dataTypeColumn     string                                    // column used in WHERE/GROUP BY
+	dataTypeSelectExpr string                                    // expression used in SELECT (may wrap with lower())
+	addBaseFilters     func(sb *sqlbuilder.SelectBuilder)        // mandatory WHERE filters (e.g., signal, field_context)
+	encodeDataType     func(telemetrytypes.FieldDataType) string // how to render a FieldDataType in WHERE values
+	extraOrBranch      func(sb *sqlbuilder.SelectBuilder) string // optional extra OR branch (e.g., body parent-types)
+}
+
 // getLogsKeys returns the keys from the spans that match the field selection criteria.
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -397,89 +410,148 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	// tables to query based on field selectors
 	queryAttributeTable := false
 	queryResourceTable := false
+	queryBodyTable := false
 
 	for _, selector := range fieldKeySelectors {
 		if selector.FieldContext == telemetrytypes.FieldContextUnspecified {
-			// unspecified context, query both tables
+			// unspecified context, query all tables
 			queryAttributeTable = true
 			queryResourceTable = true
+			queryBodyTable = true
 			break
 		} else if selector.FieldContext == telemetrytypes.FieldContextAttribute {
 			queryAttributeTable = true
 		} else if selector.FieldContext == telemetrytypes.FieldContextResource {
 			queryResourceTable = true
+		} else if selector.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled {
+			queryBodyTable = true
 		}
 	}
 
-	tablesToQuery := []struct {
-		fieldContext telemetrytypes.FieldContext
-		shouldQuery  bool
-	}{
-		{telemetrytypes.FieldContextAttribute, queryAttributeTable},
-		{telemetrytypes.FieldContextResource, queryResourceTable},
+	// body keys are gated behind the feature flag
+	queryBodyTable = queryBodyTable && querybuilder.BodyJSONQueryEnabled
+
+	// pre-compute parent array path names from body selectors for JSON plan building;
+	// these will be fetched as a separate UNION arm filtered to ArrayJSON/ArrayDynamic only
+	parentPaths := make(map[string]bool)
+	if queryBodyTable {
+		for _, sel := range fieldKeySelectors {
+			if sel.FieldContext != telemetrytypes.FieldContextBody &&
+				sel.FieldContext != telemetrytypes.FieldContextUnspecified {
+				continue
+			}
+			if !strings.Contains(sel.Name, telemetrytypes.ArraySep) {
+				continue
+			}
+			key := &telemetrytypes.TelemetryFieldKey{
+				Name:         sel.Name,
+				Signal:       telemetrytypes.SignalLogs,
+				FieldContext: telemetrytypes.FieldContextBody,
+			}
+			for _, ps := range key.ArrayParentSelectors() {
+				parentPaths[ps.Name] = true
+			}
+		}
 	}
 
-	for _, table := range tablesToQuery {
-		if !table.shouldQuery {
+	// Each UNION arm differs only in: table, data-type column name and SELECT
+	// expression (lower-wrapped for historical mixed-case in attr/resource),
+	// base WHERE filters, the per-selector data-type encoding, and (for body)
+	// an extra OR branch that fetches parent array types for JSON plan building.
+	// All other logic is shared by the loop below.
+	tablesToQuery := []logKeysUnionArm{
+		{
+			shouldQuery:        queryAttributeTable,
+			fieldContext:       telemetrytypes.FieldContextAttribute,
+			table:              t.logsDBName + "." + t.logAttributeKeysTblName,
+			dataTypeColumn:     "datatype",
+			dataTypeSelectExpr: "lower(datatype)",
+			addBaseFilters:     func(*sqlbuilder.SelectBuilder) {},
+			encodeDataType:     func(ft telemetrytypes.FieldDataType) string { return ft.TagDataType() },
+			extraOrBranch:      func(*sqlbuilder.SelectBuilder) string { return "" },
+		},
+		{
+			shouldQuery:        queryResourceTable,
+			fieldContext:       telemetrytypes.FieldContextResource,
+			table:              t.logsDBName + "." + t.logResourceKeysTblName,
+			dataTypeColumn:     "datatype",
+			dataTypeSelectExpr: "lower(datatype)",
+			addBaseFilters:     func(*sqlbuilder.SelectBuilder) {},
+			encodeDataType:     func(ft telemetrytypes.FieldDataType) string { return ft.TagDataType() },
+			extraOrBranch:      func(*sqlbuilder.SelectBuilder) string { return "" },
+		},
+		{
+			shouldQuery:        queryBodyTable,
+			fieldContext:       telemetrytypes.FieldContextBody,
+			table:              fmt.Sprintf("%s.%s", DBName, FieldKeysTable),
+			dataTypeColumn:     "field_data_type",
+			dataTypeSelectExpr: "field_data_type",
+			addBaseFilters: func(sb *sqlbuilder.SelectBuilder) {
+				sb.Where(sb.E("signal", telemetrytypes.SignalLogs.StringValue()))
+				sb.Where(sb.E("field_context", telemetrytypes.FieldContextBody.StringValue()))
+			},
+			encodeDataType: func(ft telemetrytypes.FieldDataType) string { return ft.StringValue() },
+			extraOrBranch: func(sb *sqlbuilder.SelectBuilder) string {
+				if len(parentPaths) == 0 {
+					return ""
+				}
+				names := make([]any, 0, len(parentPaths))
+				for n := range parentPaths {
+					names = append(names, n)
+				}
+				return sb.And(
+					sb.In("name", names...),
+					sb.In("field_data_type",
+						telemetrytypes.FieldDataTypeArrayDynamic.StringValue(),
+						telemetrytypes.FieldDataTypeArrayJSON.StringValue(),
+					),
+				)
+			},
+		},
+	}
+
+	for _, arm := range tablesToQuery {
+		if !arm.shouldQuery {
 			continue
-		}
-
-		fieldContext := table.fieldContext
-
-		// table name based on field context
-		var tblName string
-		if fieldContext == telemetrytypes.FieldContextAttribute {
-			tblName = t.logsDBName + "." + t.logAttributeKeysTblName
-		} else {
-			tblName = t.logsDBName + "." + t.logResourceKeysTblName
 		}
 
 		sb := sqlbuilder.Select(
 			"name AS tag_key",
-			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
-			"lower(datatype) AS tag_data_type", // in logs, we had some historical data with capital and small case
-			fmt.Sprintf(`%d AS priority`, getPriorityForContext(fieldContext)),
-		).From(tblName)
+			fmt.Sprintf("'%s' AS tag_type", arm.fieldContext.TagType()),
+			arm.dataTypeSelectExpr+" AS tag_data_type",
+			fmt.Sprintf("%d AS priority", getPriorityForContext(arm.fieldContext)),
+		).From(arm.table)
 
-		var limit int
-		conds := []string{}
+		arm.addBaseFilters(sb)
 
-		for _, fieldKeySelector := range fieldKeySelectors {
-			// Include this selector if:
-			// 1. It has unspecified context (matches all tables)
-			// 2. Its context matches the current table's context
-			if fieldKeySelector.FieldContext != telemetrytypes.FieldContextUnspecified &&
-				fieldKeySelector.FieldContext != fieldContext {
+		branches := []string{}
+		for _, sel := range fieldKeySelectors {
+			if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != arm.fieldContext {
 				continue
 			}
-
-			// key part of the selector
-			fieldKeyConds := []string{}
-			if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-				fieldKeyConds = append(fieldKeyConds, sb.E("name", fieldKeySelector.Name))
+			parts := []string{}
+			if sel.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
+				parts = append(parts, sb.E("name", sel.Name))
 			} else {
-				fieldKeyConds = append(fieldKeyConds, sb.ILike("name", "%"+escapeForLike(fieldKeySelector.Name)+"%"))
+				parts = append(parts, sb.ILike("name", "%"+escapeForLike(sel.Name)+"%"))
 			}
-
-			// now look at the field data type
-			if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				fieldKeyConds = append(fieldKeyConds, sb.E("datatype", fieldKeySelector.FieldDataType.TagDataType()))
+			if sel.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+				parts = append(parts, sb.E(arm.dataTypeColumn, arm.encodeDataType(sel.FieldDataType)))
 			}
-
-			if len(fieldKeyConds) > 0 {
-				conds = append(conds, sb.And(fieldKeyConds...))
+			if len(parts) > 0 {
+				branches = append(branches, sb.And(parts...))
 			}
-			limit += fieldKeySelector.Limit
 		}
 
-		if len(conds) > 0 {
-			sb.Where(sb.Or(conds...))
+		if extra := arm.extraOrBranch(sb); extra != "" {
+			branches = append(branches, extra)
 		}
 
-		sb.GroupBy("name", "datatype")
-		if limit == 0 {
-			limit = 1000
+		if len(branches) > 0 {
+			sb.Where(sb.Or(branches...))
 		}
+
+		sb.GroupBy("name", arm.dataTypeColumn)
 
 		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		queries = append(queries, query)
@@ -517,6 +589,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	defer rows.Close()
 
 	keys := []*telemetrytypes.TelemetryFieldKey{}
+	parentTypeCache := make(map[string][]telemetrytypes.FieldDataType)
 	rowCount := 0
 	searchTexts := []string{}
 
@@ -540,6 +613,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
+
+		// body keys with ArrayJSON/ArrayDynamic types are internal container types
+		// used only for JSON access plan building; route to parentTypeCache, not to results
+		switch fieldDataType {
+		case telemetrytypes.FieldDataTypeArrayJSON, telemetrytypes.FieldDataTypeArrayDynamic:
+			if fieldContext == telemetrytypes.FieldContextBody && parentPaths[name] {
+				parentTypeCache[name] = append(parentTypeCache[name], fieldDataType)
+				continue
+			}
+		}
+
 		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
 
 		// if there is no materialised column, create a key with the field context and data type
@@ -593,13 +677,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 	}
 
+	// enrich body keys with promoted paths, indexes, and JSON access plans
 	if querybuilder.BodyJSONQueryEnabled {
-		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
-		if err != nil {
-			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", errors.Attr(err))
+		if err := t.enrichBodyKeys(ctx, keys, parentTypeCache); err != nil {
+			t.logger.ErrorContext(ctx, "failed to enrich body JSON keys", errors.Attr(err))
 		}
-		keys = append(keys, bodyJSONPaths...)
-		complete = complete && finished
 	}
 
 	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {

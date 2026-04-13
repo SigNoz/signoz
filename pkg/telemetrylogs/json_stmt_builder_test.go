@@ -220,7 +220,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((LOWER(toString(dynamicElement(body_v2.`user.age`, 'Int64'))) LIKE LOWER(?)) AND has(JSONAllPaths(body_v2), 'user.age')) OR ((LOWER(dynamicElement(body_v2.`user.age`, 'String')) LIKE LOWER(?)) AND has(JSONAllPaths(body_v2), 'user.age')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%25%", "%25%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `user.age` is ambiguous, found 2 different combinations of field context / data type: [name=user.age,context=body,datatype=int64,jsondatatype=Int64 name=user.age,context=body,datatype=string,jsondatatype=String]."},
+				Warnings:    []string{"Key `user.age` is ambiguous, found 2 different combinations of field context / data type: [name=user.age,context=body,datatype=int64 name=user.age,context=body,datatype=string]."},
 			},
 		},
 		{
@@ -414,7 +414,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -441,7 +441,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%true%", true, "%true%", true, "%true%", true, "%true%", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -455,7 +455,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -549,7 +549,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "((NOT arrayExists(`body_v2.education`-> toFloat64OrNull(dynamicElement(`body_v2.education`.`type`, 'String')) = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND (NOT arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`type`, 'Int64') = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), int64(10001), int64(10001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].type` is ambiguous, found 2 different combinations of field context / data type: [name=education[].type,context=body,datatype=string,jsondatatype=String name=education[].type,context=body,datatype=int64,jsondatatype=Int64]."},
+				Warnings:    []string{"Key `education[].type` is ambiguous, found 2 different combinations of field context / data type: [name=education[].type,context=body,datatype=string name=education[].type,context=body,datatype=int64]."},
 			},
 		},
 		{
@@ -576,7 +576,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -585,7 +585,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -594,7 +594,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -603,7 +603,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) IN (?, ?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) IN (?, ?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), 1.65, 1.99, "1.65", "1.99", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -612,7 +612,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "((NOT arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND (NOT arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%1.65%", float64(1.65), "%1.65%", float64(1.65), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -622,7 +622,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 				WhereClause: "(has(arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?) OR has(arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 				Warnings: []string{
-					"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)].",
+					"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic].",
 				},
 			},
 		},
@@ -702,7 +702,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(Int64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(Int64))'))), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.`positions`, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.`metadata`, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.`entries`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.`reviews`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests')) OR ((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> (arrayExists(x -> LOWER(x) LIKE LOWER(?), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(String))')) OR arrayExists(x -> toFloat64OrNull(x) = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(String))'))), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.`positions`, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.`metadata`, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.`entries`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.`reviews`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%4%", float64(4), "%4%", float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64,jsondatatype=Array(Nullable(Int64)) name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string,jsondatatype=Array(Nullable(String))]."},
+				Warnings:    []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64 name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string]."},
 			},
 		},
 		{
@@ -946,16 +946,16 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
-	for path, jsonTypes := range types {
-		for _, jsonType := range jsonTypes {
+	for path, fieldDataTypes := range types {
+		for _, fdt := range fieldDataTypes {
 			key := &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
 				Signal:        telemetrytypes.SignalLogs,
 				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
-				JSONDataType:  &jsonType,
+				FieldDataType: fdt,
 			}
 			if addIndexes {
+				jsonType := telemetrytypes.MappingFieldDataTypeToJSONDataType[fdt]
 				idx := slices.IndexFunc(telemetrytypes.TestIndexedPaths, func(entry telemetrytypes.TestIndexedPathEntry) bool {
 					return entry.Path == path && entry.Type == jsonType
 				})

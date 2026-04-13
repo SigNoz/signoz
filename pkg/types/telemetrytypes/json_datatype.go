@@ -46,14 +46,6 @@ var MappingStringToJSONDataType = map[string]JSONDataType{
 	"Array(JSON)":              ArrayJSON,
 }
 
-var ScalerTypeToArrayType = map[JSONDataType]JSONDataType{
-	String:  ArrayString,
-	Int64:   ArrayInt64,
-	Float64: ArrayFloat64,
-	Bool:    ArrayBool,
-	Dynamic: ArrayDynamic,
-}
-
 var MappingFieldDataTypeToJSONDataType = map[FieldDataType]JSONDataType{
 	FieldDataTypeString:       String,
 	FieldDataTypeInt64:        Int64,
@@ -63,18 +55,8 @@ var MappingFieldDataTypeToJSONDataType = map[FieldDataType]JSONDataType{
 	FieldDataTypeArrayString:  ArrayString,
 	FieldDataTypeArrayInt64:   ArrayInt64,
 	FieldDataTypeArrayFloat64: ArrayFloat64,
+	FieldDataTypeArrayNumber:  ArrayFloat64,
 	FieldDataTypeArrayBool:    ArrayBool,
-}
-
-var MappingJSONDataTypeToFieldDataType = map[JSONDataType]FieldDataType{
-	String:       FieldDataTypeString,
-	Int64:        FieldDataTypeInt64,
-	Float64:      FieldDataTypeFloat64,
-	Bool:         FieldDataTypeBool,
-	ArrayString:  FieldDataTypeArrayString,
-	ArrayInt64:   FieldDataTypeArrayInt64,
-	ArrayFloat64: FieldDataTypeArrayFloat64,
-	ArrayBool:    FieldDataTypeArrayBool,
-	ArrayDynamic: FieldDataTypeArrayDynamic,
-	ArrayJSON:    FieldDataTypeArrayObject,
+	FieldDataTypeArrayDynamic: ArrayDynamic,
+	FieldDataTypeArrayJSON:    ArrayJSON,
 }
