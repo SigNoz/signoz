@@ -1,73 +1,31 @@
 import { forwardRef } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import type { InfinityTableProps } from '../../../container/LogsExplorerList/InfinityTableView/types';
-import { FontSize } from '../../../container/OptionsMenu/types';
-import TanStackTableView from '../index';
+import type { TableColumnDef, TanStackTableProps } from '../types';
+import TanStackTable from '../index';
 
 jest.mock('react-virtuoso', () => ({
 	TableVirtuoso: forwardRef<
 		unknown,
-		{
-			fixedHeaderContent?: () => JSX.Element;
-			itemContent: (i: number) => JSX.Element;
-		}
-	>(function MockVirtuoso({ fixedHeaderContent, itemContent }, _ref) {
+		{ fixedHeaderContent?: () => JSX.Element }
+	>(function MockVirtuoso({ fixedHeaderContent }, _ref) {
 		return (
 			<div data-testid="virtuoso">
 				{fixedHeaderContent?.()}
-				{itemContent(0)}
 			</div>
 		);
 	}),
 }));
 
-jest.mock('../../Logs/TableView/useTableView', () => ({
-	useTableView: (): {
-		dataSource: Record<string, string>[];
-		columns: unknown[];
-	} => ({
-		dataSource: [{ id: '1' }],
-		columns: [
-			{ key: 'body', title: 'body', render: (): string => 'x' },
-			{ key: 'state-indicator', title: 's', render: (): string => 'y' },
-		],
+jest.mock('../useTableParams', () => ({
+	useTableParams: (): Record<string, unknown> => ({
+		page: 1,
+		limit: 50,
+		orderBy: null,
+		setPage: jest.fn(),
+		setLimit: jest.fn(),
+		setOrderBy: jest.fn(),
 	}),
-}));
-
-jest.mock('../../../hooks/useDragColumns', () => ({
-	__esModule: true,
-	default: (): {
-		draggedColumns: unknown[];
-		onColumnOrderChange: () => void;
-	} => ({
-		draggedColumns: [],
-		onColumnOrderChange: jest.fn(),
-	}),
-}));
-
-jest.mock('../../../hooks/logs/useActiveLog', () => ({
-	useActiveLog: (): { activeLog: null } => ({ activeLog: null }),
-}));
-
-jest.mock('../../../hooks/logs/useCopyLogLink', () => ({
-	useCopyLogLink: (): { activeLogId: null } => ({ activeLogId: null }),
-}));
-
-jest.mock('../../../hooks/useDarkMode', () => ({
-	useIsDarkMode: (): boolean => false,
-}));
-
-jest.mock('react-router-dom', () => ({
-	useLocation: (): { pathname: string } => ({ pathname: '/logs' }),
-}));
-
-jest.mock('react-use', () => ({
-	useCopyToClipboard: (): [unknown, () => void] => [null, jest.fn()],
-}));
-
-jest.mock('@signozhq/sonner', () => ({
-	toast: { success: jest.fn() },
 }));
 
 jest.mock('../../Spinner', () => ({
@@ -77,28 +35,39 @@ jest.mock('../../Spinner', () => ({
 	),
 }));
 
-const baseProps: InfinityTableProps = {
-	isLoading: false,
-	tableViewProps: {
-		logs: [{ id: '1' } as never],
-		fields: [],
-		linesPerRow: 3,
-		fontSize: FontSize.SMALL,
-		appendTo: 'end',
-		activeLogIndex: 0,
-	},
+jest.mock('hooks/useDarkMode', () => ({
+	useIsDarkMode: (): boolean => false,
+}));
+
+type Row = { id: string };
+
+const col = (): TableColumnDef<Row> => ({
+	id: 'id',
+	header: 'ID',
+	cell: ({ row }) => row.id,
+	accessorKey: 'id',
+});
+
+const baseProps: TanStackTableProps<Row> = {
+	data: [{ id: '1' }],
+	columns: [col()],
 };
 
-describe('TanStackTableView', () => {
-	it('shows spinner while loading', () => {
-		render(<TanStackTableView {...baseProps} isLoading />);
-
-		expect(screen.getByTestId('spinner')).toHaveTextContent('Getting Logs');
+describe('TanStackTable', () => {
+	it('renders virtuoso when not loading', () => {
+		render(<TanStackTable {...baseProps} />);
+		expect(screen.getByTestId('virtuoso')).toBeInTheDocument();
 	});
 
-	it('renders virtuoso when not loading', () => {
-		render(<TanStackTableView {...baseProps} />);
+	it('shows loading spinner overlay when isLoading is true', () => {
+		render(<TanStackTable {...baseProps} isLoading />);
+		expect(screen.getByTestId('spinner')).toBeInTheDocument();
+	});
 
-		expect(screen.getByTestId('virtuoso')).toBeInTheDocument();
+	it('passes loadingTip to spinner', () => {
+		render(
+			<TanStackTable {...baseProps} isLoading loadingTip="Fetching hosts" />,
+		);
+		expect(screen.getByTestId('spinner')).toHaveTextContent('Fetching hosts');
 	});
 });

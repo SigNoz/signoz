@@ -1,91 +1,68 @@
-import {
-	MouseEvent as ReactMouseEvent,
-	MouseEventHandler,
-	useCallback,
-} from 'react';
+import type { ReactNode } from 'react';
+import { useCallback } from 'react';
 import { flexRender, Row as TanStackRowModel } from '@tanstack/react-table';
 import cx from 'classnames';
 
-import { VIEW_TYPES } from '../LogDetail/constants';
-import LogLinesActionButtons from '../Logs/LogLinesActionButtons/LogLinesActionButtons';
 import { useRowHover } from './RowHoverContext';
-import { TanStackTableProps, TanStackTableRowData } from './types';
+import TanStackTableText from './TanStackTableText';
+import { TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
 
-type TanStackRowCellsProps = {
-	row: TanStackRowModel<TanStackTableRowData>;
-	fontSize: TanStackTableProps['tableViewProps']['fontSize'];
-	onSetActiveLog?: TanStackTableProps['onSetActiveLog'];
-	onClearActiveLog?: TanStackTableProps['onClearActiveLog'];
-	isActiveLog?: boolean;
-	isDarkMode: boolean;
-	onLogCopy: (logId: string, event: ReactMouseEvent<HTMLElement>) => void;
-	isLogsExplorerPage: boolean;
+type TanStackRowCellsProps<TData> = {
+	row: TanStackRowModel<TData>;
+	context: TableRowContext<TData> | undefined;
+	itemKind: 'row' | 'expansion';
+	hasSingleColumn: boolean;
 };
 
-function TanStackRowCells({
+function TanStackRowCells<TData>({
 	row,
-	fontSize,
-	onSetActiveLog,
-	onClearActiveLog,
-	isActiveLog = false,
-	isDarkMode,
-	onLogCopy,
-	isLogsExplorerPage,
-}: TanStackRowCellsProps): JSX.Element {
-	const { currentLog } = row.original;
+	context,
+	itemKind,
+	hasSingleColumn,
+}: TanStackRowCellsProps<TData>): JSX.Element {
 	const hasHovered = useRowHover();
-
-	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
-		(event) => {
-			event.preventDefault();
-			event.stopPropagation();
-			onSetActiveLog?.(currentLog, VIEW_TYPES.CONTEXT);
-		},
-		[currentLog, onSetActiveLog],
-	);
-
-	const handleShowLogDetails = useCallback(() => {
-		if (!currentLog) {
-			return;
-		}
-
-		if (isActiveLog && onClearActiveLog) {
-			onClearActiveLog();
-			return;
-		}
-
-		onSetActiveLog?.(currentLog);
-	}, [currentLog, isActiveLog, onClearActiveLog, onSetActiveLog]);
-
+	const rowData = row.original;
 	const visibleCells = row.getVisibleCells();
 	const lastCellIndex = visibleCells.length - 1;
-	const hasSingleColumn = visibleCells.length <= 2;
+
+	const handleClick = useCallback(() => {
+		const isActive = context?.isRowActive?.(rowData) ?? false;
+		if (isActive && context?.onRowDeactivate) {
+			context.onRowDeactivate();
+		} else {
+			context?.onRowClick?.(rowData);
+		}
+	}, [context, rowData]);
+
+	if (itemKind === 'expansion') {
+		return (
+			<td
+				colSpan={context?.colCount ?? 1}
+				className={tableStyles.tableCellExpansion}
+			>
+				{context?.renderExpandedRow?.(rowData)}
+			</td>
+		);
+	}
 
 	return (
 		<>
 			{visibleCells.map((cell, index) => {
-				const columnKey = cell.column.id;
 				const isLastCell = index === lastCellIndex;
 				return (
 					<td
 						key={cell.id}
-						className={cx(tableStyles.tableCell, columnKey)}
-						data-dark-mode={isDarkMode}
-						data-log-indicator={columnKey === 'state-indicator' || undefined}
-						data-timestamp={columnKey === 'timestamp' || undefined}
+						className={cx(tableStyles.tableCell, cell.column.id)}
 						data-single-column={hasSingleColumn || undefined}
-						data-font-size={fontSize}
-						onClick={handleShowLogDetails}
+						onClick={handleClick}
 					>
 						{flexRender(cell.column.columnDef.cell, cell.getContext())}
-						{isLastCell && isLogsExplorerPage && hasHovered && (
-							<LogLinesActionButtons
-								handleShowContext={handleShowContext}
-								onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
-								customClassName={tableStyles.tableViewLogActions}
-							/>
+						{isLastCell && hasHovered && context?.renderRowActions && (
+							<span className={tableStyles.tableViewRowActions}>
+								{context.renderRowActions(rowData)}
+							</span>
 						)}
 					</td>
 				);

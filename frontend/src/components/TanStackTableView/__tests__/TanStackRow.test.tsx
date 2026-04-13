@@ -1,55 +1,29 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-
-import { FontSize } from '../../../container/OptionsMenu/types';
 import RowHoverContext from '../RowHoverContext';
 import TanStackRowCells from '../TanStackRow';
-import type { TanStackTableRowData } from '../types';
+import type { FlatItem, TableRowContext } from '../types';
 
-jest.mock(
-	'../../../container/LogsExplorerList/InfinityTableView/styles',
-	() => ({
-		TableCellStyled: 'td',
-	}),
-);
-
-jest.mock('../../Logs/LogLinesActionButtons/LogLinesActionButtons', () => ({
-	__esModule: true,
-	default: ({
-		onLogCopy,
-	}: {
-		onLogCopy: (e: React.MouseEvent) => void;
-	}): JSX.Element => (
-		<button type="button" data-testid="copy-btn" onClick={onLogCopy}>
-			copy
-		</button>
-	),
-}));
-
-const flexRenderMock = jest.fn((def: unknown, _ctx?: unknown) =>
+const flexRenderMock = jest.fn((def: unknown) =>
 	typeof def === 'function' ? def({}) : def,
 );
-
 jest.mock('@tanstack/react-table', () => ({
-	flexRender: (def: unknown, ctx: unknown): unknown => flexRenderMock(def, ctx),
+	flexRender: (def: unknown, _ctx?: unknown): unknown => flexRenderMock(def),
 }));
 
+type Row = { id: string };
+
 function buildMockRow(
-	visibleCells: Array<{ columnId: string }>,
+	cells: { id: string }[],
+	rowData: Row = { id: 'r1' },
 ): Parameters<typeof TanStackRowCells>[0]['row'] {
 	return {
-		original: {
-			currentLog: { id: 'log-1' } as TanStackTableRowData['currentLog'],
-			log: {},
-			rowIndex: 0,
-		},
+		original: rowData,
 		getVisibleCells: () =>
-			visibleCells.map((cell, index) => ({
-				id: `cell-${index}`,
+			cells.map((c, i) => ({
+				id: `cell-${i}`,
 				column: {
-					id: cell.columnId,
-					columnDef: {
-						cell: (): string => `content-${cell.columnId}`,
-					},
+					id: c.id,
+					columnDef: { cell: (): string => `content-${c.id}` },
 				},
 				getContext: (): Record<string, unknown> => ({}),
 			})),
@@ -57,137 +31,148 @@ function buildMockRow(
 }
 
 describe('TanStackRowCells', () => {
-	beforeEach(() => {
-		flexRenderMock.mockClear();
-	});
+	beforeEach(() => flexRenderMock.mockClear());
 
-	it('renders a cell per visible column and calls flexRender', () => {
-		const row = buildMockRow([
-			{ columnId: 'state-indicator' },
-			{ columnId: 'body' },
-		]);
-
+	it('renders a cell per visible column', () => {
+		const row = buildMockRow([{ id: 'col-a' }, { id: 'col-b' }]);
 		render(
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRowCells
-							row={row}
-							fontSize={FontSize.SMALL}
-							isDarkMode={false}
-							onLogCopy={jest.fn()}
-							isLogsExplorerPage={false}
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={undefined}
+							itemKind="row"
+							hasSingleColumn={false}
 						/>
 					</tr>
 				</tbody>
 			</table>,
 		);
-
 		expect(screen.getAllByRole('cell')).toHaveLength(2);
-		expect(flexRenderMock).toHaveBeenCalled();
 	});
 
-	it('applies state-indicator styling class on the indicator cell', () => {
-		const row = buildMockRow([{ columnId: 'state-indicator' }]);
-
-		const { container } = render(
+	it('calls onRowClick when a cell is clicked', () => {
+		const onRowClick = jest.fn();
+		const ctx: TableRowContext<Row> = { colCount: 1, onRowClick };
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRowCells
-							row={row}
-							fontSize={FontSize.SMALL}
-							isDarkMode={false}
-							onLogCopy={jest.fn()}
-							isLogsExplorerPage={false}
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
 						/>
 					</tr>
 				</tbody>
 			</table>,
 		);
-
-		expect(container.querySelector('td.state-indicator')).toBeInTheDocument();
+		fireEvent.click(screen.getAllByRole('cell')[0]);
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' });
 	});
 
-	it('renders row actions on logs explorer page after hover', () => {
-		const row = buildMockRow([{ columnId: 'body' }]);
+	it('calls onRowDeactivate instead of onRowClick when row is active', () => {
+		const onRowClick = jest.fn();
+		const onRowDeactivate = jest.fn();
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			onRowClick,
+			onRowDeactivate,
+			isRowActive: () => true,
+		};
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		fireEvent.click(screen.getAllByRole('cell')[0]);
+		expect(onRowDeactivate).toHaveBeenCalled();
+		expect(onRowClick).not.toHaveBeenCalled();
+	});
 
+	it('renders renderRowActions in last cell on hover', () => {
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			renderRowActions: () => <button type="button">action</button>,
+		};
+		const row = buildMockRow([{ id: 'body' }]);
 		render(
 			<RowHoverContext.Provider value>
 				<table>
 					<tbody>
 						<tr>
-							<TanStackRowCells
-								row={row}
-								fontSize={FontSize.SMALL}
-								isDarkMode={false}
-								onLogCopy={jest.fn()}
-								isLogsExplorerPage
+							<TanStackRowCells<Row>
+								row={row as never}
+								context={ctx}
+								itemKind="row"
+								hasSingleColumn={false}
 							/>
 						</tr>
 					</tbody>
 				</table>
 			</RowHoverContext.Provider>,
 		);
-
-		expect(screen.getByTestId('copy-btn')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'action' })).toBeInTheDocument();
 	});
 
-	it('click on a data cell calls onSetActiveLog with current log', () => {
-		const onSetActiveLog = jest.fn();
-		const row = buildMockRow([{ columnId: 'body' }]);
-
-		render(
+	it('wraps primitive cell output when plainTextCellLineClamp is set', () => {
+		const ctx: TableRowContext<Row> = { colCount: 1, plainTextCellLineClamp: 2 };
+		const row = buildMockRow([{ id: 'col-a' }]);
+		const { container } = render(
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRowCells
-							row={row}
-							fontSize={FontSize.SMALL}
-							isDarkMode={false}
-							onSetActiveLog={onSetActiveLog}
-							onLogCopy={jest.fn()}
-							isLogsExplorerPage={false}
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
 						/>
 					</tr>
 				</tbody>
 			</table>,
 		);
-
-		fireEvent.click(screen.getAllByRole('cell')[0]);
-
-		expect(onSetActiveLog).toHaveBeenCalledWith(
-			expect.objectContaining({ id: 'log-1' }),
-		);
+		const wrap = container.querySelector('span');
+		expect(wrap).toBeTruthy();
+		expect(wrap?.textContent).toBe('content-col-a');
 	});
 
-	it('when row is active log, click on cell clears active log', () => {
-		const onSetActiveLog = jest.fn();
-		const onClearActiveLog = jest.fn();
-		const row = buildMockRow([{ columnId: 'body' }]);
-
+	it('renders expansion cell with renderExpandedRow content', () => {
+		const row = {
+			original: { id: 'r1' },
+			getVisibleCells: () => [],
+		} as never;
+		const ctx: TableRowContext<Row> = {
+			colCount: 3,
+			renderExpandedRow: (r) => <div>expanded-{r.id}</div>,
+		};
 		render(
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRowCells
-							row={row}
-							fontSize={FontSize.SMALL}
-							isDarkMode={false}
-							isActiveLog
-							onSetActiveLog={onSetActiveLog}
-							onClearActiveLog={onClearActiveLog}
-							onLogCopy={jest.fn()}
-							isLogsExplorerPage={false}
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="expansion"
+							hasSingleColumn={false}
 						/>
 					</tr>
 				</tbody>
 			</table>,
 		);
-
-		fireEvent.click(screen.getAllByRole('cell')[0]);
-
-		expect(onClearActiveLog).toHaveBeenCalled();
-		expect(onSetActiveLog).not.toHaveBeenCalled();
+		expect(screen.getByText('expanded-r1')).toBeInTheDocument();
 	});
 });

@@ -11,52 +11,42 @@ import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
 import { GripVertical } from 'lucide-react';
 
-import {
-	OrderedColumn,
-	TanStackTableProps,
-	TanStackTableRowData,
-} from './types';
-import { getColumnId } from './utils';
+import { TableColumnDef } from './types';
 
 import headerStyles from './TanStackHeaderRow.module.scss';
 import tableStyles from './TanStackTable.module.scss';
 
-type TanStackHeaderRowProps = {
-	column: OrderedColumn;
-	header?: TanStackHeader<TanStackTableRowData, unknown>;
+type TanStackHeaderRowProps<TData = unknown> = {
+	column: TableColumnDef<TData>;
+	header?: TanStackHeader<TData, unknown>;
 	isDarkMode: boolean;
-	fontSize: TanStackTableProps['tableViewProps']['fontSize'];
 	hasSingleColumn: boolean;
 	canRemoveColumn?: boolean;
-	onRemoveColumn?: (columnKey: string) => void;
+	onRemoveColumn?: (columnId: string) => void;
 };
 
 const GRIP_ICON_SIZE = 12;
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function TanStackHeaderRow({
+
+function TanStackHeaderRow<TData>({
 	column,
 	header,
 	isDarkMode,
-	fontSize,
 	hasSingleColumn,
 	canRemoveColumn = false,
 	onRemoveColumn,
-}: TanStackHeaderRowProps): JSX.Element {
-	const columnId = getColumnId(column);
-	const isDragColumn =
-		column.key !== 'expand' && column.key !== 'state-indicator';
-	const isResizableColumn = Boolean(header?.column.getCanResize());
+}: TanStackHeaderRowProps<TData>): JSX.Element {
+	const columnId = column.id;
+	const isDragColumn = column.enableMove !== false && column.pin == null;
+	const isResizableColumn =
+		column.enableResize !== false && Boolean(header?.column.getCanResize());
 	const isColumnRemovable = Boolean(
-		canRemoveColumn &&
-			onRemoveColumn &&
-			column.key !== 'expand' &&
-			column.key !== 'state-indicator',
+		canRemoveColumn && onRemoveColumn && column.enableRemove,
 	);
 	const isResizing = Boolean(header?.column.getIsResizing());
 	const resizeHandler = header?.getResizeHandler();
 	const headerText =
-		typeof column.title === 'string' && column.title
-			? column.title
+		typeof column.header === 'string' && column.header
+			? column.header
 			: String(header?.id ?? columnId);
 	const headerTitleAttr = headerText.replace(/^\w/, (c) => c.toUpperCase());
 	const handleResizeStart = (
@@ -98,12 +88,9 @@ function TanStackHeaderRow({
 		isColumnRemovable && headerStyles.hasActionControl,
 	);
 
-	const isLogIndicator = column.key === 'state-indicator';
-	const isTimestamp = column.key === 'timestamp';
-
 	const thClassName = useMemo(
-		() => cx(tableStyles.tableHeaderCell, headerCellClassName),
-		[headerCellClassName],
+		() => cx(tableStyles.tableHeaderCell, headerCellClassName, column.id),
+		[headerCellClassName, column.id],
 	);
 
 	return (
@@ -113,10 +100,7 @@ function TanStackHeaderRow({
 			key={columnId}
 			style={headerCellStyle}
 			data-dark-mode={isDarkMode}
-			data-log-indicator={isLogIndicator || undefined}
-			data-timestamp={isTimestamp || undefined}
 			data-single-column={hasSingleColumn || undefined}
-			data-font-size={fontSize}
 		>
 			<span className={headerContentClassName}>
 				{isDragColumn ? (
@@ -127,7 +111,9 @@ function TanStackHeaderRow({
 							{...listeners}
 							role="button"
 							aria-label={`Drag ${String(
-								column.title || header?.id || columnId,
+								(typeof column.header === 'string' && column.header) ||
+									header?.id ||
+									columnId,
 							)} column`}
 							className={headerStyles.tanstackGripActivator}
 						>
@@ -136,9 +122,11 @@ function TanStackHeaderRow({
 					</span>
 				) : null}
 				<span className="tanstack-header-title" title={headerTitleAttr}>
-					{header
+					{header?.column?.columnDef
 						? flexRender(header.column.columnDef.header, header.getContext())
-						: String(column.title || '').replace(/^\w/, (c) => c.toUpperCase())}
+						: typeof column.header === 'function'
+						? column.header()
+						: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
 				</span>
 				{isColumnRemovable && (
 					<Popover>
@@ -165,7 +153,7 @@ function TanStackHeaderRow({
 								onClick={(event): void => {
 									event.preventDefault();
 									event.stopPropagation();
-									onRemoveColumn?.(String(column.key));
+									onRemoveColumn?.(column.id);
 								}}
 							>
 								<CloseOutlined

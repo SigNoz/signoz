@@ -1,8 +1,8 @@
+import type { CSSProperties, Ref } from 'react';
 import {
 	forwardRef,
 	memo,
-	MouseEvent as ReactMouseEvent,
-	ReactElement,
+	ReactNode,
 	useCallback,
 	useEffect,
 	useImperativeHandle,
@@ -10,42 +10,44 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
 import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
-import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
+	DndContext,
+	DragEndEvent,
+	PointerSensor,
+	pointerWithin,
+	useSensor,
+	useSensors,
+} from '@dnd-kit/core';
+import {
+	arrayMove,
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import { toast } from '@signozhq/sonner';
 import {
 	ColumnDef,
+	ColumnPinningState,
+	ExpandedState,
 	getCoreRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
-import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { Pagination } from 'antd';
+import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import useDragColumns from 'hooks/useDragColumns';
 
-import { ColumnTypeRender } from '../Logs/TableView/types';
-import { useTableView } from '../Logs/TableView/useTableView';
 import Spinner from '../Spinner';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
 import TanStackRowCells from './TanStackRow';
-import { TableRecord, TanStackTableProps, TanStackTableRowData } from './types';
-import { useColumnSizingPersistence } from './useColumnSizingPersistence';
-import { useOrderedColumns } from './useOrderedColumns';
+import TanStackTableText from './TanStackTableText';
 import {
-	getColumnId,
-	getColumnMinWidthPx,
-	resolveColumnTypeRender,
-} from './utils';
+	FlatItem,
+	TableRowContext,
+	TanStackTableHandle,
+	TanStackTableProps,
+} from './types';
+import { useTableParams } from './useTableParams';
+import { getColumnMinWidthPx } from './utils';
 
 import tableStyles from './TanStackTable.module.scss';
 import viewStyles from './TanStackTableView.module.scss';
@@ -55,377 +57,455 @@ const COLUMN_DND_AUTO_SCROLL = {
 	threshold: { x: 0.2, y: 0 },
 };
 
-const TanStackTableView = forwardRef<TableVirtuosoHandle, TanStackTableProps>(
-	function TanStackTableView(
-		{
-			isLoading,
-			isFetching,
-			onRemoveColumn,
-			tableViewProps,
-			infitiyTableProps,
-			onSetActiveLog,
-			onClearActiveLog,
-			activeLog,
-		}: TanStackTableProps,
-		forwardedRef,
-	): JSX.Element {
-		const { pathname } = useLocation();
-		const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
-		// could avoid this if directly use forwardedRef in TableVirtuoso, but need to verify if it causes any issue with react-virtuoso internal ref handling
-		useImperativeHandle(
-			forwardedRef,
-			() => virtuosoRef.current as TableVirtuosoHandle,
-			[],
-		);
-		const [, setCopy] = useCopyToClipboard();
-		const isDarkMode = useIsDarkMode();
-		const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
-		const { activeLog: activeContextLog } = useActiveLog();
+function TanStackTableInner<TData>(
+	{
+		data,
+		columns,
+		columnSizing: columnSizingProp,
+		onColumnSizingChange,
+		onColumnOrderChange,
+		onRemoveColumn,
+		isLoading = false,
+		loadingTip = 'Loading',
+		enableQueryParams,
+		pagination,
+		onEndReached,
+		getRowStyle,
+		getRowClassName,
+		isRowActive,
+		renderRowActions,
+		onRowClick,
+		onRowDeactivate,
+		activeRowIndex,
+		renderExpandedRow,
+		getRowCanExpand,
+		tableScrollerProps,
+		plainTextCellLineClamp,
+		cellTypographySize,
+	}: TanStackTableProps<TData>,
+	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
+): JSX.Element {
+	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
+	const isDarkMode = useIsDarkMode();
 
-		// Column definitions (shared with existing logs table)
-		const { dataSource, columns } = useTableView({
-			...tableViewProps,
-			onClickExpand: onSetActiveLog,
-			onOpenLogsContext: (log): void => onSetActiveLog?.(log, VIEW_TYPES.CONTEXT),
+	const { page, limit, setPage, setLimit } = useTableParams(enableQueryParams, {
+		page: pagination?.defaultPage,
+		limit: pagination?.defaultLimit,
+	});
+
+	const [expanded, setExpanded] = useState<ExpandedState>({});
+
+	const columnPinning = useMemo<ColumnPinningState>(
+		() => ({
+			left: columns.filter((c) => c.pin === 'left').map((c) => c.id),
+			right: columns.filter((c) => c.pin === 'right').map((c) => c.id),
+		}),
+		[columns],
+	);
+
+	const tanstackColumns = useMemo<ColumnDef<TData>[]>(() => {
+		return columns.map((colDef) => {
+			const isFixed = colDef.width?.fixed != null;
+			const fixedWidth = colDef.width?.fixed;
+			const minWidthPx = getColumnMinWidthPx(colDef);
+			return {
+				id: colDef.id,
+				header:
+					typeof colDef.header === 'string'
+						? colDef.header
+						: (): ReactNode =>
+								typeof colDef.header === 'function' ? colDef.header() : null,
+				accessorFn: (row: TData): unknown => {
+					if (colDef.accessorFn) {
+						return colDef.accessorFn(row);
+					}
+					if (colDef.accessorKey) {
+						return (row as Record<string, unknown>)[colDef.accessorKey];
+					}
+					return undefined;
+				},
+				enableResizing: colDef.enableResize !== false && !isFixed,
+				enableSorting: colDef.enableSort === true,
+				minSize: fixedWidth ?? minWidthPx,
+				size: colDef.width?.default ?? fixedWidth,
+				maxSize: fixedWidth,
+				cell: ({ row, getValue }): ReactNode => {
+					const rowData = row.original;
+					return colDef.cell({
+						row: rowData,
+						value: getValue(),
+						isActive: isRowActive?.(rowData) ?? false,
+						rowIndex: row.index,
+						isExpanded: row.getIsExpanded(),
+						canExpand: row.getCanExpand(),
+						toggleExpanded: (): void => {
+							row.toggleExpanded();
+						},
+					});
+				},
+			};
 		});
+	}, [columns, isRowActive]);
 
-		// Column order (drag + persisted order)
-		const { draggedColumns, onColumnOrderChange } = useDragColumns<TableRecord>(
-			LOCALSTORAGE.LOGS_LIST_COLUMNS,
-		);
-		const {
-			orderedColumns,
-			orderedColumnIds,
-			hasSingleColumn,
-			handleDragEnd,
-			sensors,
-		} = useOrderedColumns({
-			columns,
-			draggedColumns,
-			onColumnOrderChange: onColumnOrderChange as (columns: unknown[]) => void,
+	const getRowId = useCallback((row: TData, index: number): string => {
+		const r = row as Record<string, unknown>;
+		if (r != null && typeof r.id !== 'undefined') {
+			return String(r.id);
+		}
+		return String(index);
+	}, []);
+
+	const table = useReactTable({
+		data,
+		columns: tanstackColumns,
+		enableColumnResizing: true,
+		enableColumnPinning: true,
+		columnResizeMode: 'onChange',
+		getCoreRowModel: getCoreRowModel(),
+		getRowId,
+		enableExpanding: Boolean(renderExpandedRow),
+		getRowCanExpand: renderExpandedRow
+			? (row): boolean => (getRowCanExpand ? getRowCanExpand(row.original) : true)
+			: undefined,
+		onColumnSizingChange: onColumnSizingChange ?? ((): void => {}),
+		onExpandedChange: setExpanded,
+		state: {
+			columnSizing: columnSizingProp ?? {},
+			columnPinning,
+			expanded,
+		},
+	});
+
+	const tableRows = table.getRowModel().rows;
+
+	const flatItems = useMemo<FlatItem<TData>[]>(() => {
+		const result: FlatItem<TData>[] = [];
+		for (const row of tableRows) {
+			result.push({ kind: 'row', row });
+			if (renderExpandedRow && row.getIsExpanded()) {
+				result.push({ kind: 'expansion', row });
+			}
+		}
+		return result;
+	}, [tableRows, renderExpandedRow]);
+
+	const flatIndexForActiveRow = useMemo(() => {
+		if (activeRowIndex == null || activeRowIndex < 0) {
+			return -1;
+		}
+		for (let i = 0; i < flatItems.length; i++) {
+			const item = flatItems[i];
+			if (item.kind === 'row' && item.row.index === activeRowIndex) {
+				return i;
+			}
+		}
+		return -1;
+	}, [activeRowIndex, flatItems]);
+
+	useEffect(() => {
+		if (flatIndexForActiveRow < 0) {
+			return;
+		}
+		virtuosoRef.current?.scrollToIndex({
+			index: flatIndexForActiveRow,
+			align: 'center',
+			behavior: 'auto',
 		});
+	}, [flatIndexForActiveRow]);
 
-		// Column sizing (persisted). stored to localStorage.
-		const { columnSizing, setColumnSizing } = useColumnSizingPersistence(
-			orderedColumns,
-		);
+	const sensors = useSensors(
+		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+	);
 
-		// don't allow "remove column" when only state-indicator + one data col remain
-		const isAtMinimumRemovableColumns = useMemo(
-			() =>
-				orderedColumns.filter(
-					(column) => column.key !== 'state-indicator' && column.key !== 'expand',
-				).length <= 1,
-			[orderedColumns],
-		);
+	const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
 
-		// Table data (TanStack row data shape)
-		// useTableView sends flattened log data. this would not be needed once we move to new log details view
-		const tableData = useMemo<TanStackTableRowData[]>(
-			() =>
-				dataSource
-					.map((log, rowIndex) => {
-						const currentLog = tableViewProps.logs[rowIndex];
-						if (!currentLog) {
-							return null;
-						}
-						return { log, currentLog, rowIndex };
-					})
-					.filter(Boolean) as TanStackTableRowData[],
-			[dataSource, tableViewProps.logs],
-		);
+	const handleDragEnd = useCallback(
+		(event: DragEndEvent): void => {
+			const { active, over } = event;
+			if (!over || active.id === over.id || !onColumnOrderChange) {
+				return;
+			}
+			const activeCol = columns.find((c) => c.id === String(active.id));
+			const overCol = columns.find((c) => c.id === String(over.id));
+			if (
+				!activeCol ||
+				!overCol ||
+				activeCol.pin != null ||
+				overCol.pin != null ||
+				activeCol.enableMove === false
+			) {
+				return;
+			}
+			const oldIndex = columns.findIndex((c) => c.id === String(active.id));
+			const newIndex = columns.findIndex((c) => c.id === String(over.id));
+			if (oldIndex === -1 || newIndex === -1) {
+				return;
+			}
+			onColumnOrderChange(arrayMove(columns, oldIndex, newIndex));
+		},
+		[columns, onColumnOrderChange],
+	);
 
-		// TanStack columns + table instance
-		const tanstackColumns = useMemo<ColumnDef<TanStackTableRowData>[]>(
-			() =>
-				orderedColumns.map((column, index) => {
-					const isStateIndicator = column.key === 'state-indicator';
-					const isExpand = column.key === 'expand';
-					const isFixedColumn = isStateIndicator || isExpand;
-					const fixedWidth = isFixedColumn ? 32 : undefined;
-					const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
-					const headerTitle = String(column.title || '');
+	const hasSingleColumn = useMemo(
+		() => columns.filter((c) => !c.pin && c.enableRemove !== false).length <= 1,
+		[columns],
+	);
 
-					return {
-						id: getColumnId(column),
-						header: headerTitle.replace(/^\w/, (character) =>
-							character.toUpperCase(),
-						),
-						accessorFn: (row): unknown => row.log[column.key as keyof TableRecord],
-						enableResizing: !isFixedColumn && index !== orderedColumns.length - 1,
-						minSize: fixedWidth ?? minWidthPx,
-						size: fixedWidth, // last column gets remaining space, so don't set initial size to avoid conflict with resizing
-						maxSize: fixedWidth,
-						cell: ({ row, getValue }): ReactElement | string | number | null => {
-							if (!column.render) {
+	const canRemoveColumn = !hasSingleColumn;
+
+	const flatHeaders = useMemo(
+		() => table.getFlatHeaders().filter((header) => !header.isPlaceholder),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[tanstackColumns, columnPinning],
+	);
+
+	const columnsById = useMemo(
+		() => new Map(columns.map((c) => [c.id, c] as const)),
+		[columns],
+	);
+
+	const virtuosoContext = useMemo<TableRowContext<TData>>(
+		() => ({
+			getRowStyle,
+			getRowClassName,
+			isRowActive,
+			renderRowActions,
+			onRowClick,
+			onRowDeactivate,
+			renderExpandedRow,
+			colCount: columns.length,
+			isDarkMode,
+			plainTextCellLineClamp,
+		}),
+		[
+			getRowStyle,
+			getRowClassName,
+			isRowActive,
+			renderRowActions,
+			onRowClick,
+			onRowDeactivate,
+			renderExpandedRow,
+			columns.length,
+			isDarkMode,
+			plainTextCellLineClamp,
+		],
+	);
+
+	const itemContent = useCallback(
+		(_index: number, item: FlatItem<TData>): JSX.Element => (
+			<TanStackRowCells
+				row={item.row}
+				itemKind={item.kind}
+				context={virtuosoContext}
+				hasSingleColumn={hasSingleColumn}
+			/>
+		),
+		[virtuosoContext, hasSingleColumn],
+	);
+
+	const tableHeader = useCallback(() => {
+		return (
+			<DndContext
+				sensors={sensors}
+				collisionDetection={pointerWithin}
+				onDragEnd={handleDragEnd}
+				autoScroll={COLUMN_DND_AUTO_SCROLL}
+			>
+				<SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+					<tr>
+						{flatHeaders.map((header) => {
+							const column = columnsById.get(header.id);
+							if (!column) {
 								return null;
 							}
-
-							return resolveColumnTypeRender(
-								column.render(
-									getValue(),
-									row.original.log,
-									row.original.rowIndex,
-								) as ColumnTypeRender<Record<string, unknown>>,
+							return (
+								<TanStackHeaderRow
+									key={header.id}
+									column={column}
+									header={header}
+									isDarkMode={isDarkMode}
+									hasSingleColumn={hasSingleColumn}
+									onRemoveColumn={onRemoveColumn}
+									canRemoveColumn={canRemoveColumn}
+								/>
 							);
-						},
-					};
-				}),
-			[orderedColumns],
+						})}
+					</tr>
+				</SortableContext>
+			</DndContext>
 		);
-		const table = useReactTable({
-			data: tableData,
-			columns: tanstackColumns,
-			enableColumnResizing: true,
-			getCoreRowModel: getCoreRowModel(),
-			columnResizeMode: 'onChange',
-			onColumnSizingChange: setColumnSizing,
-			state: {
-				columnSizing,
-			},
-		});
-		const tableRows = table.getRowModel().rows;
+	}, [
+		sensors,
+		handleDragEnd,
+		columnIds,
+		flatHeaders,
+		columnsById,
+		isDarkMode,
+		hasSingleColumn,
+		onRemoveColumn,
+		canRemoveColumn,
+	]);
 
-		// Infinite-scroll footer UI state
-		const [loadMoreState, setLoadMoreState] = useState<{
-			active: boolean;
-			startCount: number;
-		}>({
-			active: false,
-			startCount: 0,
-		});
+	const handleEndReached = useCallback(
+		(index: number): void => {
+			onEndReached?.(index);
+		},
+		[onEndReached],
+	);
 
-		// Map to resolve full log object by id (row highlighting + indicator)
-		const logsById = useMemo(
-			() => new Map(tableViewProps.logs.map((log) => [String(log.id), log])),
-			[tableViewProps.logs],
-		);
-
-		// this is already written in parent. Check if this is needed.
-		useEffect(() => {
-			const activeLogIndex = tableViewProps.activeLogIndex ?? -1;
-			if (activeLogIndex < 0 || activeLogIndex >= tableRows.length) {
-				return;
-			}
-
-			virtuosoRef.current?.scrollToIndex({
-				index: activeLogIndex,
-				align: 'center',
-				behavior: 'auto',
-			});
-		}, [tableRows.length, tableViewProps.activeLogIndex]);
-
-		useEffect(() => {
-			if (!loadMoreState.active) {
-				return;
-			}
-
-			if (!isFetching || tableRows.length > loadMoreState.startCount) {
-				setLoadMoreState((prev) =>
-					prev.active ? { active: false, startCount: prev.startCount } : prev,
-				);
-			}
-		}, [isFetching, loadMoreState, tableRows.length]);
-
-		const handleLogCopy = useCallback(
-			(logId: string, event: ReactMouseEvent<HTMLElement>): void => {
-				event.preventDefault();
-				event.stopPropagation();
-
-				const urlQuery = new URLSearchParams(window.location.search);
-				urlQuery.delete(QueryParams.activeLogId);
-				urlQuery.delete(QueryParams.relativeTime);
-				urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
-				const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
-
-				setCopy(link);
-				toast.success('Copied to clipboard', { position: 'top-right' });
-			},
-			[pathname, setCopy],
-		);
-
-		const itemContent = useCallback(
-			(index: number): JSX.Element | null => {
-				const row = tableRows[index];
-				if (!row) {
-					return null;
-				}
-
-				return (
-					<TanStackRowCells
-						row={row}
-						fontSize={tableViewProps.fontSize}
-						onSetActiveLog={onSetActiveLog}
-						onClearActiveLog={onClearActiveLog}
-						isActiveLog={
-							String(activeLog?.id ?? '') === String(row.original.currentLog.id ?? '')
+	useImperativeHandle(
+		forwardedRef,
+		(): TanStackTableHandle =>
+			new Proxy(
+				{
+					goToPage: (p: number): void => {
+						setPage(p);
+						virtuosoRef.current?.scrollToIndex({
+							index: 0,
+							align: 'start',
+						});
+					},
+				} as TanStackTableHandle,
+				{
+					get(target, prop): unknown {
+						if (prop in target) {
+							return Reflect.get(target, prop);
 						}
-						isDarkMode={isDarkMode}
-						onLogCopy={handleLogCopy}
-						isLogsExplorerPage={isLogsExplorerPage}
-					/>
-				);
-			},
-			[
-				activeLog?.id,
-				handleLogCopy,
-				isDarkMode,
-				isLogsExplorerPage,
-				onClearActiveLog,
-				onSetActiveLog,
-				tableRows,
-				tableViewProps.fontSize,
-			],
-		);
+						const v = (virtuosoRef.current as unknown) as Record<string, unknown>;
+						const value = v?.[prop as string];
+						if (typeof value === 'function') {
+							return (value as (...a: unknown[]) => unknown).bind(virtuosoRef.current);
+						}
+						return value;
+					},
+				},
+			),
+		[setPage],
+	);
 
-		const flatHeaders = useMemo(
-			() => table.getFlatHeaders().filter((header) => !header.isPlaceholder),
-			// eslint-disable-next-line react-hooks/exhaustive-deps
-			[tanstackColumns],
-		);
+	const showPagination = Boolean(pagination && !onEndReached);
 
-		const tableHeader = useCallback(() => {
-			const orderedColumnsById = new Map(
-				orderedColumns.map((column) => [getColumnId(column), column] as const),
-			);
+	const { className: tableScrollerClassName, ...restTableScrollerProps } =
+		tableScrollerProps ?? {};
 
-			return (
-				<DndContext
-					sensors={sensors}
-					collisionDetection={pointerWithin}
-					onDragEnd={handleDragEnd}
-					autoScroll={COLUMN_DND_AUTO_SCROLL}
-				>
-					<SortableContext
-						items={orderedColumnIds}
-						strategy={horizontalListSortingStrategy}
-					>
-						<tr>
-							{flatHeaders.map((header) => {
-								const column = orderedColumnsById.get(header.id);
-								if (!column) {
-									return null;
-								}
-
-								return (
-									<TanStackHeaderRow
-										key={header.id}
-										column={column}
-										header={header}
-										isDarkMode={isDarkMode}
-										fontSize={tableViewProps.fontSize}
-										hasSingleColumn={hasSingleColumn}
-										onRemoveColumn={onRemoveColumn}
-										canRemoveColumn={!isAtMinimumRemovableColumns}
-									/>
-								);
-							})}
-						</tr>
-					</SortableContext>
-				</DndContext>
-			);
-		}, [
-			flatHeaders,
-			handleDragEnd,
-			hasSingleColumn,
-			isDarkMode,
-			orderedColumnIds,
-			orderedColumns,
-			onRemoveColumn,
-			isAtMinimumRemovableColumns,
-			sensors,
-			tableViewProps.fontSize,
-		]);
-
-		const handleEndReached = useCallback(
-			(index: number): void => {
-				if (!infitiyTableProps?.onEndReached) {
-					return;
-				}
-
-				setLoadMoreState({
-					active: true,
-					startCount: tableRows.length,
-				});
-				infitiyTableProps.onEndReached(index);
-			},
-			[infitiyTableProps, tableRows.length],
-		);
-
-		if (isLoading) {
-			return <Spinner height="35px" tip="Getting Logs" />;
+	const cellTypographyClass = useMemo((): string | undefined => {
+		if (cellTypographySize === 'small') {
+			return viewStyles.cellTypographySmall;
 		}
+		if (cellTypographySize === 'medium') {
+			return viewStyles.cellTypographyMedium;
+		}
+		if (cellTypographySize === 'large') {
+			return viewStyles.cellTypographyLarge;
+		}
+		return undefined;
+	}, [cellTypographySize]);
 
-		return (
-			<div className={viewStyles.tanstackTableViewWrapper}>
-				<TableVirtuoso
-					className={viewStyles.tanstackTableVirtuosoScroll}
-					ref={virtuosoRef}
-					data={tableData}
-					totalCount={tableRows.length}
-					increaseViewportBy={{ top: 500, bottom: 500 }}
-					initialTopMostItemIndex={
-						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
-					}
-					context={{ activeLog, activeContextLog, logsById }}
-					fixedHeaderContent={tableHeader}
-					itemContent={itemContent}
-					components={{
-						Table: ({ style, children }): JSX.Element => (
-							<table className={tableStyles.tanStackTable} style={style}>
-								<colgroup>
-									{orderedColumns.map((column, colIndex) => {
-										const columnId = getColumnId(column);
-										const isFixedColumn =
-											column.key === 'expand' || column.key === 'state-indicator';
-										const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
-										const persistedWidth = columnSizing[columnId];
-										const computedWidth = table.getColumn(columnId)?.getSize();
-										const effectiveWidth = persistedWidth ?? computedWidth;
-										if (isFixedColumn) {
-											return (
-												<col key={columnId} className={viewStyles.tanstackFixedCol} />
-											);
-										}
-										// Last data column should stretch to fill remaining space
-										const isLastColumn = colIndex === orderedColumns.length - 1;
-										if (isLastColumn) {
-											return (
-												<col
-													key={columnId}
-													style={{ width: '100%', minWidth: `${minWidthPx}px` }}
-												/>
-											);
-										}
-										const widthPx =
-											effectiveWidth != null
-												? Math.max(effectiveWidth, minWidthPx)
-												: minWidthPx;
+	return (
+		<div className={viewStyles.tanstackTableViewWrapper}>
+			<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
+				className={cx(
+					viewStyles.tanstackTableVirtuosoScroll,
+					cellTypographyClass,
+					tableScrollerClassName,
+				)}
+				ref={virtuosoRef}
+				{...restTableScrollerProps}
+				data={flatItems}
+				totalCount={flatItems.length}
+				context={virtuosoContext}
+				increaseViewportBy={{ top: 500, bottom: 500 }}
+				initialTopMostItemIndex={
+					flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
+				}
+				fixedHeaderContent={tableHeader}
+				itemContent={itemContent}
+				style={
+					{
+						'--tanstack-plain-body-line-clamp': plainTextCellLineClamp,
+					} as CSSProperties
+				}
+				components={{
+					Table: ({ style, children }): JSX.Element => (
+						<table className={tableStyles.tanStackTable} style={style}>
+							<colgroup>
+								{columns.map((column, colIndex) => {
+									const columnId = column.id;
+									const isFixedColumn = column.width?.fixed != null;
+									const minWidthPx = getColumnMinWidthPx(column);
+									const persistedWidth = columnSizingProp?.[columnId];
+									const computedWidth = table.getColumn(columnId)?.getSize();
+									const effectiveWidth = persistedWidth ?? computedWidth;
+									if (isFixedColumn) {
+										return <col key={columnId} className={viewStyles.tanstackFixedCol} />;
+									}
+									const isLastColumn = colIndex === columns.length - 1;
+									if (isLastColumn) {
 										return (
 											<col
 												key={columnId}
-												style={{ width: `${widthPx}px`, minWidth: `${minWidthPx}px` }}
+												style={{ width: '100%', minWidth: `${minWidthPx}px` }}
 											/>
 										);
-									})}
-								</colgroup>
-								{children}
-							</table>
-						),
-						TableRow: TanStackCustomTableRow,
+									}
+									const widthPx =
+										effectiveWidth != null
+											? Math.max(effectiveWidth, minWidthPx)
+											: minWidthPx;
+									return (
+										<col
+											key={columnId}
+											style={{
+												width: `${widthPx}px`,
+												minWidth: `${minWidthPx}px`,
+											}}
+										/>
+									);
+								})}
+							</colgroup>
+							{children}
+						</table>
+					),
+					TableRow: TanStackCustomTableRow,
+				}}
+				{...(onEndReached ? { endReached: handleEndReached } : {})}
+			/>
+			{isLoading && (
+				<div className={viewStyles.tanstackLoadingOverlay}>
+					<Spinner height="35px" tip={loadingTip} />
+				</div>
+			)}
+			{showPagination && pagination && (
+				<Pagination
+					style={{ marginTop: 12, textAlign: 'right' }}
+					current={page}
+					pageSize={limit}
+					total={pagination.total}
+					showSizeChanger
+					onChange={(p, ps): void => {
+						setPage(p);
+						if (ps != null && ps !== limit) {
+							setLimit(ps);
+						}
 					}}
-					{...(infitiyTableProps?.onEndReached
-						? { endReached: handleEndReached }
-						: {})}
 				/>
-				{loadMoreState.active && (
-					<div className={viewStyles.tanstackLoadMoreContainer}>
-						<Spinner height="20px" tip="Getting Logs" />
-					</div>
-				)}
-			</div>
-		);
-	},
-);
+			)}
+		</div>
+	);
+}
 
-export default memo(TanStackTableView);
+const TanStackTableForward = forwardRef(TanStackTableInner) as <TData>(
+	props: TanStackTableProps<TData> & {
+		ref?: React.Ref<TanStackTableHandle>;
+	},
+) => JSX.Element;
+
+const TanStackTableBase = memo(
+	TanStackTableForward,
+) as typeof TanStackTableForward;
+
+const TanStackTable = Object.assign(TanStackTableBase, {
+	Text: TanStackTableText,
+});
+
+export default TanStackTable;

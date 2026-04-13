@@ -1,11 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 
-import { LogType } from '../Logs/LogStateIndicator/LogStateIndicator';
+import { LogType } from './LogStateIndicator';
 
-/**
- * Returns the background color for active/hover log rows.
- * This is a CSS module-compatible version of getActiveLogBackground from utils/logs.
- */
 export function getRowBackgroundColor(
 	isDarkMode: boolean,
 	logType?: string,
@@ -28,7 +24,6 @@ export function getRowBackgroundColor(
 				return `${Color.BG_ROBIN_500}40`;
 		}
 	}
-	// Light mode
 	switch (logType) {
 		case LogType.INFO:
 			return Color.BG_ROBIN_100;

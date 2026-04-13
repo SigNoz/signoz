@@ -1,108 +1,105 @@
+jest.mock('../TanStackTable.module.scss', () => ({
+	__esModule: true,
+	default: {
+		tableRow: 'tableRow',
+		tableRowActive: 'tableRowActive',
+		tableRowExpansion: 'tableRowExpansion',
+	},
+}));
+
 import { render, screen } from '@testing-library/react';
+import TanStackCustomTableRow from '../TanStackCustomTableRow';
+import type { FlatItem, TableRowContext } from '../types';
 
-import TanStackCustomTableRow, {
-	TableRowContext,
-} from '../TanStackCustomTableRow';
-import type { TanStackTableRowData } from '../types';
+const makeItem = (id: string): FlatItem<{ id: string }> => ({
+	kind: 'row',
+	row: { original: { id } } as never,
+});
 
-jest.mock(
-	'../../../container/LogsExplorerList/InfinityTableView/styles',
-	() => ({
-		TableRowStyled: 'tr',
-	}),
-);
-
-jest.mock('../../../hooks/logs/useCopyLogLink', () => ({
-	useCopyLogLink: (): { isHighlighted: boolean } => ({ isHighlighted: false }),
-}));
-
-jest.mock('../../../hooks/useDarkMode', () => ({
-	useIsDarkMode: (): boolean => false,
-}));
-
-jest.mock('../../Logs/LogStateIndicator/utils', () => ({
-	getLogIndicatorType: (): string => 'info',
-	getLogIndicatorTypeForTable: (): string => 'info',
-}));
-
-const item: TanStackTableRowData = {
-	log: {},
-	currentLog: { id: 'row-1' } as TanStackTableRowData['currentLog'],
-	rowIndex: 0,
-};
-
-const virtuosoTableRowAttrs = {
+const virtuosoAttrs = {
 	'data-index': 0,
 	'data-item-index': 0,
 	'data-known-size': 40,
 } as const;
 
-const defaultContext: TableRowContext = {
-	activeLog: null,
-	activeContextLog: null,
-	logsById: new Map(),
-};
-
 describe('TanStackCustomTableRow', () => {
-	it('renders children inside TableRowStyled', () => {
+	it('renders children', () => {
 		render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
-						{...virtuosoTableRowAttrs}
-						item={item}
-						context={defaultContext}
+						{...virtuosoAttrs}
+						item={makeItem('1')}
+						context={undefined}
 					>
 						<td>cell</td>
 					</TanStackCustomTableRow>
 				</tbody>
 			</table>,
 		);
-
 		expect(screen.getByText('cell')).toBeInTheDocument();
 	});
 
-	it('marks row active when activeLog matches item id', () => {
+	it('applies active class when isRowActive returns true', () => {
+		const ctx: TableRowContext<{ id: string }> = {
+			isRowActive: (row) => row.id === '1',
+			colCount: 1,
+		};
 		const { container } = render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
-						{...virtuosoTableRowAttrs}
-						item={item}
-						context={{
-							...defaultContext,
-							activeLog: { id: 'row-1' } as never,
-						}}
+						{...virtuosoAttrs}
+						item={makeItem('1')}
+						context={ctx as never}
 					>
 						<td>x</td>
 					</TanStackCustomTableRow>
 				</tbody>
 			</table>,
 		);
-
-		const row = container.querySelector('tr');
-		expect(row).toBeTruthy();
+		expect(container.querySelector('tr')).toHaveClass('tableRowActive');
 	});
 
-	it('uses logsById entry when present for indicator type', () => {
-		const logFromMap = { id: 'row-1', severity_text: 'error' } as never;
-		render(
+	it('does not apply active class when isRowActive returns false', () => {
+		const ctx: TableRowContext<{ id: string }> = {
+			isRowActive: (row) => row.id === 'other',
+			colCount: 1,
+		};
+		const { container } = render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
-						{...virtuosoTableRowAttrs}
-						item={item}
-						context={{
-							...defaultContext,
-							logsById: new Map([['row-1', logFromMap]]),
-						}}
+						{...virtuosoAttrs}
+						item={makeItem('1')}
+						context={ctx as never}
 					>
 						<td>x</td>
 					</TanStackCustomTableRow>
 				</tbody>
 			</table>,
 		);
+		expect(container.querySelector('tr')).not.toHaveClass('tableRowActive');
+	});
 
-		expect(screen.getByText('x')).toBeInTheDocument();
+	it('renders expansion row without RowHoverContext when kind is expansion', () => {
+		const item: FlatItem<{ id: string }> = {
+			kind: 'expansion',
+			row: { original: { id: '1' } } as never,
+		};
+		const { container } = render(
+			<table>
+				<tbody>
+					<TanStackCustomTableRow
+						{...virtuosoAttrs}
+						item={item}
+						context={undefined}
+					>
+						<td>expanded content</td>
+					</TanStackCustomTableRow>
+				</tbody>
+			</table>,
+		);
+		expect(container.querySelector('tr')).toHaveClass('tableRowExpansion');
 	});
 });

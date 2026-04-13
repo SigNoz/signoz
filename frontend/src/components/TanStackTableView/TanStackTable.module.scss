@@ -69,8 +69,25 @@
 	}
 }
 
-/* In table/column view, keep action buttons visible at the viewport's right edge */
-.tableViewLogActions {
+.tableCellText {
+	font-style: normal;
+	font-weight: 400;
+	letter-spacing: -0.07px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	width: auto;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: var(--tanstack-plain-body-line-clamp, 1);
+	line-clamp: var(--tanstack-plain-body-line-clamp, 1);
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: var(--l2-foreground);
+	max-width: 100%;
+	word-break: break-all;
+}
+
+.tableViewRowActions {
 	position: absolute;
 	top: 50%;
 	right: 8px;
@@ -81,43 +98,25 @@
 }
 
 .tableCell {
-	padding: 0.5rem;
-	background-color: inherit;
-	color: inherit;
+	padding: 0.3rem;
+	font-style: normal;
+	font-weight: 400;
+	letter-spacing: -0.07px;
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: var(--l2-foreground);
 
-	&[data-dark-mode='true'] {
-		background-color: inherit;
-		color: #ffffff;
-	}
-
-	&[data-dark-mode='false'] {
-		background-color: #ffffffd5;
-		color: #1d1d1d;
-	}
-
-	&[data-log-indicator] {
+	&:global(.state-indicator) {
 		padding: 0 0 0 8px;
 		width: 1%;
 	}
 
-	&[data-timestamp]:not([data-single-column]) {
+	&:global(.timestamp):not([data-single-column]) {
 		width: 10%;
 	}
 
-	&[data-timestamp][data-single-column] {
+	&:global(.timestamp)[data-single-column] {
 		width: 100%;
-	}
-
-	&[data-font-size='small'] {
-		padding: 0.3rem;
-	}
-
-	&[data-font-size='medium'] {
-		padding: 0.4rem;
-	}
-
-	&[data-font-size='large'] {
-		padding: 0.5rem;
 	}
 
 	&:global(.table-actions-cell) {
@@ -169,7 +168,7 @@
 }
 
 .tableHeaderCell {
-	padding: 0.5rem;
+	padding: 0.3rem;
 	height: 36px;
 	text-align: left;
 	font-size: 14px;
@@ -195,36 +194,25 @@
 		color: #1d1d1d;
 	}
 
-	&[data-log-indicator] {
+	&:global(.state-indicator) {
 		padding: 0px;
 		width: 1%;
 	}
 
-	/* Timestamp column */
-	&[data-timestamp]:not([data-single-column]) {
+	&:global(.timestamp):not([data-single-column]) {
 		width: 10%;
 	}
 
-	&[data-timestamp][data-single-column] {
+	&:global(.timestamp)[data-single-column] {
 		width: 100%;
 	}
+}
 
-	/* Font size modifiers */
-	&[data-font-size='small'] {
-		font-size: 11px;
-		line-height: 16px;
-		padding: 0.1rem;
-	}
+.tableRowExpansion {
+	display: table-row;
+}
 
-	&[data-font-size='medium'] {
-		font-size: 13px;
-		line-height: 20px;
-		padding: 0.3rem;
-	}
-
-	&[data-font-size='large'] {
-		font-size: 14px;
-		line-height: 24px;
-		padding: 0.5rem;
-	}
+.tableCellExpansion {
+	padding: 0.5rem;
+	vertical-align: top;
 }

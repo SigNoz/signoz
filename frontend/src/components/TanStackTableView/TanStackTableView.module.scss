@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	position: relative;
 	min-height: 0;
 }
 
@@ -37,18 +38,6 @@
 	overflow-x: scroll;
 }
 
-.tanstackFontSizeSmall {
-	font-size: 11px;
-}
-
-.tanstackFontSizeMedium {
-	font-size: 13px;
-}
-
-.tanstackFontSizeLarge {
-	font-size: 14px;
-}
-
 .tanstackTableFootLoaderCell {
 	text-align: center;
 	padding: 8px 0;
@@ -81,6 +70,56 @@
 	&::-webkit-scrollbar-thumb:hover {
 		background: var(--bg-slate-200);
 	}
+
+	&.cellTypographySmall {
+		--tanstack-plain-cell-font-size: 11px;
+		--tanstack-plain-cell-line-height: 16px;
+
+		:global(table tr td),
+		:global(table thead th) {
+			font-size: 11px;
+			line-height: 16px;
+			letter-spacing: -0.07px;
+		}
+	}
+
+	&.cellTypographyMedium {
+		--tanstack-plain-cell-font-size: 13px;
+		--tanstack-plain-cell-line-height: 20px;
+
+		:global(table tr td),
+		:global(table thead th) {
+			font-size: 13px;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+	}
+
+	&.cellTypographyLarge {
+		--tanstack-plain-cell-font-size: 14px;
+		--tanstack-plain-cell-line-height: 24px;
+
+		:global(table tr td),
+		:global(table thead th) {
+			font-size: 14px;
+			line-height: 24px;
+			letter-spacing: -0.07px;
+		}
+	}
+}
+
+.tanstackLoadingOverlay {
+	position: absolute;
+	left: 50%;
+	bottom: 2rem;
+	transform: translateX(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	z-index: 3;
+	border-radius: 8px;
+	padding: 8px 16px;
 }
 
 :global(.lightMode) .tanstackTableVirtuosoScroll {

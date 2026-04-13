@@ -1,17 +1,28 @@
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { toast } from '@signozhq/sonner';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
-// components
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
+import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { getRowBackgroundColor } from 'components/Logs/LogStateIndicator/getRowBackgroundColor';
+import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import RawLogView from 'components/Logs/RawLogView';
+import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColumns';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
-import TanStackTableView from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import type { TanStackTableHandle } from 'components/TanStackTableView/types';
+import { useTableColumns } from 'components/TanStackTableView/useTableColumns';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
@@ -20,6 +31,7 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
@@ -50,7 +62,10 @@ function LogsExplorerList({
 	isFilterApplied,
 	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
-	const ref = useRef<VirtuosoHandle>(null);
+	const ref = useRef<TanStackTableHandle | VirtuosoHandle | null>(null);
+	const { pathname } = useLocation();
+	const [, setCopy] = useCopyToClipboard();
+	const isDarkMode = useIsDarkMode();
 	const { activeLogId } = useCopyLogLink();
 
 	const {
@@ -84,9 +99,46 @@ function LogsExplorerList({
 		[options],
 	);
 
+	const logsColumns = useLogsTableColumns({
+		fields: selectedFields,
+		linesPerRow: options.maxLines,
+		fontSize: options.fontSize,
+		appendTo: 'end',
+	});
+
+	const { tableProps } = useTableColumns(logsColumns, {
+		storageKey: LOCALSTORAGE.LOGS_LIST_COLUMNS,
+	});
+
+	const handleRemoveColumn = useCallback(
+		(columnId: string): void => {
+			tableProps.onRemoveColumn(columnId);
+			config.addColumn?.onRemove?.(columnId);
+		},
+		[tableProps, config.addColumn],
+	);
+
+	const makeOnLogCopy = useCallback(
+		(log: ILog) => (event: MouseEvent<HTMLElement>): void => {
+			event.preventDefault();
+			event.stopPropagation();
+			const urlQuery = new URLSearchParams(window.location.search);
+			urlQuery.delete(QueryParams.activeLogId);
+			urlQuery.delete(QueryParams.relativeTime);
+			urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
+			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+			setCopy(link);
+			toast.success('Copied to clipboard', { position: 'top-right' });
+		},
+		[pathname, setCopy],
+	);
+
 	const handleScrollToLog = useScrollToLog({
 		logs,
-		virtuosoRef: ref,
+		virtuosoRef: ref as React.RefObject<Pick<
+			VirtuosoHandle,
+			'scrollToIndex'
+		> | null>,
 	});
 
 	useEffect(() => {
@@ -155,25 +207,44 @@ function LogsExplorerList({
 
 		if (options.format === 'table') {
 			return (
-				<TanStackTableView
-					ref={ref}
-					isLoading={isLoading}
-					isFetching={isFetching}
-					tableViewProps={{
-						logs,
-						fields: selectedFields,
-						linesPerRow: options.maxLines,
-						fontSize: options.fontSize,
-						appendTo: 'end',
-						activeLogIndex,
+				<TanStackTable
+					ref={ref as React.Ref<TanStackTableHandle>}
+					{...tableProps}
+					plainTextCellLineClamp={options.maxLines}
+					cellTypographySize={options.fontSize}
+					onRemoveColumn={handleRemoveColumn}
+					data={logs}
+					isLoading={isLoading || isFetching}
+					loadingTip="Getting Logs"
+					onEndReached={onEndReached}
+					isRowActive={(log): boolean => log.id === activeLog?.id}
+					getRowStyle={(log): CSSProperties =>
+						({
+							'--row-active-bg': getRowBackgroundColor(
+								isDarkMode,
+								getLogIndicatorType(log),
+							),
+							'--row-hover-bg': getRowBackgroundColor(
+								isDarkMode,
+								getLogIndicatorType(log),
+							),
+						} as CSSProperties)
+					}
+					onRowClick={(log): void => {
+						handleSetActiveLog(log);
 					}}
-					infitiyTableProps={{ onEndReached }}
-					handleChangeSelectedView={handleChangeSelectedView}
-					logs={logs}
-					onSetActiveLog={handleSetActiveLog}
-					onClearActiveLog={handleCloseLogDetail}
-					activeLog={activeLog}
-					onRemoveColumn={config.addColumn?.onRemove}
+					onRowDeactivate={handleCloseLogDetail}
+					activeRowIndex={activeLogIndex}
+					renderRowActions={(log): ReactNode => (
+						<LogLinesActionButtons
+							handleShowContext={(e): void => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
+							}}
+							onLogCopy={makeOnLogCopy(log)}
+						/>
+					)}
 				/>
 			);
 		}
@@ -198,7 +269,7 @@ function LogsExplorerList({
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
 						key={activeLogIndex || 'logs-virtuoso'}
-						ref={ref}
+						ref={ref as React.Ref<VirtuosoHandle>}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 						data={logs}
 						endReached={onEndReached}
@@ -219,12 +290,13 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		isFetching,
-		selectedFields,
-		handleChangeSelectedView,
 		handleSetActiveLog,
 		handleCloseLogDetail,
 		activeLog,
-		config.addColumn?.onRemove,
+		tableProps,
+		handleRemoveColumn,
+		isDarkMode,
+		makeOnLogCopy,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

@@ -1,155 +1,137 @@
-import type { Header } from '@tanstack/react-table';
-import { render, screen } from '@testing-library/react';
-
-import { FontSize } from '../../../container/OptionsMenu/types';
+import { fireEvent, render, screen } from '@testing-library/react';
+import type { TableColumnDef } from '../types';
 import TanStackHeaderRow from '../TanStackHeaderRow';
-import type { OrderedColumn, TanStackTableRowData } from '../types';
-
-jest.mock(
-	'../../../container/LogsExplorerList/InfinityTableView/styles',
-	() => ({
-		TableHeaderCellStyled: 'th',
-	}),
-);
-
-const mockUseSortable = jest.fn((_args?: unknown) => ({
-	attributes: {},
-	listeners: {},
-	setNodeRef: jest.fn(),
-	setActivatorNodeRef: jest.fn(),
-	transform: null,
-	transition: undefined,
-	isDragging: false,
-}));
 
 jest.mock('@dnd-kit/sortable', () => ({
-	useSortable: (args: unknown): ReturnType<typeof mockUseSortable> =>
-		mockUseSortable(args),
+	useSortable: () => ({
+		attributes: {},
+		listeners: {},
+		setNodeRef: jest.fn(),
+		setActivatorNodeRef: jest.fn(),
+		transform: null,
+		transition: null,
+		isDragging: false,
+	}),
 }));
 
-jest.mock('@tanstack/react-table', () => ({
-	flexRender: (def: unknown, ctx: unknown): unknown => {
-		if (typeof def === 'string') {
-			return def;
-		}
-		if (typeof def === 'function') {
-			return (def as (c: unknown) => unknown)(ctx);
-		}
-		return def;
-	},
-}));
-
-const column = (key: string): OrderedColumn =>
-	({ key, title: key } as OrderedColumn);
-
-const mockHeader = (
+const col = (
 	id: string,
-	canResize = true,
-): Header<TanStackTableRowData, unknown> =>
-	(({
-		id,
-		column: {
-			getCanResize: (): boolean => canResize,
-			getIsResizing: (): boolean => false,
-			columnDef: { header: id },
-		},
-		getContext: (): unknown => ({}),
-		getResizeHandler: (): (() => void) => jest.fn(),
-		flexRender: undefined,
-	} as unknown) as Header<TanStackTableRowData, unknown>);
+	overrides?: Partial<TableColumnDef<unknown>>,
+): TableColumnDef<unknown> => ({
+	id,
+	header: id,
+	cell: () => null,
+	...overrides,
+});
+
+const header = {
+	id: 'col',
+	column: {
+		getCanResize: () => true,
+		getIsResizing: () => false,
+		columnDef: { header: 'col' },
+	},
+	getResizeHandler: () => jest.fn(),
+	getContext: () => ({}),
+} as never;
 
 describe('TanStackHeaderRow', () => {
-	beforeEach(() => {
-		mockUseSortable.mockClear();
-	});
-
-	it('renders column title when header is undefined', () => {
+	it('renders column title', () => {
 		render(
 			<table>
 				<thead>
 					<tr>
 						<TanStackHeaderRow
-							column={column('timestamp')}
+							column={col('timestamp', { header: 'timestamp' })}
+							header={header}
 							isDarkMode={false}
-							fontSize={FontSize.SMALL}
 							hasSingleColumn={false}
 						/>
 					</tr>
 				</thead>
 			</table>,
 		);
-
-		expect(screen.getByText('Timestamp')).toBeInTheDocument();
+		expect(screen.getByTitle('Timestamp')).toBeInTheDocument();
 	});
 
-	it('enables useSortable for draggable columns', () => {
+	it('shows grip icon when enableMove is not false and pin is not set', () => {
 		render(
 			<table>
 				<thead>
 					<tr>
 						<TanStackHeaderRow
-							column={column('body')}
-							header={mockHeader('body')}
+							column={col('body')}
+							header={header}
 							isDarkMode={false}
-							fontSize={FontSize.SMALL}
 							hasSingleColumn={false}
 						/>
 					</tr>
 				</thead>
 			</table>,
 		);
-
-		expect(mockUseSortable).toHaveBeenCalledWith(
-			expect.objectContaining({
-				id: 'body',
-				disabled: false,
-			}),
-		);
+		expect(screen.getByRole('button', { name: /drag body/i })).toBeInTheDocument();
 	});
 
-	it('disables sortable for expand column', () => {
+	it('does NOT show grip icon when pin is set', () => {
 		render(
 			<table>
 				<thead>
 					<tr>
 						<TanStackHeaderRow
-							column={column('expand')}
-							header={mockHeader('expand', false)}
+							column={col('indicator', { pin: 'left' })}
+							header={header}
 							isDarkMode={false}
-							fontSize={FontSize.SMALL}
 							hasSingleColumn={false}
 						/>
 					</tr>
 				</thead>
 			</table>,
 		);
-
-		expect(mockUseSortable).toHaveBeenCalledWith(
-			expect.objectContaining({
-				disabled: true,
-			}),
-		);
+		expect(screen.queryByRole('button', { name: /drag/i })).not.toBeInTheDocument();
 	});
 
-	it('shows drag grip for draggable columns', () => {
+	it('shows remove button when enableRemove and canRemoveColumn are true', () => {
+		const onRemoveColumn = jest.fn();
 		render(
 			<table>
 				<thead>
 					<tr>
 						<TanStackHeaderRow
-							column={column('body')}
-							header={mockHeader('body')}
+							column={col('name', { enableRemove: true })}
+							header={header}
 							isDarkMode={false}
-							fontSize={FontSize.SMALL}
 							hasSingleColumn={false}
+							canRemoveColumn
+							onRemoveColumn={onRemoveColumn}
 						/>
 					</tr>
 				</thead>
 			</table>,
 		);
+		fireEvent.click(screen.getByRole('button', { name: /column actions/i }));
+		fireEvent.click(screen.getByText(/remove column/i));
+		expect(onRemoveColumn).toHaveBeenCalledWith('name');
+	});
 
+	it('does NOT show remove button when enableRemove is absent', () => {
+		render(
+			<table>
+				<thead>
+					<tr>
+						<TanStackHeaderRow
+							column={col('name')}
+							header={header}
+							isDarkMode={false}
+							hasSingleColumn={false}
+							canRemoveColumn
+							onRemoveColumn={jest.fn()}
+						/>
+					</tr>
+				</thead>
+			</table>,
+		);
 		expect(
-			screen.getByRole('button', { name: /Drag body column/i }),
-		).toBeInTheDocument();
+			screen.queryByRole('button', { name: /column actions/i }),
+		).not.toBeInTheDocument();
 	});
 });
