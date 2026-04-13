@@ -11,9 +11,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var (
-	ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
-)
+var ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 
 type MaintenanceStatus struct {
 	valuer.String
@@ -161,8 +159,11 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 
 	currentTime := now.In(loc)
 
-	// fixed schedule
-	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
+	// fixed schedule — only when no recurrence is configured.
+	// When recurrence is set, the recurring check below handles everything;
+	// falling through here would cause the window to match the absolute
+	// StartTime–EndTime range instead of the daily/weekly/monthly pattern.
+	if m.Schedule.Recurrence == nil && !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() {
 		startTime := m.Schedule.StartTime.In(loc)
 		endTime := m.Schedule.EndTime.In(loc)
 		if currentTime.Equal(startTime) || currentTime.Equal(endTime) ||
