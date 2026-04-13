@@ -185,7 +185,7 @@ func validatePluginSpec(plugin common.Plugin, factory func() any, path string) e
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: plugin kind is required", path)
 	}
 	if plugin.Spec == nil {
-		return nil
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: plugin spec is required", path)
 	}
 	// Re-marshal the spec and unmarshal into the typed struct.
 	specJSON, err := json.Marshal(plugin.Spec)
