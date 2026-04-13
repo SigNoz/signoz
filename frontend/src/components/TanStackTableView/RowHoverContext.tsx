@@ -1,5 +1,4 @@
 /* eslint-disable no-restricted-imports */
-// Context is required here to pass zustand store to components
 import {
 	createContext,
 	ReactNode,
@@ -10,16 +9,39 @@ import {
 /* eslint-enable no-restricted-imports */
 import { createStore, StoreApi, useStore } from 'zustand';
 
+const CLEAR_HOVER_DELAY_MS = 100;
+
 type RowHoverState = {
 	hoveredRowId: string | null;
+	clearTimeoutId: ReturnType<typeof setTimeout> | null;
 	setHoveredRowId: (id: string | null) => void;
+	scheduleClearHover: (rowId: string) => void;
 };
 
 const createRowHoverStore = (): StoreApi<RowHoverState> =>
-	createStore<RowHoverState>((set) => ({
+	createStore<RowHoverState>((set, get) => ({
 		hoveredRowId: null,
+		clearTimeoutId: null,
 		setHoveredRowId: (id: string | null): void => {
+			const { clearTimeoutId } = get();
+			if (clearTimeoutId) {
+				clearTimeout(clearTimeoutId);
+				set({ clearTimeoutId: null });
+			}
 			set({ hoveredRowId: id });
+		},
+		scheduleClearHover: (rowId: string): void => {
+			const { clearTimeoutId } = get();
+			if (clearTimeoutId) {
+				clearTimeout(clearTimeoutId);
+			}
+			const timeoutId = setTimeout(() => {
+				const current = get().hoveredRowId;
+				if (current === rowId) {
+					set({ hoveredRowId: null, clearTimeoutId: null });
+				}
+			}, CLEAR_HOVER_DELAY_MS);
+			set({ clearTimeoutId: timeoutId });
 		},
 	}));
 
@@ -43,13 +65,8 @@ export function RowHoverProvider({
 	);
 }
 
-// Default store for when provider is not available
 const defaultStore = createRowHoverStore();
 
-/**
- * Check if a specific row is hovered.
- * Only re-renders when THIS row's hover state changes.
- */
 export const useIsRowHovered = (rowId: string): boolean => {
 	const store = useContext(RowHoverContext);
 	// Selector returns true only if this specific row is hovered
@@ -60,10 +77,6 @@ export const useIsRowHovered = (rowId: string): boolean => {
 	return store ? isHovered : false;
 };
 
-/**
- * Get a callback to set a row as hovered.
- * This callback is stable and doesn't cause re-renders.
- */
 export const useSetRowHovered = (rowId: string): (() => void) => {
 	const store = useContext(RowHoverContext);
 	return useCallback(() => {
@@ -72,6 +85,15 @@ export const useSetRowHovered = (rowId: string): (() => void) => {
 			if (current !== rowId) {
 				store.getState().setHoveredRowId(rowId);
 			}
+		}
+	}, [store, rowId]);
+};
+
+export const useClearRowHovered = (rowId: string): (() => void) => {
+	const store = useContext(RowHoverContext);
+	return useCallback(() => {
+		if (store) {
+			store.getState().scheduleClearHover(rowId);
 		}
 	}, [store, rowId]);
 };

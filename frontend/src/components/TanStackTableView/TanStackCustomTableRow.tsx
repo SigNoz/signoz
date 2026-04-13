@@ -2,7 +2,7 @@ import { ComponentProps, memo } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
-import { useSetRowHovered } from './RowHoverContext';
+import { useClearRowHovered, useSetRowHovered } from './RowHoverContext';
 import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -22,8 +22,9 @@ function TanStackCustomTableRow<TData>({
 	const rowId = item.row.id;
 	const rowData = item.row.original;
 
-	// Stable callback that sets this row as hovered
+	// Stable callbacks for hover state management
 	const setHovered = useSetRowHovered(rowId);
+	const clearHovered = useClearRowHovered(rowId);
 
 	if (item.kind === 'expansion') {
 		return (
@@ -49,6 +50,7 @@ function TanStackCustomTableRow<TData>({
 			className={rowClassName}
 			style={rowStyle}
 			onMouseEnter={setHovered}
+			onMouseLeave={clearHovered}
 		>
 			{children}
 		</tr>

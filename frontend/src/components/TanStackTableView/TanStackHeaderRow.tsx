@@ -89,9 +89,10 @@ function TanStackHeaderRow<TData>({
 		isColumnRemovable && headerStyles.hasActionControl,
 	);
 
-	const thClassName = useMemo(
-		() => cx(tableStyles.tableHeaderCell, headerCellClassName, column.id),
-		[headerCellClassName, column.id],
+	const thClassName = cx(
+		tableStyles.tableHeaderCell,
+		headerCellClassName,
+		column.id,
 	);
 
 	return (

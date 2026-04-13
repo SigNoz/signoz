@@ -217,7 +217,9 @@ function LogsExplorerList({
 					isLoading={isLoading || isFetching}
 					loadingTip="Getting Logs"
 					onEndReached={onEndReached}
-					isRowActive={(log): boolean => log.id === activeLog?.id}
+					isRowActive={(log): boolean =>
+						log.id === activeLog?.id || log.id === activeLogId
+					}
 					getRowStyle={(log): CSSProperties =>
 						({
 							'--row-active-bg': getRowBackgroundColor(

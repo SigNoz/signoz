@@ -1,15 +1,8 @@
-.table {
-	width: 100%;
-	border-collapse: separate;
-	border-spacing: 0;
-}
-
 .tanStackTable {
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
 	table-layout: fixed;
-	width: 100%;
 	min-width: 100%;
 	max-width: 100%;
 
@@ -69,11 +62,11 @@
 			background-color: var(--row-hover-bg) !important;
 		}
 	}
-}
 
-.tableRowActive {
-	td {
-		background-color: var(--row-active-bg) !important;
+	&.tableRowActive {
+		.tableCell {
+			background-color: var(--row-active-bg) !important;
+		}
 	}
 }
 

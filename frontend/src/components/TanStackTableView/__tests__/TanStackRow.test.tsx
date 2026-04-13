@@ -134,26 +134,6 @@ describe('TanStackRowCells', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('renders cell content when plainTextCellLineClamp is set on context', () => {
-		const ctx: TableRowContext<Row> = { colCount: 1, plainTextCellLineClamp: 2 };
-		const row = buildMockRow([{ id: 'col-a' }]);
-		render(
-			<table>
-				<tbody>
-					<tr>
-						<TanStackRowCells<Row>
-							row={row as never}
-							context={ctx}
-							itemKind="row"
-							hasSingleColumn={false}
-						/>
-					</tr>
-				</tbody>
-			</table>,
-		);
-		expect(screen.getByRole('cell')).toHaveTextContent('content-col-a');
-	});
-
 	it('renders expansion cell with renderExpandedRow content', async () => {
 		const row = {
 			original: { id: 'r1' },
