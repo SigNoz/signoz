@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type DayWiseBreakdown struct {
@@ -52,6 +57,11 @@ type billingData struct {
 	SubscriptionStatus string  `json:"subscriptionStatus"`
 }
 
+type billingDetails struct {
+	Status string      `json:"status"`
+	Data   billingData `json:"data"`
+}
+
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 	licenseKey := r.URL.Query().Get("licenseKey")
 
@@ -60,17 +70,53 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := ah.Signoz.Zeus.GetMeters(r.Context(), licenseKey)
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	var billing billingData
-	if err := json.Unmarshal(data, &billing); err != nil {
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useZeus := ah.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureBillingZeus, evalCtx)
+
+	if useZeus {
+		data, err := ah.Signoz.Zeus.GetMeters(r.Context(), licenseKey)
+		if err != nil {
+			RespondError(w, model.InternalError(err), nil)
+			return
+		}
+
+		var billing billingData
+		if err := json.Unmarshal(data, &billing); err != nil {
+			RespondError(w, model.InternalError(err), nil)
+			return
+		}
+
+		ah.Respond(w, billing)
+		return
+	}
+
+	billingURL := fmt.Sprintf("%s/usage?licenseKey=%s", constants.LicenseSignozIo, licenseKey)
+
+	hClient := &http.Client{}
+	req, err := http.NewRequest("GET", billingURL, nil)
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+	req.Header.Add("X-SigNoz-SecretKey", constants.LicenseAPIKey)
+	billingResp, err := hClient.Do(req)
+	if err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	ah.Respond(w, billing)
+	var billingResponse billingDetails
+	if err := json.NewDecoder(billingResp.Body).Decode(&billingResponse); err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	ah.Respond(w, billingResponse.Data)
 }
