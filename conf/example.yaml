@@ -364,3 +364,34 @@ serviceaccount:
   analytics:
     # toggle service account analytics
     enabled: true
+
+##################### Auditor #####################
+auditor:
+  # Specifies the auditor provider to use.
+  # noop: discards all audit events (community default).
+  # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  provider: noop
+  # The async channel capacity for audit events. Events are dropped when full (fail-open).
+  buffer_size: 1000
+  # The maximum number of events per export batch.
+  batch_size: 100
+  # The maximum time between export flushes.
+  flush_interval: 1s
+  otlphttp:
+    # The target scheme://host:port/path of the OTLP HTTP endpoint.
+    endpoint: http://localhost:4318/v1/logs
+    # Whether to use HTTP instead of HTTPS.
+    insecure: false
+    # The maximum duration for an export attempt.
+    timeout: 10s
+    # Additional HTTP headers sent with every export request.
+    headers: {}
+    retry:
+      # Whether to retry on transient failures.
+      enabled: true
+      # The initial wait time before the first retry.
+      initial_interval: 5s
+      # The upper bound on backoff interval.
+      max_interval: 30s
+      # The total maximum time spent retrying.
+      max_elapsed_time: 60s

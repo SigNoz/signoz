@@ -495,12 +495,12 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/EC2"
+            "namespace": "AWS/EC2"
           },
           {
-            "Namespace": "CWAgent"
+            "namespace": "CWAgent"
           }
         ]
       }
