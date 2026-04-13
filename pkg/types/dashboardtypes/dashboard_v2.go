@@ -113,7 +113,7 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 	// Validate panel and query plugins.
 	for key, panel := range d.Panels {
 		if panel == nil {
-			continue
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
 		if err := validatePanelPlugin(panel.Spec.Plugin, path+".spec.plugin"); err != nil {
