@@ -24,20 +24,24 @@ import type {
 	AgentCheckInDeprecated200,
 	AgentCheckInDeprecatedPathParameters,
 	AgentCheckInPathParameters,
-	CloudintegrationtypesConnectionArtifactRequestDTO,
-	CloudintegrationtypesPostableAgentCheckInRequestDTO,
+	CloudintegrationtypesPostableAccountDTO,
+	CloudintegrationtypesPostableAgentCheckInDTO,
 	CloudintegrationtypesUpdatableAccountDTO,
 	CloudintegrationtypesUpdatableServiceDTO,
-	CreateAccount200,
+	CreateAccount201,
 	CreateAccountPathParameters,
 	DisconnectAccountPathParameters,
 	GetAccount200,
 	GetAccountPathParameters,
+	GetConnectionCredentials200,
+	GetConnectionCredentialsPathParameters,
 	GetService200,
+	GetServiceParams,
 	GetServicePathParameters,
 	ListAccounts200,
 	ListAccountsPathParameters,
 	ListServicesMetadata200,
+	ListServicesMetadataParams,
 	ListServicesMetadataPathParameters,
 	RenderErrorResponseDTO,
 	UpdateAccountPathParameters,
@@ -51,14 +55,14 @@ import type {
  */
 export const agentCheckInDeprecated = (
 	{ cloudProvider }: AgentCheckInDeprecatedPathParameters,
-	cloudintegrationtypesPostableAgentCheckInRequestDTO: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>,
+	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<AgentCheckInDeprecated200>({
 		url: `/api/v1/cloud-integrations/${cloudProvider}/agent-check-in`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesPostableAgentCheckInRequestDTO,
+		data: cloudintegrationtypesPostableAgentCheckInDTO,
 		signal,
 	});
 };
@@ -72,7 +76,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -81,7 +85,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -98,7 +102,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 		Awaited<ReturnType<typeof agentCheckInDeprecated>>,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -112,7 +116,7 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 export type AgentCheckInDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckInDeprecated>>
 >;
-export type AgentCheckInDeprecatedMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+export type AgentCheckInDeprecatedMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 export type AgentCheckInDeprecatedMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -128,7 +132,7 @@ export const useAgentCheckInDeprecated = <
 		TError,
 		{
 			pathParams: AgentCheckInDeprecatedPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 		},
 		TContext
 	>;
@@ -137,7 +141,7 @@ export const useAgentCheckInDeprecated = <
 	TError,
 	{
 		pathParams: AgentCheckInDeprecatedPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 	},
 	TContext
 > => {
@@ -255,14 +259,14 @@ export const invalidateListAccounts = async (
  */
 export const createAccount = (
 	{ cloudProvider }: CreateAccountPathParameters,
-	cloudintegrationtypesConnectionArtifactRequestDTO: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>,
+	cloudintegrationtypesPostableAccountDTO: BodyType<CloudintegrationtypesPostableAccountDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAccount200>({
+	return GeneratedAPIInstance<CreateAccount201>({
 		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesConnectionArtifactRequestDTO,
+		data: cloudintegrationtypesPostableAccountDTO,
 		signal,
 	});
 };
@@ -276,7 +280,7 @@ export const getCreateAccountMutationOptions = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -285,7 +289,7 @@ export const getCreateAccountMutationOptions = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
@@ -302,7 +306,7 @@ export const getCreateAccountMutationOptions = <
 		Awaited<ReturnType<typeof createAccount>>,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -316,7 +320,7 @@ export const getCreateAccountMutationOptions = <
 export type CreateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAccount>>
 >;
-export type CreateAccountMutationBody = BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+export type CreateAccountMutationBody = BodyType<CloudintegrationtypesPostableAccountDTO>;
 export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -331,7 +335,7 @@ export const useCreateAccount = <
 		TError,
 		{
 			pathParams: CreateAccountPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+			data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 		},
 		TContext
 	>;
@@ -340,7 +344,7 @@ export const useCreateAccount = <
 	TError,
 	{
 		pathParams: CreateAccountPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		data: BodyType<CloudintegrationtypesPostableAccountDTO>;
 	},
 	TContext
 > => {
@@ -629,329 +633,15 @@ export const useUpdateAccount = <
 	return useMutation(mutationOptions);
 };
 /**
- * This endpoint is called by the deployed agent to check in
- * @summary Agent check-in
- */
-export const agentCheckIn = (
-	{ cloudProvider }: AgentCheckInPathParameters,
-	cloudintegrationtypesPostableAgentCheckInRequestDTO: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<AgentCheckIn200>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/check_in`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesPostableAgentCheckInRequestDTO,
-		signal,
-	});
-};
-
-export const getAgentCheckInMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof agentCheckIn>>,
-		TError,
-		{
-			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof agentCheckIn>>,
-	TError,
-	{
-		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['agentCheckIn'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof agentCheckIn>>,
-		{
-			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return agentCheckIn(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type AgentCheckInMutationResult = NonNullable<
-	Awaited<ReturnType<typeof agentCheckIn>>
->;
-export type AgentCheckInMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Agent check-in
- */
-export const useAgentCheckIn = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof agentCheckIn>>,
-		TError,
-		{
-			pathParams: AgentCheckInPathParameters;
-			data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof agentCheckIn>>,
-	TError,
-	{
-		pathParams: AgentCheckInPathParameters;
-		data: BodyType<CloudintegrationtypesPostableAgentCheckInRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getAgentCheckInMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint lists the services metadata for the specified cloud provider
- * @summary List services metadata
- */
-export const listServicesMetadata = (
-	{ cloudProvider }: ListServicesMetadataPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<ListServicesMetadata200>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/services`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListServicesMetadataQueryKey = ({
-	cloudProvider,
-}: ListServicesMetadataPathParameters) => {
-	return [`/api/v1/cloud_integrations/${cloudProvider}/services`] as const;
-};
-
-export const getListServicesMetadataQueryOptions = <
-	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ cloudProvider }: ListServicesMetadataPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listServicesMetadata>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getListServicesMetadataQueryKey({ cloudProvider });
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof listServicesMetadata>>
-	> = ({ signal }) => listServicesMetadata({ cloudProvider }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!cloudProvider,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof listServicesMetadata>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListServicesMetadataQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listServicesMetadata>>
->;
-export type ListServicesMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary List services metadata
- */
-
-export function useListServicesMetadata<
-	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ cloudProvider }: ListServicesMetadataPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listServicesMetadata>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListServicesMetadataQueryOptions(
-		{ cloudProvider },
-		options,
-	);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary List services metadata
- */
-export const invalidateListServicesMetadata = async (
-	queryClient: QueryClient,
-	{ cloudProvider }: ListServicesMetadataPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint gets a service for the specified cloud provider
- * @summary Get service
- */
-export const getService = (
-	{ cloudProvider, serviceId }: GetServicePathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetService200>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetServiceQueryKey = ({
-	cloudProvider,
-	serviceId,
-}: GetServicePathParameters) => {
-	return [
-		`/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
-	] as const;
-};
-
-export const getGetServiceQueryOptions = <
-	TData = Awaited<ReturnType<typeof getService>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ cloudProvider, serviceId }: GetServicePathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getService>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getGetServiceQueryKey({ cloudProvider, serviceId });
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getService>>> = ({
-		signal,
-	}) => getService({ cloudProvider, serviceId }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!(cloudProvider && serviceId),
-		...queryOptions,
-	} as UseQueryOptions<Awaited<ReturnType<typeof getService>>, TError, TData> & {
-		queryKey: QueryKey;
-	};
-};
-
-export type GetServiceQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getService>>
->;
-export type GetServiceQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get service
- */
-
-export function useGetService<
-	TData = Awaited<ReturnType<typeof getService>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ cloudProvider, serviceId }: GetServicePathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getService>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetServiceQueryOptions(
-		{ cloudProvider, serviceId },
-		options,
-	);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary Get service
- */
-export const invalidateGetService = async (
-	queryClient: QueryClient,
-	{ cloudProvider, serviceId }: GetServicePathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
  * This endpoint updates a service for the specified cloud provider
  * @summary Update service
  */
 export const updateService = (
-	{ cloudProvider, serviceId }: UpdateServicePathParameters,
+	{ cloudProvider, id, serviceId }: UpdateServicePathParameters,
 	cloudintegrationtypesUpdatableServiceDTO: BodyType<CloudintegrationtypesUpdatableServiceDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: cloudintegrationtypesUpdatableServiceDTO,
@@ -1038,4 +728,444 @@ export const useUpdateService = <
 	const mutationOptions = getUpdateServiceMutationOptions(options);
 
 	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint is called by the deployed agent to check in
+ * @summary Agent check-in
+ */
+export const agentCheckIn = (
+	{ cloudProvider }: AgentCheckInPathParameters,
+	cloudintegrationtypesPostableAgentCheckInDTO: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<AgentCheckIn200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/check_in`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: cloudintegrationtypesPostableAgentCheckInDTO,
+		signal,
+	});
+};
+
+export const getAgentCheckInMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof agentCheckIn>>,
+		TError,
+		{
+			pathParams: AgentCheckInPathParameters;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof agentCheckIn>>,
+	TError,
+	{
+		pathParams: AgentCheckInPathParameters;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['agentCheckIn'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof agentCheckIn>>,
+		{
+			pathParams: AgentCheckInPathParameters;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return agentCheckIn(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type AgentCheckInMutationResult = NonNullable<
+	Awaited<ReturnType<typeof agentCheckIn>>
+>;
+export type AgentCheckInMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Agent check-in
+ */
+export const useAgentCheckIn = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof agentCheckIn>>,
+		TError,
+		{
+			pathParams: AgentCheckInPathParameters;
+			data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof agentCheckIn>>,
+	TError,
+	{
+		pathParams: AgentCheckInPathParameters;
+		data: BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getAgentCheckInMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint retrieves the connection credentials required for integration
+ * @summary Get connection credentials
+ */
+export const getConnectionCredentials = (
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetConnectionCredentials200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/credentials`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetConnectionCredentialsQueryKey = ({
+	cloudProvider,
+}: GetConnectionCredentialsPathParameters) => {
+	return [`/api/v1/cloud_integrations/${cloudProvider}/credentials`] as const;
+};
+
+export const getGetConnectionCredentialsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getConnectionCredentials>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetConnectionCredentialsQueryKey({ cloudProvider });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getConnectionCredentials>>
+	> = ({ signal }) => getConnectionCredentials({ cloudProvider }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!cloudProvider,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getConnectionCredentials>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetConnectionCredentialsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getConnectionCredentials>>
+>;
+export type GetConnectionCredentialsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get connection credentials
+ */
+
+export function useGetConnectionCredentials<
+	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getConnectionCredentials>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetConnectionCredentialsQueryOptions(
+		{ cloudProvider },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get connection credentials
+ */
+export const invalidateGetConnectionCredentials = async (
+	queryClient: QueryClient,
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetConnectionCredentialsQueryKey({ cloudProvider }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint lists the services metadata for the specified cloud provider
+ * @summary List services metadata
+ */
+export const listServicesMetadata = (
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListServicesMetadata200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/services`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListServicesMetadataQueryKey = (
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/services`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListServicesMetadataQueryOptions = <
+	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServicesMetadata>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getListServicesMetadataQueryKey({ cloudProvider }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listServicesMetadata>>
+	> = ({ signal }) => listServicesMetadata({ cloudProvider }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!cloudProvider,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listServicesMetadata>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListServicesMetadataQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listServicesMetadata>>
+>;
+export type ListServicesMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List services metadata
+ */
+
+export function useListServicesMetadata<
+	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServicesMetadata>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListServicesMetadataQueryOptions(
+		{ cloudProvider },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary List services metadata
+ */
+export const invalidateListServicesMetadata = async (
+	queryClient: QueryClient,
+	{ cloudProvider }: ListServicesMetadataPathParameters,
+	params?: ListServicesMetadataParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListServicesMetadataQueryKey({ cloudProvider }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint gets a service for the specified cloud provider
+ * @summary Get service
+ */
+export const getService = (
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetService200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getGetServiceQueryKey = (
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+) => {
+	return [
+		`/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getGetServiceQueryOptions = <
+	TData = Awaited<ReturnType<typeof getService>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getService>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetServiceQueryKey({ cloudProvider, serviceId }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getService>>> = ({
+		signal,
+	}) => getService({ cloudProvider, serviceId }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!(cloudProvider && serviceId),
+		...queryOptions,
+	} as UseQueryOptions<Awaited<ReturnType<typeof getService>>, TError, TData> & {
+		queryKey: QueryKey;
+	};
+};
+
+export type GetServiceQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getService>>
+>;
+export type GetServiceQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get service
+ */
+
+export function useGetService<
+	TData = Awaited<ReturnType<typeof getService>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getService>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetServiceQueryOptions(
+		{ cloudProvider, serviceId },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get service
+ */
+export const invalidateGetService = async (
+	queryClient: QueryClient,
+	{ cloudProvider, serviceId }: GetServicePathParameters,
+	params?: GetServiceParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetServiceQueryKey({ cloudProvider, serviceId }, params) },
+		options,
+	);
+
+	return queryClient;
 };

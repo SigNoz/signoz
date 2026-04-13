@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfroutingstore/sqlroutingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
@@ -33,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -74,6 +76,7 @@ type SigNoz struct {
 	QueryParser            queryparser.QueryParser
 	Flagger                flagger.Flagger
 	Gateway                gateway.Gateway
+	Auditor                auditor.Auditor
 }
 
 func New(
@@ -93,6 +96,7 @@ func New(
 	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
+	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
@@ -370,6 +374,12 @@ func New(
 		return nil, err
 	}
 
+	// Initialize auditor from the variant-specific provider factories
+	auditor, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Auditor, auditorProviderFactories(licensing), config.Auditor.Provider)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
 	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
@@ -395,6 +405,11 @@ func New(
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
@@ -464,6 +479,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
 		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
+		factory.NewNamedService(factory.MustNewName("auditor"), auditor),
 	)
 	if err != nil {
 		return nil, err
@@ -510,5 +526,6 @@ func New(
 		QueryParser:            queryParser,
 		Flagger:                flagger,
 		Gateway:                gateway,
+		Auditor:                auditor,
 	}, nil
 }

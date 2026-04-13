@@ -12,6 +12,10 @@ func NewHandler() cloudintegration.Handler {
 	return &handler{}
 }
 
+func (handler *handler) GetConnectionCredentials(http.ResponseWriter, *http.Request) {
+	panic("unimplemented")
+}
+
 func (handler *handler) CreateAccount(writer http.ResponseWriter, request *http.Request) {
 	// TODO implement me
 	panic("implement me")

@@ -21,6 +21,7 @@ type resourceFilterStatementBuilder[T any] struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
+	source           telemetrytypes.Source
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -37,6 +38,7 @@ func New[T any](
 	dbName string,
 	tableName string,
 	signal telemetrytypes.Signal,
+	source telemetrytypes.Source,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
@@ -52,6 +54,7 @@ func New[T any](
 		conditionBuilder: cb,
 		metadataStore:    metadataStore,
 		signal:           signal,
+		source:           source,
 		fullTextColumn:   fullTextColumn,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
@@ -72,6 +75,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 			continue
 		}
 		keySelectors[idx].Signal = b.signal
+		keySelectors[idx].Source = b.source
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 		filteredKeySelectors = append(filteredKeySelectors, keySelectors[idx])
 	}

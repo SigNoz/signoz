@@ -4,10 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-var (
-	ErrCodeInvalidCloudRegion    = errors.MustNewCode("invalid_cloud_region")
-	ErrCodeMismatchCloudProvider = errors.MustNewCode("cloud_provider_mismatch")
-)
+var ErrCodeInvalidCloudRegion = errors.MustNewCode("invalid_cloud_region")
 
 // List of all valid cloud regions on Amazon Web Services.
 var ValidAWSRegions = map[string]struct{}{
