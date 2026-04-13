@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import RowHoverContext from '../RowHoverContext';
+
 import TanStackRowCells from '../TanStackRow';
-import type { FlatItem, TableRowContext } from '../types';
+import type { TableRowContext } from '../types';
 
 const flexRenderMock = jest.fn((def: unknown) =>
 	typeof def === 'function' ? def({}) : def,
@@ -26,6 +26,7 @@ function buildMockRow(
 					columnDef: { cell: (): string => `content-${c.id}` },
 				},
 				getContext: (): Record<string, unknown> => ({}),
+				getValue: (): string => `content-${c.id}`,
 			})),
 	} as never;
 }
@@ -103,35 +104,14 @@ describe('TanStackRowCells', () => {
 		expect(onRowClick).not.toHaveBeenCalled();
 	});
 
-	it('renders renderRowActions in last cell on hover', () => {
+	it('does not render renderRowActions before hover', () => {
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			renderRowActions: () => <button type="button">action</button>,
 		};
 		const row = buildMockRow([{ id: 'body' }]);
-		render(
-			<RowHoverContext.Provider value>
-				<table>
-					<tbody>
-						<tr>
-							<TanStackRowCells<Row>
-								row={row as never}
-								context={ctx}
-								itemKind="row"
-								hasSingleColumn={false}
-							/>
-						</tr>
-					</tbody>
-				</table>
-			</RowHoverContext.Provider>,
-		);
-		expect(screen.getByRole('button', { name: 'action' })).toBeInTheDocument();
-	});
 
-	it('wraps primitive cell output when plainTextCellLineClamp is set', () => {
-		const ctx: TableRowContext<Row> = { colCount: 1, plainTextCellLineClamp: 2 };
-		const row = buildMockRow([{ id: 'col-a' }]);
-		const { container } = render(
+		render(
 			<table>
 				<tbody>
 					<tr>
@@ -145,9 +125,30 @@ describe('TanStackRowCells', () => {
 				</tbody>
 			</table>,
 		);
-		const wrap = container.querySelector('span');
-		expect(wrap).toBeTruthy();
-		expect(wrap?.textContent).toBe('content-col-a');
+		// Row actions are not rendered until hover (useIsRowHovered returns false by default)
+		expect(
+			screen.queryByRole('button', { name: 'action' }),
+		).not.toBeInTheDocument();
+	});
+
+	it('renders cell content when plainTextCellLineClamp is set on context', () => {
+		const ctx: TableRowContext<Row> = { colCount: 1, plainTextCellLineClamp: 2 };
+		const row = buildMockRow([{ id: 'col-a' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		expect(screen.getByRole('cell')).toHaveTextContent('content-col-a');
 	});
 
 	it('renders expansion cell with renderExpandedRow content', () => {

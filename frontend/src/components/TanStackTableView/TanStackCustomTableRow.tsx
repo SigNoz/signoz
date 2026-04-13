@@ -1,15 +1,8 @@
-import {
-	ComponentProps,
-	CSSProperties,
-	memo,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
+import { ComponentProps, memo } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
-import RowHoverContext from './RowHoverContext';
+import { useSetRowHovered } from './RowHoverContext';
 import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -20,64 +13,17 @@ type VirtuosoTableRowProps<TData> = ComponentProps<
 	>
 >;
 
-type StandardTableRowProps<TData> = {
-	rowData: TData;
-	context: VirtuosoTableRowProps<TData>['context'];
-	hasHovered: boolean;
-	onMouseEnter: () => void;
-	children: VirtuosoTableRowProps<TData>['children'];
-} & Omit<VirtuosoTableRowProps<TData>, 'children' | 'item' | 'context'>;
-
-function TanStackStandardTableRow<TData>({
-	children,
-	context,
-	rowData,
-	hasHovered,
-	onMouseEnter,
-	...trProps
-}: StandardTableRowProps<TData>): JSX.Element {
-	const isActive = context?.isRowActive?.(rowData) ?? false;
-	const extraClass = context?.getRowClassName?.(rowData) ?? '';
-
-	const rowClassName = useMemo(
-		() =>
-			cx(tableStyles.tableRow, isActive && tableStyles.tableRowActive, extraClass),
-		[isActive, extraClass],
-	);
-
-	const rowStyle = useMemo((): CSSProperties => {
-		const style = context?.getRowStyle?.(rowData) ?? {};
-		return { ...style };
-	}, [context, rowData]);
-
-	return (
-		<RowHoverContext.Provider value={hasHovered}>
-			<tr
-				{...trProps}
-				className={rowClassName}
-				style={rowStyle}
-				onMouseEnter={onMouseEnter}
-			>
-				{children}
-			</tr>
-		</RowHoverContext.Provider>
-	);
-}
-
 function TanStackCustomTableRow<TData>({
 	children,
 	item,
 	context,
 	...props
 }: VirtuosoTableRowProps<TData>): JSX.Element {
-	const [hasHovered, setHasHovered] = useState(false);
-	const handleMouseEnter = useCallback(() => {
-		if (!hasHovered) {
-			setHasHovered(true);
-		}
-	}, [hasHovered]);
-
+	const rowId = item.row.id;
 	const rowData = item.row.original;
+
+	// Stable callback that sets this row as hovered
+	const setHovered = useSetRowHovered(rowId);
 
 	if (item.kind === 'expansion') {
 		return (
@@ -87,17 +33,77 @@ function TanStackCustomTableRow<TData>({
 		);
 	}
 
+	const isActive = context?.isRowActive?.(rowData) ?? false;
+	const extraClass = context?.getRowClassName?.(rowData) ?? '';
+	const rowStyle = context?.getRowStyle?.(rowData);
+
+	const rowClassName = cx(
+		tableStyles.tableRow,
+		isActive && tableStyles.tableRowActive,
+		extraClass,
+	);
+
 	return (
-		<TanStackStandardTableRow<TData>
+		<tr
 			{...props}
-			context={context}
-			rowData={rowData}
-			hasHovered={hasHovered}
-			onMouseEnter={handleMouseEnter}
+			className={rowClassName}
+			style={rowStyle}
+			onMouseEnter={setHovered}
 		>
 			{children}
-		</TanStackStandardTableRow>
+		</tr>
 	);
 }
 
-export default memo(TanStackCustomTableRow) as typeof TanStackCustomTableRow;
+// Custom comparison - only re-render when row identity or computed values change
+function areTableRowPropsEqual<TData>(
+	prev: Readonly<VirtuosoTableRowProps<TData>>,
+	next: Readonly<VirtuosoTableRowProps<TData>>,
+): boolean {
+	// Different row = must re-render
+	if (prev.item.row.id !== next.item.row.id) {
+		return false;
+	}
+	// Different kind (row vs expansion) = must re-render
+	if (prev.item.kind !== next.item.kind) {
+		return false;
+	}
+	// Same row, same kind - check if computed values would differ
+	// We compare the context callbacks and row data to determine this
+	const prevData = prev.item.row.original;
+	const nextData = next.item.row.original;
+
+	// Row data reference changed = potential re-render needed
+	if (prevData !== nextData) {
+		return false;
+	}
+
+	// Context callbacks changed = computed values may differ
+	if (prev.context !== next.context) {
+		// If context changed, check if the actual computed values differ
+		const prevActive = prev.context?.isRowActive?.(prevData) ?? false;
+		const nextActive = next.context?.isRowActive?.(nextData) ?? false;
+		if (prevActive !== nextActive) {
+			return false;
+		}
+
+		const prevClass = prev.context?.getRowClassName?.(prevData) ?? '';
+		const nextClass = next.context?.getRowClassName?.(nextData) ?? '';
+		if (prevClass !== nextClass) {
+			return false;
+		}
+
+		const prevStyle = prev.context?.getRowStyle?.(prevData);
+		const nextStyle = next.context?.getRowStyle?.(nextData);
+		if (prevStyle !== nextStyle) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+export default memo(
+	TanStackCustomTableRow,
+	areTableRowPropsEqual,
+) as typeof TanStackCustomTableRow;

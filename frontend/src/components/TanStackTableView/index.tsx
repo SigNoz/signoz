@@ -1,4 +1,4 @@
-import type { CSSProperties, Ref } from 'react';
+import type { ComponentProps, CSSProperties, Ref } from 'react';
 import {
 	forwardRef,
 	memo,
@@ -10,6 +10,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import type { TableComponents } from 'react-virtuoso';
 import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
 import {
 	DndContext,
@@ -24,6 +25,8 @@ import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
+import { TooltipProvider } from '@signozhq/ui';
+import type { Row, Table } from '@tanstack/react-table';
 import {
 	ColumnDef,
 	ColumnPinningState,
@@ -36,12 +39,14 @@ import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import Spinner from '../Spinner';
+import { RowHoverProvider } from './RowHoverContext';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
 import TanStackRowCells from './TanStackRow';
 import TanStackTableText from './TanStackTableText';
 import {
 	FlatItem,
+	TableColumnDef,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
@@ -56,6 +61,103 @@ const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
 	threshold: { x: 0.2, y: 0 },
 };
+
+const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
+
+const PAGINATION_STYLE: CSSProperties = { marginTop: 12, textAlign: 'right' };
+
+const noopColumnSizing = (): void => {};
+
+function VirtuosoTableColGroup<TData>({
+	columns,
+	columnSizingProp,
+	table,
+}: {
+	columns: TableColumnDef<TData>[];
+	columnSizingProp: TanStackTableProps<TData>['columnSizing'];
+	table: Table<TData>;
+}): JSX.Element {
+	return (
+		<colgroup>
+			{columns.map((column, colIndex) => {
+				const columnId = column.id;
+				const isFixedColumn = column.width?.fixed != null;
+				const minWidthPx = getColumnMinWidthPx(column);
+				const persistedWidth = columnSizingProp?.[columnId];
+				const computedWidth = table.getColumn(columnId)?.getSize();
+				const effectiveWidth = persistedWidth ?? computedWidth;
+				if (isFixedColumn) {
+					return <col key={columnId} className={viewStyles.tanstackFixedCol} />;
+				}
+				const isLastColumn = colIndex === columns.length - 1;
+				if (isLastColumn) {
+					return (
+						<col
+							key={columnId}
+							style={{ width: '100%', minWidth: `${minWidthPx}px` }}
+						/>
+					);
+				}
+				const widthPx =
+					effectiveWidth != null ? Math.max(effectiveWidth, minWidthPx) : minWidthPx;
+				return (
+					<col
+						key={columnId}
+						style={{
+							width: `${widthPx}px`,
+							minWidth: `${minWidthPx}px`,
+						}}
+					/>
+				);
+			})}
+		</colgroup>
+	);
+}
+
+function buildTanstackColumnDef<TData>(
+	colDef: TableColumnDef<TData>,
+	isRowActive?: (row: TData) => boolean,
+): ColumnDef<TData> {
+	const isFixed = colDef.width?.fixed != null;
+	const fixedWidth = colDef.width?.fixed;
+	const minWidthPx = getColumnMinWidthPx(colDef);
+	return {
+		id: colDef.id,
+		header:
+			typeof colDef.header === 'string'
+				? colDef.header
+				: (): ReactNode =>
+						typeof colDef.header === 'function' ? colDef.header() : null,
+		accessorFn: (row: TData): unknown => {
+			if (colDef.accessorFn) {
+				return colDef.accessorFn(row);
+			}
+			if (colDef.accessorKey) {
+				return (row as Record<string, unknown>)[colDef.accessorKey];
+			}
+			return undefined;
+		},
+		enableResizing: colDef.enableResize !== false && !isFixed,
+		enableSorting: colDef.enableSort === true,
+		minSize: fixedWidth ?? minWidthPx,
+		size: colDef.width?.default ?? fixedWidth,
+		maxSize: fixedWidth,
+		cell: ({ row, getValue }): ReactNode => {
+			const rowData = row.original;
+			return colDef.cell({
+				row: rowData,
+				value: getValue(),
+				isActive: isRowActive?.(rowData) ?? false,
+				rowIndex: row.index,
+				isExpanded: row.getIsExpanded(),
+				canExpand: row.getCanExpand(),
+				toggleExpanded: (): void => {
+					row.toggleExpanded();
+				},
+			});
+		},
+	};
+}
 
 function TanStackTableInner<TData>(
 	{
@@ -103,49 +205,10 @@ function TanStackTableInner<TData>(
 		[columns],
 	);
 
-	const tanstackColumns = useMemo<ColumnDef<TData>[]>(() => {
-		return columns.map((colDef) => {
-			const isFixed = colDef.width?.fixed != null;
-			const fixedWidth = colDef.width?.fixed;
-			const minWidthPx = getColumnMinWidthPx(colDef);
-			return {
-				id: colDef.id,
-				header:
-					typeof colDef.header === 'string'
-						? colDef.header
-						: (): ReactNode =>
-								typeof colDef.header === 'function' ? colDef.header() : null,
-				accessorFn: (row: TData): unknown => {
-					if (colDef.accessorFn) {
-						return colDef.accessorFn(row);
-					}
-					if (colDef.accessorKey) {
-						return (row as Record<string, unknown>)[colDef.accessorKey];
-					}
-					return undefined;
-				},
-				enableResizing: colDef.enableResize !== false && !isFixed,
-				enableSorting: colDef.enableSort === true,
-				minSize: fixedWidth ?? minWidthPx,
-				size: colDef.width?.default ?? fixedWidth,
-				maxSize: fixedWidth,
-				cell: ({ row, getValue }): ReactNode => {
-					const rowData = row.original;
-					return colDef.cell({
-						row: rowData,
-						value: getValue(),
-						isActive: isRowActive?.(rowData) ?? false,
-						rowIndex: row.index,
-						isExpanded: row.getIsExpanded(),
-						canExpand: row.getCanExpand(),
-						toggleExpanded: (): void => {
-							row.toggleExpanded();
-						},
-					});
-				},
-			};
-		});
-	}, [columns, isRowActive]);
+	const tanstackColumns = useMemo<ColumnDef<TData>[]>(
+		() => columns.map((colDef) => buildTanstackColumnDef(colDef, isRowActive)),
+		[columns, isRowActive],
+	);
 
 	const getRowId = useCallback((row: TData, index: number): string => {
 		const r = row as Record<string, unknown>;
@@ -154,6 +217,12 @@ function TanStackTableInner<TData>(
 		}
 		return String(index);
 	}, []);
+
+	const tableGetRowCanExpand = useCallback(
+		(row: Row<TData>): boolean =>
+			getRowCanExpand ? getRowCanExpand(row.original) : true,
+		[getRowCanExpand],
+	);
 
 	const table = useReactTable({
 		data,
@@ -164,10 +233,8 @@ function TanStackTableInner<TData>(
 		getCoreRowModel: getCoreRowModel(),
 		getRowId,
 		enableExpanding: Boolean(renderExpandedRow),
-		getRowCanExpand: renderExpandedRow
-			? (row): boolean => (getRowCanExpand ? getRowCanExpand(row.original) : true)
-			: undefined,
-		onColumnSizingChange: onColumnSizingChange ?? ((): void => {}),
+		getRowCanExpand: renderExpandedRow ? tableGetRowCanExpand : undefined,
+		onColumnSizingChange: onColumnSizingChange ?? noopColumnSizing,
 		onExpandedChange: setExpanded,
 		state: {
 			columnSizing: columnSizingProp ?? {},
@@ -401,95 +468,88 @@ function TanStackTableInner<TData>(
 		return undefined;
 	}, [cellTypographySize]);
 
+	const virtuosoClassName = useMemo(
+		() =>
+			cx(
+				viewStyles.tanstackTableVirtuosoScroll,
+				cellTypographyClass,
+				tableScrollerClassName,
+			),
+		[cellTypographyClass, tableScrollerClassName],
+	);
+
+	const virtuosoTableStyle = useMemo(
+		() =>
+			({
+				'--tanstack-plain-body-line-clamp': plainTextCellLineClamp,
+			} as CSSProperties),
+		[plainTextCellLineClamp],
+	);
+
+	type VirtuosoTableComponentProps = ComponentProps<
+		NonNullable<TableComponents<FlatItem<TData>, TableRowContext<TData>>['Table']>
+	>;
+
+	const virtuosoComponents = useMemo(
+		() => ({
+			Table: ({ style, children }: VirtuosoTableComponentProps): JSX.Element => (
+				<table className={tableStyles.tanStackTable} style={style}>
+					<VirtuosoTableColGroup
+						columns={columns}
+						columnSizingProp={columnSizingProp}
+						table={table}
+					/>
+					{children}
+				</table>
+			),
+			TableRow: TanStackCustomTableRow,
+		}),
+		[columns, columnSizingProp, table],
+	);
+
 	return (
 		<div className={viewStyles.tanstackTableViewWrapper}>
-			<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
-				className={cx(
-					viewStyles.tanstackTableVirtuosoScroll,
-					cellTypographyClass,
-					tableScrollerClassName,
-				)}
-				ref={virtuosoRef}
-				{...restTableScrollerProps}
-				data={flatItems}
-				totalCount={flatItems.length}
-				context={virtuosoContext}
-				increaseViewportBy={{ top: 500, bottom: 500 }}
-				initialTopMostItemIndex={
-					flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
-				}
-				fixedHeaderContent={tableHeader}
-				itemContent={itemContent}
-				style={
-					{
-						'--tanstack-plain-body-line-clamp': plainTextCellLineClamp,
-					} as CSSProperties
-				}
-				components={{
-					Table: ({ style, children }): JSX.Element => (
-						<table className={tableStyles.tanStackTable} style={style}>
-							<colgroup>
-								{columns.map((column, colIndex) => {
-									const columnId = column.id;
-									const isFixedColumn = column.width?.fixed != null;
-									const minWidthPx = getColumnMinWidthPx(column);
-									const persistedWidth = columnSizingProp?.[columnId];
-									const computedWidth = table.getColumn(columnId)?.getSize();
-									const effectiveWidth = persistedWidth ?? computedWidth;
-									if (isFixedColumn) {
-										return <col key={columnId} className={viewStyles.tanstackFixedCol} />;
-									}
-									const isLastColumn = colIndex === columns.length - 1;
-									if (isLastColumn) {
-										return (
-											<col
-												key={columnId}
-												style={{ width: '100%', minWidth: `${minWidthPx}px` }}
-											/>
-										);
-									}
-									const widthPx =
-										effectiveWidth != null
-											? Math.max(effectiveWidth, minWidthPx)
-											: minWidthPx;
-									return (
-										<col
-											key={columnId}
-											style={{
-												width: `${widthPx}px`,
-												minWidth: `${minWidthPx}px`,
-											}}
-										/>
-									);
-								})}
-							</colgroup>
-							{children}
-						</table>
-					),
-					TableRow: TanStackCustomTableRow,
-				}}
-				{...(onEndReached ? { endReached: handleEndReached } : {})}
-			/>
-			{isLoading && (
-				<div className={viewStyles.tanstackLoadingOverlay}>
-					<Spinner height="35px" tip={loadingTip} />
-				</div>
-			)}
-			{showPagination && pagination && (
-				<Pagination
-					style={{ marginTop: 12, textAlign: 'right' }}
-					current={page}
-					pageSize={limit}
-					total={pagination.total}
-					showSizeChanger
-					onChange={(p, ps): void => {
-						setPage(p);
-						if (ps != null && ps !== limit) {
-							setLimit(ps);
+			<RowHoverProvider>
+				<TooltipProvider>
+					<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
+						className={virtuosoClassName}
+						ref={virtuosoRef}
+						{...restTableScrollerProps}
+						data={flatItems}
+						totalCount={flatItems.length}
+						context={virtuosoContext}
+						increaseViewportBy={INCREASE_VIEWPORT_BY}
+						initialTopMostItemIndex={
+							flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
 						}
-					}}
-				/>
-			)}
+						fixedHeaderContent={tableHeader}
+						itemContent={itemContent}
+						style={virtuosoTableStyle}
+						components={virtuosoComponents}
+						endReached={onEndReached ? handleEndReached : undefined}
+					/>
+					{isLoading && (
+						<div className={viewStyles.tanstackLoadingOverlay}>
+							<Spinner height="35px" tip={loadingTip} />
+						</div>
+					)}
+					{showPagination && pagination && (
+						<Pagination
+							style={PAGINATION_STYLE}
+							current={page}
+							pageSize={limit}
+							total={pagination.total}
+							showSizeChanger
+							onChange={(p, ps): void => {
+								setPage(p);
+								if (ps != null && ps !== limit) {
+									setLimit(ps);
+								}
+							}}
+						/>
+					)}
+				</TooltipProvider>
+			</RowHoverProvider>
 		</div>
 	);
 }

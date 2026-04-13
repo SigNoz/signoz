@@ -95,6 +95,17 @@
 	transform: translateY(-50%);
 	margin: 0;
 	z-index: 5;
+	// Hidden by default, shown on row hover via CSS
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 80ms linear;
+}
+
+// Show row actions on hover or when row is active
+.tableRow:hover .tableViewRowActions,
+.tableRowActive .tableViewRowActions {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .tableCell {
