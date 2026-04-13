@@ -27,6 +27,7 @@ export type MetricNameSelectorProps = {
 	defaultValue?: string;
 	onSelect?: (value: BaseAutocompleteData) => void;
 	signalSource?: 'meter' | '';
+	'data-testid'?: string;
 };
 
 function getAttributeType(
@@ -81,6 +82,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	defaultValue,
 	onSelect,
 	signalSource,
+	'data-testid': dataTestId,
 }: MetricNameSelectorProps): JSX.Element {
 	const currentMetricName =
 		(query.aggregations?.[0] as MetricAggregation)?.metricName ||
@@ -279,6 +281,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 					</Typography.Text>
 				) : null
 			}
+			data-testid={dataTestId}
 			options={optionsData}
 			value={inputValue}
 			onBlur={handleBlur}

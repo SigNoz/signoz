@@ -138,6 +138,7 @@ function ContextLinks({
 				<Button
 					type="default"
 					className="add-context-link-button"
+					data-testid="add-context-link-cta"
 					icon={<Plus size={12} />}
 					style={{ width: '100%' }}
 					onClick={handleAddContextLink}
