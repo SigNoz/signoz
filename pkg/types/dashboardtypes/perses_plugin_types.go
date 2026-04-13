@@ -29,8 +29,8 @@ func (VariablePluginKind) Enum() []any {
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
 	// signal. This could be extended to a richer selector in the future.
-	Name   string `json:"name" validate:"required" required:"true"`
-	Signal string `json:"signal"`
+	Name   string                `json:"name" validate:"required" required:"true"`
+	Signal telemetrytypes.Signal `json:"signal"`
 }
 
 type QueryVariableSpec struct {
@@ -86,32 +86,32 @@ type BuilderQuerySpec struct {
 
 func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 	var peek struct {
-		Signal string `json:"signal"`
+		Signal telemetrytypes.Signal `json:"signal"`
 	}
 	if err := json.Unmarshal(data, &peek); err != nil {
 		return err
 	}
 	switch peek.Signal {
-	case "metrics":
+	case telemetrytypes.SignalMetrics:
 		var spec MetricBuilderQuerySpec
 		if err := json.Unmarshal(data, &spec); err != nil {
 			return err
 		}
 		b.Spec = spec
-	case "logs":
+	case telemetrytypes.SignalLogs:
 		var spec LogBuilderQuerySpec
 		if err := json.Unmarshal(data, &spec); err != nil {
 			return err
 		}
 		b.Spec = spec
-	case "traces":
+	case telemetrytypes.SignalTraces:
 		var spec TraceBuilderQuerySpec
 		if err := json.Unmarshal(data, &spec); err != nil {
 			return err
 		}
 		b.Spec = spec
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q: must be metrics, logs, or traces", peek.Signal)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q; allowed values: %v", peek.Signal.StringValue(), telemetrytypes.Signal{}.Enum())
 	}
 	return nil
 }

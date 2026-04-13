@@ -276,6 +276,33 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 		wantContain string
 	}{
 		{
+			name: "bad signal in builder query",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoztimeseriespanel",
+								"spec": {}
+							},
+							"queries": [{
+								"kind": "TimeSeriesQuery",
+								"spec": {
+									"plugin": {
+										"kind": "signozbuilderquery",
+										"spec": {"signal": "foo"}
+									}
+								}
+							}]
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "signal",
+		},
+		{
 			name: "bad time preference",
 			data: `{
 				"panels": {
