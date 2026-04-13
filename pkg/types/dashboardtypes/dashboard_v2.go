@@ -12,6 +12,18 @@ import (
 	"github.com/perses/perses/pkg/model/api/v1/common"
 )
 
+// StorableDashboardDataV2 wraps v1.DashboardSpec (Perses) with additional SigNoz-specific fields.
+//
+// We embed DashboardSpec (not v1.Dashboard) to avoid carrying Perses's Metadata
+// (Name, Project, CreatedAt, UpdatedAt, Tags, Version) and Kind field. SigNoz
+// manages identity (ID), timestamps (TimeAuditable), and multi-tenancy (OrgID)
+// separately on StorableDashboardV2/DashboardV2.
+//
+// The following v1 request fields map to locations inside v1.DashboardSpec:
+//   - title       → Display.Name          (common.Display)
+//   - description → Display.Description   (common.Display)
+//
+// Fields that have no Perses equivalent will be added in this wrapper (like image, uploadGrafana, etc.)
 type StorableDashboardDataV2 = v1.DashboardSpec
 
 // UnmarshalAndValidateDashboardV2JSON unmarshals the JSON into a StorableDashboardDataV2
