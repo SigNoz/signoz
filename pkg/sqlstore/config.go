@@ -41,6 +41,7 @@ type ConnectionConfig struct {
 	MaxOpenConns int `mapstructure:"max_open_conns"`
 
 	// ConnMaxLifetime is the maximum amount of time a connection may be reused.
+	// If conn_max_lifetime == 0, connections are not closed due to a connection's age.
 	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
 }
 
@@ -53,7 +54,7 @@ func newConfig() factory.Config {
 		Provider: "sqlite",
 		Connection: ConnectionConfig{
 			MaxOpenConns:    100,
-			ConnMaxLifetime: time.Hour * 4,
+			ConnMaxLifetime: 0,
 		},
 		Sqlite: SqliteConfig{
 			Path:            "/var/lib/signoz/signoz.db",
