@@ -71,48 +71,18 @@ type (
 	TraceOperatorSpec      = qb.QueryBuilderTraceOperator
 )
 
-// BuilderQuerySpec dispatches to MetricBuilderQuerySpec, LogBuilderQuerySpec,
-// or TraceBuilderQuerySpec based on the signal field.
-
-type (
-	MetricBuilderQuerySpec = qb.QueryBuilderQuery[qb.MetricAggregation]
-	LogBuilderQuerySpec    = qb.QueryBuilderQuery[qb.LogAggregation]
-	TraceBuilderQuerySpec  = qb.QueryBuilderQuery[qb.TraceAggregation]
-)
-
+// BuilderQuerySpec dispatches to the correct generic QueryBuilderQuery type
+// based on the signal field, reusing the shared dispatch logic.
 type BuilderQuerySpec struct {
 	Spec any
 }
 
 func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
-	var peek struct {
-		Signal telemetrytypes.Signal `json:"signal"`
-	}
-	if err := json.Unmarshal(data, &peek); err != nil {
+	spec, err := qb.UnmarshalBuilderQueryBySignal(data)
+	if err != nil {
 		return err
 	}
-	switch peek.Signal {
-	case telemetrytypes.SignalMetrics:
-		var spec MetricBuilderQuerySpec
-		if err := json.Unmarshal(data, &spec); err != nil {
-			return err
-		}
-		b.Spec = spec
-	case telemetrytypes.SignalLogs:
-		var spec LogBuilderQuerySpec
-		if err := json.Unmarshal(data, &spec); err != nil {
-			return err
-		}
-		b.Spec = spec
-	case telemetrytypes.SignalTraces:
-		var spec TraceBuilderQuerySpec
-		if err := json.Unmarshal(data, &spec); err != nil {
-			return err
-		}
-		b.Spec = spec
-	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid signal %q; allowed values: %v", peek.Signal.StringValue(), telemetrytypes.Signal{}.Enum())
-	}
+	b.Spec = spec
 	return nil
 }
 
