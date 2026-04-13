@@ -6,20 +6,25 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // ══════════════════════════════════════════════
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
 
-type VariablePluginKind = string
+type VariablePluginKind struct{ valuer.String }
 
-const (
-	VariableKindDynamic VariablePluginKind = "SigNozDynamicVariable"
-	VariableKindQuery   VariablePluginKind = "SigNozQueryVariable"
-	VariableKindCustom  VariablePluginKind = "SigNozCustomVariable"
-	VariableKindTextbox VariablePluginKind = "SigNozTextboxVariable"
+var (
+	VariableKindDynamic = VariablePluginKind{valuer.NewString("signozdynamicvariable")}
+	VariableKindQuery   = VariablePluginKind{valuer.NewString("signozqueryvariable")}
+	VariableKindCustom  = VariablePluginKind{valuer.NewString("signozcustomvariable")}
+	VariableKindTextbox = VariablePluginKind{valuer.NewString("signoztextboxvariable")}
 )
+
+func (VariablePluginKind) Enum() []any {
+	return []any{VariableKindDynamic, VariableKindQuery, VariableKindCustom, VariableKindTextbox}
+}
 
 type DynamicVariableSpec struct {
 	// Name is the name of the attribute being fetched dynamically from the
@@ -42,16 +47,20 @@ type TextboxVariableSpec struct{}
 // SigNoz query plugin specs — aliased from querybuildertypesv5
 // ══════════════════════════════════════════════
 
-type QueryPluginKind = string
+type QueryPluginKind struct{ valuer.String }
 
-const (
-	QueryKindBuilder       QueryPluginKind = "SigNozBuilderQuery"
-	QueryKindComposite     QueryPluginKind = "SigNozCompositeQuery"
-	QueryKindFormula       QueryPluginKind = "SigNozFormula"
-	QueryKindPromQL        QueryPluginKind = "SigNozPromQLQuery"
-	QueryKindClickHouseSQL QueryPluginKind = "SigNozClickHouseSQL"
-	QueryKindTraceOperator QueryPluginKind = "SigNozTraceOperator"
+var (
+	QueryKindBuilder       = QueryPluginKind{valuer.NewString("signozbuilderquery")}
+	QueryKindComposite     = QueryPluginKind{valuer.NewString("signozcompositequery")}
+	QueryKindFormula       = QueryPluginKind{valuer.NewString("signozformula")}
+	QueryKindPromQL        = QueryPluginKind{valuer.NewString("signozpromqlquery")}
+	QueryKindClickHouseSQL = QueryPluginKind{valuer.NewString("signozclickhousesql")}
+	QueryKindTraceOperator = QueryPluginKind{valuer.NewString("signoztraceoperator")}
 )
+
+func (QueryPluginKind) Enum() []any {
+	return []any{QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL, QueryKindTraceOperator}
+}
 
 type (
 	CompositeQuerySpec     = qb.CompositeQuery
@@ -111,23 +120,31 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 // SigNoz panel plugin specs
 // ══════════════════════════════════════════════
 
-type PanelPluginKind = string
+type PanelPluginKind struct{ valuer.String }
 
-const (
-	PanelKindTimeSeries PanelPluginKind = "SigNozTimeSeriesPanel"
-	PanelKindBarChart   PanelPluginKind = "SigNozBarChartPanel"
-	PanelKindNumber     PanelPluginKind = "SigNozNumberPanel"
-	PanelKindPieChart   PanelPluginKind = "SigNozPieChartPanel"
-	PanelKindTable      PanelPluginKind = "SigNozTablePanel"
-	PanelKindHistogram  PanelPluginKind = "SigNozHistogramPanel"
-	PanelKindList       PanelPluginKind = "SigNozListPanel"
+var (
+	PanelKindTimeSeries = PanelPluginKind{valuer.NewString("signoztimeseriespanel")}
+	PanelKindBarChart   = PanelPluginKind{valuer.NewString("signozbarchartpanel")}
+	PanelKindNumber     = PanelPluginKind{valuer.NewString("signoznumberpanel")}
+	PanelKindPieChart   = PanelPluginKind{valuer.NewString("signozpiechartpanel")}
+	PanelKindTable      = PanelPluginKind{valuer.NewString("signoztablepanel")}
+	PanelKindHistogram  = PanelPluginKind{valuer.NewString("signozhistogrampanel")}
+	PanelKindList       = PanelPluginKind{valuer.NewString("signozlistpanel")}
 )
 
-type DatasourcePluginKind = string
+func (PanelPluginKind) Enum() []any {
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
+}
 
-const (
-	DatasourceKindSigNoz DatasourcePluginKind = "SigNozDatasource"
+type DatasourcePluginKind struct{ valuer.String }
+
+var (
+	DatasourceKindSigNoz = DatasourcePluginKind{valuer.NewString("signozdatasource")}
 )
+
+func (DatasourcePluginKind) Enum() []any {
+	return []any{DatasourceKindSigNoz}
+}
 
 type TimeSeriesPanelSpec struct {
 	Visualization   TimeSeriesVisualization   `json:"visualization"`

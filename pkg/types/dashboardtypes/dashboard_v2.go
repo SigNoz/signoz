@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
@@ -43,7 +44,7 @@ func UnmarshalAndValidateDashboardV2JSON(data []byte) (*StorableDashboardDataV2,
 // expected spec struct. validatePluginSpec marshals plugin.Spec back to JSON and
 // unmarshals into the typed struct to catch field-level errors.
 var (
-	panelPluginSpecs = map[string]func() any{
+	panelPluginSpecs = map[PanelPluginKind]func() any{
 		PanelKindTimeSeries: func() any { return new(TimeSeriesPanelSpec) },
 		PanelKindBarChart:   func() any { return new(BarChartPanelSpec) },
 		PanelKindNumber:     func() any { return new(NumberPanelSpec) },
@@ -52,7 +53,7 @@ var (
 		PanelKindHistogram:  func() any { return new(HistogramPanelSpec) },
 		PanelKindList:       func() any { return new(ListPanelSpec) },
 	}
-	queryPluginSpecs = map[string]func() any{
+	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
 		QueryKindComposite:     func() any { return new(CompositeQuerySpec) },
 		QueryKindFormula:       func() any { return new(FormulaSpec) },
@@ -60,20 +61,20 @@ var (
 		QueryKindClickHouseSQL: func() any { return new(ClickHouseSQLQuerySpec) },
 		QueryKindTraceOperator: func() any { return new(TraceOperatorSpec) },
 	}
-	variablePluginSpecs = map[string]func() any{
+	variablePluginSpecs = map[VariablePluginKind]func() any{
 		VariableKindDynamic: func() any { return new(DynamicVariableSpec) },
 		VariableKindQuery:   func() any { return new(QueryVariableSpec) },
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 		VariableKindTextbox: func() any { return new(TextboxVariableSpec) },
 	}
-	datasourcePluginSpecs = map[string]func() any{
+	datasourcePluginSpecs = map[DatasourcePluginKind]func() any{
 		DatasourceKindSigNoz: func() any { return new(struct{}) },
 	}
 
 	// allowedQueryKinds maps each panel plugin kind to the query plugin
 	// kinds it supports. Composite sub-query types are mapped to these
 	// same kind strings via compositeSubQueryTypeToPluginKind.
-	allowedQueryKinds = map[string][]string{
+	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
 		PanelKindTimeSeries: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindBarChart:   {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindNumber:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
@@ -85,19 +86,19 @@ var (
 
 	// compositeSubQueryTypeToPluginKind maps CompositeQuery sub-query type
 	// strings to the equivalent top-level query plugin kind for validation.
-	compositeSubQueryTypeToPluginKind = map[string]string{
-		qb.QueryTypeBuilder.StringValue():       QueryKindBuilder,
-		qb.QueryTypeFormula.StringValue():       QueryKindFormula,
-		qb.QueryTypeTraceOperator.StringValue(): QueryKindTraceOperator,
-		qb.QueryTypePromQL.StringValue():        QueryKindPromQL,
-		qb.QueryTypeClickHouseSQL.StringValue(): QueryKindClickHouseSQL,
+	compositeSubQueryTypeToPluginKind = map[qb.QueryType]QueryPluginKind{
+		qb.QueryTypeBuilder:       QueryKindBuilder,
+		qb.QueryTypeFormula:       QueryKindFormula,
+		qb.QueryTypeTraceOperator: QueryKindTraceOperator,
+		qb.QueryTypePromQL:        QueryKindPromQL,
+		qb.QueryTypeClickHouseSQL: QueryKindClickHouseSQL,
 	}
 )
 
 func validateDashboardV2(d StorableDashboardDataV2) error {
 	// Validate datasource plugins.
 	for name, ds := range d.Datasources {
-		if err := validatePlugin(ds.Plugin, datasourcePluginSpecs, fmt.Sprintf("spec.datasources.%s.plugin", name)); err != nil {
+		if err := validateDatasourcePlugin(ds.Plugin, fmt.Sprintf("spec.datasources.%s.plugin", name)); err != nil {
 			return err
 		}
 	}
@@ -111,7 +112,7 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 		if plugin == nil {
 			continue
 		}
-		if err := validatePlugin(*plugin, variablePluginSpecs, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
+		if err := validateVariablePlugin(*plugin, fmt.Sprintf("spec.variables[%d].spec.plugin", i)); err != nil {
 			return err
 		}
 	}
@@ -122,16 +123,17 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 			continue
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
-		if err := validatePlugin(panel.Spec.Plugin, panelPluginSpecs, path+".spec.plugin"); err != nil {
+		if err := validatePanelPlugin(panel.Spec.Plugin, path+".spec.plugin"); err != nil {
 			return err
 		}
-		allowed := allowedQueryKinds[panel.Spec.Plugin.Kind]
+		panelKind := PanelPluginKind{valuer.NewString(panel.Spec.Plugin.Kind)}
+		allowed := allowedQueryKinds[panelKind]
 		for qi, query := range panel.Spec.Queries {
 			queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)
-			if err := validatePlugin(query.Spec.Plugin, queryPluginSpecs, queryPath); err != nil {
+			if err := validateQueryPlugin(query.Spec.Plugin, queryPath); err != nil {
 				return err
 			}
-			if err := validateQueryAllowedForPanel(query.Spec.Plugin, allowed, panel.Spec.Plugin.Kind, queryPath); err != nil {
+			if err := validateQueryAllowedForPanel(query.Spec.Plugin, allowed, panelKind, queryPath); err != nil {
 				return err
 			}
 		}
@@ -140,13 +142,45 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 	return nil
 }
 
-func validatePlugin(plugin common.Plugin, specs map[string]func() any, path string) error {
+func validateDatasourcePlugin(plugin common.Plugin, path string) error {
+	factory, ok := datasourcePluginSpecs[DatasourcePluginKind{valuer.NewString(plugin.Kind)}]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"%s: unknown datasource plugin kind %q; allowed values: %v", path, plugin.Kind, DatasourcePluginKind{}.Enum())
+	}
+	return validatePluginSpec(plugin, factory, path)
+}
+
+func validateVariablePlugin(plugin common.Plugin, path string) error {
+	factory, ok := variablePluginSpecs[VariablePluginKind{valuer.NewString(plugin.Kind)}]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"%s: unknown variable plugin kind %q; allowed values: %v", path, plugin.Kind, VariablePluginKind{}.Enum())
+	}
+	return validatePluginSpec(plugin, factory, path)
+}
+
+func validatePanelPlugin(plugin common.Plugin, path string) error {
+	factory, ok := panelPluginSpecs[PanelPluginKind{valuer.NewString(plugin.Kind)}]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"%s: unknown panel plugin kind %q; allowed values: %v", path, plugin.Kind, PanelPluginKind{}.Enum())
+	}
+	return validatePluginSpec(plugin, factory, path)
+}
+
+func validateQueryPlugin(plugin common.Plugin, path string) error {
+	factory, ok := queryPluginSpecs[QueryPluginKind{valuer.NewString(plugin.Kind)}]
+	if !ok {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
+			"%s: unknown query plugin kind %q; allowed values: %v", path, plugin.Kind, QueryPluginKind{}.Enum())
+	}
+	return validatePluginSpec(plugin, factory, path)
+}
+
+func validatePluginSpec(plugin common.Plugin, factory func() any, path string) error {
 	if plugin.Kind == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: plugin kind is required", path)
-	}
-	factory, ok := specs[plugin.Kind]
-	if !ok {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: unknown plugin kind %q", path, plugin.Kind)
 	}
 	if plugin.Spec == nil {
 		return nil
@@ -168,14 +202,15 @@ func validatePlugin(plugin common.Plugin, specs map[string]func() any, path stri
 
 // validateQueryAllowedForPanel checks that the query plugin kind is permitted
 // for the given panel. For composite queries it recurses into sub-queries.
-func validateQueryAllowedForPanel(plugin common.Plugin, allowed []string, panelKind string, path string) error {
-	if !slices.Contains(allowed, plugin.Kind) {
+func validateQueryAllowedForPanel(plugin common.Plugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
+	queryKind := QueryPluginKind{valuer.NewString(plugin.Kind)}
+	if !slices.Contains(allowed, queryKind) {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind)
+			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind.StringValue())
 	}
 
 	// For composite queries, validate each sub-query type.
-	if plugin.Kind == QueryKindComposite && plugin.Spec != nil {
+	if queryKind == QueryKindComposite && plugin.Spec != nil {
 		specJSON, err := json.Marshal(plugin.Spec)
 		if err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
@@ -189,14 +224,15 @@ func validateQueryAllowedForPanel(plugin common.Plugin, allowed []string, panelK
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 		}
 		for si, sub := range composite.Queries {
-			pluginKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
+			subQueryType := qb.QueryType{String: valuer.NewString(sub.Type)}
+			pluginKind, ok := compositeSubQueryTypeToPluginKind[subQueryType]
 			if !ok {
 				continue
 			}
 			if !slices.Contains(allowed, pluginKind) {
 				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 					"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
-					path, si, sub.Type, panelKind)
+					path, si, sub.Type, panelKind.StringValue())
 			}
 		}
 	}
