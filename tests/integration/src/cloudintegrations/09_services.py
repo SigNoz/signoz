@@ -6,6 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -67,6 +68,11 @@ def test_list_services_with_account(
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
+
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(
@@ -139,6 +145,11 @@ def test_get_service_details_with_account(
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
     response = requests.get(
         signoz.self.host_configs["8080"].get(
             f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
@@ -192,6 +203,11 @@ def test_update_service_config(
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
     put_response = requests.put(
         signoz.self.host_configs["8080"].get(
             f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
@@ -242,6 +258,12 @@ def test_update_service_config_disable(
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
+
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
     endpoint = signoz.self.host_configs["8080"].get(
         f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
     )
@@ -347,6 +369,11 @@ def test_list_services_account_removed(
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
     delete_response = requests.delete(
         signoz.self.host_configs["8080"].get(
             f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"
@@ -382,6 +409,11 @@ def test_get_service_details_account_removed(
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
+
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     delete_response = requests.delete(
         signoz.self.host_configs["8080"].get(
@@ -419,6 +451,11 @@ def test_update_service_account_removed(
 
     account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
+
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
 
     delete_response = requests.delete(
         signoz.self.host_configs["8080"].get(

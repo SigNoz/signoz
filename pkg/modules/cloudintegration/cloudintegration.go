@@ -18,6 +18,9 @@ type Module interface {
 	// GetAccount returns cloud integration account
 	GetAccount(ctx context.Context, orgID, accountID valuer.UUID, provider citypes.CloudProviderType) (*citypes.Account, error)
 
+	// GetConnectedAccount returns the account where agent is connected
+	GetConnectedAccount(ctx context.Context, orgID, accountID valuer.UUID, provider citypes.CloudProviderType) (*citypes.Account, error)
+
 	// ListAccounts lists accounts where agent is connected
 	ListAccounts(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType) ([]*citypes.Account, error)
 

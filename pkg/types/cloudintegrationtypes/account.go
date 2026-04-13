@@ -99,6 +99,15 @@ func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountCo
 	}
 }
 
+func NewCredentials(sigNozAPIURL, sigNozAPIKey, ingestionURL, ingestionKey string) *Credentials {
+	return &Credentials{
+		SigNozAPIURL: sigNozAPIURL,
+		SigNozAPIKey: sigNozAPIKey,
+		IngestionURL: ingestionURL,
+		IngestionKey: ingestionKey,
+	}
+}
+
 func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account, error) {
 	// config can not be empty
 	if storableAccount.Config == "" {
@@ -230,10 +239,6 @@ func (account *Account) Update(provider CloudProviderType, config *AccountConfig
 	account.Config = config
 	account.UpdatedAt = time.Now()
 	return nil
-}
-
-func (account *Account) IsRemoved() bool {
-	return account.RemovedAt != nil
 }
 
 func (postableAccount *PostableAccount) UnmarshalJSON(data []byte) error {

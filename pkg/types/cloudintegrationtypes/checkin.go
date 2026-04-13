@@ -76,6 +76,15 @@ func NewGettableAgentCheckIn(provider CloudProviderType, resp *AgentCheckInRespo
 	return gettable
 }
 
+func NewAgentCheckInResponse(providerAccountID, cloudIntegrationID string, integrationConfig *ProviderIntegrationConfig, removedAt *time.Time) *AgentCheckInResponse {
+	return &AgentCheckInResponse{
+		CloudIntegrationID: cloudIntegrationID,
+		ProviderAccountID:  providerAccountID,
+		IntegrationConfig:  integrationConfig,
+		RemovedAt:          removedAt,
+	}
+}
+
 func (postable *PostableAgentCheckIn) UnmarshalJSON(data []byte) error {
 	type Alias PostableAgentCheckIn
 

@@ -3,7 +3,6 @@ package zeustypes
 import (
 	"encoding/json"
 	"net/url"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/tidwall/gjson"
@@ -61,40 +60,17 @@ func NewGettableHost(data []byte) *GettableHost {
 }
 
 // GettableDeployment represents the parsed deployment info from zeus.GetDeployment.
-// NOTE: break down deployment into multiple structs if needed.
+// NOTE: this is not a full response structure, add more fields from actual response as per requirement.
 type GettableDeployment struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	State     string    `json:"state"`
-	Tier      string    `json:"tier"`
-	User      string    `json:"user"`
-	LicenseID string    `json:"license_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ClusterID string    `json:"cluster_id"`
-	Hosts     []struct {
-		Name      string `json:"name"`
-		IsDefault bool   `json:"is_default"`
-	} `json:"hosts"`
+	ID      string `json:"id"`
+	Name    string `json:"name"`
 	Cluster struct {
-		ID             string    `json:"id"`
-		Name           string    `json:"name"`
-		CloudProvider  string    `json:"cloud_provider"`
-		CloudAccountID string    `json:"cloud_account_id"`
-		CloudRegion    string    `json:"cloud_region"`
-		Address        string    `json:"address"`
-		Ca             string    `json:"ca"`
-		Buffer         int       `json:"buffer"`
-		CreatedAt      time.Time `json:"created_at"`
-		UpdatedAt      time.Time `json:"updated_at"`
-		RegionID       string    `json:"region_id"`
-		Region         struct {
-			ID        string    `json:"id"`
-			Name      string    `json:"name"`
-			Category  string    `json:"category"`
-			DNS       string    `json:"dns"`
-			CreatedAt time.Time `json:"created_at"`
-			UpdatedAt time.Time `json:"updated_at"`
+		ID     string `json:"id"`
+		Name   string `json:"name"`
+		Region struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+			DNS  string `json:"dns"`
 		} `json:"region"`
 	} `json:"cluster"`
 }

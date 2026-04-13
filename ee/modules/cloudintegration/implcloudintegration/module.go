@@ -82,12 +82,12 @@ func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer
 	// ignore error
 	ingestionKey, _ := module.getOrCreateIngestionKey(ctx, orgID, provider)
 
-	return &cloudintegrationtypes.Credentials{
-		SigNozAPIURL: signozAPIURL,
-		SigNozAPIKey: apiKey,
-		IngestionURL: module.global.GetConfig(ctx).IngestionURL,
-		IngestionKey: ingestionKey,
-	}, nil
+	return cloudintegrationtypes.NewCredentials(
+		signozAPIURL,
+		apiKey,
+		module.global.GetConfig(ctx).IngestionURL,
+		ingestionKey,
+	), nil
 }
 
 func (module *module) CreateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
@@ -105,6 +105,11 @@ func (module *module) CreateAccount(ctx context.Context, account *cloudintegrati
 }
 
 func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+	_, err := module.licensing.GetActive(ctx, account.OrgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
 	cloudProviderModule, err := module.getCloudProvider(account.Provider)
 	if err != nil {
 		return nil, err
@@ -121,6 +126,20 @@ func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, account
 	}
 
 	storableAccount, err := module.store.GetAccountByID(ctx, orgID, accountID, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudintegrationtypes.NewAccountFromStorable(storableAccount)
+}
+
+func (module *module) GetConnectedAccount(ctx context.Context, orgID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	storableAccount, err := module.store.GetConnectedAccount(ctx, orgID, accountID, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +168,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	connectedAccount, err := module.store.GetConnectedAccount(ctx, orgID, provider, req.ProviderAccountID)
+	connectedAccount, err := module.store.GetConnectedAccountByProviderAccountID(ctx, orgID, req.ProviderAccountID, provider)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
@@ -166,23 +185,23 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, err
 	}
 
+	// If account has been removed (disconnected), return a minimal response with empty integration config.
+	// The agent uses this response to clean up resources
+	if account.RemovedAt != nil {
+		return cloudintegrationtypes.NewAgentCheckInResponse(
+			req.ProviderAccountID,
+			account.ID.StringValue(),
+			new(cloudintegrationtypes.ProviderIntegrationConfig),
+			account.RemovedAt,
+		), nil
+	}
+
 	// update account with cloud provider account id and agent report (heartbeat)
 	account.Update(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data))
 
 	err = module.store.UpdateAccount(ctx, account)
 	if err != nil {
 		return nil, err
-	}
-
-	// If account has been removed (disconnected), return a minimal response with empty integration config.
-	// The agent doesn't act on config for removed accounts.
-	if account.RemovedAt != nil {
-		return &cloudintegrationtypes.AgentCheckInResponse{
-			CloudIntegrationID: account.ID.StringValue(),
-			ProviderAccountID:  req.ProviderAccountID,
-			IntegrationConfig:  new(cloudintegrationtypes.ProviderIntegrationConfig),
-			RemovedAt:          account.RemovedAt,
-		}, nil
 	}
 
 	// Get account as domain object for config access (enabled regions, etc.)
@@ -207,12 +226,12 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, err
 	}
 
-	return &cloudintegrationtypes.AgentCheckInResponse{
-		CloudIntegrationID: account.ID.StringValue(),
-		ProviderAccountID:  req.ProviderAccountID,
-		IntegrationConfig:  integrationConfig,
-		RemovedAt:          account.RemovedAt,
-	}, nil
+	return cloudintegrationtypes.NewAgentCheckInResponse(
+		req.ProviderAccountID,
+		account.ID.StringValue(),
+		integrationConfig,
+		account.RemovedAt,
+	), nil
 }
 
 func (module *module) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {

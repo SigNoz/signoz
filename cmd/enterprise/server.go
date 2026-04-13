@@ -152,7 +152,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-		func(store cloudintegrationtypes.Store, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
+		func(sqlStore sqlstore.SQLStore, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
 			defStore := pkgcloudintegration.NewServiceDefinitionStore()
 			awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
 			if err != nil {
@@ -164,7 +164,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
 			}
 
-			return implcloudintegration.NewModule(store, global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
+			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
 		},
 	)
 	if err != nil {

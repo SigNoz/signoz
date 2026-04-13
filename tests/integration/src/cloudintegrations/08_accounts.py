@@ -170,6 +170,12 @@ def test_update_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
     )
     account_id = account["id"]
+
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
     updated_regions = ["us-east-1", "us-west-2", "eu-west-1"]
 
     response = requests.put(

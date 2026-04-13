@@ -28,6 +28,11 @@ func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, account
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get account is not supported")
 }
 
+// GetConnectedAccount implements [cloudintegration.Module].
+func (module *module) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
+	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get connected account is not supported")
+}
+
 func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list accounts is not supported")
 }
