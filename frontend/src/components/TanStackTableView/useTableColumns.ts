@@ -42,7 +42,7 @@ function readStorage(storageKey: string): PersistedState {
 							Object.entries(parsed.columnSizing).filter(
 								([, v]) => typeof v === 'number' && Number.isFinite(v) && v > 0,
 							),
-						)
+					  )
 					: {},
 			removedColumnIds: Array.isArray(parsed.removedColumnIds)
 				? parsed.removedColumnIds

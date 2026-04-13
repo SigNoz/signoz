@@ -1,20 +1,15 @@
 import { forwardRef } from 'react';
 import { render, screen } from '@testing-library/react';
 
-import type { TableColumnDef, TanStackTableProps } from '../types';
 import TanStackTable from '../index';
+import type { TableColumnDef, TanStackTableProps } from '../types';
 
 jest.mock('react-virtuoso', () => ({
-	TableVirtuoso: forwardRef<
-		unknown,
-		{ fixedHeaderContent?: () => JSX.Element }
-	>(function MockVirtuoso({ fixedHeaderContent }, _ref) {
-		return (
-			<div data-testid="virtuoso">
-				{fixedHeaderContent?.()}
-			</div>
-		);
-	}),
+	TableVirtuoso: forwardRef<unknown, { fixedHeaderContent?: () => JSX.Element }>(
+		function MockVirtuoso({ fixedHeaderContent }, _ref) {
+			return <div data-testid="virtuoso">{fixedHeaderContent?.()}</div>;
+		},
+	),
 }));
 
 jest.mock('../useTableParams', () => ({
@@ -44,7 +39,7 @@ type Row = { id: string };
 const col = (): TableColumnDef<Row> => ({
 	id: 'id',
 	header: 'ID',
-	cell: ({ row }) => row.id,
+	cell: ({ row }): string => row.id,
 	accessorKey: 'id',
 });
 

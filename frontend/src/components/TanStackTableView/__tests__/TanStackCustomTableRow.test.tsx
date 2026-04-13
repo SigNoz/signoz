@@ -8,6 +8,7 @@ jest.mock('../TanStackTable.module.scss', () => ({
 }));
 
 import { render, screen } from '@testing-library/react';
+
 import TanStackCustomTableRow from '../TanStackCustomTableRow';
 import type { FlatItem, TableRowContext } from '../types';
 
@@ -90,11 +91,7 @@ describe('TanStackCustomTableRow', () => {
 		const { container } = render(
 			<table>
 				<tbody>
-					<TanStackCustomTableRow
-						{...virtuosoAttrs}
-						item={item}
-						context={undefined}
-					>
+					<TanStackCustomTableRow {...virtuosoAttrs} item={item} context={undefined}>
 						<td>expanded content</td>
 					</TanStackCustomTableRow>
 				</tbody>

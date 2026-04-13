@@ -21,7 +21,7 @@ type Row = { id: string; name: string };
 const col = (id: string, pin?: 'left' | 'right'): TableColumnDef<Row> => ({
 	id,
 	header: id,
-	cell: ({ value }) => String(value),
+	cell: ({ value }): string => String(value),
 	...(pin ? { pin } : {}),
 });
 
@@ -99,11 +99,7 @@ describe('useTableColumns', () => {
 	it('activeColumnIds reflects only currently visible columns', () => {
 		const defs = [col('body'), col('timestamp'), col('name')];
 		const { result } = renderHook(() => useTableColumns(defs));
-		expect(result.current.activeColumnIds).toEqual([
-			'body',
-			'timestamp',
-			'name',
-		]);
+		expect(result.current.activeColumnIds).toEqual(['body', 'timestamp', 'name']);
 	});
 
 	it('onRemoveColumn removes column and persists after debounce', () => {
@@ -133,7 +129,11 @@ describe('useTableColumns', () => {
 		const { result } = renderHook(() => useTableColumns(defs));
 
 		act(() => {
-			result.current.tableProps.onColumnOrderChange([col('c'), col('b'), col('a')]);
+			result.current.tableProps.onColumnOrderChange([
+				col('c'),
+				col('b'),
+				col('a'),
+			]);
 		});
 
 		expect(result.current.tableProps.columns.map((c) => c.id)).toEqual([
@@ -185,7 +185,10 @@ describe('useTableColumns', () => {
 		const { result } = renderHook(() =>
 			useTableColumns(defs, { storageKey: 'test_table' }),
 		);
-		expect(result.current.tableProps.columns.map((c) => c.id)).toEqual(['a', 'b']);
+		expect(result.current.tableProps.columns.map((c) => c.id)).toEqual([
+			'a',
+			'b',
+		]);
 		spy.mockRestore();
 	});
 });

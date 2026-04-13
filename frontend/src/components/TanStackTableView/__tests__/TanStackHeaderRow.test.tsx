@@ -1,9 +1,11 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import type { TableColumnDef } from '../types';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
 import TanStackHeaderRow from '../TanStackHeaderRow';
+import type { TableColumnDef } from '../types';
 
 jest.mock('@dnd-kit/sortable', () => ({
-	useSortable: () => ({
+	useSortable: (): any => ({
 		attributes: {},
 		listeners: {},
 		setNodeRef: jest.fn(),
@@ -20,7 +22,7 @@ const col = (
 ): TableColumnDef<unknown> => ({
 	id,
 	header: id,
-	cell: () => null,
+	cell: (): null => null,
 	...overrides,
 });
 
@@ -69,7 +71,9 @@ describe('TanStackHeaderRow', () => {
 				</thead>
 			</table>,
 		);
-		expect(screen.getByRole('button', { name: /drag body/i })).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /drag body/i }),
+		).toBeInTheDocument();
 	});
 
 	it('does NOT show grip icon when pin is set', () => {
@@ -87,10 +91,13 @@ describe('TanStackHeaderRow', () => {
 				</thead>
 			</table>,
 		);
-		expect(screen.queryByRole('button', { name: /drag/i })).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /drag/i }),
+		).not.toBeInTheDocument();
 	});
 
-	it('shows remove button when enableRemove and canRemoveColumn are true', () => {
+	it('shows remove button when enableRemove and canRemoveColumn are true', async () => {
+		const user = userEvent.setup();
 		const onRemoveColumn = jest.fn();
 		render(
 			<table>
@@ -108,8 +115,8 @@ describe('TanStackHeaderRow', () => {
 				</thead>
 			</table>,
 		);
-		fireEvent.click(screen.getByRole('button', { name: /column actions/i }));
-		fireEvent.click(screen.getByText(/remove column/i));
+		await user.click(screen.getByRole('button', { name: /column actions/i }));
+		await user.click(screen.getByText(/remove column/i));
 		expect(onRemoveColumn).toHaveBeenCalledWith('name');
 	});
 

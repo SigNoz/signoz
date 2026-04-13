@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { SortState } from './types';
-import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 const NUQS_OPTIONS = { history: 'push' as const };
 const DEFAULT_PAGE = 1;

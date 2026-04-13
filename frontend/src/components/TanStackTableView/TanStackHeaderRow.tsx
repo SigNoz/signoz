@@ -27,6 +27,7 @@ type TanStackHeaderRowProps<TData = unknown> = {
 
 const GRIP_ICON_SIZE = 12;
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function TanStackHeaderRow<TData>({
 	column,
 	header,

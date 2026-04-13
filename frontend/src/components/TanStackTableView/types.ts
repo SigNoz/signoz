@@ -5,8 +5,11 @@ import {
 	ReactNode,
 	SetStateAction,
 } from 'react';
-import type { ColumnSizingState, Row as TanStackRowType } from '@tanstack/react-table';
 import type { TableVirtuosoHandle } from 'react-virtuoso';
+import type {
+	ColumnSizingState,
+	Row as TanStackRowType,
+} from '@tanstack/react-table';
 
 export type SortState = { columnId: string; desc: boolean };
 

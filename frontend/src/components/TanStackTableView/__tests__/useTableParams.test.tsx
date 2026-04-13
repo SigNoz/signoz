@@ -3,9 +3,9 @@ import { act, renderHook } from '@testing-library/react';
 import { useTableParams } from '../useTableParams';
 
 jest.mock('utils/nuqsParsers', () => ({
-	parseAsJsonNoValidate: () => ({
-		withDefault: (d: unknown) => ({
-			withOptions: () => ({ _default: d }),
+	parseAsJsonNoValidate: (): any => ({
+		withDefault: (d: unknown): any => ({
+			withOptions: (): any => ({ _default: d }),
 			_default: d,
 		}),
 	}),
@@ -13,25 +13,25 @@ jest.mock('utils/nuqsParsers', () => ({
 
 jest.mock('nuqs', () => ({
 	parseAsInteger: {
-		withDefault: (d: number) => ({
-			withOptions: () => ({ _default: d }),
+		withDefault: (d: number): any => ({
+			withOptions: (): any => ({ _default: d }),
 			_default: d,
 		}),
 	},
-	parseAsJson: () => ({
-		withDefault: (d: unknown) => ({
-			withOptions: () => ({ _default: d }),
+	parseAsJson: (): any => ({
+		withDefault: (d: unknown): any => ({
+			withOptions: (): any => ({ _default: d }),
 			_default: d,
 		}),
 	}),
-	useQueryState: jest.fn().mockImplementation(
-		(_key: string, parser: { _default: unknown }) => {
-			const [val, setVal] = (jest.requireActual('react') as typeof import('react')).useState(
-				parser?._default,
-			);
+	useQueryState: jest
+		.fn()
+		.mockImplementation((_key: string, parser: { _default: unknown }) => {
+			const [val, setVal] = (jest.requireActual(
+				'react',
+			) as typeof import('react')).useState(parser?._default);
 			return [val, setVal];
-		},
-	),
+		}),
 }));
 
 describe('useTableParams (local mode — enableQueryParams not set)', () => {

@@ -2,7 +2,6 @@ import type { ComponentProps, CSSProperties, Ref } from 'react';
 import {
 	forwardRef,
 	memo,
-	ReactNode,
 	useCallback,
 	useEffect,
 	useImperativeHandle,
@@ -26,7 +25,7 @@ import {
 	SortableContext,
 } from '@dnd-kit/sortable';
 import { TooltipProvider } from '@signozhq/ui';
-import type { Row, Table } from '@tanstack/react-table';
+import type { Row } from '@tanstack/react-table';
 import {
 	ColumnDef,
 	ColumnPinningState,
@@ -46,13 +45,13 @@ import TanStackRowCells from './TanStackRow';
 import TanStackTableText from './TanStackTableText';
 import {
 	FlatItem,
-	TableColumnDef,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
 import { useTableParams } from './useTableParams';
-import { getColumnMinWidthPx } from './utils';
+import { buildTanstackColumnDef } from './utils';
+import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
 
 import tableStyles from './TanStackTable.module.scss';
 import viewStyles from './TanStackTableView.module.scss';
@@ -67,97 +66,6 @@ const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
 const PAGINATION_STYLE: CSSProperties = { marginTop: 12, textAlign: 'right' };
 
 const noopColumnSizing = (): void => {};
-
-function VirtuosoTableColGroup<TData>({
-	columns,
-	columnSizingProp,
-	table,
-}: {
-	columns: TableColumnDef<TData>[];
-	columnSizingProp: TanStackTableProps<TData>['columnSizing'];
-	table: Table<TData>;
-}): JSX.Element {
-	return (
-		<colgroup>
-			{columns.map((column, colIndex) => {
-				const columnId = column.id;
-				const isFixedColumn = column.width?.fixed != null;
-				const minWidthPx = getColumnMinWidthPx(column);
-				const persistedWidth = columnSizingProp?.[columnId];
-				const computedWidth = table.getColumn(columnId)?.getSize();
-				const effectiveWidth = persistedWidth ?? computedWidth;
-				if (isFixedColumn) {
-					return <col key={columnId} className={viewStyles.tanstackFixedCol} />;
-				}
-				const isLastColumn = colIndex === columns.length - 1;
-				if (isLastColumn) {
-					return (
-						<col
-							key={columnId}
-							style={{ width: '100%', minWidth: `${minWidthPx}px` }}
-						/>
-					);
-				}
-				const widthPx =
-					effectiveWidth != null ? Math.max(effectiveWidth, minWidthPx) : minWidthPx;
-				return (
-					<col
-						key={columnId}
-						style={{
-							width: `${widthPx}px`,
-							minWidth: `${minWidthPx}px`,
-						}}
-					/>
-				);
-			})}
-		</colgroup>
-	);
-}
-
-function buildTanstackColumnDef<TData>(
-	colDef: TableColumnDef<TData>,
-	isRowActive?: (row: TData) => boolean,
-): ColumnDef<TData> {
-	const isFixed = colDef.width?.fixed != null;
-	const fixedWidth = colDef.width?.fixed;
-	const minWidthPx = getColumnMinWidthPx(colDef);
-	return {
-		id: colDef.id,
-		header:
-			typeof colDef.header === 'string'
-				? colDef.header
-				: (): ReactNode =>
-						typeof colDef.header === 'function' ? colDef.header() : null,
-		accessorFn: (row: TData): unknown => {
-			if (colDef.accessorFn) {
-				return colDef.accessorFn(row);
-			}
-			if (colDef.accessorKey) {
-				return (row as Record<string, unknown>)[colDef.accessorKey];
-			}
-			return undefined;
-		},
-		enableResizing: colDef.enableResize !== false && !isFixed,
-		enableSorting: colDef.enableSort === true,
-		minSize: fixedWidth ?? minWidthPx,
-		size: colDef.width?.default ?? fixedWidth,
-		maxSize: fixedWidth,
-		cell: ({ row, getValue }): ReactNode => {
-			const rowData = row.original;
-			return colDef.cell({
-				row: rowData,
-				value: getValue(),
-				isActive: isRowActive?.(rowData) ?? false,
-				rowIndex: row.index,
-				isExpanded: row.getIsExpanded(),
-				canExpand: row.getCanExpand(),
-				toggleExpanded: (): void => {
-					row.toggleExpanded();
-				},
-			});
-		},
-	};
-}
 
 function TanStackTableInner<TData>(
 	{
@@ -564,6 +472,145 @@ const TanStackTableBase = memo(
 	TanStackTableForward,
 ) as typeof TanStackTableForward;
 
+/**
+ * Virtualized data table built on TanStack Table and `react-virtuoso`: resizable and pinnable columns,
+ * optional drag-to-reorder headers, expandable rows, and Ant Design pagination or infinite scroll.
+ *
+ * @example Minimal usage
+ * ```tsx
+ * import TanStackTable from 'components/TanStackTableView';
+ * import type { TableColumnDef } from 'components/TanStackTableView/types';
+ *
+ * type Row = { id: string; name: string };
+ *
+ * const columns: TableColumnDef<Row>[] = [
+ *   {
+ *     id: 'name',
+ *     header: 'Name',
+ *     accessorKey: 'name',
+ *     cell: ({ value }) => <TanStackTable.Text>{String(value ?? '')}</TanStackTable.Text>,
+ *   },
+ * ];
+ *
+ * function Example(): JSX.Element {
+ *   return <TanStackTable<Row> data={rows} columns={columns} />;
+ * }
+ * ```
+ *
+ * @example Column definitions — `accessorFn`, custom header, pinned column
+ * ```tsx
+ * const columns: TableColumnDef<Row>[] = [
+ *   {
+ *     id: 'id',
+ *     header: 'ID',
+ *     accessorKey: 'id',
+ *     pin: 'left',
+ *     width: { min: 80, default: 120 },
+ *     cell: ({ value }) => <TanStackTable.Text>{String(value)}</TanStackTable.Text>,
+ *   },
+ *   {
+ *     id: 'computed',
+ *     header: () => <span>Computed</span>,
+ *     accessorFn: (row) => row.first + row.last,
+ *     enableMove: false,
+ *     cell: ({ value }) => <TanStackTable.Text>{String(value)}</TanStackTable.Text>,
+ *   },
+ * ];
+ * ```
+ *
+ * @example Controlled column sizing and reorder (persist in parent state)
+ * ```tsx
+ * import type { ColumnSizingState } from '@tanstack/react-table';
+ *
+ * const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+ *
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   columnSizing={columnSizing}
+ *   onColumnSizingChange={setColumnSizing}
+ *   onColumnOrderChange={setColumns}
+ *   onRemoveColumn={(id) => setColumns((cols) => cols.filter((c) => c.id !== id))}
+ * />
+ * ```
+ *
+ * @example Pagination (Ant Design). Omit `onEndReached` so the footer pager is shown.
+ * ```tsx
+ * <TanStackTable
+ *   data={pageRows}
+ *   columns={columns}
+ *   pagination={{ total: totalCount, defaultPage: 1, defaultLimit: 20 }}
+ *   enableQueryParams
+ * />
+ * ```
+ *
+ * @example Infinite scroll — use `onEndReached` instead of `pagination` (pagination UI is hidden when `onEndReached` is set).
+ * ```tsx
+ * <TanStackTable
+ *   data={accumulatedRows}
+ *   columns={columns}
+ *   onEndReached={(lastIndex) => fetchMore(lastIndex)}
+ * />
+ * ```
+ *
+ * @example Loading overlay and typography for plain string/number cells
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   isLoading={isFetching}
+ *   loadingTip="Loading logs…"
+ *   cellTypographySize="small"
+ *   plainTextCellLineClamp={2}
+ * />
+ * ```
+ *
+ * @example Row styling, selection, and actions
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   isRowActive={(row) => row.id === selectedId}
+ *   activeRowIndex={selectedIndex}
+ *   onRowClick={(row) => setSelectedId(row.id)}
+ *   onRowDeactivate={() => setSelectedId(undefined)}
+ *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
+ *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
+ *   renderRowActions={(row) => <Button size="small">Open</Button>}
+ * />
+ * ```
+ *
+ * @example Expandable rows
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   renderExpandedRow={(row) => <pre>{JSON.stringify(row.raw, null, 2)}</pre>}
+ *   getRowCanExpand={(row) => Boolean(row.raw)}
+ * />
+ * ```
+ *
+ * @example Imperative handle — `goToPage` plus Virtuoso methods (e.g. `scrollToIndex`)
+ * ```tsx
+ * import type { TanStackTableHandle } from 'components/TanStackTableView/types';
+ *
+ * const ref = useRef<TanStackTableHandle>(null);
+ *
+ * <TanStackTable ref={ref} data={data} columns={columns} pagination={{ total, defaultLimit: 20 }} />;
+ *
+ * ref.current?.goToPage(2);
+ * ref.current?.scrollToIndex({ index: 0, align: 'start' });
+ * ```
+ *
+ * @example Scroll container props (className, `data-testid`, etc.). `data` is reserved by Virtuoso and cannot be passed here.
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   tableScrollerProps={{ className: 'my-table-scroll', 'data-testid': 'logs-table' }}
+ * />
+ * ```
+ */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,
 });

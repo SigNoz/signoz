@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import TanStackRowCells from '../TanStackRow';
 import type { TableRowContext } from '../types';
@@ -53,7 +54,8 @@ describe('TanStackRowCells', () => {
 		expect(screen.getAllByRole('cell')).toHaveLength(2);
 	});
 
-	it('calls onRowClick when a cell is clicked', () => {
+	it('calls onRowClick when a cell is clicked', async () => {
+		const user = userEvent.setup();
 		const onRowClick = jest.fn();
 		const ctx: TableRowContext<Row> = { colCount: 1, onRowClick };
 		const row = buildMockRow([{ id: 'body' }]);
@@ -71,11 +73,12 @@ describe('TanStackRowCells', () => {
 				</tbody>
 			</table>,
 		);
-		fireEvent.click(screen.getAllByRole('cell')[0]);
+		await user.click(screen.getAllByRole('cell')[0]);
 		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' });
 	});
 
-	it('calls onRowDeactivate instead of onRowClick when row is active', () => {
+	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
+		const user = userEvent.setup();
 		const onRowClick = jest.fn();
 		const onRowDeactivate = jest.fn();
 		const ctx: TableRowContext<Row> = {
@@ -99,7 +102,7 @@ describe('TanStackRowCells', () => {
 				</tbody>
 			</table>,
 		);
-		fireEvent.click(screen.getAllByRole('cell')[0]);
+		await user.click(screen.getAllByRole('cell')[0]);
 		expect(onRowDeactivate).toHaveBeenCalled();
 		expect(onRowClick).not.toHaveBeenCalled();
 	});
