@@ -28,9 +28,9 @@ import { openInNewTab } from 'utils/navigation';
 import { InfraMonitoringEntity } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
+	useInfraMonitoringFilters,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
-	useInfraMonitoringQueryFilters,
 } from '../hooks';
 import { usePageSize } from '../utils';
 import { K8sEmptyState } from './K8sEmptyState';
@@ -88,7 +88,7 @@ export function K8sBaseList<T>({
 	eventCategory,
 	renderEmptyState,
 }: K8sBaseListProps<T>): JSX.Element {
-	const queryFilters = useInfraMonitoringQueryFilters();
+	const [queryFilters] = useInfraMonitoringFilters();
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [groupBy] = useInfraMonitoringGroupBy();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
@@ -146,7 +146,7 @@ export function K8sBaseList<T>({
 				{
 					limit: pageSize,
 					offset: (currentPage - 1) * pageSize,
-					filters: queryFilters,
+					filters: queryFilters || { items: [], op: 'AND' },
 					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
 					end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 					orderBy: orderBy || undefined,

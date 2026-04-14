@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	Options,
 	parseAsInteger,
@@ -101,15 +99,6 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 	);
 
 export const useInfraMonitoringFilters = (): UseQueryStateReturn<
-	string,
-	string
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 	TagFilter,
 	undefined
 > =>
@@ -117,19 +106,6 @@ export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
 		parseAsJsonNoValidate<TagFilter>().withOptions(defaultNuqsOptions),
 	);
-
-export const useInfraMonitoringQueryFilters = (): TagFilter => {
-	const { currentQuery } = useQueryBuilder();
-
-	return useMemo(
-		() =>
-			currentQuery?.builder?.queryData[0]?.filters || {
-				items: [],
-				op: 'and',
-			},
-		[currentQuery?.builder?.queryData],
-	);
-};
 
 export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
 	string,

@@ -20,7 +20,7 @@ import {
 } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
-	useInfraMonitoringFiltersK8s,
+	useInfraMonitoringFilters,
 	useInfraMonitoringGroupBy,
 } from '../hooks';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel';
@@ -39,7 +39,7 @@ function K8sHeader({
 	showAutoRefresh,
 }: K8sHeaderProps): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
 
 	const currentQuery = initialQueriesMap[DataSource.METRICS];
 

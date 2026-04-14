@@ -15,18 +15,17 @@ import {
 	getAutoRefreshQueryKey,
 	NANO_SECOND_MULTIPLIER,
 } from 'store/globalTime/utils';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
-import { BaseAutocompleteData } from '../../../types/api/queryBuilder/queryAutocompleteResponse';
 import { InfraMonitoringEntity } from '../constants';
 import {
 	useInfraMonitoringCurrentPage,
 	useInfraMonitoringFilters,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
-	useInfraMonitoringQueryFilters,
 	useInfraMonitoringSelectedItem,
 } from '../hooks';
 import LoadingContainer from '../LoadingContainer';
@@ -66,10 +65,8 @@ export function K8sExpandedRow<T>({
 	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [, setFilters] = useInfraMonitoringFilters();
+	const [queryFilters, setFilters] = useInfraMonitoringFilters();
 	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
-
-	const queryFilters = useInfraMonitoringQueryFilters();
 
 	const [
 		columnsDefinitions,
@@ -98,7 +95,7 @@ export function K8sExpandedRow<T>({
 		IBuilderQuery['filters']
 	> => {
 		const baseFilters: IBuilderQuery['filters'] = {
-			items: [...queryFilters.items],
+			items: [...(queryFilters?.items || [])],
 			op: 'and',
 		};
 
@@ -117,7 +114,7 @@ export function K8sExpandedRow<T>({
 		}
 
 		return baseFilters;
-	}, [queryFilters.items, record]);
+	}, [queryFilters?.items, record]);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
@@ -189,7 +186,7 @@ export function K8sExpandedRow<T>({
 
 	const handleViewAllClick = (): void => {
 		const filters = createFiltersForRecord();
-		setFilters(JSON.stringify(filters));
+		setFilters(filters);
 		setCurrentPage(1);
 		setGroupBy([]);
 		setOrderBy(null);

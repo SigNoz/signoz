@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
@@ -60,7 +60,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
-	const [, setFilters] = useInfraMonitoringFilters();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 
@@ -76,6 +76,12 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		entityVersion: '',
 	});
 
+	useEffect(() => {
+		if (urlFilters && urlFilters.items) {
+			handleChangeQueryData('filters', urlFilters);
+		}
+	}, [urlFilters, handleChangeQueryData]);
+
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
@@ -84,8 +90,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const handleFilterChange = (query: Query): void => {
 		// update the current query with the new filters
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
-		handleChangeQueryData('filters', query.builder.queryData[0].filters);
-		setFilters(JSON.stringify(query.builder.queryData[0].filters));
+		const filters = query.builder.queryData[0].filters;
+		setUrlFilters(filters || null);
+		handleChangeQueryData('filters', filters);
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,
@@ -282,7 +289,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		if (Array.isArray(key) && key.length > 0) {
 			setSelectedCategory(key[0] as string);
 			// Reset filters
-			setFilters(null);
+			setUrlFilters(null);
 			setOrderBy(null);
 			setGroupBy(null);
 			handleChangeQueryData('filters', { items: [], op: 'and' });

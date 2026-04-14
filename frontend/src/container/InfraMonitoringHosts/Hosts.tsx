@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -10,7 +10,10 @@ import K8sBaseDetails from 'container/InfraMonitoringK8s/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
-import { useInfraMonitoringCurrentPage } from 'container/InfraMonitoringK8s/hooks';
+import {
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringFilters,
+} from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Filter } from 'lucide-react';
@@ -41,6 +44,7 @@ import styles from './InfraMonitoringHosts.module.scss';
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -54,12 +58,20 @@ function Hosts(): JSX.Element {
 		entityVersion: '',
 	});
 
+	useEffect(() => {
+		if (urlFilters && urlFilters.items) {
+			handleChangeQueryData('filters', urlFilters);
+		}
+	}, [urlFilters, handleChangeQueryData]);
+
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
 	};
 
 	const handleQuickFiltersChange = (query: Query): void => {
-		handleChangeQueryData('filters', query.builder.queryData[0].filters);
+		const filters = query.builder.queryData[0].filters;
+		setUrlFilters(filters || null);
+		handleChangeQueryData('filters', filters);
 		setCurrentPage(1);
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.HostEntity,
