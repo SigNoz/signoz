@@ -7,6 +7,10 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type DayWiseBreakdown struct {
@@ -45,15 +49,17 @@ type details struct {
 	BillTotal float64         `json:"billTotal"`
 }
 
+type billingData struct {
+	BillingPeriodStart int64   `json:"billingPeriodStart"`
+	BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
+	Details            details `json:"details"`
+	Discount           float64 `json:"discount"`
+	SubscriptionStatus string  `json:"subscriptionStatus"`
+}
+
 type billingDetails struct {
-	Status string `json:"status"`
-	Data   struct {
-		BillingPeriodStart int64   `json:"billingPeriodStart"`
-		BillingPeriodEnd   int64   `json:"billingPeriodEnd"`
-		Details            details `json:"details"`
-		Discount           float64 `json:"discount"`
-		SubscriptionStatus string  `json:"subscriptionStatus"`
-	} `json:"data"`
+	Status string      `json:"status"`
+	Data   billingData `json:"data"`
 }
 
 func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +67,33 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 
 	if licenseKey == "" {
 		RespondError(w, model.BadRequest(fmt.Errorf("license key is required")), nil)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		RespondError(w, model.InternalError(err), nil)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useZeus := ah.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureGetMetersFromZeus, evalCtx)
+
+	if useZeus {
+		data, err := ah.Signoz.Zeus.GetMeters(r.Context(), licenseKey)
+		if err != nil {
+			RespondError(w, model.InternalError(err), nil)
+			return
+		}
+
+		var billing billingData
+		if err := json.Unmarshal(data, &billing); err != nil {
+			RespondError(w, model.InternalError(err), nil)
+			return
+		}
+
+		ah.Respond(w, billing)
 		return
 	}
 
@@ -79,13 +112,11 @@ func (ah *APIHandler) getBilling(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// decode response body
 	var billingResponse billingDetails
 	if err := json.NewDecoder(billingResp.Body).Decode(&billingResponse); err != nil {
 		RespondError(w, model.InternalError(err), nil)
 		return
 	}
 
-	// TODO(srikanthccv):Fetch the current day usage and add it to the response
 	ah.Respond(w, billingResponse.Data)
 }

@@ -83,6 +83,7 @@ export default defineConfig(
 			plugins,
 			resolve: {
 				alias: {
+					'@': resolve(__dirname, './src'),
 					utils: resolve(__dirname, './src/utils'),
 					types: resolve(__dirname, './src/types'),
 					constants: resolve(__dirname, './src/constants'),
