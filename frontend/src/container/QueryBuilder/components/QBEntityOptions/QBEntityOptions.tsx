@@ -136,6 +136,7 @@ export default function QBEntityOptions({
 												onChangeDataSource(value);
 											}
 										}}
+										data-testid={`query-data-source-selector-${index}`}
 										value={query?.dataSource || DataSource.METRICS}
 										isListViewPanel={isListViewPanel}
 										className="query-data-source-dropdown"

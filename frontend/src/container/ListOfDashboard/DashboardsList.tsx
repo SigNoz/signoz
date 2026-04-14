@@ -560,6 +560,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="import-json-menu-cta"
 						onClick={(): void => onModalHandler(false)}
 					>
 						<Radius size={14} /> Import JSON
@@ -573,6 +574,7 @@ function DashboardsList(): JSX.Element {
 						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
+						data-testid="view-templates-menu-cta"
 					>
 						<Flex
 							justify="space-between"
@@ -596,6 +598,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="create-dashboard-menu-cta"
 						onClick={(): void => {
 							onNewDashboardHandler();
 						}}
@@ -759,6 +762,7 @@ function DashboardsList(): JSX.Element {
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 								value={searchString}
+								data-testid="dashboards-list-search"
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
@@ -772,6 +776,7 @@ function DashboardsList(): JSX.Element {
 										type="primary"
 										className="periscope-btn primary btn"
 										icon={<Plus size={14} />}
+										data-testid="new-dashboard-cta"
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
