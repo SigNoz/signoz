@@ -374,6 +374,7 @@ type logKeysUnionArm struct {
 	shouldQuery        bool
 	fieldContext       telemetrytypes.FieldContext
 	table              string
+	nameColumn         string                                    // column holding the field/key name (e.g., "name" or "field_name")
 	dataTypeColumn     string                                    // column used in WHERE/GROUP BY
 	dataTypeSelectExpr string                                    // expression used in SELECT (may wrap with lower())
 	addBaseFilters     func(sb *sqlbuilder.SelectBuilder)        // mandatory WHERE filters (e.g., signal, field_context)
@@ -464,6 +465,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			shouldQuery:        queryAttributeTable,
 			fieldContext:       telemetrytypes.FieldContextAttribute,
 			table:              t.logsDBName + "." + t.logAttributeKeysTblName,
+			nameColumn:         "name",
 			dataTypeColumn:     "datatype",
 			dataTypeSelectExpr: "lower(datatype)",
 			addBaseFilters:     func(*sqlbuilder.SelectBuilder) {},
@@ -474,6 +476,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			shouldQuery:        queryResourceTable,
 			fieldContext:       telemetrytypes.FieldContextResource,
 			table:              t.logsDBName + "." + t.logResourceKeysTblName,
+			nameColumn:         "name",
 			dataTypeColumn:     "datatype",
 			dataTypeSelectExpr: "lower(datatype)",
 			addBaseFilters:     func(*sqlbuilder.SelectBuilder) {},
@@ -484,6 +487,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			shouldQuery:        queryBodyTable,
 			fieldContext:       telemetrytypes.FieldContextBody,
 			table:              fmt.Sprintf("%s.%s", DBName, FieldKeysTable),
+			nameColumn:         "field_name",
 			dataTypeColumn:     "field_data_type",
 			dataTypeSelectExpr: "field_data_type",
 			addBaseFilters: func(sb *sqlbuilder.SelectBuilder) {
@@ -500,7 +504,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 					names = append(names, n)
 				}
 				return sb.And(
-					sb.In("name", names...),
+					sb.In("field_name", names...),
 					sb.In("field_data_type",
 						telemetrytypes.FieldDataTypeArrayDynamic.StringValue(),
 						telemetrytypes.FieldDataTypeArrayJSON.StringValue(),
@@ -516,7 +520,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		sb := sqlbuilder.Select(
-			"name AS tag_key",
+			arm.nameColumn+" AS tag_key",
 			fmt.Sprintf("'%s' AS tag_type", arm.fieldContext.TagType()),
 			arm.dataTypeSelectExpr+" AS tag_data_type",
 			fmt.Sprintf("%d AS priority", getPriorityForContext(arm.fieldContext)),
@@ -531,9 +535,9 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 			parts := []string{}
 			if sel.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-				parts = append(parts, sb.E("name", sel.Name))
+				parts = append(parts, sb.E(arm.nameColumn, sel.Name))
 			} else {
-				parts = append(parts, sb.ILike("name", "%"+escapeForLike(sel.Name)+"%"))
+				parts = append(parts, sb.ILike(arm.nameColumn, "%"+escapeForLike(sel.Name)+"%"))
 			}
 			if sel.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 				parts = append(parts, sb.E(arm.dataTypeColumn, arm.encodeDataType(sel.FieldDataType)))
@@ -551,7 +555,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			sb.Where(sb.Or(branches...))
 		}
 
-		sb.GroupBy("name", arm.dataTypeColumn)
+		sb.GroupBy(arm.nameColumn, arm.dataTypeColumn)
 
 		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		queries = append(queries, query)
