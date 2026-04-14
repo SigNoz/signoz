@@ -31,7 +31,7 @@ var (
 	FieldDataTypeArrayInt64  = FieldDataType{valuer.NewString("[]int64")}
 	FieldDataTypeArrayNumber = FieldDataType{valuer.NewString("[]number")}
 
-	FieldDataTypeArrayJSON    = FieldDataType{valuer.NewString("[]object")}
+	FieldDataTypeArrayJSON    = FieldDataType{valuer.NewString("[]json")}
 	FieldDataTypeArrayDynamic = FieldDataType{valuer.NewString("[]dynamic")}
 
 	// Map string representations to FieldDataType values

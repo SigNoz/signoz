@@ -680,7 +680,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
 	if querybuilder.BodyJSONQueryEnabled {
 		if err := t.enrichBodyKeys(ctx, keys, parentTypeCache); err != nil {
-			t.logger.ErrorContext(ctx, "failed to enrich body JSON keys", errors.Attr(err))
+			return nil, false, err
 		}
 	}
 

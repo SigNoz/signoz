@@ -80,7 +80,6 @@ func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 }
 
 // GetJSONDataType derives the JSONDataType from FieldDataType.
-// Callers should check FieldDataType != FieldDataTypeUnspecified before calling.
 func (f *TelemetryFieldKey) GetJSONDataType() JSONDataType {
 	return MappingFieldDataTypeToJSONDataType[f.FieldDataType]
 }

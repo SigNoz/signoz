@@ -247,7 +247,7 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 - name: user.name
   column: %s
   availableTypes:
-    - String
+    - string
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
@@ -260,14 +260,14 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 - name: user.name
   column: %s
   availableTypes:
-    - String
+    - string
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
 - name: user.name
   column: %s
   availableTypes:
-    - String
+    - string
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   isTerminal: true
@@ -315,13 +315,13 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: name
       availableTypes:
-        - String
+        - string
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -334,27 +334,27 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
       availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
+        - "[]dynamic"
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -368,42 +368,42 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 - name: interests
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
       availableTypes:
-        - Array(JSON)
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
           availableTypes:
-            - Array(JSON)
+            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
                   availableTypes:
-                    - Array(JSON)
+                    - "[]json"
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
                       availableTypes:
-                        - Array(JSON)
+                        - "[]json"
                       branches:
                         json:
                           name: name
                           availableTypes:
-                            - String
+                            - string
                           isTerminal: true
                           elemType: String
 `, bodyV2Column),
@@ -415,13 +415,13 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: name
       availableTypes:
-        - String
+        - string
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -462,27 +462,27 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
       availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
+        - "[]dynamic"
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -505,27 +505,27 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
       availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
+        - "[]dynamic"
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -533,22 +533,22 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   branches:
     json:
       name: awards
       availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
+        - "[]dynamic"
+        - "[]json"
       maxDynamicTypes: 8
       maxDynamicPaths: 64
       branches:
         json:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 4
           maxDynamicPaths: 16
           isTerminal: true
@@ -556,7 +556,7 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
         dynamic:
           name: type
           availableTypes:
-            - String
+            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -588,42 +588,42 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 - name: interests
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
       availableTypes:
-        - Array(JSON)
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
           availableTypes:
-            - Array(JSON)
+            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
                   availableTypes:
-                    - Array(JSON)
+                    - "[]json"
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
                       availableTypes:
-                        - Array(JSON)
+                        - "[]json"
                       branches:
                         json:
                           name: name
                           availableTypes:
-                            - String
+                            - string
                           isTerminal: true
                           elemType: String
 `, bodyV2Column),
@@ -635,14 +635,14 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: type
       availableTypes:
-        - String
-        - Int64
+        - string
+        - int64
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -655,7 +655,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   isTerminal: true
   elemType: Array(JSON)
@@ -704,47 +704,47 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 - name: education
   column: %s
   availableTypes:
-    - Array(JSON)
+    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
       availableTypes:
-        - Array(Dynamic)
-        - Array(JSON)
+        - "[]dynamic"
+        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: participated
           availableTypes:
-            - Array(Dynamic)
-            - Array(JSON)
+            - "[]dynamic"
+            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: team
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: branch
                   availableTypes:
-                    - String
+                    - string
                   maxDynamicTypes: 1
                   isTerminal: true
                   elemType: String
             dynamic:
               name: team
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
                   availableTypes:
-                    - String
+                    - string
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true
@@ -752,22 +752,22 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
         dynamic:
           name: participated
           availableTypes:
-            - Array(Dynamic)
-            - Array(JSON)
+            - "[]dynamic"
+            - "[]json"
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           branches:
             json:
               name: team
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 8
               maxDynamicPaths: 64
               branches:
                 json:
                   name: branch
                   availableTypes:
-                    - String
+                    - string
                   maxDynamicTypes: 4
                   maxDynamicPaths: 16
                   isTerminal: true
@@ -775,14 +775,14 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
             dynamic:
               name: team
               availableTypes:
-                - Array(JSON)
+                - "[]json"
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
                   availableTypes:
-                    - String
+                    - string
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true
