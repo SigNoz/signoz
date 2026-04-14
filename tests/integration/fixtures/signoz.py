@@ -76,6 +76,7 @@ def create_signoz(
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_POLL__INTERVAL": "5s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__WAIT": "1s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__INTERVAL": "5s",
+                "SIGNOZ_CLOUDINTEGRATION_AGENT_VERSION": "v0.0.8",
             }
             | sqlstore.env
             | clickhouse.env

@@ -1,8 +1,10 @@
 package zeustypes
 
 import (
+	"encoding/json"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/tidwall/gjson"
 )
 
@@ -55,4 +57,31 @@ func NewGettableHost(data []byte) *GettableHost {
 		Tier:  parsed.Get("tier").String(),
 		Hosts: hosts,
 	}
+}
+
+// GettableDeployment represents the parsed deployment info from zeus.GetDeployment.
+// NOTE: this is not a full response structure, add more fields from actual response as per requirement.
+type GettableDeployment struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Cluster struct {
+		ID     string `json:"id"`
+		Name   string `json:"name"`
+		Region struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+			DNS  string `json:"dns"`
+		} `json:"region"`
+	} `json:"cluster"`
+}
+
+// NewGettableDeployment parses raw GetDeployment bytes into a GettableDeployment.
+func NewGettableDeployment(data []byte) (*GettableDeployment, error) {
+	deployment := new(GettableDeployment)
+	err := json.Unmarshal(data, deployment)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to unmarshal deployment response")
+	}
+
+	return deployment, nil
 }
