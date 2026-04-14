@@ -19,7 +19,8 @@ var (
 	BranchJSON    = JSONAccessBranchType{valuer.NewString("json")}
 	BranchDynamic = JSONAccessBranchType{valuer.NewString("dynamic")}
 
-	CodePlanIndexOutOfBounds = errors.MustNewCode("plan_index_out_of_bounds")
+	CodePlanIndexOutOfBounds     = errors.MustNewCode("plan_index_out_of_bounds")
+	CodePlanFieldDataTypeMissing = errors.MustNewCode("field_data_type_missing")
 )
 
 type JSONColumnMetadata struct {
@@ -157,9 +158,17 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 
 	hasJSON := slices.Contains(node.AvailableTypes, FieldDataTypeArrayJSON)
 	hasDynamic := slices.Contains(node.AvailableTypes, FieldDataTypeArrayDynamic)
+	if !hasJSON && !hasDynamic {
+		return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data types missing for path %s", pathSoFar)
+	}
 
 	// Configure terminal if this is the last part
 	if isTerminal {
+		// fielddatatype must not be unspecified else expression can not be generated
+		if pb.key.FieldDataType == FieldDataTypeUnspecified {
+			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "field data type is missing for path %s", pathSoFar)
+		}
+
 		node.TerminalConfig = &TerminalConfig{
 			Key:      pb.key,
 			ElemType: pb.key.GetJSONDataType(),
