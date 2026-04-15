@@ -3,7 +3,8 @@ import TanStackTableText from './TanStackTableText';
 
 export * from './TanStackTableStateContext';
 export * from './types';
-export * from './useTableColumns';
+export * from './useColumnState';
+export * from './useColumnStore';
 export * from './useTableParams';
 
 /**
@@ -54,19 +55,12 @@ export * from './useTableParams';
  * ];
  * ```
  *
- * @example Controlled column sizing and reorder (persist in parent state)
+ * @example Column state persistence with store (recommended)
  * ```tsx
- * import type { ColumnSizingState } from '@tanstack/react-table';
- *
- * const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
- *
  * <TanStackTable
  *   data={data}
  *   columns={columns}
- *   columnSizing={columnSizing}
- *   onColumnSizingChange={setColumnSizing}
- *   onColumnOrderChange={setColumns}
- *   onRemoveColumn={(id) => setColumns((cols) => cols.filter((c) => c.id !== id))}
+ *   columnStorageKey="my-table-columns"
  * />
  * ```
  *

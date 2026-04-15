@@ -9,7 +9,6 @@ import type { TableVirtuosoHandle } from 'react-virtuoso';
 import type {
 	ColumnSizingState,
 	Row as TanStackRowType,
-	VisibilityState,
 } from '@tanstack/react-table';
 
 export type SortState = { columnName: string; order: 'asc' | 'desc' };
@@ -56,11 +55,26 @@ export type TableColumnDef<
 	enableResize?: boolean;
 	enableRemove?: boolean;
 	enableSort?: boolean;
+	/** Default visibility when no persisted state exists. Default: true */
+	defaultVisibility?: boolean;
+	/** Whether user can hide this column. Default: true */
+	canBeHidden?: boolean;
+	/**
+	 * Visibility behavior for grouped views:
+	 * - 'hidden-on-expand': Hide when rows are expanded (grouped view)
+	 * - 'hidden-on-collapse': Hide when rows are collapsed (ungrouped view)
+	 * - 'always-visible': Always show regardless of grouping
+	 * Default: 'always-visible'
+	 */
+	visibilityBehavior?:
+		| 'hidden-on-expand'
+		| 'hidden-on-collapse'
+		| 'always-visible';
 	width?: {
-		fixed?: number;
-		min?: number;
-		default?: number;
-		max?: number;
+		fixed?: number | string;
+		min?: number | string;
+		default?: number | string;
+		max?: number | string;
 	};
 };
 
@@ -112,12 +126,13 @@ export type TanstackTableQueryParamsConfig = {
 export type TanStackTableProps<TData> = {
 	data: TData[];
 	columns: TableColumnDef<TData>[];
+	/** Storage key for column state persistence (visibility, sizing, ordering). When set, enables unified column management. */
+	columnStorageKey?: string;
 	columnSizing?: ColumnSizingState;
 	onColumnSizingChange?: Dispatch<SetStateAction<ColumnSizingState>>;
-	columnVisibility?: VisibilityState;
-	onColumnVisibilityChange?: Dispatch<SetStateAction<VisibilityState>>;
 	onColumnOrderChange?: (cols: TableColumnDef<TData>[]) => void;
-	onRemoveColumn?: (id: string) => void;
+	/** Called when a column is removed via the header menu. Use this to sync with external column preferences. */
+	onColumnRemove?: (columnId: string) => void;
 	isLoading?: boolean;
 	/** Number of skeleton rows to show when loading with no data. Default: 10 */
 	skeletonRowCount?: number;

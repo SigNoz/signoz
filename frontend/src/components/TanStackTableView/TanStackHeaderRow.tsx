@@ -25,6 +25,8 @@ type TanStackHeaderRowProps<TData = unknown> = {
 	onRemoveColumn?: (columnId: string) => void;
 	orderBy?: SortState | null;
 	onSort?: (sort: SortState | null) => void;
+	/** Last column cannot be resized */
+	isLastColumn?: boolean;
 };
 
 const GRIP_ICON_SIZE = 12;
@@ -41,11 +43,14 @@ function TanStackHeaderRow<TData>({
 	onRemoveColumn,
 	orderBy,
 	onSort,
+	isLastColumn = false,
 }: TanStackHeaderRowProps<TData>): JSX.Element {
 	const columnId = column.id;
 	const isDragColumn = column.enableMove !== false && column.pin == null;
 	const isResizableColumn =
-		column.enableResize !== false && Boolean(header?.column.getCanResize());
+		!isLastColumn &&
+		column.enableResize !== false &&
+		Boolean(header?.column.getCanResize());
 	const isColumnRemovable = Boolean(
 		canRemoveColumn && onRemoveColumn && column.enableRemove,
 	);

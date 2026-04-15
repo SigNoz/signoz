@@ -12,8 +12,6 @@ import { ILog } from 'types/api/logs/log';
 import type { TableColumnDef } from '../../TanStackTableView/types';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 
-import styles from './useLogsTableColumns.module.scss';
-
 type UseLogsTableColumnsProps = {
 	fields: IField[];
 	linesPerRow: number;
@@ -36,6 +34,7 @@ export function useLogsTableColumns({
 			enableMove: false,
 			enableResize: false,
 			enableRemove: false,
+			canBeHidden: false,
 			width: { fixed: 24 },
 			cell: ({ row }): ReactElement => (
 				<LogStateIndicator
@@ -68,7 +67,7 @@ export function useLogsTableColumns({
 					id: 'timestamp',
 					header: 'Timestamp',
 					accessorFn: (log): unknown => log.timestamp,
-					width: { min: 170, max: 220 },
+					width: { default: 170, min: 170 },
 					cell: ({ value }): ReactElement => {
 						const ts = value as string | number;
 						const formatted =
@@ -90,17 +89,16 @@ export function useLogsTableColumns({
 					id: 'body',
 					header: 'Body',
 					accessorFn: (log): string => log.body,
-					width: { min: 640 },
+					canBeHidden: false,
+					width: { default: '100%', min: 640 },
 					cell: ({ value, isActive }): ReactElement => (
-						<div
-							// eslint-disable-next-line react/no-danger
+						<TanStackTable.Text
 							dangerouslySetInnerHTML={{
 								__html: getSanitizedLogBody(value as string, {
 									shouldEscapeHtml: true,
 								}),
 							}}
 							data-active={isActive}
-							className={styles.logBodyCell}
 						/>
 					),
 			  }

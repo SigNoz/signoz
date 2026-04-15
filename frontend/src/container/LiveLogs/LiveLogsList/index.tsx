@@ -15,7 +15,8 @@ import RawLogView from 'components/Logs/RawLogView';
 import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColumns';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import type { TanStackTableHandle } from 'components/TanStackTableView';
-import TanStackTable, { useTableColumns } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { useHiddenColumnIds } from 'components/TanStackTableView/useColumnStore';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
@@ -29,6 +30,7 @@ import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -50,6 +52,9 @@ function LiveLogsList({
 	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
+	const { logs: logsPreferences } = usePreferenceContext();
+	const hiddenColumnIds = useHiddenColumnIds(LOCALSTORAGE.LOGS_LIST_COLUMNS);
+	const hasReconciledHiddenColumnsRef = useRef(false);
 
 	const {
 		activeLog,
@@ -65,7 +70,7 @@ function LiveLogsList({
 		[logs],
 	);
 
-	const { options, config } = useOptionsMenu({
+	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
@@ -81,6 +86,12 @@ function LiveLogsList({
 		...options.selectColumns,
 	]);
 
+	const syncedSelectedColumns = useMemo(
+		() =>
+			options.selectColumns.filter(({ name }) => !hiddenColumnIds.includes(name)),
+		[options.selectColumns, hiddenColumnIds],
+	);
+
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
 		linesPerRow: options.maxLines,
@@ -88,16 +99,28 @@ function LiveLogsList({
 		appendTo: 'end',
 	});
 
-	const { tableProps } = useTableColumns(logsColumns, {
-		storageKey: LOCALSTORAGE.LOGS_LIST_COLUMNS,
-	});
+	useEffect(() => {
+		if (hasReconciledHiddenColumnsRef.current) {
+			return;
+		}
 
-	const handleRemoveColumn = useCallback(
-		(columnId: string): void => {
-			tableProps.onRemoveColumn(columnId);
-			config.addColumn?.onRemove?.(columnId);
+		hasReconciledHiddenColumnsRef.current = true;
+
+		if (syncedSelectedColumns.length === options.selectColumns.length) {
+			return;
+		}
+
+		logsPreferences.updateColumns(syncedSelectedColumns);
+	}, [logsPreferences, options.selectColumns.length, syncedSelectedColumns]);
+
+	const handleColumnRemove = useCallback(
+		(columnId: string) => {
+			const updatedColumns = options.selectColumns.filter(
+				({ name }) => name !== columnId,
+			);
+			logsPreferences.updateColumns(updatedColumns);
 		},
-		[tableProps, config.addColumn],
+		[options.selectColumns, logsPreferences],
 	);
 
 	const makeOnLogCopy = useCallback(
@@ -210,12 +233,13 @@ function LiveLogsList({
 			{formattedLogs.length !== 0 && (
 				<InfinityWrapperStyled>
 					{options.format === OptionFormatTypes.TABLE ? (
-						<TanStackTable
+						<TanStackTable<ILog>
 							ref={ref as React.Ref<TanStackTableHandle>}
-							{...tableProps}
+							columns={logsColumns}
+							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+							onColumnRemove={handleColumnRemove}
 							plainTextCellLineClamp={options.maxLines}
 							cellTypographySize={options.fontSize}
-							onRemoveColumn={handleRemoveColumn}
 							data={formattedLogs}
 							isLoading={false}
 							isRowActive={(log): boolean => log.id === activeLog?.id}

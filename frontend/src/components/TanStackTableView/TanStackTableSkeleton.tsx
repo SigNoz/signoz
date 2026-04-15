@@ -3,11 +3,7 @@ import type { ColumnSizingState } from '@tanstack/react-table';
 import { Skeleton } from 'antd';
 
 import { TableColumnDef } from './types';
-import {
-	getColumnInitialSize,
-	getColumnMaxWidth,
-	getColumnMinWidthPx,
-} from './utils';
+import { getColumnWidthStyle } from './utils';
 
 import tableStyles from './TanStackTable.module.scss';
 import styles from './TanStackTableSkeleton.module.scss';
@@ -32,69 +28,16 @@ export function TanStackTableSkeleton<TData>({
 	return (
 		<table className={tableStyles.tanStackTable}>
 			<colgroup>
-				{columns.map((column) => {
-					const isFixedColumn = column.width?.fixed != null;
-					const hasDefaultWidth = column.width?.default != null;
-					const hasMinMax = column.width?.min != null && column.width?.max != null;
-					const minWidthPx = getColumnMinWidthPx(column);
-					const maxWidthPx = getColumnMaxWidth(column);
-					const persistedWidth = columnSizing?.[column.id];
-
-					// Fixed columns get exact width with no flexibility
-					if (isFixedColumn) {
-						const fixedWidth = column.width?.fixed;
-						return (
-							<col
-								key={column.id}
-								style={{
-									width: fixedWidth,
-									minWidth: fixedWidth,
-									maxWidth: fixedWidth,
-								}}
-							/>
-						);
-					}
-
-					// User has resized this column - use persisted width
-					if (persistedWidth != null) {
-						const width = Math.max(persistedWidth, minWidthPx);
-						return (
-							<col
-								key={column.id}
-								style={{
-									width,
-									minWidth: minWidthPx,
-									maxWidth: maxWidthPx,
-								}}
-							/>
-						);
-					}
-
-					// Columns with min+max but no default: auto-size within bounds
-					if (hasMinMax && !hasDefaultWidth) {
-						return (
-							<col
-								key={column.id}
-								style={{
-									minWidth: minWidthPx,
-									maxWidth: maxWidthPx,
-								}}
-							/>
-						);
-					}
-
-					// For other columns, use initial size with min/max constraints
-					return (
-						<col
-							key={column.id}
-							style={{
-								width: getColumnInitialSize(column),
-								minWidth: minWidthPx,
-								maxWidth: maxWidthPx,
-							}}
-						/>
-					);
-				})}
+				{columns.map((column, index) => (
+					<col
+						key={column.id}
+						style={getColumnWidthStyle(
+							column,
+							columnSizing?.[column.id],
+							index === columns.length - 1,
+						)}
+					/>
+				))}
 			</colgroup>
 			<thead>
 				<tr>

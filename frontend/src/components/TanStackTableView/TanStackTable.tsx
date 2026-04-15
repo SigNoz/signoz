@@ -1,4 +1,4 @@
-import type { ComponentProps, CSSProperties } from 'react';
+import type { ComponentProps, CSSProperties, SetStateAction } from 'react';
 import {
 	forwardRef,
 	memo,
@@ -34,6 +34,7 @@ import type { Row } from '@tanstack/react-table';
 import {
 	ColumnDef,
 	ColumnPinningState,
+	ColumnSizingState,
 	getCoreRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
@@ -50,10 +51,12 @@ import {
 } from './TanStackTableStateContext';
 import {
 	FlatItem,
+	TableColumnDef,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
+import { useColumnState } from './useColumnState';
 import { useTableParams } from './useTableParams';
 import { buildTanstackColumnDef } from './utils';
 import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
@@ -68,7 +71,6 @@ const COLUMN_DND_AUTO_SCROLL = {
 
 const INCREASE_VIEWPORT_BY = { top: 500, bottom: 500 };
 
-const noopColumnSizing = (): void => {};
 const noopColumnVisibility = (): void => {};
 
 const paginationPageSizeItems: ComboboxSimpleItem[] = [10, 20, 30, 50, 100].map(
@@ -84,12 +86,11 @@ function TanStackTableInner<TData>(
 	{
 		data,
 		columns,
+		columnStorageKey,
 		columnSizing: columnSizingProp,
 		onColumnSizingChange,
-		columnVisibility: columnVisibilityProp,
-		onColumnVisibilityChange,
 		onColumnOrderChange,
-		onRemoveColumn,
+		onColumnRemove,
 		isLoading = false,
 		skeletonRowCount = 10,
 		enableQueryParams,
@@ -136,6 +137,28 @@ function TanStackTableInner<TData>(
 		page: pagination?.defaultPage,
 		limit: pagination?.defaultLimit,
 	});
+
+	const isGrouped = (groupBy?.length ?? 0) > 0;
+
+	const {
+		columnVisibility: storeVisibility,
+		columnSizing: storeSizing,
+		sortedColumns,
+		hideColumn,
+		setColumnSizing: storeSetSizing,
+		setColumnOrder: storeSetOrder,
+	} = useColumnState({
+		storageKey: columnStorageKey,
+		columns,
+		isGrouped,
+	});
+
+	// Use store values when columnStorageKey is provided, otherwise fall back to props/defaults
+	const effectiveColumns = columnStorageKey ? sortedColumns : columns;
+	const effectiveVisibility = columnStorageKey ? storeVisibility : {};
+	const effectiveSizing = columnStorageKey
+		? storeSizing
+		: columnSizingProp ?? {};
 
 	// Track previous data for loading states
 	const prevDataRef = useRef<TData[]>(data);
@@ -208,20 +231,52 @@ function TanStackTableInner<TData>(
 		rowKeyData,
 	]);
 
+	const handleColumnSizingChange = useCallback(
+		(updater: SetStateAction<ColumnSizingState>) => {
+			const next =
+				typeof updater === 'function' ? updater(effectiveSizing) : updater;
+			if (columnStorageKey) {
+				storeSetSizing(next);
+			}
+			onColumnSizingChange?.(next);
+		},
+		[columnStorageKey, effectiveSizing, storeSetSizing, onColumnSizingChange],
+	);
+
+	const handleColumnOrderChange = useCallback(
+		(cols: TableColumnDef<TData>[]) => {
+			if (columnStorageKey) {
+				storeSetOrder(cols);
+			}
+			onColumnOrderChange?.(cols);
+		},
+		[columnStorageKey, storeSetOrder, onColumnOrderChange],
+	);
+
+	const handleRemoveColumn = useCallback(
+		(columnId: string) => {
+			if (columnStorageKey) {
+				hideColumn(columnId);
+			}
+			onColumnRemove?.(columnId);
+		},
+		[columnStorageKey, hideColumn, onColumnRemove],
+	);
+
 	const columnPinning = useMemo<ColumnPinningState>(
 		() => ({
-			left: columns.filter((c) => c.pin === 'left').map((c) => c.id),
-			right: columns.filter((c) => c.pin === 'right').map((c) => c.id),
+			left: effectiveColumns.filter((c) => c.pin === 'left').map((c) => c.id),
+			right: effectiveColumns.filter((c) => c.pin === 'right').map((c) => c.id),
 		}),
-		[columns],
+		[effectiveColumns],
 	);
 
 	const tanstackColumns = useMemo<ColumnDef<TData>[]>(
 		() =>
-			columns.map((colDef) =>
+			effectiveColumns.map((colDef) =>
 				buildTanstackColumnDef(colDef, isRowActive, getRowKeyData),
 			),
-		[columns, isRowActive, getRowKeyData],
+		[effectiveColumns, isRowActive, getRowKeyData],
 	);
 
 	const getRowId = useCallback(
@@ -259,12 +314,12 @@ function TanStackTableInner<TData>(
 		getRowId,
 		enableExpanding: Boolean(renderExpandedRow),
 		getRowCanExpand: renderExpandedRow ? tableGetRowCanExpand : undefined,
-		onColumnSizingChange: onColumnSizingChange ?? noopColumnSizing,
-		onColumnVisibilityChange: onColumnVisibilityChange ?? noopColumnVisibility,
+		onColumnSizingChange: handleColumnSizingChange,
+		onColumnVisibilityChange: noopColumnVisibility,
 		onExpandedChange: setExpanded,
 		state: {
-			columnSizing: columnSizingProp ?? {},
-			columnVisibility: columnVisibilityProp ?? {},
+			columnSizing: effectiveSizing,
+			columnVisibility: effectiveVisibility,
 			columnPinning,
 			expanded,
 		},
@@ -273,8 +328,8 @@ function TanStackTableInner<TData>(
 	// Keep refs to avoid recreating virtuosoComponents on every resize/render
 	const tableRef = useRef(table);
 	tableRef.current = table;
-	const columnsRef = useRef(columns);
-	columnsRef.current = columns;
+	const columnsRef = useRef(effectiveColumns);
+	columnsRef.current = effectiveColumns;
 
 	const tableRows = table.getRowModel().rows;
 
@@ -328,16 +383,18 @@ function TanStackTableInner<TData>(
 		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
 	);
 
-	const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
+	const columnIds = useMemo(() => effectiveColumns.map((c) => c.id), [
+		effectiveColumns,
+	]);
 
 	const handleDragEnd = useCallback(
 		(event: DragEndEvent): void => {
 			const { active, over } = event;
-			if (!over || active.id === over.id || !onColumnOrderChange) {
+			if (!over || active.id === over.id) {
 				return;
 			}
-			const activeCol = columns.find((c) => c.id === String(active.id));
-			const overCol = columns.find((c) => c.id === String(over.id));
+			const activeCol = effectiveColumns.find((c) => c.id === String(active.id));
+			const overCol = effectiveColumns.find((c) => c.id === String(over.id));
 			if (
 				!activeCol ||
 				!overCol ||
@@ -347,19 +404,23 @@ function TanStackTableInner<TData>(
 			) {
 				return;
 			}
-			const oldIndex = columns.findIndex((c) => c.id === String(active.id));
-			const newIndex = columns.findIndex((c) => c.id === String(over.id));
+			const oldIndex = effectiveColumns.findIndex(
+				(c) => c.id === String(active.id),
+			);
+			const newIndex = effectiveColumns.findIndex((c) => c.id === String(over.id));
 			if (oldIndex === -1 || newIndex === -1) {
 				return;
 			}
-			onColumnOrderChange(arrayMove(columns, oldIndex, newIndex));
+			handleColumnOrderChange(arrayMove(effectiveColumns, oldIndex, newIndex));
 		},
-		[columns, onColumnOrderChange],
+		[effectiveColumns, handleColumnOrderChange],
 	);
 
 	const hasSingleColumn = useMemo(
-		() => columns.filter((c) => !c.pin && c.enableRemove !== false).length <= 1,
-		[columns],
+		() =>
+			effectiveColumns.filter((c) => !c.pin && c.enableRemove !== false).length <=
+			1,
+		[effectiveColumns],
 	);
 
 	const canRemoveColumn = !hasSingleColumn;
@@ -367,12 +428,12 @@ function TanStackTableInner<TData>(
 	const flatHeaders = useMemo(
 		() => table.getFlatHeaders().filter((header) => !header.isPlaceholder),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[tanstackColumns, columnPinning, columnVisibilityProp],
+		[tanstackColumns, columnPinning, effectiveVisibility],
 	);
 
 	const columnsById = useMemo(
-		() => new Map(columns.map((c) => [c.id, c] as const)),
-		[columns],
+		() => new Map(effectiveColumns.map((c) => [c.id, c] as const)),
+		[effectiveColumns],
 	);
 
 	const visibleColumnsCount = table.getVisibleFlatColumns().length;
@@ -386,7 +447,7 @@ function TanStackTableInner<TData>(
 				.join(','),
 		// we want to explicitly have table out of this deps
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[columnVisibilityProp, columnIds],
+		[effectiveVisibility, columnIds],
 	);
 
 	const virtuosoContext = useMemo<TableRowContext<TData>>(
@@ -436,7 +497,7 @@ function TanStackTableInner<TData>(
 			>
 				<SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
 					<tr>
-						{flatHeaders.map((header) => {
+						{flatHeaders.map((header, index) => {
 							const column = columnsById.get(header.id);
 							if (!column) {
 								return null;
@@ -448,10 +509,11 @@ function TanStackTableInner<TData>(
 									header={header}
 									isDarkMode={isDarkMode}
 									hasSingleColumn={hasSingleColumn}
-									onRemoveColumn={onRemoveColumn}
+									onRemoveColumn={handleRemoveColumn}
 									canRemoveColumn={canRemoveColumn}
 									orderBy={orderBy}
 									onSort={setOrderBy}
+									isLastColumn={index === flatHeaders.length - 1}
 								/>
 							);
 						})}
@@ -467,7 +529,7 @@ function TanStackTableInner<TData>(
 		columnsById,
 		isDarkMode,
 		hasSingleColumn,
-		onRemoveColumn,
+		handleRemoveColumn,
 		canRemoveColumn,
 		orderBy,
 		setOrderBy,
@@ -480,7 +542,6 @@ function TanStackTableInner<TData>(
 		[onEndReached],
 	);
 
-	// Show loading spinner at the bottom for infinite scroll mode
 	const isInfiniteScrollMode = Boolean(onEndReached);
 	const showInfiniteScrollLoader = isInfiniteScrollMode && isLoading;
 
@@ -579,7 +640,7 @@ function TanStackTableInner<TData>(
 					isLoading={isLoading}
 					isInfiniteScrollMode={isInfiniteScrollMode}
 				/>
-				<ColumnVisibilitySync visibility={columnVisibilityProp ?? {}} />
+				<ColumnVisibilitySync visibility={effectiveVisibility} />
 				<TooltipProvider>
 					<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
 						className={virtuosoClassName}

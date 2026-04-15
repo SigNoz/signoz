@@ -1,6 +1,7 @@
 import type { Table } from '@tanstack/react-table';
 
 import type { TableColumnDef } from './types';
+import { getColumnWidthStyle } from './utils';
 
 export function VirtuosoTableColGroup<TData>({
 	columns,
@@ -15,50 +16,17 @@ export function VirtuosoTableColGroup<TData>({
 
 	return (
 		<colgroup>
-			{visibleTanstackColumns.map((tanstackCol) => {
+			{visibleTanstackColumns.map((tanstackCol, index) => {
 				const colDef = columnDefsById.get(tanstackCol.id);
-				const isFixedColumn = colDef?.width?.fixed != null;
-				const hasDefaultWidth = colDef?.width?.default != null;
-				const hasMinMax = colDef?.width?.min != null && colDef?.width?.max != null;
-				const hasPersistedWidth = columnSizing[tanstackCol.id] != null;
-
-				const computedSize = tanstackCol.getSize();
-				const minSize = tanstackCol.columnDef.minSize;
-				const maxSize = tanstackCol.columnDef.maxSize;
-
-				if (isFixedColumn) {
-					return (
-						<col
-							key={tanstackCol.id}
-							style={{
-								width: computedSize,
-								minWidth: computedSize,
-								maxWidth: computedSize,
-							}}
-						/>
-					);
+				if (!colDef) {
+					return <col key={tanstackCol.id} />;
 				}
-
-				if (hasMinMax && !hasDefaultWidth && !hasPersistedWidth) {
-					return (
-						<col
-							key={tanstackCol.id}
-							style={{
-								minWidth: minSize,
-								maxWidth: maxSize,
-							}}
-						/>
-					);
-				}
-
+				const persistedWidth = columnSizing[tanstackCol.id];
+				const isLastColumn = index === visibleTanstackColumns.length - 1;
 				return (
 					<col
 						key={tanstackCol.id}
-						style={{
-							width: computedSize,
-							minWidth: minSize,
-							maxWidth: maxSize,
-						}}
+						style={getColumnWidthStyle(colDef, persistedWidth, isLastColumn)}
 					/>
 				);
 			})}

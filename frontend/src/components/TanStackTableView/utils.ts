@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { RowKeyData, TableColumnDef } from './types';
@@ -6,45 +6,57 @@ import { RowKeyData, TableColumnDef } from './types';
 export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
 	column.id;
 
-const REM_PX = 16;
-const MIN_WIDTH_DEFAULT_REM = 12;
+const DEFAULT_MIN_WIDTH = 192; // 12rem * 16px
 
-export const getColumnMinWidthPx = <TData>(
+/** Get CSS style properties for column width */
+export const getColumnWidthStyle = <TData>(
 	column: TableColumnDef<TData>,
-): number => {
-	if (column.width?.fixed != null) {
-		return column.width.fixed;
+	/** Persisted width from user resizing (overrides defined width) */
+	persistedWidth?: number,
+	/** Last column always gets width: 100% and ignores other width settings */
+	isLastColumn?: boolean,
+): CSSProperties => {
+	// Last column always fills remaining space
+	if (isLastColumn) {
+		return { width: '100%' };
 	}
-	if (column.width?.min != null) {
-		return column.width.min;
+
+	const { width } = column;
+	if (!width) {
+		return {
+			width: persistedWidth ?? DEFAULT_MIN_WIDTH,
+			minWidth: DEFAULT_MIN_WIDTH,
+		};
 	}
-	return MIN_WIDTH_DEFAULT_REM * REM_PX;
+	// Fixed: all three properties set to the same value (ignore persisted)
+	if (width.fixed != null) {
+		return {
+			width: width.fixed,
+			minWidth: width.fixed,
+			maxWidth: width.fixed,
+		};
+	}
+	// Use persisted width if available, otherwise use defined width, fallback to min
+	return {
+		width: persistedWidth ?? width.default ?? width.min,
+		minWidth: width.min ?? DEFAULT_MIN_WIDTH,
+		maxWidth: width.max,
+	};
 };
 
-/**
- * Get the initial column size from a column definition.
- * Matches the logic used by TanStack Table's size property.
- */
-export const getColumnInitialSize = <TData>(
-	column: TableColumnDef<TData>,
-): number => {
-	const minWidthPx = getColumnMinWidthPx(column);
-	if (column.width?.fixed != null) {
-		return column.width.fixed;
-	}
-	return column.width?.default ?? column.width?.min ?? minWidthPx;
-};
-
-/**
- * Get the max width for a column, if any.
- */
-export const getColumnMaxWidth = <TData>(
-	column: TableColumnDef<TData>,
-): number | undefined => {
-	if (column.width?.fixed != null) {
-		return column.width.fixed;
-	}
-	return column.width?.max;
+/** Helper to build accessor function */
+const buildAccessorFn = <TData>(
+	colDef: TableColumnDef<TData>,
+): ((row: TData) => unknown) => {
+	return (row: TData): unknown => {
+		if (colDef.accessorFn) {
+			return colDef.accessorFn(row);
+		}
+		if (colDef.accessorKey) {
+			return (row as Record<string, unknown>)[colDef.accessorKey];
+		}
+		return undefined;
+	};
 };
 
 export function buildTanstackColumnDef<TData>(
@@ -53,30 +65,18 @@ export function buildTanstackColumnDef<TData>(
 	getRowKeyData?: (index: number) => RowKeyData | undefined,
 ): ColumnDef<TData> {
 	const isFixed = colDef.width?.fixed != null;
-	const fixedWidth = colDef.width?.fixed;
-	const minWidthPx = getColumnMinWidthPx(colDef);
+	const headerFn =
+		typeof colDef.header === 'function' ? colDef.header : undefined;
+
 	return {
 		id: colDef.id,
 		header:
 			typeof colDef.header === 'string'
 				? colDef.header
-				: (): ReactNode =>
-						typeof colDef.header === 'function' ? colDef.header() : null,
-		accessorFn: (row: TData): unknown => {
-			if (colDef.accessorFn) {
-				return colDef.accessorFn(row);
-			}
-			if (colDef.accessorKey) {
-				return (row as Record<string, unknown>)[colDef.accessorKey];
-			}
-			return undefined;
-		},
+				: (): ReactNode => headerFn?.() ?? null,
+		accessorFn: buildAccessorFn(colDef),
 		enableResizing: colDef.enableResize !== false && !isFixed,
 		enableSorting: colDef.enableSort === true,
-		// TanStack Table uses these to compute column.getSize()
-		minSize: fixedWidth ?? minWidthPx,
-		size: fixedWidth ?? colDef.width?.default ?? colDef.width?.min ?? minWidthPx,
-		maxSize: fixedWidth ?? colDef.width?.max,
 		cell: ({ row, getValue }): ReactNode => {
 			const rowData = row.original;
 			const keyData = getRowKeyData?.(row.index);

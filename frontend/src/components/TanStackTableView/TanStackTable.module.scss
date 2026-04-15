@@ -54,6 +54,7 @@
 .tableRow {
 	cursor: pointer;
 	position: relative;
+	overflow-anchor: none;
 
 	&:hover {
 		.tableCell {
