@@ -3,7 +3,8 @@ import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { Form } from 'antd';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { useAccountSettingsModal } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
@@ -43,7 +44,9 @@ function AccountSettingsModal({
 	const urlQuery = useUrlQuery();
 
 	const handleRemoveIntegrationAccountSuccess = useCallback((): void => {
-		queryClient.invalidateQueries([REACT_QUERY_KEY.CLOUD_INTEGRATION_ACCOUNTS]);
+		void invalidateListAccounts(queryClient, {
+			cloudProvider: INTEGRATION_TYPES.AWS,
+		});
 		urlQuery.delete('cloudAccountId');
 		setActiveAccount(null);
 		handleClose();

@@ -61,19 +61,8 @@ function IntegrationDetailPage(): JSX.Element {
 		),
 	);
 
-	if (
-		integrationId === INTEGRATION_TYPES.AWS ||
-		integrationId === INTEGRATION_TYPES.AZURE
-	) {
-		return (
-			<CloudIntegration
-				type={
-					integrationId === INTEGRATION_TYPES.AWS
-						? IntegrationType.AWS_SERVICES
-						: IntegrationType.AZURE_SERVICES
-				}
-			/>
-		);
+	if (integrationId === INTEGRATION_TYPES.AWS) {
+		return <CloudIntegration type={IntegrationType.AWS_SERVICES} />;
 	}
 
 	return (

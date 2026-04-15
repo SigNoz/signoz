@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Select, Skeleton } from 'antd';
-import { useGetCloudIntegrationAccounts } from 'hooks/integration/useGetCloudIntegrationAccounts';
+import { useListAccounts } from 'api/generated/services/cloudintegration';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
+
+import { mapAccountDtoToAwsCloudAccount } from '../mapAwsCloudAccountFromDto';
+import { CloudAccount } from '../types';
 
 import './S3BucketsSelector.styles.scss';
 
@@ -21,7 +25,18 @@ function S3BucketsSelector({
 	disabled: isSelectorDisabled = false,
 }: S3BucketsSelectorProps): JSX.Element {
 	const cloudAccountId = useUrlQuery().get('cloudAccountId');
-	const { data: accounts, isLoading } = useGetCloudIntegrationAccounts('aws');
+	const { data: listAccountsResponse, isLoading } = useListAccounts({
+		cloudProvider: INTEGRATION_TYPES.AWS,
+	});
+	const accounts = useMemo((): CloudAccount[] | undefined => {
+		const raw = listAccountsResponse?.data?.accounts;
+		if (!raw) {
+			return undefined;
+		}
+		return raw
+			.map(mapAccountDtoToAwsCloudAccount)
+			.filter((account): account is CloudAccount => account !== null);
+	}, [listAccountsResponse]);
 	const [bucketsByRegion, setBucketsByRegion] = useState<
 		Record<string, string[]>
 	>(initialBucketsByRegion);

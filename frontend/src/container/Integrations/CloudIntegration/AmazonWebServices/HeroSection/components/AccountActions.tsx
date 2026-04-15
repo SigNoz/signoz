@@ -5,11 +5,13 @@ import { Color } from '@signozhq/design-tokens';
 import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
+import { useListAccounts } from 'api/generated/services/cloudintegration';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
-import { useGetCloudIntegrationAccounts } from 'hooks/integration/useGetCloudIntegrationAccounts';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 
+import { mapAccountDtoToAwsCloudAccount } from '../../mapAwsCloudAccountFromDto';
 import { CloudAccount } from '../../types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
@@ -102,7 +104,18 @@ function AccountActionsRenderer({
 function AccountActions(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: accounts, isLoading } = useGetCloudIntegrationAccounts('aws');
+	const { data: listAccountsResponse, isLoading } = useListAccounts({
+		cloudProvider: INTEGRATION_TYPES.AWS,
+	});
+	const accounts = useMemo((): CloudAccount[] | undefined => {
+		const raw = listAccountsResponse?.data?.accounts;
+		if (!raw) {
+			return undefined;
+		}
+		return raw
+			.map(mapAccountDtoToAwsCloudAccount)
+			.filter((account): account is CloudAccount => account !== null);
+	}, [listAccountsResponse]);
 
 	const initialAccount = useMemo(
 		() =>
