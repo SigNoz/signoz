@@ -4,6 +4,121 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+export interface AlertmanagertypesChannelDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	data?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface AlertmanagertypesGettableRoutePolicyDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	channels?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	createdAt?: Date | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	createdBy?: string | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 */
+	tags?: string[];
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	updatedAt?: Date | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	updatedBy?: string | null;
+}
+
+export interface AlertmanagertypesPostableRoutePolicyDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	channels?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type array
+	 */
+	tags?: string[];
+}
+
 export interface AuthtypesAttributeMappingDTO {
 	/**
 	 * @type string
@@ -3564,6 +3679,42 @@ export type AuthzResources200 = {
 export type ChangePasswordPathParameters = {
 	id: string;
 };
+export type ListChannels200 = {
+	/**
+	 * @type array
+	 */
+	data: AlertmanagertypesChannelDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateChannel201 = {
+	data: AlertmanagertypesChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteChannelByIDPathParameters = {
+	id: string;
+};
+export type GetChannelByIDPathParameters = {
+	id: string;
+};
+export type GetChannelByID200 = {
+	data: AlertmanagertypesChannelDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateChannelByIDPathParameters = {
+	id: string;
+};
 export type AgentCheckInDeprecatedPathParameters = {
 	cloudProvider: string;
 };
@@ -4067,6 +4218,50 @@ export type PatchObjectsPathParameters = {
 	id: string;
 	relation: string;
 };
+export type GetAllRoutePolicies200 = {
+	/**
+	 * @type array
+	 */
+	data: AlertmanagertypesGettableRoutePolicyDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRoutePolicy201 = {
+	data: AlertmanagertypesGettableRoutePolicyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRoutePolicyByIDPathParameters = {
+	id: string;
+};
+export type GetRoutePolicyByIDPathParameters = {
+	id: string;
+};
+export type GetRoutePolicyByID200 = {
+	data: AlertmanagertypesGettableRoutePolicyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateRoutePolicyPathParameters = {
+	id: string;
+};
+export type UpdateRoutePolicy200 = {
+	data: AlertmanagertypesGettableRoutePolicyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListServiceAccounts200 = {
 	/**
 	 * @type array
