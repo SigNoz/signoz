@@ -69,6 +69,8 @@ function ServiceDetails(): JSX.Element | null {
 	);
 
 	const awsConfig = serviceDetailsData?.cloudIntegrationService?.config?.aws;
+	const isServiceEnabledInPersistedConfig =
+		Boolean(awsConfig?.logs?.enabled) || Boolean(awsConfig?.metrics?.enabled);
 	const serviceDetailsId = serviceDetailsData?.id;
 
 	const {
@@ -255,9 +257,7 @@ function ServiceDetails(): JSX.Element | null {
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const renderOverview = (): JSX.Element => {
 		const logsEnabled = watch('logsEnabled');
-		const metricsEnabled = watch('metricsEnabled');
 		const s3BucketsByRegion = watch('s3BucketsByRegion');
-		const isServiceConfigEnabled = logsEnabled || metricsEnabled;
 
 		const isLogsSupported = serviceDetailsData?.supportedSignals?.logs || false;
 		const isMetricsSupported =
@@ -378,7 +378,7 @@ function ServiceDetails(): JSX.Element | null {
 				/>
 				<ServiceDashboards
 					service={serviceDetailsData}
-					isInteractive={!isReadOnly && isServiceConfigEnabled}
+					isInteractive={!isReadOnly && isServiceEnabledInPersistedConfig}
 				/>
 			</div>
 		);

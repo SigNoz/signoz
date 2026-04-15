@@ -20,5 +20,6 @@ export function mapAccountDtoToAwsCloudAccount(
 				last_heartbeat_ts_ms: account.agentReport?.timestampMillis ?? 0,
 			},
 		},
+		providerAccountId: account.providerAccountId,
 	};
 }

@@ -55,7 +55,7 @@ function AccountActionsRenderer({
 
 					<span className="account-selector">
 						<Select
-							value={activeAccount?.cloud_account_id}
+							value={activeAccount?.providerAccountId}
 							options={selectOptions}
 							rootClassName="cloud-account-selector"
 							placeholder="Select AWS Account"
@@ -178,8 +178,8 @@ function AccountActions(): JSX.Element {
 		() =>
 			accounts?.length
 				? accounts.map((account) => ({
-						value: account.cloud_account_id,
-						label: account.cloud_account_id,
+						value: account.providerAccountId,
+						label: account.providerAccountId,
 				  }))
 				: [],
 		[accounts],

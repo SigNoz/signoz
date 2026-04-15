@@ -134,7 +134,9 @@ export function useAccountSettingsModal({
 	}, [form, selectedRegions, updateAccount, account, setActiveAccount, onClose]);
 
 	const isSaveDisabled = useMemo(
-		() => isEqual(selectedRegions.sort(), accountRegions.sort()),
+		() =>
+			isEqual(selectedRegions.sort(), accountRegions.sort()) ||
+			selectedRegions.length === 0,
 		[selectedRegions, accountRegions],
 	);
 

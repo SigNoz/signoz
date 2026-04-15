@@ -73,6 +73,12 @@ function CloudAccountSetupModal({
 							<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
 						}
 						onClick={handleSubmit}
+						disabled={
+							selectedRegions.length === 0 ||
+							isLoading ||
+							isGeneratingUrl ||
+							modalState === ModalStateEnum.WAITING
+						}
 					>
 						Launch Cloud Formation Template
 					</Button>
@@ -93,6 +99,8 @@ function CloudAccountSetupModal({
 		isConnectionParamsLoading,
 		setSelectedRegions,
 		setIncludeAllRegions,
+		isLoading,
+		isGeneratingUrl,
 	]);
 
 	const getSelectedRegionsCount = useCallback(

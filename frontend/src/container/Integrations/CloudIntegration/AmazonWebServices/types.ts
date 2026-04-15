@@ -47,6 +47,7 @@ interface CloudAccount {
 	cloud_account_id: string;
 	config: AWSCloudAccountConfig;
 	status: AccountStatus;
+	providerAccountId: string;
 }
 
 interface CloudAccountsData {
