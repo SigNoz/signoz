@@ -29,7 +29,7 @@ export function useRegionSelection({
 	const handleRegionSelect = (regionId: string): void => {
 		setSelectedRegions((prev) => {
 			const normalizedPrev = prev.includes('all') ? allRegionIds : prev;
-			const newSelection = prev.includes(regionId)
+			const newSelection = normalizedPrev.includes(regionId)
 				? normalizedPrev.filter((id) => id !== regionId)
 				: [...normalizedPrev, regionId];
 

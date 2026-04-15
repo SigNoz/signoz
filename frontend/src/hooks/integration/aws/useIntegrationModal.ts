@@ -12,6 +12,7 @@ import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
 	GetConnectionCredentialsQueryResult,
+	invalidateListAccounts,
 	useCreateAccount,
 } from 'api/generated/services/cloudintegration';
 import { useGetConnectionCredentials } from 'api/generated/services/cloudintegration';
@@ -19,7 +20,6 @@ import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
@@ -115,7 +115,9 @@ export function useIntegrationModal({
 			toast.success('AWS account connected successfully', {
 				position: 'bottom-right',
 			});
-			void queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
+			void invalidateListAccounts(queryClient, {
+				cloudProvider: INTEGRATION_TYPES.AWS,
+			});
 			handleClose();
 		},
 		[handleClose, queryClient],
