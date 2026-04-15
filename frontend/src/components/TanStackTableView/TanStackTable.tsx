@@ -1,4 +1,4 @@
-import type { ComponentProps, CSSProperties, SetStateAction } from 'react';
+import type { ComponentProps, CSSProperties } from 'react';
 import {
 	forwardRef,
 	memo,
@@ -11,16 +11,8 @@ import {
 import type { TableComponents } from 'react-virtuoso';
 import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
 import { LoadingOutlined } from '@ant-design/icons';
+import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
-	DndContext,
-	DragEndEvent,
-	PointerSensor,
-	pointerWithin,
-	useSensor,
-	useSensors,
-} from '@dnd-kit/core';
-import {
-	arrayMove,
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
@@ -34,7 +26,6 @@ import type { Row } from '@tanstack/react-table';
 import {
 	ColumnDef,
 	ColumnPinningState,
-	ColumnSizingState,
 	getCoreRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
@@ -51,12 +42,16 @@ import {
 } from './TanStackTableStateContext';
 import {
 	FlatItem,
-	TableColumnDef,
 	TableRowContext,
 	TanStackTableHandle,
 	TanStackTableProps,
 } from './types';
+import { useColumnDnd } from './useColumnDnd';
+import { useColumnHandlers } from './useColumnHandlers';
 import { useColumnState } from './useColumnState';
+import { useEffectiveData } from './useEffectiveData';
+import { useFlatItems } from './useFlatItems';
+import { useRowKeyData } from './useRowKeyData';
 import { useTableParams } from './useTableParams';
 import { buildTanstackColumnDef } from './utils';
 import { VirtuosoTableColGroup } from './VirtuosoTableColGroup';
@@ -96,7 +91,7 @@ function TanStackTableInner<TData>(
 		enableQueryParams,
 		pagination,
 		onEndReached,
-		getRowId: getRowIdProp,
+		getRowId: getRowIdProp, // @deprecated - kept for backwards compat, use getRowKey instead
 		getRowKey,
 		getItemKey,
 		groupBy,
@@ -160,108 +155,36 @@ function TanStackTableInner<TData>(
 		? storeSizing
 		: columnSizingProp ?? {};
 
-	// Track previous data for loading states
-	const prevDataRef = useRef<TData[]>(data);
-	const prevDataSizeRef = useRef(data.length || limit || skeletonRowCount);
+	const effectiveData = useEffectiveData<TData>({
+		data,
+		isLoading,
+		limit,
+		skeletonRowCount,
+	});
 
-	// Update refs when we have real data (not loading)
-	if (!isLoading && data.length > 0) {
-		prevDataRef.current = data;
-		prevDataSizeRef.current = data.length;
-	}
+	const { rowKeyData, getRowKeyData } = useRowKeyData({
+		data: effectiveData,
+		isLoading,
+		getRowKey,
+		getItemKey,
+		groupBy,
+		getGroupKey,
+	});
 
-	// Effective data: use current data, previous data, or fake data for skeleton
-	const effectiveData = useMemo((): TData[] => {
-		// Have current data - use it
-		if (data.length > 0) {
-			return data;
-		}
-		// No current data but have previous data - use previous (avoids flash)
-		if (prevDataRef.current.length > 0) {
-			return prevDataRef.current;
-		}
-		// No data at all - create fake data for skeleton rows if loading
-		if (isLoading) {
-			const fakeCount = prevDataSizeRef.current || limit || skeletonRowCount;
-			return Array.from({ length: fakeCount }, (_, i) => ({
-				id: `skeleton-${i}`,
-			})) as TData[];
-		}
-		// Not loading and no data - return empty
-		return data;
-	}, [isLoading, data, limit, skeletonRowCount]);
-
-	// Compute key data for each row (handles duplicates, group prefixes)
-	// Skip computation when loading - skeleton data doesn't have the required properties
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const rowKeyData = useMemo(() => {
-		if (!getRowKey || isLoading) {
-			return undefined;
-		}
-
-		const keyCount = new Map<string, number>();
-
-		return effectiveData.map((item, index) => {
-			const itemIdentifier = getRowKey(item);
-			const itemKey = getItemKey?.(item) ?? itemIdentifier;
-			const groupMeta = groupBy?.length ? getGroupKey?.(item) : undefined;
-
-			// Build rowKey with group prefix when grouped
-			let rowKey: string;
-			if (groupBy?.length && groupMeta) {
-				const groupKeyStr = Object.values(groupMeta).join('-');
-				if (groupKeyStr && itemIdentifier) {
-					rowKey = `${groupKeyStr}-${itemIdentifier}`;
-				} else {
-					rowKey = groupKeyStr || itemIdentifier || String(index);
-				}
-			} else {
-				rowKey = itemIdentifier || String(index);
-			}
-
-			const count = keyCount.get(rowKey) || 0;
-			keyCount.set(rowKey, count + 1);
-			const finalKey = count > 0 ? `${rowKey}-${count}` : rowKey;
-
-			return { finalKey, itemKey, groupMeta };
-		});
-	}, [effectiveData, getRowKey, getItemKey, groupBy, getGroupKey, isLoading]);
-
-	const getRowKeyData = useCallback((index: number) => rowKeyData?.[index], [
-		rowKeyData,
-	]);
-
-	const handleColumnSizingChange = useCallback(
-		(updater: SetStateAction<ColumnSizingState>) => {
-			const next =
-				typeof updater === 'function' ? updater(effectiveSizing) : updater;
-			if (columnStorageKey) {
-				storeSetSizing(next);
-			}
-			onColumnSizingChange?.(next);
-		},
-		[columnStorageKey, effectiveSizing, storeSetSizing, onColumnSizingChange],
-	);
-
-	const handleColumnOrderChange = useCallback(
-		(cols: TableColumnDef<TData>[]) => {
-			if (columnStorageKey) {
-				storeSetOrder(cols);
-			}
-			onColumnOrderChange?.(cols);
-		},
-		[columnStorageKey, storeSetOrder, onColumnOrderChange],
-	);
-
-	const handleRemoveColumn = useCallback(
-		(columnId: string) => {
-			if (columnStorageKey) {
-				hideColumn(columnId);
-			}
-			onColumnRemove?.(columnId);
-		},
-		[columnStorageKey, hideColumn, onColumnRemove],
-	);
+	const {
+		handleColumnSizingChange,
+		handleColumnOrderChange,
+		handleRemoveColumn,
+	} = useColumnHandlers({
+		columnStorageKey,
+		effectiveSizing,
+		storeSetSizing,
+		storeSetOrder,
+		hideColumn,
+		onColumnSizingChange,
+		onColumnOrderChange,
+		onColumnRemove,
+	});
 
 	const columnPinning = useMemo<ColumnPinningState>(
 		() => ({
@@ -333,18 +256,12 @@ function TanStackTableInner<TData>(
 
 	const tableRows = table.getRowModel().rows;
 
-	const flatItems = useMemo<FlatItem<TData>[]>(() => {
-		const result: FlatItem<TData>[] = [];
-		for (const row of tableRows) {
-			result.push({ kind: 'row', row });
-			if (renderExpandedRow && row.getIsExpanded()) {
-				result.push({ kind: 'expansion', row });
-			}
-		}
-		return result;
-		// expanded needs to be here, otherwise the rows are not updated when you click to expand
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tableRows, renderExpandedRow, expanded]);
+	const { flatItems, flatIndexForActiveRow } = useFlatItems({
+		tableRows,
+		renderExpandedRow,
+		expanded,
+		activeRowIndex,
+	});
 
 	// keep previous count just to avoid flashing the pagination component
 	const prevTotalCountRef = useRef(pagination?.total || 0);
@@ -354,19 +271,6 @@ function TanStackTableInner<TData>(
 	const effectiveTotalCount = !isLoading
 		? pagination?.total || 0
 		: prevTotalCountRef.current;
-
-	const flatIndexForActiveRow = useMemo(() => {
-		if (activeRowIndex == null || activeRowIndex < 0) {
-			return -1;
-		}
-		for (let i = 0; i < flatItems.length; i++) {
-			const item = flatItems[i];
-			if (item.kind === 'row' && item.row.index === activeRowIndex) {
-				return i;
-			}
-		}
-		return -1;
-	}, [activeRowIndex, flatItems]);
 
 	useEffect(() => {
 		if (flatIndexForActiveRow < 0) {
@@ -379,42 +283,10 @@ function TanStackTableInner<TData>(
 		});
 	}, [flatIndexForActiveRow]);
 
-	const sensors = useSensors(
-		useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-	);
-
-	const columnIds = useMemo(() => effectiveColumns.map((c) => c.id), [
-		effectiveColumns,
-	]);
-
-	const handleDragEnd = useCallback(
-		(event: DragEndEvent): void => {
-			const { active, over } = event;
-			if (!over || active.id === over.id) {
-				return;
-			}
-			const activeCol = effectiveColumns.find((c) => c.id === String(active.id));
-			const overCol = effectiveColumns.find((c) => c.id === String(over.id));
-			if (
-				!activeCol ||
-				!overCol ||
-				activeCol.pin != null ||
-				overCol.pin != null ||
-				activeCol.enableMove === false
-			) {
-				return;
-			}
-			const oldIndex = effectiveColumns.findIndex(
-				(c) => c.id === String(active.id),
-			);
-			const newIndex = effectiveColumns.findIndex((c) => c.id === String(over.id));
-			if (oldIndex === -1 || newIndex === -1) {
-				return;
-			}
-			handleColumnOrderChange(arrayMove(effectiveColumns, oldIndex, newIndex));
-		},
-		[effectiveColumns, handleColumnOrderChange],
-	);
+	const { sensors, columnIds, handleDragEnd } = useColumnDnd({
+		columns: effectiveColumns,
+		onColumnOrderChange: handleColumnOrderChange,
+	});
 
 	const hasSingleColumn = useMemo(
 		() =>

@@ -75,44 +75,38 @@ function TanStackCustomTableRow<TData>({
 }
 
 // Custom comparison - only re-render when row identity or computed values change
+// This looks overkill but ensures the table is stable and doesn't re-render on every change
+// If you add any new prop to context, remember to update this function
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function areTableRowPropsEqual<TData>(
 	prev: Readonly<VirtuosoTableRowProps<TData>>,
 	next: Readonly<VirtuosoTableRowProps<TData>>,
 ): boolean {
-	// Different row = must re-render
 	if (prev.item.row.id !== next.item.row.id) {
 		return false;
 	}
-	// Different kind (row vs expansion) = must re-render
 	if (prev.item.kind !== next.item.kind) {
 		return false;
 	}
-	// Same row, same kind - check if computed values would differ
-	// We compare the context callbacks and row data to determine this
+
 	const prevData = prev.item.row.original;
 	const nextData = next.item.row.original;
 
-	// Row data reference changed = potential re-render needed
 	if (prevData !== nextData) {
 		return false;
 	}
 
-	// Column layout changed = must re-render cells
 	if (prev.context?.hasSingleColumn !== next.context?.hasSingleColumn) {
 		return false;
 	}
 	if (prev.context?.columnOrderKey !== next.context?.columnOrderKey) {
 		return false;
 	}
-
 	if (prev.context?.columnVisibilityKey !== next.context?.columnVisibilityKey) {
 		return false;
 	}
 
-	// Context callbacks changed = computed values may differ
 	if (prev.context !== next.context) {
-		// If context changed, check if the actual computed values differ
 		const prevActive = prev.context?.isRowActive?.(prevData) ?? false;
 		const nextActive = next.context?.isRowActive?.(nextData) ?? false;
 		if (prevActive !== nextActive) {

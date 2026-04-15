@@ -14,7 +14,6 @@ import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 
 type UseLogsTableColumnsProps = {
 	fields: IField[];
-	linesPerRow: number;
 	fontSize: FontSize;
 	appendTo?: 'center' | 'end';
 };

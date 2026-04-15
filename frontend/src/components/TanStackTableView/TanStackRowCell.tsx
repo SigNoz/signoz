@@ -55,6 +55,8 @@ function TanStackRowCellInner<TData>({
 	);
 }
 
+// Custom comparison - only re-render when row data changes
+// If you add any new prop to context, remember to update this function
 function areTanStackRowCellPropsEqual<TData>(
 	prev: Readonly<TanStackRowCellProps<TData>>,
 	next: Readonly<TanStackRowCellProps<TData>>,

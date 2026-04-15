@@ -94,7 +94,6 @@ function LiveLogsList({
 
 	const logsColumns = useLogsTableColumns({
 		fields: selectedFields,
-		linesPerRow: options.maxLines,
 		fontSize: options.fontSize,
 		appendTo: 'end',
 	});

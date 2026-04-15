@@ -25,13 +25,12 @@ function TanStackRowCellsInner<TData>({
 	columnOrderKey: _columnOrderKey,
 	columnVisibilityKey: _columnVisibilityKey,
 }: TanStackRowCellsProps<TData>): JSX.Element {
-	// Only re-render this row when ITS hover state changes
 	const hasHovered = useIsRowHovered(row.id);
 	const rowData = row.original;
 	const visibleCells = row.getVisibleCells();
 	const lastCellIndex = visibleCells.length - 1;
 
-	// Stable references via destructuring
+	// Stable references via destructuring, keep them as is
 	const onRowClick = context?.onRowClick;
 	const onRowClickNewTab = context?.onRowClickNewTab;
 	const onRowDeactivate = context?.onRowDeactivate;
@@ -106,22 +105,17 @@ function TanStackRowCellsInner<TData>({
 }
 
 // Custom comparison - only re-render when row data changes
+// If you add any new prop to context, remember to update this function
 function areRowCellsPropsEqual<TData>(
 	prev: Readonly<TanStackRowCellsProps<TData>>,
 	next: Readonly<TanStackRowCellsProps<TData>>,
 ): boolean {
 	return (
-		// Row identity
 		prev.row.id === next.row.id &&
-		// Row kind (row vs expansion)
 		prev.itemKind === next.itemKind &&
-		// Layout
 		prev.hasSingleColumn === next.hasSingleColumn &&
-		// Column order - re-render when columns are reordered
 		prev.columnOrderKey === next.columnOrderKey &&
-		// Column visibility - re-render when columns are shown/hidden
 		prev.columnVisibilityKey === next.columnVisibilityKey &&
-		// Context callbacks for click handlers and row actions
 		prev.context?.onRowClick === next.context?.onRowClick &&
 		prev.context?.onRowClickNewTab === next.context?.onRowClickNewTab &&
 		prev.context?.onRowDeactivate === next.context?.onRowDeactivate &&
