@@ -436,29 +436,170 @@ def test_primitive_path_operations(
 
 
 # ============================================================================
-# Array path operations
+# Indexed path behavior
+#
+# Indexes: body.user.name (String/ngrambf), body.user.age (Int64/minmax).
+# log4 has no user; log6 has zero/empty values (age=0, name="").
 # ============================================================================
-#
-# Data landscape (4 logs from different services):
-#   log1 — university-service: rich education[] with multiple entries,
-#          awards[][] deep nesting, participated/team/branch full chain,
-#          mixed array element structures (one entry has all fields, another sparse)
-#   log2 — enrollment-service: single education entry, NO awards at all,
-#          different parameters shape, minimal scores
-#   log3 — research-service:  education with deeply nested awards/participated/team,
-#          plus http-events with non-array intermediate paths
-#   log4 — app-service:       NO education at all, has top-level ids (mixed-type),
-#          plus interests[] 6-hop deep nesting
-#
-# This exercises the condition builder against:
-#   - Array(JSON) + Array(Dynamic) dual branches (awards[])
-#   - Multi-hop recursion (education[].awards[].participated[].team[].branch)
-#   - Terminal typed arrays (scores: Array(Int64), parameters: Array(Float64))
-#   - Sparse array elements (one entry has awards, another doesn't)
-#   - Logs missing the array path entirely (log4 has no education)
-#   - Non-array intermediate paths (http-events[].request-info.host)
-#   - Super deep nesting (interests[]...ratings)
-#   - Type ambiguity (education[].type: string in some, int in others)
+
+
+def test_indexed_paths(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    export_json_types: Callable[[List[Logs]], None],
+    create_json_index: Callable[[str, List[Dict[str, Any]]], None],
+) -> None:
+    now = datetime.now(tz=timezone.utc)
+
+    log1 = json.dumps({"user": {"name": "alice", "age": 25, "active": True}})
+    log2 = json.dumps({"user": {"name": "bob", "age": 30, "active": False}})
+    log3 = json.dumps({"user": {"name": "charlie", "age": 35, "active": True}})
+    log4 = json.dumps({"message": "health check passed"})
+    log5 = json.dumps({"user": {"name": "diana", "age": "28", "active": True}})
+    log6 = json.dumps({"user": {"name": "", "age": 0, "active": False}})
+
+    logs_list = [
+        Logs(
+            timestamp=now - timedelta(seconds=5),
+            resources={"service.name": "auth-service"},
+            body_v2=log1,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=4),
+            resources={"service.name": "auth-service"},
+            body_v2=log2,
+            body_promoted="",
+            severity_text="ERROR",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=3),
+            resources={"service.name": "api-gateway"},
+            body_v2=log3,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=2),
+            resources={"service.name": "healthcheck"},
+            body_v2=log4,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=1),
+            resources={"service.name": "legacy-service"},
+            body_v2=log5,
+            body_promoted="",
+            severity_text="WARN",
+        ),
+        Logs(
+            timestamp=now - timedelta(milliseconds=500),
+            resources={"service.name": "zero-service"},
+            body_v2=log6,
+            body_promoted="",
+            severity_text="DEBUG",
+        ),
+    ]
+
+    export_json_types(logs_list)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    create_json_index(
+        token,
+        [
+            {
+                "path": "body.user.name",
+                "indexes": [
+                    {
+                        "column_type": "String",
+                        "type": "ngrambf_v1(3, 256, 2, 0)",
+                        "granularity": 1,
+                    }
+                ],
+            },
+            {
+                "path": "body.user.age",
+                "indexes": [
+                    {
+                        "column_type": "Int64",
+                        "type": "minmax",
+                        "granularity": 1,
+                    }
+                ],
+            },
+        ],
+    )
+    insert_logs(logs_list)
+
+    cases = [
+        # ── EXISTS: !isExistsCheck guard → indexed path skipped → plain IS NOT NULL ──────
+        # String ngrambf index on body.user.name: EXISTS skips the indexed path.
+        # IS NOT NULL("") = true → log6 (name="") IS found.
+        # log4 (no user) is the only exclusion → 5 results.
+        {
+            "name": "indexed.string_exists_skips_index_finds_empty",
+            "requestType": "raw",
+            "expression": "body.user.name EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 5
+            and any(b.get("user", {}).get("name") == "" for b in _get_bodies(r)),
+        },
+        # Int64 minmax index on body.user.age: EXISTS skips the indexed path.
+        # IS NOT NULL(0) = true → log6 (age=0) IS found.
+        # log4 (no user) is the only exclusion → 5 results.
+        {
+            "name": "indexed.int64_exists_skips_index_finds_zero",
+            "requestType": "raw",
+            "expression": "body.user.age EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 5
+            and any(b.get("user", {}).get("age") == 0 for b in _get_bodies(r)),
+        },
+        # body.user.name = "": `assumeNotNull(dynamicElement(..., 'String')) = ''
+        #                       AND IS NOT NULL(dynamicElement(..., 'String'))`.
+        # log6 (name=""):    assumeNotNull("")="" matches AND IS NOT NULL("")=true → FOUND.
+        # log4 (no user):    IS NOT NULL(null)=false → NOT found.
+        {
+            "name": "indexed.string_empty_eq_disambiguates_absent_field",
+            "requestType": "raw",
+            "expression": 'body.user.name = ""',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "",
+        },
+        # ── Non-EXISTS, non-zero value: indexed condition is self-contained ──────────────
+        # body.user.age = 25: `assumeNotNull(dynamicElement(..., 'Int64')) = 25` → only log1.
+        {
+            "name": "indexed.int64_nonzero_eq_uses_index",
+            "requestType": "raw",
+            "expression": "body.user.age = 25",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["age"] == 25,
+        },
+        # body.user.name = "alice": `assumeNotNull(dynamicElement(..., 'String')) = 'alice'`
+        # → only log1.
+        {
+            "name": "indexed.string_nonempty_eq_uses_index",
+            "requestType": "raw",
+            "expression": 'body.user.name = "alice"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "alice",
+        },
+    ]
+
+    for case in cases:
+        case.setdefault("groupBy", None)
+        case.setdefault("stepInterval", None)
+        _run_query_case(signoz, token, now, case)
+
+
+# ============================================================================
+# Array path operations
 # ============================================================================
 
 
@@ -807,14 +948,6 @@ def test_array_path_operations(
 # ============================================================================
 # Array membership — has, hasAll, hasAny
 # ============================================================================
-#
-# Data landscape (4 logs):
-#   log1 — full: tags, ids, flags, permissions, education with deep participated/members
-#   log2 — partial: tags, ids (different), flags (only false), permissions (read only)
-#   log3 — different shape: tags but NO ids, NO flags, different permissions
-#   log4 — unrelated: no tags, no ids, no flags, no user, no education
-# ============================================================================
-
 
 def test_array_membership_operations(
     signoz: types.SigNoz,
@@ -982,14 +1115,6 @@ def test_array_membership_operations(
 # ============================================================================
 # Message / full-text search
 # ============================================================================
-#
-# Data landscape (4 logs):
-#   log1 — plain-text body (normalized to {"message": <text>})
-#   log2 — JSON body with explicit message field
-#   log3 — JSON body with message but no "Payment" keyword (control)
-#   log4 — JSON body with NO message field at all (nested object)
-# ============================================================================
-
 
 def test_message_searches(
     signoz: types.SigNoz,
@@ -1126,26 +1251,6 @@ def test_message_searches(
 
 # ============================================================================
 # Polluted Data — body-path isolation verified against attribute key pollution
-# ============================================================================
-#
-# Why the QB does NOT query both body AND attribute for `body.user.name`:
-#
-#   QueryStringToKeysSelectors (query_to_keys.go L46-58) creates a second
-#   selector (for context-prefixed attribute lookup) only for log / span /
-#   metric / trace contexts — NOT for FieldContextBody.
-#   GetKeysMulti is therefore called with {Name:"user.name", FieldContext:Body}
-#   only.  fieldKeys["body.user.name"] is always empty, so VisitKey's
-#   contextPrefixedFieldName branch finds nothing — the attribute branch
-#   never fires for body.* expressions.
-#
-# Result: `body.user.name = "impostor"` ONLY searches body_v2.  An attribute
-# with key "body.user.name" is completely invisible to that query.
-#
-# Data landscape (4 logs):
-#   log_clean:           body={"user":{"name":"alice"}}  attrs={}
-#   log_body_attr_clash: body={"user":{"name":"bob"}}    attrs={"body.user.name":"impostor"}
-#   log_ghost:           body={"status":200}             attrs={"body.user.name":"ghost"}
-#   log_flat_attr:       body={"user":{"name":"charlie"}} attrs={"user.name":"shadow"}
 # ============================================================================
 
 def test_polluted_data(
