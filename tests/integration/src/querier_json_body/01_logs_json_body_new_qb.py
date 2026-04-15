@@ -599,6 +599,160 @@ def test_indexed_paths(
 
 
 # ============================================================================
+# Select + OrderBy on JSON body paths
+#
+# 4 logs: unique status (200/201/404/500), unique score (85/72/91/60),
+# items[].tags[] gives 2-level array nesting.
+# ============================================================================
+
+
+def test_select_order_by(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    export_json_types: Callable[[List[Logs]], None],
+) -> None:
+    now = datetime.now(tz=timezone.utc)
+
+    log1 = json.dumps(
+        {
+            "status": 200,
+            "user": {"name": "alice", "score": 85},
+            "items": [{"id": 1, "tags": ["a", "b"]}, {"id": 2, "tags": ["c"]}],
+        }
+    )
+    log2 = json.dumps(
+        {
+            "status": 404,
+            "user": {"name": "bob", "score": 72},
+            "items": [{"id": 3, "tags": ["d"]}],
+        }
+    )
+    log3 = json.dumps(
+        {
+            "status": 500,
+            "user": {"name": "charlie", "score": 91},
+            "items": [{"id": 4, "tags": ["e", "f"]}],
+        }
+    )
+    log4 = json.dumps(
+        {
+            "status": 201,
+            "user": {"name": "diana", "score": 60},
+            "items": [{"id": 5, "tags": ["g"]}],
+        }
+    )
+
+    logs_list = [
+        Logs(
+            timestamp=now - timedelta(seconds=4),
+            resources={"service.name": "svc-a"},
+            body_v2=log1,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=3),
+            resources={"service.name": "svc-b"},
+            body_v2=log2,
+            body_promoted="",
+            severity_text="WARN",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=2),
+            resources={"service.name": "svc-c"},
+            body_v2=log3,
+            body_promoted="",
+            severity_text="ERROR",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=1),
+            resources={"service.name": "svc-d"},
+            body_v2=log4,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+    ]
+
+    export_json_types(logs_list)
+    insert_logs(logs_list)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    def _run(case: Dict[str, Any]) -> None:
+        query = build_scalar_query(
+            name=case["name"],
+            signal="logs",
+            aggregations=[build_logs_aggregation("count()")],
+            order=case["order"],
+            limit=100,
+            step_interval=60,
+        )
+        query["spec"]["selectFields"] = case["selectFields"]
+        response = make_query_request(
+            signoz=signoz,
+            token=token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            queries=[query],
+            request_type="raw",
+        )
+        assert response.status_code == 200, (
+            f"HTTP {response.status_code} for '{case['name']}': {response.text}"
+        )
+        assert case["validate"](response), (
+            f"Validation failed for '{case['name']}': {response.json()}"
+        )
+
+    cases = [
+        # select array, order by scalar
+        {
+            "name": "sel_ord.select_items_order_by_status",
+            "selectFields": [{"name": "body.items"}],
+            "order": [build_order_by("body.status", "asc")],
+            "validate": lambda r: [b["status"] for b in _get_bodies(r)]
+            == [200, 201, 404, 500]
+            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+        },
+        # select array, order by array field
+        {
+            "name": "sel_ord.select_items_order_by_items",
+            "selectFields": [{"name": "body.items"}],
+            "order": [build_order_by("body.items", "asc")],
+            "validate": lambda r: len(_get_rows(r)) == 4
+            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+        },
+        # select scalar + array, order by scalar
+        {
+            "name": "sel_ord.select_status_and_items_order_by_status",
+            "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
+            "order": [build_order_by("body.status", "asc")],
+            "validate": lambda r: [b["status"] for b in _get_bodies(r)]
+            == [200, 201, 404, 500]
+            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+        },
+        # select scalar + array, order by array field
+        {
+            "name": "sel_ord.select_status_and_items_order_by_items",
+            "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
+            "order": [build_order_by("body.items", "desc")],
+            "validate": lambda r: len(_get_rows(r)) == 4
+            and all(
+                isinstance(b.get("items"), list)
+                and all(isinstance(item.get("tags"), list) for item in b["items"])
+                for b in _get_bodies(r)
+            ),
+        },
+    ]
+
+    for case in cases:
+        _run(case)
+
+
+# ============================================================================
 # Array path operations
 # ============================================================================
 
