@@ -20,7 +20,16 @@ components:
           type: string
       required:
       - id
+      - name
+      - type
+      - data
+      - orgId
       type: object
+    AlertmanagertypesExpressionKind:
+      enum:
+      - rule
+      - policy
+      type: string
     AlertmanagertypesGettableRoutePolicy:
       properties:
         channels:
@@ -30,7 +39,6 @@ components:
           type: array
         createdAt:
           format: date-time
-          nullable: true
           type: string
         createdBy:
           nullable: true
@@ -42,20 +50,27 @@ components:
         id:
           type: string
         kind:
-          type: string
+          $ref: '#/components/schemas/AlertmanagertypesExpressionKind'
         name:
           type: string
         tags:
           items:
             type: string
+          nullable: true
           type: array
         updatedAt:
           format: date-time
-          nullable: true
           type: string
         updatedBy:
           nullable: true
           type: string
+      required:
+      - expression
+      - channels
+      - name
+      - id
+      - createdAt
+      - updatedAt
       type: object
     AlertmanagertypesPostableRoutePolicy:
       properties:
@@ -69,13 +84,18 @@ components:
         expression:
           type: string
         kind:
-          type: string
+          $ref: '#/components/schemas/AlertmanagertypesExpressionKind'
         name:
           type: string
         tags:
           items:
             type: string
+          nullable: true
           type: array
+      required:
+      - expression
+      - channels
+      - name
       type: object
     AuthtypesAttributeMapping:
       properties:

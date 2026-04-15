@@ -13,7 +13,7 @@ export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
 	 */
-	data?: string;
+	data: string;
 	/**
 	 * @type string
 	 */
@@ -21,15 +21,15 @@ export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -37,18 +37,21 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: Date;
 }
 
+export enum AlertmanagertypesExpressionKindDTO {
+	rule = 'rule',
+	policy = 'policy',
+}
 export interface AlertmanagertypesGettableRoutePolicyDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	channels?: string[] | null;
+	channels: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
-	 * @nullable true
 	 */
-	createdAt?: Date | null;
+	createdAt: Date;
 	/**
 	 * @type string
 	 * @nullable true
@@ -61,29 +64,26 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	/**
 	 * @type string
 	 */
-	expression?: string;
+	expression: string;
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
+	kind?: AlertmanagertypesExpressionKindDTO;
 	/**
 	 * @type string
 	 */
-	kind?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	tags?: string[];
+	tags?: string[] | null;
 	/**
 	 * @type string
 	 * @format date-time
-	 * @nullable true
 	 */
-	updatedAt?: Date | null;
+	updatedAt: Date;
 	/**
 	 * @type string
 	 * @nullable true
@@ -96,7 +96,7 @@ export interface AlertmanagertypesPostableRoutePolicyDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	channels?: string[] | null;
+	channels: string[] | null;
 	/**
 	 * @type string
 	 */
@@ -104,19 +104,17 @@ export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type string
 	 */
-	expression?: string;
+	expression: string;
+	kind?: AlertmanagertypesExpressionKindDTO;
 	/**
 	 * @type string
 	 */
-	kind?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	tags?: string[];
+	tags?: string[] | null;
 }
 
 export interface AuthtypesAttributeMappingDTO {
