@@ -11,5 +11,7 @@
  * do not read `<base>` directly anywhere else in the codebase.
  */
 export function getBasePath(): string {
-	return document.querySelector('base')?.getAttribute('href') ?? '/';
+	const href = document.querySelector('base')?.getAttribute('href') ?? '/';
+	// Trailing slash is required for relative asset resolution and API prefixing.
+	return href.endsWith('/') ? href : `${href}/`;
 }

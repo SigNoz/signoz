@@ -3,6 +3,7 @@ import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import history from 'lib/history';
 import { Home, LifeBuoy } from 'lucide-react';
 
 import cloudUrl from '@/assets/Images/cloud.svg';
@@ -11,8 +12,9 @@ import './ErrorBoundaryFallback.styles.scss';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {
-		// Go to home page
-		window.location.href = ROUTES.HOME;
+		// Use history.push so the navigation stays within the base path prefix
+		// (window.location.href would strip any /signoz/ prefix).
+		history.push(ROUTES.HOME);
 	};
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();

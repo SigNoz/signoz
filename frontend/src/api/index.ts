@@ -68,25 +68,25 @@ export const interceptorsRequestResponse = (
 	return value;
 };
 
-/**
- * Prepends the runtime base path to every axios instance's baseURL so that
- * API calls work correctly under a URL prefix (e.g. /signoz/api/v1/…).
- *
- * Only acts when:
- *   1. The base path is not root ("/") — no-op for standard deployments.
- *   2. The baseURL is an absolute path (starts with "/") — full URLs like
- *      http://localhost:8080/ used in dev are left untouched.
- */
+// Prepends the runtime base path to outgoing requests so API calls work under
+// a URL prefix (e.g. /signoz/api/v1/…). No-op for root deployments and dev
+// (dev baseURL is a full http:// URL, not an absolute path).
 export const interceptorsRequestBasePath = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
 	const basePath = getBasePath();
-	if (basePath !== '/' && value.baseURL?.startsWith('/')) {
-		// basePath = '/signoz/',  baseURL = '/api/v1/'
-		// slice(1) strips the leading '/' from baseURL to avoid double-slash
-		// result: '/signoz/' + 'api/v1/' = '/signoz/api/v1/'
-		value.baseURL = basePath + value.baseURL.slice(1);
+	if (basePath === '/') {
+		return value;
 	}
+
+	if (value.baseURL?.startsWith('/')) {
+		// Named instances: baseURL='/api/v1/' → '/signoz/api/v1/'
+		value.baseURL = basePath + value.baseURL.slice(1);
+	} else if (!value.baseURL && value.url?.startsWith('/')) {
+		// Generated instance: baseURL is '' in prod, path is in url
+		value.url = basePath + value.url.slice(1);
+	}
+
 	return value;
 };
 

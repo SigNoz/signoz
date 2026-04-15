@@ -32,11 +32,19 @@ describe('getBasePath', () => {
 		expect(getBasePath()).toBe('/');
 	});
 
-	it('returns the href unchanged — does not normalise or trim it', () => {
+	it('returns the href unchanged when it already has a trailing slash', () => {
 		const base = document.createElement('base');
 		base.setAttribute('href', '/my/nested/path/');
 		document.head.appendChild(base);
 
 		expect(getBasePath()).toBe('/my/nested/path/');
+	});
+
+	it('appends a trailing slash when the href is missing one', () => {
+		const base = document.createElement('base');
+		base.setAttribute('href', '/signoz');
+		document.head.appendChild(base);
+
+		expect(getBasePath()).toBe('/signoz/');
 	});
 });
