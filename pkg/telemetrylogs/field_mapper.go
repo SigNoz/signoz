@@ -276,11 +276,12 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					continue
 				}
 
-				if key.JSONDataType == nil {
+				if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 					return "", qbtypes.ErrColumnNotFound
 				}
 
-				if key.KeyNameContainsArray() && !key.JSONDataType.IsArray {
+				jdt := key.GetJSONDataType()
+				if key.KeyNameContainsArray() && !jdt.IsArray {
 					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
 				}
 

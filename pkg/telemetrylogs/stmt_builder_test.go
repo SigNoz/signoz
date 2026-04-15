@@ -875,7 +875,6 @@ func TestAdjustKey(t *testing.T) {
 			require.Equal(t, c.expectedKey.FieldContext, key.FieldContext, "field context should match")
 			require.Equal(t, c.expectedKey.FieldDataType, key.FieldDataType, "field data type should match")
 			require.Equal(t, c.expectedKey.Materialized, key.Materialized, "materialized should match")
-			require.Equal(t, c.expectedKey.JSONDataType, key.JSONDataType, "json data type should match")
 			require.Equal(t, c.expectedKey.Indexes, key.Indexes, "json exists should match")
 		})
 	}
