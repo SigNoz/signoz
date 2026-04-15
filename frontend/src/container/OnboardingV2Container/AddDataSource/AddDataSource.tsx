@@ -23,9 +23,11 @@ import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
-import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
+import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links';
 
 import '../OnboardingV2.styles.scss';
 
@@ -894,7 +896,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																	>
 																		{option.imgUrl && (
 																			<img
-																				src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																				src={option.imgUrl || signozBrandLogoUrl}
 																				alt={option.label}
 																				className="onboarding-data-source-button-img"
 																			/>
@@ -957,7 +959,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																		}
 																	>
 																		<img
-																			src={option.imgUrl || '/Logos/signoz-brand-logo-new.svg'}
+																			src={option.imgUrl || signozBrandLogoUrl}
 																			alt={option.label}
 																			className="onboarding-data-source-button-img"
 																		/>

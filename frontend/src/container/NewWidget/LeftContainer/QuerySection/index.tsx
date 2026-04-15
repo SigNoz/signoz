@@ -19,7 +19,7 @@ import { Atom, Terminal } from 'lucide-react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
-import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
+import ClickHouseQueryContainer from './QueryBuilder/ClickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
 import './QuerySection.styles.scss';

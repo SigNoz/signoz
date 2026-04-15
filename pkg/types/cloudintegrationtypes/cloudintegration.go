@@ -153,30 +153,42 @@ func (account *StorableCloudIntegration) Update(providerAccountID *string, agent
 }
 
 // following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct.
-func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
+func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) (*StorableServiceConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
 		storableAWSServiceConfig := new(StorableAWSServiceConfig)
 
 		if supportedSignals.Logs {
+			if serviceConfig.AWS.Logs == nil {
+				return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "logs config is required for AWS service: %s", serviceID.StringValue())
+			}
+
 			storableAWSServiceConfig.Logs = &StorableAWSLogsServiceConfig{
 				Enabled: serviceConfig.AWS.Logs.Enabled,
 			}
 
 			if serviceID == AWSServiceS3Sync {
+				if serviceConfig.AWS.Logs.S3Buckets == nil {
+					return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "s3 buckets config is required for AWS S3 Sync service")
+				}
+
 				storableAWSServiceConfig.Logs.S3Buckets = serviceConfig.AWS.Logs.S3Buckets
 			}
 		}
 
 		if supportedSignals.Metrics {
+			if serviceConfig.AWS.Metrics == nil {
+				return nil, errors.NewInvalidInputf(ErrCodeCloudIntegrationInvalidConfig, "metrics config is required for AWS service: %s", serviceID.StringValue())
+			}
+
 			storableAWSServiceConfig.Metrics = &StorableAWSMetricsServiceConfig{
 				Enabled: serviceConfig.AWS.Metrics.Enabled,
 			}
 		}
 
-		return &StorableServiceConfig{AWS: storableAWSServiceConfig}
+		return &StorableServiceConfig{AWS: storableAWSServiceConfig}, nil
 	default:
-		return nil
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 
