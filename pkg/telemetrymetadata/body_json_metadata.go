@@ -33,22 +33,34 @@ var (
 	CodeFailedToAppendPath   = errors.MustNewCode("failed_to_append_path_promoted_paths")
 )
 
-// enrichBodyKeys enriches body-context keys with promoted path info, indexes,
-// and JSON access plans.
-// parentTypeCache contains parent array types (ArrayJSON/ArrayDynamic) pre-fetched in the main UNION query.
-func (t *telemetryMetaStore) enrichBodyKeys(ctx context.Context, keys []*telemetrytypes.TelemetryFieldKey, parentTypeCache map[string][]telemetrytypes.FieldDataType) error {
-	if len(keys) == 0 {
-		return nil
+// enrichJSONKeys enriches body-context keys with promoted path info, indexes,
+// and JSON access plans. parentTypeCache contains parent array types (ArrayJSON/ArrayDynamic)
+// pre-fetched in the main UNION query.
+//
+// NOTE: enrichment can not work with FuzzySelectors; QB requests exact matches for query building so
+// parentTypeCache will actually have proper matches and
+// FuzzyMatching is for Suggestions API so enrichment is not needed
+func (t *telemetryMetaStore) enrichJSONKeys(ctx context.Context, selectors []*telemetrytypes.FieldKeySelector, keys []*telemetrytypes.TelemetryFieldKey, parentTypeCache map[string][]telemetrytypes.FieldDataType) error {
+	mapOfExactSelectors := make(map[string]*telemetrytypes.FieldKeySelector)
+	for _, selector := range selectors {
+		if selector.SelectorMatchType != telemetrytypes.FieldSelectorMatchTypeExact {
+			continue
+		}
+
+		mapOfExactSelectors[selector.Name] = selector
 	}
 
 	var filteredKeys []*telemetrytypes.TelemetryFieldKey
 	for _, key := range keys {
-		if key.FieldContext == telemetrytypes.FieldContextBody {
+		if key.FieldContext == telemetrytypes.FieldContextBody && mapOfExactSelectors[key.Name] != nil {
 			filteredKeys = append(filteredKeys, key)
 		}
 	}
 
-	// collect paths for batch queries
+	if len(filteredKeys) == 0 {
+		return nil
+	}
+
 	paths := make([]string, 0, len(filteredKeys))
 	for _, key := range filteredKeys {
 		paths = append(paths, key.Name)

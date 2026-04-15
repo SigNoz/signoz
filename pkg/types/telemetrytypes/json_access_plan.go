@@ -136,12 +136,6 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 	}
 
-	// Use cached types from the batched metadata query
-	types, ok := pb.typeCache[pathSoFar]
-	if !ok {
-		return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
-	}
-
 	// Create node for this path segment
 	node := &JSONAccessNode{
 		Name:            segmentName,
@@ -165,6 +159,12 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 	} else {
 		var err error
+		// Use cached types from the batched metadata query
+		types, ok := pb.typeCache[pathSoFar]
+		if !ok {
+			return nil, errors.NewInternalf(errors.CodeInvalidInput, "types missing for path %s", pathSoFar)
+		}
+
 		hasJSON := slices.Contains(types, FieldDataTypeArrayJSON)
 		hasDynamic := slices.Contains(types, FieldDataTypeArrayDynamic)
 		if !hasJSON && !hasDynamic {

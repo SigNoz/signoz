@@ -441,16 +441,16 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				sel.FieldContext != telemetrytypes.FieldContextUnspecified {
 				continue
 			}
-			if !strings.Contains(sel.Name, telemetrytypes.ArraySep) {
-				continue
-			}
 			key := &telemetrytypes.TelemetryFieldKey{
 				Name:         sel.Name,
 				Signal:       telemetrytypes.SignalLogs,
 				FieldContext: telemetrytypes.FieldContextBody,
 			}
-			for _, ps := range key.ArrayParentSelectors() {
-				parentPaths[ps.Name] = true
+			if !key.KeyNameContainsArray() {
+				continue
+			}
+			for _, parent := range key.ArrayParentPaths() {
+				parentPaths[parent] = true
 			}
 		}
 	}
@@ -683,7 +683,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
 	if querybuilder.BodyJSONQueryEnabled {
-		if err := t.enrichBodyKeys(ctx, keys, parentTypeCache); err != nil {
+		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypeCache); err != nil {
 			return nil, false, err
 		}
 	}
