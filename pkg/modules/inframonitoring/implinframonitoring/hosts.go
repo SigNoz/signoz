@@ -541,7 +541,6 @@ func (m *module) getPerGroupHostCounts(
 	)
 
 	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", hostNameAttrKey)
-	activeHostsSQQuery, activeHostsSQArgs := activeHostsSQ.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	// Determine which count columns to include based on filterByStatus.
 	needActive := true
@@ -556,8 +555,8 @@ func (m *module) getPerGroupHostCounts(
 	}
 
 	// Build SELECT columns: groupBy keys + count columns.
-	// The subquery args from activeHostsSQ are embedded directly in the SQL string
-	// produced by BuildWithFlavor, so we track them for the final query execution.
+	// sb.Var(activeHostsSQ) registers the subquery with the builder so all ? placeholders
+	// and args are tracked in the correct order — no manual arg management needed.
 	sb := sqlbuilder.NewSelectBuilder()
 	selectCols := make([]string, 0, len(req.GroupBy)+2)
 	for _, key := range req.GroupBy {
@@ -566,19 +565,15 @@ func (m *module) getPerGroupHostCounts(
 		)
 	}
 
-	// Collect subquery args in order of appearance in SELECT.
-	var subqueryArgs []any
 	if needActive {
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, activeHostsSQQuery),
+			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
 		)
-		subqueryArgs = append(subqueryArgs, activeHostsSQArgs...)
 	}
 	if needInactive {
 		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL NOT IN (%s) AND %s != '') AS inactive_host_count", hostNameExpr, hostNameExpr, activeHostsSQQuery, hostNameExpr),
+			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL NOT IN (%s) AND %s != '') AS inactive_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ), hostNameExpr),
 		)
-		subqueryArgs = append(subqueryArgs, activeHostsSQArgs...)
 	}
 
 	sb.Select(selectCols...)
@@ -607,14 +602,9 @@ func (m *module) getPerGroupHostCounts(
 	}
 	sb.GroupBy(groupByAliases...)
 
-	query, whereArgs := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	// The subquery args appear in the SELECT clause (before WHERE args in the final SQL),
-	// so prepend them.
-	allArgs := make([]any, 0, len(subqueryArgs)+len(whereArgs))
-	allArgs = append(allArgs, subqueryArgs...)
-	allArgs = append(allArgs, whereArgs...)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, allArgs...)
+	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -628,7 +618,7 @@ func (m *module) getPerGroupHostCounts(
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}
 
-		var activeCount, inactiveCount int
+		var activeCount, inactiveCount uint64
 		if needActive {
 			scanPtrs = append(scanPtrs, &activeCount)
 		}
@@ -642,8 +632,8 @@ func (m *module) getPerGroupHostCounts(
 
 		compositeKey := compositeKeyFromList(groupVals)
 		result[compositeKey] = groupHostCounts{
-			Active:   activeCount,
-			Inactive: inactiveCount,
+			Active:   int(activeCount),
+			Inactive: int(inactiveCount),
 		}
 	}
 
