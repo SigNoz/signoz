@@ -394,3 +394,20 @@ func TestNormalize(t *testing.T) {
 		})
 	}
 }
+
+func TestNewFieldKeySelectorFromPostableFieldKeysParamsMetricNamespace(t *testing.T) {
+	selector := NewFieldKeySelectorFromPostableFieldKeysParams(PostableFieldKeysParams{
+		Signal:          SignalMetrics,
+		MetricNamespace: "system.cpu",
+	})
+
+	if selector.MetricContext == nil {
+		t.Fatalf("expected metric context to be set")
+	}
+	if selector.MetricContext.MetricNamespace != "system.cpu" {
+		t.Fatalf("expected metric namespace to be propagated, got %q", selector.MetricContext.MetricNamespace)
+	}
+	if selector.MetricContext.MetricName != "" {
+		t.Fatalf("expected metric name to remain empty, got %q", selector.MetricContext.MetricName)
+	}
+}

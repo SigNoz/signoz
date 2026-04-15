@@ -3840,6 +3840,11 @@ export type GetFieldsKeysParams = {
 	 * @type string
 	 * @description undefined
 	 */
+	metricNamespace?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	searchText?: string;
 };
 
@@ -3890,6 +3895,11 @@ export type GetFieldsValuesParams = {
 	 * @description undefined
 	 */
 	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricNamespace?: string;
 	/**
 	 * @type string
 	 * @description undefined
@@ -4573,6 +4583,11 @@ export type GetRuleHistoryFilterKeysParams = {
 	 * @type string
 	 * @description undefined
 	 */
+	metricNamespace?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
 	searchText?: string;
 };
 
@@ -4626,6 +4641,11 @@ export type GetRuleHistoryFilterValuesParams = {
 	 * @description undefined
 	 */
 	metricName?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	metricNamespace?: string;
 	/**
 	 * @type string
 	 * @description undefined

@@ -390,12 +390,12 @@ def test_logs_list_query_timestamp_expectations(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Query Logs for the last 1 minute and check if the logs are returned in the correct order
+    # Query Logs for the last 10 minute and check if the logs are returned in the correct order
     response = make_query_request(
         signoz,
         token,
         start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp() * 1000
+            (datetime.now(tz=timezone.utc) - timedelta(minutes=10)).timestamp() * 1000
         ),
         end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
         request_type="raw",
@@ -721,7 +721,7 @@ def test_logs_list_query_trace_id_expectations(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Query Logs for the last 1 minute and check if the logs are returned in the correct order
+    # Query Logs for the last 10 minute and check if the logs are returned in the correct order
     response = make_query_request(
         signoz,
         token,
