@@ -13,7 +13,7 @@ export function mapAccountDtoToAwsCloudAccount(
 		id: account.id,
 		cloud_account_id: account.id,
 		config: {
-			regions: account.config.aws.regions,
+			regions: account.config?.aws?.regions ?? [],
 		},
 		status: {
 			integration: {

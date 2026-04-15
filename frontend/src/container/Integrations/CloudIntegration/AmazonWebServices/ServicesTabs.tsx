@@ -6,12 +6,6 @@ import ServicesList from './ServicesList';
 
 import './ServicesTabs.style.scss';
 
-export enum ServiceFilterType {
-	ALL_SERVICES = 'all_services',
-	ENABLED = 'enabled',
-	AVAILABLE = 'available',
-}
-
 function ServicesTabs(): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId') || '';

@@ -163,19 +163,6 @@ function CloudAccountSetupModal({
 			header={{
 				title: modalConfig.title,
 			}}
-			// onCancel={handleClose}
-			// onOk={modalConfig.onOk}
-			// okText={modalConfig.okText}
-			// okButtonProps={{
-			// 	loading: isLoading,
-			// 	disabled: selectedRegions.length === 0 || modalConfig.disabled,
-			// 	className:
-			// 		activeView === ActiveViewEnum.FORM
-			// 			? 'cloud-account-setup-form__submit-button'
-			// 			: 'account-setup-modal-footer__confirm-button',
-			// 	block: activeView === ActiveViewEnum.FORM,
-			// }}
-			// cancelButtonProps={modalConfig.cancelButtonProps}
 		/>
 	);
 }

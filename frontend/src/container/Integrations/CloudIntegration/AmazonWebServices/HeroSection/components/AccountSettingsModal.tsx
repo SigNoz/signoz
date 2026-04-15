@@ -155,17 +155,6 @@ function AccountSettingsModal({
 			header={{
 				title: 'Account Settings',
 			}}
-			// onCancel={handleClose}
-			// onOk={handleSubmit}
-			// okText="Save"
-			// okButtonProps={{
-			// 	disabled: isSaveDisabled,
-			// 	className: 'account-settings-modal__footer-save-button',
-			// 	loading: isLoading,
-			// }}
-			// cancelButtonProps={{
-			// 	className: 'account-settings-modal__footer-close-button',
-			// }}
 			direction="right"
 			showCloseButton
 			content={renderAccountDetails()}

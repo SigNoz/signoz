@@ -209,10 +209,10 @@ function AccountActions(): JSX.Element {
 				/>
 			)}
 
-			{isAccountSettingsModalOpen && (
+			{isAccountSettingsModalOpen && activeAccount && (
 				<AccountSettingsModal
 					onClose={(): void => setIsAccountSettingsModalOpen(false)}
-					account={activeAccount as CloudAccount}
+					account={activeAccount}
 					setActiveAccount={setActiveAccount}
 				/>
 			)}

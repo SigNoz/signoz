@@ -28,28 +28,15 @@ interface UseAccountSettingsModal {
 	isLoading: boolean;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
-	isRegionSelectOpen: boolean;
 	isSaveDisabled: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
-	setIsRegionSelectOpen: Dispatch<SetStateAction<boolean>>;
-	handleIncludeAllRegionsChange: (checked: boolean) => void;
 	handleSubmit: () => Promise<void>;
 	handleClose: () => void;
 }
 
 const allRegions = (): string[] =>
 	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
-
-const getRegionPreviewText = (regions: string[] | undefined): string[] => {
-	if (!regions) {
-		return [];
-	}
-	if (regions.includes('all')) {
-		return allRegions();
-	}
-	return regions;
-};
 
 export function useAccountSettingsModal({
 	onClose,
@@ -65,7 +52,6 @@ export function useAccountSettingsModal({
 
 	const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 	const [includeAllRegions, setIncludeAllRegions] = useState(false);
-	const [isRegionSelectOpen, setIsRegionSelectOpen] = useState(false);
 
 	// Initialize regions from account when modal opens
 	useEffect(() => {
@@ -135,22 +121,12 @@ export function useAccountSettingsModal({
 
 	const isSaveDisabled = useMemo(
 		() =>
-			isEqual(selectedRegions.sort(), accountRegions.sort()) ||
+			isEqual([...selectedRegions].sort(), [...accountRegions].sort()) ||
 			selectedRegions.length === 0,
 		[selectedRegions, accountRegions],
 	);
 
-	const handleIncludeAllRegionsChange = useCallback((checked: boolean): void => {
-		setIncludeAllRegions(checked);
-		if (checked) {
-			setSelectedRegions(allRegions());
-		} else {
-			setSelectedRegions([]);
-		}
-	}, []);
-
 	const handleClose = useCallback(() => {
-		setIsRegionSelectOpen(false);
 		onClose();
 	}, [onClose]);
 
@@ -159,15 +135,10 @@ export function useAccountSettingsModal({
 		isLoading,
 		selectedRegions,
 		includeAllRegions,
-		isRegionSelectOpen,
 		isSaveDisabled,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		setIsRegionSelectOpen,
-		handleIncludeAllRegionsChange,
 		handleSubmit,
 		handleClose,
 	};
 }
-
-export { getRegionPreviewText };
