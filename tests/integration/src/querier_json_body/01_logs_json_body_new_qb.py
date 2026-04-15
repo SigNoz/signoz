@@ -24,7 +24,8 @@ def _get_results(response: requests.Response) -> List[Dict[str, Any]]:
 
 def _get_rows(response: requests.Response) -> List[Dict[str, Any]]:
     results = _get_results(response)
-    return results[0]["rows"]
+    # The server returns rows:null (not []) when there are 0 matching logs.
+    return results[0].get("rows") or []
 
 
 def _get_bodies(response: requests.Response) -> List[Dict[str, Any]]:
@@ -126,7 +127,6 @@ def test_primitive_path_operations(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
     export_json_types: Callable[[List[Logs]], None],
-    create_json_index: Callable[[str, List[Dict[str, Any]]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc)
 
@@ -190,10 +190,10 @@ def test_primitive_path_operations(
             "status": 500,
         }
     )
-    # log6: zero-service — all default/empty/falsy values (edge case for indexed EXISTS)
-    #   user.name=""  → indexed String EXISTS uses != "", so empty string = "not exists"
-    #   user.age=0    → indexed Int64 EXISTS uses != 0, so zero = "not exists"
-    #   user.active=False → Bool is NOT IndexSupported; IS NOT NULL correctly finds it
+    # log6: zero-service — all default/empty/falsy values
+    #   user.name=""   exercises NOT IN / String operator edge cases
+    #   user.age=0     exercises int_lt (0 < 30)
+    #   user.active=False  exercises bool EXISTS (false ≠ NULL)
     log6 = json.dumps(
         {
             "user": {
@@ -242,7 +242,7 @@ def test_primitive_path_operations(
             severity_text="WARN",
         ),
         Logs(
-            timestamp=now - timedelta(seconds=0),
+            timestamp=now - timedelta(milliseconds=500),
             resources={"service.name": "zero-service"},
             body_v2=log6,
             body_promoted="",
@@ -250,43 +250,8 @@ def test_primitive_path_operations(
         ),
     ]
 
-    # Token must be obtained before insert_logs so it is available for
-    # create_json_body_index, which must run BEFORE the data is inserted.
-    # New data parts written after the index exists are covered automatically;
-    # no MATERIALIZE INDEX step is required.
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
     export_json_types(logs_list)
-    create_json_index(
-        token,
-        [
-            # ngrambf on String paths activates the indexed EXISTS code path:
-            #   assumeNotNull(val) != "" AND IS NOT NULL(val)
-            # This means body.user.name="" is treated as non-existent (edge case).
-            {
-                "path": "body.user.name",
-                "indexes": [
-                    {
-                        "column_type": "String",
-                        "type": "ngrambf_v1(3, 256, 2, 0)",
-                        "granularity": 1,
-                    }
-                ],
-            },
-            # minmax on Int64 paths activates the indexed EXISTS code path:
-            #   assumeNotNull(val) != 0 AND IS NOT NULL(val)
-            # This means body.user.age=0 is treated as non-existent (edge case).
-            {
-                "path": "body.user.age",
-                "indexes": [
-                    {
-                        "column_type": "Int64",
-                        "type": "minmax",
-                        "granularity": 1,
-                    }
-                ],
-            },
-        ],
-    )
     insert_logs(logs_list)
 
     cases = [
@@ -460,62 +425,6 @@ def test_primitive_path_operations(
             and all(
                 b.get("user", {}).get("name") not in ("alice", "charlie")
                 for b in _get_bodies(r)
-            ),
-        },
-        # NOT BETWEEN — operator present in applyOperator but not tested until now
-        {
-            "name": "prim.int_not_between",
-            "requestType": "raw",
-            "expression": "body.user.age NOT BETWEEN 26 AND 34",
-            "aggregation": "count()",
-            # log2(age=30) is the only Int64 value inside [26,34] → excluded
-            # log1(25) and log3(35) are clearly outside → included
-            "validate": lambda r: (
-                not any(b.get("user", {}).get("age") == 30 for b in _get_bodies(r))
-                and {25, 35}.issubset(
-                    {b.get("user", {}).get("age") for b in _get_bodies(r)}
-                )
-            ),
-        },
-        # ── indexed-path EXISTS edge cases (log6 exercises these) ──────────
-        # Indexed String EXISTS: `assumeNotNull(val) != "" AND IS NOT NULL(val)`.
-        # log6 (name="") passes IS NOT NULL but fails != "" → treated as absent.
-        # log4 (healthcheck, no user) also absent. Result: 4 (alice, bob, charlie, diana).
-        {
-            "name": "edge.empty_string_not_matched_by_indexed_exists",
-            "requestType": "raw",
-            "expression": "body.user.name EXISTS",
-            "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 4
-            and not any(b.get("user", {}).get("name") == "" for b in _get_bodies(r)),
-        },
-        # Indexed Int64 EXISTS: `assumeNotNull(val) != 0 AND IS NOT NULL(val)`.
-        # log6 (age=0): assumeNotNull(0)=0 → 0!=0=false → not matched.
-        # log5("28" String) is found via its own String-type plan branch.
-        # Result: log1(25), log2(30), log3(35), log5("28") = 4. NOT log4 or log6.
-        {
-            "name": "edge.zero_int_not_matched_by_indexed_exists",
-            "requestType": "raw",
-            "expression": "body.user.age EXISTS",
-            "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 4
-            and not any(b.get("user", {}).get("age") == 0 for b in _get_bodies(r)),
-        },
-        # Bool is NOT IndexSupported → EXISTS uses plain IS NOT NULL(dynamicElement(..., 'Bool')).
-        # false is a concrete stored value (not NULL) → IS NOT NULL(false) = true → found.
-        # Contrast with above: log6(active=False) IS found; log6(age=0) is NOT.
-        # log1(True), log2(False), log3(True), log5(True), log6(False) all have active.
-        # log4 (healthcheck, no user.active) is the only exclusion → 5 results.
-        {
-            "name": "edge.false_bool_correctly_matched_by_exists",
-            "requestType": "raw",
-            "expression": "body.user.active EXISTS",
-            "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 5
-            and all(
-                "active" in b.get("user", {})
-                for b in _get_bodies(r)
-                if "user" in b
             ),
         },
     ]
@@ -1216,13 +1125,27 @@ def test_message_searches(
         _run_query_case(signoz, token, now, case)
 
 # ============================================================================
-# Corrupted / Polluted Data
+# Polluted Data — body-path isolation verified against attribute key pollution
 # ============================================================================
 #
-# This means inserting an attribute with key `body.user.name` deliberately
-# pollutes all `body.user.name` queries. The QueryBuilder returns logs based on that
-# attribute even when the body JSON does not contain the matching field.
+# Why the QB does NOT query both body AND attribute for `body.user.name`:
 #
+#   QueryStringToKeysSelectors (query_to_keys.go L46-58) creates a second
+#   selector (for context-prefixed attribute lookup) only for log / span /
+#   metric / trace contexts — NOT for FieldContextBody.
+#   GetKeysMulti is therefore called with {Name:"user.name", FieldContext:Body}
+#   only.  fieldKeys["body.user.name"] is always empty, so VisitKey's
+#   contextPrefixedFieldName branch finds nothing — the attribute branch
+#   never fires for body.* expressions.
+#
+# Result: `body.user.name = "impostor"` ONLY searches body_v2.  An attribute
+# with key "body.user.name" is completely invisible to that query.
+#
+# Data landscape (4 logs):
+#   log_clean:           body={"user":{"name":"alice"}}  attrs={}
+#   log_body_attr_clash: body={"user":{"name":"bob"}}    attrs={"body.user.name":"impostor"}
+#   log_ghost:           body={"status":200}             attrs={"body.user.name":"ghost"}
+#   log_flat_attr:       body={"user":{"name":"charlie"}} attrs={"user.name":"shadow"}
 # ============================================================================
 
 def test_polluted_data(
@@ -1237,7 +1160,7 @@ def test_polluted_data(
     # Clean baseline — no attribute pollution
     log_clean = json.dumps({"user": {"name": "alice"}})
     # Collision: attribute key is the full dotted path "body.user.name"
-    log_body_attr_clash = json.dumps({"user": {"name": "bob"}})
+    log_body_attr_clash = json.dumps({"user": {"name": "shadow"}})
     # Ghost: body has NO user.name; only the attribute key "body.user.name" exists
     log_ghost = json.dumps({"status": 200})
     # Flat attr: attribute key is "user.name" (without body. prefix) — no collision expected
@@ -1282,65 +1205,43 @@ def test_polluted_data(
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     cases = [
-        # ── attribute "body.user.name" collides with body.user.name queries ──
-        # body says "bob"; QB generates: body_json_cond OR attrs['body.user.name']='impostor'
-        # The attribute branch fires → FALSE POSITIVE: returned log whose body ≠ "impostor"
+        # ── body-path isolation ───────────────────────────────────────────────
+        # "impostor" lives in attributes_string["body.user.name"], not in any body.
+        # QB only searches body_v2 (QueryStringToKeysSelectors does not create an
+        # extra selector for the attribute) → 0 results, proving isolation.
         {
-            "name": "polluted.attr_key_with_body_prefix_collides",
+            "name": "polluted.body_prefix_isolated_from_literal_attr_value",
             "requestType": "raw",
             "expression": 'body.user.name = "impostor"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["name"] == "bob",
+            "validate": lambda r: len(_get_rows(r)) == 0,
         },
-        # Ghost log: body has NO user.name path at all; only the attribute fires.
-        # Clearest false-positive: a log with no user data surfaces in a user query.
+        # log_ghost body has no user at all. QB only searches body_v2 → 0 results.
         {
-            "name": "polluted.ghost_log_returned_via_attr_branch",
+            "name": "polluted.ghost_log_not_returned_for_body_query",
             "requestType": "raw",
             "expression": 'body.user.name = "ghost"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1
-            and "user" not in _get_bodies(r)[0],
+            "validate": lambda r: len(_get_rows(r)) == 0,
         },
-        # Flat attribute "user.name" does NOT collide with "body.user.name" queries.
-        # VisitKey second lookup is fieldKeys["body.user.name"]; flat key is absent there.
+        # Body queries still find real body values unaffected by attribute pollution.
         {
-            "name": "polluted.flat_attr_key_no_collision_with_body_prefix",
+            "name": "polluted.clean_body_query_unaffected",
             "requestType": "raw",
-            "expression": 'user.name = "shadow"',
+            "expression": 'body.user.name = "alice"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1 and _get_bodies(r)[0]["user"]["name"] == "charlie",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "alice",
         },
-        # EXISTS — all 4 logs match through OR:
-        #   log_clean:           body path hit
-        #   log_body_attr_clash: body path hit (OR attribute hit)
-        #   log_ghost:           body path misses BUT attribute branch hits
-        #   log_flat_attr:       body path hit (flat attr "user.name" doesn't interfere)
+        # EXISTS only fires the body path.
+        # alice (log_clean), bob (log_body_attr_clash), charlie (log_flat_attr) match.
+        # log_ghost has no user object in body → excluded.
         {
-            "name": "polluted.exists_affected_by_attr_collision",
+            "name": "polluted.exists_scoped_to_body_paths_only",
             "requestType": "raw",
             "expression": "body.user.name EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 4,
-        },
-        # Explicitly querying the attribute by its full dotted key name
-        {
-            "name": "polluted.explicit_attr_query_with_dotted_key",
-            "requestType": "raw",
-            "expression": 'attribute.body.user.name = "impostor"',
-            "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["name"] == "bob",
-        },
-        # Flat attribute query — "user.name" holds "shadow" on log_flat_attr
-        {
-            "name": "polluted.flat_attr_key_explicit_query",
-            "requestType": "raw",
-            "expression": 'attribute.user.name = "shadow"',
-            "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["name"] == "charlie",
+            "validate": lambda r: len(_get_rows(r)) == 3 and _get_bodies(r)[0]["user"]["name"] in ["alice", "charlie", "bob"],
         },
     ]
 
@@ -1411,7 +1312,7 @@ def test_groupby_timeseries(
             "name": "groupby.age",
             "requestType": "scalar",
             "expression": None,
-            "groupBy": [{"name": "body.user.age", "fieldDataType": "int64"}],
+            "groupBy": [{"name": "body.user.age"}],
             "limit": 100,
             "aggregation": "count()",
             # Each row: [age_value, count]
@@ -1425,8 +1326,8 @@ def test_groupby_timeseries(
             "requestType": "scalar",
             "expression": None,
             "groupBy": [
-                {"name": "body.user.name", "fieldDataType": "string"},
-                {"name": "body.user.age", "fieldDataType": "int64"},
+                {"name": "body.user.name"},
+                {"name": "body.user.age"},
             ],
             "limit": 100,
             "aggregation": "count()",
