@@ -1,31 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
 // Copyright 2019 Prometheus Team
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
-// Some tests require a running mail catcher. We use MailDev for this purpose,
-// it can work without or with authentication (LOGIN only). It exposes a REST
-// API which we use to retrieve and check the sent emails.
-//
-// Those tests are only executed when specific environment variables are set,
-// otherwise they are skipped. The tests must be run by the CI.
-//
-// To run the tests locally, you should start 2 MailDev containers:
-//
-// $ docker run --rm -p 1080:1080 -p 1025:1025 --entrypoint bin/maildev maildev/maildev:2.2.1 -v
-// $ docker run --rm -p 1081:1080 -p 1026:1025 --entrypoint bin/maildev maildev/maildev:2.2.1 --incoming-user user --incoming-pass pass -v
-//
-// $ EMAIL_NO_AUTH_CONFIG=testdata/noauth-local.yml EMAIL_AUTH_CONFIG=testdata/auth-local.yml make
-//
-// See also https://github.com/maildev/maildev for more details.
 package email
 
 import (
