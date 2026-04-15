@@ -44,7 +44,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/channels", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.CreateChannel), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.CreateChannel), handler.OpenAPIDef{
 		ID:                  "CreateChannel",
 		Tags:                []string{"channels"},
 		Summary:             "Create notification channel",
@@ -56,7 +56,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
