@@ -184,6 +184,7 @@ function ForgotPassword({
 				<div className="login-form-actions forgot-password-actions">
 					<Button
 						variant="solid"
+						color="secondary"
 						type="button"
 						data-testid="forgot-password-back"
 						className="forgot-password-back-button"
