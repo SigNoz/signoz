@@ -10,7 +10,6 @@ import (
 )
 
 func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
-	// Channels
 	if err := router.Handle("/api/v1/channels", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.ListChannels), handler.OpenAPIDef{
 		ID:                  "ListChannels",
 		Tags:                []string{"channels"},
@@ -130,7 +129,6 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// Route Policies
 	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetAllRoutePolicies), handler.OpenAPIDef{
 		ID:                  "GetAllRoutePolicies",
 		Tags:                []string{"route-policies"},
@@ -216,7 +214,6 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// Alerts
 	if err := router.Handle("/api/v1/alerts", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetAlerts), handler.OpenAPIDef{
 		ID:                  "GetAlerts",
 		Tags:                []string{"alerts"},
