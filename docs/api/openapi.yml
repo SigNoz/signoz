@@ -11,7 +11,7 @@ components:
           type: string
         name:
           type: string
-        org_id:
+        orgId:
           type: string
         type:
           type: string
