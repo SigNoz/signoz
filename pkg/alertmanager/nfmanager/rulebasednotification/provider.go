@@ -223,9 +223,8 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	for _, route := range expressionRoutes {
 		evaluateExpr, err := r.evaluateExpr(ctx, route.Expression, set)
 		if err != nil {
-			r.settings.Logger().WarnContext(
-				ctx, "failed to evaluate route policy expression", errors.Attr(err), slog.String("rule.id", ruleID),
-			)
+			//nolint:sloglint
+			r.settings.Logger().WarnContext(ctx, "failed to evaluate route policy expression", errors.Attr(err), slog.String("rule.id", ruleID))
 			continue
 		}
 		if evaluateExpr {
