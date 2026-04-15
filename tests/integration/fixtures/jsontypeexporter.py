@@ -29,25 +29,29 @@ from fixtures import types
 class JSONPathType(ABC):
     """Represents a JSON path with its type information"""
 
-    path: str
-    type: str
+    field_name: str
+    field_data_type: str
     last_seen: np.uint64
+    signal: str = "logs"
+    field_context: str = "body"
 
     def __init__(
         self,
-        path: str,
-        type: str,  # pylint: disable=redefined-builtin
+        field_name: str,
+        field_data_type: str,
         last_seen: Optional[datetime.datetime] = None,
     ) -> None:
-        self.path = path
-        self.type = type
+        self.field_name = field_name
+        self.field_data_type = field_data_type
+        self.signal = "logs"
+        self.field_context = "body"
         if last_seen is None:
             last_seen = datetime.datetime.now()
         self.last_seen = np.uint64(int(last_seen.timestamp() * 1e9))
 
     def np_arr(self) -> np.array:
         """Return path type data as numpy array for database insertion"""
-        return np.array([self.path, self.type, self.last_seen])
+        return np.array([self.signal, self.field_context, self.field_name, self.field_data_type, self.last_seen])
 
 
 # Constants matching jsontypeexporter
@@ -58,17 +62,17 @@ ARRAY_SUFFIX = "[]"  # Used when traversing into array element objects
 def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
     """
     Infer array type from a list of pre-classified type strings.
-    Matches jsontypeexporter's inferArrayMask logic (v0.144.2+).
+    Matches metadataexporter's inferArrayMask logic.
 
-    Type strings are: "JSON", "String", "Bool", "Float64", "Int64"
+    Internal type strings are: "JSON", "String", "Bool", "Float64", "Int64"
 
     SuperTyping rules (matching Go inferArrayMask):
-    - JSON alone → Array(JSON)
-    - JSON + any primitive → Array(Dynamic)
-    - String alone → Array(Nullable(String)); String + other → Array(Dynamic)
+    - JSON alone → []json
+    - JSON + any primitive → []dynamic
+    - String alone → []string; String + other → []dynamic
     - Float64 wins over Int64 and Bool
     - Int64 wins over Bool
-    - Bool alone → Array(Nullable(Bool))
+    - Bool alone → []bool
     """
     if len(types) == 0:
         return None
@@ -81,23 +85,23 @@ def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
 
     if has_json:
         if not has_primitive:
-            return "Array(JSON)"
-        return "Array(Dynamic)"
+            return "[]json"
+        return "[]dynamic"
 
     # ---- Primitive Type Resolution (Float > Int > Bool) ----
     if "String" in unique:
         if len(unique) > 1:
-            return "Array(Dynamic)"
-        return "Array(Nullable(String))"
+            return "[]dynamic"
+        return "[]string"
 
     if "Float64" in unique:
-        return "Array(Nullable(Float64))"
+        return "[]float64"
     if "Int64" in unique:
-        return "Array(Nullable(Int64))"
+        return "[]int64"
     if "Bool" in unique:
-        return "Array(Nullable(Bool))"
+        return "[]bool"
 
-    return "Array(Dynamic)"
+    return "[]dynamic"
 
 
 def _infer_array_type(elements: List[Any]) -> Optional[str]:
@@ -130,26 +134,24 @@ def _python_type_to_clickhouse_type(value: Any) -> str:
     """
     Convert Python type to ClickHouse JSON type string.
     Maps Python types to ClickHouse JSON data types.
+    Matches metadataexporter's mapPCommonValueTypeToDataType.
     """
-    if value is None:
-        return "String"  # Default for null values
-
     if isinstance(value, bool):
-        return "Bool"
+        return "bool"
     elif isinstance(value, int):
-        return "Int64"
+        return "int64"
     elif isinstance(value, float):
-        return "Float64"
+        return "float64"
     elif isinstance(value, str):
-        return "String"
+        return "string"
     elif isinstance(value, list):
         # Use the sophisticated array type inference
         array_type = _infer_array_type(value)
-        return array_type if array_type else "Array(Dynamic)"
+        return array_type if array_type else "[]dynamic"
     elif isinstance(value, dict):
-        return "JSON"
+        return "json"
     else:
-        return "String"  # Default fallback
+        return "string"  # Default fallback
 
 
 def _extract_json_paths(
@@ -175,18 +177,12 @@ def _extract_json_paths(
         path_types = {}
 
     if obj is None:
-        if current_path:
-            if current_path not in path_types:
-                path_types[current_path] = set()
-            path_types[current_path].add("String")  # Null defaults to String
+        # Skip null values — matches Go walkNode which errors on ValueTypeEmpty
         return path_types
 
     if isinstance(obj, dict):
-        # For objects, add the object itself and recurse into keys
-        if current_path:
-            if current_path not in path_types:
-                path_types[current_path] = set()
-            path_types[current_path].add("JSON")
+        # For objects, recurse into keys without recording the object itself as a type.
+        # Matches Go walkMap which recurses without calling ta.record on the map node.
 
         for key, value in obj.items():
             # Build the path for this key
@@ -288,7 +284,7 @@ def _parse_json_bodies_and_extract_paths(
     for path, types_set in all_path_types.items():
         for type_str in types_set:
             path_type_objects.append(
-                JSONPathType(path=path, type=type_str, last_seen=timestamp)
+                JSONPathType(field_name=path, field_data_type=type_str, last_seen=timestamp)
             )
 
     return path_type_objects
@@ -313,8 +309,8 @@ def export_json_types(
     Usage examples:
         # Manual specification
         export_json_types([
-            JSONPathType(path="user.name", type="String"),
-            JSONPathType(path="user.age", type="Int64"),
+            JSONPathType(field_name="user.name", field_data_type="string"),
+            JSONPathType(field_name="user.age", field_data_type="int64"),
         ])
 
         # Auto-extract from JSON strings
@@ -339,8 +335,8 @@ def export_json_types(
         ],  # List[Logs] but avoiding circular import
     ) -> None:
         """
-        Export JSON type metadata to signoz_metadata.distributed_json_path_types table.
-        This table stores path and type information for body JSON fields.
+        Export JSON type metadata to signoz_metadata.distributed_field_keys table.
+        This table stores signal, context, path, and type information for body JSON fields.
         """
         path_types: List[JSONPathType] = []
 
@@ -380,11 +376,13 @@ def export_json_types(
 
         clickhouse.conn.insert(
             database="signoz_metadata",
-            table="distributed_json_path_types",
+            table="distributed_field_keys",
             data=[path_type.np_arr() for path_type in path_types],
             column_names=[
-                "path",
-                "type",
+                "signal",
+                "field_context",
+                "field_name",
+                "field_data_type",
                 "last_seen",
             ],
         )
@@ -393,7 +391,7 @@ def export_json_types(
 
     # Cleanup - truncate the local table after tests (following pattern from logs fixture)
     clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_metadata.json_path_types ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
+        f"TRUNCATE TABLE signoz_metadata.field_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
 
 @pytest.fixture(name="create_json_index", scope="function")
