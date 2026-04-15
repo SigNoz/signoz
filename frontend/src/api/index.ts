@@ -11,6 +11,7 @@ import axios, {
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { getBasePath } from 'utils/getBasePath';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
@@ -64,6 +65,28 @@ export const interceptorsRequestResponse = (
 		value.headers.Authorization = token ? `Bearer ${token}` : '';
 	}
 
+	return value;
+};
+
+/**
+ * Prepends the runtime base path to every axios instance's baseURL so that
+ * API calls work correctly under a URL prefix (e.g. /signoz/api/v1/…).
+ *
+ * Only acts when:
+ *   1. The base path is not root ("/") — no-op for standard deployments.
+ *   2. The baseURL is an absolute path (starts with "/") — full URLs like
+ *      http://localhost:8080/ used in dev are left untouched.
+ */
+export const interceptorsRequestBasePath = (
+	value: InternalAxiosRequestConfig,
+): InternalAxiosRequestConfig => {
+	const basePath = getBasePath();
+	if (basePath !== '/' && value.baseURL?.startsWith('/')) {
+		// basePath = '/signoz/',  baseURL = '/api/v1/'
+		// slice(1) strips the leading '/' from baseURL to avoid double-slash
+		// result: '/signoz/' + 'api/v1/' = '/signoz/api/v1/'
+		value.baseURL = basePath + value.baseURL.slice(1);
+	}
 	return value;
 };
 
@@ -133,6 +156,7 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use(interceptorsRequestResponse);
+instance.interceptors.request.use(interceptorsRequestBasePath);
 instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
 export const AxiosAlertManagerInstance = axios.create({
@@ -147,6 +171,7 @@ ApiV2Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV2Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV2Instance.interceptors.request.use(interceptorsRequestBasePath);
 
 // axios V3
 export const ApiV3Instance = axios.create({
@@ -158,6 +183,7 @@ ApiV3Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV3Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV3Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios V4
@@ -170,6 +196,7 @@ ApiV4Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV4Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV4Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios V5
@@ -182,6 +209,7 @@ ApiV5Instance.interceptors.response.use(
 	interceptorRejected,
 );
 ApiV5Instance.interceptors.request.use(interceptorsRequestResponse);
+ApiV5Instance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 // axios Base
@@ -194,6 +222,7 @@ LogEventAxiosInstance.interceptors.response.use(
 	interceptorRejectedBase,
 );
 LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
+LogEventAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 //
 
 AxiosAlertManagerInstance.interceptors.response.use(
@@ -201,6 +230,7 @@ AxiosAlertManagerInstance.interceptors.response.use(
 	interceptorRejected,
 );
 AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestResponse);
+AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestBasePath);
 
 export { apiV1 };
 export default instance;

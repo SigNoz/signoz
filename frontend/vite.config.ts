@@ -1,5 +1,6 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
+import fs from 'fs';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import type { Plugin, TransformResult, UserConfig } from 'vite';
@@ -9,6 +10,43 @@ import viteCompression from 'vite-plugin-compression';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+/**
+ * Generates build/index.html.gotmpl from build/index.html after every
+ * production build. The Go backend uses html/template (with [[ ]] delimiters)
+ * to serve this file, injecting [[.BasePath]] at request time so that one
+ * build artifact works for any URL prefix (e.g. /signoz/).
+ *
+ * Running as a closeBundle hook guarantees the file is produced whenever
+ * `vite build` runs — regardless of how it is invoked (yarn, npx, CI, Docker).
+ */
+function generateIndexGotmplPlugin(): Plugin {
+	return {
+		name: 'generate-index-gotmpl',
+		apply: 'build',
+		closeBundle(): void {
+			const outDir = resolve(__dirname, 'build');
+			const inputPath = resolve(outDir, 'index.html');
+			const outputPath = resolve(outDir, 'index.html.gotmpl');
+
+			const html = fs.readFileSync(inputPath, 'utf-8');
+
+			// Matches <base href="/"> and <base href="/" /> — tolerates the
+			// optional self-closing slash and any trailing whitespace.
+			const BASE_TAG_RE = /<base\s+href="\/"[^>]*>/;
+
+			if (!BASE_TAG_RE.test(html)) {
+				this.error(
+					'generate-index-gotmpl: <base href="/"> not found in build/index.html. ' +
+						'Ensure index.html contains a <base href="/"> as the first element in <head>.',
+				);
+			}
+
+			const gotmpl = html.replace(BASE_TAG_RE, '<base href="[[.BasePath]]">');
+			fs.writeFileSync(outputPath, gotmpl, 'utf-8');
+		},
+	};
+}
 
 function rawMarkdownPlugin(): Plugin {
 	return {
@@ -32,6 +70,7 @@ export default defineConfig(
 		const plugins = [
 			tsconfigPaths(),
 			rawMarkdownPlugin(),
+			generateIndexGotmplPlugin(),
 			react(),
 			createHtmlPlugin({
 				inject: {
@@ -124,6 +163,7 @@ export default defineConfig(
 				'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 				'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			},
+			base: './',
 			build: {
 				sourcemap: true,
 				outDir: 'build',
