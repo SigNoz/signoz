@@ -7,8 +7,8 @@ and extracting all paths with their types, similar to how the real jsontypeexpor
 import datetime
 import json
 from abc import ABC
+from http import HTTPStatus
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -21,11 +21,9 @@ from typing import (
 
 import numpy as np
 import pytest
+import requests
 
 from fixtures import types
-
-if TYPE_CHECKING:
-    pass
 
 
 class JSONPathType(ABC):
@@ -435,3 +433,82 @@ def export_promoted_paths(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_metadata.json_promoted_paths ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="create_json_index", scope="function")
+def create_json_index(
+    signoz: types.SigNoz,
+) -> Generator[Callable[[str, List[Dict[str, Any]]], None], None, None]:
+    """
+    Create ClickHouse data-skipping indexes on body_v2 JSON sub-columns via
+    POST /api/v1/logs/promote_paths.
+
+    **Must be called BEFORE insert_logs** so that newly inserted data parts are
+    covered by the index and the QB uses the indexed condition path.
+
+    Each entry in `paths` follows the PromotePath API shape:
+        {
+            "path": "body.user.name",          # must start with "body."
+            "indexes": [
+                {
+                    "column_type": "String",   # String | Int64 | Float64
+                    "type": "ngrambf_v1(3, 256, 2, 0)",  # or "minmax", "tokenbf_v1(...)"
+                    "granularity": 1,
+                }
+            ],
+        }
+
+    Teardown drops every index created during the test by querying
+    system.data_skipping_indices for matching expressions.
+
+    Example::
+
+        def test_foo(signoz, get_token, insert_logs, export_json_types, create_json_body_index):
+            token = get_token(...)
+            export_json_types(logs_list)
+            create_json_body_index(token, [
+                {"path": "body.user.name",
+                 "indexes": [{"column_type": "String", "type": "ngrambf_v1(3, 256, 2, 0)", "granularity": 1}]},
+                {"path": "body.user.age",
+                 "indexes": [{"column_type": "Int64", "type": "minmax", "granularity": 1}]},
+            ])
+            insert_logs(logs_list)   # data inserted after index exists — index is built automatically
+    """
+    created_paths: List[str] = []
+
+    def _create_json_body_index(token: str, paths: List[Dict[str, Any]]) -> None:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/logs/promote_paths"),
+            headers={"authorization": f"Bearer {token}"},
+            json=paths,
+            timeout=30,
+        )
+        assert response.status_code == HTTPStatus.CREATED, (
+            f"Failed to create JSON body indexes: "
+            f"{response.status_code} {response.text}"
+        )
+        for path in paths:
+            # The API strips the "body." prefix before storing — mirror that here
+            # so our cleanup query uses the bare path (e.g. "user.name").
+            raw = path["path"].removeprefix("body.")
+            if raw not in created_paths:
+                created_paths.append(raw)
+
+    yield _create_json_body_index
+
+    if not created_paths:
+        return
+
+    cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
+    for path in created_paths:
+        result = signoz.telemetrystore.conn.query(
+            "SELECT name FROM system.data_skipping_indices "
+            "WHERE database = 'signoz_logs' AND table = 'logs_v2' "
+            f"AND expr LIKE '%{path}%'"
+        )
+        for (index_name,) in result.result_rows:
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_logs.logs_v2 "
+                f"ON CLUSTER '{cluster}' "
+                f"DROP INDEX IF EXISTS `{index_name}`"
+            )

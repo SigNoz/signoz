@@ -31,6 +31,15 @@ def _get_bodies(response: requests.Response) -> List[Dict[str, Any]]:
     return [json.loads(row["data"]["body"]) for row in _get_rows(response)]
 
 
+def _get_scalar_rows(response: requests.Response) -> List[List[Any]]:
+    """Return table rows from a scalar GroupBy response.
+
+    Scalar response shape: results[0]["data"] = [[group_key..., agg_value], ...]
+    """
+    results = response.json().get("data", {}).get("data", {}).get("results", [])
+    return results[0].get("data", []) if results else []
+
+
 def _run_query_case(
     signoz: types.SigNoz, token: str, now: datetime, case: Dict[str, Any]
 ) -> None:
@@ -117,6 +126,7 @@ def test_primitive_path_operations(
     get_token: Callable[[str, str], str],
     insert_logs: Callable[[List[Logs]], None],
     export_json_types: Callable[[List[Logs]], None],
+    create_json_index: Callable[[str, List[Dict[str, Any]]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc)
 
@@ -180,6 +190,20 @@ def test_primitive_path_operations(
             "status": 500,
         }
     )
+    # log6: zero-service — all default/empty/falsy values (edge case for indexed EXISTS)
+    #   user.name=""  → indexed String EXISTS uses != "", so empty string = "not exists"
+    #   user.age=0    → indexed Int64 EXISTS uses != 0, so zero = "not exists"
+    #   user.active=False → Bool is NOT IndexSupported; IS NOT NULL correctly finds it
+    log6 = json.dumps(
+        {
+            "user": {
+                "name": "",
+                "age": 0,
+                "active": False,
+            },
+            "status": 0,
+        }
+    )
 
     logs_list = [
         Logs(
@@ -217,11 +241,53 @@ def test_primitive_path_operations(
             body_promoted="",
             severity_text="WARN",
         ),
+        Logs(
+            timestamp=now - timedelta(seconds=0),
+            resources={"service.name": "zero-service"},
+            body_v2=log6,
+            body_promoted="",
+            severity_text="DEBUG",
+        ),
     ]
 
-    export_json_types(logs_list)
-    insert_logs(logs_list)
+    # Token must be obtained before insert_logs so it is available for
+    # create_json_body_index, which must run BEFORE the data is inserted.
+    # New data parts written after the index exists are covered automatically;
+    # no MATERIALIZE INDEX step is required.
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+    export_json_types(logs_list)
+    create_json_index(
+        token,
+        [
+            # ngrambf on String paths activates the indexed EXISTS code path:
+            #   assumeNotNull(val) != "" AND IS NOT NULL(val)
+            # This means body.user.name="" is treated as non-existent (edge case).
+            {
+                "path": "body.user.name",
+                "indexes": [
+                    {
+                        "column_type": "String",
+                        "type": "ngrambf_v1(3, 256, 2, 0)",
+                        "granularity": 1,
+                    }
+                ],
+            },
+            # minmax on Int64 paths activates the indexed EXISTS code path:
+            #   assumeNotNull(val) != 0 AND IS NOT NULL(val)
+            # This means body.user.age=0 is treated as non-existent (edge case).
+            {
+                "path": "body.user.age",
+                "indexes": [
+                    {
+                        "column_type": "Int64",
+                        "type": "minmax",
+                        "granularity": 1,
+                    }
+                ],
+            },
+        ],
+    )
+    insert_logs(logs_list)
 
     cases = [
         # ── positive operators ─────────────────────────────────────────────
@@ -251,13 +317,14 @@ def test_primitive_path_operations(
             "validate": lambda r: len(_get_rows(r)) == 1
             and json.loads(_get_rows(r)[0]["data"]["body"])["user"]["height"] == 6.1,
         },
-        # user.age: Int64 in log1, String "28" in log5 — type ambiguity
+        # user.age: Int64 in log1, String "28" in log5, Int64 0 in log6 — type ambiguity
+        # log6 (age=0) is now also < 30, so count increases from 2 to 3
         {
             "name": "prim.int_lt_with_type_ambiguity",
             "requestType": "raw",
             "expression": "body.user.age < 30",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2
+            "validate": lambda r: len(_get_rows(r)) == 3
         },
         # Bool has distinct handling (not IndexSupported); log4 has no active field
         {
@@ -379,6 +446,77 @@ def test_primitive_path_operations(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) >= 2
             and all("email" not in b.get("user", {}) for b in _get_bodies(r)),
+        },
+        # ── missing negative operators ─────────────────────────────────────
+        # NOT IN — operator present in applyOperator but not tested until now
+        {
+            "name": "prim.string_not_in",
+            "requestType": "raw",
+            "expression": "body.user.name NOT IN ['alice', 'charlie']",
+            "aggregation": "count()",
+            # log1(alice) and log3(charlie) are excluded
+            # bob, diana, "" (log6), healthcheck (no user) are included
+            "validate": lambda r: len(_get_rows(r)) >= 2
+            and all(
+                b.get("user", {}).get("name") not in ("alice", "charlie")
+                for b in _get_bodies(r)
+            ),
+        },
+        # NOT BETWEEN — operator present in applyOperator but not tested until now
+        {
+            "name": "prim.int_not_between",
+            "requestType": "raw",
+            "expression": "body.user.age NOT BETWEEN 26 AND 34",
+            "aggregation": "count()",
+            # log2(age=30) is the only Int64 value inside [26,34] → excluded
+            # log1(25) and log3(35) are clearly outside → included
+            "validate": lambda r: (
+                not any(b.get("user", {}).get("age") == 30 for b in _get_bodies(r))
+                and {25, 35}.issubset(
+                    {b.get("user", {}).get("age") for b in _get_bodies(r)}
+                )
+            ),
+        },
+        # ── indexed-path EXISTS edge cases (log6 exercises these) ──────────
+        # Indexed String EXISTS: `assumeNotNull(val) != "" AND IS NOT NULL(val)`.
+        # log6 (name="") passes IS NOT NULL but fails != "" → treated as absent.
+        # log4 (healthcheck, no user) also absent. Result: 4 (alice, bob, charlie, diana).
+        {
+            "name": "edge.empty_string_not_matched_by_indexed_exists",
+            "requestType": "raw",
+            "expression": "body.user.name EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 4
+            and not any(b.get("user", {}).get("name") == "" for b in _get_bodies(r)),
+        },
+        # Indexed Int64 EXISTS: `assumeNotNull(val) != 0 AND IS NOT NULL(val)`.
+        # log6 (age=0): assumeNotNull(0)=0 → 0!=0=false → not matched.
+        # log5("28" String) is found via its own String-type plan branch.
+        # Result: log1(25), log2(30), log3(35), log5("28") = 4. NOT log4 or log6.
+        {
+            "name": "edge.zero_int_not_matched_by_indexed_exists",
+            "requestType": "raw",
+            "expression": "body.user.age EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 4
+            and not any(b.get("user", {}).get("age") == 0 for b in _get_bodies(r)),
+        },
+        # Bool is NOT IndexSupported → EXISTS uses plain IS NOT NULL(dynamicElement(..., 'Bool')).
+        # false is a concrete stored value (not NULL) → IS NOT NULL(false) = true → found.
+        # Contrast with above: log6(active=False) IS found; log6(age=0) is NOT.
+        # log1(True), log2(False), log3(True), log5(True), log6(False) all have active.
+        # log4 (healthcheck, no user.active) is the only exclusion → 5 results.
+        {
+            "name": "edge.false_bool_correctly_matched_by_exists",
+            "requestType": "raw",
+            "expression": "body.user.active EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 5
+            and all(
+                "active" in b.get("user", {})
+                for b in _get_bodies(r)
+                if "user" in b
+            ),
         },
     ]
 
@@ -1077,15 +1215,157 @@ def test_message_searches(
         case.setdefault("stepInterval", None)
         _run_query_case(signoz, token, now, case)
 
-
 # ============================================================================
-# GroupBy time series
+# Corrupted / Polluted Data
 # ============================================================================
 #
-# Data landscape (6 logs, mixed shapes):
-#   4 logs with user.name + user.age (repeated alice for count > 1)
-#   1 log with user.name but NO user.age (sparse)
-#   1 log with no user at all (different service)
+# This means inserting an attribute with key `body.user.name` deliberately
+# pollutes all `body.user.name` queries. The QueryBuilder returns logs based on that
+# attribute even when the body JSON does not contain the matching field.
+#
+# ============================================================================
+
+def test_polluted_data(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    export_json_types: Callable[[List[Logs]], None],
+) -> None:
+    now = datetime.now(tz=timezone.utc)
+
+    # Clean baseline — no attribute pollution
+    log_clean = json.dumps({"user": {"name": "alice"}})
+    # Collision: attribute key is the full dotted path "body.user.name"
+    log_body_attr_clash = json.dumps({"user": {"name": "bob"}})
+    # Ghost: body has NO user.name; only the attribute key "body.user.name" exists
+    log_ghost = json.dumps({"status": 200})
+    # Flat attr: attribute key is "user.name" (without body. prefix) — no collision expected
+    log_flat_attr = json.dumps({"user": {"name": "charlie"}})
+
+    logs_list = [
+        Logs(
+            timestamp=now - timedelta(seconds=4),
+            resources={"service.name": "clean-svc"},
+            body_v2=log_clean,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=3),
+            resources={"service.name": "polluted-svc"},
+            attributes={"body.user.name": "impostor"},
+            body_v2=log_body_attr_clash,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=2),
+            resources={"service.name": "ghost-svc"},
+            attributes={"body.user.name": "ghost"},
+            body_v2=log_ghost,
+            body_promoted="",
+            severity_text="WARN",
+        ),
+        Logs(
+            timestamp=now - timedelta(seconds=1),
+            resources={"service.name": "flat-attr-svc"},
+            attributes={"user.name": "shadow"},
+            body_v2=log_flat_attr,
+            body_promoted="",
+            severity_text="INFO",
+        ),
+    ]
+
+    export_json_types(logs_list)
+    insert_logs(logs_list)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    cases = [
+        # ── attribute "body.user.name" collides with body.user.name queries ──
+        # body says "bob"; QB generates: body_json_cond OR attrs['body.user.name']='impostor'
+        # The attribute branch fires → FALSE POSITIVE: returned log whose body ≠ "impostor"
+        {
+            "name": "polluted.attr_key_with_body_prefix_collides",
+            "requestType": "raw",
+            "expression": 'body.user.name = "impostor"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "bob",
+        },
+        # Ghost log: body has NO user.name path at all; only the attribute fires.
+        # Clearest false-positive: a log with no user data surfaces in a user query.
+        {
+            "name": "polluted.ghost_log_returned_via_attr_branch",
+            "requestType": "raw",
+            "expression": 'body.user.name = "ghost"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and "user" not in _get_bodies(r)[0],
+        },
+        # Flat attribute "user.name" does NOT collide with "body.user.name" queries.
+        # VisitKey second lookup is fieldKeys["body.user.name"]; flat key is absent there.
+        {
+            "name": "polluted.flat_attr_key_no_collision_with_body_prefix",
+            "requestType": "raw",
+            "expression": 'user.name = "shadow"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1 and _get_bodies(r)[0]["user"]["name"] == "charlie",
+        },
+        # EXISTS — all 4 logs match through OR:
+        #   log_clean:           body path hit
+        #   log_body_attr_clash: body path hit (OR attribute hit)
+        #   log_ghost:           body path misses BUT attribute branch hits
+        #   log_flat_attr:       body path hit (flat attr "user.name" doesn't interfere)
+        {
+            "name": "polluted.exists_affected_by_attr_collision",
+            "requestType": "raw",
+            "expression": "body.user.name EXISTS",
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 4,
+        },
+        # Explicitly querying the attribute by its full dotted key name
+        {
+            "name": "polluted.explicit_attr_query_with_dotted_key",
+            "requestType": "raw",
+            "expression": 'attribute.body.user.name = "impostor"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "bob",
+        },
+        # Flat attribute query — "user.name" holds "shadow" on log_flat_attr
+        {
+            "name": "polluted.flat_attr_key_explicit_query",
+            "requestType": "raw",
+            "expression": 'attribute.user.name = "shadow"',
+            "aggregation": "count()",
+            "validate": lambda r: len(_get_rows(r)) == 1
+            and _get_bodies(r)[0]["user"]["name"] == "charlie",
+        },
+    ]
+
+    for case in cases:
+        case.setdefault("groupBy", None)
+        case.setdefault("stepInterval", None)
+        _run_query_case(signoz, token, now, case)
+
+
+# ============================================================================
+# GroupBy — scalar aggregation
+# ============================================================================
+#
+# Uses requestType="scalar" (flat table: [group_key..., count]) instead of
+# time_series, because the test goal is to verify body JSON path resolution
+# in GROUP BY SQL — not time-bucketing semantics.  Scalar results are a
+# plain list of rows, far simpler to assert than navigating
+# aggregations[0]["series"][*]["labels"].
+#
+# Data landscape (7 logs, mixed shapes):
+#   3 × alice (age=25) — count > 1 exercises the aggregation correctly
+#   1 × bob   (age=30)
+#   1 × charlie (age=35)
+#   1 × diana  (no age — sparse field)
+#   1 × health check (no user at all)
 # ============================================================================
 
 
@@ -1125,27 +1405,24 @@ def test_groupby_timeseries(
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     cases = [
+        # Scalar GroupBy: results[0]["data"] = [[group_key, count], ...]
+        # Simpler to validate than time_series which nests inside aggregations[0]["series"].
         {
             "name": "groupby.age",
-            "requestType": "time_series",
+            "requestType": "scalar",
             "expression": None,
             "groupBy": [{"name": "body.user.age", "fieldDataType": "int64"}],
             "limit": 100,
             "aggregation": "count()",
-            "stepInterval": 60,
-            "validate": lambda r: (
-                {
-                    _labels_to_map(s.get("labels")).get("user.age")
-                    for s in _get_results(r)[0]["aggregations"][0]["series"]
-                    if _labels_to_map(s.get("labels")).get("user.age") is not None
-                }
-                in ({"25", "30", "35"}, {25, 30, 35})
-            ),
+            # Each row: [age_value, count]
+            # Verify the three distinct ages appear as group keys (str or int).
+            "validate": lambda r: {str(row[0]) for row in _get_scalar_rows(r) if row}
+            >= {"25", "30", "35"},
         },
         # Multi-field GroupBy — distinct SQL (multiple group-by columns)
         {
             "name": "groupby.multi",
-            "requestType": "time_series",
+            "requestType": "scalar",
             "expression": None,
             "groupBy": [
                 {"name": "body.user.name", "fieldDataType": "string"},
@@ -1153,27 +1430,11 @@ def test_groupby_timeseries(
             ],
             "limit": 100,
             "aggregation": "count()",
-            "stepInterval": 60,
-            "validate": lambda r: (
-                {
-                    (
-                        _labels_to_map(s.get("labels")).get("user.name"),
-                        _labels_to_map(s.get("labels")).get("user.age"),
-                    )
-                    for s in _get_results(r)[0]["aggregations"][0]["series"]
-                    if _labels_to_map(s.get("labels")).get("user.name") is not None
-                    and _labels_to_map(s.get("labels")).get("user.age") is not None
-                }.issuperset({("alice", "25"), ("bob", "30"), ("charlie", "35")})
-                or {
-                    (
-                        _labels_to_map(s.get("labels")).get("user.name"),
-                        _labels_to_map(s.get("labels")).get("user.age"),
-                    )
-                    for s in _get_results(r)[0]["aggregations"][0]["series"]
-                    if _labels_to_map(s.get("labels")).get("user.name") is not None
-                    and _labels_to_map(s.get("labels")).get("user.age") is not None
-                }.issuperset({("alice", 25), ("bob", 30), ("charlie", 35)})
-            ),
+            # Each row: [name, age, count]
+            # Verify the three (name, age) pairs all appear as group keys.
+            "validate": lambda r: {
+                (str(row[0]), str(row[1])) for row in _get_scalar_rows(r) if len(row) >= 2
+            }.issuperset({("alice", "25"), ("bob", "30"), ("charlie", "35")}),
         },
     ]
 
