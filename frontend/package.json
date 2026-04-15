@@ -72,7 +72,6 @@
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",
-    "@uiw/codemirror-theme-dracula": "4.25.9",
     "@uiw/codemirror-theme-github": "4.24.1",
     "@uiw/react-codemirror": "4.23.10",
     "@uiw/react-md-editor": "3.23.5",

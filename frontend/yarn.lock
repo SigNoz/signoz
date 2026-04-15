@@ -7005,13 +7005,6 @@
   dependencies:
     "@uiw/codemirror-themes" "4.23.11"
 
-"@uiw/codemirror-theme-dracula@4.25.9":
-  version "4.25.9"
-  resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-dracula/-/codemirror-theme-dracula-4.25.9.tgz#f5704aa4df9e35e39308309aec176abfb487161c"
-  integrity sha512-0VTnpPCHPc+7LqYsQOX6nvW32XiiT+O6kJjReUbV7Eio3vPHsb+b9P4DKhz4AAvIIYMxmHkMuautHKuWktFXSg==
-  dependencies:
-    "@uiw/codemirror-themes" "4.25.9"
-
 "@uiw/codemirror-theme-github@4.24.1":
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-theme-github/-/codemirror-theme-github-4.24.1.tgz#80a6e735ed9bb97d66d7914b951b8243f974634f"
@@ -7032,15 +7025,6 @@
   version "4.24.1"
   resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.24.1.tgz#f27075079b5a899d99716d035b58f38d62fffa12"
   integrity sha512-hduBbFNiWNW6nYa2/giKQ9YpzhWNw87BGpCjC+cXYMZ7bCD6q5DC6Hw+7z7ZwSzEaOQvV91lmirOjJ8hn9+pkg==
-  dependencies:
-    "@codemirror/language" "^6.0.0"
-    "@codemirror/state" "^6.0.0"
-    "@codemirror/view" "^6.0.0"
-
-"@uiw/codemirror-themes@4.25.9":
-  version "4.25.9"
-  resolved "https://registry.yarnpkg.com/@uiw/codemirror-themes/-/codemirror-themes-4.25.9.tgz#08d70061d4b8ec721023484cd80d4e0302184443"
-  integrity sha512-DAHKb/L9ELwjY4nCf/MP/mIllHOn4GQe7RR4x8AMJuNeh9nGRRoo1uPxrxMmUL/bKqe6kDmDbIZ2AlhlqyIJuw==
   dependencies:
     "@codemirror/language" "^6.0.0"
     "@codemirror/state" "^6.0.0"
