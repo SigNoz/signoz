@@ -4466,6 +4466,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: metricNamespace
+        schema:
+          type: string
+      - in: query
         name: searchText
         schema:
           type: string
@@ -4548,6 +4552,10 @@ paths:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
+        schema:
+          type: string
+      - in: query
+        name: metricNamespace
         schema:
           type: string
       - in: query
@@ -8313,6 +8321,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: metricNamespace
+        schema:
+          type: string
+      - in: query
         name: searchText
         schema:
           type: string
@@ -8407,6 +8419,10 @@ paths:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
+        schema:
+          type: string
+      - in: query
+        name: metricNamespace
         schema:
           type: string
       - in: query
