@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Callout } from '@signozhq/callout';
+import getLocalStorageApi from 'api/browser/localstorage/get';
+import setLocalStorageApi from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
@@ -9,11 +12,10 @@ import { USER_ROLES } from 'types/roles';
 
 import './LicenseRowDismissible.styles.scss';
 
-const CALLOUT_DISMISSED_KEY = 'license_key_callout_dismissed';
-
 function LicenseRowDismissibleCallout(): JSX.Element | null {
 	const [isCalloutDismissed, setIsCalloutDismissed] = useState<boolean>(
-		() => localStorage.getItem(CALLOUT_DISMISSED_KEY) === 'true',
+		() =>
+			getLocalStorageApi(LOCALSTORAGE.LICENSE_KEY_CALLOUT_DISMISSED) === 'true',
 	);
 
 	const { user, featureFlags } = useAppContext();
@@ -37,7 +39,7 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 		(isGatewayEnabled && (isAdmin || isEditor));
 
 	const handleDismissCallout = (): void => {
-		localStorage.setItem(CALLOUT_DISMISSED_KEY, 'true');
+		setLocalStorageApi(LOCALSTORAGE.LICENSE_KEY_CALLOUT_DISMISSED, 'true');
 		setIsCalloutDismissed(true);
 	};
 

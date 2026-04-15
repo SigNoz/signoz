@@ -1,12 +1,11 @@
 import { FeatureKeys } from 'constants/features';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import LicenseRowDismissibleCallout from '../LicenseRowDismissibleCallout';
-
-const CALLOUT_DISMISSED_KEY = 'license_key_callout_dismissed';
 
 const getDescription = (): HTMLElement =>
 	screen.getByText(
@@ -205,11 +204,13 @@ describe('LicenseRowDismissibleCallout', () => {
 
 			await user.click(screen.getByRole('button'));
 
-			expect(localStorage.getItem(CALLOUT_DISMISSED_KEY)).toBe('true');
+			expect(
+				localStorage.getItem(LOCALSTORAGE.LICENSE_KEY_CALLOUT_DISMISSED),
+			).toBe('true');
 		});
 
 		it('should not render when localStorage dismissal is set', () => {
-			localStorage.setItem(CALLOUT_DISMISSED_KEY, 'true');
+			localStorage.setItem(LOCALSTORAGE.LICENSE_KEY_CALLOUT_DISMISSED, 'true');
 			renderCallout(USER_ROLES.ADMIN, false, false);
 
 			expect(queryDescription()).not.toBeInTheDocument();
