@@ -844,7 +844,10 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Args:        []any{uint64(1747945619), uint64(1747983448), float64(110001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
-		// ── indexed exists: emits assumeNotNull != nil AND dynamicElement IS NOT NULL ─
+		// ── indexed exists: index is skipped; emits plain IS NOT NULL ───────────
+		// EXISTS/NOT EXISTS bypass the index because indexed columns store a default
+		// empty value for absent fields, making != "" unreliable for existence checks
+		// (a field with value "" would be incorrectly excluded).
 		{
 			name: "Indexed String Exists",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
@@ -853,8 +856,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ? AND dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL)",
+				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		// ── indexed not-equal: assumeNotNull wrapping + no path index ─────────
@@ -868,22 +871,6 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 			expected: TestExpected{
 				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ?)",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-			},
-		},
-		// ── indexed not-exists: assumeNotNull = "" AND assumeNotNull IS NOT NULL ─
-		// FilterOperatorNotExists → Equal + emptyValue("") in the indexed branch,
-		// then a second condition flipped to Exists (IS NOT NULL) on the same
-		// assumeNotNull expr, producing AND(= "", IS NOT NULL).
-		{
-			name: "Indexed String NotExists",
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.user.name NOT EXISTS"},
-				Limit:  10,
-			},
-			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND dynamicElement(body_v2.`user.name`, 'String') IS NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
