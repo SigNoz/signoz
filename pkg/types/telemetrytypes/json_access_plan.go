@@ -43,9 +43,6 @@ type JSONAccessNode struct {
 	IsTerminal bool
 	isRoot     bool // marked true for only body_v2 and body_promoted
 
-	// Precomputed type information (single source of truth)
-	AvailableTypes []FieldDataType
-
 	// Array type branches (Array(JSON) vs Array(Dynamic))
 	Branches map[JSONAccessBranchType]*JSONAccessNode
 
@@ -149,17 +146,10 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 	node := &JSONAccessNode{
 		Name:            segmentName,
 		IsTerminal:      isTerminal,
-		AvailableTypes:  types,
 		Branches:        make(map[JSONAccessBranchType]*JSONAccessNode),
 		Parent:          parent,
 		MaxDynamicTypes: maxTypes,
 		MaxDynamicPaths: maxPaths,
-	}
-
-	hasJSON := slices.Contains(node.AvailableTypes, FieldDataTypeArrayJSON)
-	hasDynamic := slices.Contains(node.AvailableTypes, FieldDataTypeArrayDynamic)
-	if !hasJSON && !hasDynamic {
-		return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data types missing for path %s", pathSoFar)
 	}
 
 	// Configure terminal if this is the last part
@@ -175,6 +165,16 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		}
 	} else {
 		var err error
+		hasJSON := slices.Contains(types, FieldDataTypeArrayJSON)
+		hasDynamic := slices.Contains(types, FieldDataTypeArrayDynamic)
+		// since both are missing; probably high cardinal data is being queried
+		// so we query both array types. This enables User being able to query any
+		// fields that were skipped by metadataexporter
+		if !hasJSON && !hasDynamic {
+			hasDynamic = true
+			hasJSON = true
+		}
+
 		if hasJSON {
 			node.Branches[BranchJSON], err = pb.buildPlan(index+1, node, false)
 			if err != nil {

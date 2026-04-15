@@ -65,14 +65,6 @@ func toTestNode(n *JSONAccessNode) *jsonAccessTestNode {
 		out.Column = n.Parent.Name
 	}
 
-	// AvailableTypes as strings (using StringValue for stable representation)
-	if len(n.AvailableTypes) > 0 {
-		out.AvailableTypes = make([]string, 0, len(n.AvailableTypes))
-		for _, t := range n.AvailableTypes {
-			out.AvailableTypes = append(out.AvailableTypes, t.StringValue())
-		}
-	}
-
 	// Terminal config
 	if n.TerminalConfig != nil {
 		out.ElemType = n.TerminalConfig.ElemType.StringValue()
