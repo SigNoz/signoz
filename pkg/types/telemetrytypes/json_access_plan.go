@@ -171,8 +171,7 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		// so we query both array types. This enables User being able to query any
 		// fields that were skipped by metadataexporter
 		if !hasJSON && !hasDynamic {
-			hasDynamic = true
-			hasJSON = true
+			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data type missing for path %s", pathSoFar)
 		}
 
 		if hasJSON {
