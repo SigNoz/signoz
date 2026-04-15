@@ -35,7 +35,7 @@ const assertGenericModalElements = async (): Promise<void> => {
 const assertS3SyncSpecificElements = async (
 	_expectedBucketsByRegion: Record<string, string[]> = {},
 ): Promise<void> => {
-	const regions = accountsResponse.data.accounts[0]?.config?.regions || [];
+	const regions = accountsResponse.data.accounts[0]?.config?.aws?.regions || [];
 
 	await waitFor(() => {
 		expect(screen.getByText(/select s3 buckets by region/i)).toBeInTheDocument();

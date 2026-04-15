@@ -2,7 +2,6 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
 
-import { UpdateServiceConfigPayload } from '../types';
 import {
 	accountsResponse,
 	buildServiceDetailsResponse,
@@ -61,11 +60,11 @@ describe('ServiceDetails for S3 Sync service', () => {
 		testInitialBuckets = {};
 		server.use(
 			rest.get(
-				'http://localhost/api/v1/cloud-integrations/aws/accounts',
+				'http://localhost/api/v1/cloud_integrations/aws/accounts',
 				(_req, res, ctx) => res(ctx.json(accountsResponse)),
 			),
 			rest.get(
-				'http://localhost/api/v1/cloud-integrations/aws/services/:serviceId',
+				'http://localhost/api/v1/cloud_integrations/aws/services/:serviceId',
 				(req, res, ctx) =>
 					res(
 						ctx.json(
@@ -115,13 +114,12 @@ describe('ServiceDetails for S3 Sync service', () => {
 	});
 
 	it('should send updated bucket configuration on save', async () => {
-		let capturedPayload: UpdateServiceConfigPayload | null = null;
-		const mockUpdateConfigUrl =
-			'http://localhost/api/v1/cloud-integrations/aws/services/s3sync/config';
+		let capturedPayload: Record<string, unknown> | null = null;
+		const mockUpdateConfigUrl = `http://localhost/api/v1/cloud_integrations/aws/accounts/${CLOUD_ACCOUNT_ID}/services/s3sync`;
 
-		// Override POST handler specifically for this test to capture payload
+		// Override PUT handler specifically for this test to capture payload
 		server.use(
-			rest.post(mockUpdateConfigUrl, async (req: RestRequest, res, ctx) => {
+			rest.put(mockUpdateConfigUrl, async (req: RestRequest, res, ctx) => {
 				capturedPayload = await req.json();
 				return res(ctx.status(200), ctx.json({ message: 'Config updated' }));
 			}),
@@ -152,24 +150,25 @@ describe('ServiceDetails for S3 Sync service', () => {
 		});
 
 		expect(capturedPayload).toEqual({
-			cloud_account_id: CLOUD_ACCOUNT_ID,
 			config: {
-				logs: {
-					enabled: true,
-					s3_buckets: {
-						'us-east-2': ['first-bucket', 'second-bucket'],
-						'ap-south-1': [newBucketName],
+				aws: {
+					logs: {
+						enabled: true,
+						s3Buckets: {
+							'us-east-2': ['first-bucket', 'second-bucket'],
+							'ap-south-1': [newBucketName],
+						},
 					},
+					metrics: { enabled: false },
 				},
-				metrics: { enabled: false },
 			},
 		});
 	});
 
 	it('should not render S3 bucket region selector UI for services other than s3sync', async () => {
-		testServiceId = 'cloudwatch';
+		testServiceId = 'ec2';
 		testInitialBuckets = {};
-		renderServiceDetails({}, 'cloudwatch');
+		renderServiceDetails({}, 'ec2');
 		await waitFor(() => {
 			expect(
 				screen.queryByText(/select s3 buckets by region/i),
