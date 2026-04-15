@@ -187,7 +187,6 @@ function ForgotPassword({
 						color="secondary"
 						type="button"
 						data-testid="forgot-password-back"
-						className="forgot-password-back-button"
 						onClick={handleBackToLogin}
 						prefix={<ArrowLeft size={12} />}
 					>
@@ -201,7 +200,6 @@ function ForgotPassword({
 						color="primary"
 						type="submit"
 						data-testid="forgot-password-submit"
-						className="login-submit-btn"
 						suffix={<ArrowRight size={12} />}
 					>
 						{isLoading ? 'Sending...' : 'Send reset link'}

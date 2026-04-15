@@ -26,7 +26,6 @@ function SuccessScreen({ onBackToLogin }: SuccessScreenProps): JSX.Element {
 						color="primary"
 						type="button"
 						data-testid="back-to-login"
-						className="login-submit-btn"
 						onClick={onBackToLogin}
 						prefix={<ArrowLeft size={12} />}
 					>
