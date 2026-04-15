@@ -82,6 +82,9 @@ sqlstore:
   provider: sqlite
   # The maximum number of open connections to the database.
   max_open_conns: 100
+  # The maximum amount of time a connection may be reused.
+  # If max_conn_lifetime == 0, connections are not closed due to a connection's age.
+  max_conn_lifetime: 0
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
@@ -395,3 +398,10 @@ auditor:
       max_interval: 30s
       # The total maximum time spent retrying.
       max_elapsed_time: 60s
+
+##################### Cloud Integration #####################
+cloudintegration:
+  # cloud integration agent configuration
+  agent:
+    # The version of the cloud integration agent.
+    version: v0.0.8

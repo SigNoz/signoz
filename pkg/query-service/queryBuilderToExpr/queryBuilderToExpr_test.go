@@ -518,20 +518,25 @@ func TestExpressionVSEntry(t *testing.T) {
 			expression, err := Parse(tt.Query)
 			assert.NoError(t, err)
 
-			compiled, hasBodyFieldRef, err := signozstanzahelper.ExprCompileBool(expression)
+			compiled, hasBodyFieldRef, _, err := signozstanzahelper.ExprCompileBool(expression)
 			assert.NoError(t, err)
 
 			matchedIDs := []int{}
 			for _, d := range dataset {
-				env := signozstanzahelper.GetExprEnv(d.Entry, hasBodyFieldRef)
-				matches, err := vm.Run(compiled, env)
-				signozstanzahelper.PutExprEnv(env)
+				err := signozstanzahelper.RunWithExprEnv(d.Entry, hasBodyFieldRef, nil, func(env map[string]any) error {
+					matches, err := vm.Run(compiled, env)
+					if err != nil {
+						// Eval error (e.g. fromJSON on non-JSON body) => treat as no match
+						return err
+					}
+					if matches != nil && matches.(bool) {
+						matchedIDs = append(matchedIDs, d.ID)
+					}
+					return nil
+				})
 				if err != nil {
 					// Eval error (e.g. fromJSON on non-JSON body) => treat as no match
 					continue
-				}
-				if matches != nil && matches.(bool) {
-					matchedIDs = append(matchedIDs, d.ID)
 				}
 			}
 			assert.Equal(t, tt.ExpectedMatches, matchedIDs, "query %q", tt.Name)

@@ -1,6 +1,7 @@
 package cloudintegrationtypes
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -237,6 +238,12 @@ func NewService(def ServiceDefinition, storableService *CloudIntegrationService)
 	}
 }
 
+func NewGettableServicesMetadata(services []*ServiceMetadata) *GettableServicesMetadata {
+	return &GettableServicesMetadata{
+		Services: services,
+	}
+}
+
 func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*ServiceConfig, error) {
 	storableServiceConfig, err := newStorableServiceConfigFromJSON(provider, jsonString)
 	if err != nil {
@@ -267,9 +274,27 @@ func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*S
 }
 
 // Update sets the service config.
-func (service *CloudIntegrationService) Update(config *ServiceConfig) {
+func (service *CloudIntegrationService) Update(provider CloudProviderType, serviceID ServiceID, config *ServiceConfig) error {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if config.AWS == nil {
+			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS config is required for AWS service")
+		}
+
+		if serviceID == AWSServiceS3Sync {
+			if config.AWS.Logs == nil || config.AWS.Logs.S3Buckets == nil {
+				return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS S3 Sync service requires S3 bucket configuration for logs")
+			}
+		}
+
+		// other validations happen in newStorableServiceConfig
+	default:
+		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+
 	service.Config = config
 	service.UpdatedAt = time.Now()
+	return nil
 }
 
 // IsServiceEnabled returns true if the service has at least one signal (logs or metrics) enabled
@@ -307,28 +332,31 @@ func (config *ServiceConfig) IsLogsEnabled(provider CloudProviderType) bool {
 }
 
 func (config *ServiceConfig) ToJSON(provider CloudProviderType, serviceID ServiceID, supportedSignals *SupportedSignals) ([]byte, error) {
-	storableServiceConfig := newStorableServiceConfig(provider, serviceID, config, supportedSignals)
+	storableServiceConfig, err := newStorableServiceConfig(provider, serviceID, config, supportedSignals)
+	if err != nil {
+		return nil, err
+	}
+
 	return storableServiceConfig.toJSON(provider)
 }
 
-func (updatableService *UpdatableService) Validate(provider CloudProviderType, serviceID ServiceID) error {
-	switch provider {
-	case CloudProviderTypeAWS:
-		if updatableService.Config.AWS == nil {
-			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS config is required for AWS service")
-		}
+func (updatableService *UpdatableService) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableService
 
-		if serviceID == AWSServiceS3Sync {
-			if updatableService.Config.AWS.Logs == nil || updatableService.Config.AWS.Logs.S3Buckets == nil {
-				return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS S3 Sync service requires S3 bucket configuration for logs")
-			}
-		}
-
-		return nil
-	default:
-		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
 	}
+
+	if temp.Config == nil {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "config is required")
+	}
+
+	*updatableService = UpdatableService(temp)
+	return nil
 }
+
+// UTILITIES
 
 // GetCloudIntegrationDashboardID returns the dashboard id for a cloud integration, given the cloud provider, service id, and dashboard id.
 // This is used to generate unique dashboard ids for cloud integration, and also to parse the dashboard id to get the cloud provider and service id when needed.

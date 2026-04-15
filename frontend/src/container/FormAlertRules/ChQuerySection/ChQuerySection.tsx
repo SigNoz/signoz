@@ -1,4 +1,4 @@
-import ClickHouseQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/clickHouse/query';
+import ClickHouseQueryBuilder from 'container/NewWidget/LeftContainer/QuerySection/QueryBuilder/ClickHouse/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 function ChQuerySection(): JSX.Element {
