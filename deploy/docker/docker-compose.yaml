@@ -134,6 +134,9 @@ services:
     !!merge <<: *db-depend
     image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.2}
     container_name: signoz-otel-collector
+    # Allow the collector to resolve the host gateway to scrape Postgres
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     entrypoint:
       - /bin/sh
     command:

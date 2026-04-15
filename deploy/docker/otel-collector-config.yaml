@@ -12,6 +12,16 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+  postgresql:
+    endpoint: host.docker.internal:5434
+    transport: tcp
+    username: prefect
+    password: prefect
+    databases:
+      - prefect
+    collection_interval: 10s
+    tls:
+      insecure: true
   prometheus:
     config:
       global:
@@ -101,7 +111,7 @@ service:
       processors: [signozspanmetrics/delta, batch]
       exporters: [clickhousetraces, metadataexporter, signozmeter]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, postgresql]
       processors: [batch]
       exporters: [signozclickhousemetrics, metadataexporter, signozmeter]
     metrics/prometheus:
