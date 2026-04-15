@@ -36,7 +36,7 @@ export function useLogsTableColumns({
 			enableMove: false,
 			enableResize: false,
 			enableRemove: false,
-			width: { fixed: 32 },
+			width: { fixed: 24 },
 			cell: ({ row }): ReactElement => (
 				<LogStateIndicator
 					fontSize={fontSize}
@@ -68,7 +68,7 @@ export function useLogsTableColumns({
 					id: 'timestamp',
 					header: 'Timestamp',
 					accessorFn: (log): unknown => log.timestamp,
-					width: { min: 200 },
+					width: { min: 170, max: 220 },
 					cell: ({ value }): ReactElement => {
 						const ts = value as string | number;
 						const formatted =

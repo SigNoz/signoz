@@ -1,8 +1,9 @@
+import type { MouseEvent } from 'react';
 import { memo, useCallback } from 'react';
 import { Row as TanStackRowModel } from '@tanstack/react-table';
 
-import { useIsRowHovered } from './RowHoverContext';
 import { TanStackRowCell } from './TanStackRowCell';
+import { useIsRowHovered } from './TanStackTableStateContext';
 import { TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -12,6 +13,8 @@ type TanStackRowCellsProps<TData> = {
 	context: TableRowContext<TData> | undefined;
 	itemKind: 'row' | 'expansion';
 	hasSingleColumn: boolean;
+	columnOrderKey: string;
+	columnVisibilityKey: string;
 };
 
 function TanStackRowCellsInner<TData>({
@@ -19,6 +22,8 @@ function TanStackRowCellsInner<TData>({
 	context,
 	itemKind,
 	hasSingleColumn,
+	columnOrderKey: _columnOrderKey,
+	columnVisibilityKey: _columnVisibilityKey,
 }: TanStackRowCellsProps<TData>): JSX.Element {
 	// Only re-render this row when ITS hover state changes
 	const hasHovered = useIsRowHovered(row.id);
@@ -28,25 +33,53 @@ function TanStackRowCellsInner<TData>({
 
 	// Stable references via destructuring
 	const onRowClick = context?.onRowClick;
+	const onRowClickNewTab = context?.onRowClickNewTab;
 	const onRowDeactivate = context?.onRowDeactivate;
 	const isRowActive = context?.isRowActive;
+	const getRowKeyData = context?.getRowKeyData;
+	const rowIndex = row.index;
 
-	const handleClick = useCallback(() => {
-		const isActive = isRowActive?.(rowData) ?? false;
-		if (isActive && onRowDeactivate) {
-			onRowDeactivate();
-		} else {
-			onRowClick?.(rowData);
-		}
-	}, [isRowActive, onRowDeactivate, onRowClick, rowData]);
+	const handleClick = useCallback(
+		(event: MouseEvent<HTMLTableCellElement>) => {
+			const keyData = getRowKeyData?.(rowIndex);
+			const itemKey = keyData?.itemKey ?? '';
+
+			// Handle ctrl+click or cmd+click (open in new tab)
+			if ((event.ctrlKey || event.metaKey) && onRowClickNewTab) {
+				onRowClickNewTab(rowData, itemKey);
+				return;
+			}
+
+			const isActive = isRowActive?.(rowData) ?? false;
+			if (isActive && onRowDeactivate) {
+				onRowDeactivate();
+			} else {
+				onRowClick?.(rowData, itemKey);
+			}
+		},
+		[
+			isRowActive,
+			onRowDeactivate,
+			onRowClick,
+			onRowClickNewTab,
+			rowData,
+			getRowKeyData,
+			rowIndex,
+		],
+	);
 
 	if (itemKind === 'expansion') {
+		const keyData = getRowKeyData?.(rowIndex);
 		return (
 			<td
 				colSpan={context?.colCount ?? 1}
 				className={tableStyles.tableCellExpansion}
 			>
-				{context?.renderExpandedRow?.(rowData)}
+				{context?.renderExpandedRow?.(
+					rowData,
+					keyData?.finalKey ?? '',
+					keyData?.groupMeta,
+				)}
 			</td>
 		);
 	}
@@ -82,14 +115,18 @@ function areRowCellsPropsEqual<TData>(
 		prev.row.id === next.row.id &&
 		// Row kind (row vs expansion)
 		prev.itemKind === next.itemKind &&
-		// Row data reference
-		prev.row.original === next.row.original &&
 		// Layout
 		prev.hasSingleColumn === next.hasSingleColumn &&
+		// Column order - re-render when columns are reordered
+		prev.columnOrderKey === next.columnOrderKey &&
+		// Column visibility - re-render when columns are shown/hidden
+		prev.columnVisibilityKey === next.columnVisibilityKey &&
 		// Context callbacks for click handlers and row actions
 		prev.context?.onRowClick === next.context?.onRowClick &&
+		prev.context?.onRowClickNewTab === next.context?.onRowClickNewTab &&
 		prev.context?.onRowDeactivate === next.context?.onRowDeactivate &&
 		prev.context?.isRowActive === next.context?.isRowActive &&
+		prev.context?.getRowKeyData === next.context?.getRowKeyData &&
 		prev.context?.renderRowActions === next.context?.renderRowActions &&
 		prev.context?.renderExpandedRow === next.context?.renderExpandedRow &&
 		prev.context?.colCount === next.context?.colCount

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { TableColumnDef } from './types';
+import { RowKeyData, TableColumnDef } from './types';
 
 export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
 	column.id;
@@ -21,9 +21,36 @@ export const getColumnMinWidthPx = <TData>(
 	return MIN_WIDTH_DEFAULT_REM * REM_PX;
 };
 
+/**
+ * Get the initial column size from a column definition.
+ * Matches the logic used by TanStack Table's size property.
+ */
+export const getColumnInitialSize = <TData>(
+	column: TableColumnDef<TData>,
+): number => {
+	const minWidthPx = getColumnMinWidthPx(column);
+	if (column.width?.fixed != null) {
+		return column.width.fixed;
+	}
+	return column.width?.default ?? column.width?.min ?? minWidthPx;
+};
+
+/**
+ * Get the max width for a column, if any.
+ */
+export const getColumnMaxWidth = <TData>(
+	column: TableColumnDef<TData>,
+): number | undefined => {
+	if (column.width?.fixed != null) {
+		return column.width.fixed;
+	}
+	return column.width?.max;
+};
+
 export function buildTanstackColumnDef<TData>(
 	colDef: TableColumnDef<TData>,
 	isRowActive?: (row: TData) => boolean,
+	getRowKeyData?: (index: number) => RowKeyData | undefined,
 ): ColumnDef<TData> {
 	const isFixed = colDef.width?.fixed != null;
 	const fixedWidth = colDef.width?.fixed;
@@ -46,14 +73,16 @@ export function buildTanstackColumnDef<TData>(
 		},
 		enableResizing: colDef.enableResize !== false && !isFixed,
 		enableSorting: colDef.enableSort === true,
+		// TanStack Table uses these to compute column.getSize()
 		minSize: fixedWidth ?? minWidthPx,
-		size: colDef.width?.default ?? fixedWidth,
-		maxSize: fixedWidth,
+		size: fixedWidth ?? colDef.width?.default ?? colDef.width?.min ?? minWidthPx,
+		maxSize: fixedWidth ?? colDef.width?.max,
 		cell: ({ row, getValue }): ReactNode => {
 			const rowData = row.original;
+			const keyData = getRowKeyData?.(row.index);
 			return colDef.cell({
 				row: rowData,
-				value: getValue(),
+				value: getValue() as TData[any],
 				isActive: isRowActive?.(rowData) ?? false,
 				rowIndex: row.index,
 				isExpanded: row.getIsExpanded(),
@@ -61,6 +90,8 @@ export function buildTanstackColumnDef<TData>(
 				toggleExpanded: (): void => {
 					row.toggleExpanded();
 				},
+				itemKey: keyData?.itemKey ?? '',
+				groupMeta: keyData?.groupMeta,
 			});
 		},
 	};

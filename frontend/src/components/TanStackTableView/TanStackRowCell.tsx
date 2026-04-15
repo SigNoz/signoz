@@ -1,10 +1,14 @@
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { memo } from 'react';
 import type { Cell } from '@tanstack/react-table';
 import { flexRender } from '@tanstack/react-table';
+import { Skeleton } from 'antd';
 import cx from 'classnames';
 
+import { useShouldShowCellSkeleton } from './TanStackTableStateContext';
+
 import tableStyles from './TanStackTable.module.scss';
+import skeletonStyles from './TanStackTableSkeleton.module.scss';
 
 export type TanStackRowCellProps<TData> = {
 	cell: Cell<TData, unknown>;
@@ -12,7 +16,7 @@ export type TanStackRowCellProps<TData> = {
 	isLastCell: boolean;
 	hasHovered: boolean;
 	rowData: TData;
-	onClick: () => void;
+	onClick: (event: MouseEvent<HTMLTableCellElement>) => void;
 	renderRowActions?: (row: TData) => ReactNode;
 };
 
@@ -25,14 +29,24 @@ function TanStackRowCellInner<TData>({
 	onClick,
 	renderRowActions,
 }: TanStackRowCellProps<TData>): JSX.Element {
+	const showSkeleton = useShouldShowCellSkeleton();
+
 	return (
 		<td
 			className={cx(tableStyles.tableCell, 'tanstack-cell-' + cell.column.id)}
 			data-single-column={hasSingleColumn || undefined}
 			onClick={onClick}
 		>
-			{flexRender(cell.column.columnDef.cell, cell.getContext())}
-			{isLastCell && hasHovered && renderRowActions && (
+			{showSkeleton ? (
+				<Skeleton.Input
+					active
+					size="small"
+					className={skeletonStyles.cellSkeleton}
+				/>
+			) : (
+				flexRender(cell.column.columnDef.cell, cell.getContext())
+			)}
+			{isLastCell && hasHovered && renderRowActions && !showSkeleton && (
 				<span className={tableStyles.tableViewRowActions}>
 					{renderRowActions(rowData)}
 				</span>
@@ -45,6 +59,10 @@ function areTanStackRowCellPropsEqual<TData>(
 	prev: Readonly<TanStackRowCellProps<TData>>,
 	next: Readonly<TanStackRowCellProps<TData>>,
 ): boolean {
+	if (next.cell.id.startsWith('skeleton-')) {
+		return false;
+	}
+
 	return (
 		prev.cell.id === next.cell.id &&
 		prev.cell.column.id === next.cell.column.id &&

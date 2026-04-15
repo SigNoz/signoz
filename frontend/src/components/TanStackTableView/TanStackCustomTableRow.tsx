@@ -2,7 +2,11 @@ import { ComponentProps, memo } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
-import { useClearRowHovered, useSetRowHovered } from './RowHoverContext';
+import TanStackRowCells from './TanStackRow';
+import {
+	useClearRowHovered,
+	useSetRowHovered,
+} from './TanStackTableStateContext';
 import { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
@@ -14,7 +18,6 @@ type VirtuosoTableRowProps<TData> = ComponentProps<
 >;
 
 function TanStackCustomTableRow<TData>({
-	children,
 	item,
 	context,
 	...props
@@ -29,7 +32,14 @@ function TanStackCustomTableRow<TData>({
 	if (item.kind === 'expansion') {
 		return (
 			<tr {...props} className={tableStyles.tableRowExpansion}>
-				{children}
+				<TanStackRowCells
+					row={item.row}
+					itemKind={item.kind}
+					context={context}
+					hasSingleColumn={context?.hasSingleColumn ?? false}
+					columnOrderKey={context?.columnOrderKey ?? ''}
+					columnVisibilityKey={context?.columnVisibilityKey ?? ''}
+				/>
 			</tr>
 		);
 	}
@@ -52,12 +62,20 @@ function TanStackCustomTableRow<TData>({
 			onMouseEnter={setHovered}
 			onMouseLeave={clearHovered}
 		>
-			{children}
+			<TanStackRowCells
+				row={item.row}
+				itemKind={item.kind}
+				context={context}
+				hasSingleColumn={context?.hasSingleColumn ?? false}
+				columnOrderKey={context?.columnOrderKey ?? ''}
+				columnVisibilityKey={context?.columnVisibilityKey ?? ''}
+			/>
 		</tr>
 	);
 }
 
 // Custom comparison - only re-render when row identity or computed values change
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function areTableRowPropsEqual<TData>(
 	prev: Readonly<VirtuosoTableRowProps<TData>>,
 	next: Readonly<VirtuosoTableRowProps<TData>>,
@@ -77,6 +95,18 @@ function areTableRowPropsEqual<TData>(
 
 	// Row data reference changed = potential re-render needed
 	if (prevData !== nextData) {
+		return false;
+	}
+
+	// Column layout changed = must re-render cells
+	if (prev.context?.hasSingleColumn !== next.context?.hasSingleColumn) {
+		return false;
+	}
+	if (prev.context?.columnOrderKey !== next.context?.columnOrderKey) {
+		return false;
+	}
+
+	if (prev.context?.columnVisibilityKey !== next.context?.columnVisibilityKey) {
 		return false;
 	}
 

@@ -2,7 +2,7 @@
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: 0;
+	padding: 0.3rem;
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
@@ -16,11 +16,6 @@
 
 	&.isResizing {
 		background: var(--l2-background-hover);
-	}
-
-	&:last-child .cursorColResize {
-		display: none;
-		border-right: 1px solid var(--l2-border);
 	}
 }
 
@@ -147,14 +142,73 @@
 	left: 50%;
 	width: 4px;
 	transform: translateX(-50%);
-	background: var(--l2-border);
 	opacity: 1;
 	pointer-events: none;
 	transition: background 120ms ease, width 120ms ease;
+	background: transparent;
+}
+
+.cursorColResize:hover .tanstackResizeHandleLine {
+	background: var(--l2-border);
 }
 
 .tanstackHeaderCell.isResizing .tanstackResizeHandleLine {
 	width: 2px;
 	background: var(--bg-robin-500);
 	transition: none;
+}
+
+.tanstackSortButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: left;
+	min-width: 0;
+	max-width: 100%;
+	flex: 1;
+	overflow: hidden;
+
+	&:hover {
+		color: var(--l2-foreground);
+	}
+
+	&.isSorted {
+		color: var(--l2-foreground);
+	}
+}
+
+.tanstackHeaderTitle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	flex: 1;
+}
+
+.tanstackSortLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.tanstackSortIndicator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	color: var(--l2-foreground);
+}
+
+.isSortable {
+	cursor: pointer;
 }

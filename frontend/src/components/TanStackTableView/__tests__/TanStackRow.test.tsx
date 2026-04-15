@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import TanStackRowCells from '../TanStackRow';
@@ -46,6 +46,8 @@ describe('TanStackRowCells', () => {
 							context={undefined}
 							itemKind="row"
 							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
 						/>
 					</tr>
 				</tbody>
@@ -57,35 +59,12 @@ describe('TanStackRowCells', () => {
 	it('calls onRowClick when a cell is clicked', async () => {
 		const user = userEvent.setup();
 		const onRowClick = jest.fn();
-		const ctx: TableRowContext<Row> = { colCount: 1, onRowClick };
-		const row = buildMockRow([{ id: 'body' }]);
-		render(
-			<table>
-				<tbody>
-					<tr>
-						<TanStackRowCells<Row>
-							row={row as never}
-							context={ctx}
-							itemKind="row"
-							hasSingleColumn={false}
-						/>
-					</tr>
-				</tbody>
-			</table>,
-		);
-		await user.click(screen.getAllByRole('cell')[0]);
-		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' });
-	});
-
-	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
-		const user = userEvent.setup();
-		const onRowClick = jest.fn();
-		const onRowDeactivate = jest.fn();
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			onRowClick,
-			onRowDeactivate,
-			isRowActive: () => true,
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
 		};
 		const row = buildMockRow([{ id: 'body' }]);
 		render(
@@ -97,6 +76,43 @@ describe('TanStackRowCells', () => {
 							context={ctx}
 							itemKind="row"
 							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+		await user.click(screen.getAllByRole('cell')[0]);
+		// onRowClick receives (rowData, itemKey) - itemKey is empty when getRowKeyData not provided
+		expect(onRowClick).toHaveBeenCalledWith({ id: 'r1' }, '');
+	});
+
+	it('calls onRowDeactivate instead of onRowClick when row is active', async () => {
+		const user = userEvent.setup();
+		const onRowClick = jest.fn();
+		const onRowDeactivate = jest.fn();
+		const ctx: TableRowContext<Row> = {
+			colCount: 1,
+			onRowClick,
+			onRowDeactivate,
+			isRowActive: () => true,
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
+		};
+		const row = buildMockRow([{ id: 'body' }]);
+		render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRowCells<Row>
+							row={row as never}
+							context={ctx}
+							itemKind="row"
+							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
 						/>
 					</tr>
 				</tbody>
@@ -111,6 +127,9 @@ describe('TanStackRowCells', () => {
 		const ctx: TableRowContext<Row> = {
 			colCount: 1,
 			renderRowActions: () => <button type="button">action</button>,
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
 		};
 		const row = buildMockRow([{ id: 'body' }]);
 
@@ -123,6 +142,8 @@ describe('TanStackRowCells', () => {
 							context={ctx}
 							itemKind="row"
 							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
 						/>
 					</tr>
 				</tbody>
@@ -142,6 +163,9 @@ describe('TanStackRowCells', () => {
 		const ctx: TableRowContext<Row> = {
 			colCount: 3,
 			renderExpandedRow: (r) => <div>expanded-{r.id}</div>,
+			hasSingleColumn: false,
+			columnOrderKey: '',
+			columnVisibilityKey: '',
 		};
 		render(
 			<table>
@@ -152,11 +176,113 @@ describe('TanStackRowCells', () => {
 							context={ctx}
 							itemKind="expansion"
 							hasSingleColumn={false}
+							columnOrderKey=""
+							columnVisibilityKey=""
 						/>
 					</tr>
 				</tbody>
 			</table>,
 		);
 		expect(await screen.findByText('expanded-r1')).toBeInTheDocument();
+	});
+
+	describe('new tab click', () => {
+		it('calls onRowClickNewTab on ctrl+click', () => {
+			const onRowClick = jest.fn();
+			const onRowClickNewTab = jest.fn();
+			const ctx: TableRowContext<Row> = {
+				colCount: 1,
+				onRowClick,
+				onRowClickNewTab,
+				hasSingleColumn: false,
+				columnOrderKey: '',
+				columnVisibilityKey: '',
+			};
+			const row = buildMockRow([{ id: 'body' }]);
+			render(
+				<table>
+					<tbody>
+						<tr>
+							<TanStackRowCells<Row>
+								row={row as never}
+								context={ctx}
+								itemKind="row"
+								hasSingleColumn={false}
+								columnOrderKey=""
+								columnVisibilityKey=""
+							/>
+						</tr>
+					</tbody>
+				</table>,
+			);
+			fireEvent.click(screen.getAllByRole('cell')[0], { ctrlKey: true });
+			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, '');
+			expect(onRowClick).not.toHaveBeenCalled();
+		});
+
+		it('calls onRowClickNewTab on meta+click (cmd)', () => {
+			const onRowClick = jest.fn();
+			const onRowClickNewTab = jest.fn();
+			const ctx: TableRowContext<Row> = {
+				colCount: 1,
+				onRowClick,
+				onRowClickNewTab,
+				hasSingleColumn: false,
+				columnOrderKey: '',
+				columnVisibilityKey: '',
+			};
+			const row = buildMockRow([{ id: 'body' }]);
+			render(
+				<table>
+					<tbody>
+						<tr>
+							<TanStackRowCells<Row>
+								row={row as never}
+								context={ctx}
+								itemKind="row"
+								hasSingleColumn={false}
+								columnOrderKey=""
+								columnVisibilityKey=""
+							/>
+						</tr>
+					</tbody>
+				</table>,
+			);
+			fireEvent.click(screen.getAllByRole('cell')[0], { metaKey: true });
+			expect(onRowClickNewTab).toHaveBeenCalledWith({ id: 'r1' }, '');
+			expect(onRowClick).not.toHaveBeenCalled();
+		});
+
+		it('does not call onRowClick when modifier key is pressed', () => {
+			const onRowClick = jest.fn();
+			const onRowClickNewTab = jest.fn();
+			const ctx: TableRowContext<Row> = {
+				colCount: 1,
+				onRowClick,
+				onRowClickNewTab,
+				hasSingleColumn: false,
+				columnOrderKey: '',
+				columnVisibilityKey: '',
+			};
+			const row = buildMockRow([{ id: 'body' }]);
+			render(
+				<table>
+					<tbody>
+						<tr>
+							<TanStackRowCells<Row>
+								row={row as never}
+								context={ctx}
+								itemKind="row"
+								hasSingleColumn={false}
+								columnOrderKey=""
+								columnVisibilityKey=""
+							/>
+						</tr>
+					</tbody>
+				</table>,
+			);
+			fireEvent.click(screen.getAllByRole('cell')[0], { ctrlKey: true });
+			expect(onRowClick).not.toHaveBeenCalled();
+		});
 	});
 });

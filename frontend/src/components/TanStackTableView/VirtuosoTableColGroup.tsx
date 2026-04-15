@@ -1,48 +1,63 @@
 import type { Table } from '@tanstack/react-table';
 
-import type { TableColumnDef, TanStackTableProps } from './types';
-import { getColumnMinWidthPx } from './utils';
-
-import viewStyles from './TanStackTableView.module.scss';
+import type { TableColumnDef } from './types';
 
 export function VirtuosoTableColGroup<TData>({
 	columns,
-	columnSizingProp,
 	table,
 }: {
 	columns: TableColumnDef<TData>[];
-	columnSizingProp: TanStackTableProps<TData>['columnSizing'];
 	table: Table<TData>;
 }): JSX.Element {
+	const visibleTanstackColumns = table.getVisibleFlatColumns();
+	const columnDefsById = new Map(columns.map((c) => [c.id, c]));
+	const columnSizing = table.getState().columnSizing;
+
 	return (
 		<colgroup>
-			{columns.map((column, colIndex) => {
-				const columnId = column.id;
-				const isFixedColumn = column.width?.fixed != null;
-				const minWidthPx = getColumnMinWidthPx(column);
-				const persistedWidth = columnSizingProp?.[columnId];
-				const computedWidth = table.getColumn(columnId)?.getSize();
-				const effectiveWidth = persistedWidth ?? computedWidth;
+			{visibleTanstackColumns.map((tanstackCol) => {
+				const colDef = columnDefsById.get(tanstackCol.id);
+				const isFixedColumn = colDef?.width?.fixed != null;
+				const hasDefaultWidth = colDef?.width?.default != null;
+				const hasMinMax = colDef?.width?.min != null && colDef?.width?.max != null;
+				const hasPersistedWidth = columnSizing[tanstackCol.id] != null;
+
+				const computedSize = tanstackCol.getSize();
+				const minSize = tanstackCol.columnDef.minSize;
+				const maxSize = tanstackCol.columnDef.maxSize;
+
 				if (isFixedColumn) {
-					return <col key={columnId} className={viewStyles.tanstackFixedCol} />;
-				}
-				const isLastColumn = colIndex === columns.length - 1;
-				if (isLastColumn) {
 					return (
 						<col
-							key={columnId}
-							style={{ width: '100%', minWidth: `${minWidthPx}px` }}
+							key={tanstackCol.id}
+							style={{
+								width: computedSize,
+								minWidth: computedSize,
+								maxWidth: computedSize,
+							}}
 						/>
 					);
 				}
-				const widthPx =
-					effectiveWidth != null ? Math.max(effectiveWidth, minWidthPx) : minWidthPx;
+
+				if (hasMinMax && !hasDefaultWidth && !hasPersistedWidth) {
+					return (
+						<col
+							key={tanstackCol.id}
+							style={{
+								minWidth: minSize,
+								maxWidth: maxSize,
+							}}
+						/>
+					);
+				}
+
 				return (
 					<col
-						key={columnId}
+						key={tanstackCol.id}
 						style={{
-							width: `${widthPx}px`,
-							minWidth: `${minWidthPx}px`,
+							width: computedSize,
+							minWidth: minSize,
+							maxWidth: maxSize,
 						}}
 					/>
 				);

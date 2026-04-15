@@ -1,6 +1,7 @@
 .tanstackTableViewWrapper {
 	display: flex;
 	flex-direction: column;
+	flex: 1;
 	width: 100%;
 	position: relative;
 	min-height: 0;
@@ -35,7 +36,7 @@
 
 .tanstackTableVirtuoso {
 	width: 100%;
-	overflow-x: scroll;
+	overflow-x: auto;
 }
 
 .tanstackTableFootLoaderCell {
@@ -44,8 +45,9 @@
 }
 
 .tanstackTableVirtuosoScroll {
+	flex: 1;
 	width: 100%;
-	overflow-x: scroll;
+	overflow-x: auto;
 	scrollbar-width: thin;
 	scrollbar-color: var(--bg-slate-300) transparent;
 
@@ -108,6 +110,19 @@
 	}
 }
 
+.paginationContainer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.paginationPageSize {
+	width: 80px;
+	--combobox-trigger-height: 2rem;
+}
+
 .tanstackLoadingOverlay {
 	position: absolute;
 	left: 50%;
@@ -120,6 +135,8 @@
 	z-index: 3;
 	border-radius: 8px;
 	padding: 8px 16px;
+	background: var(--l1-background);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 :global(.lightMode) .tanstackTableVirtuosoScroll {

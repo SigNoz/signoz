@@ -17,9 +17,8 @@ import RawLogView from 'components/Logs/RawLogView';
 import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColumns';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
-import TanStackTable from 'components/TanStackTableView';
-import type { TanStackTableHandle } from 'components/TanStackTableView/types';
-import { useTableColumns } from 'components/TanStackTableView/useTableColumns';
+import type { TanStackTableHandle } from 'components/TanStackTableView';
+import TanStackTable, { useTableColumns } from 'components/TanStackTableView';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -215,7 +214,6 @@ function LogsExplorerList({
 					onRemoveColumn={handleRemoveColumn}
 					data={logs}
 					isLoading={isLoading || isFetching}
-					loadingTip="Getting Logs"
 					onEndReached={onEndReached}
 					isRowActive={(log): boolean =>
 						log.id === activeLog?.id || log.id === activeLogId

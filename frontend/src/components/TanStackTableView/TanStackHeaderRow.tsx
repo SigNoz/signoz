@@ -3,15 +3,15 @@ import type {
 	MouseEvent as ReactMouseEvent,
 	TouchEvent as ReactTouchEvent,
 } from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/popover';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
-import { GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 
-import { TableColumnDef } from './types';
+import { SortState, TableColumnDef } from './types';
 
 import headerStyles from './TanStackHeaderRow.module.scss';
 import tableStyles from './TanStackTable.module.scss';
@@ -23,9 +23,13 @@ type TanStackHeaderRowProps<TData = unknown> = {
 	hasSingleColumn: boolean;
 	canRemoveColumn?: boolean;
 	onRemoveColumn?: (columnId: string) => void;
+	orderBy?: SortState | null;
+	onSort?: (sort: SortState | null) => void;
 };
 
 const GRIP_ICON_SIZE = 12;
+
+const SORT_ICON_SIZE = 14;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function TanStackHeaderRow<TData>({
@@ -35,6 +39,8 @@ function TanStackHeaderRow<TData>({
 	hasSingleColumn,
 	canRemoveColumn = false,
 	onRemoveColumn,
+	orderBy,
+	onSort,
 }: TanStackHeaderRowProps<TData>): JSX.Element {
 	const columnId = column.id;
 	const isDragColumn = column.enableMove !== false && column.pin == null;
@@ -43,6 +49,9 @@ function TanStackHeaderRow<TData>({
 	const isColumnRemovable = Boolean(
 		canRemoveColumn && onRemoveColumn && column.enableRemove,
 	);
+	const isSortable = column.enableSort === true && Boolean(onSort);
+	const currentSortDirection =
+		orderBy?.columnName === columnId ? orderBy.order : null;
 	const isResizing = Boolean(header?.column.getIsResizing());
 	const resizeHandler = header?.getResizeHandler();
 	const headerText =
@@ -50,6 +59,20 @@ function TanStackHeaderRow<TData>({
 			? column.header
 			: String(header?.id ?? columnId);
 	const headerTitleAttr = headerText.replace(/^\w/, (c) => c.toUpperCase());
+
+	const handleSortClick = useCallback((): void => {
+		if (!isSortable || !onSort) {
+			return;
+		}
+		if (currentSortDirection === null) {
+			onSort({ columnName: columnId, order: 'asc' });
+		} else if (currentSortDirection === 'asc') {
+			onSort({ columnName: columnId, order: 'desc' });
+		} else {
+			onSort(null);
+		}
+	}, [isSortable, onSort, currentSortDirection, columnId]);
+
 	const handleResizeStart = (
 		event: ReactMouseEvent<HTMLElement> | ReactTouchEvent<HTMLElement>,
 	): void => {
@@ -87,6 +110,7 @@ function TanStackHeaderRow<TData>({
 		headerStyles.tanstackHeaderContent,
 		isResizableColumn && headerStyles.hasResizeControl,
 		isColumnRemovable && headerStyles.hasActionControl,
+		isSortable && headerStyles.isSortable,
 	);
 
 	const thClassName = cx(
@@ -123,13 +147,51 @@ function TanStackHeaderRow<TData>({
 						</span>
 					</span>
 				) : null}
-				<span className="tanstack-header-title" title={headerTitleAttr}>
-					{header?.column?.columnDef
-						? flexRender(header.column.columnDef.header, header.getContext())
-						: typeof column.header === 'function'
-						? column.header()
-						: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
-				</span>
+				{isSortable ? (
+					<button
+						type="button"
+						className={cx(
+							'tanstack-header-title',
+							headerStyles.tanstackSortButton,
+							currentSortDirection && headerStyles.isSorted,
+						)}
+						title={headerTitleAttr}
+						onClick={handleSortClick}
+						aria-sort={
+							currentSortDirection === 'asc'
+								? 'ascending'
+								: currentSortDirection === 'desc'
+								? 'descending'
+								: 'none'
+						}
+					>
+						<span className={headerStyles.tanstackSortLabel}>
+							{header?.column?.columnDef
+								? flexRender(header.column.columnDef.header, header.getContext())
+								: typeof column.header === 'function'
+								? column.header()
+								: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
+						</span>
+						<span className={headerStyles.tanstackSortIndicator}>
+							{currentSortDirection === 'asc' ? (
+								<ChevronUp size={SORT_ICON_SIZE} />
+							) : currentSortDirection === 'desc' ? (
+								<ChevronDown size={SORT_ICON_SIZE} />
+							) : null}
+						</span>
+					</button>
+				) : (
+					<span
+						className={cx('tanstack-header-title', headerStyles.tanstackHeaderTitle)}
+						title={headerTitleAttr}
+					>
+						{header?.column?.columnDef
+							? flexRender(header.column.columnDef.header, header.getContext())
+							: typeof column.header === 'function'
+							? column.header()
+							: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
+					</span>
+				)}
 				{isColumnRemovable && (
 					<Popover>
 						<PopoverTrigger asChild>
