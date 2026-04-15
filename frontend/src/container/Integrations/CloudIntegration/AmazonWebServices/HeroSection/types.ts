@@ -11,13 +11,11 @@ export enum ModalStateEnum {
 	FORM = 'form',
 	WAITING = 'waiting',
 	ERROR = 'error',
-	SUCCESS = 'success',
 }
 
 export interface RegionFormProps {
 	form: FormInstance;
 	modalState: ModalStateEnum;
-	setModalState: Dispatch<SetStateAction<ModalStateEnum>>;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
 	onRegionSelect: () => void;
@@ -28,6 +26,12 @@ export interface RegionFormProps {
 	isConnectionParamsLoading?: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
+	onConnectionSuccess: (payload: {
+		cloudAccountId: string;
+		status?: unknown;
+	}) => void;
+	onConnectionTimeout: (payload: { id?: string }) => void;
+	onConnectionError: () => void;
 }
 
 export interface IntegrationModalProps {

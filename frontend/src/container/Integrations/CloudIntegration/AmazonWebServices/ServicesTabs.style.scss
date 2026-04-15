@@ -55,6 +55,24 @@
 	}
 }
 
+.services-list-empty-message {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	padding: 12px;
+	color: var(--bg-vanilla-400);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 20px; /* 142.857% */
+	letter-spacing: -0.07px;
+
+	.empty-state-svg {
+		height: 20px;
+		width: 20px;
+	}
+}
+
 .services-filter {
 	padding: 12px;
 

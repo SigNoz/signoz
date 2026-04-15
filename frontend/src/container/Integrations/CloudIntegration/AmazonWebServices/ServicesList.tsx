@@ -80,7 +80,17 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	}
 
 	if (!awsServices?.length) {
-		return <div>No services found</div>;
+		return (
+			<div className="services-list-empty-message">
+				{' '}
+				<img
+					src="/Icons/emptyState.svg"
+					alt="no-services-found"
+					className="empty-state-svg"
+				/>{' '}
+				No services found
+			</div>
+		);
 	}
 
 	const isEnabledServicesEmpty = enabledServices.length === 0;

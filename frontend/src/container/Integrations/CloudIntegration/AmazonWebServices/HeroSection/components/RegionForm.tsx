@@ -5,7 +5,6 @@ import cx from 'classnames';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { regions } from 'utils/regions';
 
-import logEvent from '../../../../../../api/common/logEvent';
 import { ModalStateEnum, RegionFormProps } from '../types';
 import AlertMessage from './AlertMessage';
 import {
@@ -18,7 +17,6 @@ import RenderConnectionFields from './RenderConnectionParams';
 export function RegionForm({
 	form,
 	modalState,
-	setModalState,
 	selectedRegions,
 	onSubmit,
 	accountId,
@@ -27,6 +25,9 @@ export function RegionForm({
 	isConnectionParamsLoading,
 	setSelectedRegions,
 	setIncludeAllRegions,
+	onConnectionSuccess,
+	onConnectionTimeout,
+	onConnectionError,
 }: RegionFormProps): JSX.Element {
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
@@ -50,20 +51,16 @@ export function RegionForm({
 						const cloudAccountId =
 							response.data.providerAccountId ?? response.data.id;
 
-						setModalState(ModalStateEnum.SUCCESS);
-						logEvent('AWS Integration: Account connected', {
+						onConnectionSuccess({
 							cloudAccountId,
 							status: response.data.agentReport,
 						});
 					} else if (Date.now() - startTimeRef.current >= errorTimeout) {
-						setModalState(ModalStateEnum.ERROR);
-						logEvent('AWS Integration: Account connection attempt timed out', {
-							id: accountId,
-						});
+						onConnectionTimeout({ id: accountId });
 					}
 				},
 				onError: () => {
-					setModalState(ModalStateEnum.ERROR);
+					onConnectionError();
 				},
 			},
 		},

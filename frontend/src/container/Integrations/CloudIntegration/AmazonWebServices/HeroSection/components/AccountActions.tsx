@@ -178,7 +178,7 @@ function AccountActions(): JSX.Element {
 		() =>
 			accounts?.length
 				? accounts.map((account) => ({
-						value: account.providerAccountId,
+						value: account.cloud_account_id,
 						label: account.providerAccountId,
 				  }))
 				: [],

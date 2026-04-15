@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
-import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import { DrawerWrapper } from '@signozhq/drawer';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 
@@ -13,18 +11,15 @@ import {
 	ModalStateEnum,
 } from '../types';
 import { RegionForm } from './RegionForm';
-import { SuccessView } from './SuccessView';
 
 import './CloudAccountSetupModal.style.scss';
 
 function CloudAccountSetupModal({
 	onClose,
 }: IntegrationModalProps): JSX.Element {
-	const queryClient = useQueryClient();
 	const {
 		form,
 		modalState,
-		setModalState,
 		isLoading,
 		activeView,
 		selectedRegions,
@@ -40,19 +35,17 @@ function CloudAccountSetupModal({
 		handleRegionChange,
 		connectionParams,
 		isConnectionParamsLoading,
+		handleConnectionSuccess,
+		handleConnectionTimeout,
+		handleConnectionError,
 	} = useIntegrationModal({ onClose });
 
 	const renderContent = useCallback(() => {
-		if (modalState === ModalStateEnum.SUCCESS) {
-			return <SuccessView />;
-		}
-
 		return (
 			<div className="cloud-account-setup-modal__content">
 				<RegionForm
 					form={form}
 					modalState={modalState}
-					setModalState={setModalState}
 					selectedRegions={selectedRegions}
 					includeAllRegions={includeAllRegions}
 					onRegionSelect={handleRegionSelect}
@@ -63,6 +56,9 @@ function CloudAccountSetupModal({
 					isConnectionParamsLoading={isConnectionParamsLoading}
 					setSelectedRegions={setSelectedRegions}
 					setIncludeAllRegions={setIncludeAllRegions}
+					onConnectionSuccess={handleConnectionSuccess}
+					onConnectionTimeout={handleConnectionTimeout}
+					onConnectionError={handleConnectionError}
 				/>
 
 				<div className="cloud-account-setup-modal__footer">
@@ -88,7 +84,6 @@ function CloudAccountSetupModal({
 	}, [
 		modalState,
 		form,
-		setModalState,
 		selectedRegions,
 		includeAllRegions,
 		handleRegionSelect,
@@ -101,6 +96,9 @@ function CloudAccountSetupModal({
 		setIncludeAllRegions,
 		isLoading,
 		isGeneratingUrl,
+		handleConnectionSuccess,
+		handleConnectionTimeout,
+		handleConnectionError,
 	]);
 
 	const getSelectedRegionsCount = useCallback(
@@ -109,26 +107,6 @@ function CloudAccountSetupModal({
 	);
 
 	const getModalConfig = useCallback(() => {
-		// Handle success state first
-		if (modalState === ModalStateEnum.SUCCESS) {
-			return {
-				title: 'AWS Integration',
-				okText: (
-					<div className="cloud-account-setup-success-view__footer-button">
-						Continue
-					</div>
-				),
-				block: true,
-				onOk: (): void => {
-					queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
-					handleClose();
-				},
-				cancelButtonProps: { style: { display: 'none' } },
-				disabled: false,
-			};
-		}
-
-		// Handle other views
 		const viewConfigs = {
 			[ActiveViewEnum.FORM]: {
 				title: 'Add AWS Account',
@@ -161,9 +139,7 @@ function CloudAccountSetupModal({
 		isLoading,
 		isGeneratingUrl,
 		activeView,
-		handleClose,
 		setActiveView,
-		queryClient,
 	]);
 
 	const modalConfig = getModalConfig();

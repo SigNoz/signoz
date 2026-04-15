@@ -6,6 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/sonner';
 import { Form, FormInstance } from 'antd';
 import {
@@ -18,6 +19,7 @@ import {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesPostableAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,
@@ -53,11 +55,18 @@ interface UseIntegrationModal {
 	handleRegionChange: (value: string) => void;
 	connectionParams?: CloudintegrationtypesCredentialsDTO;
 	isConnectionParamsLoading: boolean;
+	handleConnectionSuccess: (payload: {
+		cloudAccountId: string;
+		status?: unknown;
+	}) => void;
+	handleConnectionTimeout: (payload: { id?: string }) => void;
+	handleConnectionError: () => void;
 }
 
 export function useIntegrationModal({
 	onClose,
 }: UseIntegrationModalProps): UseIntegrationModal {
+	const queryClient = useQueryClient();
 	const [form] = Form.useForm();
 	const [modalState, setModalState] = useState<ModalStateEnum>(
 		ModalStateEnum.FORM,
@@ -96,6 +105,35 @@ export function useIntegrationModal({
 		setModalState(ModalStateEnum.FORM);
 		onClose();
 	}, [onClose]);
+
+	const handleConnectionSuccess = useCallback(
+		(payload: { cloudAccountId: string; status?: unknown }): void => {
+			logEvent('AWS Integration: Account connected', {
+				cloudAccountId: payload.cloudAccountId,
+				status: payload.status,
+			});
+			toast.success('AWS account connected successfully', {
+				position: 'bottom-right',
+			});
+			void queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
+			handleClose();
+		},
+		[handleClose, queryClient],
+	);
+
+	const handleConnectionTimeout = useCallback(
+		(payload: { id?: string }): void => {
+			setModalState(ModalStateEnum.ERROR);
+			logEvent('AWS Integration: Account connection attempt timed out', {
+				id: payload.id,
+			});
+		},
+		[],
+	);
+
+	const handleConnectionError = useCallback((): void => {
+		setModalState(ModalStateEnum.ERROR);
+	}, []);
 
 	const { mutate: generateUrl, isLoading: isGeneratingUrl } = useCreateAccount();
 
@@ -199,5 +237,8 @@ export function useIntegrationModal({
 			| CloudintegrationtypesCredentialsDTO
 			| undefined,
 		isConnectionParamsLoading,
+		handleConnectionSuccess,
+		handleConnectionTimeout,
+		handleConnectionError,
 	};
 }
