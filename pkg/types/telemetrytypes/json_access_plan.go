@@ -167,9 +167,6 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 		var err error
 		hasJSON := slices.Contains(types, FieldDataTypeArrayJSON)
 		hasDynamic := slices.Contains(types, FieldDataTypeArrayDynamic)
-		// since both are missing; probably high cardinal data is being queried
-		// so we query both array types. This enables User being able to query any
-		// fields that were skipped by metadataexporter
 		if !hasJSON && !hasDynamic {
 			return nil, errors.NewInternalf(CodePlanFieldDataTypeMissing, "array data type missing for path %s", pathSoFar)
 		}
