@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -127,6 +128,9 @@ type Config struct {
 
 	// Auditor config
 	Auditor auditor.Config `mapstructure:"auditor"`
+
+	// CloudIntegration config
+	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -158,6 +162,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
 		auditor.NewConfigFactory(),
+		cloudintegration.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -300,7 +305,6 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		}
 		config.Flagger.Config.Boolean[flagger.FeatureKafkaSpanEval.String()] = os.Getenv("KAFKA_SPAN_EVAL") == "true"
 	}
-
 }
 
 func (config Config) Collect(_ context.Context, _ valuer.UUID) (map[string]any, error) {

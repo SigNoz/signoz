@@ -143,8 +143,8 @@
 					background-color: #4568dc;
 					content: '';
 					display: inline-block;
-					background: url('/public/Icons/status-inprogress-pill.svg') no-repeat
-						center;
+					background: url('../../../assets/Icons/status-inprogress-pill.svg')
+						no-repeat center;
 					background-size: contain;
 					border: none !important;
 
@@ -160,7 +160,8 @@
 					background-color: var(--bg-amber-400);
 					content: '';
 					display: inline-block;
-					background: url('/public/Icons/status-skipped-pill.svg') no-repeat center;
+					background: url('../../../assets/Icons/status-skipped-pill.svg') no-repeat
+						center;
 					background-size: contain;
 					border: none;
 

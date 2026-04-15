@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	factorAPIKeyNameRegex = regexp.MustCompile("^[a-z-]{1,80}$")
+	factorAPIKeyNameRegex = regexp.MustCompile("^[a-z][a-z0-9-]{0,79}$")
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 	ErrCodeAPIKeyAlreadyExists = errors.MustNewCode("api_key_already_exists")
 	ErrCodeAPIKeytNotFound     = errors.MustNewCode("api_key_not_found")
 	ErrCodeAPIKeyExpired       = errors.MustNewCode("api_key_expired")
-	errInvalidAPIKeyName       = errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must be 1–80 characters long and contain only lowercase letters (a-z) and hyphens (-)")
+	errInvalidAPIKeyName       = errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 80 characters long")
 )
 
 type FactorAPIKey struct {

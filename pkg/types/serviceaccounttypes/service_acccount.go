@@ -23,7 +23,7 @@ var (
 	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
 	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
 	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
-	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must be 1–50 characters long and contain only lowercase letters (a-z) and hyphens (-)")
+	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 50 characters long")
 )
 
 var (
@@ -32,7 +32,7 @@ var (
 )
 
 var (
-	serviceAccountNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+	serviceAccountNameRegex = regexp.MustCompile("^[a-z][a-z0-9-]{0,49}$")
 )
 
 type ServiceAccountStatus struct{ valuer.String }
@@ -238,6 +238,7 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccount, error)
 	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*ServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*ServiceAccount, error)
+	GetByIDAndStatus(context.Context, valuer.UUID, ServiceAccountStatus) (*ServiceAccount, error)
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 	List(context.Context, valuer.UUID) ([]*ServiceAccount, error)
 	Update(context.Context, valuer.UUID, *ServiceAccount) error
