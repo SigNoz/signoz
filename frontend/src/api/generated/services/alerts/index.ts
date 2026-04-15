@@ -16,14 +16,14 @@ import { useQuery } from 'react-query';
 
 import type { ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
-import type { RenderErrorResponseDTO } from '../sigNoz.schemas';
+import type { GetAlerts200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 /**
  * This endpoint returns alerts for the organization
  * @summary Get alerts
  */
 export const getAlerts = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<GetAlerts200>({
 		url: `/api/v1/alerts`,
 		method: 'GET',
 		signal,

@@ -221,7 +221,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns alerts for the organization",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            nil,
+		Response:            make(alertmanagertypes.DeprecatedGettableAlerts, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

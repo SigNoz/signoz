@@ -37,6 +37,35 @@ export interface AlertmanagertypesChannelDTO {
 	updatedAt?: Date;
 }
 
+export interface AlertmanagertypesDeprecatedGettableAlertDTO {
+	annotations?: ModelLabelSetDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endsAt?: Date;
+	/**
+	 * @type string
+	 */
+	fingerprint?: string;
+	/**
+	 * @type string
+	 */
+	generatorURL?: string;
+	labels?: ModelLabelSetDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	receivers?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startsAt?: Date;
+	status?: TypesAlertStatusDTO;
+}
+
 export enum AlertmanagertypesExpressionKindDTO {
 	rule = 'rule',
 	policy = 'policy',
@@ -1922,6 +1951,10 @@ export enum MetrictypesTypeDTO {
 	summary = 'summary',
 	exponentialhistogram = 'exponentialhistogram',
 }
+export interface ModelLabelSetDTO {
+	[key: string]: string;
+}
+
 export interface PreferencetypesPreferenceDTO {
 	/**
 	 * @type array
@@ -3309,6 +3342,23 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 	stringValues?: string[];
 }
 
+export interface TypesAlertStatusDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	inhibitedBy?: string[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	silencedBy?: string[] | null;
+	/**
+	 * @type string
+	 */
+	state?: string;
+}
+
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -3654,6 +3704,17 @@ export interface ZeustypesPostableProfileDTO {
 	 */
 	where_did_you_discover_signoz: string;
 }
+
+export type GetAlerts200 = {
+	/**
+	 * @type array
+	 */
+	data: AlertmanagertypesDeprecatedGettableAlertDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
 
 export type AuthzCheck200 = {
 	/**

@@ -25,6 +25,30 @@ components:
       - data
       - orgId
       type: object
+    AlertmanagertypesDeprecatedGettableAlert:
+      properties:
+        annotations:
+          $ref: '#/components/schemas/ModelLabelSet'
+        endsAt:
+          format: date-time
+          type: string
+        fingerprint:
+          type: string
+        generatorURL:
+          type: string
+        labels:
+          $ref: '#/components/schemas/ModelLabelSet'
+        receivers:
+          items:
+            type: string
+          nullable: true
+          type: array
+        startsAt:
+          format: date-time
+          type: string
+        status:
+          $ref: '#/components/schemas/TypesAlertStatus'
+      type: object
     AlertmanagertypesExpressionKind:
       enum:
       - rule
@@ -1681,6 +1705,10 @@ components:
       - summary
       - exponentialhistogram
       type: string
+    ModelLabelSet:
+      additionalProperties:
+        type: string
+      type: object
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -2884,6 +2912,21 @@ components:
             type: string
           type: array
       type: object
+    TypesAlertStatus:
+      properties:
+        inhibitedBy:
+          items:
+            type: string
+          nullable: true
+          type: array
+        silencedBy:
+          items:
+            type: string
+          nullable: true
+          type: array
+        state:
+          type: string
+      type: object
     TypesChangePasswordRequest:
       properties:
         newPassword:
@@ -3165,7 +3208,17 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AlertmanagertypesDeprecatedGettableAlert'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
           description: OK
         "401":
           content:
