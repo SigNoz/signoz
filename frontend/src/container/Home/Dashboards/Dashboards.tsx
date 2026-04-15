@@ -10,6 +10,7 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
+import { openExternalLink, openInNewTab } from 'utils/navigation';
 
 import dialsUrl from '@/assets/Icons/dials.svg';
 
@@ -87,10 +88,7 @@ export default function Dashboards({
 								logEvent('Homepage: Learn more clicked', {
 									source: 'Dashboards',
 								});
-								window.open(
-									'https://signoz.io/docs/userguide/manage-dashboards/',
-									'_blank',
-								);
+								openExternalLink('https://signoz.io/docs/userguide/manage-dashboards/');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />
@@ -114,7 +112,7 @@ export default function Dashboards({
 							dashboardName: dashboard.data.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(), '_blank');
+							openInNewTab(getLink());
 						} else {
 							safeNavigate(getLink());
 						}

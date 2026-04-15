@@ -20,6 +20,7 @@ import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+import { openExternalLink } from 'utils/navigation';
 
 import './Support.styles.scss';
 
@@ -92,7 +93,7 @@ export default function Support(): JSX.Element {
 
 	const { pathname } = useLocation();
 	const handleChannelWithRedirects = (url: string): void => {
-		window.open(url, '_blank');
+		openExternalLink(url);
 	};
 
 	useEffect(() => {

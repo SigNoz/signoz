@@ -16,6 +16,7 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import './PublicDashboard.styles.scss';
 
@@ -294,7 +295,7 @@ function PublicDashboardSetting(): JSX.Element {
 								icon={<ExternalLink size={12} />}
 								onClick={(): void => {
 									if (publicDashboardURL) {
-										window.open(publicDashboardURL, '_blank');
+										openInNewTab(publicDashboardURL);
 									}
 								}}
 							/>

@@ -2,6 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import EmptyQuickFilterIcon from 'assets/CustomIcons/EmptyQuickFilterIcon';
 import { ArrowUpRight } from 'lucide-react';
+import { openExternalLink } from 'utils/navigation';
 
 const QUICK_FILTER_DOC_PATHS: Record<string, string> = {
 	severity_text: 'severity-text',
@@ -22,9 +23,8 @@ function LogsQuickFilterEmptyState({
 	const handleLearnMoreClick = (): void => {
 		const section = QUICK_FILTER_DOC_PATHS[attributeKey];
 
-		window.open(
+		openExternalLink(
 			`https://signoz.io/docs/logs-management/features/logs-quick-filters#${section}`,
-			'_blank',
 		);
 	};
 	return (

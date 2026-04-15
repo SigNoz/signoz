@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import history from 'lib/history';
 import { Home, LifeBuoy } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
 
@@ -11,8 +12,7 @@ import './ErrorBoundaryFallback.styles.scss';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {
-		// Go to home page
-		window.location.href = ROUTES.HOME;
+		history.push(ROUTES.HOME);
 	};
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();

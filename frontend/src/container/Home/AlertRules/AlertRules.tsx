@@ -13,6 +13,7 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
+import { openExternalLink } from 'utils/navigation';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
@@ -103,11 +104,7 @@ export default function AlertRules({
 									source: 'Alert Rules',
 								});
 
-								window.open(
-									'https://signoz.io/docs/alerts/',
-									'_blank',
-									'noreferrer noopener',
-								);
+								openExternalLink('https://signoz.io/docs/alerts/');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

@@ -20,6 +20,7 @@ const config: Config.InitialOptions = {
 		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
+		'^hooks/useSafeNavigate\\.impl$': '<rootDir>/src/hooks/useSafeNavigate.ts',
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',

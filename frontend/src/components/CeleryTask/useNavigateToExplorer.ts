@@ -7,11 +7,13 @@ import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
+import history from 'lib/history';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { openInNewTab } from 'utils/navigation';
 
 export interface NavigateToExplorerProps {
 	filters: TagFilterItem[];
@@ -133,7 +135,11 @@ export function useNavigateToExplorer(): (
 				QueryParams.compositeQuery
 			}=${JSONCompositeQuery}`;
 
-			window.open(newExplorerPath, sameTab ? '_self' : '_blank');
+			if (sameTab) {
+				history.push(newExplorerPath);
+			} else {
+				openInNewTab(newExplorerPath);
+			}
 		},
 		[
 			prepareQuery,

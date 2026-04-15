@@ -17,6 +17,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { openInNewTab } from 'utils/navigation';
 
 import { useContextLogData } from './useContextLogData';
 
@@ -116,7 +117,7 @@ function ContextLogRenderer({
 			);
 
 			const link = `${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`;
-			window.open(link, '_blank', 'noopener,noreferrer');
+			openInNewTab(link);
 		},
 		[query, urlQuery],
 	);

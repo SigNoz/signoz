@@ -115,6 +115,7 @@ const useBaseAggregateOptions = ({
 					key={id}
 					icon={<LinkOutlined />}
 					onClick={(): void => {
+						// eslint-disable-next-line no-restricted-syntax -- context links can be internal or external URLs provided by users
 						window.open(url, '_blank');
 						onClose?.();
 					}}

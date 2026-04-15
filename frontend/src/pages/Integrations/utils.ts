@@ -1,10 +1,11 @@
 import history from 'lib/history';
+import { openExternalLink } from 'utils/navigation';
 
 export const handleContactSupport = (isCloudUser: boolean): void => {
 	if (isCloudUser) {
 		history.push('/support');
 	} else {
-		window.open('https://signoz.io/slack', '_blank');
+		openExternalLink('https://signoz.io/slack');
 	}
 };
 

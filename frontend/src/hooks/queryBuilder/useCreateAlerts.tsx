@@ -22,6 +22,7 @@ import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
+import { openInNewTab } from 'utils/navigation';
 
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 	const queryRangeMutation = useMutation(getSubstituteVars);
@@ -92,7 +93,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 				const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
 
-				window.open(url, '_blank', 'noreferrer');
+				openInNewTab(url);
 			},
 			onError: () => {
 				notifications.error({

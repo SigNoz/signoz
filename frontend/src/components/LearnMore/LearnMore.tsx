@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { ArrowUpRight } from 'lucide-react';
+import { openExternalLink } from 'utils/navigation';
 
 import './LearnMore.styles.scss';
 
@@ -14,7 +15,7 @@ function LearnMore({ text, url, onClick }: LearnMoreProps): JSX.Element {
 	const handleClick = (): void => {
 		onClick?.();
 		if (url) {
-			window.open(url, '_blank');
+			openExternalLink(url);
 		}
 	};
 	return (

@@ -213,6 +213,23 @@ module.exports = {
 				message:
 					'Avoid calling .getState() directly. Export a standalone action from the store instead.',
 			},
+			{
+				selector:
+					"CallExpression[callee.object.name='window'][callee.property.name='open']",
+				message:
+					'Do not call window.open() directly. ' +
+					"Use openInNewTab() from 'utils/navigation' for internal SigNoz paths. " +
+					"For intentional external URLs, use openExternalLink() from 'utils/navigation'. " +
+					'For unavoidable direct calls, add // eslint-disable-next-line with a reason.',
+			},
+			{
+				selector:
+					"AssignmentExpression[left.object.name='window'][left.property.name='href']",
+				message:
+					'Do not assign window.location.href for internal navigation. ' +
+					"Use history.push() or history.replace() from 'lib/history'. " +
+					'For external redirects (SSO, logout URLs), add // eslint-disable-next-line with a reason.',
+			},
 		],
 	},
 	overrides: [
@@ -261,6 +278,15 @@ module.exports = {
 			// Store definition files are the only place .getState() is permitted —
 			// they are the canonical source for standalone action exports.
 			files: ['**/*Store.{ts,tsx}'],
+			rules: {
+				'no-restricted-syntax': 'off',
+			},
+		},
+		{
+			// navigation.ts and useSafeNavigate.ts are the canonical implementations that call
+			// window.open after computing a base-path-aware href. They are the only places
+			// allowed to call window.open directly.
+			files: ['src/utils/navigation.ts', 'src/hooks/useSafeNavigate.ts'],
 			rules: {
 				'no-restricted-syntax': 'off',
 			},

@@ -17,6 +17,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
+import { openExternalLink } from 'utils/navigation';
 
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
@@ -133,11 +134,7 @@ export default function ServiceTraces({
 									) {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
-										window?.open(
-											DOCS_LINKS.ADD_DATA_SOURCE,
-											'_blank',
-											'noopener noreferrer',
-										);
+										openExternalLink(DOCS_LINKS.ADD_DATA_SOURCE);
 									}
 								}}
 							>
@@ -151,10 +148,7 @@ export default function ServiceTraces({
 									logEvent('Homepage: Learn more clicked', {
 										source: 'Service Traces',
 									});
-									window.open(
-										'https://signoz.io/docs/instrumentation/overview/',
-										'_blank',
-									);
+									openExternalLink('https://signoz.io/docs/instrumentation/overview/');
 								}}
 							>
 								Learn more <ArrowUpRight size={12} />

@@ -2,6 +2,7 @@ import { Typography } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
+import { openExternalLink } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 
@@ -14,7 +15,7 @@ export default function LogsError(): JSX.Element {
 		if (isCloudUserVal) {
 			history.push('/support');
 		} else {
-			window.open('https://signoz.io/slack', '_blank');
+			openExternalLink('https://signoz.io/slack');
 		}
 	};
 

@@ -19,6 +19,7 @@ import { useAppContext } from 'providers/App/App';
 import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
+import { openExternalLink } from 'utils/navigation';
 
 import circusTentUrl from '@/assets/Icons/circus-tent.svg';
 import eightBallUrl from '@/assets/Icons/eight-ball.svg';
@@ -196,11 +197,7 @@ export default function SavedViews({
 									entity: selectedEntity,
 								});
 
-								window.open(
-									'https://signoz.io/docs/product-features/saved-view/',
-									'_blank',
-									'noopener noreferrer',
-								);
+								openExternalLink('https://signoz.io/docs/product-features/saved-view/');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import history from 'lib/history';
 import { cloneDeep, isEqual } from 'lodash-es';
 
 interface NavigateOptions {
@@ -126,11 +127,30 @@ export const useSafeNavigate = (
 			const shouldOpenInNewTab = options?.newTab;
 
 			if (shouldOpenInNewTab) {
-				const targetPath =
-					typeof to === 'string'
-						? to
-						: `${to.pathname || location.pathname}${to.search || ''}`;
-				window.open(targetPath, '_blank');
+				if (!to) {
+					return;
+				}
+				let href: string;
+				if (typeof to === 'string') {
+					// 'to' may include a query string; parse before passing to createHref
+					// so search params are not embedded in pathname.
+					const parsed = new URL(to, window.location.origin);
+					if (parsed.origin !== window.location.origin) {
+						window.open(to, '_blank');
+						return;
+					}
+					href = history.createHref({
+						pathname: parsed.pathname,
+						search: parsed.search,
+						hash: parsed.hash,
+					});
+				} else {
+					href = history.createHref({
+						pathname: to.pathname ?? location.pathname,
+						search: to.search ?? '',
+					});
+				}
+				window.open(href, '_blank');
 				return;
 			}
 

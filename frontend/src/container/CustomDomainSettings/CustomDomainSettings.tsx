@@ -21,6 +21,7 @@ import { useGetHosts, usePutHost } from 'api/generated/services/zeus';
 import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
+import { openExternalLink } from 'utils/navigation';
 
 import CustomDomainEditModal from './CustomDomainEditModal';
 
@@ -48,7 +49,7 @@ function DomainUpdateToast({
 					className="custom-domain-toast-visit-btn"
 					suffixIcon={<ExternalLink size={12} />}
 					onClick={(): void => {
-						window.open(url, '_blank', 'noopener,noreferrer');
+						openExternalLink(url);
 					}}
 				>
 					Visit new URL

@@ -38,6 +38,7 @@ export default defineConfig(
 					data: {
 						PYLON_APP_ID: env.VITE_PYLON_APP_ID || '',
 						APPCUES_APP_ID: env.VITE_APPCUES_APP_ID || '',
+						BASE_PATH: env.VITE_BASE_PATH || '/', // ← REMOVE when BE injection is live
 					},
 				},
 			}),
@@ -81,6 +82,7 @@ export default defineConfig(
 
 		return {
 			plugins,
+			base: './',
 			resolve: {
 				alias: {
 					'@': resolve(__dirname, './src'),

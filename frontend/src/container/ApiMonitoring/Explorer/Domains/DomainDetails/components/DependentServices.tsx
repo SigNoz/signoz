@@ -9,6 +9,7 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
+import { openInNewTab } from 'utils/navigation';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
@@ -107,7 +108,7 @@ function DependentServices({
 							urlQuery.set(QueryParams.startTime, timeRange.startTime.toString());
 							urlQuery.set(QueryParams.endTime, timeRange.endTime.toString());
 							url.search = urlQuery.toString();
-							window.open(url.toString(), '_blank');
+							openInNewTab(`${url.pathname}${url.search}`);
 						},
 						className: 'clickable-row',
 					})}

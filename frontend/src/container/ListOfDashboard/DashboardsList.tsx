@@ -83,6 +83,7 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
+import { openExternalLink, openInNewTab } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
@@ -457,7 +458,7 @@ function DashboardsList(): JSX.Element {
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
-														window.open(getLink(), '_blank');
+														openInNewTab(getLink());
 													}}
 												>
 													Open in New Tab
@@ -739,9 +740,8 @@ function DashboardsList(): JSX.Element {
 									className="learn-more"
 									data-testid="learn-more"
 									onClick={(): void => {
-										window.open(
+										openExternalLink(
 											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
-											'_blank',
 										);
 									}}
 								>

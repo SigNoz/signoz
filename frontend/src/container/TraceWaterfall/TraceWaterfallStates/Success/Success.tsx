@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
+import { openExternalLink } from 'utils/navigation';
 import { toFixed } from 'utils/toFixed';
 
 import funnelAddUrl from '@/assets/Icons/funnel-add.svg';
@@ -547,12 +548,11 @@ function Success(props: ISuccessProps): JSX.Element {
 						icon={<ArrowUpRight size={14} />}
 						className="right-info"
 						type="text"
-						onClick={(): WindowProxy | null =>
-							window.open(
+						onClick={(): void => {
+							openExternalLink(
 								'https://signoz.io/docs/userguide/traces/#missing-spans',
-								'_blank',
-							)
-						}
+							);
+						}}
 					>
 						Learn More
 					</Button>

@@ -31,6 +31,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
+import { openExternalLink } from 'utils/navigation';
 
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
@@ -79,11 +80,7 @@ const EmptyState = memo(
 								) {
 									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 								} else {
-									window?.open(
-										DOCS_LINKS.ADD_DATA_SOURCE,
-										'_blank',
-										'noopener noreferrer',
-									);
+									openExternalLink(DOCS_LINKS.ADD_DATA_SOURCE);
 								}
 							}}
 						>
@@ -97,10 +94,7 @@ const EmptyState = memo(
 								logEvent('Homepage: Learn more clicked', {
 									source: 'Service Metrics',
 								});
-								window.open(
-									'https://signoz.io/docs/instrumentation/overview/',
-									'_blank',
-								);
+								openExternalLink('https://signoz.io/docs/instrumentation/overview/');
 							}}
 						>
 							Learn more <ArrowUpRight size={12} />

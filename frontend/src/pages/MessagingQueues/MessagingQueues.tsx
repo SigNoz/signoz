@@ -10,7 +10,7 @@ import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
+import { openExternalLink, openInNewTab } from 'utils/navigation';
 
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -59,7 +59,7 @@ function MessagingQueues(): JSX.Element {
 				history.push(link);
 			}
 		} else {
-			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
+			openExternalLink(KAFKA_SETUP_DOC_LINK);
 		}
 	};
 

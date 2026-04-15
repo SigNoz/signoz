@@ -64,7 +64,7 @@ import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
 import { isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
-import { openInNewTab } from 'utils/navigation';
+import { openExternalLink, openInNewTab } from 'utils/navigation';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
@@ -818,7 +818,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		);
 
 		if (item && !('type' in item) && item.isExternal && item.url) {
-			window.open(item.url, '_blank');
+			openExternalLink(item.url);
 		}
 
 		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;

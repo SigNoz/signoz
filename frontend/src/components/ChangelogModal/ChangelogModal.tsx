@@ -11,6 +11,7 @@ import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { UserPreference } from 'types/api/preferences/preference';
+import { openExternalLink } from 'utils/navigation';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
 
@@ -86,11 +87,7 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 	}, [checkScroll]);
 
 	const onClickUpdateWorkspace = (): void => {
-		window.open(
-			'https://signoz.io/upgrade-path',
-			'_blank',
-			'noopener,noreferrer',
-		);
+		openExternalLink('https://signoz.io/upgrade-path');
 	};
 
 	const onClickScrollForMore = (): void => {

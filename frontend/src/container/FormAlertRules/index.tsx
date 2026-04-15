@@ -46,6 +46,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
+import { openExternalLink } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -771,7 +772,7 @@ function FormAlertRules({
 				queryType: currentQuery.queryType,
 				link: url,
 			});
-			window.open(url, '_blank');
+			openExternalLink(url);
 		}
 	}
 

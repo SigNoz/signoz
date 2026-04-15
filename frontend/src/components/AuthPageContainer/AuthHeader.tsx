@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Button } from '@signozhq/button';
 import { LifeBuoy } from 'lucide-react';
+import { openExternalLink } from 'utils/navigation';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
@@ -8,7 +9,7 @@ import './AuthHeader.styles.scss';
 
 function AuthHeader(): JSX.Element {
 	const handleGetHelp = useCallback((): void => {
-		window.open('https://signoz.io/support/', '_blank');
+		openExternalLink('https://signoz.io/support/');
 	}, []);
 
 	return (
