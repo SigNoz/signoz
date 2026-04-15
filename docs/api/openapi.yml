@@ -6140,7 +6140,7 @@ paths:
         - VIEWER
       summary: List route policies
       tags:
-      - route-policies
+      - routepolicies
     post:
       deprecated: false
       description: This endpoint creates a route policy
@@ -6196,7 +6196,7 @@ paths:
         - ADMIN
       summary: Create route policy
       tags:
-      - route-policies
+      - routepolicies
   /api/v1/route_policies/{id}:
     delete:
       deprecated: false
@@ -6242,7 +6242,7 @@ paths:
         - ADMIN
       summary: Delete route policy
       tags:
-      - route-policies
+      - routepolicies
     get:
       deprecated: false
       description: This endpoint returns a route policy by ID
@@ -6299,7 +6299,7 @@ paths:
         - VIEWER
       summary: Get route policy by ID
       tags:
-      - route-policies
+      - routepolicies
     put:
       deprecated: false
       description: This endpoint updates a route policy by ID
@@ -6367,7 +6367,7 @@ paths:
         - ADMIN
       summary: Update route policy
       tags:
-      - route-policies
+      - routepolicies
   /api/v1/service_accounts:
     get:
       deprecated: false

@@ -131,7 +131,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetAllRoutePolicies), handler.OpenAPIDef{
 		ID:                  "GetAllRoutePolicies",
-		Tags:                []string{"route-policies"},
+		Tags:                []string{"routepolicies"},
 		Summary:             "List route policies",
 		Description:         "This endpoint lists all route policies for the organization",
 		Request:             nil,
@@ -148,7 +148,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.ViewAccess(provider.alertmanagerHandler.GetRoutePolicyByID), handler.OpenAPIDef{
 		ID:                  "GetRoutePolicyByID",
-		Tags:                []string{"route-policies"},
+		Tags:                []string{"routepolicies"},
 		Summary:             "Get route policy by ID",
 		Description:         "This endpoint returns a route policy by ID",
 		Request:             nil,
@@ -165,7 +165,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/route_policies", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.CreateRoutePolicy), handler.OpenAPIDef{
 		ID:                  "CreateRoutePolicy",
-		Tags:                []string{"route-policies"},
+		Tags:                []string{"routepolicies"},
 		Summary:             "Create route policy",
 		Description:         "This endpoint creates a route policy",
 		Request:             new(alertmanagertypes.PostableRoutePolicy),
@@ -182,7 +182,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.UpdateRoutePolicy), handler.OpenAPIDef{
 		ID:                  "UpdateRoutePolicy",
-		Tags:                []string{"route-policies"},
+		Tags:                []string{"routepolicies"},
 		Summary:             "Update route policy",
 		Description:         "This endpoint updates a route policy by ID",
 		Request:             new(alertmanagertypes.PostableRoutePolicy),
@@ -199,7 +199,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/route_policies/{id}", handler.New(provider.authZ.AdminAccess(provider.alertmanagerHandler.DeleteRoutePolicyByID), handler.OpenAPIDef{
 		ID:                  "DeleteRoutePolicyByID",
-		Tags:                []string{"route-policies"},
+		Tags:                []string{"routepolicies"},
 		Summary:             "Delete route policy",
 		Description:         "This endpoint deletes a route policy by ID",
 		Request:             nil,
