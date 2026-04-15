@@ -132,6 +132,14 @@ function ServiceDetails(): JSX.Element | null {
 	const onSubmit = useCallback(
 		async (values: ServiceConfigFormValues): Promise<void> => {
 			const { logsEnabled, metricsEnabled, s3BucketsByRegion } = values;
+			const shouldClearS3Buckets = serviceId === 's3sync' && !logsEnabled;
+			const normalizedS3BucketsByRegion = shouldClearS3Buckets
+				? {}
+				: s3BucketsByRegion;
+			const nextFormValues: ServiceConfigFormValues = {
+				...values,
+				s3BucketsByRegion: normalizedS3BucketsByRegion,
+			};
 
 			try {
 				if (!serviceId || !cloudAccountId) {
@@ -150,7 +158,7 @@ function ServiceDetails(): JSX.Element | null {
 								aws: {
 									logs: {
 										enabled: logsEnabled,
-										s3Buckets: s3BucketsByRegion,
+										s3Buckets: normalizedS3BucketsByRegion,
 									},
 									metrics: {
 										enabled: metricsEnabled,
@@ -163,7 +171,7 @@ function ServiceDetails(): JSX.Element | null {
 						onSuccess: () => {
 							// Immediately sync form state to remove dirty flag and hide actions,
 							// instead of waiting for the refetch to complete.
-							reset(values);
+							reset(nextFormValues);
 
 							const servicesListQueryKey = getListServicesMetadataQueryKey(
 								{
