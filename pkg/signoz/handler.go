@@ -80,7 +80,7 @@ func NewHandlers(
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
-	am alertmanager.Alertmanager,
+	alertmanagerService alertmanager.Alertmanager,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -103,6 +103,6 @@ func NewHandlers(
 		RegistryHandler:         registryHandler,
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
-		AlertmanagerHandler:     signozalertmanager.NewHandler(am),
+		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 	}
 }

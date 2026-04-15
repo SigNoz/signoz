@@ -96,7 +96,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/channels/test", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
 		ID:                  "TestChannel",
 		Tags:                []string{"channels"},
 		Summary:             "Test notification channel",
@@ -108,6 +108,23 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/testChannel", handler.New(provider.authZ.EditAccess(provider.alertmanagerHandler.TestReceiver), handler.OpenAPIDef{
+		ID:                  "TestChannelDeprecated",
+		Tags:                []string{"channels"},
+		Summary:             "Test notification channel (deprecated)",
+		Description:         "Deprecated: use /api/v1/channels/test instead",
+		Request:             nil,
+		RequestContentType:  "application/json",
+		Response:            nil,
+		ResponseContentType: "",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
