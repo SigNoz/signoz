@@ -12,10 +12,12 @@ import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 /**
- * Generates build/index.html.gotmpl from build/index.html after every
- * production build. The Go backend uses html/template (with [[ ]] delimiters)
- * to serve this file, injecting [[.BasePath]] at request time so that one
- * build artifact works for any URL prefix (e.g. /signoz/).
+ * Generates index.html.gotmpl (alongside index.html, at the project root)
+ * from build/index.html after every build.
+ *
+ * The Go backend uses html/template (with [[ ]] delimiters) to serve this
+ * file, injecting [[.BasePath]] at request time so that one build artifact
+ * works for any URL prefix (e.g. /signoz/).
  *
  * Running as a closeBundle hook guarantees the file is produced whenever
  * `vite build` runs — regardless of how it is invoked (yarn, npx, CI, Docker).
@@ -27,7 +29,7 @@ function generateIndexGotmplPlugin(): Plugin {
 		closeBundle(): void {
 			const outDir = resolve(__dirname, 'build');
 			const inputPath = resolve(outDir, 'index.html');
-			const outputPath = resolve(outDir, 'index.html.gotmpl');
+			const outputPath = resolve(__dirname, 'index.html.gotmpl');
 
 			const html = fs.readFileSync(inputPath, 'utf-8');
 
