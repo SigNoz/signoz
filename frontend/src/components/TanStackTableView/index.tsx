@@ -8,7 +8,7 @@ export * from './useTableParams';
 
 /**
  * Virtualized data table built on TanStack Table and `react-virtuoso`: resizable and pinnable columns,
- * optional drag-to-reorder headers, expandable rows, and Ant Design pagination or infinite scroll.
+ * optional drag-to-reorder headers, expandable rows, and pagination or infinite scroll.
  *
  * @example Minimal usage
  * ```tsx
@@ -31,7 +31,7 @@ export * from './useTableParams';
  * }
  * ```
  *
- * @example Column definitions — `accessorFn`, custom header, pinned column
+ * @example Column definitions — `accessorFn`, custom header, pinned column, sortable
  * ```tsx
  * const columns: TableColumnDef<Row>[] = [
  *   {
@@ -40,6 +40,7 @@ export * from './useTableParams';
  *     accessorKey: 'id',
  *     pin: 'left',
  *     width: { min: 80, default: 120 },
+ *     enableSort: true,
  *     cell: ({ value }) => <TanStackTable.Text>{String(value)}</TanStackTable.Text>,
  *   },
  *   {
@@ -47,6 +48,7 @@ export * from './useTableParams';
  *     header: () => <span>Computed</span>,
  *     accessorFn: (row) => row.first + row.last,
  *     enableMove: false,
+ *     enableRemove: false,
  *     cell: ({ value }) => <TanStackTable.Text>{String(value)}</TanStackTable.Text>,
  *   },
  * ];
@@ -68,22 +70,30 @@ export * from './useTableParams';
  * />
  * ```
  *
- * @example Pagination (Ant Design). Omit `onEndReached` so the footer pager is shown.
+ * @example Pagination with query params. Use `enableQueryParams` object to customize param names.
  * ```tsx
  * <TanStackTable
  *   data={pageRows}
  *   columns={columns}
  *   pagination={{ total: totalCount, defaultPage: 1, defaultLimit: 20 }}
- *   enableQueryParams
+ *   enableQueryParams={{
+ *     page: 'listPage',
+ *     limit: 'listPageSize',
+ *     orderBy: 'orderBy',
+ *     expanded: 'listExpanded',
+ *   }}
+ *   prefixPaginationContent={<span>Custom prefix</span>}
+ *   suffixPaginationContent={<span>Custom suffix</span>}
  * />
  * ```
  *
- * @example Infinite scroll — use `onEndReached` instead of `pagination` (pagination UI is hidden when `onEndReached` is set).
+ * @example Infinite scroll — use `onEndReached` (pagination UI is hidden when set).
  * ```tsx
  * <TanStackTable
  *   data={accumulatedRows}
  *   columns={columns}
  *   onEndReached={(lastIndex) => fetchMore(lastIndex)}
+ *   isLoading={isFetching}
  * />
  * ```
  *
@@ -93,19 +103,23 @@ export * from './useTableParams';
  *   data={data}
  *   columns={columns}
  *   isLoading={isFetching}
+ *   skeletonRowCount={15}
  *   cellTypographySize="small"
  *   plainTextCellLineClamp={2}
  * />
  * ```
  *
- * @example Row styling, selection, and actions
+ * @example Row styling, selection, and actions. `onRowClick` receives `(row, itemKey)`.
  * ```tsx
  * <TanStackTable
  *   data={data}
  *   columns={columns}
+ *   getRowKey={(row) => row.id}
+ *   getItemKey={(row) => row.id}
  *   isRowActive={(row) => row.id === selectedId}
  *   activeRowIndex={selectedIndex}
- *   onRowClick={(row) => setSelectedId(row.id)}
+ *   onRowClick={(row, itemKey) => setSelectedId(itemKey)}
+ *   onRowClickNewTab={(row, itemKey) => openInNewTab(itemKey)}
  *   onRowDeactivate={() => setSelectedId(undefined)}
  *   getRowClassName={(row) => (row.severity === 'error' ? 'row-error' : '')}
  *   getRowStyle={(row) => (row.dimmed ? { opacity: 0.5 } : {})}
@@ -113,13 +127,31 @@ export * from './useTableParams';
  * />
  * ```
  *
- * @example Expandable rows
+ * @example Expandable rows. `renderExpandedRow` receives `(row, rowKey, groupMeta?)`.
  * ```tsx
  * <TanStackTable
  *   data={data}
  *   columns={columns}
- *   renderExpandedRow={(row) => <pre>{JSON.stringify(row.raw, null, 2)}</pre>}
+ *   getRowKey={(row) => row.id}
+ *   renderExpandedRow={(row, rowKey, groupMeta) => (
+ *     <pre>{JSON.stringify({ rowKey, groupMeta, raw: row.raw }, null, 2)}</pre>
+ *   )}
  *   getRowCanExpand={(row) => Boolean(row.raw)}
+ * />
+ * ```
+ *
+ * @example Grouped rows — use `groupBy` + `getGroupKey` for group-aware key generation.
+ * ```tsx
+ * <TanStackTable
+ *   data={data}
+ *   columns={columns}
+ *   getRowKey={(row) => row.id}
+ *   groupBy={[{ key: 'namespace' }, { key: 'cluster' }]}
+ *   getGroupKey={(row) => row.meta ?? {}}
+ *   renderExpandedRow={(row, rowKey, groupMeta) => (
+ *     <ExpandedDetails groupMeta={groupMeta} />
+ *   )}
+ *   getRowCanExpand={() => true}
  * />
  * ```
  *
@@ -135,12 +167,14 @@ export * from './useTableParams';
  * ref.current?.scrollToIndex({ index: 0, align: 'start' });
  * ```
  *
- * @example Scroll container props (className, `data-testid`, etc.). `data` is reserved by Virtuoso and cannot be passed here.
+ * @example Scroll container props and testing
  * ```tsx
  * <TanStackTable
  *   data={data}
  *   columns={columns}
- *   tableScrollerProps={{ className: 'my-table-scroll', 'data-testid': 'logs-table' }}
+ *   className="my-table-wrapper"
+ *   testId="logs-table"
+ *   tableScrollerProps={{ className: 'my-table-scroll', 'data-testid': 'logs-scroller' }}
  * />
  * ```
  */
