@@ -250,9 +250,9 @@ def test_primitive_path_operations(
         ),
     ]
 
-    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
     export_json_types(logs_list)
     insert_logs(logs_list)
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     cases = [
         # ── positive operators ─────────────────────────────────────────────
