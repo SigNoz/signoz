@@ -181,18 +181,10 @@ func paginateWithBackfill(
 	return pageGroups
 }
 
-// buildFullQueryRequest creates a QueryRangeRequest for all metrics,
-// restricted to the given page of groups via an IN filter.
-// Accepts primitive fields so it can be reused across different v2 APIs
-// (hosts, pods, etc.).
-func buildFullQueryRequest(
-	start int64,
-	end int64,
-	filterExpr string,
-	groupBy []qbtypes.GroupByKey,
-	pageGroups []map[string]string,
-	tableListQuery *qbtypes.QueryRangeRequest,
-) *qbtypes.QueryRangeRequest {
+// buildPageGroupsFilterExpr builds a filter expression that restricts results
+// to the given page of groups via IN clauses.
+// Returns e.g. "host.name IN ('h1','h2') AND os.type IN ('linux','windows')".
+func buildPageGroupsFilterExpr(pageGroups []map[string]string) string {
 	groupValues := make(map[string][]string)
 	for _, labels := range pageGroups {
 		for k, v := range labels {
@@ -208,7 +200,22 @@ func buildFullQueryRequest(
 		}
 		inClauses = append(inClauses, fmt.Sprintf("%s IN (%s)", key, strings.Join(quoted, ", ")))
 	}
-	inFilterExpr := strings.Join(inClauses, " AND ")
+	return strings.Join(inClauses, " AND ")
+}
+
+// buildFullQueryRequest creates a QueryRangeRequest for all metrics,
+// restricted to the given page of groups via an IN filter.
+// Accepts primitive fields so it can be reused across different v2 APIs
+// (hosts, pods, etc.).
+func buildFullQueryRequest(
+	start int64,
+	end int64,
+	filterExpr string,
+	groupBy []qbtypes.GroupByKey,
+	pageGroups []map[string]string,
+	tableListQuery *qbtypes.QueryRangeRequest,
+) *qbtypes.QueryRangeRequest {
+	inFilterExpr := buildPageGroupsFilterExpr(pageGroups)
 
 	fullReq := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),

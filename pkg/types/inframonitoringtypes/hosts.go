@@ -139,12 +139,14 @@ type HostsListResponse struct {
 }
 
 type HostRecord struct {
-	HostName  string                 `json:"hostName"`
-	Status    HostStatus             `json:"status"`
-	CPU       float64                `json:"cpu"`
-	Memory    float64                `json:"memory"`
-	Wait      float64                `json:"wait"`
-	Load15    float64                `json:"load15"`
-	DiskUsage float64                `json:"diskUsage"`
-	Meta      map[string]interface{} `json:"meta"`
+	HostName          string                 `json:"hostName"`
+	Status            HostStatus             `json:"status"`
+	ActiveHostCount   int                    `json:"activeHostCount"`
+	InactiveHostCount int                    `json:"inactiveHostCount"`
+	CPU               float64                `json:"cpu"`
+	Memory            float64                `json:"memory"`
+	Wait              float64                `json:"wait"`
+	Load15            float64                `json:"load15"`
+	DiskUsage         float64                `json:"diskUsage"`
+	Meta              map[string]interface{} `json:"meta"`
 }

@@ -132,13 +132,29 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	if req.Filter != nil {
 		hostsFilterExpr = req.Filter.Expression
 	}
+	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
+
 	fullQueryReq := buildFullQueryRequest(req.Start, req.End, hostsFilterExpr, req.GroupBy, pageGroups, m.newHostsTableListQuery())
 	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
 	if err != nil {
 		return nil, err
 	}
 
-	resp.Records = m.buildHostRecords(queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap)
+	// Compute per-group active/inactive host counts.
+	// When host.name is in groupBy, each row = one host, so counts are derived
+	// directly from activeHostsMap in buildHostRecords (no extra query needed).
+	hostCounts := make(map[string]groupHostCounts)
+	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
+	if !isHostNameInGroupBy {
+		activeHostsSQ := m.getActiveHostsQuery(hostsTableMetricNamesList, hostNameAttrKey)
+		fullFilterExpr := mergeFilterExpressions(hostsFilterExpr, pageGroupsFilterExpr)
+		hostCounts, err = m.getPerGroupHostCounts(ctx, req, activeHostsSQ, fullFilterExpr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp.Records = m.buildHostRecords(isHostNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, activeHostsMap, hostCounts)
 	resp.Warning = queryResp.Warning
 
 	return resp, nil

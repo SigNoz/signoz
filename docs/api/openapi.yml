@@ -1224,6 +1224,8 @@ components:
       type: object
     InframonitoringtypesHostRecord:
       properties:
+        activeHostCount:
+          type: integer
         cpu:
           format: double
           type: number
@@ -1232,6 +1234,8 @@ components:
           type: number
         hostName:
           type: string
+        inactiveHostCount:
+          type: integer
         load15:
           format: double
           type: number
