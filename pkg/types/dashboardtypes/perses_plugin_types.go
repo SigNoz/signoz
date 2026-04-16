@@ -80,7 +80,7 @@ type BuilderQuerySpec struct {
 func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 	spec, err := qb.UnmarshalBuilderQueryBySignal(data)
 	if err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid builder query spec")
 	}
 	b.Spec = spec
 	return nil
@@ -265,7 +265,7 @@ func (t TimePreference) Value() string {
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
 	switch v {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
@@ -299,7 +299,7 @@ func (l LegendPosition) Value() string {
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
 	}
 	switch v {
 	case LegendPositionBottom, LegendPositionRight:
@@ -333,7 +333,7 @@ func (f ThresholdFormat) Value() string {
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
 	}
 	switch v {
 	case ThresholdFormatText, ThresholdFormatBackground:
@@ -378,7 +378,7 @@ func (o ComparisonOperator) Value() string {
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
 	switch v {
 	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
@@ -416,7 +416,7 @@ func (li LineInterpolation) Value() string {
 func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
 	switch v {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
@@ -450,7 +450,7 @@ func (ls LineStyle) Value() string {
 func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
 	}
 	switch v {
 	case LineStyleSolid, LineStyleDashed:
@@ -485,7 +485,7 @@ func (fm FillMode) Value() string {
 func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
 	switch v {
 	case FillModeSolid, FillModeGradient, FillModeNone:
@@ -531,7 +531,7 @@ func (p PrecisionOption) Value() string {
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be a string, one of `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
 	switch v {
 	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
