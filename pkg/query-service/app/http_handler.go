@@ -78,7 +78,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/version"
 )
 
@@ -98,7 +98,7 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	logger       *slog.Logger
 	reader       interfaces.Reader
-	ruleManager  *rules.Manager
+	ruleManager  ruler.Ruler
 	querier      interfaces.Querier
 	querierV2    interfaces.Querier
 	queryBuilder *queryBuilder.QueryBuilder
@@ -151,7 +151,7 @@ type APIHandlerOpts struct {
 	Reader interfaces.Reader
 
 	// rule manager handles rule crud operations
-	RuleManager *rules.Manager
+	RuleManager ruler.Ruler
 
 	// Integrations
 	IntegrationsController *integrations.Controller

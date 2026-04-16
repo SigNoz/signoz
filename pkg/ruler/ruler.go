@@ -34,4 +34,10 @@ type Ruler interface {
 
 	// MaintenanceStore returns the store for planned maintenance / downtime schedules.
 	MaintenanceStore() ruletypes.MaintenanceStore
+
+	// Start begins rule evaluation. Blocks until Stop is called.
+	Start(ctx context.Context)
+
+	// Stop halts rule evaluation.
+	Stop(ctx context.Context)
 }

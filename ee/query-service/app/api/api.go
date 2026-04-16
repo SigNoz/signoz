@@ -14,8 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/gorilla/mux"
@@ -23,7 +23,7 @@ import (
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.Reader
-	RulesManager                  *rules.Manager
+	RulesManager                  ruler.Ruler
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
@@ -64,7 +64,7 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 	return ah, nil
 }
 
-func (ah *APIHandler) RM() *rules.Manager {
+func (ah *APIHandler) RM() ruler.Ruler {
 	return ah.opts.RulesManager
 }
 

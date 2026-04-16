@@ -12,10 +12,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
 	"github.com/gorilla/handlers"
 
@@ -23,18 +19,10 @@ import (
 	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
-	"github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
-	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/signoz"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
 
 	"log/slog"
@@ -49,7 +37,6 @@ import (
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
@@ -57,7 +44,6 @@ import (
 type Server struct {
 	config      signoz.Config
 	signoz      *signoz.SigNoz
-	ruleManager *baserules.Manager
 
 	// public http router
 	httpConn     net.Listener
@@ -96,24 +82,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.Cache,
 		nil,
 	)
-
-	rm, err := makeRulesManager(
-		signoz.Cache,
-		signoz.Alertmanager,
-		signoz.SQLStore,
-		signoz.TelemetryStore,
-		signoz.TelemetryMetadataStore,
-		signoz.Prometheus,
-		signoz.Modules.OrgGetter,
-		signoz.Modules.RuleStateHistory,
-		signoz.Querier,
-		signoz.Instrumentation.ToProviderSettings(),
-		signoz.QueryParser,
-	)
-
-	if err != nil {
-		return nil, err
-	}
 
 	// initiate opamp
 	opAmpModel.Init(signoz.SQLStore, signoz.Instrumentation.Logger(), signoz.Modules.OrgGetter)
@@ -163,7 +131,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	apiOpts := api.APIHandlerOptions{
 		DataConnector:                 reader,
-		RulesManager:                  rm,
+		RulesManager:                  signoz.Ruler,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
 		CloudIntegrationsController:   cloudIntegrationsController,
@@ -180,8 +148,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	s := &Server{
 		config:             config,
-		signoz:             signoz,
-		ruleManager:        rm,
+		signoz:       signoz,
 		httpHostPort:       baseconst.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
@@ -288,7 +255,7 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
-	s.ruleManager.Start(ctx)
+	s.signoz.Ruler.Start(ctx)
 
 	err := s.initListeners()
 	if err != nil {
@@ -333,8 +300,8 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	s.opampServer.Stop()
 
-	if s.ruleManager != nil {
-		s.ruleManager.Stop(ctx)
+	if s.signoz.Ruler != nil {
+		s.signoz.Ruler.Stop(ctx)
 	}
 
 	// stop usage manager
@@ -343,37 +310,3 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, ruleStateHistoryModule rulestatehistory.Module, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
-	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
-	// create manager opts
-	managerOpts := &baserules.ManagerOptions{
-		TelemetryStore:         telemetryStore,
-		MetadataStore:          metadataStore,
-		Prometheus:             prometheus,
-		Context:                context.Background(),
-		Querier:                querier,
-		Logger:                 providerSettings.Logger,
-		Cache:                  cache,
-		EvalDelay:              baseconst.GetEvalDelay(),
-		PrepareTaskFunc:        rules.PrepareTaskFunc,
-		PrepareTestRuleFunc:    rules.TestNotification,
-		Alertmanager:           alertmanager,
-		OrgGetter:              orgGetter,
-		RuleStore:              ruleStore,
-		MaintenanceStore:       maintenanceStore,
-		SQLStore:               sqlstore,
-		QueryParser:            queryParser,
-		RuleStateHistoryModule: ruleStateHistoryModule,
-	}
-
-	// create Manager
-	manager, err := baserules.NewManager(managerOpts)
-	if err != nil {
-		return nil, fmt.Errorf("rule manager error: %v", err)
-	}
-
-	slog.Info("rules manager is ready")
-
-	return manager, nil
-}
