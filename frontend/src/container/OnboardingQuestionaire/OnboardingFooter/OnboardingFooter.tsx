@@ -1,4 +1,3 @@
-// hippa.svg and soc2.svg do not exist in src/assets — suppressed until assets are added
 import { Dot } from 'lucide-react';
 
 import './OnboardingFooter.styles.scss';
@@ -13,6 +12,7 @@ export function OnboardingFooter(): JSX.Element {
 					className="footer-content"
 					rel="noreferrer"
 				>
+					{/* hippa.svg does not exist in src/assets — suppressed until asset is added */}
 					{/* eslint-disable-next-line rulesdir/no-unsupported-asset-pattern */}
 					<img src="/logos/hippa.svg" alt="HIPPA" className="footer-logo" />
 					<span className="footer-text">HIPPA</span>
@@ -24,6 +24,7 @@ export function OnboardingFooter(): JSX.Element {
 					className="footer-content"
 					rel="noreferrer"
 				>
+					{/* soc2.svg does not exist in src/assets — suppressed until asset is added */}
 					{/* eslint-disable-next-line rulesdir/no-unsupported-asset-pattern */}
 					<img src="/logos/soc2.svg" alt="SOC2" className="footer-logo" />
 					<span className="footer-text">SOC2</span>

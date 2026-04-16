@@ -20,10 +20,10 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 
-import circusTentUrl from '@/assets/Icons/circus-tent.svg';
-import eightBallUrl from '@/assets/Icons/eight-ball.svg';
 import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
 import logsUrl from '@/assets/Icons/logs.svg';
+
+import { getItemIcon } from '../constants';
 
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
@@ -229,7 +229,7 @@ export default function SavedViews({
 					>
 						<div className="saved-view-item-name-container home-data-item-name-container">
 							<img
-								src={view.id % 2 === 0 ? eightBallUrl : circusTentUrl}
+								src={getItemIcon(String(view.id))}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>
