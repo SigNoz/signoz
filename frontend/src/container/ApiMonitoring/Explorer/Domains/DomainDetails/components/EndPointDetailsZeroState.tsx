@@ -1,6 +1,8 @@
 import { UseQueryResult } from 'react-query';
 import { SuccessResponse } from 'types/api';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import EndPointsDropDown from './EndPointsDropDown';
 
 function EndPointDetailsZeroState({
@@ -14,7 +16,7 @@ function EndPointDetailsZeroState({
 		<div className="end-point-details-zero-state-wrapper">
 			<div className="end-point-details-zero-state-content">
 				<img
-					src="/Icons/no-data.svg"
+					src={noDataUrl}
 					alt="no-data"
 					width={32}
 					height={32}
