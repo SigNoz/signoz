@@ -14,6 +14,8 @@ describe('filterAlerts', () => {
 		updateAt: new Date('2024-01-01T00:00:00Z'),
 		updateBy: 'test-user',
 		version: '1',
+		condition: {},
+		ruleType: 'threshold_rule' as RuletypesGettableRuleDTO['ruleType'],
 	};
 
 	const mockAlerts: RuletypesGettableRuleDTO[] = [
@@ -27,7 +29,7 @@ describe('filterAlerts', () => {
 				status: 'ok',
 				environment: 'production',
 			},
-		},
+		} as RuletypesGettableRuleDTO,
 		{
 			...mockAlertBase,
 			id: '2',
@@ -38,7 +40,7 @@ describe('filterAlerts', () => {
 				status: 'firing',
 				environment: 'staging',
 			},
-		},
+		} as RuletypesGettableRuleDTO,
 		{
 			...mockAlertBase,
 			id: '3',
@@ -49,7 +51,7 @@ describe('filterAlerts', () => {
 				status: 'pending',
 				environment: 'production',
 			},
-		},
+		} as RuletypesGettableRuleDTO,
 	];
 
 	it('should return all alerts when filter is empty', () => {
