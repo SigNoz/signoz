@@ -39,20 +39,14 @@ def test_change_password(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Get the user id via v2
-    found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
-
     # Try logging in with the password
     token = get_token(PASSWORD_USER_EMAIL, PASSWORD_USER_PASSWORD)
     assert token is not None
 
     # Try changing the password with a bad old password which should fail
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/changePassword/{found_user['id']}"
-        ),
+    response = requests.put(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/factor_password"),
         json={
-            "userId": f"{found_user['id']}",
             "oldPassword": "password",
             "newPassword": PASSWORD_USER_PASSWORD,
         },
@@ -63,12 +57,9 @@ def test_change_password(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
     # Try changing the password with a good old password
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/changePassword/{found_user['id']}"
-        ),
+    response = requests.put(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me/factor_password"),
         json={
-            "userId": f"{found_user['id']}",
             "oldPassword": PASSWORD_USER_PASSWORD,
             "newPassword": "password123Znew$",
         },
