@@ -223,6 +223,8 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 	for _, route := range expressionRoutes {
 		evaluateExpr, err := r.evaluateExpr(ctx, route.Expression, set)
 		if err != nil {
+			//nolint:sloglint
+			r.settings.Logger().WarnContext(ctx, "failed to evaluate route policy expression", errors.Attr(err), slog.String("rule.id", ruleID))
 			continue
 		}
 		if evaluateExpr {
@@ -298,7 +300,7 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 func (r *provider) evaluateExpr(ctx context.Context, expression string, labelSet model.LabelSet) (bool, error) {
 	env := r.convertLabelSetToEnv(ctx, labelSet)
 
-	program, err := expr.Compile(expression, expr.Env(env))
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
 	if err != nil {
 		return false, errors.NewInternalf(errors.CodeInternal, "error compiling route policy %s: %v", expression, err)
 	}
