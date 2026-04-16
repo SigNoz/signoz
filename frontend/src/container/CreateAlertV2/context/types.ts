@@ -1,16 +1,15 @@
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
-import { UpdateAlertRuleResponse } from 'api/alerts/updateAlertRule';
 import type {
 	CreateRule200,
+	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
 	TestRule200,
+	UpdateRuleByIDPathParameters,
 } from 'api/generated/services/sigNoz.schemas';
 import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
 import { Dayjs } from 'dayjs';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
@@ -43,12 +42,18 @@ export interface ICreateAlertContextProps {
 	discardAlertRule: () => void;
 	isUpdatingAlertRule: boolean;
 	updateAlertRule: UseMutateFunction<
-		SuccessResponse<UpdateAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		Awaited<
+			ReturnType<typeof import('api/generated/services/rules').updateRuleByID>
+		>,
+		ErrorType<RenderErrorResponseDTO>,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
 		unknown
 	>;
 	isEditMode: boolean;
+	ruleId: string;
 }
 
 export interface ICreateAlertProviderProps {

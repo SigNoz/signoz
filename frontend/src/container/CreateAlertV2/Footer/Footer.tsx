@@ -30,6 +30,7 @@ function Footer(): JSX.Element {
 		updateAlertRule,
 		isUpdatingAlertRule,
 		isEditMode,
+		ruleId,
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
@@ -110,15 +111,18 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		if (isEditMode) {
-			updateAlertRule(payload, {
-				onSuccess: () => {
-					toast.success('Alert rule updated successfully');
-					safeNavigate('/alerts');
+			updateAlertRule(
+				{ pathParams: { id: ruleId }, data: payload as any },
+				{
+					onSuccess: () => {
+						toast.success('Alert rule updated successfully');
+						safeNavigate('/alerts');
+					},
+					onError: (error) => {
+						toast.error(error.message);
+					},
 				},
-				onError: (error) => {
-					toast.error(error.message);
-				},
-			});
+			);
 		} else {
 			createAlertRule(
 				{ data: payload as any },
@@ -142,6 +146,7 @@ function Footer(): JSX.Element {
 		notificationSettings,
 		currentQuery,
 		isEditMode,
+		ruleId,
 		updateAlertRule,
 		createAlertRule,
 		safeNavigate,

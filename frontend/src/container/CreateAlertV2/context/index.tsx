@@ -10,10 +10,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useCreateRule, useTestRule } from 'api/generated/services/rules';
+import {
+	useCreateRule,
+	useTestRule,
+	useUpdateRuleByID,
+} from 'api/generated/services/rules';
 import { QueryParams } from 'constants/query';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -221,7 +224,7 @@ export function CreateAlertProvider(
 	const {
 		mutate: updateAlertRule,
 		isLoading: isUpdatingAlertRule,
-	} = useUpdateAlertRule(ruleId || '');
+	} = useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
@@ -245,6 +248,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
+			ruleId: ruleId || '',
 		}),
 		[
 			createAlertState,
@@ -263,6 +267,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode,
+			ruleId,
 		],
 	);
 

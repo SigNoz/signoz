@@ -7,7 +7,6 @@ import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import * as rulesHook from '../../../../api/generated/services/rules';
-import * as useUpdateAlertRuleHook from '../../../../hooks/alerts/useUpdateAlertRule';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
 
@@ -24,7 +23,7 @@ jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useUpdateAlertRuleHook, 'useUpdateAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useUpdateRuleByID').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
