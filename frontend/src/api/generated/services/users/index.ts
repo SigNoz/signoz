@@ -28,9 +28,9 @@ import type {
 	GetMyUser200,
 	GetMyUserDeprecated200,
 	GetResetPasswordToken200,
+	GetResetPasswordTokenDeprecated200,
+	GetResetPasswordTokenDeprecatedPathParameters,
 	GetResetPasswordTokenPathParameters,
-	GetResetPasswordTokenV2PathParameters,
-	GetResetPasswordTokenV2200,
 	GetRolesByUserID200,
 	GetRolesByUserIDPathParameters,
 	GetUser200,
@@ -161,31 +161,31 @@ export const useChangePassword = <
  * @deprecated
  * @summary Get reset password token
  */
-export const getResetPasswordToken = (
-	{ id }: GetResetPasswordTokenPathParameters,
+export const getResetPasswordTokenDeprecated = (
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetResetPasswordToken200>({
+	return GeneratedAPIInstance<GetResetPasswordTokenDeprecated200>({
 		url: `/api/v1/getResetPasswordToken/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetResetPasswordTokenQueryKey = ({
+export const getGetResetPasswordTokenDeprecatedQueryKey = ({
 	id,
-}: GetResetPasswordTokenPathParameters) => {
+}: GetResetPasswordTokenDeprecatedPathParameters) => {
 	return [`/api/v1/getResetPasswordToken/${id}`] as const;
 };
 
-export const getGetResetPasswordTokenQueryOptions = <
-	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+export const getGetResetPasswordTokenDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 			TError,
 			TData
 		>;
@@ -194,11 +194,11 @@ export const getGetResetPasswordTokenQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getGetResetPasswordTokenQueryKey({ id });
+		queryOptions?.queryKey ?? getGetResetPasswordTokenDeprecatedQueryKey({ id });
 
 	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getResetPasswordToken>>
-	> = ({ signal }) => getResetPasswordToken({ id }, signal);
+		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
+	> = ({ signal }) => getResetPasswordTokenDeprecated({ id }, signal);
 
 	return {
 		queryKey,
@@ -206,36 +206,39 @@ export const getGetResetPasswordTokenQueryOptions = <
 		enabled: !!id,
 		...queryOptions,
 	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getResetPasswordToken>>,
+		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetResetPasswordTokenQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getResetPasswordToken>>
+export type GetResetPasswordTokenDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
 >;
-export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetResetPasswordTokenDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @deprecated
  * @summary Get reset password token
  */
 
-export function useGetResetPasswordToken<
-	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+export function useGetResetPasswordTokenDeprecated<
+	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 			TError,
 			TData
 		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetResetPasswordTokenQueryOptions({ id }, options);
+	const queryOptions = getGetResetPasswordTokenDeprecatedQueryOptions(
+		{ id },
+		options,
+	);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -250,13 +253,13 @@ export function useGetResetPasswordToken<
  * @deprecated
  * @summary Get reset password token
  */
-export const invalidateGetResetPasswordToken = async (
+export const invalidateGetResetPasswordTokenDeprecated = async (
 	queryClient: QueryClient,
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetResetPasswordTokenQueryKey({ id }) },
+		{ queryKey: getGetResetPasswordTokenDeprecatedQueryKey({ id }) },
 		options,
 	);
 
@@ -1418,31 +1421,31 @@ export const useUpdateUser = <
  * This endpoint returns the existing reset password token for a user.
  * @summary Get reset password token for a user
  */
-export const getResetPasswordTokenV2 = (
-	{ id }: GetResetPasswordTokenV2PathParameters,
+export const getResetPasswordToken = (
+	{ id }: GetResetPasswordTokenPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetResetPasswordTokenV2200>({
+	return GeneratedAPIInstance<GetResetPasswordToken200>({
 		url: `/api/v2/users/${id}/reset-password-token`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetResetPasswordTokenV2QueryKey = ({
+export const getGetResetPasswordTokenQueryKey = ({
 	id,
-}: GetResetPasswordTokenV2PathParameters) => {
+}: GetResetPasswordTokenPathParameters) => {
 	return [`/api/v2/users/${id}/reset-password-token`] as const;
 };
 
-export const getGetResetPasswordTokenV2QueryOptions = <
-	TData = Awaited<ReturnType<typeof getResetPasswordTokenV2>>,
+export const getGetResetPasswordTokenQueryOptions = <
+	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenV2PathParameters,
+	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordTokenV2>>,
+			Awaited<ReturnType<typeof getResetPasswordToken>>,
 			TError,
 			TData
 		>;
@@ -1451,11 +1454,11 @@ export const getGetResetPasswordTokenV2QueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getGetResetPasswordTokenV2QueryKey({ id });
+		queryOptions?.queryKey ?? getGetResetPasswordTokenQueryKey({ id });
 
 	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getResetPasswordTokenV2>>
-	> = ({ signal }) => getResetPasswordTokenV2({ id }, signal);
+		Awaited<ReturnType<typeof getResetPasswordToken>>
+	> = ({ signal }) => getResetPasswordToken({ id }, signal);
 
 	return {
 		queryKey,
@@ -1463,35 +1466,35 @@ export const getGetResetPasswordTokenV2QueryOptions = <
 		enabled: !!id,
 		...queryOptions,
 	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getResetPasswordTokenV2>>,
+		Awaited<ReturnType<typeof getResetPasswordToken>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetResetPasswordTokenV2QueryResult = NonNullable<
-	Awaited<ReturnType<typeof getResetPasswordTokenV2>>
+export type GetResetPasswordTokenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getResetPasswordToken>>
 >;
-export type GetResetPasswordTokenV2QueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get reset password token for a user
  */
 
-export function useGetResetPasswordTokenV2<
-	TData = Awaited<ReturnType<typeof getResetPasswordTokenV2>>,
+export function useGetResetPasswordToken<
+	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenV2PathParameters,
+	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordTokenV2>>,
+			Awaited<ReturnType<typeof getResetPasswordToken>>,
 			TError,
 			TData
 		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetResetPasswordTokenV2QueryOptions({ id }, options);
+	const queryOptions = getGetResetPasswordTokenQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1505,13 +1508,13 @@ export function useGetResetPasswordTokenV2<
 /**
  * @summary Get reset password token for a user
  */
-export const invalidateGetResetPasswordTokenV2 = async (
+export const invalidateGetResetPasswordToken = async (
 	queryClient: QueryClient,
-	{ id }: GetResetPasswordTokenV2PathParameters,
+	{ id }: GetResetPasswordTokenPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetResetPasswordTokenV2QueryKey({ id }) },
+		{ queryKey: getGetResetPasswordTokenQueryKey({ id }) },
 		options,
 	);
 

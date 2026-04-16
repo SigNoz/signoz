@@ -12,7 +12,7 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import {
 	useCreateResetPasswordToken,
 	useDeleteUser,
-	useGetResetPasswordTokenV2,
+	useGetResetPasswordToken,
 	useGetUser,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -150,7 +150,7 @@ function EditMemberDrawer({
 		data: tokenQueryData,
 		isLoading: isLoadingTokenStatus,
 		isError: tokenNotFound,
-	} = useGetResetPasswordTokenV2(
+	} = useGetResetPasswordToken(
 		{ id: member?.id ?? '' },
 		{ query: { enabled: open && !!member?.id && isInvited } },
 	);

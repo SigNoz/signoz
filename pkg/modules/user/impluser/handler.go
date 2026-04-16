@@ -327,7 +327,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+func (handler *handler) GetResetPasswordTokenDeprecated(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -354,7 +354,7 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 	render.Success(w, http.StatusOK, token)
 }
 
-func (h *handler) GetResetPasswordTokenV2(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 

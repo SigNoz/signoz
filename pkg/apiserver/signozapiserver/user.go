@@ -213,8 +213,8 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
-		ID:                  "GetResetPasswordToken",
+	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordTokenDeprecated), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordTokenDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get reset password token",
 		Description:         "This endpoint returns the reset password token by id",
@@ -230,8 +230,8 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordTokenV2), handler.OpenAPIDef{
-		ID:                  "GetResetPasswordTokenV2",
+	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordToken",
 		Tags:                []string{"users"},
 		Summary:             "Get reset password token for a user",
 		Description:         "This endpoint returns the existing reset password token for a user.",

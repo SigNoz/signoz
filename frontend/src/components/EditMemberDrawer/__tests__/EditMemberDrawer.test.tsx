@@ -4,7 +4,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useCreateResetPasswordToken,
 	useDeleteUser,
-	useGetResetPasswordTokenV2,
+	useGetResetPasswordToken,
 	useGetUser,
 	useSetRoleByUserID,
 	useUpdateMyUserV2,
@@ -56,7 +56,7 @@ jest.mock('api/generated/services/users', () => ({
 	useUpdateUser: jest.fn(),
 	useUpdateMyUserV2: jest.fn(),
 	useSetRoleByUserID: jest.fn(),
-	useGetResetPasswordTokenV2: jest.fn(),
+	useGetResetPasswordToken: jest.fn(),
 	useCreateResetPasswordToken: jest.fn(),
 }));
 
@@ -187,7 +187,7 @@ describe('EditMemberDrawer', () => {
 			isLoading: false,
 		});
 		// Token query: valid token for invited members
-		(useGetResetPasswordTokenV2 as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: {
 				data: {
 					token: 'invite-tok-valid',
@@ -385,7 +385,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('shows "Invite Expired - Regenerate" when token is expired', () => {
-		(useGetResetPasswordTokenV2 as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: {
 				data: {
 					token: 'old-tok',
@@ -405,7 +405,7 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('shows "Generate Invite Link" when no token exists', () => {
-		(useGetResetPasswordTokenV2 as jest.Mock).mockReturnValue({
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: undefined,
 			isLoading: false,
 			isError: true,

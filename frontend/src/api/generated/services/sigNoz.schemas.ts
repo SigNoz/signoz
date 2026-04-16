@@ -5604,10 +5604,10 @@ export type GetFieldsValues200 = {
 	status: string;
 };
 
-export type GetResetPasswordTokenPathParameters = {
+export type GetResetPasswordTokenDeprecatedPathParameters = {
 	id: string;
 };
-export type GetResetPasswordToken200 = {
+export type GetResetPasswordTokenDeprecated200 = {
 	data: TypesResetPasswordTokenDTO;
 	/**
 	 * @type string
@@ -6579,10 +6579,10 @@ export type GetUser200 = {
 export type UpdateUserPathParameters = {
 	id: string;
 };
-export type GetResetPasswordTokenV2PathParameters = {
+export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
-export type GetResetPasswordTokenV2200 = {
+export type GetResetPasswordToken200 = {
 	data: TypesResetPasswordTokenDTO;
 	/**
 	 * @type string

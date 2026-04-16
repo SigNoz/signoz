@@ -115,8 +115,8 @@ type Handler interface {
 	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password
+	GetResetPasswordTokenDeprecated(http.ResponseWriter, *http.Request)
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
-	GetResetPasswordTokenV2(http.ResponseWriter, *http.Request)
 	CreateResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)

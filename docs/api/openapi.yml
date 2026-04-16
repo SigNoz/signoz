@@ -6070,7 +6070,7 @@ paths:
     get:
       deprecated: true
       description: This endpoint returns the reset password token by id
-      operationId: GetResetPasswordToken
+      operationId: GetResetPasswordTokenDeprecated
       parameters:
       - in: path
         name: id
@@ -10898,7 +10898,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the existing reset password token for a user.
-      operationId: GetResetPasswordTokenV2
+      operationId: GetResetPasswordToken
       parameters:
       - in: path
         name: id
