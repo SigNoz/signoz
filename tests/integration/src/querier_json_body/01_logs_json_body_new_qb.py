@@ -32,6 +32,11 @@ def _get_bodies(response: requests.Response) -> List[Dict[str, Any]]:
     return [json.loads(row["data"]["body"]) for row in _get_rows(response)]
 
 
+def _get_row_field(response: requests.Response, field: str) -> List[Any]:
+    """Return the value of a selected field from each row (for selectFields queries)."""
+    return [row["data"].get(field) for row in _get_rows(response)]
+
+
 def _get_scalar_rows(response: requests.Response) -> List[List[Any]]:
     """Return table rows from a scalar GroupBy response.
 
@@ -707,43 +712,57 @@ def test_select_order_by(
             f"Validation failed for '{case['name']}': {response.json()}"
         )
 
+    # Timestamp-based ordering helper: the 4 logs are inserted at now-4s/3s/2s/1s,
+    # which map to statuses 200/404/500/201 respectively.
+    # When ordered by body.status ASC (200→201→404→500) the row timestamps follow
+    # the pattern: ts[0] < ts[2] < ts[3] < ts[1]  (i.e. -4s, -3s, -2s, -1s reordered).
+    def _ts(r: requests.Response) -> List[int]:
+        return [row["data"]["timestamp"] for row in _get_rows(r)]
+
     cases = [
-        # select array, order by scalar
+        # select array, order by scalar (status not selected — verify via timestamps)
         {
             "name": "sel_ord.select_items_order_by_status",
             "selectFields": [{"name": "body.items"}],
             "order": [build_order_by("body.status", "asc")],
-            "validate": lambda r: [b["status"] for b in _get_bodies(r)]
-            == [200, 201, 404, 500]
-            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+            "validate": lambda r: (
+                len(_get_rows(r)) == 4
+                # items field is present and is a list in every row
+                and all(isinstance(x, list) for x in _get_row_field(r, "items"))
+                # status ASC maps to timestamp order: [-4s, -1s, -3s, -2s]
+                # i.e. ts[0] < ts[2] < ts[3] < ts[1]
+                and _ts(r)[0] < _ts(r)[2] < _ts(r)[3] < _ts(r)[1]
+            ),
         },
-        # select array, order by array field
+        # select array, order by array field (all arrays are [], order is non-deterministic)
         {
             "name": "sel_ord.select_items_order_by_items",
             "selectFields": [{"name": "body.items"}],
             "order": [build_order_by("body.items", "asc")],
-            "validate": lambda r: len(_get_rows(r)) == 4
-            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+            "validate": lambda r: (
+                len(_get_rows(r)) == 4
+                and all(isinstance(x, list) for x in _get_row_field(r, "items"))
+            ),
         },
-        # select scalar + array, order by scalar
+        # select scalar + array, order by scalar — verify exact status ordering
         {
             "name": "sel_ord.select_status_and_items_order_by_status",
             "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
             "order": [build_order_by("body.status", "asc")],
-            "validate": lambda r: [b["status"] for b in _get_bodies(r)]
-            == [200, 201, 404, 500]
-            and all(isinstance(b.get("items"), list) for b in _get_bodies(r)),
+            "validate": lambda r: (
+                _get_row_field(r, "status") == [200, 201, 404, 500]
+                and all(isinstance(x, list) for x in _get_row_field(r, "items"))
+            ),
         },
-        # select scalar + array, order by array field
+        # select scalar + array, order by array field (all arrays are [], order is non-deterministic)
         {
             "name": "sel_ord.select_status_and_items_order_by_items",
             "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
             "order": [build_order_by("body.items", "desc")],
-            "validate": lambda r: len(_get_rows(r)) == 4
-            and all(
-                isinstance(b.get("items"), list)
-                and all(isinstance(item.get("tags"), list) for item in b["items"])
-                for b in _get_bodies(r)
+            "validate": lambda r: (
+                len(_get_rows(r)) == 4
+                and set(_get_row_field(r, "status")) == {200, 201, 404, 500}
+                and all(isinstance(x, list) for x in _get_row_field(r, "items"))
             ),
         },
     ]
