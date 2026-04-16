@@ -8,7 +8,6 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
-import { isUndefined } from 'lodash-es';
 
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import ListAlert from './ListAlert';
@@ -19,7 +18,8 @@ function ListAlertRules(): JSX.Element {
 		query: { cacheTime: 0 },
 	});
 
-	const rules = data?.data?.rules;
+	const rules = data?.data?.rules ?? [];
+	const hasLoaded = !isLoading && data !== undefined;
 	const logEventCalledRef = useRef(false);
 
 	const { notifications } = useNotifications();
@@ -30,13 +30,13 @@ function ListAlertRules(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (!logEventCalledRef.current && !isUndefined(rules)) {
+		if (!logEventCalledRef.current && hasLoaded) {
 			logEvent('Alert: List page visited', {
-				number: rules?.length,
+				number: rules.length,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [rules]);
+	}, [hasLoaded, rules.length]);
 
 	useEffect(() => {
 		if (isError) {
@@ -50,12 +50,12 @@ function ListAlertRules(): JSX.Element {
 		return <div>{apiError?.getErrorMessage() || t('something_went_wrong')}</div>;
 	}
 
-	if (!isLoading && rules && rules.length === 0) {
-		return <AlertsEmptyState />;
+	if (isLoading || !data) {
+		return <Spinner height="75vh" tip="Loading Rules..." />;
 	}
 
-	if (isLoading || !rules) {
-		return <Spinner height="75vh" tip="Loading Rules..." />;
+	if (rules.length === 0) {
+		return <AlertsEmptyState />;
 	}
 
 	return (
