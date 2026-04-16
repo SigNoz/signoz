@@ -146,9 +146,8 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	hostCounts := make(map[string]groupHostCounts)
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
 	if !isHostNameInGroupBy {
-		activeHostsSQ := m.getActiveHostsQuery(hostsTableMetricNamesList, hostNameAttrKey)
 		fullFilterExpr := mergeFilterExpressions(hostsFilterExpr, pageGroupsFilterExpr)
-		hostCounts, err = m.getPerGroupHostCounts(ctx, req, activeHostsSQ, fullFilterExpr)
+		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, fullFilterExpr)
 		if err != nil {
 			return nil, err
 		}

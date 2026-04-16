@@ -14,6 +14,30 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
+// buildSamplesTblFingerprintSubQuery returns a SelectBuilder that selects distinct fingerprints
+// from the samples table for the given metric names andtime range.
+// The timeseries tables are ReplacingMergeTrees with bucketed granularity, so
+// WhichTSTableToUse widens the window — this subquery helps restricts to fingerprints
+// that actually have sample data in the requested range.
+func (m *module) buildSamplesTblFingerprintSubQuery(metricNames []string, startMs, endMs int64) *sqlbuilder.SelectBuilder {
+	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
+		uint64(startMs), uint64(endMs),
+		metrictypes.UnspecifiedType,
+		metrictypes.TimeAggregationUnspecified,
+		nil,
+	)
+	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
+	fpSB := sqlbuilder.NewSelectBuilder()
+	fpSB.Select("DISTINCT fingerprint")
+	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localSamplesTable))
+	fpSB.Where(
+		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
+		fpSB.GE("unix_milli", startMs),
+		fpSB.L("unix_milli", endMs),
+	)
+	return fpSB
+}
+
 func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := ""
 	if filter != nil {
@@ -145,25 +169,7 @@ func (m *module) getMetadata(
 		uint64(startMs), uint64(endMs), nil,
 	)
 
-	// Build a fingerprint subquery against the samples table using the original
-	// (non-adjusted) time range. The time_series tables are ReplacingMergeTrees
-	// with bucketed granularity, so WhichTSTableToUse widens the window — this
-	// subquery restricts to fingerprints actually active in the requested range.
-	samplesTableName := telemetrymetrics.WhichSamplesTableToUse(
-		uint64(startMs), uint64(endMs),
-		metrictypes.UnspecifiedType,
-		metrictypes.TimeAggregationUnspecified,
-		nil,
-	)
-	localSamplesTable := strings.TrimPrefix(samplesTableName, "distributed_")
-	fpSB := sqlbuilder.NewSelectBuilder()
-	fpSB.Select("DISTINCT fingerprint")
-	fpSB.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, localSamplesTable))
-	fpSB.Where(
-		fpSB.In("metric_name", sqlbuilder.List(metricNames)),
-		fpSB.GE("unix_milli", startMs),
-		fpSB.L("unix_milli", endMs),
-	)
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, startMs, endMs)
 
 	// Flatten groupBy keys to string names for SQL expressions and result scanning.
 	groupByCols := make([]string, len(groupBy))

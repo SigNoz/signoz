@@ -522,41 +522,24 @@ type groupHostCounts struct {
 	Inactive int
 }
 
-// getPerGroupHostCounts computes the number of active and inactive hosts per group
+// getPerGroupActiveInactiveHostCounts computes the number of active and inactive hosts per group
 // for the current page. It queries the timeseries table using the provided filter
 // expression (which includes user filter + status filter + page groups IN clause).
-// Uses GLOBAL IN/NOT IN with the active-hosts subquery inside uniqExactIf for
-// correctness across shards.
-//
-// When filterByStatus is set, only the relevant count column is queried — the other
-// is hardcoded to 0 since the filter guarantees it.
-func (m *module) getPerGroupHostCounts(
+// Uses GLOBAL IN with the active-hosts subquery inside uniqExactIf for active count,
+// and a simple uniqExactIf for total count. Inactive = total - active (computed in Go).
+func (m *module) getPerGroupActiveInactiveHostCounts(
 	ctx context.Context,
 	req *inframonitoringtypes.HostsListRequest,
-	activeHostsSQ *sqlbuilder.SelectBuilder,
+	metricNames []string,
 	filterExpr string,
 ) (map[string]groupHostCounts, error) {
+
 	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
 		uint64(req.Start), uint64(req.End), nil,
 	)
 
 	hostNameExpr := fmt.Sprintf("JSONExtractString(labels, '%s')", hostNameAttrKey)
 
-	// Determine which count columns to include based on filterByStatus.
-	needActive := true
-	needInactive := true
-	if req.Filter != nil {
-		switch req.Filter.FilterByStatus {
-		case inframonitoringtypes.HostStatusActive:
-			needInactive = false
-		case inframonitoringtypes.HostStatusInactive:
-			needActive = false
-		}
-	}
-
-	// Build SELECT columns: groupBy keys + count columns.
-	// sb.Var(activeHostsSQ) registers the subquery with the builder so all ? placeholders
-	// and args are tracked in the correct order — no manual arg management needed.
 	sb := sqlbuilder.NewSelectBuilder()
 	selectCols := make([]string, 0, len(req.GroupBy)+2)
 	for _, key := range req.GroupBy {
@@ -565,23 +548,23 @@ func (m *module) getPerGroupHostCounts(
 		)
 	}
 
-	if needActive {
-		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
-		)
-	}
-	if needInactive {
-		selectCols = append(selectCols,
-			fmt.Sprintf("uniqExactIf(%s, %s GLOBAL NOT IN (%s) AND %s != '') AS inactive_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ), hostNameExpr),
-		)
-	}
+	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey)
+	selectCols = append(selectCols,
+		fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
+		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),
+	)
+
+	// Build a fingerprint subquery to restrict to fingerprints with actual sample
+	// data in the original time range (not the wider timeseries table window).
+	fpSB := m.buildSamplesTblFingerprintSubQuery(metricNames, req.Start, req.End)
 
 	sb.Select(selectCols...)
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTimeSeriesTableName))
 	sb.Where(
-		sb.In("metric_name", sqlbuilder.List(hostsTableMetricNamesList)),
+		sb.In("metric_name", sqlbuilder.List(metricNames)),
 		sb.GE("unix_milli", adjustedStart),
 		sb.L("unix_milli", adjustedEnd),
+		fmt.Sprintf("fingerprint IN (%s)", sb.Var(fpSB)),
 	)
 
 	// Apply the combined filter expression (user filter + status filter + page groups IN).
@@ -618,13 +601,8 @@ func (m *module) getPerGroupHostCounts(
 			scanPtrs = append(scanPtrs, &groupVals[i])
 		}
 
-		var activeCount, inactiveCount uint64
-		if needActive {
-			scanPtrs = append(scanPtrs, &activeCount)
-		}
-		if needInactive {
-			scanPtrs = append(scanPtrs, &inactiveCount)
-		}
+		var activeCount, totalCount uint64
+		scanPtrs = append(scanPtrs, &activeCount, &totalCount)
 
 		if err := rows.Scan(scanPtrs...); err != nil {
 			return nil, err
@@ -633,7 +611,7 @@ func (m *module) getPerGroupHostCounts(
 		compositeKey := compositeKeyFromList(groupVals)
 		result[compositeKey] = groupHostCounts{
 			Active:   int(activeCount),
-			Inactive: int(inactiveCount),
+			Inactive: int(totalCount - activeCount),
 		}
 	}
 
