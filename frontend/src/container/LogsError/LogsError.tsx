@@ -3,6 +3,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
 
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+
 import './LogsError.styles.scss';
 
 export default function LogsError(): JSX.Element {
@@ -19,11 +21,7 @@ export default function LogsError(): JSX.Element {
 	return (
 		<div className="logs-error-container">
 			<div className="logs-error-content">
-				<img
-					src="/Icons/awwSnap.svg"
-					alt="error-emoji"
-					className="error-state-svg"
-				/>
+				<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
 				<Typography.Text>
 					<span className="aww-snap">Aw snap :/ </span> Something went wrong. Please
 					try again or contact support.

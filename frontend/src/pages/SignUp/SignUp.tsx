@@ -13,6 +13,8 @@ import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CircleAlert } from 'lucide-react';
 import APIError from 'types/api/error';
 
+import tvUrl from '@/assets/svgs/tv.svg';
+
 import { FormContainer, Label } from './styles';
 
 import './SignUp.styles.scss';
@@ -130,7 +132,7 @@ function SignUp(): JSX.Element {
 			<div className="signup-card">
 				<div className="signup-form-header">
 					<div className="signup-header-icon">
-						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
 					<Typography.Title level={4} className="signup-header-title">
 						Create your account
