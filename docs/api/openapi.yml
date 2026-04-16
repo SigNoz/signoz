@@ -10894,7 +10894,7 @@ paths:
       summary: Update user v2
       tags:
       - users
-  /api/v2/users/{id}/reset-password-token:
+  /api/v2/users/{id}/reset_password_token:
     get:
       deprecated: false
       description: This endpoint returns the existing reset password token for a user.

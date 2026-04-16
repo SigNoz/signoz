@@ -1426,7 +1426,7 @@ export const getResetPasswordToken = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetResetPasswordToken200>({
-		url: `/api/v2/users/${id}/reset-password-token`,
+		url: `/api/v2/users/${id}/reset_password_token`,
 		method: 'GET',
 		signal,
 	});
@@ -1435,7 +1435,7 @@ export const getResetPasswordToken = (
 export const getGetResetPasswordTokenQueryKey = ({
 	id,
 }: GetResetPasswordTokenPathParameters) => {
-	return [`/api/v2/users/${id}/reset-password-token`] as const;
+	return [`/api/v2/users/${id}/reset_password_token`] as const;
 };
 
 export const getGetResetPasswordTokenQueryOptions = <
@@ -1530,7 +1530,7 @@ export const createResetPasswordToken = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateResetPasswordToken201>({
-		url: `/api/v2/users/${id}/reset-password-token`,
+		url: `/api/v2/users/${id}/reset_password_token`,
 		method: 'POST',
 		signal,
 	});

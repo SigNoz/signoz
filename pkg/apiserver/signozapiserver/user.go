@@ -230,7 +230,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/reset_password_token", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
 		ID:                  "GetResetPasswordToken",
 		Tags:                []string{"users"},
 		Summary:             "Get reset password token for a user",
@@ -247,7 +247,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/users/{id}/reset_password_token", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
 		ID:                  "CreateResetPasswordToken",
 		Tags:                []string{"users"},
 		Summary:             "Create or regenerate reset password token for a user",
