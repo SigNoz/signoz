@@ -91,17 +91,42 @@ def test_reset_password(
     # Get the user id via v2
     found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
 
-    response = requests.get(
+    # Create a reset password token via v2 POST
+    response = requests.post(
         signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{found_user['id']}"
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
 
-    assert response.status_code == HTTPStatus.OK
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    token_data = response.json()["data"]
+    assert "token" in token_data
+    assert "expiresAt" in token_data
+    token = token_data["token"]
 
-    token = response.json()["data"]["token"]
+    # Calling POST again should return the same token (still valid)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    assert response.json()["data"]["token"] == token
+
+    # GET should also return the same token
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["token"] == token
 
     # Reset the password with a bad password which should fail
     response = requests.post(
@@ -140,18 +165,29 @@ def test_reset_password_with_no_password(
         )
         assert result.rowcount == 1
 
-    # Generate a new reset password token
+    # GET should return 404 since there's no password (and thus no token)
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{found_user['id']}"
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text
+
+    # Generate a new reset password token via v2 POST
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
 
-    assert response.status_code == HTTPStatus.OK
-
-    token = response.json()["data"]["token"]
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    token_data = response.json()["data"]
+    assert "expiresAt" in token_data
+    token = token_data["token"]
 
     # Reset the password with a good password
     response = requests.post(
@@ -262,32 +298,22 @@ def test_forgot_password_creates_reset_token(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Verify reset password token was created by querying the database
+    # Verify reset password token was created via the v2 GET endpoint
     found_user = find_user_by_email(signoz, admin_token, forgot_email)
 
-    reset_token = None
-    # Query the database directly to get the reset password token
-    # First get the password_id from factor_password, then get the token
-    with signoz.sqlstore.conn.connect() as conn:
-        result = conn.execute(
-            sql.text(
-                """
-                SELECT rpt.token
-                FROM reset_password_token rpt
-                JOIN factor_password fp ON rpt.password_id = fp.id
-                WHERE fp.user_id = :user_id
-            """
-            ),
-            {"user_id": found_user["id"]},
-        )
-        row = result.fetchone()
-        assert (
-            row is not None
-        ), "Reset password token should exist after calling forgotPassword"
-        reset_token = row[0]
-
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v2/users/{found_user['id']}/reset-password-token"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    token_data = response.json()["data"]
+    reset_token = token_data["token"]
     assert reset_token is not None
     assert reset_token != ""
+    assert "expiresAt" in token_data
 
     # Reset password with a valid strong password
     response = requests.post(

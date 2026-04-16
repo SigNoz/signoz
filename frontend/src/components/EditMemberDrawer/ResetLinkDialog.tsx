@@ -12,20 +12,6 @@ interface ResetLinkDialogProps {
 	onCopy: () => void;
 }
 
-function formatExpiry(expiresAt: string | null): string | null {
-	if (!expiresAt) {
-		return null;
-	}
-	const d = new Date(expiresAt);
-	if (Number.isNaN(d.getTime())) {
-		return null;
-	}
-	return d.toLocaleString(undefined, {
-		dateStyle: 'medium',
-		timeStyle: 'short',
-	});
-}
-
 function ResetLinkDialog({
 	open,
 	linkType,
@@ -35,8 +21,6 @@ function ResetLinkDialog({
 	onClose,
 	onCopy,
 }: ResetLinkDialogProps): JSX.Element {
-	const formattedExpiry = formatExpiry(expiresAt);
-
 	return (
 		<DialogWrapper
 			open={open}
@@ -71,9 +55,9 @@ function ResetLinkDialog({
 						{hasCopied ? 'Copied!' : 'Copy'}
 					</Button>
 				</div>
-				{formattedExpiry && (
+				{expiresAt && (
 					<p className="reset-link-dialog__description">
-						This link expires on {formattedExpiry}.
+						This link expires on {expiresAt}.
 					</p>
 				)}
 			</div>

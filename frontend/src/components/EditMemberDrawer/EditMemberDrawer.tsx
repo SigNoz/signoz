@@ -391,7 +391,12 @@ function EditMemberDrawer({
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
 				setResetLinkExpiresAt(
-					response.data.expiresAt ? String(response.data.expiresAt) : null,
+					response.data.expiresAt
+						? formatTimezoneAdjustedTimestamp(
+								String(response.data.expiresAt),
+								DATE_TIME_FORMATS.DASH_DATETIME,
+						  )
+						: null,
 				);
 				setHasCopiedResetLink(false);
 				setLinkType(isInvited ? 'invite' : 'reset');
