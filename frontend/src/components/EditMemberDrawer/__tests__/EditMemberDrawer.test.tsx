@@ -400,7 +400,7 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ member: invitedMember });
 
 		expect(
-			screen.getByRole('button', { name: /invite expired - regenerate/i }),
+			screen.getByRole('button', { name: /regenerate invite link/i }),
 		).toBeInTheDocument();
 	});
 

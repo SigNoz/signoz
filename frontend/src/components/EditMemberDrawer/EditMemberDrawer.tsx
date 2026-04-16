@@ -69,7 +69,7 @@ function getInviteButtonLabel(
 		return 'Copy Invite Link';
 	}
 	if (isExpired) {
-		return 'Invite Expired - Regenerate';
+		return 'Regenerate Invite Link';
 	}
 	if (notFound) {
 		return 'Generate Invite Link';
