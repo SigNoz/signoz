@@ -7,8 +7,8 @@ import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
 import saveAlertApi from 'api/alerts/save';
-import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
+import { testRule } from 'api/generated/services/rules';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -641,32 +641,20 @@ function FormAlertRules({
 		let statusResponse = { status: 'failed', message: '' };
 		setLoading(true);
 		try {
-			const response = await testAlertApi({ data: postableAlert });
+			const response = await testRule(postableAlert as any);
 
-			if (response.statusCode === 200) {
-				const { payload } = response;
-				if (payload?.alertCount === 0) {
-					notifications.error({
-						message: 'Error',
-						description: t('no_alerts_found'),
-					});
-					statusResponse = { status: 'failed', message: t('no_alerts_found') };
-				} else {
-					notifications.success({
-						message: 'Success',
-						description: t('rule_test_fired'),
-					});
-					statusResponse = { status: 'success', message: t('rule_test_fired') };
-				}
-			} else {
+			if (response.data?.alertCount === 0) {
 				notifications.error({
 					message: 'Error',
-					description: response.error || t('unexpected_error'),
+					description: t('no_alerts_found'),
 				});
-				statusResponse = {
-					status: 'failed',
-					message: response.error || t('unexpected_error'),
-				};
+				statusResponse = { status: 'failed', message: t('no_alerts_found') };
+			} else {
+				notifications.success({
+					message: 'Success',
+					description: t('rule_test_fired'),
+				});
+				statusResponse = { status: 'success', message: t('rule_test_fired') };
 			}
 		} catch (e) {
 			notifications.error({
