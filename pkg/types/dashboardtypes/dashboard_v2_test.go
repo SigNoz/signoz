@@ -188,6 +188,88 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 	}
 }
 
+func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
+	tests := []struct {
+		name        string
+		data        string
+		wantContain string
+	}{
+		{
+			name: "unknown field in panel spec",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {
+								"kind": "signoz/TimeSeriesPanel",
+								"spec": {"bogusField": true}
+							}
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "bogusField",
+		},
+		{
+			name: "unknown field in query spec",
+			data: `{
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+							"queries": [{
+								"kind": "TimeSeriesQuery",
+								"spec": {
+									"plugin": {
+										"kind": "signoz/PromQLQuery",
+										"spec": {"name": "A", "query": "up", "unknownThing": 42}
+									}
+								}
+							}]
+						}
+					}
+				},
+				"layouts": []
+			}`,
+			wantContain: "unknownThing",
+		},
+		{
+			name: "unknown field in variable spec",
+			data: `{
+				"variables": [{
+					"kind": "ListVariable",
+					"spec": {
+						"name": "v",
+						"allowAllValue": false,
+						"allowMultiple": false,
+						"plugin": {
+							"kind": "signoz/DynamicVariable",
+							"spec": {"name": "service.name", "signal": "metrics", "extraField": "bad"}
+						}
+					}
+				}],
+				"layouts": []
+			}`,
+			wantContain: "extraField",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			if err == nil {
+				t.Fatalf("expected error for unknown field, got nil")
+			}
+			if !strings.Contains(err.Error(), tt.wantContain) {
+				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			}
+		})
+	}
+}
+
 func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 	tests := []struct {
 		name        string

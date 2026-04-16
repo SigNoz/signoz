@@ -1,6 +1,7 @@
 package dashboardtypes
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -32,6 +33,9 @@ type StorableDashboardDataV2 = v1.DashboardSpec
 // (= PostableDashboardV2 = UpdatableDashboardV2) and validates plugin kinds and specs.
 func UnmarshalAndValidateDashboardV2JSON(data []byte) (*StorableDashboardDataV2, error) {
 	var d StorableDashboardDataV2
+	// Note: DashboardSpec has a custom UnmarshalJSON which prevents
+	// DisallowUnknownFields from working at the top level. Unknown
+	// fields in plugin specs are still rejected by validateAndNormalizePluginSpec.
 	if err := json.Unmarshal(data, &d); err != nil {
 		return nil, err
 	}
@@ -206,7 +210,9 @@ func validateAndNormalizePluginSpec(plugin *common.Plugin, factory func() any, p
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
 	target := factory()
-	if err := json.Unmarshal(specJSON, target); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(specJSON))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(target); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
 	if err := validator.New().Struct(target); err != nil {
