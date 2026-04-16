@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/go-playground/validator/v10"
 	v1 "github.com/perses/perses/pkg/model/api/v1"
 	"github.com/perses/perses/pkg/model/api/v1/common"
@@ -119,7 +118,7 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 		if err := validatePanelPlugin(panel.Spec.Plugin, path+".spec.plugin"); err != nil {
 			return err
 		}
-		panelKind := PanelPluginKind{valuer.NewString(panel.Spec.Plugin.Kind)}
+		panelKind := PanelPluginKind(panel.Spec.Plugin.Kind)
 		allowed := allowedQueryKinds[panelKind]
 		for qi, query := range panel.Spec.Queries {
 			queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)
@@ -136,10 +135,11 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 }
 
 func validateDatasourcePlugin(plugin common.Plugin, path string) error {
-	factory, ok := datasourcePluginSpecs[DatasourcePluginKind{valuer.NewString(plugin.Kind)}]
+	kind := DatasourcePluginKind(plugin.Kind)
+	factory, ok := datasourcePluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown datasource plugin kind %q; allowed values: %v", path, plugin.Kind, DatasourcePluginKind{}.Enum())
+			"%s: unknown datasource plugin kind %q; allowed values: %v", path, kind, kind.Enum())
 	}
 	return validatePluginSpec(plugin, factory, path)
 }
@@ -148,10 +148,11 @@ func validateVariablePlugin(v dashboard.Variable, path string) error {
 	switch spec := v.Spec.(type) {
 	case *dashboard.ListVariableSpec:
 		pluginPath := path + ".spec.plugin"
-		factory, ok := variablePluginSpecs[VariablePluginKind{valuer.NewString(spec.Plugin.Kind)}]
+		kind := VariablePluginKind(spec.Plugin.Kind)
+		factory, ok := variablePluginSpecs[kind]
 		if !ok {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-				"%s: unknown variable plugin kind %q; allowed values: %v", pluginPath, spec.Plugin.Kind, VariablePluginKind{}.Enum())
+				"%s: unknown variable plugin kind %q; allowed values: %v", pluginPath, kind, kind.Enum())
 		}
 		return validatePluginSpec(spec.Plugin, factory, pluginPath)
 	case *dashboard.TextVariableSpec:
@@ -163,19 +164,21 @@ func validateVariablePlugin(v dashboard.Variable, path string) error {
 }
 
 func validatePanelPlugin(plugin common.Plugin, path string) error {
-	factory, ok := panelPluginSpecs[PanelPluginKind{valuer.NewString(plugin.Kind)}]
+	kind := PanelPluginKind(plugin.Kind)
+	factory, ok := panelPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown panel plugin kind %q; allowed values: %v", path, plugin.Kind, PanelPluginKind{}.Enum())
+			"%s: unknown panel plugin kind %q; allowed values: %v", path, kind, kind.Enum())
 	}
 	return validatePluginSpec(plugin, factory, path)
 }
 
 func validateQueryPlugin(plugin common.Plugin, path string) error {
-	factory, ok := queryPluginSpecs[QueryPluginKind{valuer.NewString(plugin.Kind)}]
+	kind := QueryPluginKind(plugin.Kind)
+	factory, ok := queryPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown query plugin kind %q; allowed values: %v", path, plugin.Kind, QueryPluginKind{}.Enum())
+			"%s: unknown query plugin kind %q; allowed values: %v", path, kind, kind.Enum())
 	}
 	return validatePluginSpec(plugin, factory, path)
 }
@@ -205,10 +208,10 @@ func validatePluginSpec(plugin common.Plugin, factory func() any, path string) e
 // validateQueryAllowedForPanel checks that the query plugin kind is permitted
 // for the given panel. For composite queries it recurses into sub-queries.
 func validateQueryAllowedForPanel(plugin common.Plugin, allowed []QueryPluginKind, panelKind PanelPluginKind, path string) error {
-	queryKind := QueryPluginKind{valuer.NewString(plugin.Kind)}
+	queryKind := QueryPluginKind(plugin.Kind)
 	if !slices.Contains(allowed, queryKind) {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: query kind %q is not supported by panel kind %q", path, plugin.Kind, panelKind.StringValue())
+			"%s: query kind %q is not supported by panel kind %q", path, queryKind, panelKind)
 	}
 
 	// For composite queries, validate each sub-query type.
@@ -219,22 +222,21 @@ func validateQueryAllowedForPanel(plugin common.Plugin, allowed []QueryPluginKin
 		}
 		var composite struct {
 			Queries []struct {
-				Type string `json:"type"`
+				Type qb.QueryType `json:"type"`
 			} `json:"queries"`
 		}
 		if err := json.Unmarshal(specJSON, &composite); err != nil {
 			return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 		}
 		for si, sub := range composite.Queries {
-			subQueryType := qb.QueryType{String: valuer.NewString(sub.Type)}
-			pluginKind, ok := compositeSubQueryTypeToPluginKind[subQueryType]
+			pluginKind, ok := compositeSubQueryTypeToPluginKind[sub.Type]
 			if !ok {
 				continue
 			}
 			if !slices.Contains(allowed, pluginKind) {
 				return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 					"%s.spec.queries[%d]: sub-query type %q is not supported by panel kind %q",
-					path, si, sub.Type, panelKind.StringValue())
+					path, si, sub.Type, panelKind)
 			}
 		}
 	}

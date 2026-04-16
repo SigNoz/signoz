@@ -13,13 +13,13 @@ import (
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
 
-type VariablePluginKind struct{ valuer.String }
+type VariablePluginKind string
 
-var (
-	VariableKindDynamic = VariablePluginKind{valuer.NewString("signozdynamicvariable")}
-	VariableKindQuery   = VariablePluginKind{valuer.NewString("signozqueryvariable")}
-	VariableKindCustom  = VariablePluginKind{valuer.NewString("signozcustomvariable")}
-	VariableKindTextbox = VariablePluginKind{valuer.NewString("signoztextboxvariable")}
+const (
+	VariableKindDynamic VariablePluginKind = "signoz/DynamicVariable"
+	VariableKindQuery   VariablePluginKind = "signoz/QueryVariable"
+	VariableKindCustom  VariablePluginKind = "signoz/CustomVariable"
+	VariableKindTextbox VariablePluginKind = "signoz/TextboxVariable"
 )
 
 func (VariablePluginKind) Enum() []any {
@@ -47,15 +47,15 @@ type TextboxVariableSpec struct{}
 // SigNoz query plugin specs — aliased from querybuildertypesv5
 // ══════════════════════════════════════════════
 
-type QueryPluginKind struct{ valuer.String }
+type QueryPluginKind string
 
-var (
-	QueryKindBuilder       = QueryPluginKind{valuer.NewString("signozbuilderquery")}
-	QueryKindComposite     = QueryPluginKind{valuer.NewString("signozcompositequery")}
-	QueryKindFormula       = QueryPluginKind{valuer.NewString("signozformula")}
-	QueryKindPromQL        = QueryPluginKind{valuer.NewString("signozpromqlquery")}
-	QueryKindClickHouseSQL = QueryPluginKind{valuer.NewString("signozclickhousesql")}
-	QueryKindTraceOperator = QueryPluginKind{valuer.NewString("signoztraceoperator")}
+const (
+	QueryKindBuilder       QueryPluginKind = "signoz/BuilderQuery"
+	QueryKindComposite     QueryPluginKind = "signoz/CompositeQuery"
+	QueryKindFormula       QueryPluginKind = "signoz/Formula"
+	QueryKindPromQL        QueryPluginKind = "signoz/PromQLQuery"
+	QueryKindClickHouseSQL QueryPluginKind = "signoz/ClickHouseSQL"
+	QueryKindTraceOperator QueryPluginKind = "signoz/TraceOperator"
 )
 
 func (QueryPluginKind) Enum() []any {
@@ -90,26 +90,26 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 // SigNoz panel plugin specs
 // ══════════════════════════════════════════════
 
-type PanelPluginKind struct{ valuer.String }
+type PanelPluginKind string
 
-var (
-	PanelKindTimeSeries = PanelPluginKind{valuer.NewString("signoztimeseriespanel")}
-	PanelKindBarChart   = PanelPluginKind{valuer.NewString("signozbarchartpanel")}
-	PanelKindNumber     = PanelPluginKind{valuer.NewString("signoznumberpanel")}
-	PanelKindPieChart   = PanelPluginKind{valuer.NewString("signozpiechartpanel")}
-	PanelKindTable      = PanelPluginKind{valuer.NewString("signoztablepanel")}
-	PanelKindHistogram  = PanelPluginKind{valuer.NewString("signozhistogrampanel")}
-	PanelKindList       = PanelPluginKind{valuer.NewString("signozlistpanel")}
+const (
+	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
+	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
+	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
+	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
+	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
+	PanelKindList       PanelPluginKind = "signoz/ListPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
 	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList}
 }
 
-type DatasourcePluginKind struct{ valuer.String }
+type DatasourcePluginKind string
 
-var (
-	DatasourceKindSigNoz = DatasourcePluginKind{valuer.NewString("signozdatasource")}
+const (
+	DatasourceKindSigNoz DatasourcePluginKind = "signoz/Datasource"
 )
 
 func (DatasourcePluginKind) Enum() []any {

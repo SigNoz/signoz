@@ -7,7 +7,7 @@
         "SigNozDatasource": {
             "default": true,
             "plugin": {
-                "kind": "signozdatasource",
+                "kind": "signoz/Datasource",
                 "spec": {}
             }
         }
@@ -20,7 +20,7 @@
                     "name": ""
                 },
                 "plugin": {
-                    "kind": "signoznumberpanel",
+                    "kind": "signoz/NumberPanel",
                     "spec": {
                         "formatting": {
                             "unit": "s",
@@ -33,7 +33,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "metrics",
@@ -62,7 +62,7 @@
                     "name": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {
                         "visualization": {
                             "fillSpans": false
@@ -88,7 +88,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "metrics",

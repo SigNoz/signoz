@@ -8,7 +8,7 @@
         "SigNozDatasource": {
             "default": true,
             "plugin": {
-                "kind": "signozdatasource",
+                "kind": "signoz/Datasource",
                 "spec": {}
             }
         }
@@ -25,7 +25,7 @@
                 "allowMultiple": false,
                 "sort": "none",
                 "plugin": {
-                    "kind": "signozdynamicvariable",
+                    "kind": "signoz/DynamicVariable",
                     "spec": {
                         "name": "service.name",
                         "signal": "metrics"
@@ -44,7 +44,7 @@
                 "allowMultiple": true,
                 "sort": "alphabetical-asc",
                 "plugin": {
-                    "kind": "signozqueryvariable",
+                    "kind": "signoz/QueryVariable",
                     "spec": {
                         "queryValue": "SELECT JSONExtractString(labels, 'http.status_code') AS status_code FROM signoz_metrics.distributed_time_series_v4_1day WHERE status_code != '' GROUP BY status_code"
                     }
@@ -62,7 +62,7 @@
                 "allowMultiple": false,
                 "sort": "none",
                 "plugin": {
-                    "kind": "signozcustomvariable",
+                    "kind": "signoz/CustomVariable",
                     "spec": {
                         "customValue": "1,10,20,40,80,160,200"
                     }
@@ -78,7 +78,7 @@
                 },
                 "value": "defaultvaluegoeshere",
                 "plugin": {
-                    "kind": "signoztextboxvariable",
+                    "kind": "signoz/TextboxVariable",
                     "spec": {}
                 }
             }
@@ -93,7 +93,7 @@
                     "description": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {
                         "visualization": {
                             "fillSpans": true
@@ -139,7 +139,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "metrics",
@@ -176,7 +176,7 @@
                     "description": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {
                         "visualization": {
                             "fillSpans": true
@@ -198,7 +198,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozcompositequery",
+                                "kind": "signoz/CompositeQuery",
                                 "spec": {
                                     "queries": [
                                         {
@@ -261,7 +261,7 @@
                     "name": "total resp size"
                 },
                 "plugin": {
-                    "kind": "signozbarchartpanel",
+                    "kind": "signoz/BarChartPanel",
                     "spec": {
                         "visualization": {
                             "stackedBarChart": false
@@ -276,7 +276,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "metrics",
@@ -312,7 +312,7 @@
                     "name": "num traces for service"
                 },
                 "plugin": {
-                    "kind": "signoznumberpanel",
+                    "kind": "signoz/NumberPanel",
                     "spec": {
                         "formatting": {
                             "unit": "none",
@@ -341,7 +341,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "traces",
@@ -367,7 +367,7 @@
                     "name": "num logs for service"
                 },
                 "plugin": {
-                    "kind": "signoznumberpanel",
+                    "kind": "signoz/NumberPanel",
                     "spec": {
                         "formatting": {
                             "unit": "none",
@@ -380,7 +380,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "logs",
@@ -406,7 +406,7 @@
                     "name": "num traces for service per resp code"
                 },
                 "plugin": {
-                    "kind": "signozpiechartpanel",
+                    "kind": "signoz/PieChartPanel",
                     "spec": {
                         "formatting": {
                             "decimalPrecision": "1"
@@ -425,7 +425,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "traces",
@@ -459,7 +459,7 @@
                     "name": "average latency per service"
                 },
                 "plugin": {
-                    "kind": "signoztablepanel",
+                    "kind": "signoz/TablePanel",
                     "spec": {
                         "formatting": {
                             "columnUnits": {
@@ -483,7 +483,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozclickhousesql",
+                                "kind": "signoz/ClickHouseSQL",
                                 "spec": {
                                     "name": "A",
                                     "query": "WITH\n    __spatial_aggregation_cte AS\n    (\n        SELECT\n            toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts,\n            `service.name`,\n            le,\n            sum(value) / 60 AS value\n        FROM signoz_metrics.distributed_samples_v4 AS points\n        INNER JOIN\n        (\n            SELECT\n                fingerprint,\n                JSONExtractString(labels, 'service.name') AS `service.name`,\n                JSONExtractString(labels, 'le') AS le\n            FROM signoz_metrics.time_series_v4\n            WHERE (metric_name IN ('signoz_latency.bucket')) AND (LOWER(temporality) LIKE LOWER('delta')) AND (__normalized = 0)\n            GROUP BY\n                fingerprint,\n                `service.name`,\n                le\n        ) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint\n        WHERE metric_name IN ('signoz_latency.bucket')\n        GROUP BY\n            ts,\n            `service.name`,\n            le\n    ),\n    __histogramCTE AS\n    (\n        SELECT\n            ts,\n            `service.name`,\n            histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.9) AS value\n        FROM __spatial_aggregation_cte\n        GROUP BY\n            `service.name`,\n            ts\n        ORDER BY\n            `service.name` ASC,\n            ts ASC\n    )\nSELECT\n    `service.name` AS service,\n    avg(value) AS A\nFROM __histogramCTE\nGROUP BY `service.name`"
@@ -501,7 +501,7 @@
                     "name": "logs from service"
                 },
                 "plugin": {
-                    "kind": "signozlistpanel",
+                    "kind": "signoz/ListPanel",
                     "spec": {
                         "selectFields": [
                             {
@@ -524,7 +524,7 @@
                         "kind": "LogQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "logs",
@@ -565,7 +565,7 @@
                     "name": "response size buckets"
                 },
                 "plugin": {
-                    "kind": "signozhistogrampanel",
+                    "kind": "signoz/HistogramPanel",
                     "spec": {
                         "histogramBuckets": {
                             "bucketCount": 60,
@@ -578,7 +578,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozbuilderquery",
+                                "kind": "signoz/BuilderQuery",
                                 "spec": {
                                     "name": "A",
                                     "signal": "metrics",
@@ -605,7 +605,7 @@
                     "description": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {
                         "legend": {
                             "position": "right"
@@ -617,7 +617,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozcompositequery",
+                                "kind": "signoz/CompositeQuery",
                                 "spec": {
                                     "queries": [
                                         {
@@ -680,7 +680,7 @@
                     "description": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {}
                 },
                 "queries": [
@@ -688,7 +688,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozcompositequery",
+                                "kind": "signoz/CompositeQuery",
                                 "spec": {
                                     "queries": [
                                         {
@@ -721,7 +721,7 @@
                     "description": ""
                 },
                 "plugin": {
-                    "kind": "signoztimeseriespanel",
+                    "kind": "signoz/TimeSeriesPanel",
                     "spec": {}
                 },
                 "queries": [
@@ -729,7 +729,7 @@
                         "kind": "TimeSeriesQuery",
                         "spec": {
                             "plugin": {
-                                "kind": "signozpromqlquery",
+                                "kind": "signoz/PromQLQuery",
                                 "spec": {
                                     "name": "A",
                                     "query": "sum(rate(flask_exporter_info[5m]))"

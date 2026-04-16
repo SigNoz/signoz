@@ -52,7 +52,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 					"allowAllValue": true,
 					"allowMultiple": false,
 					"plugin": {
-						"kind": "signozdynamicvariable",
+						"kind": "signoz/DynamicVariable",
 						"spec": {
 							"name": "service.name",
 							"signal": "metrics"
@@ -66,7 +66,7 @@ func TestValidateOnlyVariables(t *testing.T) {
 					"name": "mytext",
 					"value": "default",
 					"plugin": {
-						"kind": "signoztextboxvariable",
+						"kind": "signoz/TextboxVariable",
 						"spec": {}
 					}
 				}
@@ -107,7 +107,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
-							"plugin": {"kind": "signoztimeseriespanel", "spec": {}},
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "TimeSeriesQuery",
 								"spec": {
@@ -170,7 +170,7 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 		"panels": {
 			"good": {
 				"kind": "Panel",
-				"spec": {"plugin": {"kind": "signoznumberpanel", "spec": {}}}
+				"spec": {"plugin": {"kind": "signoz/NumberPanel", "spec": {}}}
 			},
 			"bad": {
 				"kind": "Panel",
@@ -202,7 +202,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"visualization": {"fillSpans": "notabool"}}
 							}
 						}
@@ -219,12 +219,12 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 					"p1": {
 						"kind": "Panel",
 						"spec": {
-							"plugin": {"kind": "signoztimeseriespanel", "spec": {}},
+							"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
 							"queries": [{
 								"kind": "TimeSeriesQuery",
 								"spec": {
 									"plugin": {
-										"kind": "signozpromqlquery",
+										"kind": "signoz/PromQLQuery",
 										"spec": {"name": "A", "query": 123}
 									}
 								}
@@ -246,7 +246,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 						"allowAllValue": false,
 						"allowMultiple": false,
 						"plugin": {
-							"kind": "signozdynamicvariable",
+							"kind": "signoz/DynamicVariable",
 							"spec": {"name": 123, "signal": "metrics"}
 						}
 					}
@@ -284,14 +284,14 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {}
 							},
 							"queries": [{
 								"kind": "TimeSeriesQuery",
 								"spec": {
 									"plugin": {
-										"kind": "signozbuilderquery",
+										"kind": "signoz/BuilderQuery",
 										"spec": {"signal": "foo"}
 									}
 								}
@@ -311,7 +311,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"lineInterpolation": "cubic"}}
 							}
 						}
@@ -329,7 +329,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"lineStyle": "dotted"}}
 							}
 						}
@@ -347,7 +347,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"fillMode": "striped"}}
 							}
 						}
@@ -365,7 +365,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"chartAppearance": {"spanGaps": {"fillLessThan": "notaduration"}}}
 							}
 						}
@@ -383,7 +383,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"visualization": {"timePreference": "last2Hr"}}
 							}
 						}
@@ -401,7 +401,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signozbarchartpanel",
+								"kind": "signoz/BarChartPanel",
 								"spec": {"legend": {"position": "top"}}
 							}
 						}
@@ -419,7 +419,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoznumberpanel",
+								"kind": "signoz/NumberPanel",
 								"spec": {"thresholds": [{"value": 100, "operator": ">", "color": "Red", "format": "Color"}]}
 							}
 						}
@@ -437,7 +437,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoznumberpanel",
+								"kind": "signoz/NumberPanel",
 								"spec": {"thresholds": [{"value": 100, "operator": "!=", "color": "Red", "format": "text"}]}
 							}
 						}
@@ -455,7 +455,7 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 						"kind": "Panel",
 						"spec": {
 							"plugin": {
-								"kind": "signoztimeseriespanel",
+								"kind": "signoz/TimeSeriesPanel",
 								"spec": {"formatting": {"decimalPrecision": "9"}}
 							}
 						}
@@ -516,52 +516,52 @@ func TestValidateRequiredFields(t *testing.T) {
 	}{
 		{
 			name:        "DynamicVariable missing name",
-			data:        wrapVariable("signozdynamicvariable", `{"signal": "metrics"}`),
+			data:        wrapVariable("signoz/DynamicVariable", `{"signal": "metrics"}`),
 			wantContain: "Name",
 		},
 		{
 			name:        "QueryVariable missing queryValue",
-			data:        wrapVariable("signozqueryvariable", `{}`),
+			data:        wrapVariable("signoz/QueryVariable", `{}`),
 			wantContain: "QueryValue",
 		},
 		{
 			name:        "CustomVariable missing customValue",
-			data:        wrapVariable("signozcustomvariable", `{}`),
+			data:        wrapVariable("signoz/CustomVariable", `{}`),
 			wantContain: "CustomValue",
 		},
 		{
 			name:        "ThresholdWithLabel missing value",
-			data:        wrapPanel("signoztimeseriespanel", `{"thresholds": [{"color": "Red", "label": "high"}]}`),
+			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"color": "Red", "label": "high"}]}`),
 			wantContain: "Value",
 		},
 		{
 			name:        "ThresholdWithLabel missing color",
-			data:        wrapPanel("signoztimeseriespanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
+			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "label": "high", "color": ""}]}`),
 			wantContain: "Color",
 		},
 		{
 			name:        "ThresholdWithLabel missing label",
-			data:        wrapPanel("signoztimeseriespanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
+			data:        wrapPanel("signoz/TimeSeriesPanel", `{"thresholds": [{"value": 100, "color": "Red", "label": ""}]}`),
 			wantContain: "Label",
 		},
 		{
 			name:        "ComparisonThreshold missing value",
-			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"operator": ">", "format": "text", "color": "Red"}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"operator": ">", "format": "text", "color": "Red"}]}`),
 			wantContain: "Value",
 		},
 		{
 			name:        "ComparisonThreshold missing color",
-			data:        wrapPanel("signoznumberpanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": ""}]}`),
+			data:        wrapPanel("signoz/NumberPanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": ""}]}`),
 			wantContain: "Color",
 		},
 		{
 			name:        "TableThreshold missing columnName",
-			data:        wrapPanel("signoztablepanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": "Red", "columnName": ""}]}`),
+			data:        wrapPanel("signoz/TablePanel", `{"thresholds": [{"value": 100, "operator": ">", "format": "text", "color": "Red", "columnName": ""}]}`),
 			wantContain: "ColumnName",
 		},
 		{
 			name:        "SelectField missing name",
-			data:        wrapPanel("signozlistpanel", `{"selectFields": [{"name": ""}]}`),
+			data:        wrapPanel("signoz/ListPanel", `{"selectFields": [{"name": ""}]}`),
 			wantContain: "Name",
 		},
 	}
@@ -586,7 +586,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 				"kind": "Panel",
 				"spec": {
 					"plugin": {
-						"kind": "signoztimeseriespanel",
+						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
 					}
 				}
@@ -635,7 +635,7 @@ func TestNumberPanelDefaults(t *testing.T) {
 				"kind": "Panel",
 				"spec": {
 					"plugin": {
-						"kind": "signoznumberpanel",
+						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
 					}
 				}
@@ -730,7 +730,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		return []byte(`{
 			"panels": {"p1": {"kind": "Panel", "spec": {
 				"plugin": {"kind": "` + panelKind + `", "spec": {}},
-				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signozcompositequery", "spec": {
+				"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {
 					"queries": [{"type": "` + subType + `", "spec": ` + subSpec + `}]
 				}}}}]
 			}}},
@@ -744,18 +744,18 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 		wantErr bool
 	}{
 		// Top-level: allowed
-		{"TimeSeries+PromQL", mkQuery("signoztimeseriespanel", "signozpromqlquery", `{"name":"A","query":"up"}`), false},
-		{"Table+ClickHouse", mkQuery("signoztablepanel", "signozclickhousesql", `{"name":"A","query":"SELECT 1"}`), false},
-		{"List+Builder", mkQuery("signozlistpanel", "signozbuilderquery", `{"name":"A","signal":"logs"}`), false},
+		{"TimeSeries+PromQL", mkQuery("signoz/TimeSeriesPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), false},
+		{"Table+ClickHouse", mkQuery("signoz/TablePanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), false},
+		{"List+Builder", mkQuery("signoz/ListPanel", "signoz/BuilderQuery", `{"name":"A","signal":"logs"}`), false},
 		// Top-level: rejected
-		{"Table+PromQL", mkQuery("signoztablepanel", "signozpromqlquery", `{"name":"A","query":"up"}`), true},
-		{"List+ClickHouse", mkQuery("signozlistpanel", "signozclickhousesql", `{"name":"A","query":"SELECT 1"}`), true},
-		{"List+PromQL", mkQuery("signozlistpanel", "signozpromqlquery", `{"name":"A","query":"up"}`), true},
-		{"List+Composite", mkQuery("signozlistpanel", "signozcompositequery", `{"queries":[]}`), true},
-		{"List+Formula", mkQuery("signozlistpanel", "signozformula", `{"name":"F1","expression":"A+B"}`), true},
+		{"Table+PromQL", mkQuery("signoz/TablePanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+ClickHouse", mkQuery("signoz/ListPanel", "signoz/ClickHouseSQL", `{"name":"A","query":"SELECT 1"}`), true},
+		{"List+PromQL", mkQuery("signoz/ListPanel", "signoz/PromQLQuery", `{"name":"A","query":"up"}`), true},
+		{"List+Composite", mkQuery("signoz/ListPanel", "signoz/CompositeQuery", `{"queries":[]}`), true},
+		{"List+Formula", mkQuery("signoz/ListPanel", "signoz/Formula", `{"name":"F1","expression":"A+B"}`), true},
 		// Composite sub-queries
-		{"Table+Composite(promql)", mkComposite("signoztablepanel", "promql", `{"name":"A","query":"up"}`), true},
-		{"Table+Composite(clickhouse)", mkComposite("signoztablepanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
+		{"Table+Composite(promql)", mkComposite("signoz/TablePanel", "promql", `{"name":"A","query":"up"}`), true},
+		{"Table+Composite(clickhouse)", mkComposite("signoz/TablePanel", "clickhouse_sql", `{"name":"A","query":"SELECT 1"}`), false},
 	}
 
 	for _, tc := range cases {
