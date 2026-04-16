@@ -6,8 +6,7 @@ import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/ut
 import * as useSafeNavigateHook from 'hooks/useSafeNavigate';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import * as useCreateAlertRuleHook from '../../../../hooks/alerts/useCreateAlertRule';
-import * as useTestAlertRuleHook from '../../../../hooks/alerts/useTestAlertRule';
+import * as rulesHook from '../../../../api/generated/services/rules';
 import * as useUpdateAlertRuleHook from '../../../../hooks/alerts/useUpdateAlertRule';
 import { CreateAlertProvider } from '../../context';
 import CreateAlertHeader from '../CreateAlertHeader';
@@ -17,11 +16,11 @@ jest.spyOn(useSafeNavigateHook, 'useSafeNavigate').mockReturnValue({
 	safeNavigate: mockSafeNavigate,
 });
 
-jest.spyOn(useCreateAlertRuleHook, 'useCreateAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
-jest.spyOn(useTestAlertRuleHook, 'useTestAlertRule').mockReturnValue({
+jest.spyOn(rulesHook, 'useTestRule').mockReturnValue({
 	mutate: jest.fn(),
 	isLoading: false,
 } as any);
