@@ -59,7 +59,7 @@ func New(
 		Querier:                querier,
 		Logger:                 providerSettings.Logger,
 		Cache:                  cache,
-		EvalDelay:              config.EvalDelay,
+		EvalDelay:              valuer.MustParseTextDuration(config.EvalDelay.String()),
 		PrepareTaskFunc:        prepareTaskFunc,
 		PrepareTestRuleFunc:    prepareTestRuleFunc,
 		Alertmanager:           alertmanager,
