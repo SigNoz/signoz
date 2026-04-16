@@ -39,7 +39,7 @@ var (
 //
 // NOTE: enrichment can not work with FuzzySelectors; QB requests exact matches for query building so
 // parentTypeCache will actually have proper matches and
-// FuzzyMatching is for Suggestions API so enrichment is not needed
+// FuzzyMatching is for Suggestions API so enrichment is not needed.
 func (t *telemetryMetaStore) enrichJSONKeys(ctx context.Context, selectors []*telemetrytypes.FieldKeySelector, keys []*telemetrytypes.TelemetryFieldKey, parentTypeCache map[string][]telemetrytypes.FieldDataType) error {
 	mapOfExactSelectors := make(map[string]*telemetrytypes.FieldKeySelector)
 	for _, selector := range selectors {
