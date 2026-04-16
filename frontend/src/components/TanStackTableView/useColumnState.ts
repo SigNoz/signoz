@@ -23,25 +23,16 @@ type UseColumnStateOptions<TData> = {
 };
 
 type UseColumnStateResult<TData> = {
-	/** Computed visibility state for TanStack Table */
 	columnVisibility: VisibilityState;
-	/** Column sizing state */
 	columnSizing: ColumnSizingState;
 	/** Columns sorted by persisted order (pinned first) */
 	sortedColumns: TableColumnDef<TData>[];
-	/** List of currently hidden column IDs */
 	hiddenColumnIds: string[];
-	/** Hide a column (persisted) */
 	hideColumn: (columnId: string) => void;
-	/** Show a column (persisted) */
 	showColumn: (columnId: string) => void;
-	/** Toggle column visibility */
 	toggleColumn: (columnId: string) => void;
-	/** Update column sizing */
 	setColumnSizing: (sizing: ColumnSizingState) => void;
-	/** Update column order from reordered columns array */
 	setColumnOrder: (columns: TableColumnDef<TData>[]) => void;
-	/** Reset all to defaults from column definitions */
 	resetToDefaults: () => void;
 };
 
@@ -60,47 +51,51 @@ export function useColumnState<TData>({
 
 	const rawHiddenColumnIds = useHiddenColumnIds(storageKey ?? '');
 
-	// Cleanup stale hidden column IDs that no longer exist in column definitions
-	useEffect(() => {
-		if (!storageKey) {
-			return;
-		}
+	useEffect(
+		function cleanupHiddenColumnIdsNoLongerInDefinitions(): void {
+			if (!storageKey) {
+				return;
+			}
 
-		const validColumnIds = new Set(columns.map((c) => c.id));
-		storeCleanupStaleHiddenColumns(storageKey, validColumnIds);
-	}, [storageKey, columns]);
+			const validColumnIds = new Set(columns.map((c) => c.id));
+			storeCleanupStaleHiddenColumns(storageKey, validColumnIds);
+		},
+		[storageKey, columns],
+	);
+
 	const columnSizing = useStoreSizing(storageKey ?? '');
-
 	const prevColumnIdsRef = useRef<Set<string> | null>(null);
 
-	// Auto-show newly added columns (e.g., when user adds via Options Menu)
-	useEffect(() => {
-		if (!storageKey) {
-			return;
-		}
-
-		const currentIds = new Set(columns.map((c) => c.id));
-
-		// Skip first render - just record the initial columns
-		if (prevColumnIdsRef.current === null) {
-			prevColumnIdsRef.current = currentIds;
-			return;
-		}
-
-		const prevIds = prevColumnIdsRef.current;
-
-		// Find columns that are new (in current but not in previous)
-		for (const id of currentIds) {
-			if (!prevIds.has(id) && rawHiddenColumnIds.includes(id)) {
-				// Column was just added and is hidden - show it
-				storeShowColumn(storageKey, id);
+	useEffect(
+		function autoShowNewlyAddedColumns(): void {
+			if (!storageKey) {
+				return;
 			}
-		}
 
-		prevColumnIdsRef.current = currentIds;
-	}, [storageKey, columns, rawHiddenColumnIds]);
+			const currentIds = new Set(columns.map((c) => c.id));
+
+			// Skip first render - just record the initial columns
+			if (prevColumnIdsRef.current === null) {
+				prevColumnIdsRef.current = currentIds;
+				return;
+			}
+
+			const prevIds = prevColumnIdsRef.current;
+
+			// Find columns that are new (in current but not in previous)
+			for (const id of currentIds) {
+				if (!prevIds.has(id) && rawHiddenColumnIds.includes(id)) {
+					// Column was just added and is hidden - show it
+					storeShowColumn(storageKey, id);
+				}
+			}
+
+			prevColumnIdsRef.current = currentIds;
+		},
+		[storageKey, columns, rawHiddenColumnIds],
+	);
+
 	const columnOrder = useStoreOrder(storageKey ?? '');
-
 	const columnMap = useMemo(() => new Map(columns.map((c) => [c.id, c])), [
 		columns,
 	]);

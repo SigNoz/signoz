@@ -13,29 +13,21 @@ import { createStore, StoreApi, useStore } from 'zustand';
 
 const CLEAR_HOVER_DELAY_MS = 100;
 
-type TableState = {
-	// Hover state
+type TanStackTableState = {
 	hoveredRowId: string | null;
 	clearTimeoutId: ReturnType<typeof setTimeout> | null;
 	setHoveredRowId: (id: string | null) => void;
 	scheduleClearHover: (rowId: string) => void;
-
-	// Loading state
 	isLoading: boolean;
 	setIsLoading: (loading: boolean) => void;
-
-	// Infinite scroll mode - when enabled, cells don't show skeleton on load
 	isInfiniteScrollMode: boolean;
 	setIsInfiniteScrollMode: (enabled: boolean) => void;
-
-	// Column visibility state
 	columnVisibility: VisibilityState;
 	setColumnVisibility: (visibility: VisibilityState) => void;
 };
 
-const createTableStateStore = (): StoreApi<TableState> =>
-	createStore<TableState>((set, get) => ({
-		// Hover state
+const createTableStateStore = (): StoreApi<TanStackTableState> =>
+	createStore<TanStackTableState>((set, get) => ({
 		hoveredRowId: null,
 		clearTimeoutId: null,
 		setHoveredRowId: (id: string | null): void => {
@@ -59,27 +51,21 @@ const createTableStateStore = (): StoreApi<TableState> =>
 			}, CLEAR_HOVER_DELAY_MS);
 			set({ clearTimeoutId: timeoutId });
 		},
-
-		// Loading state
 		isLoading: false,
 		setIsLoading: (loading: boolean): void => {
 			set({ isLoading: loading });
 		},
-
-		// Infinite scroll mode
 		isInfiniteScrollMode: false,
 		setIsInfiniteScrollMode: (enabled: boolean): void => {
 			set({ isInfiniteScrollMode: enabled });
 		},
-
-		// Column visibility state
 		columnVisibility: {},
 		setColumnVisibility: (visibility: VisibilityState): void => {
 			set({ columnVisibility: visibility });
 		},
 	}));
 
-type TableStateStore = StoreApi<TableState>;
+type TableStateStore = StoreApi<TanStackTableState>;
 
 const TanStackTableStateContext = createContext<TableStateStore | null>(null);
 
@@ -101,7 +87,6 @@ export function TanStackTableStateProvider({
 
 const defaultStore = createTableStateStore();
 
-// Hover hooks
 export const useIsRowHovered = (rowId: string): boolean => {
 	const store = useContext(TanStackTableStateContext);
 	const isHovered = useStore(
@@ -132,7 +117,6 @@ export const useClearRowHovered = (rowId: string): (() => void) => {
 	}, [store, rowId]);
 };
 
-// Loading hooks
 export const useIsTableLoading = (): boolean => {
 	const store = useContext(TanStackTableStateContext);
 	return useStore(store ?? defaultStore, (s) => s.isLoading);
@@ -150,7 +134,6 @@ export const useSetTableLoading = (): ((loading: boolean) => void) => {
 	);
 };
 
-// Sync component to update loading state from props
 export function TableLoadingSync({
 	isLoading,
 	isInfiniteScrollMode,
@@ -171,7 +154,6 @@ export function TableLoadingSync({
 	return null;
 }
 
-// Hook to check if cells should show skeleton (loading but not infinite scroll mode)
 export const useShouldShowCellSkeleton = (): boolean => {
 	const store = useContext(TanStackTableStateContext);
 	return useStore(
@@ -180,7 +162,6 @@ export const useShouldShowCellSkeleton = (): boolean => {
 	);
 };
 
-// Column visibility hooks
 export const useColumnVisibility = (): VisibilityState => {
 	const store = useContext(TanStackTableStateContext);
 	return useStore(store ?? defaultStore, (s) => s.columnVisibility);
@@ -208,7 +189,6 @@ export const useSetColumnVisibility = (): ((
 	);
 };
 
-// Sync component to update column visibility from props
 export function ColumnVisibilitySync({
 	visibility,
 }: {
@@ -216,7 +196,6 @@ export function ColumnVisibilitySync({
 }): null {
 	const setVisibility = useSetColumnVisibility();
 
-	// Sync on mount and when visibility changes
 	useEffect(() => {
 		setVisibility(visibility);
 	}, [visibility, setVisibility]);

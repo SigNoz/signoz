@@ -5,7 +5,7 @@ import { FlatItem } from './types';
 
 export interface UseFlatItemsOptions<TData> {
 	tableRows: Row<TData>[];
-	/** Whether row expansion is enabled */
+	/** Whether row expansion is enabled, needs to be unknown since it will be a function that can be updated/modified, boolean does not work well here */
 	renderExpandedRow?: unknown;
 	expanded: ExpandedState;
 	/** Index of the active row (for scroll-to behavior) */

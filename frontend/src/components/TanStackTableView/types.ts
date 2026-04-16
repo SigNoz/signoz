@@ -39,7 +39,6 @@ export type RowKeyData = {
 	groupMeta?: Record<string, string>;
 };
 
-/** Original column definition - compatible with existing code */
 export type TableColumnDef<
 	TData,
 	TKey extends keyof TData = any,

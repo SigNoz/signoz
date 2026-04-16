@@ -8,7 +8,6 @@ export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
 
 const DEFAULT_MIN_WIDTH = 192; // 12rem * 16px
 
-/** Get CSS style properties for column width */
 export const getColumnWidthStyle = <TData>(
 	column: TableColumnDef<TData>,
 	/** Persisted width from user resizing (overrides defined width) */
@@ -28,7 +27,6 @@ export const getColumnWidthStyle = <TData>(
 			minWidth: DEFAULT_MIN_WIDTH,
 		};
 	}
-	// Fixed: all three properties set to the same value (ignore persisted)
 	if (width.fixed != null) {
 		return {
 			width: width.fixed,
@@ -36,7 +34,6 @@ export const getColumnWidthStyle = <TData>(
 			maxWidth: width.fixed,
 		};
 	}
-	// Use persisted width if available, otherwise use defined width, fallback to min
 	return {
 		width: persistedWidth ?? width.default ?? width.min,
 		minWidth: width.min ?? DEFAULT_MIN_WIDTH,
@@ -44,7 +41,6 @@ export const getColumnWidthStyle = <TData>(
 	};
 };
 
-/** Helper to build accessor function */
 const buildAccessorFn = <TData>(
 	colDef: TableColumnDef<TData>,
 ): ((row: TData) => unknown) => {
