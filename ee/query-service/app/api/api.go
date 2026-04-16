@@ -64,10 +64,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 	return ah, nil
 }
 
-func (ah *APIHandler) RM() ruler.Ruler {
-	return ah.opts.RulesManager
-}
-
 func (ah *APIHandler) UM() *usage.Manager {
 	return ah.opts.UsageManager
 }
