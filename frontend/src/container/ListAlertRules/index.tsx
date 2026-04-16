@@ -1,8 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Space } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRules } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';
 import { isUndefined } from 'lodash-es';
@@ -21,6 +24,11 @@ function ListAlertRules(): JSX.Element {
 
 	const { notifications } = useNotifications();
 
+	const apiError = useMemo(
+		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
+		[error],
+	);
+
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(rules)) {
 			logEvent('Alert: List page visited', {
@@ -33,13 +41,13 @@ function ListAlertRules(): JSX.Element {
 	useEffect(() => {
 		if (isError) {
 			notifications.error({
-				message: (error as any)?.message || t('something_went_wrong'),
+				message: apiError?.getErrorMessage() || t('something_went_wrong'),
 			});
 		}
-	}, [isError, error, t, notifications]);
+	}, [isError, apiError, t, notifications]);
 
 	if (isError) {
-		return <div>{(error as any)?.message || t('something_went_wrong')}</div>;
+		return <div>{apiError?.getErrorMessage() || t('something_went_wrong')}</div>;
 	}
 
 	if (!isLoading && rules && rules.length === 0) {

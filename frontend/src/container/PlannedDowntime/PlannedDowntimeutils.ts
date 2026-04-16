@@ -1,6 +1,7 @@
 import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { DefaultOptionType } from 'antd/es/select';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createDowntimeSchedule,
 	updateDowntimeScheduleByID,
@@ -12,11 +13,11 @@ import type {
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
+import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
-
-import { showErrorNotification } from '../../utils/error';
+import APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
 
@@ -107,6 +108,7 @@ type DeleteDowntimeScheduleProps = {
 		{ pathParams: DeleteDowntimeScheduleByIDPathParameters }
 	>;
 	notifications: NotificationInstance;
+	showErrorModal: (error: APIError) => void;
 	refetchAllSchedules: VoidFunction;
 	deleteId?: string;
 	hideDeleteDowntimeScheduleModal: () => void;
@@ -120,11 +122,11 @@ export const deleteDowntimeHandler = ({
 	hideDeleteDowntimeScheduleModal,
 	clearSearch,
 	notifications,
+	showErrorModal,
 }: DeleteDowntimeScheduleProps): void => {
 	if (!deleteId) {
-		const errorMsg = new Error('Something went wrong');
 		console.error('Unable to delete, please provide correct deleteId');
-		showErrorNotification(notifications, errorMsg);
+		notifications.error({ message: 'Something went wrong' });
 	} else {
 		deleteDowntimeScheduleAsync(
 			{ pathParams: { id: String(deleteId) } },
@@ -138,7 +140,9 @@ export const deleteDowntimeHandler = ({
 					refetchAllSchedules();
 				},
 				onError: (err) => {
-					showErrorNotification(notifications, err);
+					showErrorModal(
+						convertToApiError(err as AxiosError<RenderErrorResponseDTO>) as APIError,
+					);
 				},
 			},
 		);

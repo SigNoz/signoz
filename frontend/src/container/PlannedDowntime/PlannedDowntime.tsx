@@ -15,6 +15,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { USER_ROLES } from 'types/roles';
 
 import 'dayjs/locale/en';
@@ -38,6 +39,7 @@ export function PlannedDowntime(): JSX.Element {
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
+	const { showErrorModal } = useErrorModal();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
@@ -109,6 +111,7 @@ export function PlannedDowntime(): JSX.Element {
 		deleteDowntimeHandler({
 			deleteDowntimeScheduleAsync,
 			notifications,
+			showErrorModal,
 			refetchAllSchedules,
 			deleteId: deleteData?.id,
 			hideDeleteDowntimeScheduleModal,

@@ -5,7 +5,10 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { createRule } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
@@ -27,9 +30,11 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
+import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import DeleteAlert from './DeleteAlert';
@@ -94,11 +99,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		})();
 	}, 30000);
 
-	const handleError = useCallback((): void => {
-		notificationsApi.error({
-			message: t('something_went_wrong'),
-		});
-	}, [notificationsApi, t]);
+	const { showErrorModal } = useErrorModal();
 
 	const onClickNewAlertHandler = useCallback(
 		(e: React.MouseEvent): void => {
@@ -171,8 +172,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				});
 			}
 		} catch (error) {
-			handleError();
-			console.error(error);
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
 		} finally {
 			setCloneLoader(false);
 		}

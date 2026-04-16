@@ -7,6 +7,7 @@ import ruleStats from 'api/alerts/ruleStats';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createRule,
 	deleteRuleByID,
@@ -15,7 +16,11 @@ import {
 	useGetRuleByID,
 	useListRules,
 } from 'api/generated/services/rules';
-import type { GetRuleByID200 } from 'api/generated/services/sigNoz.schemas';
+import type {
+	GetRuleByID200,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -25,7 +30,6 @@ import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
-import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -38,6 +42,7 @@ import { OrderPreferenceItems } from 'pages/Logs/config';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertDef,
@@ -47,6 +52,7 @@ import {
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
+import APIError from 'types/api/error';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
@@ -377,6 +383,15 @@ export const useTimelineTable = ({
 	return { paginationConfig, onChangeHandler };
 };
 
+const handleMutationError = (
+	showErrorModal: (error: APIError) => void,
+	error: unknown,
+): void => {
+	showErrorModal(
+		convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+	);
+};
+
 export const useAlertRuleStatusToggle = ({
 	ruleId,
 }: {
@@ -388,7 +403,7 @@ export const useAlertRuleStatusToggle = ({
 	const { notifications } = useNotifications();
 
 	const queryClient = useQueryClient();
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
@@ -406,7 +421,7 @@ export const useAlertRuleStatusToggle = ({
 			},
 			onError: (error) => {
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
-				handleError(error);
+				handleMutationError(showErrorModal, error);
 			},
 		},
 	);
@@ -436,7 +451,7 @@ export const useAlertRuleDuplicate = ({
 	const { refetch } = useListRules({
 		query: { cacheTime: 0 },
 	});
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
 		(args: { data: AlertDef }) => createRule(args.data as any),
@@ -455,7 +470,7 @@ export const useAlertRuleDuplicate = ({
 					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
 			},
-			onError: handleError,
+			onError: (error) => handleMutationError(showErrorModal, error),
 		},
 	);
 
@@ -481,7 +496,7 @@ export const useAlertRuleUpdate = ({
 	isLoading: boolean;
 } => {
 	const { notifications } = useNotifications();
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 
 	const { mutate: updateAlertRule, isLoading } = useMutation(
 		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
@@ -493,7 +508,7 @@ export const useAlertRuleUpdate = ({
 				notifications.success({ message: 'Alert renamed successfully' }),
 			onError: (error) => {
 				setUpdatedName(alertDetails.alert);
-				handleError(error);
+				handleMutationError(showErrorModal, error);
 			},
 		},
 	);
@@ -516,7 +531,7 @@ export const useAlertRuleDelete = ({
 	handleAlertDelete: () => void;
 } => {
 	const { notifications } = useNotifications();
-	const handleError = useAxiosError();
+	const { showErrorModal } = useErrorModal();
 
 	const { mutate: deleteAlert } = useMutation(
 		[REACT_QUERY_KEY.REMOVE_ALERT_RULE, ruleId],
@@ -529,7 +544,7 @@ export const useAlertRuleDelete = ({
 
 				history.push(ROUTES.LIST_ALL_ALERT);
 			},
-			onError: handleError,
+			onError: (error) => handleMutationError(showErrorModal, error),
 		},
 	);
 

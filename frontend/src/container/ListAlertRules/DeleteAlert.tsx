@@ -1,9 +1,14 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import type { NotificationInstance } from 'antd/es/notification/interface';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { deleteRuleByID } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { GettableAlert } from 'types/api/alerts/get';
+import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
 
@@ -22,7 +27,7 @@ function DeleteAlert({
 		payload: undefined,
 	});
 
-	const defaultErrorMessage = 'Something went wrong';
+	const { showErrorModal } = useErrorModal();
 
 	const onDeleteHandler = async (id: string): Promise<void> => {
 		try {
@@ -42,12 +47,11 @@ function DeleteAlert({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: defaultErrorMessage,
 			}));
 
-			notifications.error({
-				message: defaultErrorMessage,
-			});
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
 		}
 	};
 

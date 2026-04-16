@@ -1,7 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Card } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -63,12 +66,17 @@ function EditRules(): JSX.Element {
 
 	const ruleData = data?.data as any;
 
+	const apiError = useMemo(
+		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
+		[error],
+	);
+
 	if (
 		(isError && !isValidRuleId) ||
 		ruleId == null ||
 		(ruleData === undefined && !isLoading)
 	) {
-		const errorMsg = (error as any)?.message || '';
+		const errorMsg = apiError?.getErrorMessage() || '';
 		return (
 			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">

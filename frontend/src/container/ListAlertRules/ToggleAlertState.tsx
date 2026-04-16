@@ -1,9 +1,14 @@
 import { Dispatch, SetStateAction, useState } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { patchRuleByID } from 'api/generated/services/rules';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
+import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
 
@@ -21,8 +26,7 @@ function ToggleAlertState({
 	});
 
 	const { notifications } = useNotifications();
-
-	const defaultErrorMessage = 'Something went wrong';
+	const { showErrorModal } = useErrorModal();
 
 	const onToggleHandler = async (
 		id: string,
@@ -63,12 +67,11 @@ function ToggleAlertState({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: defaultErrorMessage,
 			}));
 
-			notifications.error({
-				message: defaultErrorMessage,
-			});
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
 		}
 	};
 

@@ -1,9 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Loader, Send, X } from 'lucide-react';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
@@ -34,6 +39,7 @@ function Footer(): JSX.Element {
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const { showErrorModal } = useErrorModal();
 
 	const handleDiscard = (e: React.MouseEvent): void => {
 		discardAlertRule();
@@ -85,7 +91,11 @@ function Footer(): JSX.Element {
 					toast.success('Test notification sent successfully');
 				},
 				onError: (error) => {
-					toast.error(error.message);
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO>,
+						) as APIError,
+					);
 				},
 			},
 		);
@@ -150,6 +160,7 @@ function Footer(): JSX.Element {
 		updateAlertRule,
 		createAlertRule,
 		safeNavigate,
+		showErrorModal,
 	]);
 
 	const disableButtons =

@@ -14,10 +14,13 @@ import {
 	Typography,
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	RuletypesGettablePlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {
 	ModalButtonWrapper,
@@ -28,11 +31,12 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';
 
-import { showErrorNotification } from '../../utils/error';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
@@ -124,6 +128,7 @@ export function PlannedDowntimeForm(
 		: undefined;
 
 	const { notifications } = useNotifications();
+	const { showErrorModal } = useErrorModal();
 
 	const datePickerFooter = (mode: any): any =>
 		mode === 'time' ? (
@@ -173,7 +178,9 @@ export function PlannedDowntimeForm(
 				});
 				refetchAllSchedules();
 			} catch (e: unknown) {
-				showErrorNotification(notifications, e as Error);
+				showErrorModal(
+					convertToApiError(e as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
 			}
 			setSaveLoading(false);
 		},
@@ -184,6 +191,7 @@ export function PlannedDowntimeForm(
 			refetchAllSchedules,
 			setIsOpen,
 			timezoneInitialValue,
+			showErrorModal,
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
