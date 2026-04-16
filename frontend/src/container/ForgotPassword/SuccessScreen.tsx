@@ -1,5 +1,5 @@
-import { Button } from '@signozhq/button';
 import { ArrowLeft, Mail } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 
 interface SuccessScreenProps {
 	onBackToLogin: () => void;
@@ -26,9 +26,8 @@ function SuccessScreen({ onBackToLogin }: SuccessScreenProps): JSX.Element {
 						color="primary"
 						type="button"
 						data-testid="back-to-login"
-						className="login-submit-btn"
 						onClick={onBackToLogin}
-						prefixIcon={<ArrowLeft size={12} />}
+						prefix={<ArrowLeft size={12} />}
 					>
 						Back to login
 					</Button>
