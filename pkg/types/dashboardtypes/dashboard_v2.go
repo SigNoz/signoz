@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -139,7 +140,7 @@ func validateDatasourcePlugin(plugin common.Plugin, path string) error {
 	factory, ok := datasourcePluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown datasource plugin kind %q; allowed values: %v", path, kind, kind.Enum())
+			"%s: unknown datasource plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
 	return validatePluginSpec(plugin, factory, path)
 }
@@ -152,7 +153,7 @@ func validateVariablePlugin(v dashboard.Variable, path string) error {
 		factory, ok := variablePluginSpecs[kind]
 		if !ok {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-				"%s: unknown variable plugin kind %q; allowed values: %v", pluginPath, kind, kind.Enum())
+				"%s: unknown variable plugin kind %q; allowed values: %s", pluginPath, kind, formatEnum(kind.Enum()))
 		}
 		return validatePluginSpec(spec.Plugin, factory, pluginPath)
 	case *dashboard.TextVariableSpec:
@@ -168,7 +169,7 @@ func validatePanelPlugin(plugin common.Plugin, path string) error {
 	factory, ok := panelPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown panel plugin kind %q; allowed values: %v", path, kind, kind.Enum())
+			"%s: unknown panel plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
 	return validatePluginSpec(plugin, factory, path)
 }
@@ -178,9 +179,17 @@ func validateQueryPlugin(plugin common.Plugin, path string) error {
 	factory, ok := queryPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
-			"%s: unknown query plugin kind %q; allowed values: %v", path, kind, kind.Enum())
+			"%s: unknown query plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
 	return validatePluginSpec(plugin, factory, path)
+}
+
+func formatEnum(values []any) string {
+	parts := make([]string, len(values))
+	for i, v := range values {
+		parts[i] = fmt.Sprintf("`%v`", v)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func validatePluginSpec(plugin common.Plugin, factory func() any, path string) error {
