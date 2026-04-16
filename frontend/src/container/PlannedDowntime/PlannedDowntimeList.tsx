@@ -12,12 +12,13 @@ import {
 	Typography,
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
-import {
-	DowntimeSchedules,
-	PayloadProps,
-	Recurrence,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
-import { AxiosError, AxiosResponse } from 'axios';
+import type {
+	ListDowntimeSchedules200,
+	RenderErrorResponseDTO,
+	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesRecurrenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
@@ -143,7 +144,7 @@ export function CollapseListContent({
 	created_by_name?: string;
 	created_by_email?: string;
 	timeframe: [string | undefined | null, string | undefined | null];
-	repeats?: Recurrence | null;
+	repeats?: RuletypesRecurrenceDTO | null;
 	updated_at?: string;
 	updated_by_name?: string;
 	alertOptions?: DefaultOptionType[];
@@ -218,10 +219,10 @@ export function CollapseListContent({
 export function CustomCollapseList(
 	props: DowntimeSchedulesTableData & {
 		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<DowntimeSchedules>>
+			React.SetStateAction<Partial<RuletypesGettablePlannedMaintenanceDTO>>
 		>;
 		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-		handleDeleteDowntime: (id: number, name: string) => void;
+		handleDeleteDowntime: (id: string, name: string) => void;
 		setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	},
 ): JSX.Element {
@@ -241,12 +242,17 @@ export function CustomCollapseList(
 		kind,
 	} = props;
 
-	const scheduleTime = schedule?.startTime ? schedule.startTime : createdAt;
+	const scheduleTime = schedule?.startTime
+		? String(schedule.startTime)
+		: String(createdAt ?? '');
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
 	)} ${schedule?.timezone}`;
-	const endTime = getEndTime({ kind, schedule });
+	const endTime = getEndTime({
+		kind,
+		schedule,
+	} as Partial<RuletypesGettablePlannedMaintenanceDTO>);
 
 	return (
 		<>
@@ -257,7 +263,10 @@ export function CustomCollapseList(
 							duration={
 								schedule?.recurrence?.duration
 									? (schedule?.recurrence?.duration as string)
-									: getDuration(schedule?.startTime, schedule?.endTime)
+									: getDuration(
+											String(schedule?.startTime ?? ''),
+											String(schedule?.endTime ?? ''),
+									  )
 							}
 							name={defaultTo(name, '')}
 							handleEdit={(): void => {
@@ -266,21 +275,23 @@ export function CustomCollapseList(
 								setEditMode(true);
 							}}
 							handleDelete={(): void => {
-								handleDeleteDowntime(id, name || '');
+								handleDeleteDowntime(id ?? '', name || '');
 							}}
 						/>
 					}
-					key={id}
+					key={id ?? ''}
 				>
 					<CollapseListContent
-						created_at={defaultTo(createdAt, '')}
+						created_at={String(createdAt ?? '')}
 						created_by_name={defaultTo(createdBy, '')}
 						timeframe={[
 							schedule?.startTime?.toString(),
 							typeof endTime === 'string' ? endTime : endTime?.toString(),
 						]}
-						repeats={schedule?.recurrence}
-						updated_at={defaultTo(updatedAt, '')}
+						repeats={
+							schedule?.recurrence as RuletypesRecurrenceDTO | null | undefined
+						}
+						updated_at={String(updatedAt ?? '')}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
 						timezone={defaultTo(schedule?.timezone, '')}
@@ -295,7 +306,7 @@ export function CustomCollapseList(
 	);
 }
 
-export type DowntimeSchedulesTableData = DowntimeSchedules & {
+export type DowntimeSchedulesTableData = RuletypesGettablePlannedMaintenanceDTO & {
 	alertOptions: DefaultOptionType[];
 };
 
@@ -309,15 +320,15 @@ export function PlannedDowntimeList({
 	searchValue,
 }: {
 	downtimeSchedules: UseQueryResult<
-		AxiosResponse<PayloadProps, any>,
-		AxiosError<unknown, any>
+		ListDowntimeSchedules200,
+		ErrorType<RenderErrorResponseDTO>
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
-		React.SetStateAction<Partial<DowntimeSchedules>>
+		React.SetStateAction<Partial<RuletypesGettablePlannedMaintenanceDTO>>
 	>;
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-	handleDeleteDowntime: (id: number, name: string) => void;
+	handleDeleteDowntime: (id: string, name: string) => void;
 	setEditMode: React.Dispatch<React.SetStateAction<boolean>>;
 	searchValue: string | number;
 }): JSX.Element {
@@ -337,17 +348,17 @@ export function PlannedDowntimeList({
 	];
 	const { notifications } = useNotifications();
 
-	const tableData = (downtimeSchedules.data?.data?.data || [])
+	const tableData = (downtimeSchedules.data?.data || [])
 		.sort((a, b): number => {
 			if (a?.updatedAt && b?.updatedAt) {
-				return b.updatedAt.localeCompare(a.updatedAt);
+				return String(b.updatedAt).localeCompare(String(a.updatedAt));
 			}
 			return 0;
 		})
 		?.filter(
 			(data) =>
 				data?.name?.includes(searchValue.toLocaleString()) ||
-				data?.id.toLocaleString() === searchValue.toLocaleString(),
+				String(data?.id ?? '') === searchValue.toLocaleString(),
 		)
 		.map?.((data) => {
 			const specificAlertOptions = getAlertOptionsFromIds(

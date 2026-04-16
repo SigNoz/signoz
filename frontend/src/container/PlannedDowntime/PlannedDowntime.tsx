@@ -6,10 +6,8 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
 import { useDeleteDowntimeScheduleByID } from 'api/generated/services/downtimeschedules';
-import {
-	DowntimeSchedules,
-	useGetAllDowntimeSchedules,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
+import { useListDowntimeSchedules } from 'api/generated/services/downtimeschedules';
+import type { RuletypesGettablePlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -44,10 +42,10 @@ export function PlannedDowntime(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] = useState<
-		Partial<DowntimeSchedules & { editMode: boolean }>
+		Partial<RuletypesGettablePlannedMaintenanceDTO & { editMode: boolean }>
 	>(defautlInitialValues);
 
-	const downtimeSchedules = useGetAllDowntimeSchedules();
+	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
 			data?.payload?.map((i) => ({
@@ -66,7 +64,7 @@ export function PlannedDowntime(): JSX.Element {
 	const [searchValue, setSearchValue] = React.useState<string | number>(
 		urlQuery.get('search') || '',
 	);
-	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
+	const [deleteData, setDeleteData] = useState<{ id: string; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {

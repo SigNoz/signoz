@@ -14,11 +14,10 @@ import {
 	Typography,
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
-import {
-	DowntimeSchedules,
-	Recurrence,
-} from 'api/plannedDowntime/getAllDowntimeSchedules';
-import { DowntimeScheduleUpdatePayload } from 'api/plannedDowntime/updateDowntimeSchedule';
+import type {
+	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesRecurrenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {
 	ModalButtonWrapper,
@@ -33,11 +32,11 @@ import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';
 
-import { SOMETHING_WENT_WRONG } from '../../constants/api';
 import { showErrorNotification } from '../../utils/error';
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
 	createEditDowntimeSchedule,
+	DowntimeScheduleUpdatePayload,
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
@@ -62,9 +61,9 @@ interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
 	endTime: dayjs.Dayjs | string;
-	recurrence?: Recurrence | null;
+	recurrence?: RuletypesRecurrenceDTO | null;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect?: Recurrence;
+	recurrenceSelect?: RuletypesRecurrenceDTO;
 	timezone?: string;
 }
 
@@ -72,7 +71,7 @@ const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<
-		DowntimeSchedules & {
+		RuletypesGettablePlannedMaintenanceDTO & {
 			editMode: boolean;
 		}
 	>;
@@ -112,10 +111,12 @@ export function PlannedDowntimeForm(
 	);
 
 	const [formData, setFormData] = useState<PlannedDowntimeFormData>(
-		initialValues?.schedule as PlannedDowntimeFormData,
+		(initialValues?.schedule as unknown) as PlannedDowntimeFormData,
 	);
 
-	const [recurrenceType, setRecurrenceType] = useState<string | null>(
+	const [recurrenceType, setRuletypesRecurrenceDTOType] = useState<
+		string | null
+	>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
 			recurrenceOptions.doesNotRepeat.value,
 	);
@@ -141,48 +142,38 @@ export function PlannedDowntimeForm(
 						.filter((alert) => alert !== undefined) as string[],
 					name: values.name,
 					schedule: {
-						startTime: handleTimeConversion(
+						startTime: (handleTimeConversion(
 							values.startTime,
 							timezoneInitialValue,
 							values.timezone,
 							shouldKeepLocalTime,
-						),
+						) as unknown) as Date,
 						timezone: values.timezone,
 						endTime: values.endTime
-							? handleTimeConversion(
+							? ((handleTimeConversion(
 									values.endTime,
 									timezoneInitialValue,
 									values.timezone,
 									shouldKeepLocalTime,
-							  )
+							  ) as unknown) as Date)
 							: undefined,
-						recurrence: values.recurrence as Recurrence,
+						recurrence: values.recurrence as RuletypesRecurrenceDTO,
 					},
 				},
-				id: isEditMode ? initialValues.id : undefined,
+				id: isEditMode ? Number(initialValues.id) : undefined,
 			};
 
 			setSaveLoading(true);
 			try {
-				const response = await createEditDowntimeSchedule({ ...createEditProps });
-				if (response.message === 'success') {
-					setIsOpen(false);
-					notifications.success({
-						message: 'Success',
-						description: isEditMode
-							? 'Schedule updated successfully'
-							: 'Schedule created successfully',
-					});
-					refetchAllSchedules();
-				} else {
-					notifications.error({
-						message: 'Error',
-						description:
-							typeof response.error === 'string'
-								? response.error
-								: response.error?.message || SOMETHING_WENT_WRONG,
-					});
-				}
+				await createEditDowntimeSchedule({ ...createEditProps });
+				setIsOpen(false);
+				notifications.success({
+					message: 'Success',
+					description: isEditMode
+						? 'Schedule updated successfully'
+						: 'Schedule created successfully',
+				});
+				refetchAllSchedules();
 			} catch (e: unknown) {
 				showErrorNotification(notifications, e as Error);
 			}
@@ -198,7 +189,7 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		const recurrenceData: Recurrence | undefined =
+		const recurrenceData =
 			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
@@ -225,7 +216,10 @@ export function PlannedDowntimeForm(
 						repeatType: values.recurrence?.repeatType,
 				  };
 
-		const payloadValues = { ...values, recurrence: recurrenceData };
+		const payloadValues = {
+			...values,
+			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
+		};
 		await saveHanlder(payloadValues);
 	};
 
@@ -280,13 +274,14 @@ export function PlannedDowntimeForm(
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
 			recurrence: {
-				...initialValues.schedule?.recurrence,
+				...(initialValues.schedule?.recurrence as Record<string, unknown>),
 				repeatType: !isScheduleRecurring(initialValues?.schedule)
 					? recurrenceOptions.doesNotRepeat.value
 					: (initialValues.schedule?.recurrence?.repeatType as string),
-				duration: getDurationInfo(
-					initialValues.schedule?.recurrence?.duration as string,
-				)?.value,
+				duration: String(
+					getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
+						?.value ?? '',
+				),
 			},
 			timezone: initialValues.schedule?.timezone as string,
 		};
@@ -325,7 +320,10 @@ export function PlannedDowntimeForm(
 	const startTimeText = useMemo((): string => {
 		let startTime = formData?.startTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			startTime = formData?.recurrence?.startTime || formData?.startTime || '';
+			startTime =
+				((formData?.recurrence?.startTime as unknown) as string) ||
+				formData?.startTime ||
+				'';
 		}
 
 		if (!startTime) {
@@ -381,7 +379,7 @@ export function PlannedDowntimeForm(
 	const endTimeText = useMemo((): string => {
 		let endTime = formData?.endTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			endTime = formData?.recurrence?.endTime || '';
+			endTime = ((formData?.recurrence?.endTime as unknown) as string) || '';
 
 			if (!isEditMode && !endTime) {
 				endTime = formData?.endTime || '';
@@ -439,7 +437,9 @@ export function PlannedDowntimeForm(
 				className="createForm"
 				onFinish={onFinish}
 				onValuesChange={(): void => {
-					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
+					setRuletypesRecurrenceDTOType(
+						form.getFieldValue('recurrence')?.repeatType as string,
+					);
 					setFormData(form.getFieldsValue());
 				}}
 				autoComplete="off"
