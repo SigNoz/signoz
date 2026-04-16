@@ -5,7 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
-import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
+import { useDeleteDowntimeScheduleByID } from 'api/generated/services/downtimeschedules';
 import {
 	DowntimeSchedules,
 	useGetAllDowntimeSchedules,
@@ -105,7 +105,7 @@ export function PlannedDowntime(): JSX.Element {
 	const {
 		mutateAsync: deleteDowntimeScheduleAsync,
 		isLoading: isDeleteLoading,
-	} = useDeleteDowntimeSchedule({ id: deleteData?.id });
+	} = useDeleteDowntimeScheduleByID();
 
 	const onDeleteHandler = (): void => {
 		deleteDowntimeHandler({

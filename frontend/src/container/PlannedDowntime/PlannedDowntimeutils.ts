@@ -1,8 +1,12 @@
 import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { DefaultOptionType } from 'antd/es/select';
+import type {
+	DeleteDowntimeScheduleByIDPathParameters,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import createDowntimeSchedule from 'api/plannedDowntime/createDowntimeSchedule';
-import { DeleteSchedulePayloadProps } from 'api/plannedDowntime/deleteDowntimeSchedule';
 import {
 	DowntimeSchedules,
 	Recurrence,
@@ -95,9 +99,9 @@ export const defautlInitialValues: Partial<
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
-		DeleteSchedulePayloadProps,
-		Error,
-		number
+		void,
+		ErrorType<RenderErrorResponseDTO>,
+		{ pathParams: DeleteDowntimeScheduleByIDPathParameters }
 	>;
 	notifications: NotificationInstance;
 	refetchAllSchedules: VoidFunction;
@@ -119,19 +123,22 @@ export const deleteDowntimeHandler = ({
 		console.error('Unable to delete, please provide correct deleteId');
 		showErrorNotification(notifications, errorMsg);
 	} else {
-		deleteDowntimeScheduleAsync(deleteId, {
-			onSuccess: () => {
-				hideDeleteDowntimeScheduleModal();
-				clearSearch();
-				notifications.success({
-					message: 'Downtime schedule Deleted Successfully',
-				});
-				refetchAllSchedules();
+		deleteDowntimeScheduleAsync(
+			{ pathParams: { id: String(deleteId) } },
+			{
+				onSuccess: () => {
+					hideDeleteDowntimeScheduleModal();
+					clearSearch();
+					notifications.success({
+						message: 'Downtime schedule Deleted Successfully',
+					});
+					refetchAllSchedules();
+				},
+				onError: (err) => {
+					showErrorNotification(notifications, err);
+				},
 			},
-			onError: (err) => {
-				showErrorNotification(notifications, err);
-			},
-		});
+		);
 	}
 };
 
