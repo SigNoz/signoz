@@ -2,13 +2,13 @@ package signozruler
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -242,8 +242,7 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 	defer cancel()
 
 	var schedule ruletypes.GettablePlannedMaintenance
-	err := json.NewDecoder(req.Body).Decode(&schedule)
-	if err != nil {
+	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -253,7 +252,7 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 		return
 	}
 
-	_, err = handler.ruler.MaintenanceStore().CreatePlannedMaintenance(ctx, schedule)
+	_, err := handler.ruler.MaintenanceStore().CreatePlannedMaintenance(ctx, schedule)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -273,8 +272,7 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 	}
 
 	var schedule ruletypes.GettablePlannedMaintenance
-	err = json.NewDecoder(req.Body).Decode(&schedule)
-	if err != nil {
+	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
 		render.Error(rw, err)
 		return
 	}
