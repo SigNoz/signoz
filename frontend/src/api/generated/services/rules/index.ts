@@ -47,6 +47,8 @@ import type {
 	PatchRuleByIDPathParameters,
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
+	TestRule200,
+	TestRuleDeprecated200,
 	UpdateRuleByIDPathParameters,
 } from '../sigNoz.schemas';
 
@@ -591,7 +593,7 @@ export const testRule = (
 	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<TestRule200>({
 		url: `/api/v1/rules/test`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -675,7 +677,7 @@ export const testRuleDeprecated = (
 	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<string>({
+	return GeneratedAPIInstance<TestRuleDeprecated200>({
 		url: `/api/v1/testRule`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

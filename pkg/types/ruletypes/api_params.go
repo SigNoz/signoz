@@ -586,6 +586,11 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 }
 
 // GettableRules has info for all stored rules.
+type GettableTestRule struct {
+	AlertCount int    `json:"alertCount"`
+	Message    string `json:"message"`
+}
+
 type GettableRules struct {
 	Rules []*GettableRule `json:"rules"`
 }

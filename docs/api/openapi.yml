@@ -3752,6 +3752,13 @@ components:
           nullable: true
           type: array
       type: object
+    RuletypesGettableTestRule:
+      properties:
+        alertCount:
+          type: integer
+        message:
+          type: string
+      type: object
     RuletypesMatchType:
       enum:
       - at_least_once
@@ -8242,7 +8249,15 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableTestRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
           description: OK
         "400":
           content:
@@ -9093,7 +9108,15 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableTestRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
           description: OK
         "400":
           content:

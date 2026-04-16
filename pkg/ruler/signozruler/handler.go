@@ -172,7 +172,7 @@ func (handler *handler) TestRule(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, map[string]any{"alertCount": alertCount, "message": "notification sent"})
+	render.Success(rw, http.StatusOK, ruletypes.GettableTestRule{AlertCount: alertCount, Message: "notification sent"})
 }
 
 func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.Request) {

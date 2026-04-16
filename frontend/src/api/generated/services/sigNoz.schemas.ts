@@ -4713,6 +4713,17 @@ export interface RuletypesGettableRulesDTO {
 	rules?: RuletypesGettableRuleDTO[] | null;
 }
 
+export interface RuletypesGettableTestRuleDTO {
+	/**
+	 * @type integer
+	 */
+	alertCount?: number;
+	/**
+	 * @type string
+	 */
+	message?: string;
+}
+
 export enum RuletypesMatchTypeDTO {
 	at_least_once = 'at_least_once',
 	all_the_times = 'all_the_times',
@@ -6248,6 +6259,14 @@ export type PatchRuleByID200 = {
 export type UpdateRuleByIDPathParameters = {
 	id: string;
 };
+export type TestRule200 = {
+	data: RuletypesGettableTestRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListServiceAccounts200 = {
 	/**
 	 * @type array
@@ -6349,6 +6368,14 @@ export type DeleteServiceAccountRolePathParameters = {
 };
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type TestRuleDeprecated200 = {
+	data: RuletypesGettableTestRuleDTO;
 	/**
 	 * @type string
 	 */
