@@ -780,6 +780,135 @@ func TestNumberPanelDefaults(t *testing.T) {
 	}
 }
 
+// TestStorageRoundTrip simulates the future DB store/load cycle:
+// marshal the normalized dashboard to JSON (what would be written to DB),
+// then unmarshal it back (what would be read from DB), and verify defaults survive.
+func TestStorageRoundTrip(t *testing.T) {
+	input := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {
+						"kind": "signoz/TimeSeriesPanel",
+						"spec": {}
+					}
+				}
+			},
+			"p2": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {
+						"kind": "signoz/NumberPanel",
+						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
+					}
+				}
+			}
+		},
+		"layouts": []
+	}`)
+
+	// Step 1: Unmarshal + validate + normalize (what the API handler does).
+	d, err := UnmarshalAndValidateDashboardV2JSON(input)
+	if err != nil {
+		t.Fatalf("unmarshal and validate failed: %v", err)
+	}
+
+	// Step 1.5: Verify struct fields have correct defaults (extra validation before storing).
+	tsSpec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+	if tsSpec.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
+		t.Errorf("expected DecimalPrecision default 2, got %v", tsSpec.Formatting.DecimalPrecision.ValueOrDefault())
+	}
+	if tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
+		t.Errorf("expected LineInterpolation default spline, got %v", tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault())
+	}
+	if tsSpec.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
+		t.Errorf("expected LineStyle default solid, got %v", tsSpec.ChartAppearance.LineStyle.ValueOrDefault())
+	}
+	if tsSpec.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
+		t.Errorf("expected FillMode default solid, got %v", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
+	}
+	if tsSpec.Visualization.TimePreference.ValueOrDefault() != "global_time" {
+		t.Errorf("expected TimePreference default global_time, got %v", tsSpec.Visualization.TimePreference.ValueOrDefault())
+	}
+	if tsSpec.Legend.Position.ValueOrDefault() != "bottom" {
+		t.Errorf("expected LegendPosition default bottom, got %v", tsSpec.Legend.Position.ValueOrDefault())
+	}
+	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
+	if numSpec.Thresholds[0].Operator.ValueOrDefault() != ">" {
+		t.Errorf("expected ComparisonOperator default >, got %v", numSpec.Thresholds[0].Operator.ValueOrDefault())
+	}
+	if numSpec.Thresholds[0].Format.ValueOrDefault() != "text" {
+		t.Errorf("expected ThresholdFormat default text, got %v", numSpec.Thresholds[0].Format.ValueOrDefault())
+	}
+
+	// Step 2: Marshal to JSON (simulates writing to DB).
+	stored, err := json.Marshal(d)
+	if err != nil {
+		t.Fatalf("marshal for storage failed: %v", err)
+	}
+
+	// Step 3: Unmarshal from JSON (simulates reading from DB).
+	loaded, err := UnmarshalAndValidateDashboardV2JSON(stored)
+	if err != nil {
+		t.Fatalf("unmarshal from storage failed: %v", err)
+	}
+
+	// Step 3.5: Verify struct fields have correct defaults after loading (before returning in API).
+	tsLoaded := loaded.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+	if tsLoaded.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
+		t.Errorf("after load: expected DecimalPrecision default 2, got %v", tsLoaded.Formatting.DecimalPrecision.ValueOrDefault())
+	}
+	if tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
+		t.Errorf("after load: expected LineInterpolation default spline, got %v", tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault())
+	}
+	if tsLoaded.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
+		t.Errorf("after load: expected LineStyle default solid, got %v", tsLoaded.ChartAppearance.LineStyle.ValueOrDefault())
+	}
+	if tsLoaded.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
+		t.Errorf("after load: expected FillMode default solid, got %v", tsLoaded.ChartAppearance.FillMode.ValueOrDefault())
+	}
+	if tsLoaded.Visualization.TimePreference.ValueOrDefault() != "global_time" {
+		t.Errorf("after load: expected TimePreference default global_time, got %v", tsLoaded.Visualization.TimePreference.ValueOrDefault())
+	}
+	if tsLoaded.Legend.Position.ValueOrDefault() != "bottom" {
+		t.Errorf("after load: expected LegendPosition default bottom, got %v", tsLoaded.Legend.Position.ValueOrDefault())
+	}
+	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
+	if numLoaded.Thresholds[0].Operator.ValueOrDefault() != ">" {
+		t.Errorf("after load: expected ComparisonOperator default >, got %v", numLoaded.Thresholds[0].Operator.ValueOrDefault())
+	}
+	if numLoaded.Thresholds[0].Format.ValueOrDefault() != "text" {
+		t.Errorf("after load: expected ThresholdFormat default text, got %v", numLoaded.Thresholds[0].Format.ValueOrDefault())
+	}
+
+	// Step 4: Marshal again (simulates API response) and verify defaults.
+	response, err := json.Marshal(loaded)
+	if err != nil {
+		t.Fatalf("marshal for response failed: %v", err)
+	}
+	responseStr := string(response)
+
+	for field, want := range map[string]string{
+		"decimalPrecision":  `"2"`,
+		"lineInterpolation": `"spline"`,
+		"lineStyle":         `"solid"`,
+		"fillMode":          `"solid"`,
+		"timePreference":    `"global_time"`,
+		"position":          `"bottom"`,
+		"format":            `"text"`,
+	} {
+		if !strings.Contains(responseStr, `"`+field+`":`+want) {
+			t.Errorf("expected %s:%s after storage round-trip, got: %s", field, want, responseStr)
+		}
+	}
+
+	// Verify operator default (Go escapes ">" as "\u003e").
+	if !strings.Contains(responseStr, `"operator":">"`) && !strings.Contains(responseStr, `"operator":"\u003e"`) {
+		t.Errorf("expected operator:> after storage round-trip, got: %s", responseStr)
+	}
+}
+
 func TestSpanGaps(t *testing.T) {
 	unmarshal := func(val string) (SpanGaps, error) {
 		var sg SpanGaps
