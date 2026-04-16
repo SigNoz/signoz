@@ -241,22 +241,26 @@ type TableThreshold struct {
 
 type TimePreference struct{ valuer.String }
 
-const (
-	TimePreferenceGlobalTime = "global_time" // default
-	TimePreferenceLast5Min   = "last_5_min"
-	TimePreferenceLast15Min  = "last_15_min"
-	TimePreferenceLast30Min  = "last_30_min"
-	TimePreferenceLast1Hr    = "last_1_hr"
-	TimePreferenceLast6Hr    = "last_6_hr"
-	TimePreferenceLast1Day   = "last_1_day"
-	TimePreferenceLast3Days  = "last_3_days"
-	TimePreferenceLast1Week  = "last_1_week"
-	TimePreferenceLast1Month = "last_1_month"
+var (
+	TimePreferenceGlobalTime = TimePreference{valuer.NewString("global_time")} // default
+	TimePreferenceLast5Min   = TimePreference{valuer.NewString("last_5_min")}
+	TimePreferenceLast15Min  = TimePreference{valuer.NewString("last_15_min")}
+	TimePreferenceLast30Min  = TimePreference{valuer.NewString("last_30_min")}
+	TimePreferenceLast1Hr    = TimePreference{valuer.NewString("last_1_hr")}
+	TimePreferenceLast6Hr    = TimePreference{valuer.NewString("last_6_hr")}
+	TimePreferenceLast1Day   = TimePreference{valuer.NewString("last_1_day")}
+	TimePreferenceLast3Days  = TimePreference{valuer.NewString("last_3_days")}
+	TimePreferenceLast1Week  = TimePreference{valuer.NewString("last_1_week")}
+	TimePreferenceLast1Month = TimePreference{valuer.NewString("last_1_month")}
 )
+
+func (TimePreference) Enum() []any {
+	return []any{TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month}
+}
 
 func (t TimePreference) Value() string {
 	if t.IsZero() {
-		return TimePreferenceGlobalTime
+		return TimePreferenceGlobalTime.StringValue()
 	}
 	return t.StringValue()
 }
@@ -271,11 +275,13 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
 	if v == "" {
-		v = TimePreferenceGlobalTime
+		*t = TimePreferenceGlobalTime
+		return nil
 	}
-	switch v {
+	tp := TimePreference{valuer.NewString(v)}
+	switch tp {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
-		t.String = valuer.NewString(v)
+		*t = tp
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
@@ -284,14 +290,18 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 
 type LegendPosition struct{ valuer.String }
 
-const (
-	LegendPositionBottom = "bottom" // default
-	LegendPositionRight  = "right"
+var (
+	LegendPositionBottom = LegendPosition{valuer.NewString("bottom")} // default
+	LegendPositionRight  = LegendPosition{valuer.NewString("right")}
 )
+
+func (LegendPosition) Enum() []any {
+	return []any{LegendPositionBottom, LegendPositionRight}
+}
 
 func (l LegendPosition) Value() string {
 	if l.IsZero() {
-		return LegendPositionBottom
+		return LegendPositionBottom.StringValue()
 	}
 	return l.StringValue()
 }
@@ -306,11 +316,13 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
 	}
 	if v == "" {
-		v = LegendPositionBottom
+		*l = LegendPositionBottom
+		return nil
 	}
-	switch v {
+	lp := LegendPosition{valuer.NewString(v)}
+	switch lp {
 	case LegendPositionBottom, LegendPositionRight:
-		l.String = valuer.NewString(v)
+		*l = lp
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
@@ -319,14 +331,18 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 
 type ThresholdFormat struct{ valuer.String }
 
-const (
-	ThresholdFormatText       = "text" // default
-	ThresholdFormatBackground = "background"
+var (
+	ThresholdFormatText       = ThresholdFormat{valuer.NewString("text")}       // default
+	ThresholdFormatBackground = ThresholdFormat{valuer.NewString("background")}
 )
+
+func (ThresholdFormat) Enum() []any {
+	return []any{ThresholdFormatText, ThresholdFormatBackground}
+}
 
 func (f ThresholdFormat) Value() string {
 	if f.IsZero() {
-		return ThresholdFormatText
+		return ThresholdFormatText.StringValue()
 	}
 	return f.StringValue()
 }
@@ -341,11 +357,13 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
 	}
 	if v == "" {
-		v = ThresholdFormatText
+		*f = ThresholdFormatText
+		return nil
 	}
-	switch v {
+	tf := ThresholdFormat{valuer.NewString(v)}
+	switch tf {
 	case ThresholdFormatText, ThresholdFormatBackground:
-		f.String = valuer.NewString(v)
+		*f = tf
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
@@ -356,23 +374,27 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 // ruletypes.CompareOperator which accepts any string at unmarshal time.
 type ComparisonOperator struct{ valuer.String }
 
-const (
-	ComparisonOperatorGT           = ">" // default
-	ComparisonOperatorLT           = "<"
-	ComparisonOperatorGTE          = ">="
-	ComparisonOperatorLTE          = "<="
-	ComparisonOperatorEQ           = "="
-	ComparisonOperatorAbove        = "above"
-	ComparisonOperatorBelow        = "below"
-	ComparisonOperatorAboveOrEqual = "above_or_equal"
-	ComparisonOperatorBelowOrEqual = "below_or_equal"
-	ComparisonOperatorEqual        = "equal"
-	ComparisonOperatorNotEqual     = "not_equal"
+var (
+	ComparisonOperatorGT           = ComparisonOperator{valuer.NewString(">")} // default
+	ComparisonOperatorLT           = ComparisonOperator{valuer.NewString("<")}
+	ComparisonOperatorGTE          = ComparisonOperator{valuer.NewString(">=")}
+	ComparisonOperatorLTE          = ComparisonOperator{valuer.NewString("<=")}
+	ComparisonOperatorEQ           = ComparisonOperator{valuer.NewString("=")}
+	ComparisonOperatorAbove        = ComparisonOperator{valuer.NewString("above")}
+	ComparisonOperatorBelow        = ComparisonOperator{valuer.NewString("below")}
+	ComparisonOperatorAboveOrEqual = ComparisonOperator{valuer.NewString("above_or_equal")}
+	ComparisonOperatorBelowOrEqual = ComparisonOperator{valuer.NewString("below_or_equal")}
+	ComparisonOperatorEqual        = ComparisonOperator{valuer.NewString("equal")}
+	ComparisonOperatorNotEqual     = ComparisonOperator{valuer.NewString("not_equal")}
 )
+
+func (ComparisonOperator) Enum() []any {
+	return []any{ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ, ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual, ComparisonOperatorEqual, ComparisonOperatorNotEqual}
+}
 
 func (o ComparisonOperator) Value() string {
 	if o.IsZero() {
-		return ComparisonOperatorGT
+		return ComparisonOperatorGT.StringValue()
 	}
 	return o.StringValue()
 }
@@ -387,13 +409,15 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
 	if v == "" {
-		v = ComparisonOperatorGT
+		*o = ComparisonOperatorGT
+		return nil
 	}
-	switch v {
+	co := ComparisonOperator{valuer.NewString(v)}
+	switch co {
 	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
 		ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
 		ComparisonOperatorEqual, ComparisonOperatorNotEqual:
-		o.String = valuer.NewString(v)
+		*o = co
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
@@ -402,16 +426,20 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 
 type LineInterpolation struct{ valuer.String }
 
-const (
-	LineInterpolationLinear     = "linear"
-	LineInterpolationSpline     = "spline" // default
-	LineInterpolationStepAfter  = "step_after"
-	LineInterpolationStepBefore = "step_before"
+var (
+	LineInterpolationLinear     = LineInterpolation{valuer.NewString("linear")}
+	LineInterpolationSpline     = LineInterpolation{valuer.NewString("spline")} // default
+	LineInterpolationStepAfter  = LineInterpolation{valuer.NewString("step_after")}
+	LineInterpolationStepBefore = LineInterpolation{valuer.NewString("step_before")}
 )
+
+func (LineInterpolation) Enum() []any {
+	return []any{LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore}
+}
 
 func (li LineInterpolation) Value() string {
 	if li.IsZero() {
-		return LineInterpolationSpline
+		return LineInterpolationSpline.StringValue()
 	}
 	return li.StringValue()
 }
@@ -426,11 +454,13 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
 	if v == "" {
-		v = LineInterpolationSpline
+		*li = LineInterpolationSpline
+		return nil
 	}
-	switch v {
+	val := LineInterpolation{valuer.NewString(v)}
+	switch val {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
-		li.String = valuer.NewString(v)
+		*li = val
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
@@ -439,14 +469,18 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 
 type LineStyle struct{ valuer.String }
 
-const (
-	LineStyleSolid  = "solid" // default
-	LineStyleDashed = "dashed"
+var (
+	LineStyleSolid  = LineStyle{valuer.NewString("solid")}  // default
+	LineStyleDashed = LineStyle{valuer.NewString("dashed")}
 )
+
+func (LineStyle) Enum() []any {
+	return []any{LineStyleSolid, LineStyleDashed}
+}
 
 func (ls LineStyle) Value() string {
 	if ls.IsZero() {
-		return LineStyleSolid
+		return LineStyleSolid.StringValue()
 	}
 	return ls.StringValue()
 }
@@ -461,11 +495,13 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
 	}
 	if v == "" {
-		v = LineStyleSolid
+		*ls = LineStyleSolid
+		return nil
 	}
-	switch v {
+	val := LineStyle{valuer.NewString(v)}
+	switch val {
 	case LineStyleSolid, LineStyleDashed:
-		ls.String = valuer.NewString(v)
+		*ls = val
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
@@ -474,15 +510,19 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 
 type FillMode struct{ valuer.String }
 
-const (
-	FillModeSolid    = "solid" // default
-	FillModeGradient = "gradient"
-	FillModeNone     = "none"
+var (
+	FillModeSolid    = FillMode{valuer.NewString("solid")} // default
+	FillModeGradient = FillMode{valuer.NewString("gradient")}
+	FillModeNone     = FillMode{valuer.NewString("none")}
 )
+
+func (FillMode) Enum() []any {
+	return []any{FillModeSolid, FillModeGradient, FillModeNone}
+}
 
 func (fm FillMode) Value() string {
 	if fm.IsZero() {
-		return FillModeSolid
+		return FillModeSolid.StringValue()
 	}
 	return fm.StringValue()
 }
@@ -497,11 +537,13 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
 	if v == "" {
-		v = FillModeSolid
+		*fm = FillModeSolid
+		return nil
 	}
-	switch v {
+	val := FillMode{valuer.NewString(v)}
+	switch val {
 	case FillModeSolid, FillModeGradient, FillModeNone:
-		fm.String = valuer.NewString(v)
+		*fm = val
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
@@ -518,18 +560,22 @@ type SpanGaps struct {
 
 type PrecisionOption struct{ valuer.String }
 
-const (
-	PrecisionOption0    = "0"
-	PrecisionOption1    = "1"
-	PrecisionOption2    = "2" // default
-	PrecisionOption3    = "3"
-	PrecisionOption4    = "4"
-	PrecisionOptionFull = "full"
+var (
+	PrecisionOption0    = PrecisionOption{valuer.NewString("0")}
+	PrecisionOption1    = PrecisionOption{valuer.NewString("1")}
+	PrecisionOption2    = PrecisionOption{valuer.NewString("2")} // default
+	PrecisionOption3    = PrecisionOption{valuer.NewString("3")}
+	PrecisionOption4    = PrecisionOption{valuer.NewString("4")}
+	PrecisionOptionFull = PrecisionOption{valuer.NewString("full")}
 )
+
+func (PrecisionOption) Enum() []any {
+	return []any{PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull}
+}
 
 func (p PrecisionOption) Value() string {
 	if p.IsZero() {
-		return PrecisionOption2
+		return PrecisionOption2.StringValue()
 	}
 	return p.StringValue()
 }
@@ -555,11 +601,13 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
 	if v == "" {
-		v = PrecisionOption2
+		*p = PrecisionOption2
+		return nil
 	}
-	switch v {
+	val := PrecisionOption{valuer.NewString(v)}
+	switch val {
 	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
-		p.String = valuer.NewString(v)
+		*p = val
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
