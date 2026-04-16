@@ -126,12 +126,7 @@ function AlertDetails(): JSX.Element {
 		[alertRuleDetails],
 	);
 
-	if (
-		isError ||
-		!isValidRuleId ||
-		isError ||
-		(!isLoading && !alertRuleDetails)
-	) {
+	if (isError || !isValidRuleId || (!isLoading && !alertRuleDetails)) {
 		return <AlertNotFound isTestAlert={isTestAlert} />;
 	}
 

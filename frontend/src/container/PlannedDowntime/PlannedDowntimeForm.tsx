@@ -114,9 +114,7 @@ export function PlannedDowntimeForm(
 		(initialValues?.schedule as unknown) as PlannedDowntimeFormData,
 	);
 
-	const [recurrenceType, setRuletypesRecurrenceDTOType] = useState<
-		string | null
-	>(
+	const [recurrenceType, setRecurrenceType] = useState<string | null>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
 			recurrenceOptions.doesNotRepeat.value,
 	);
@@ -437,9 +435,7 @@ export function PlannedDowntimeForm(
 				className="createForm"
 				onFinish={onFinish}
 				onValuesChange={(): void => {
-					setRuletypesRecurrenceDTOType(
-						form.getFieldValue('recurrence')?.repeatType as string,
-					);
+					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
 					setFormData(form.getFieldsValue());
 				}}
 				autoComplete="off"

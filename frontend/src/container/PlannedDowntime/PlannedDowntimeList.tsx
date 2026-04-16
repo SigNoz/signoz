@@ -348,7 +348,7 @@ export function PlannedDowntimeList({
 	];
 	const { notifications } = useNotifications();
 
-	const tableData = (downtimeSchedules.data?.data || [])
+	const tableData = [...(downtimeSchedules.data?.data || [])]
 		.sort((a, b): number => {
 			if (a?.updatedAt && b?.updatedAt) {
 				return String(b.updatedAt).localeCompare(String(a.updatedAt));

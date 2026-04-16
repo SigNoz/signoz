@@ -10,9 +10,9 @@ import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import {
 	deleteRuleByID,
-	listRules,
 	patchRuleByID,
 	useGetRuleByID,
+	useListRules,
 } from 'api/generated/services/rules';
 import type { GetRuleByID200 } from 'api/generated/services/sigNoz.schemas';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -432,11 +432,9 @@ export const useAlertRuleDuplicate = ({
 
 	const params = useUrlQuery();
 
-	const { refetch } = useQuery(
-		[REACT_QUERY_KEY.GET_ALL_ALLERTS],
-		({ signal }) => listRules(signal),
-		{ cacheTime: 0 },
-	);
+	const { refetch } = useListRules({
+		query: { cacheTime: 0 },
+	});
 	const handleError = useAxiosError();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],

@@ -12,10 +12,11 @@ import type {
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import { showErrorNotification } from 'components/ExplorerCard/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
+
+import { showErrorNotification } from '../../utils/error';
 
 type DateTimeString = string | null | undefined;
 
