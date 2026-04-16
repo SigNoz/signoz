@@ -116,10 +116,7 @@
             "kind": "Grid",
             "spec": {
                 "display": {
-                    "title": "Bravo",
-                    "collapse": {
-                        "open": true
-                    }
+                    "title": "Bravo"
                 },
                 "items": [
                     {
@@ -138,10 +135,7 @@
             "kind": "Grid",
             "spec": {
                 "display": {
-                    "title": "Alpha",
-                    "collapse": {
-                        "open": true
-                    }
+                    "title": "Alpha"
                 },
                 "items": [
                     {
