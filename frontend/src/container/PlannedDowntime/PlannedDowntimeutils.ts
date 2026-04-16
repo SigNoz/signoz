@@ -69,10 +69,10 @@ export const recurrenceInfo = (
 	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
 
 	const formattedStartTime = startTime
-		? formatDateTime((startTime as unknown) as string)
+		? formatDateTime(dayjs(startTime).toISOString())
 		: '';
 	const formattedEndTime = endTime
-		? `to ${formatDateTime((endTime as unknown) as string)}`
+		? `to ${formatDateTime(dayjs(endTime).toISOString())}`
 		: '';
 	const weeklyRepeatString = repeatOn ? `on ${repeatOn.join(', ')}` : '';
 	const durationString = duration ? `- Duration: ${duration}` : '';
@@ -233,10 +233,12 @@ export const getEndTime = ({
 	}
 >): string | dayjs.Dayjs => {
 	if (kind === 'fixed') {
-		return ((schedule?.endTime as unknown) as string) || '';
+		return schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '';
 	}
 
-	return ((schedule?.recurrence?.endTime as unknown) as string) || '';
+	return schedule?.recurrence?.endTime
+		? dayjs(schedule.recurrence.endTime).toISOString()
+		: '';
 };
 
 export const isScheduleRecurring = (

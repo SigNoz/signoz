@@ -146,20 +146,24 @@ export function PlannedDowntimeForm(
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
 				schedule: {
-					startTime: (handleTimeConversion(
-						values.startTime,
-						timezoneInitialValue,
-						values.timezone,
-						shouldKeepLocalTime,
-					) as unknown) as Date,
+					startTime: new Date(
+						handleTimeConversion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							shouldKeepLocalTime,
+						),
+					),
 					timezone: values.timezone,
 					endTime: values.endTime
-						? ((handleTimeConversion(
-								values.endTime,
-								timezoneInitialValue,
-								values.timezone,
-								shouldKeepLocalTime,
-						  ) as unknown) as Date)
+						? new Date(
+								handleTimeConversion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									shouldKeepLocalTime,
+								),
+						  )
 						: undefined,
 					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
@@ -330,7 +334,9 @@ export function PlannedDowntimeForm(
 		let startTime = formData?.startTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
 			startTime =
-				((formData?.recurrence?.startTime as unknown) as string) ||
+				(formData?.recurrence?.startTime
+					? dayjs(formData.recurrence.startTime).toISOString()
+					: '') ||
 				formData?.startTime ||
 				'';
 		}
@@ -388,7 +394,10 @@ export function PlannedDowntimeForm(
 	const endTimeText = useMemo((): string => {
 		let endTime = formData?.endTime;
 		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
-			endTime = ((formData?.recurrence?.endTime as unknown) as string) || '';
+			endTime =
+				(formData?.recurrence?.endTime
+					? dayjs(formData.recurrence.endTime).toISOString()
+					: '') || '';
 
 			if (!isEditMode && !endTime) {
 				endTime = formData?.endTime || '';

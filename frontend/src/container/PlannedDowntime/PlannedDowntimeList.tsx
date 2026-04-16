@@ -20,6 +20,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import cx from 'classnames';
+import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
@@ -243,8 +244,10 @@ export function CustomCollapseList(
 	} = props;
 
 	const scheduleTime = schedule?.startTime
-		? String(schedule.startTime)
-		: String(createdAt ?? '');
+		? dayjs(schedule.startTime).toISOString()
+		: createdAt
+		? dayjs(createdAt).toISOString()
+		: '';
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
@@ -264,8 +267,8 @@ export function CustomCollapseList(
 								schedule?.recurrence?.duration
 									? (schedule?.recurrence?.duration as string)
 									: getDuration(
-											String(schedule?.startTime ?? ''),
-											String(schedule?.endTime ?? ''),
+											schedule?.startTime ? dayjs(schedule.startTime).toISOString() : '',
+											schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '',
 									  )
 							}
 							name={defaultTo(name, '')}
@@ -282,7 +285,7 @@ export function CustomCollapseList(
 					key={id ?? ''}
 				>
 					<CollapseListContent
-						created_at={String(createdAt ?? '')}
+						created_at={createdAt ? dayjs(createdAt).toISOString() : ''}
 						created_by_name={defaultTo(createdBy, '')}
 						timeframe={[
 							schedule?.startTime?.toString(),
@@ -291,7 +294,7 @@ export function CustomCollapseList(
 						repeats={
 							schedule?.recurrence as RuletypesRecurrenceDTO | null | undefined
 						}
-						updated_at={String(updatedAt ?? '')}
+						updated_at={updatedAt ? dayjs(updatedAt).toISOString() : ''}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
 						timezone={defaultTo(schedule?.timezone, '')}
@@ -351,7 +354,7 @@ export function PlannedDowntimeList({
 	const tableData = [...(downtimeSchedules.data?.data || [])]
 		.sort((a, b): number => {
 			if (a?.updatedAt && b?.updatedAt) {
-				return String(b.updatedAt).localeCompare(String(a.updatedAt));
+				return dayjs(b.updatedAt).diff(dayjs(a.updatedAt));
 			}
 			return 0;
 		})
