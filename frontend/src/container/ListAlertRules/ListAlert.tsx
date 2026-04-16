@@ -4,8 +4,8 @@ import { UseQueryResult } from 'react-query';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
+import { createRule } from 'api/generated/services/rules';
 import DropDown from 'components/DropDown/DropDown';
 import {
 	DynamicColumnsKey,
@@ -145,36 +145,29 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			...originalAlert,
 			alert: originalAlert.alert.concat(' - Copy'),
 		};
-		const apiReq = { data: copyAlert };
 
 		try {
 			setCloneLoader(true);
-			const response = await saveAlertApi(apiReq);
+			await createRule(copyAlert as any);
 
-			if (response.statusCode === 200) {
-				notificationsApi.success({
-					message: 'Success',
-					description: 'Alert cloned successfully',
-				});
+			notificationsApi.success({
+				message: 'Success',
+				description: 'Alert cloned successfully',
+			});
 
-				const { data: refetchData, status } = await refetch();
-				if (status === 'success' && refetchData.payload) {
-					setData(refetchData.payload || []);
-					setTimeout(() => {
-						const clonedAlert = refetchData.payload[refetchData.payload.length - 1];
-						params.set(QueryParams.ruleId, String(clonedAlert.id));
-						safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
-					}, 2000);
-				}
-				if (status === 'error') {
-					notificationsApi.error({
-						message: t('something_went_wrong'),
-					});
-				}
-			} else {
+			const { data: refetchData, status } = await refetch();
+			const rules = (refetchData as any)?.data?.rules;
+			if (status === 'success' && rules) {
+				setData(rules);
+				setTimeout(() => {
+					const clonedAlert = rules[rules.length - 1];
+					params.set(QueryParams.ruleId, String(clonedAlert.id));
+					safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+				}, 2000);
+			}
+			if (status === 'error') {
 				notificationsApi.error({
-					message: 'Error',
-					description: response.error || t('something_went_wrong'),
+					message: t('something_went_wrong'),
 				});
 			}
 		} catch (error) {

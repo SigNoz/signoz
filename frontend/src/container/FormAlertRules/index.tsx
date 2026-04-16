@@ -6,9 +6,12 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
-import saveAlertApi from 'api/alerts/save';
 import logEvent from 'api/common/logEvent';
-import { testRule } from 'api/generated/services/rules';
+import {
+	createRule,
+	testRule,
+	updateRuleByID,
+} from 'api/generated/services/rules';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -533,53 +536,40 @@ function FormAlertRules({
 		};
 
 		try {
-			const apiReq =
-				ruleId && !isEmpty(ruleId)
-					? { data: postableAlert, id: ruleId }
-					: { data: postableAlert };
-
-			const response = await saveAlertApi(apiReq);
-
-			if (response.statusCode === 200) {
-				logData = {
-					status: 'success',
-					statusMessage: isNewRule ? t('rule_created') : t('rule_edited'),
-				};
-
-				notifications.success({
-					message: 'Success',
-					description: logData.statusMessage,
-				});
-
-				// invalidate rule in cache
-				ruleCache.invalidateQueries([
-					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
-					`${ruleId}`,
-				]);
-
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				setTimeout(() => {
-					urlQuery.delete(QueryParams.compositeQuery);
-					urlQuery.delete(QueryParams.panelTypes);
-					urlQuery.delete(QueryParams.ruleId);
-					urlQuery.delete(QueryParams.relativeTime);
-					safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
-				}, 2000);
+			if (ruleId && !isEmpty(ruleId)) {
+				await updateRuleByID({ id: ruleId }, postableAlert as any);
 			} else {
-				logData = {
-					status: 'error',
-					statusMessage: response.error || t('unexpected_error'),
-				};
-
-				notifications.error({
-					message: 'Error',
-					description: logData.statusMessage,
-				});
+				await createRule(postableAlert as any);
 			}
+
+			logData = {
+				status: 'success',
+				statusMessage: isNewRule ? t('rule_created') : t('rule_edited'),
+			};
+
+			notifications.success({
+				message: 'Success',
+				description: logData.statusMessage,
+			});
+
+			// invalidate rule in cache
+			ruleCache.invalidateQueries([
+				REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+				`${ruleId}`,
+			]);
+
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setTimeout(() => {
+				urlQuery.delete(QueryParams.compositeQuery);
+				urlQuery.delete(QueryParams.panelTypes);
+				urlQuery.delete(QueryParams.ruleId);
+				urlQuery.delete(QueryParams.relativeTime);
+				safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
+			}, 2000);
 		} catch (e) {
 			logData = {
 				status: 'error',
-				statusMessage: t('unexpected_error'),
+				statusMessage: (e as Error)?.message || t('unexpected_error'),
 			};
 
 			notifications.error({

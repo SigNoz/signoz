@@ -4,13 +4,14 @@ import { generatePath, useLocation } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import ruleStats from 'api/alerts/ruleStats';
-import save from 'api/alerts/save';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import {
+	createRule,
 	deleteRuleByID,
 	patchRuleByID,
+	updateRuleByID,
 	useGetRuleByID,
 	useListRules,
 } from 'api/generated/services/rules';
@@ -438,7 +439,7 @@ export const useAlertRuleDuplicate = ({
 	const handleError = useAxiosError();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
-		save,
+		(args: { data: AlertDef }) => createRule(args.data as any),
 		{
 			onSuccess: async () => {
 				notifications.success({
@@ -484,7 +485,8 @@ export const useAlertRuleUpdate = ({
 
 	const { mutate: updateAlertRule, isLoading } = useMutation(
 		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
-		save,
+		(args: { data: AlertDef; id: string }) =>
+			updateRuleByID({ id: args.id }, args.data as any),
 		{
 			onMutate: () => setUpdatedName(intermediateName),
 			onSuccess: () =>
@@ -499,7 +501,7 @@ export const useAlertRuleUpdate = ({
 	const handleAlertUpdate = (): void => {
 		updateAlertRule({
 			data: { ...alertDetails, alert: intermediateName },
-			id: alertDetails.id,
+			id: alertDetails.id || '',
 		});
 	};
 
