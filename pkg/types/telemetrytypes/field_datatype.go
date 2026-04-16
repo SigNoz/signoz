@@ -51,7 +51,7 @@ var (
 		"int8":   FieldDataTypeNumber,
 		"int16":  FieldDataTypeNumber,
 		"int32":  FieldDataTypeNumber,
-		"int64":  FieldDataTypeNumber,
+		"int64":  FieldDataTypeInt64,
 		"uint":   FieldDataTypeNumber,
 		"uint8":  FieldDataTypeNumber,
 		"uint16": FieldDataTypeNumber,
