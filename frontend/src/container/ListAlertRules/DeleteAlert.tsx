@@ -2,12 +2,14 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { deleteRuleByID } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesGettableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
-import { GettableAlert } from 'types/api/alerts/get';
 import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
@@ -76,8 +78,8 @@ function DeleteAlert({
 }
 
 interface DeleteAlertProps {
-	id: GettableAlert['id'];
-	setData: Dispatch<SetStateAction<GettableAlert[]>>;
+	id: string;
+	setData: Dispatch<SetStateAction<RuletypesGettableRuleDTO[]>>;
 	notifications: NotificationInstance;
 }
 

@@ -13,7 +13,10 @@ import {
 	testRule,
 	updateRuleByID,
 } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
@@ -543,9 +546,12 @@ function FormAlertRules({
 
 		try {
 			if (ruleId && !isEmpty(ruleId)) {
-				await updateRuleByID({ id: ruleId }, postableAlert as any);
+				await updateRuleByID(
+					{ id: ruleId },
+					(postableAlert as unknown) as RuletypesPostableRuleDTO,
+				);
 			} else {
-				await createRule(postableAlert as any);
+				await createRule((postableAlert as unknown) as RuletypesPostableRuleDTO);
 			}
 
 			logData = {
@@ -635,7 +641,9 @@ function FormAlertRules({
 		let statusResponse = { status: 'failed', message: '' };
 		setLoading(true);
 		try {
-			const response = await testRule(postableAlert as any);
+			const response = await testRule(
+				(postableAlert as unknown) as RuletypesPostableRuleDTO,
+			);
 
 			if (response.data?.alertCount === 0) {
 				notifications.error({

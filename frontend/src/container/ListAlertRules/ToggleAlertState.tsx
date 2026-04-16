@@ -1,13 +1,15 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { patchRuleByID } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesGettableRuleDTO,
+	RuletypesPostableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { GettableAlert } from 'types/api/alerts/get';
-import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
 import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
@@ -17,7 +19,7 @@ function ToggleAlertState({
 	disabled,
 	setData,
 }: ToggleAlertStateProps): JSX.Element {
-	const [apiStatus, setAPIStatus] = useState<State<PatchPayloadProps>>({
+	const [apiStatus, setAPIStatus] = useState<State<RuletypesGettableRuleDTO>>({
 		error: false,
 		errorMessage: '',
 		loading: false,
@@ -38,16 +40,18 @@ function ToggleAlertState({
 				loading: true,
 			}));
 
-			const response = await patchRuleByID({ id }, { disabled } as any);
-			const payload = response.data as any;
+			const response = await patchRuleByID({ id }, ({
+				disabled,
+			} as unknown) as RuletypesPostableRuleDTO);
+			const { data: updatedRule } = response;
 
 			setData((state) =>
 				state.map((alert) => {
 					if (alert.id === id) {
 						return {
 							...alert,
-							disabled: payload.disabled,
-							state: payload.state,
+							disabled: updatedRule.disabled,
+							state: updatedRule.state,
 						};
 					}
 					return alert;
@@ -57,7 +61,7 @@ function ToggleAlertState({
 			setAPIStatus((state) => ({
 				...state,
 				loading: false,
-				payload,
+				payload: updatedRule,
 			}));
 			notifications.success({
 				message: 'Success',
@@ -88,9 +92,9 @@ function ToggleAlertState({
 }
 
 interface ToggleAlertStateProps {
-	id: GettableAlert['id'];
+	id: string;
 	disabled: boolean;
-	setData: Dispatch<SetStateAction<GettableAlert[]>>;
+	setData: Dispatch<SetStateAction<RuletypesGettableRuleDTO[]>>;
 }
 
 export default ToggleAlertState;

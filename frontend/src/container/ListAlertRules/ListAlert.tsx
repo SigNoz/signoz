@@ -7,7 +7,13 @@ import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { createRule } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	ListRules200,
+	RenderErrorResponseDTO,
+	RuletypesGettableRuleDTO,
+	RuletypesPostableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
 import DropDown from 'components/DropDown/DropDown';
 import {
@@ -31,9 +37,8 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { GettableAlert } from 'types/api/alerts/get';
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -63,7 +68,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
-	const [data, setData] = useState<GettableAlert[]>(() => {
+	const [data, setData] = useState<RuletypesGettableRuleDTO[]>(() => {
 		const value = searchString.toLowerCase();
 		const filteredData = filterAlerts(allAlertRules, value);
 		return filteredData || [];
@@ -75,7 +80,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			? orderQueryParam
 			: null;
 
-	const { sortedInfo, handleChange } = useSortableTable<GettableAlert>(
+	const {
+		sortedInfo,
+		handleChange,
+	} = useSortableTable<RuletypesGettableRuleDTO>(
 		sortingOrder,
 		orderColumnParam || '',
 		searchString,
@@ -88,7 +96,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			const { data: refetchData, status } = await refetch();
 			if (status === 'success') {
 				const value = searchString.toLowerCase();
-				const filteredData = filterAlerts(refetchData.payload || [], value);
+				const filteredData = filterAlerts(refetchData?.data?.rules ?? [], value);
 				setData(filteredData || []);
 			}
 			if (status === 'error') {
@@ -116,11 +124,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	);
 
 	const onEditHandler = (
-		record: GettableAlert,
+		record: RuletypesGettableRuleDTO,
 		options?: { newTab?: boolean },
 	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
-			mapQueryDataFromApi(record.condition.compositeQuery),
+			mapQueryDataFromApi(
+				(record.condition?.compositeQuery as unknown) as ICompositeMetricQuery,
+			),
 			record.alertType as AlertTypes,
 		);
 		params.set(
@@ -128,9 +138,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		params.set(QueryParams.panelTypes, record.condition.compositeQuery.panelType);
+		const panelType = record.condition?.compositeQuery?.panelType;
+		if (panelType) {
+			params.set(QueryParams.panelTypes, panelType);
+		}
 
-		params.set(QueryParams.ruleId, record.id.toString());
+		params.set(QueryParams.ruleId, record.id ?? '');
 
 		setEditLoader(false);
 
@@ -140,16 +153,16 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	};
 
 	const onCloneHandler = (
-		originalAlert: GettableAlert,
+		originalAlert: RuletypesGettableRuleDTO,
 	) => async (): Promise<void> => {
-		const copyAlert = {
+		const copyAlert: RuletypesGettableRuleDTO = {
 			...originalAlert,
-			alert: originalAlert.alert.concat(' - Copy'),
+			alert: `${originalAlert.alert ?? ''} - Copy`,
 		};
 
 		try {
 			setCloneLoader(true);
-			await createRule(copyAlert as any);
+			await createRule((copyAlert as unknown) as RuletypesPostableRuleDTO);
 
 			notificationsApi.success({
 				message: 'Success',
@@ -157,7 +170,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			});
 
 			const { data: refetchData, status } = await refetch();
-			const rules = (refetchData as any)?.data?.rules;
+			const rules = refetchData?.data?.rules;
 			if (status === 'success' && rules) {
 				setData(rules);
 				setTimeout(() => {
@@ -187,16 +200,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		setData(filteredData);
 	});
 
-	const dynamicColumns: ColumnsType<GettableAlert> = [
+	const dynamicColumns: ColumnsType<RuletypesGettableRuleDTO> = [
 		{
 			title: 'Created At',
 			dataIndex: 'createAt',
 			width: 80,
 			key: DynamicColumnsKey.CreatedAt,
 			align: 'center',
-			sorter: (a: GettableAlert, b: GettableAlert): number => {
-				const prev = new Date(a.createAt).getTime();
-				const next = new Date(b.createAt).getTime();
+			sorter: (
+				a: RuletypesGettableRuleDTO,
+				b: RuletypesGettableRuleDTO,
+			): number => {
+				const prev = a.createAt ? new Date(a.createAt).getTime() : 0;
+				const next = b.createAt ? new Date(b.createAt).getTime() : 0;
 
 				return prev - next;
 			},
@@ -219,9 +235,12 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			width: 80,
 			key: DynamicColumnsKey.UpdatedAt,
 			align: 'center',
-			sorter: (a: GettableAlert, b: GettableAlert): number => {
-				const prev = new Date(a.updateAt).getTime();
-				const next = new Date(b.updateAt).getTime();
+			sorter: (
+				a: RuletypesGettableRuleDTO,
+				b: RuletypesGettableRuleDTO,
+			): number => {
+				const prev = a.updateAt ? new Date(a.updateAt).getTime() : 0;
+				const next = b.updateAt ? new Date(b.updateAt).getTime() : 0;
 
 				return prev - next;
 			},
@@ -240,7 +259,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		},
 	];
 
-	const columns: ColumnsType<GettableAlert> = [
+	const columns: ColumnsType<RuletypesGettableRuleDTO> = [
 		{
 			title: 'Status',
 			dataIndex: 'state',
@@ -317,7 +336,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'id',
 			key: 'action',
 			width: 10,
-			render: (id: GettableAlert['id'], record): JSX.Element => (
+			render: (id: RuletypesGettableRuleDTO['id'], record): JSX.Element => (
 				<div data-testid="alert-actions">
 					<DropDown
 						onDropDownItemClick={(item): void =>
@@ -326,9 +345,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 						element={[
 							<ToggleAlertState
 								key="1"
-								disabled={record.disabled}
+								disabled={record.disabled ?? false}
 								setData={setData}
-								id={id}
+								id={id ?? ''}
 							/>,
 							<ColumnButton
 								key="2"
@@ -360,7 +379,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 								key="4"
 								notifications={notificationsApi}
 								setData={setData}
-								id={id}
+								id={id ?? ''}
 							/>,
 						]}
 					/>
@@ -415,9 +434,10 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 }
 
 interface ListAlertProps {
-	allAlertRules: GettableAlert[];
+	allAlertRules: RuletypesGettableRuleDTO[];
 	refetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GettableAlert[]>
+		ListRules200,
+		ErrorType<RenderErrorResponseDTO>
 	>['refetch'];
 }
 

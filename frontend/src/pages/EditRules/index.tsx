@@ -3,7 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesGettableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
@@ -17,6 +20,7 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
+import { AlertDef } from 'types/api/alerts/def';
 
 import {
 	errorMessageReceivedFromBackend,
@@ -64,7 +68,7 @@ function EditRules(): JSX.Element {
 		}
 	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
 
-	const ruleData = data?.data as any;
+	const ruleData: RuletypesGettableRuleDTO | undefined = data?.data;
 
 	const apiError = useMemo(
 		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
@@ -101,14 +105,14 @@ function EditRules(): JSX.Element {
 
 	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
 	if (ruleData.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-		initialV2AlertValue = ruleData as PostableAlertRuleV2;
+		initialV2AlertValue = (ruleData as unknown) as PostableAlertRuleV2;
 	}
 
 	return (
 		<div className="edit-rules-container">
 			<EditRulesContainer
 				ruleId={ruleId || ''}
-				initialValue={ruleData}
+				initialValue={(ruleData as unknown) as AlertDef}
 				initialV2AlertValue={initialV2AlertValue}
 			/>
 		</div>

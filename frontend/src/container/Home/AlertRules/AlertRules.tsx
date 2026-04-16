@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
+import type { RuletypesGettableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -10,7 +11,7 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { GettableAlert } from 'types/api/alerts/get';
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { USER_ROLES } from 'types/roles';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
@@ -27,7 +28,9 @@ export default function AlertRules({
 	const { user } = useAppContext();
 	const [rulesExist, setRulesExist] = useState(false);
 
-	const [sortedAlertRules, setSortedAlertRules] = useState<GettableAlert[]>([]);
+	const [sortedAlertRules, setSortedAlertRules] = useState<
+		RuletypesGettableRuleDTO[]
+	>([]);
 
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
@@ -38,10 +41,10 @@ export default function AlertRules({
 	});
 
 	useEffect(() => {
-		const rules = (alerts?.data?.rules as any[]) || [];
+		const rules = alerts?.data?.rules ?? [];
 		setRulesExist(rules.length > 0);
 
-		const sortedRules = rules.sort((a, b) => {
+		const sortedRules = [...rules].sort((a, b) => {
 			// First, prioritize firing alerts
 			if (a.state === 'firing' && b.state !== 'firing') {
 				return -1;
@@ -51,8 +54,8 @@ export default function AlertRules({
 			}
 
 			// Then sort by updateAt timestamp
-			const aUpdateAt = new Date(a.updateAt).getTime();
-			const bUpdateAt = new Date(b.updateAt).getTime();
+			const aUpdateAt = a.updateAt ? new Date(a.updateAt).getTime() : 0;
+			const bUpdateAt = b.updateAt ? new Date(b.updateAt).getTime() : 0;
 			return bUpdateAt - aUpdateAt;
 		});
 
@@ -116,22 +119,27 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: GettableAlert) => (): void => {
+	const onEditHandler = (record: RuletypesGettableRuleDTO) => (): void => {
 		logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,
 			ruleState: record.state,
 		});
 
-		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		const compositeQuery = mapQueryDataFromApi(
+			(record.condition?.compositeQuery as unknown) as ICompositeMetricQuery,
+		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		params.set(QueryParams.panelTypes, record.condition.compositeQuery.panelType);
+		const panelType = record.condition?.compositeQuery?.panelType;
+		if (panelType) {
+			params.set(QueryParams.panelTypes, panelType);
+		}
 
-		params.set(QueryParams.ruleId, record.id.toString());
+		params.set(QueryParams.ruleId, record.id ?? '');
 
 		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
@@ -154,7 +162,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={getItemIcon(rule.id)}
+								src={getItemIcon(rule.id ?? '')}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>

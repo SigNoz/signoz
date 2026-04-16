@@ -60,12 +60,7 @@ function ListAlertRules(): JSX.Element {
 
 	return (
 		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<ListAlert
-				{...{
-					allAlertRules: rules as any,
-					refetch: refetch as any,
-				}}
-			/>
+			<ListAlert allAlertRules={rules} refetch={refetch} />
 		</Space>
 	);
 }

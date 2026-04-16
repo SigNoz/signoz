@@ -1,19 +1,22 @@
-import { GettableAlert } from 'types/api/alerts/get';
+import type {
+	RuletypesAlertStateDTO,
+	RuletypesGettableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import { filterAlerts } from '../utils';
 
 describe('filterAlerts', () => {
-	const mockAlertBase: Partial<GettableAlert> = {
-		state: 'active',
+	const mockAlertBase: Partial<RuletypesGettableRuleDTO> = {
+		state: 'active' as RuletypesAlertStateDTO,
 		disabled: false,
-		createAt: '2024-01-01T00:00:00Z',
+		createAt: new Date('2024-01-01T00:00:00Z'),
 		createBy: 'test-user',
-		updateAt: '2024-01-01T00:00:00Z',
+		updateAt: new Date('2024-01-01T00:00:00Z'),
 		updateBy: 'test-user',
 		version: '1',
 	};
 
-	const mockAlerts: GettableAlert[] = [
+	const mockAlerts: RuletypesGettableRuleDTO[] = [
 		{
 			...mockAlertBase,
 			id: '1',
@@ -24,7 +27,7 @@ describe('filterAlerts', () => {
 				status: 'ok',
 				environment: 'production',
 			},
-		} as GettableAlert,
+		},
 		{
 			...mockAlertBase,
 			id: '2',
@@ -35,7 +38,7 @@ describe('filterAlerts', () => {
 				status: 'firing',
 				environment: 'staging',
 			},
-		} as GettableAlert,
+		},
 		{
 			...mockAlertBase,
 			id: '3',
@@ -46,7 +49,7 @@ describe('filterAlerts', () => {
 				status: 'pending',
 				environment: 'production',
 			},
-		} as GettableAlert,
+		},
 	];
 
 	it('should return all alerts when filter is empty', () => {
@@ -97,14 +100,14 @@ describe('filterAlerts', () => {
 	});
 
 	it('should handle alerts with missing labels', () => {
-		const alertsWithMissingLabels: GettableAlert[] = [
+		const alertsWithMissingLabels: RuletypesGettableRuleDTO[] = [
 			{
 				...mockAlertBase,
 				id: '4',
 				alert: 'Test Alert',
 				alertType: 'metrics',
 				labels: undefined,
-			} as GettableAlert,
+			} as RuletypesGettableRuleDTO,
 		];
 		const result = filterAlerts(alertsWithMissingLabels, 'test');
 		expect(result).toHaveLength(1);
@@ -112,7 +115,7 @@ describe('filterAlerts', () => {
 	});
 
 	it('should handle alerts with missing alert name', () => {
-		const alertsWithMissingName: GettableAlert[] = [
+		const alertsWithMissingName: RuletypesGettableRuleDTO[] = [
 			{
 				...mockAlertBase,
 				id: '5',
@@ -121,7 +124,7 @@ describe('filterAlerts', () => {
 				labels: {
 					severity: 'warning',
 				},
-			} as GettableAlert,
+			} as RuletypesGettableRuleDTO,
 		];
 		const result = filterAlerts(alertsWithMissingName, 'warning');
 		expect(result).toHaveLength(1);

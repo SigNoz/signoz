@@ -19,6 +19,7 @@ import {
 import type {
 	GetRuleByID200,
 	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { TabRoutes } from 'components/RouteTab/types';
@@ -408,14 +409,17 @@ export const useAlertRuleStatusToggle = ({
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
 		(args: { id: string; data: Record<string, unknown> }) =>
-			patchRuleByID({ id: args.id }, args.data as any),
+			patchRuleByID(
+				{ id: args.id },
+				(args.data as unknown) as RuletypesPostableRuleDTO,
+			),
 		{
 			onSuccess: (data) => {
-				setAlertRuleState((data?.data as any)?.state);
+				setAlertRuleState(data?.data?.state);
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
-						(data?.data as any)?.state === 'disabled' ? 'disabled' : 'enabled'
+						data?.data?.state === 'disabled' ? 'disabled' : 'enabled'
 					}.`,
 				});
 			},
@@ -454,7 +458,8 @@ export const useAlertRuleDuplicate = ({
 	const { showErrorModal } = useErrorModal();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
-		(args: { data: AlertDef }) => createRule(args.data as any),
+		(args: { data: AlertDef }) =>
+			createRule((args.data as unknown) as RuletypesPostableRuleDTO),
 		{
 			onSuccess: async () => {
 				notifications.success({
@@ -501,7 +506,10 @@ export const useAlertRuleUpdate = ({
 	const { mutate: updateAlertRule, isLoading } = useMutation(
 		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
 		(args: { data: AlertDef; id: string }) =>
-			updateRuleByID({ id: args.id }, args.data as any),
+			updateRuleByID(
+				{ id: args.id },
+				(args.data as unknown) as RuletypesPostableRuleDTO,
+			),
 		{
 			onMutate: () => setUpdatedName(intermediateName),
 			onSuccess: () =>

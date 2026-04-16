@@ -2,7 +2,10 @@ import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -79,7 +82,7 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		testAlertRule(
-			{ data: payload as any },
+			{ data: (payload as unknown) as RuletypesPostableRuleDTO },
 			{
 				onSuccess: (response) => {
 					if (response.data?.alertCount === 0) {
@@ -122,7 +125,10 @@ function Footer(): JSX.Element {
 		});
 		if (isEditMode) {
 			updateAlertRule(
-				{ pathParams: { id: ruleId }, data: payload as any },
+				{
+					pathParams: { id: ruleId },
+					data: (payload as unknown) as RuletypesPostableRuleDTO,
+				},
 				{
 					onSuccess: () => {
 						toast.success('Alert rule updated successfully');
@@ -135,7 +141,7 @@ function Footer(): JSX.Element {
 			);
 		} else {
 			createAlertRule(
-				{ data: payload as any },
+				{ data: (payload as unknown) as RuletypesPostableRuleDTO },
 				{
 					onSuccess: () => {
 						toast.success('Alert rule created successfully');
