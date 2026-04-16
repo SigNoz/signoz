@@ -431,7 +431,7 @@ export const useAlertRuleDuplicate = ({
 
 	const params = useUrlQuery();
 
-	const { refetch } = useQuery(REACT_QUERY_KEY.GET_ALL_ALLERTS, {
+	const { refetch } = useQuery(REACT_QUERY_KEY.GET_ALL_ALERTS, {
 		queryFn: getAll,
 		cacheTime: 0,
 	});

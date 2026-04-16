@@ -132,6 +132,10 @@ export const useGetQueryRange: UseGetQueryRange = (
 			return options.retry;
 		}
 		return (failureCount: number, error: Error): boolean => {
+			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+				return false;
+			}
+
 			let status: number | undefined;
 
 			if (error instanceof APIError) {
