@@ -526,6 +526,12 @@ func (q *querier) processScalarFormula(
 		return nil
 	}
 
+	// Apply ordering (and limit) before converting to scalar format.
+	// The outer applySeriesLimit call in applyFormulas only handles
+	// *TimeSeriesData, so scalar formula results must be sorted here;
+	// otherwise formula.Order is silently ignored for table/pie/value panels.
+	formulaSeries = qbtypes.ApplySeriesLimit(formulaSeries, formula.Order, formula.Limit)
+
 	// Convert back to scalar format
 	scalarResult := &qbtypes.ScalarData{
 		QueryName: formula.Name,
