@@ -1,4 +1,4 @@
-package alertmanager
+package signozalertmanager
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -15,17 +16,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type API struct {
-	alertmanager Alertmanager
+type handler struct {
+	alertmanager alertmanager.Alertmanager
 }
 
-func NewAPI(alertmanager Alertmanager) *API {
-	return &API{
-		alertmanager: alertmanager,
-	}
+func NewHandler(alertmanager alertmanager.Alertmanager) alertmanager.Handler {
+	return &handler{alertmanager: alertmanager}
 }
 
-func (api *API) GetAlerts(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) GetAlerts(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -41,7 +40,7 @@ func (api *API) GetAlerts(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	alerts, err := api.alertmanager.GetAlerts(ctx, claims.OrgID, params)
+	alerts, err := handler.alertmanager.GetAlerts(ctx, claims.OrgID, params)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -50,7 +49,7 @@ func (api *API) GetAlerts(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, alerts)
 }
 
-func (api *API) TestReceiver(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) TestReceiver(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -73,7 +72,7 @@ func (api *API) TestReceiver(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = api.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
+	err = handler.alertmanager.TestReceiver(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -82,7 +81,7 @@ func (api *API) TestReceiver(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) ListChannels(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -92,7 +91,7 @@ func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	channels, err := api.alertmanager.ListChannels(ctx, claims.OrgID)
+	channels, err := handler.alertmanager.ListChannels(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -106,11 +105,11 @@ func (api *API) ListChannels(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, channels)
 }
 
-func (api *API) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	channels, err := api.alertmanager.ListAllChannels(ctx)
+	channels, err := handler.alertmanager.ListAllChannels(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -119,7 +118,7 @@ func (api *API) ListAllChannels(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, channels)
 }
 
-func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -147,7 +146,7 @@ func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	channel, err := api.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
+	channel, err := handler.alertmanager.GetChannelByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -156,7 +155,7 @@ func (api *API) GetChannelByID(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, channel)
 }
 
-func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -197,7 +196,7 @@ func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = api.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
+	err = handler.alertmanager.UpdateChannelByReceiverAndID(ctx, claims.OrgID, receiver, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -206,7 +205,7 @@ func (api *API) UpdateChannelByID(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -234,7 +233,7 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = api.alertmanager.DeleteChannelByID(ctx, claims.OrgID, id)
+	err = handler.alertmanager.DeleteChannelByID(ctx, claims.OrgID, id)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -243,7 +242,7 @@ func (api *API) DeleteChannelByID(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -266,7 +265,7 @@ func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	channel, err := api.alertmanager.CreateChannel(ctx, claims.OrgID, receiver)
+	channel, err := handler.alertmanager.CreateChannel(ctx, claims.OrgID, receiver)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -275,7 +274,7 @@ func (api *API) CreateChannel(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusCreated, channel)
 }
 
-func (api *API) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -300,7 +299,7 @@ func (api *API) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := api.alertmanager.CreateRoutePolicy(ctx, &policy)
+	result, err := handler.alertmanager.CreateRoutePolicy(ctx, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -309,11 +308,11 @@ func (api *API) CreateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusCreated, result)
 }
 
-func (api *API) GetAllRoutePolicies(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) GetAllRoutePolicies(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	policies, err := api.alertmanager.GetAllRoutePolicies(ctx)
+	policies, err := handler.alertmanager.GetAllRoutePolicies(ctx)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -322,7 +321,7 @@ func (api *API) GetAllRoutePolicies(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, policies)
 }
 
-func (api *API) GetRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) GetRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -333,7 +332,7 @@ func (api *API) GetRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	policy, err := api.alertmanager.GetRoutePolicyByID(ctx, policyID)
+	policy, err := handler.alertmanager.GetRoutePolicyByID(ctx, policyID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -342,7 +341,7 @@ func (api *API) GetRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusOK, policy)
 }
 
-func (api *API) DeleteRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) DeleteRoutePolicyByID(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -353,7 +352,7 @@ func (api *API) DeleteRoutePolicyByID(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	err := api.alertmanager.DeleteRoutePolicyByID(ctx, policyID)
+	err := handler.alertmanager.DeleteRoutePolicyByID(ctx, policyID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -362,7 +361,7 @@ func (api *API) DeleteRoutePolicyByID(rw http.ResponseWriter, req *http.Request)
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (api *API) UpdateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) UpdateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
@@ -392,7 +391,7 @@ func (api *API) UpdateRoutePolicy(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := api.alertmanager.UpdateRoutePolicyByID(ctx, policyID, &policy)
+	result, err := handler.alertmanager.UpdateRoutePolicyByID(ctx, policyID, &policy)
 	if err != nil {
 		render.Error(rw, err)
 		return
