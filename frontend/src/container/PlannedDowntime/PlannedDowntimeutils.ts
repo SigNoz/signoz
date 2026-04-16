@@ -2,10 +2,6 @@ import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import {
-	createDowntimeSchedule,
-	updateDowntimeScheduleByID,
-} from 'api/generated/services/downtimeschedules';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
@@ -146,21 +142,6 @@ export const deleteDowntimeHandler = ({
 				},
 			},
 		);
-	}
-};
-
-export interface DowntimeScheduleUpdatePayload {
-	data: RuletypesGettablePlannedMaintenanceDTO;
-	id?: number;
-}
-
-export const createEditDowntimeSchedule = async (
-	props: DowntimeScheduleUpdatePayload,
-): Promise<void> => {
-	if (props.id) {
-		await updateDowntimeScheduleByID({ id: String(props.id) }, props.data);
-	} else {
-		await createDowntimeSchedule(props.data);
 	}
 };
 

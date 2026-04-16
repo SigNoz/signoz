@@ -15,6 +15,10 @@ import {
 } from 'antd';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import {
+	createDowntimeSchedule,
+	updateDowntimeScheduleByID,
+} from 'api/generated/services/downtimeschedules';
 import type {
 	RuletypesGettablePlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
@@ -39,8 +43,6 @@ import 'dayjs/locale/en';
 
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
-	createEditDowntimeSchedule,
-	DowntimeScheduleUpdatePayload,
 	getAlertOptionsFromIds,
 	getDurationInfo,
 	getEndTime,
@@ -138,37 +140,38 @@ export function PlannedDowntimeForm(
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
-			const createEditProps: DowntimeScheduleUpdatePayload = {
-				data: {
-					alertIds: values.alertRules
-						.map((alert) => alert.value)
-						.filter((alert) => alert !== undefined) as string[],
-					name: values.name,
-					schedule: {
-						startTime: (handleTimeConversion(
-							values.startTime,
-							timezoneInitialValue,
-							values.timezone,
-							shouldKeepLocalTime,
-						) as unknown) as Date,
-						timezone: values.timezone,
-						endTime: values.endTime
-							? ((handleTimeConversion(
-									values.endTime,
-									timezoneInitialValue,
-									values.timezone,
-									shouldKeepLocalTime,
-							  ) as unknown) as Date)
-							: undefined,
-						recurrence: values.recurrence as RuletypesRecurrenceDTO,
-					},
+			const data: RuletypesGettablePlannedMaintenanceDTO = {
+				alertIds: values.alertRules
+					.map((alert) => alert.value)
+					.filter((alert) => alert !== undefined) as string[],
+				name: values.name,
+				schedule: {
+					startTime: (handleTimeConversion(
+						values.startTime,
+						timezoneInitialValue,
+						values.timezone,
+						shouldKeepLocalTime,
+					) as unknown) as Date,
+					timezone: values.timezone,
+					endTime: values.endTime
+						? ((handleTimeConversion(
+								values.endTime,
+								timezoneInitialValue,
+								values.timezone,
+								shouldKeepLocalTime,
+						  ) as unknown) as Date)
+						: undefined,
+					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
-				id: isEditMode ? Number(initialValues.id) : undefined,
 			};
 
 			setSaveLoading(true);
 			try {
-				await createEditDowntimeSchedule({ ...createEditProps });
+				if (isEditMode && initialValues.id) {
+					await updateDowntimeScheduleByID({ id: initialValues.id }, data);
+				} else {
+					await createDowntimeSchedule(data);
+				}
 				setIsOpen(false);
 				notifications.success({
 					message: 'Success',
