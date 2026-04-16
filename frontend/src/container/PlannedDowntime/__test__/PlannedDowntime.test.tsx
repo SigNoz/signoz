@@ -111,9 +111,16 @@ jest.mock('api/generated/services/downtimeschedules', () => ({
 		isLoading: false,
 	}),
 }));
-jest.mock('api/alerts/getAll', () => ({
-	__esModule: true,
-	default: (): Promise<{ payload: [] }> => Promise.resolve({ payload: [] }),
+jest.mock('api/generated/services/rules', () => ({
+	useListRules: (): {
+		data: { data: { rules: [] } };
+		isError: false;
+		isLoading: false;
+	} => ({
+		data: { data: { rules: [] } },
+		isError: false,
+		isLoading: false,
+	}),
 }));
 
 describe('PlannedDowntime Component', () => {
