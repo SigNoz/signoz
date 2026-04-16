@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
-	updateMyPassoword,
+	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
 import { useNotifications } from 'hooks/useNotifications';
@@ -55,7 +55,7 @@ function UserInfo(): JSX.Element {
 		try {
 			setIsLoading(true);
 
-			await updateMyPassoword({
+			await updateMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
 			});

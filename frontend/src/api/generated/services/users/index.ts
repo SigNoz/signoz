@@ -1947,7 +1947,7 @@ export const useUpdateMyUserV2 = <
  * This endpoint updates the password of the user I belong to
  * @summary Updates my password
  */
-export const updateMyPassoword = (
+export const updateMyPassword = (
 	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -1958,23 +1958,23 @@ export const updateMyPassoword = (
 	});
 };
 
-export const getUpdateMyPassowordMutationOptions = <
+export const getUpdateMyPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateMyPassoword>>,
+		Awaited<ReturnType<typeof updateMyPassword>>,
 		TError,
 		{ data: BodyType<TypesChangePasswordRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof updateMyPassoword>>,
+	Awaited<ReturnType<typeof updateMyPassword>>,
 	TError,
 	{ data: BodyType<TypesChangePasswordRequestDTO> },
 	TContext
 > => {
-	const mutationKey = ['updateMyPassoword'];
+	const mutationKey = ['updateMyPassword'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 		  'mutationKey' in options.mutation &&
@@ -1984,43 +1984,43 @@ export const getUpdateMyPassowordMutationOptions = <
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateMyPassoword>>,
+		Awaited<ReturnType<typeof updateMyPassword>>,
 		{ data: BodyType<TypesChangePasswordRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return updateMyPassoword(data);
+		return updateMyPassword(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateMyPassowordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateMyPassoword>>
+export type UpdateMyPasswordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMyPassword>>
 >;
-export type UpdateMyPassowordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
-export type UpdateMyPassowordMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyPasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type UpdateMyPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Updates my password
  */
-export const useUpdateMyPassoword = <
+export const useUpdateMyPassword = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateMyPassoword>>,
+		Awaited<ReturnType<typeof updateMyPassword>>,
 		TError,
 		{ data: BodyType<TypesChangePasswordRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
-	Awaited<ReturnType<typeof updateMyPassoword>>,
+	Awaited<ReturnType<typeof updateMyPassword>>,
 	TError,
 	{ data: BodyType<TypesChangePasswordRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getUpdateMyPassowordMutationOptions(options);
+	const mutationOptions = getUpdateMyPasswordMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

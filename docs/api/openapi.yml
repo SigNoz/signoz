@@ -11202,7 +11202,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint updates the password of the user I belong to
-      operationId: UpdateMyPassoword
+      operationId: UpdateMyPassword
       requestBody:
         content:
           application/json:

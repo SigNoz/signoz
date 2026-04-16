@@ -282,7 +282,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authZ.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
-		ID:                  "UpdateMyPassoword",
+		ID:                  "UpdateMyPassword",
 		Tags:                []string{"users"},
 		Summary:             "Updates my password",
 		Description:         "This endpoint updates the password of the user I belong to",
