@@ -6,40 +6,35 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateBigExample(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses.json")
-	if err != nil {
-		t.Fatalf("reading example file: %v", err)
-	}
-	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid dashboard, got error: %v", err)
-	}
+	require.NoError(t, err, "reading example file")
+	_, err = UnmarshalAndValidateDashboardV2JSON(data)
+	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestValidateDashboardWithSections(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses_with_sections.json")
-	if err != nil {
-		t.Fatalf("reading example file: %v", err)
-	}
-	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid dashboard, got error: %v", err)
-	}
+	require.NoError(t, err, "reading example file")
+	_, err = UnmarshalAndValidateDashboardV2JSON(data)
+	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
-	if _, err := UnmarshalAndValidateDashboardV2JSON([]byte("not json")); err == nil {
-		t.Fatal("expected error for invalid JSON")
-	}
+	_, err := UnmarshalAndValidateDashboardV2JSON([]byte("not json"))
+	require.Error(t, err, "expected error for invalid JSON")
 }
 
 func TestValidateEmptySpec(t *testing.T) {
 	// no variables no panels
 	data := []byte(`{}`)
-	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid, got: %v", err)
-	}
+	_, err := UnmarshalAndValidateDashboardV2JSON(data)
+	require.NoError(t, err, "expected valid")
 }
 
 func TestValidateOnlyVariables(t *testing.T) {
@@ -74,9 +69,8 @@ func TestValidateOnlyVariables(t *testing.T) {
 		],
 		"layouts": []
 	}`)
-	if _, err := UnmarshalAndValidateDashboardV2JSON(data); err != nil {
-		t.Fatalf("expected valid, got: %v", err)
-	}
+	_, err := UnmarshalAndValidateDashboardV2JSON(data)
+	require.NoError(t, err, "expected valid")
 }
 
 func TestInvalidateUnknownPluginKind(t *testing.T) {
@@ -155,12 +149,8 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
-			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
-			}
-			if !strings.Contains(err.Error(), tt.wantContain) {
-				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
-			}
+			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
+			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -180,12 +170,8 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 		"layouts": []
 	}`)
 	_, err := UnmarshalAndValidateDashboardV2JSON(data)
-	if err == nil {
-		t.Fatal("expected error for invalid panel plugin kind")
-	}
-	if !strings.Contains(err.Error(), "FakePanel") {
-		t.Fatalf("error should mention FakePanel, got: %v", err)
-	}
+	require.Error(t, err, "expected error for invalid panel plugin kind")
+	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
 }
 
 func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
@@ -260,12 +246,8 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
-			if err == nil {
-				t.Fatalf("expected error for unknown field, got nil")
-			}
-			if !strings.Contains(err.Error(), tt.wantContain) {
-				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
-			}
+			require.Error(t, err, "expected error for unknown field")
+			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -342,11 +324,9 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
-			if err == nil {
-				t.Fatal("expected validation error")
-			}
-			if tt.wantContain != "" && !strings.Contains(err.Error(), tt.wantContain) {
-				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
+			require.Error(t, err, "expected validation error")
+			if tt.wantContain != "" {
+				require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 			}
 		})
 	}
@@ -552,12 +532,8 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
-			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
-			}
-			if !strings.Contains(err.Error(), tt.wantContain) {
-				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
-			}
+			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
+			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -651,12 +627,8 @@ func TestValidateRequiredFields(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
-			if err == nil {
-				t.Fatalf("expected error containing %q, got nil", tt.wantContain)
-			}
-			if !strings.Contains(err.Error(), tt.wantContain) {
-				t.Fatalf("error should mention %q, got: %v", tt.wantContain, err)
-			}
+			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
+			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
 }
@@ -677,44 +649,24 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		"layouts": []
 	}`)
 	d, err := UnmarshalAndValidateDashboardV2JSON(data)
-	if err != nil {
-		t.Fatalf("unmarshal and validate failed: %v", err)
-	}
+	require.NoError(t, err, "unmarshal and validate failed")
 
 	// After validation+normalization, the plugin spec should be a typed struct.
-	spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
-	if !ok {
-		t.Fatalf("expected *TimeSeriesPanelSpec, got %T", d.Panels["p1"].Spec.Plugin.Spec)
-	}
+	require.IsType(t, &TimeSeriesPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
 
-	if spec.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
-		t.Fatalf("expected DecimalPrecision default 2, got %v", spec.Formatting.DecimalPrecision.ValueOrDefault())
-	}
-	if spec.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
-		t.Fatalf("expected LineInterpolation default spline, got %v", spec.ChartAppearance.LineInterpolation.ValueOrDefault())
-	}
-	if spec.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
-		t.Fatalf("expected LineStyle default solid, got %v", spec.ChartAppearance.LineStyle.ValueOrDefault())
-	}
-	if spec.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
-		t.Fatalf("expected FillMode default solid, got %v", spec.ChartAppearance.FillMode.ValueOrDefault())
-	}
-	if spec.ChartAppearance.SpanGaps.FillOnlyBelow != false {
-		t.Fatalf("expected SpanGaps.FillOnlyBelow default false, got %v", spec.ChartAppearance.SpanGaps.FillOnlyBelow)
-	}
-	if spec.Visualization.TimePreference.ValueOrDefault() != "global_time" {
-		t.Fatalf("expected TimePreference default global_time, got %v", spec.Visualization.TimePreference.ValueOrDefault())
-	}
-	if spec.Legend.Position.ValueOrDefault() != "bottom" {
-		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.ValueOrDefault())
-	}
+	require.Equal(t, "2", spec.Formatting.DecimalPrecision.ValueOrDefault(), "expected DecimalPrecision default 2")
+	require.Equal(t, "spline", spec.ChartAppearance.LineInterpolation.ValueOrDefault(), "expected LineInterpolation default spline")
+	require.Equal(t, "solid", spec.ChartAppearance.LineStyle.ValueOrDefault(), "expected LineStyle default solid")
+	require.Equal(t, "solid", spec.ChartAppearance.FillMode.ValueOrDefault(), "expected FillMode default solid")
+	require.False(t, spec.ChartAppearance.SpanGaps.FillOnlyBelow, "expected SpanGaps.FillOnlyBelow default false")
+	require.Equal(t, "global_time", spec.Visualization.TimePreference.ValueOrDefault(), "expected TimePreference default global_time")
+	require.Equal(t, "bottom", spec.Legend.Position.ValueOrDefault(), "expected LegendPosition default bottom")
 
 	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
 	// and verify the output contains the default values.
 	output, err := json.Marshal(d)
-	if err != nil {
-		t.Fatalf("marshal dashboard failed: %v", err)
-	}
+	require.NoError(t, err, "marshal dashboard failed")
 	outputStr := string(output)
 	for field, want := range map[string]string{
 		"decimalPrecision":  `"2"`,
@@ -724,9 +676,7 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		"timePreference":    `"global_time"`,
 		"position":          `"bottom"`,
 	} {
-		if !strings.Contains(outputStr, `"`+field+`":`+want) {
-			t.Errorf("expected stored/response JSON to contain %s:%s, got: %s", field, want, outputStr)
-		}
+		assert.Contains(t, outputStr, `"`+field+`":`+want, "expected stored/response JSON to contain %s:%s", field, want)
 	}
 }
 
@@ -746,38 +696,24 @@ func TestNumberPanelDefaults(t *testing.T) {
 		"layouts": []
 	}`)
 	d, err := UnmarshalAndValidateDashboardV2JSON(data)
-	if err != nil {
-		t.Fatalf("unmarshal and validate failed: %v", err)
-	}
+	require.NoError(t, err, "unmarshal and validate failed")
 
-	spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	if !ok {
-		t.Fatalf("expected *NumberPanelSpec, got %T", d.Panels["p1"].Spec.Plugin.Spec)
-	}
+	require.IsType(t, &NumberPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
+	spec := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
 
-	if len(spec.Thresholds) != 1 {
-		t.Fatalf("expected 1 threshold, got %d", len(spec.Thresholds))
-	}
-	if spec.Thresholds[0].Operator.ValueOrDefault() != ">" {
-		t.Fatalf("expected ComparisonOperator default >, got %v", spec.Thresholds[0].Operator.ValueOrDefault())
-	}
-	if spec.Thresholds[0].Format.ValueOrDefault() != "text" {
-		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.ValueOrDefault())
-	}
+	require.Len(t, spec.Thresholds, 1, "expected 1 threshold")
+	require.Equal(t, ">", spec.Thresholds[0].Operator.ValueOrDefault(), "expected ComparisonOperator default >")
+	require.Equal(t, "text", spec.Thresholds[0].Format.ValueOrDefault(), "expected ThresholdFormat default text")
 
 	// Marshal back and verify defaults in JSON output.
 	output, err := json.Marshal(d)
-	if err != nil {
-		t.Fatalf("marshal dashboard failed: %v", err)
-	}
+	require.NoError(t, err, "marshal dashboard failed")
 	outputStr := string(output)
-	if !strings.Contains(outputStr, `"format":"text"`) {
-		t.Errorf("expected stored/response JSON to contain format:text, got: %s", outputStr)
-	}
+	assert.Contains(t, outputStr, `"format":"text"`, "expected stored/response JSON to contain format:text")
 	// Go's json.Marshal escapes ">" as "\u003e", so check for both forms.
-	if !strings.Contains(outputStr, `"operator":">"`) && !strings.Contains(outputStr, `"operator":"\u003e"`) {
-		t.Errorf("expected stored/response JSON to contain operator:>, got: %s", outputStr)
-	}
+	assert.True(t,
+		strings.Contains(outputStr, `"operator":">"`) || strings.Contains(outputStr, `"operator":"\u003e"`),
+		"expected stored/response JSON to contain operator:>, got: %s", outputStr)
 }
 
 // TestStorageRoundTrip simulates the future DB store/load cycle:
@@ -810,83 +746,43 @@ func TestStorageRoundTrip(t *testing.T) {
 
 	// Step 1: Unmarshal + validate + normalize (what the API handler does).
 	d, err := UnmarshalAndValidateDashboardV2JSON(input)
-	if err != nil {
-		t.Fatalf("unmarshal and validate failed: %v", err)
-	}
+	require.NoError(t, err, "unmarshal and validate failed")
 
 	// Step 1.5: Verify struct fields have correct defaults (extra validation before storing).
 	tsSpec := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
-	if tsSpec.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
-		t.Errorf("expected DecimalPrecision default 2, got %v", tsSpec.Formatting.DecimalPrecision.ValueOrDefault())
-	}
-	if tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
-		t.Errorf("expected LineInterpolation default spline, got %v", tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault())
-	}
-	if tsSpec.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
-		t.Errorf("expected LineStyle default solid, got %v", tsSpec.ChartAppearance.LineStyle.ValueOrDefault())
-	}
-	if tsSpec.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
-		t.Errorf("expected FillMode default solid, got %v", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
-	}
-	if tsSpec.Visualization.TimePreference.ValueOrDefault() != "global_time" {
-		t.Errorf("expected TimePreference default global_time, got %v", tsSpec.Visualization.TimePreference.ValueOrDefault())
-	}
-	if tsSpec.Legend.Position.ValueOrDefault() != "bottom" {
-		t.Errorf("expected LegendPosition default bottom, got %v", tsSpec.Legend.Position.ValueOrDefault())
-	}
+	assert.Equal(t, "2", tsSpec.Formatting.DecimalPrecision.ValueOrDefault())
+	assert.Equal(t, "spline", tsSpec.ChartAppearance.LineInterpolation.ValueOrDefault())
+	assert.Equal(t, "solid", tsSpec.ChartAppearance.LineStyle.ValueOrDefault())
+	assert.Equal(t, "solid", tsSpec.ChartAppearance.FillMode.ValueOrDefault())
+	assert.Equal(t, "global_time", tsSpec.Visualization.TimePreference.ValueOrDefault())
+	assert.Equal(t, "bottom", tsSpec.Legend.Position.ValueOrDefault())
 	numSpec := d.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	if numSpec.Thresholds[0].Operator.ValueOrDefault() != ">" {
-		t.Errorf("expected ComparisonOperator default >, got %v", numSpec.Thresholds[0].Operator.ValueOrDefault())
-	}
-	if numSpec.Thresholds[0].Format.ValueOrDefault() != "text" {
-		t.Errorf("expected ThresholdFormat default text, got %v", numSpec.Thresholds[0].Format.ValueOrDefault())
-	}
+	assert.Equal(t, ">", numSpec.Thresholds[0].Operator.ValueOrDefault())
+	assert.Equal(t, "text", numSpec.Thresholds[0].Format.ValueOrDefault())
 
 	// Step 2: Marshal to JSON (simulates writing to DB).
 	stored, err := json.Marshal(d)
-	if err != nil {
-		t.Fatalf("marshal for storage failed: %v", err)
-	}
+	require.NoError(t, err, "marshal for storage failed")
 
 	// Step 3: Unmarshal from JSON (simulates reading from DB).
 	loaded, err := UnmarshalAndValidateDashboardV2JSON(stored)
-	if err != nil {
-		t.Fatalf("unmarshal from storage failed: %v", err)
-	}
+	require.NoError(t, err, "unmarshal from storage failed")
 
 	// Step 3.5: Verify struct fields have correct defaults after loading (before returning in API).
 	tsLoaded := loaded.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
-	if tsLoaded.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
-		t.Errorf("after load: expected DecimalPrecision default 2, got %v", tsLoaded.Formatting.DecimalPrecision.ValueOrDefault())
-	}
-	if tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
-		t.Errorf("after load: expected LineInterpolation default spline, got %v", tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault())
-	}
-	if tsLoaded.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
-		t.Errorf("after load: expected LineStyle default solid, got %v", tsLoaded.ChartAppearance.LineStyle.ValueOrDefault())
-	}
-	if tsLoaded.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
-		t.Errorf("after load: expected FillMode default solid, got %v", tsLoaded.ChartAppearance.FillMode.ValueOrDefault())
-	}
-	if tsLoaded.Visualization.TimePreference.ValueOrDefault() != "global_time" {
-		t.Errorf("after load: expected TimePreference default global_time, got %v", tsLoaded.Visualization.TimePreference.ValueOrDefault())
-	}
-	if tsLoaded.Legend.Position.ValueOrDefault() != "bottom" {
-		t.Errorf("after load: expected LegendPosition default bottom, got %v", tsLoaded.Legend.Position.ValueOrDefault())
-	}
+	assert.Equal(t, "2", tsLoaded.Formatting.DecimalPrecision.ValueOrDefault(), "after load")
+	assert.Equal(t, "spline", tsLoaded.ChartAppearance.LineInterpolation.ValueOrDefault(), "after load")
+	assert.Equal(t, "solid", tsLoaded.ChartAppearance.LineStyle.ValueOrDefault(), "after load")
+	assert.Equal(t, "solid", tsLoaded.ChartAppearance.FillMode.ValueOrDefault(), "after load")
+	assert.Equal(t, "global_time", tsLoaded.Visualization.TimePreference.ValueOrDefault(), "after load")
+	assert.Equal(t, "bottom", tsLoaded.Legend.Position.ValueOrDefault(), "after load")
 	numLoaded := loaded.Panels["p2"].Spec.Plugin.Spec.(*NumberPanelSpec)
-	if numLoaded.Thresholds[0].Operator.ValueOrDefault() != ">" {
-		t.Errorf("after load: expected ComparisonOperator default >, got %v", numLoaded.Thresholds[0].Operator.ValueOrDefault())
-	}
-	if numLoaded.Thresholds[0].Format.ValueOrDefault() != "text" {
-		t.Errorf("after load: expected ThresholdFormat default text, got %v", numLoaded.Thresholds[0].Format.ValueOrDefault())
-	}
+	assert.Equal(t, ">", numLoaded.Thresholds[0].Operator.ValueOrDefault(), "after load")
+	assert.Equal(t, "text", numLoaded.Thresholds[0].Format.ValueOrDefault(), "after load")
 
 	// Step 4: Marshal again (simulates API response) and verify defaults.
 	response, err := json.Marshal(loaded)
-	if err != nil {
-		t.Fatalf("marshal for response failed: %v", err)
-	}
+	require.NoError(t, err, "marshal for response failed")
 	responseStr := string(response)
 
 	for field, want := range map[string]string{
@@ -898,65 +794,43 @@ func TestStorageRoundTrip(t *testing.T) {
 		"position":          `"bottom"`,
 		"format":            `"text"`,
 	} {
-		if !strings.Contains(responseStr, `"`+field+`":`+want) {
-			t.Errorf("expected %s:%s after storage round-trip, got: %s", field, want, responseStr)
-		}
+		assert.Contains(t, responseStr, `"`+field+`":`+want, "expected %s:%s after storage round-trip", field, want)
 	}
 
 	// Verify operator default (Go escapes ">" as "\u003e").
-	if !strings.Contains(responseStr, `"operator":">"`) && !strings.Contains(responseStr, `"operator":"\u003e"`) {
-		t.Errorf("expected operator:> after storage round-trip, got: %s", responseStr)
-	}
+	assert.True(t,
+		strings.Contains(responseStr, `"operator":">"`) || strings.Contains(responseStr, `"operator":"\u003e"`),
+		"expected operator:> after storage round-trip")
 }
 
 func TestSpanGaps(t *testing.T) {
-	unmarshal := func(val string) (SpanGaps, error) {
+	unmarshal := func(t *testing.T, val string) SpanGaps {
+		t.Helper()
 		var sg SpanGaps
-		err := json.Unmarshal([]byte(val), &sg)
-		return sg, err
+		require.NoError(t, json.Unmarshal([]byte(val), &sg))
+		return sg
 	}
 
 	t.Run("defaults", func(t *testing.T) {
 		var sg SpanGaps
-		if sg.FillOnlyBelow != false {
-			t.Fatalf("expected FillOnlyBelow default false, got %v", sg.FillOnlyBelow)
-		}
-		if !sg.FillLessThan.IsZero() {
-			t.Fatalf("expected FillLessThan default zero, got %v", sg.FillLessThan)
-		}
+		assert.False(t, sg.FillOnlyBelow, "expected FillOnlyBelow default false")
+		assert.True(t, sg.FillLessThan.IsZero(), "expected FillLessThan default zero")
 	})
 
 	t.Run("fillOnlyBelow true", func(t *testing.T) {
-		sg, err := unmarshal(`{"fillOnlyBelow": true}`)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !sg.FillOnlyBelow {
-			t.Fatalf("expected FillOnlyBelow true, got false")
-		}
+		sg := unmarshal(t, `{"fillOnlyBelow": true}`)
+		assert.True(t, sg.FillOnlyBelow)
 	})
 
 	t.Run("fillLessThan duration", func(t *testing.T) {
-		sg, err := unmarshal(`{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if sg.FillOnlyBelow {
-			t.Fatalf("expected FillOnlyBelow false, got true")
-		}
-		if sg.FillLessThan.Duration() != 5*time.Minute {
-			t.Fatalf("expected FillLessThan 5m, got %v", sg.FillLessThan.Duration())
-		}
+		sg := unmarshal(t, `{"fillOnlyBelow": false, "fillLessThan": "5m"}`)
+		assert.False(t, sg.FillOnlyBelow)
+		assert.Equal(t, 5*time.Minute, sg.FillLessThan.Duration())
 	})
 
 	t.Run("fillLessThan compound duration", func(t *testing.T) {
-		sg, err := unmarshal(`{"fillLessThan": "1h30m"}`)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if sg.FillLessThan.Duration() != 90*time.Minute {
-			t.Fatalf("expected FillLessThan 1h30m, got %v", sg.FillLessThan.Duration())
-		}
+		sg := unmarshal(t, `{"fillLessThan": "1h30m"}`)
+		assert.Equal(t, 90*time.Minute, sg.FillLessThan.Duration())
 	})
 }
 
@@ -1003,12 +877,13 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		_, err := UnmarshalAndValidateDashboardV2JSON(tc.data)
-		if tc.wantErr && err == nil {
-			t.Fatalf("%s: expected error, got nil", tc.name)
-		}
-		if !tc.wantErr && err != nil {
-			t.Fatalf("%s: expected valid, got: %v", tc.name, err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := UnmarshalAndValidateDashboardV2JSON(tc.data)
+			if tc.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
