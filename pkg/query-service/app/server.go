@@ -238,8 +238,6 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
-	s.signoz.Ruler.Start(ctx)
-
 	err := s.initListeners()
 	if err != nil {
 		return err
@@ -282,10 +280,6 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 
 	s.opampServer.Stop()
-
-	if s.signoz.Ruler != nil {
-		s.signoz.Ruler.Stop(ctx)
-	}
 
 	return nil
 }

@@ -3,12 +3,14 @@ package ruler
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Ruler interface {
+	factory.Service
 	statsreporter.StatsCollector
 
 	// ListRuleStates returns all rules with their current evaluation state.
@@ -34,10 +36,4 @@ type Ruler interface {
 
 	// MaintenanceStore returns the store for planned maintenance / downtime schedules.
 	MaintenanceStore() ruletypes.MaintenanceStore
-
-	// Start begins rule evaluation. Blocks until Stop is called.
-	Start(ctx context.Context)
-
-	// Stop halts rule evaluation.
-	Stop(ctx context.Context)
 }

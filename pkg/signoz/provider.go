@@ -44,9 +44,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querier/signozquerier"
-	"github.com/SigNoz/signoz/pkg/queryparser"
-	"github.com/SigNoz/signoz/pkg/ruler"
-	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/sharder"
 	"github.com/SigNoz/signoz/pkg/sharder/noopsharder"
 	"github.com/SigNoz/signoz/pkg/sharder/singlesharder"
@@ -229,11 +226,7 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter orga
 	)
 }
 
-func NewRulerProviderFactories(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
-	return factory.MustNewNamedMap(
-		signozruler.NewFactory(sqlstore, queryParser),
-	)
-}
+
 
 func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
 	return factory.MustNewNamedMap(

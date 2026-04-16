@@ -175,8 +175,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
 		},
-		func(config ruler.Config, c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, ps factory.ProviderSettings, qp queryparser.QueryParser) (ruler.Ruler, error) {
-			return signozruler.New(config, c, am, ss, ts, ms, p, og, rsh, q, ps, qp, eerules.PrepareTaskFunc, eerules.TestNotification)
+		func(c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, qp queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+			return factory.MustNewNamedMap(signozruler.NewFactory(c, am, ss, ts, ms, p, og, rsh, q, qp, eerules.PrepareTaskFunc, eerules.TestNotification))
 		},
 	)
 	if err != nil {
