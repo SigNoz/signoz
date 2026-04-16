@@ -95,7 +95,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/testRule", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/rules/test", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
 		ID:                  "TestRule",
 		Tags:                []string{"rules"},
 		Summary:             "Test alert rule",
@@ -105,6 +105,22 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/testRule", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
+		ID:                  "TestRuleDeprecated",
+		Tags:                []string{"rules"},
+		Summary:             "Test alert rule (deprecated)",
+		Description:         "Deprecated: use /api/v1/rules/test instead",
+		Request:             new(ruletypes.PostableRule),
+		RequestContentType:  "application/json",
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
