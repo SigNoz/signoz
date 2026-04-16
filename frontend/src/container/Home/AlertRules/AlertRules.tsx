@@ -14,6 +14,10 @@ import { useAppContext } from 'providers/App/App';
 import { GettableAlert } from 'types/api/alerts/get';
 import { USER_ROLES } from 'types/roles';
 
+import beaconUrl from '@/assets/Icons/beacon.svg';
+
+import { getItemIcon } from '../constants';
+
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
 	loadingUserPreferences,
@@ -65,11 +69,7 @@ export default function AlertRules({
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
-					<img
-						src="/Icons/beacon.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
+					<img src={beaconUrl} alt="empty-alert-icon" className="empty-state-icon" />
 
 					<div className="empty-title">No Alert rules yet.</div>
 
@@ -156,11 +156,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={
-									Math.random() % 2 === 0
-										? '/Icons/eight-ball.svg'
-										: '/Icons/circus-tent.svg'
-								}
+								src={getItemIcon(rule.id)}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>

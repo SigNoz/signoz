@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/query-service/usage"
-	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -49,7 +48,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
 		FluxInterval:                  opts.FluxInterval,
-		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  httplicensing.NewLicensingAPI(signoz.Licensing),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),

@@ -7,6 +7,8 @@ import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
 
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
+
 import './NoLogs.styles.scss';
 
 export default function NoLogs({
@@ -50,7 +52,7 @@ export default function NoLogs({
 	return (
 		<div className="no-logs-container">
 			<div className="no-logs-container-content">
-				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+				<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
 				<Typography className="no-logs-text">
 					No {dataSource} yet.
 					<span className="sub-text">

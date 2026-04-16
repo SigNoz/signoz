@@ -1,5 +1,8 @@
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
+import integrationsHeroBgUrl from '@/assets/Images/integrations-hero-bg.png';
+import awsDarkUrl from '@/assets/Logos/aws-dark.svg';
+
 import AccountActions from './components/AccountActions';
 
 import './HeroSection.style.scss';
@@ -12,13 +15,13 @@ function HeroSection(): JSX.Element {
 			style={
 				isDarkMode
 					? {
-							backgroundImage: `url('/Images/integrations-hero-bg.png')`,
+							backgroundImage: `url('${integrationsHeroBgUrl}')`,
 					  }
 					: {}
 			}
 		>
 			<div className="hero-section__icon">
-				<img src="/Logos/aws-dark.svg" alt="aws-logo" />
+				<img src={awsDarkUrl} alt="aws-logo" />
 			</div>
 			<div className="hero-section__details">
 				<div className="title">Amazon Web Services</div>

@@ -9,6 +9,8 @@ import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
 import { isModifierKeyPressed } from 'utils/app';
 
+import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';
+
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
 import InfoLinkText from './InfoLinkText';
@@ -59,7 +61,7 @@ export function AlertsEmptyState(): JSX.Element {
 					<div className="alert-content">
 						<section className="heading">
 							<img
-								src="/Icons/alert_emoji.svg"
+								src={alertEmojiUrl}
 								alt="alert-header"
 								style={{ height: '32px', width: '32px' }}
 							/>
