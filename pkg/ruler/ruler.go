@@ -42,5 +42,7 @@ type Ruler interface {
 	TestNotification(ctx context.Context, orgID valuer.UUID, ruleStr string) (int, error)
 
 	// MaintenanceStore returns the store for planned maintenance / downtime schedules.
+	// TODO: expose downtime CRUD as methods on Ruler directly instead of leaking the
+	// store interface. The handler should not call store methods directly.
 	MaintenanceStore() ruletypes.MaintenanceStore
 }
