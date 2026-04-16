@@ -258,7 +258,7 @@ func (TimePreference) Enum() []any {
 	return []any{TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month}
 }
 
-func (t TimePreference) Value() string {
+func (t TimePreference) ValueOrDefault() string {
 	if t.IsZero() {
 		return TimePreferenceGlobalTime.StringValue()
 	}
@@ -266,7 +266,7 @@ func (t TimePreference) Value() string {
 }
 
 func (t TimePreference) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Value())
+	return json.Marshal(t.ValueOrDefault())
 }
 
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
@@ -299,7 +299,7 @@ func (LegendPosition) Enum() []any {
 	return []any{LegendPositionBottom, LegendPositionRight}
 }
 
-func (l LegendPosition) Value() string {
+func (l LegendPosition) ValueOrDefault() string {
 	if l.IsZero() {
 		return LegendPositionBottom.StringValue()
 	}
@@ -307,7 +307,7 @@ func (l LegendPosition) Value() string {
 }
 
 func (l LegendPosition) MarshalJSON() ([]byte, error) {
-	return json.Marshal(l.Value())
+	return json.Marshal(l.ValueOrDefault())
 }
 
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
@@ -332,7 +332,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 type ThresholdFormat struct{ valuer.String }
 
 var (
-	ThresholdFormatText       = ThresholdFormat{valuer.NewString("text")}       // default
+	ThresholdFormatText       = ThresholdFormat{valuer.NewString("text")} // default
 	ThresholdFormatBackground = ThresholdFormat{valuer.NewString("background")}
 )
 
@@ -340,7 +340,7 @@ func (ThresholdFormat) Enum() []any {
 	return []any{ThresholdFormatText, ThresholdFormatBackground}
 }
 
-func (f ThresholdFormat) Value() string {
+func (f ThresholdFormat) ValueOrDefault() string {
 	if f.IsZero() {
 		return ThresholdFormatText.StringValue()
 	}
@@ -348,7 +348,7 @@ func (f ThresholdFormat) Value() string {
 }
 
 func (f ThresholdFormat) MarshalJSON() ([]byte, error) {
-	return json.Marshal(f.Value())
+	return json.Marshal(f.ValueOrDefault())
 }
 
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
@@ -392,7 +392,7 @@ func (ComparisonOperator) Enum() []any {
 	return []any{ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ, ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual, ComparisonOperatorEqual, ComparisonOperatorNotEqual}
 }
 
-func (o ComparisonOperator) Value() string {
+func (o ComparisonOperator) ValueOrDefault() string {
 	if o.IsZero() {
 		return ComparisonOperatorGT.StringValue()
 	}
@@ -400,7 +400,7 @@ func (o ComparisonOperator) Value() string {
 }
 
 func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
-	return json.Marshal(o.Value())
+	return json.Marshal(o.ValueOrDefault())
 }
 
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
@@ -437,7 +437,7 @@ func (LineInterpolation) Enum() []any {
 	return []any{LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore}
 }
 
-func (li LineInterpolation) Value() string {
+func (li LineInterpolation) ValueOrDefault() string {
 	if li.IsZero() {
 		return LineInterpolationSpline.StringValue()
 	}
@@ -445,7 +445,7 @@ func (li LineInterpolation) Value() string {
 }
 
 func (li LineInterpolation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(li.Value())
+	return json.Marshal(li.ValueOrDefault())
 }
 
 func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
@@ -470,7 +470,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 type LineStyle struct{ valuer.String }
 
 var (
-	LineStyleSolid  = LineStyle{valuer.NewString("solid")}  // default
+	LineStyleSolid  = LineStyle{valuer.NewString("solid")} // default
 	LineStyleDashed = LineStyle{valuer.NewString("dashed")}
 )
 
@@ -478,7 +478,7 @@ func (LineStyle) Enum() []any {
 	return []any{LineStyleSolid, LineStyleDashed}
 }
 
-func (ls LineStyle) Value() string {
+func (ls LineStyle) ValueOrDefault() string {
 	if ls.IsZero() {
 		return LineStyleSolid.StringValue()
 	}
@@ -486,7 +486,7 @@ func (ls LineStyle) Value() string {
 }
 
 func (ls LineStyle) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ls.Value())
+	return json.Marshal(ls.ValueOrDefault())
 }
 
 func (ls *LineStyle) UnmarshalJSON(data []byte) error {
@@ -520,7 +520,7 @@ func (FillMode) Enum() []any {
 	return []any{FillModeSolid, FillModeGradient, FillModeNone}
 }
 
-func (fm FillMode) Value() string {
+func (fm FillMode) ValueOrDefault() string {
 	if fm.IsZero() {
 		return FillModeSolid.StringValue()
 	}
@@ -528,7 +528,7 @@ func (fm FillMode) Value() string {
 }
 
 func (fm FillMode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(fm.Value())
+	return json.Marshal(fm.ValueOrDefault())
 }
 
 func (fm *FillMode) UnmarshalJSON(data []byte) error {
@@ -573,7 +573,7 @@ func (PrecisionOption) Enum() []any {
 	return []any{PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull}
 }
 
-func (p PrecisionOption) Value() string {
+func (p PrecisionOption) ValueOrDefault() string {
 	if p.IsZero() {
 		return PrecisionOption2.StringValue()
 	}
@@ -581,7 +581,7 @@ func (p PrecisionOption) Value() string {
 }
 
 func (p PrecisionOption) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.Value())
+	return json.Marshal(p.ValueOrDefault())
 }
 
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {

@@ -687,26 +687,26 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		t.Fatalf("expected *TimeSeriesPanelSpec, got %T", d.Panels["p1"].Spec.Plugin.Spec)
 	}
 
-	if spec.Formatting.DecimalPrecision.Value() != "2" {
-		t.Fatalf("expected DecimalPrecision default 2, got %v", spec.Formatting.DecimalPrecision.Value())
+	if spec.Formatting.DecimalPrecision.ValueOrDefault() != "2" {
+		t.Fatalf("expected DecimalPrecision default 2, got %v", spec.Formatting.DecimalPrecision.ValueOrDefault())
 	}
-	if spec.ChartAppearance.LineInterpolation.Value() != "spline" {
-		t.Fatalf("expected LineInterpolation default spline, got %v", spec.ChartAppearance.LineInterpolation.Value())
+	if spec.ChartAppearance.LineInterpolation.ValueOrDefault() != "spline" {
+		t.Fatalf("expected LineInterpolation default spline, got %v", spec.ChartAppearance.LineInterpolation.ValueOrDefault())
 	}
-	if spec.ChartAppearance.LineStyle.Value() != "solid" {
-		t.Fatalf("expected LineStyle default solid, got %v", spec.ChartAppearance.LineStyle.Value())
+	if spec.ChartAppearance.LineStyle.ValueOrDefault() != "solid" {
+		t.Fatalf("expected LineStyle default solid, got %v", spec.ChartAppearance.LineStyle.ValueOrDefault())
 	}
-	if spec.ChartAppearance.FillMode.Value() != "solid" {
-		t.Fatalf("expected FillMode default solid, got %v", spec.ChartAppearance.FillMode.Value())
+	if spec.ChartAppearance.FillMode.ValueOrDefault() != "solid" {
+		t.Fatalf("expected FillMode default solid, got %v", spec.ChartAppearance.FillMode.ValueOrDefault())
 	}
 	if spec.ChartAppearance.SpanGaps.FillOnlyBelow != false {
 		t.Fatalf("expected SpanGaps.FillOnlyBelow default false, got %v", spec.ChartAppearance.SpanGaps.FillOnlyBelow)
 	}
-	if spec.Visualization.TimePreference.Value() != "global_time" {
-		t.Fatalf("expected TimePreference default global_time, got %v", spec.Visualization.TimePreference.Value())
+	if spec.Visualization.TimePreference.ValueOrDefault() != "global_time" {
+		t.Fatalf("expected TimePreference default global_time, got %v", spec.Visualization.TimePreference.ValueOrDefault())
 	}
-	if spec.Legend.Position.Value() != "bottom" {
-		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.Value())
+	if spec.Legend.Position.ValueOrDefault() != "bottom" {
+		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.ValueOrDefault())
 	}
 
 	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
@@ -758,11 +758,11 @@ func TestNumberPanelDefaults(t *testing.T) {
 	if len(spec.Thresholds) != 1 {
 		t.Fatalf("expected 1 threshold, got %d", len(spec.Thresholds))
 	}
-	if spec.Thresholds[0].Operator.Value() != ">" {
-		t.Fatalf("expected ComparisonOperator default >, got %v", spec.Thresholds[0].Operator.Value())
+	if spec.Thresholds[0].Operator.ValueOrDefault() != ">" {
+		t.Fatalf("expected ComparisonOperator default >, got %v", spec.Thresholds[0].Operator.ValueOrDefault())
 	}
-	if spec.Thresholds[0].Format.Value() != "text" {
-		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.Value())
+	if spec.Thresholds[0].Format.ValueOrDefault() != "text" {
+		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.ValueOrDefault())
 	}
 
 	// Marshal back and verify defaults in JSON output.
