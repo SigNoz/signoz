@@ -82,8 +82,8 @@ def test_reset_password(
     # Get the user id via v2
     found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
 
-    # Create a reset password token via v2 POST
-    response = requests.post(
+    # Create a reset password token via v2 PUT
+    response = requests.put(
         signoz.self.host_configs["8080"].get(
             f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
@@ -97,8 +97,8 @@ def test_reset_password(
     assert "expiresAt" in token_data
     token = token_data["token"]
 
-    # Calling POST again should return the same token (still valid)
-    response = requests.post(
+    # Calling PUT again should return the same token (still valid)
+    response = requests.put(
         signoz.self.host_configs["8080"].get(
             f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
@@ -166,8 +166,8 @@ def test_reset_password_with_no_password(
     )
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text
 
-    # Generate a new reset password token via v2 POST
-    response = requests.post(
+    # Generate a new reset password token via v2 PUT
+    response = requests.put(
         signoz.self.host_configs["8080"].get(
             f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
