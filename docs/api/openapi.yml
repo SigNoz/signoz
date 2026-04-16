@@ -3618,6 +3618,20 @@ components:
       - start
       - end
       type: object
+    RuletypesAlertCompositeQuery:
+      properties:
+        panelType:
+          type: string
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          nullable: true
+          type: array
+        queryType:
+          type: string
+        unit:
+          type: string
+      type: object
     RuletypesAlertState:
       enum:
       - inactive
@@ -3626,6 +3640,271 @@ components:
       - firing
       - nodata
       - disabled
+      type: string
+    RuletypesCompareOperator:
+      enum:
+      - above
+      - below
+      - equal
+      - not_equal
+      - outside_bounds
+      type: string
+    RuletypesEvaluationEnvelope:
+      properties:
+        kind:
+          type: string
+        spec: {}
+      type: object
+    RuletypesGettablePlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesSchedule'
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      type: object
+    RuletypesGettableRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          type: string
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+        condition:
+          $ref: '#/components/schemas/RuletypesRuleCondition'
+        createAt:
+          format: date-time
+          nullable: true
+          type: string
+        createBy:
+          nullable: true
+          type: string
+        description:
+          type: string
+        disabled:
+          type: boolean
+        evalWindow:
+          type: string
+        evaluation:
+          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+        frequency:
+          type: string
+        id:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        notificationSettings:
+          $ref: '#/components/schemas/RuletypesNotificationSettings'
+        preferredChannels:
+          items:
+            type: string
+          type: array
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        schemaVersion:
+          type: string
+        source:
+          type: string
+        state:
+          $ref: '#/components/schemas/RuletypesAlertState'
+        updateAt:
+          format: date-time
+          nullable: true
+          type: string
+        updateBy:
+          nullable: true
+          type: string
+        version:
+          type: string
+      type: object
+    RuletypesGettableRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/RuletypesGettableRule'
+          nullable: true
+          type: array
+      type: object
+    RuletypesMatchType:
+      enum:
+      - at_least_once
+      - all_the_times
+      - on_average
+      - in_total
+      - last
+      type: string
+    RuletypesNotificationSettings:
+      properties:
+        groupBy:
+          items:
+            type: string
+          type: array
+        newGroupEvalDelay:
+          type: string
+        renotify:
+          $ref: '#/components/schemas/RuletypesRenotify'
+        usePolicy:
+          type: boolean
+      type: object
+    RuletypesPostableRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          type: string
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+        condition:
+          $ref: '#/components/schemas/RuletypesRuleCondition'
+        description:
+          type: string
+        disabled:
+          type: boolean
+        evalWindow:
+          type: string
+        evaluation:
+          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+        frequency:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        notificationSettings:
+          $ref: '#/components/schemas/RuletypesNotificationSettings'
+        preferredChannels:
+          items:
+            type: string
+          type: array
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        schemaVersion:
+          type: string
+        source:
+          type: string
+        version:
+          type: string
+      type: object
+    RuletypesRecurrence:
+      properties:
+        duration:
+          type: string
+        endTime:
+          format: date-time
+          nullable: true
+          type: string
+        repeatOn:
+          items:
+            type: string
+          nullable: true
+          type: array
+        repeatType:
+          type: string
+        startTime:
+          format: date-time
+          type: string
+      type: object
+    RuletypesRenotify:
+      properties:
+        alertStates:
+          items:
+            $ref: '#/components/schemas/RuletypesAlertState'
+          type: array
+        enabled:
+          type: boolean
+        interval:
+          type: string
+      type: object
+    RuletypesRuleCondition:
+      properties:
+        absentFor:
+          minimum: 0
+          type: integer
+        alertOnAbsent:
+          type: boolean
+        algorithm:
+          type: string
+        compositeQuery:
+          $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
+        matchType:
+          $ref: '#/components/schemas/RuletypesMatchType'
+        op:
+          $ref: '#/components/schemas/RuletypesCompareOperator'
+        requireMinPoints:
+          type: boolean
+        requiredNumPoints:
+          type: integer
+        seasonality:
+          $ref: '#/components/schemas/RuletypesSeasonality'
+        selectedQueryName:
+          type: string
+        target:
+          nullable: true
+          type: number
+        targetUnit:
+          type: string
+        thresholds:
+          $ref: '#/components/schemas/RuletypesRuleThresholdData'
+      type: object
+    RuletypesRuleThresholdData:
+      properties:
+        kind:
+          type: string
+        spec: {}
+      type: object
+    RuletypesRuleType:
+      enum:
+      - threshold_rule
+      - promql_rule
+      - anomaly_rule
+      type: string
+    RuletypesSchedule:
+      properties:
+        endTime:
+          format: date-time
+          type: string
+        recurrence:
+          $ref: '#/components/schemas/RuletypesRecurrence'
+        startTime:
+          format: date-time
+          type: string
+        timezone:
+          type: string
+      type: object
+    RuletypesSeasonality:
+      enum:
+      - hourly
+      - daily
+      - weekly
       type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
@@ -5759,6 +6038,257 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/downtime_schedules:
+    get:
+      deprecated: false
+      description: This endpoint lists all planned maintenance / downtime schedules
+      operationId: ListDowntimeSchedules
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List downtime schedules
+      tags:
+      - downtime_schedules
+    post:
+      deprecated: false
+      description: This endpoint creates a new planned maintenance / downtime schedule
+      operationId: CreateDowntimeSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+      responses:
+        "200":
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create downtime schedule
+      tags:
+      - downtime_schedules
+  /api/v1/downtime_schedules/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a downtime schedule by ID
+      operationId: DeleteDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete downtime schedule
+      tags:
+      - downtime_schedules
+    get:
+      deprecated: false
+      description: This endpoint returns a downtime schedule by ID
+      operationId: GetDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get downtime schedule by ID
+      tags:
+      - downtime_schedules
+    put:
+      deprecated: false
+      description: This endpoint updates a downtime schedule by ID
+      operationId: UpdateDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update downtime schedule
+      tags:
+      - downtime_schedules
   /api/v1/export_raw_data:
     post:
       deprecated: false
@@ -7356,6 +7886,385 @@ paths:
       summary: Update route policy
       tags:
       - routepolicies
+  /api/v1/rules:
+    get:
+      deprecated: false
+      description: This endpoint lists all alert rules with their current evaluation
+        state
+      operationId: ListRules
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List alert rules
+      tags:
+      - rules
+    post:
+      deprecated: false
+      description: This endpoint creates a new alert rule
+      operationId: CreateRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create alert rule
+      tags:
+      - rules
+  /api/v1/rules/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an alert rule by ID
+      operationId: DeleteRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete alert rule
+      tags:
+      - rules
+    get:
+      deprecated: false
+      description: This endpoint returns an alert rule by ID
+      operationId: GetRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get alert rule by ID
+      tags:
+      - rules
+    patch:
+      deprecated: false
+      description: This endpoint applies a partial update to an alert rule by ID
+      operationId: PatchRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch alert rule
+      tags:
+      - rules
+    put:
+      deprecated: false
+      description: This endpoint updates an alert rule by ID
+      operationId: UpdateRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update alert rule
+      tags:
+      - rules
+  /api/v1/rules/test:
+    post:
+      deprecated: false
+      description: This endpoint fires a test notification for the given rule definition
+      operationId: TestRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Test alert rule
+      tags:
+      - rules
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -8158,6 +9067,55 @@ paths:
       summary: Test notification channel (deprecated)
       tags:
       - channels
+  /api/v1/testRule:
+    post:
+      deprecated: true
+      description: 'Deprecated: use /api/v1/rules/test instead'
+      operationId: TestRuleDeprecated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Test alert rule (deprecated)
+      tags:
+      - rules
   /api/v1/user:
     get:
       deprecated: false
