@@ -71,20 +71,23 @@ function Footer(): JSX.Element {
 			notificationSettings,
 			query: currentQuery,
 		});
-		testAlertRule(payload, {
-			onSuccess: (response) => {
-				if (response.payload?.data?.alertCount === 0) {
-					toast.error(
-						'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
-					);
-					return;
-				}
-				toast.success('Test notification sent successfully');
+		testAlertRule(
+			{ data: payload as any },
+			{
+				onSuccess: (response) => {
+					if (response.data?.alertCount === 0) {
+						toast.error(
+							'No alerts found during the evaluation. This happens when rule condition is unsatisfied. You may adjust the rule threshold and retry.',
+						);
+						return;
+					}
+					toast.success('Test notification sent successfully');
+				},
+				onError: (error) => {
+					toast.error(error.message);
+				},
 			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		);
 	}, [
 		alertType,
 		basicAlertState,
@@ -117,15 +120,18 @@ function Footer(): JSX.Element {
 				},
 			});
 		} else {
-			createAlertRule(payload, {
-				onSuccess: () => {
-					toast.success('Alert rule created successfully');
-					safeNavigate('/alerts');
+			createAlertRule(
+				{ data: payload as any },
+				{
+					onSuccess: () => {
+						toast.success('Alert rule created successfully');
+						safeNavigate('/alerts');
+					},
+					onError: (error) => {
+						toast.error(error.message);
+					},
 				},
-				onError: (error) => {
-					toast.error(error.message);
-				},
-			});
+			);
 		}
 	}, [
 		alertType,

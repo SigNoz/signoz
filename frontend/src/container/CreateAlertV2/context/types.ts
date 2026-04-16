@@ -1,9 +1,13 @@
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
 import { UpdateAlertRuleResponse } from 'api/alerts/updateAlertRule';
+import type {
+	CreateRule200,
+	RuletypesPostableRuleDTO,
+	TestRule200,
+} from 'api/generated/services/sigNoz.schemas';
+import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
 import { Dayjs } from 'dayjs';
-import { CreateAlertRuleResponse } from 'hooks/alerts/useCreateAlertRule';
-import { TestAlertRuleResponse } from 'hooks/alerts/useTestAlertRule';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
@@ -24,16 +28,16 @@ export interface ICreateAlertContextProps {
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
-		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		CreateRule200,
+		ErrorType<unknown>,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
-		SuccessResponse<TestAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		TestRule200,
+		ErrorType<unknown>,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	discardAlertRule: () => void;

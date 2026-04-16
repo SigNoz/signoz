@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
-import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
+import { useListRules } from 'api/generated/services/rules';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -34,13 +33,12 @@ export default function AlertRules({
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
-	const { data: alerts, isError, isLoading } = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
+	const { data: alerts, isError, isLoading } = useListRules({
+		query: { cacheTime: 0 },
 	});
 
 	useEffect(() => {
-		const rules = alerts?.payload || [];
+		const rules = (alerts?.data?.rules as any[]) || [];
 		setRulesExist(rules.length > 0);
 
 		const sortedRules = rules.sort((a, b) => {

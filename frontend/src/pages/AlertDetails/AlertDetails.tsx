@@ -99,7 +99,7 @@ function AlertDetails(): JSX.Element {
 	}, [params]);
 
 	const getDocumentTitle = useMemo(() => {
-		const alertTitle = alertDetailsResponse?.payload?.data?.alert;
+		const alertTitle = (alertDetailsResponse?.data as any)?.alert;
 		if (alertTitle) {
 			return alertTitle;
 		}
@@ -110,14 +110,14 @@ function AlertDetails(): JSX.Element {
 			return document.title;
 		}
 		return 'Alert Not Found';
-	}, [alertDetailsResponse?.payload?.data?.alert, isTestAlert, isLoading]);
+	}, [(alertDetailsResponse?.data as any)?.alert, isTestAlert, isLoading]);
 
 	useEffect(() => {
 		document.title = getDocumentTitle;
 	}, [getDocumentTitle]);
 
 	const alertRuleDetails = useMemo(
-		() => alertDetailsResponse?.payload?.data as PostableAlertRuleV2 | undefined,
+		() => (alertDetailsResponse?.data as any) as PostableAlertRuleV2 | undefined,
 		[alertDetailsResponse],
 	);
 
@@ -129,7 +129,7 @@ function AlertDetails(): JSX.Element {
 	if (
 		isError ||
 		!isValidRuleId ||
-		(alertDetailsResponse && alertDetailsResponse.statusCode !== 200) ||
+		isError ||
 		(!isLoading && !alertRuleDetails)
 	) {
 		return <AlertNotFound isTestAlert={isTestAlert} />;

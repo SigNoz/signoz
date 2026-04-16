@@ -10,10 +10,11 @@ import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
 import {
 	deleteRuleByID,
-	getRuleByID,
 	listRules,
 	patchRuleByID,
+	useGetRuleByID,
 } from 'api/generated/services/rules';
+import type { GetRuleByID200 } from 'api/generated/services/sigNoz.schemas';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -45,7 +46,6 @@ import {
 	AlertRuleTimelineTableResponsePayload,
 	AlertRuleTopContributorsPayload,
 } from 'types/api/alerts/def';
-import { PayloadProps } from 'types/api/alerts/get';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
@@ -144,10 +144,7 @@ export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 type Props = {
 	ruleId: string | null;
 	isValidRuleId: boolean;
-	alertDetailsResponse:
-		| SuccessResponse<PayloadProps, unknown>
-		| ErrorResponse
-		| undefined;
+	alertDetailsResponse: GetRuleByID200 | undefined;
 	isLoading: boolean;
 	isRefetching: boolean;
 	isError: boolean;
@@ -163,19 +160,15 @@ export const useGetAlertRuleDetails = (): Props => {
 		data: alertDetailsResponse,
 		isRefetching,
 		isError,
-	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
-		queryFn: async (): Promise<SuccessResponse<PayloadProps>> => {
-			const response = await getRuleByID({ id: ruleId || '' });
-			return {
-				statusCode: 200,
-				error: null,
-				message: response.status,
-				payload: (response.data as unknown) as PayloadProps,
-			};
+	} = useGetRuleByID(
+		{ id: ruleId || '' },
+		{
+			query: {
+				enabled: isValidRuleId,
+				refetchOnWindowFocus: false,
+			},
 		},
-		enabled: isValidRuleId,
-		refetchOnWindowFocus: false,
-	});
+	);
 
 	return {
 		ruleId,
