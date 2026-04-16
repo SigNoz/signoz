@@ -139,10 +139,6 @@ export type TanStackTableProps<TData> = {
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig;
 	pagination?: PaginationProps;
 	onEndReached?: (index: number) => void;
-	/** Custom function to get the unique ID for a row. Used for expansion state and TanStack's internal tracking.
-	 * Defaults to `row.id` if present, otherwise falls back to the row index.
-	 * @deprecated Use `getRowKey` instead for better key handling with duplicate detection. */
-	getRowId?: (row: TData, index: number) => string;
 	/** Function to get the unique key for a row (before duplicate handling).
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */
 	getRowKey?: (row: TData) => string;

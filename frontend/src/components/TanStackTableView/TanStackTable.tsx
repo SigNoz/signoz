@@ -91,7 +91,6 @@ function TanStackTableInner<TData>(
 		enableQueryParams,
 		pagination,
 		onEndReached,
-		getRowId: getRowIdProp, // @deprecated - kept for backwards compat, use getRowKey instead
 		getRowKey,
 		getItemKey,
 		groupBy,
@@ -204,13 +203,8 @@ function TanStackTableInner<TData>(
 
 	const getRowId = useCallback(
 		(row: TData, index: number): string => {
-			// Use rowKeyData if available (new API)
 			if (rowKeyData) {
 				return rowKeyData[index]?.finalKey ?? String(index);
-			}
-			// Legacy: use getRowIdProp
-			if (getRowIdProp) {
-				return getRowIdProp(row, index);
 			}
 			const r = row as Record<string, unknown>;
 			if (r != null && typeof r.id !== 'undefined') {
@@ -218,7 +212,7 @@ function TanStackTableInner<TData>(
 			}
 			return String(index);
 		},
-		[rowKeyData, getRowIdProp],
+		[rowKeyData],
 	);
 
 	const tableGetRowCanExpand = useCallback(
