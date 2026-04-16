@@ -433,13 +433,19 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	var req types.ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	err := handler.setter.UpdatePassword(ctx, req.UserID, req.OldPassword, req.NewPassword)
+	err = handler.setter.UpdatePassword(ctx, valuer.MustNewUUID(claims.UserID), req.OldPassword, req.NewPassword)
 	if err != nil {
 		render.Error(w, err)
 		return

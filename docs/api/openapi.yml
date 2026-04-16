@@ -3892,8 +3892,6 @@ components:
           type: string
         oldPassword:
           type: string
-        userId:
-          type: string
       type: object
     TypesDeprecatedUser:
       properties:
@@ -4272,63 +4270,6 @@ paths:
       summary: Get resources
       tags:
       - authz
-  /api/v1/changePassword/{id}:
-    post:
-      deprecated: false
-      description: This endpoint changes the password by id
-      operationId: ChangePassword
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesChangePasswordRequest'
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Change password
-      tags:
-      - users
   /api/v1/channels:
     get:
       deprecated: false
@@ -10952,7 +10893,7 @@ paths:
       summary: Get reset password token for a user
       tags:
       - users
-    post:
+    put:
       deprecated: false
       description: This endpoint creates or regenerates a reset password token for
         a user. If a valid token exists, it is returned. If expired, a new one is
@@ -11255,6 +11196,57 @@ paths:
       security:
       - tokenizer: []
       summary: Update my user v2
+      tags:
+      - users
+  /api/v2/users/me/factor_password:
+    put:
+      deprecated: false
+      description: This endpoint updates the password of the user I belong to
+      operationId: UpdateMyPassoword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesChangePasswordRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Updates my password
       tags:
       - users
   /api/v2/zeus/hosts:

@@ -4837,10 +4837,6 @@ export interface TypesChangePasswordRequestDTO {
 	 * @type string
 	 */
 	oldPassword?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
 }
 
 export interface TypesDeprecatedUserDTO {
@@ -5204,9 +5200,6 @@ export type AuthzResources200 = {
 	status: string;
 };
 
-export type ChangePasswordPathParameters = {
-	id: string;
-};
 export type ListChannels200 = {
 	/**
 	 * @type array

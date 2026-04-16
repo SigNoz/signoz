@@ -260,7 +260,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -281,11 +281,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/changePassword/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
-		ID:                  "ChangePassword",
+	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authZ.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
+		ID:                  "UpdateMyPassoword",
 		Tags:                []string{"users"},
-		Summary:             "Change password",
-		Description:         "This endpoint changes the password by id",
+		Summary:             "Updates my password",
+		Description:         "This endpoint updates the password of the user I belong to",
 		Request:             new(types.ChangePasswordRequest),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -294,7 +294,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 

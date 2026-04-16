@@ -20,7 +20,6 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	ChangePasswordPathParameters,
 	CreateInvite201,
 	CreateResetPasswordToken201,
 	CreateResetPasswordTokenPathParameters,
@@ -57,105 +56,6 @@ import type {
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
 
-/**
- * This endpoint changes the password by id
- * @summary Change password
- */
-export const changePassword = (
-	{ id }: ChangePasswordPathParameters,
-	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/changePassword/${id}`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesChangePasswordRequestDTO,
-		signal,
-	});
-};
-
-export const getChangePasswordMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof changePassword>>,
-		TError,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof changePassword>>,
-	TError,
-	{
-		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['changePassword'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof changePassword>>,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return changePassword(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type ChangePasswordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof changePassword>>
->;
-export type ChangePasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
-export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Change password
- */
-export const useChangePassword = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof changePassword>>,
-		TError,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof changePassword>>,
-	TError,
-	{
-		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getChangePasswordMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
 /**
  * This endpoint returns the reset password token by id
  * @deprecated
@@ -1525,14 +1425,12 @@ export const invalidateGetResetPasswordToken = async (
  * This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.
  * @summary Create or regenerate reset password token for a user
  */
-export const createResetPasswordToken = (
-	{ id }: CreateResetPasswordTokenPathParameters,
-	signal?: AbortSignal,
-) => {
+export const createResetPasswordToken = ({
+	id,
+}: CreateResetPasswordTokenPathParameters) => {
 	return GeneratedAPIInstance<CreateResetPasswordToken201>({
 		url: `/api/v2/users/${id}/reset_password_tokens`,
-		method: 'POST',
-		signal,
+		method: 'PUT',
 	});
 };
 
@@ -2042,6 +1940,87 @@ export const useUpdateMyUserV2 = <
 	TContext
 > => {
 	const mutationOptions = getUpdateMyUserV2MutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint updates the password of the user I belong to
+ * @summary Updates my password
+ */
+export const updateMyPassoword = (
+	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/me/factor_password`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesChangePasswordRequestDTO,
+	});
+};
+
+export const getUpdateMyPassowordMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyPassoword>>,
+		TError,
+		{ data: BodyType<TypesChangePasswordRequestDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateMyPassoword>>,
+	TError,
+	{ data: BodyType<TypesChangePasswordRequestDTO> },
+	TContext
+> => {
+	const mutationKey = ['updateMyPassoword'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateMyPassoword>>,
+		{ data: BodyType<TypesChangePasswordRequestDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return updateMyPassoword(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyPassowordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMyPassoword>>
+>;
+export type UpdateMyPassowordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type UpdateMyPassowordMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Updates my password
+ */
+export const useUpdateMyPassoword = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyPassoword>>,
+		TError,
+		{ data: BodyType<TypesChangePasswordRequestDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateMyPassoword>>,
+	TError,
+	{ data: BodyType<TypesChangePasswordRequestDTO> },
+	TContext
+> => {
+	const mutationOptions = getUpdateMyPassowordMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
