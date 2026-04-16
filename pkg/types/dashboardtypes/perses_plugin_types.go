@@ -174,12 +174,6 @@ type ListPanelSpec struct {
 	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitempty" validate:"dive"`
 }
 
-type LogField struct {
-	Name     string `json:"name" validate:"required" required:"true"`
-	Type     string `json:"type"`
-	DataType string `json:"dataType"`
-}
-
 // ══════════════════════════════════════════════
 // Panel common types
 // ══════════════════════════════════════════════
