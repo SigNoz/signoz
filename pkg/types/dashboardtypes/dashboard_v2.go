@@ -97,9 +97,8 @@ var (
 )
 
 func validateDashboardV2(d StorableDashboardDataV2) error {
-	// Validate datasource plugins.
 	for name, ds := range d.Datasources {
-		if err := validateDatasourcePlugin(ds.Plugin, fmt.Sprintf("spec.datasources.%s.plugin", name)); err != nil {
+		if err := validateDatasourcePlugin(&ds.Plugin, fmt.Sprintf("spec.datasources.%s.plugin", name)); err != nil {
 			return err
 		}
 	}
@@ -110,23 +109,22 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 		}
 	}
 
-	// Validate panel and query plugins.
 	for key, panel := range d.Panels {
 		if panel == nil {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "spec.panels.%s: panel must not be null", key)
 		}
 		path := fmt.Sprintf("spec.panels.%s", key)
-		if err := validatePanelPlugin(panel.Spec.Plugin, path+".spec.plugin"); err != nil {
+		if err := validatePanelPlugin(&panel.Spec.Plugin, path+".spec.plugin"); err != nil {
 			return err
 		}
 		panelKind := PanelPluginKind(panel.Spec.Plugin.Kind)
 		allowed := allowedQueryKinds[panelKind]
-		for qi, query := range panel.Spec.Queries {
+		for qi := range panel.Spec.Queries {
 			queryPath := fmt.Sprintf("%s.spec.queries[%d].spec.plugin", path, qi)
-			if err := validateQueryPlugin(query.Spec.Plugin, queryPath); err != nil {
+			if err := validateQueryPlugin(&panel.Spec.Queries[qi].Spec.Plugin, queryPath); err != nil {
 				return err
 			}
-			if err := validateQueryAllowedForPanel(query.Spec.Plugin, allowed, panelKind, queryPath); err != nil {
+			if err := validateQueryAllowedForPanel(panel.Spec.Queries[qi].Spec.Plugin, allowed, panelKind, queryPath); err != nil {
 				return err
 			}
 		}
@@ -135,14 +133,14 @@ func validateDashboardV2(d StorableDashboardDataV2) error {
 	return nil
 }
 
-func validateDatasourcePlugin(plugin common.Plugin, path string) error {
+func validateDatasourcePlugin(plugin *common.Plugin, path string) error {
 	kind := DatasourcePluginKind(plugin.Kind)
 	factory, ok := datasourcePluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"%s: unknown datasource plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
-	return validatePluginSpec(plugin, factory, path)
+	return validateAndNormalizePluginSpec(plugin, factory, path)
 }
 
 func validateVariablePlugin(v dashboard.Variable, path string) error {
@@ -155,7 +153,7 @@ func validateVariablePlugin(v dashboard.Variable, path string) error {
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 				"%s: unknown variable plugin kind %q; allowed values: %s", pluginPath, kind, formatEnum(kind.Enum()))
 		}
-		return validatePluginSpec(spec.Plugin, factory, pluginPath)
+		return validateAndNormalizePluginSpec(&spec.Plugin, factory, pluginPath)
 	case *dashboard.TextVariableSpec:
 		// TextVariables have no plugin, nothing to validate.
 		return nil
@@ -164,24 +162,24 @@ func validateVariablePlugin(v dashboard.Variable, path string) error {
 	}
 }
 
-func validatePanelPlugin(plugin common.Plugin, path string) error {
+func validatePanelPlugin(plugin *common.Plugin, path string) error {
 	kind := PanelPluginKind(plugin.Kind)
 	factory, ok := panelPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"%s: unknown panel plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
-	return validatePluginSpec(plugin, factory, path)
+	return validateAndNormalizePluginSpec(plugin, factory, path)
 }
 
-func validateQueryPlugin(plugin common.Plugin, path string) error {
+func validateQueryPlugin(plugin *common.Plugin, path string) error {
 	kind := QueryPluginKind(plugin.Kind)
 	factory, ok := queryPluginSpecs[kind]
 	if !ok {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput,
 			"%s: unknown query plugin kind %q; allowed values: %s", path, kind, formatEnum(kind.Enum()))
 	}
-	return validatePluginSpec(plugin, factory, path)
+	return validateAndNormalizePluginSpec(plugin, factory, path)
 }
 
 func formatEnum(values []any) string {
@@ -192,7 +190,10 @@ func formatEnum(values []any) string {
 	return strings.Join(parts, ", ")
 }
 
-func validatePluginSpec(plugin common.Plugin, factory func() any, path string) error {
+// validateAndNormalizePluginSpec validates the plugin spec and writes the typed
+// struct (with defaults) back into plugin.Spec so that DB storage and API
+// responses contain normalized values.
+func validateAndNormalizePluginSpec(plugin *common.Plugin, factory func() any, path string) error {
 	if plugin.Kind == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s: plugin kind is required", path)
 	}
@@ -211,6 +212,8 @@ func validatePluginSpec(plugin common.Plugin, factory func() any, path string) e
 	if err := validator.New().Struct(target); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.spec", path)
 	}
+	// Write the typed struct back so defaults are included.
+	plugin.Spec = target
 	return nil
 }
 

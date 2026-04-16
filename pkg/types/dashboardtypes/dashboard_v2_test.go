@@ -594,15 +594,15 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	var d StorableDashboardDataV2
-	if err := json.Unmarshal(data, &d); err != nil {
-		t.Fatalf("unmarshal failed: %v", err)
+	d, err := UnmarshalAndValidateDashboardV2JSON(data)
+	if err != nil {
+		t.Fatalf("unmarshal and validate failed: %v", err)
 	}
 
-	specJSON, _ := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
-	var spec TimeSeriesPanelSpec
-	if err := json.Unmarshal(specJSON, &spec); err != nil {
-		t.Fatalf("unmarshal spec failed: %v", err)
+	// After validation+normalization, the plugin spec should be a typed struct.
+	spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*TimeSeriesPanelSpec)
+	if !ok {
+		t.Fatalf("expected *TimeSeriesPanelSpec, got %T", d.Panels["p1"].Spec.Plugin.Spec)
 	}
 
 	if spec.Formatting.DecimalPrecision.Value() != "2" {
@@ -626,6 +626,26 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	if spec.Legend.Position.Value() != "bottom" {
 		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.Value())
 	}
+
+	// Re-marshal the full dashboard (what we'd store in DB / return in API response)
+	// and verify the output contains the default values.
+	output, err := json.Marshal(d)
+	if err != nil {
+		t.Fatalf("marshal dashboard failed: %v", err)
+	}
+	outputStr := string(output)
+	for field, want := range map[string]string{
+		"decimalPrecision":  `"2"`,
+		"lineInterpolation": `"spline"`,
+		"lineStyle":         `"solid"`,
+		"fillMode":          `"solid"`,
+		"timePreference":    `"global_time"`,
+		"position":          `"bottom"`,
+	} {
+		if !strings.Contains(outputStr, `"`+field+`":`+want) {
+			t.Errorf("expected stored/response JSON to contain %s:%s, got: %s", field, want, outputStr)
+		}
+	}
 }
 
 func TestNumberPanelDefaults(t *testing.T) {
@@ -643,15 +663,14 @@ func TestNumberPanelDefaults(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	var d StorableDashboardDataV2
-	if err := json.Unmarshal(data, &d); err != nil {
-		t.Fatalf("unmarshal failed: %v", err)
+	d, err := UnmarshalAndValidateDashboardV2JSON(data)
+	if err != nil {
+		t.Fatalf("unmarshal and validate failed: %v", err)
 	}
 
-	specJSON, _ := json.Marshal(d.Panels["p1"].Spec.Plugin.Spec)
-	var spec NumberPanelSpec
-	if err := json.Unmarshal(specJSON, &spec); err != nil {
-		t.Fatalf("unmarshal spec failed: %v", err)
+	spec, ok := d.Panels["p1"].Spec.Plugin.Spec.(*NumberPanelSpec)
+	if !ok {
+		t.Fatalf("expected *NumberPanelSpec, got %T", d.Panels["p1"].Spec.Plugin.Spec)
 	}
 
 	if len(spec.Thresholds) != 1 {
@@ -662,6 +681,20 @@ func TestNumberPanelDefaults(t *testing.T) {
 	}
 	if spec.Thresholds[0].Format.Value() != "text" {
 		t.Fatalf("expected ThresholdFormat default text, got %v", spec.Thresholds[0].Format.Value())
+	}
+
+	// Marshal back and verify defaults in JSON output.
+	output, err := json.Marshal(d)
+	if err != nil {
+		t.Fatalf("marshal dashboard failed: %v", err)
+	}
+	outputStr := string(output)
+	if !strings.Contains(outputStr, `"format":"text"`) {
+		t.Errorf("expected stored/response JSON to contain format:text, got: %s", outputStr)
+	}
+	// Go's json.Marshal escapes ">" as "\u003e", so check for both forms.
+	if !strings.Contains(outputStr, `"operator":">"`) && !strings.Contains(outputStr, `"operator":"\u003e"`) {
+		t.Errorf("expected stored/response JSON to contain operator:>, got: %s", outputStr)
 	}
 }
 
