@@ -80,6 +80,9 @@ type Getter interface {
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
 
+	// Get reset password token by org id and user id.
+	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error)
+
 	// Gets single Non-Deleted user by email and org id
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
@@ -113,6 +116,8 @@ type Handler interface {
 
 	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)
+	GetResetPasswordTokenV2(http.ResponseWriter, *http.Request)
+	CreateResetPasswordToken(http.ResponseWriter, *http.Request)
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)

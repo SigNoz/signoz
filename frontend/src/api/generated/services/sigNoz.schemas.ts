@@ -6579,6 +6579,28 @@ export type GetUser200 = {
 export type UpdateUserPathParameters = {
 	id: string;
 };
+export type GetResetPasswordTokenV2PathParameters = {
+	id: string;
+};
+export type GetResetPasswordTokenV2200 = {
+	data: TypesResetPasswordTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateResetPasswordTokenPathParameters = {
+	id: string;
+};
+export type CreateResetPasswordToken201 = {
+	data: TypesResetPasswordTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetRolesByUserIDPathParameters = {
 	id: string;
 };

@@ -354,6 +354,62 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 	render.Success(w, http.StatusOK, token)
 }
 
+func (h *handler) GetResetPasswordTokenV2(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	token, err := h.getter.GetResetPasswordTokenByOrgIDAndUserID(ctx, valuer.MustNewUUID(claims.OrgID), userID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, token)
+}
+
+func (h *handler) CreateResetPasswordToken(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	user, err := h.getter.GetUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), userID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	token, err := h.setter.GetOrCreateResetPasswordToken(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusCreated, token)
+}
+
 func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

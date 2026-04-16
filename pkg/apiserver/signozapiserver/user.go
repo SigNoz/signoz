@@ -224,9 +224,43 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          true,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordTokenV2), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordTokenV2",
+		Tags:                []string{"users"},
+		Summary:             "Get reset password token for a user",
+		Description:         "This endpoint returns the existing reset password token for a user.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}/reset-password-token", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "CreateResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Create or regenerate reset password token for a user",
+		Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 

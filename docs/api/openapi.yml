@@ -6068,7 +6068,7 @@ paths:
       - fields
   /api/v1/getResetPasswordToken/{id}:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the reset password token by id
       operationId: GetResetPasswordToken
       parameters:
@@ -10892,6 +10892,129 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update user v2
+      tags:
+      - users
+  /api/v2/users/{id}/reset-password-token:
+    get:
+      deprecated: false
+      description: This endpoint returns the existing reset password token for a user.
+      operationId: GetResetPasswordTokenV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get reset password token for a user
+      tags:
+      - users
+    post:
+      deprecated: false
+      description: This endpoint creates or regenerates a reset password token for
+        a user. If a valid token exists, it is returned. If expired, a new one is
+        created.
+      operationId: CreateResetPasswordToken
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or regenerate reset password token for a user
       tags:
       - users
   /api/v2/users/{id}/roles:

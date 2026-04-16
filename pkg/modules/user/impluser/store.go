@@ -359,6 +359,26 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 	return resetPasswordToken, nil
 }
 
+func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	resetPasswordToken := new(types.ResetPasswordToken)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(resetPasswordToken).
+		Join("JOIN factor_password ON factor_password.id = reset_password_token.password_id").
+		Join("JOIN users ON users.id = factor_password.user_id").
+		Where("factor_password.user_id = ?", userID).
+		Where("users.org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for user %s does not exist", userID)
+	}
+
+	return resetPasswordToken, nil
+}
+
 func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error {
 	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().
 		Model(&types.ResetPasswordToken{}).

@@ -6,19 +6,37 @@ interface ResetLinkDialogProps {
 	open: boolean;
 	linkType: 'invite' | 'reset' | null;
 	resetLink: string | null;
+	expiresAt: string | null;
 	hasCopied: boolean;
 	onClose: () => void;
 	onCopy: () => void;
+}
+
+function formatExpiry(expiresAt: string | null): string | null {
+	if (!expiresAt) {
+		return null;
+	}
+	const d = new Date(expiresAt);
+	if (Number.isNaN(d.getTime())) {
+		return null;
+	}
+	return d.toLocaleString(undefined, {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+	});
 }
 
 function ResetLinkDialog({
 	open,
 	linkType,
 	resetLink,
+	expiresAt,
 	hasCopied,
 	onClose,
 	onCopy,
 }: ResetLinkDialogProps): JSX.Element {
+	const formattedExpiry = formatExpiry(expiresAt);
+
 	return (
 		<DialogWrapper
 			open={open}
@@ -53,6 +71,11 @@ function ResetLinkDialog({
 						{hasCopied ? 'Copied!' : 'Copy'}
 					</Button>
 				</div>
+				{formattedExpiry && (
+					<p className="reset-link-dialog__description">
+						This link expires on {formattedExpiry}.
+					</p>
+				)}
 			</div>
 		</DialogWrapper>
 	);
