@@ -24,6 +24,7 @@ import type {
 	GetDowntimeScheduleByID200,
 	GetDowntimeScheduleByIDPathParameters,
 	ListDowntimeSchedules200,
+	ListDowntimeSchedulesParams,
 	RenderErrorResponseDTO,
 	RuletypesGettablePlannedMaintenanceDTO,
 	UpdateDowntimeScheduleByIDPathParameters,
@@ -33,35 +34,45 @@ import type {
  * This endpoint lists all planned maintenance / downtime schedules
  * @summary List downtime schedules
  */
-export const listDowntimeSchedules = (signal?: AbortSignal) => {
+export const listDowntimeSchedules = (
+	params?: ListDowntimeSchedulesParams,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<ListDowntimeSchedules200>({
 		url: `/api/v1/downtime_schedules`,
 		method: 'GET',
+		params,
 		signal,
 	});
 };
 
-export const getListDowntimeSchedulesQueryKey = () => {
-	return [`/api/v1/downtime_schedules`] as const;
+export const getListDowntimeSchedulesQueryKey = (
+	params?: ListDowntimeSchedulesParams,
+) => {
+	return [`/api/v1/downtime_schedules`, ...(params ? [params] : [])] as const;
 };
 
 export const getListDowntimeSchedulesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listDowntimeSchedules>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listDowntimeSchedules>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	params?: ListDowntimeSchedulesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDowntimeSchedules>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListDowntimeSchedulesQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getListDowntimeSchedulesQueryKey(params);
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listDowntimeSchedules>>
-	> = ({ signal }) => listDowntimeSchedules(signal);
+	> = ({ signal }) => listDowntimeSchedules(params, signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
 		Awaited<ReturnType<typeof listDowntimeSchedules>>,
@@ -82,14 +93,17 @@ export type ListDowntimeSchedulesQueryError = ErrorType<RenderErrorResponseDTO>;
 export function useListDowntimeSchedules<
 	TData = Awaited<ReturnType<typeof listDowntimeSchedules>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listDowntimeSchedules>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListDowntimeSchedulesQueryOptions(options);
+>(
+	params?: ListDowntimeSchedulesParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listDowntimeSchedules>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListDowntimeSchedulesQueryOptions(params, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -105,10 +119,11 @@ export function useListDowntimeSchedules<
  */
 export const invalidateListDowntimeSchedules = async (
 	queryClient: QueryClient,
+	params?: ListDowntimeSchedulesParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListDowntimeSchedulesQueryKey() },
+		{ queryKey: getListDowntimeSchedulesQueryKey(params) },
 		options,
 	);
 

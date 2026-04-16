@@ -331,6 +331,11 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 	}
 }
 
+type ListPlannedMaintenanceParams struct {
+	Active    *bool `query:"active"`
+	Recurring *bool `query:"recurring"`
+}
+
 type MaintenanceStore interface {
 	CreatePlannedMaintenance(context.Context, GettablePlannedMaintenance) (valuer.UUID, error)
 	DeletePlannedMaintenance(context.Context, valuer.UUID) error

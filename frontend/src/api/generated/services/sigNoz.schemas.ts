@@ -5834,6 +5834,21 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type ListDowntimeSchedulesParams = {
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	active?: boolean | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	recurring?: boolean | null;
+};
+
 export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array

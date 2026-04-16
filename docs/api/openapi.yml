@@ -6043,6 +6043,17 @@ paths:
       deprecated: false
       description: This endpoint lists all planned maintenance / downtime schedules
       operationId: ListDowntimeSchedules
+      parameters:
+      - in: query
+        name: active
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: recurring
+        schema:
+          nullable: true
+          type: boolean
       responses:
         "200":
           content:

@@ -131,6 +131,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "List downtime schedules",
 		Description:         "This endpoint lists all planned maintenance / downtime schedules",
+		RequestQuery:        new(ruletypes.ListPlannedMaintenanceParams),
 		Response:            make([]*ruletypes.GettablePlannedMaintenance, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,

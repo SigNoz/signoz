@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -186,29 +185,33 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 		return
 	}
 
+	var params ruletypes.ListPlannedMaintenanceParams
+	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	schedules, err := handler.ruler.MaintenanceStore().GetAllPlannedMaintenance(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	if req.URL.Query().Get("active") != "" {
+	if params.Active != nil {
 		activeSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
-		active, _ := strconv.ParseBool(req.URL.Query().Get("active"))
 		for _, schedule := range schedules {
 			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
-			if schedule.IsActive(now) == active {
+			if schedule.IsActive(now) == *params.Active {
 				activeSchedules = append(activeSchedules, schedule)
 			}
 		}
 		schedules = activeSchedules
 	}
 
-	if req.URL.Query().Get("recurring") != "" {
+	if params.Recurring != nil {
 		recurringSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
-		recurring, _ := strconv.ParseBool(req.URL.Query().Get("recurring"))
 		for _, schedule := range schedules {
-			if schedule.IsRecurring() == recurring {
+			if schedule.IsRecurring() == *params.Recurring {
 				recurringSchedules = append(recurringSchedules, schedule)
 			}
 		}
