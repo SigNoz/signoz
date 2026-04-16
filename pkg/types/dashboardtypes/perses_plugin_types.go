@@ -278,7 +278,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		t.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `globalTime`, `last5Min`, `last15Min`, `last30Min`, `last1Hr`, `last6Hr`, `last1Day`, `last3Days`, `last1Week`, or `last1Month`", v)
 	}
 }
 
@@ -312,7 +312,7 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 		l.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be bottom or right", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
 	}
 }
 
@@ -346,7 +346,7 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 		f.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be text or background", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
 	}
 }
 
@@ -393,7 +393,7 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 		o.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
 	}
 }
 
@@ -429,7 +429,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		li.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be linear, spline, stepAfter, or stepBefore", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `stepAfter`, or `stepBefore`", v)
 	}
 }
 
@@ -463,7 +463,7 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 		ls.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be solid or dashed", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
 	}
 }
 
@@ -498,7 +498,7 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 		fm.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be solid, gradient, or none", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
 	}
 }
 
@@ -544,7 +544,7 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 		p.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be 0, 1, 2, 3, 4, or full", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
 	}
 }
 
