@@ -172,7 +172,7 @@ func Ast(cause error, typ typ) bool {
 	return t == typ
 }
 
-// Ast checks if the provided error matches the specified custom error code.
+// Asc checks if the provided error matches the specified custom error code.
 func Asc(cause error, code Code) bool {
 	_, c, _, _, _, _ := Unwrapb(cause)
 
