@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -69,6 +70,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
+		struct{ alertmanager.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

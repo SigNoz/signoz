@@ -136,7 +136,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
-		AlertmanagerAPI:               alertmanager.NewAPI(signoz.Alertmanager),
 		LicensingAPI:                  nooplicensing.NewLicenseAPI(),
 		Signoz:                        signoz,
 		QueryParserAPI:                queryparser.NewAPI(signoz.Instrumentation.ToProviderSettings(), signoz.QueryParser),

@@ -27,7 +27,6 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -63,6 +62,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
@@ -139,8 +139,6 @@ type APIHandler struct {
 
 	pvcsRepo *inframetrics.PvcsRepo
 
-	AlertmanagerAPI *alertmanager.API
-
 	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
@@ -166,8 +164,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
 
@@ -229,7 +225,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
@@ -501,21 +496,6 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.AlertmanagerAPI.ListChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetChannelByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateChannelByID)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteChannelByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/route_policies", am.ViewAccess(aH.AlertmanagerAPI.GetAllRoutePolicies)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetRoutePolicyByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies", am.AdminAccess(aH.AlertmanagerAPI.CreateRoutePolicy)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteRoutePolicyByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateRoutePolicy)).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
@@ -1137,12 +1117,19 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	dashboard := new(dashboardtypes.Dashboard)
-	if aH.CloudIntegrationsController.IsCloudIntegrationDashboardUuid(id) {
-		cloudIntegrationDashboard, apiErr := aH.CloudIntegrationsController.GetDashboardById(ctx, orgID, id)
-		if apiErr != nil {
-			render.Error(rw, errorsV2.Wrapf(apiErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
+
+	if _, _, _, err := cloudintegrationtypes.ParseCloudIntegrationDashboardID(id); err == nil {
+		cloudIntegrationDashboard, err := aH.Signoz.Modules.CloudIntegration.GetDashboardByID(ctx, orgID, id)
+		if err != nil && !errorsV2.Ast(err, errorsV2.TypeLicenseUnavailable) {
+			render.Error(rw, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to get dashboard"))
 			return
 		}
+
+		if cloudIntegrationDashboard == nil {
+			render.Error(rw, errorsV2.Newf(errorsV2.TypeNotFound, errorsV2.CodeNotFound, "dashboard not found"))
+			return
+		}
+
 		dashboard = cloudIntegrationDashboard
 	} else if aH.IntegrationsController.IsInstalledIntegrationDashboardID(id) {
 		integrationDashboard, apiErr := aH.IntegrationsController.GetInstalledIntegrationDashboardById(ctx, orgID, id)
@@ -1207,9 +1194,11 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
-	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
-	if apiErr != nil {
-		aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(apiErr))
+	cloudIntegrationDashboards, err := aH.Signoz.Modules.CloudIntegration.ListDashboards(ctx, orgID)
+	if err != nil {
+		if !errors.Ast(err, errorsV2.TypeLicenseUnavailable) {
+			aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(err))
+		}
 	} else {
 		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}

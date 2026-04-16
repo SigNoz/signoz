@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
@@ -31,10 +33,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -42,6 +48,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -127,7 +134,6 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule), nil
-
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)
@@ -146,8 +152,21 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-	)
+		func(sqlStore sqlstore.SQLStore, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
+			defStore := pkgcloudintegration.NewServiceDefinitionStore()
+			awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
+			if err != nil {
+				return nil, err
+			}
+			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
+			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
+				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
+			}
 
+			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
+		},
+	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", errors.Attr(err))
 		return err

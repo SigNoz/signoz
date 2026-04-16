@@ -12,7 +12,11 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "bundler",
@@ -21,8 +25,15 @@
 		"noEmit": true,
 		"baseUrl": "./src",
 		"paths": {
-			"*": ["./*"],
-			"@constants/*": ["./container/OnboardingContainer/constants/*"]
+			"*": [
+				"./*"
+			],
+			"@constants/*": [
+				"./container/OnboardingContainer/constants/*"
+			],
+			"@/*": [
+				"./*"
+			]
 		},
 		"downlevelIteration": true,
 		"plugins": [
@@ -30,9 +41,18 @@
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": ["vite/client", "node", "jest"]
+		"types": [
+			"vite/client",
+			"node",
+			"jest"
+		]
 	},
-	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts", "orval.config.ts"],
+	"exclude": [
+		"node_modules",
+		"src/parser/*.ts",
+		"src/parser/TraceOperatorParser/*.ts",
+		"orval.config.ts"
+	],
 	"include": [
 		"./src",
 		"./src/**/*.ts",

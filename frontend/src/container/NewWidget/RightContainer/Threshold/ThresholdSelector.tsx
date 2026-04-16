@@ -72,6 +72,7 @@ function ThresholdSelector({
 						type="default"
 						icon={<Plus size={14} />}
 						style={{ width: '100%' }}
+						data-testid="add-threshold-cta"
 						onClick={addThresholdHandler}
 					>
 						Add Threshold
