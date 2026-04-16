@@ -239,9 +239,7 @@ type TableThreshold struct {
 // Constrained scalar types — with default value
 // ══════════════════════════════════════════════
 
-type TimePreference struct {
-	value string
-}
+type TimePreference struct{ valuer.String }
 
 const (
 	TimePreferenceGlobalTime = "global_time" // default
@@ -257,10 +255,14 @@ const (
 )
 
 func (t TimePreference) Value() string {
-	if t.value == "" {
+	if t.IsZero() {
 		return TimePreferenceGlobalTime
 	}
-	return t.value
+	return t.StringValue()
+}
+
+func (t TimePreference) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Value())
 }
 
 func (t *TimePreference) UnmarshalJSON(data []byte) error {
@@ -268,22 +270,19 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid timePreference: must be a string, one of `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`")
 	}
+	if v == "" {
+		v = TimePreferenceGlobalTime
+	}
 	switch v {
 	case TimePreferenceGlobalTime, TimePreferenceLast5Min, TimePreferenceLast15Min, TimePreferenceLast30Min, TimePreferenceLast1Hr, TimePreferenceLast6Hr, TimePreferenceLast1Day, TimePreferenceLast3Days, TimePreferenceLast1Week, TimePreferenceLast1Month:
-		t.value = v
+		t.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
 	}
 }
 
-func (t TimePreference) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Value())
-}
-
-type LegendPosition struct {
-	value string
-}
+type LegendPosition struct{ valuer.String }
 
 const (
 	LegendPositionBottom = "bottom" // default
@@ -291,10 +290,14 @@ const (
 )
 
 func (l LegendPosition) Value() string {
-	if l.value == "" {
+	if l.IsZero() {
 		return LegendPositionBottom
 	}
-	return l.value
+	return l.StringValue()
+}
+
+func (l LegendPosition) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.Value())
 }
 
 func (l *LegendPosition) UnmarshalJSON(data []byte) error {
@@ -302,22 +305,19 @@ func (l *LegendPosition) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid legend position: must be a string, one of `bottom` or `right`")
 	}
+	if v == "" {
+		v = LegendPositionBottom
+	}
 	switch v {
 	case LegendPositionBottom, LegendPositionRight:
-		l.value = v
+		l.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid legend position %q: must be `bottom` or `right`", v)
 	}
 }
 
-func (l LegendPosition) MarshalJSON() ([]byte, error) {
-	return json.Marshal(l.Value())
-}
-
-type ThresholdFormat struct {
-	value string
-}
+type ThresholdFormat struct{ valuer.String }
 
 const (
 	ThresholdFormatText       = "text" // default
@@ -325,10 +325,14 @@ const (
 )
 
 func (f ThresholdFormat) Value() string {
-	if f.value == "" {
+	if f.IsZero() {
 		return ThresholdFormatText
 	}
-	return f.value
+	return f.StringValue()
+}
+
+func (f ThresholdFormat) MarshalJSON() ([]byte, error) {
+	return json.Marshal(f.Value())
 }
 
 func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
@@ -336,24 +340,21 @@ func (f *ThresholdFormat) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold format: must be a string, one of `text` or `background`")
 	}
+	if v == "" {
+		v = ThresholdFormatText
+	}
 	switch v {
 	case ThresholdFormatText, ThresholdFormatBackground:
-		f.value = v
+		f.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold format %q: must be `text` or `background`", v)
 	}
 }
 
-func (f ThresholdFormat) MarshalJSON() ([]byte, error) {
-	return json.Marshal(f.Value())
-}
-
-// Not using ruletypes.CompareOperator here because it uses valuer.String
-// which accepts any string at unmarshal time, bypassing validation.
-type ComparisonOperator struct {
-	value string
-}
+// Uses valuer.String with custom UnmarshalJSON for validation, rather than
+// ruletypes.CompareOperator which accepts any string at unmarshal time.
+type ComparisonOperator struct{ valuer.String }
 
 const (
 	ComparisonOperatorGT           = ">" // default
@@ -370,10 +371,14 @@ const (
 )
 
 func (o ComparisonOperator) Value() string {
-	if o.value == "" {
+	if o.IsZero() {
 		return ComparisonOperatorGT
 	}
-	return o.value
+	return o.StringValue()
+}
+
+func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(o.Value())
 }
 
 func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
@@ -381,24 +386,21 @@ func (o *ComparisonOperator) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid comparison operator: must be a string, one of `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`")
 	}
+	if v == "" {
+		v = ComparisonOperatorGT
+	}
 	switch v {
 	case ComparisonOperatorGT, ComparisonOperatorLT, ComparisonOperatorGTE, ComparisonOperatorLTE, ComparisonOperatorEQ,
 		ComparisonOperatorAbove, ComparisonOperatorBelow, ComparisonOperatorAboveOrEqual, ComparisonOperatorBelowOrEqual,
 		ComparisonOperatorEqual, ComparisonOperatorNotEqual:
-		o.value = v
+		o.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid comparison operator %q: must be `>`, `<`, `>=`, `<=`, `=`, `above`, `below`, `above_or_equal`, `below_or_equal`, `equal`, or `not_equal`", v)
 	}
 }
 
-func (o ComparisonOperator) MarshalJSON() ([]byte, error) {
-	return json.Marshal(o.Value())
-}
-
-type LineInterpolation struct {
-	value string
-}
+type LineInterpolation struct{ valuer.String }
 
 const (
 	LineInterpolationLinear     = "linear"
@@ -408,10 +410,14 @@ const (
 )
 
 func (li LineInterpolation) Value() string {
-	if li.value == "" {
+	if li.IsZero() {
 		return LineInterpolationSpline
 	}
-	return li.value
+	return li.StringValue()
+}
+
+func (li LineInterpolation) MarshalJSON() ([]byte, error) {
+	return json.Marshal(li.Value())
 }
 
 func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
@@ -419,22 +425,19 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line interpolation: must be a string, one of `linear`, `spline`, `step_after`, or `step_before`")
 	}
+	if v == "" {
+		v = LineInterpolationSpline
+	}
 	switch v {
 	case LineInterpolationLinear, LineInterpolationSpline, LineInterpolationStepAfter, LineInterpolationStepBefore:
-		li.value = v
+		li.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
 	}
 }
 
-func (li LineInterpolation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(li.Value())
-}
-
-type LineStyle struct {
-	value string
-}
+type LineStyle struct{ valuer.String }
 
 const (
 	LineStyleSolid  = "solid" // default
@@ -442,10 +445,14 @@ const (
 )
 
 func (ls LineStyle) Value() string {
-	if ls.value == "" {
+	if ls.IsZero() {
 		return LineStyleSolid
 	}
-	return ls.value
+	return ls.StringValue()
+}
+
+func (ls LineStyle) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ls.Value())
 }
 
 func (ls *LineStyle) UnmarshalJSON(data []byte) error {
@@ -453,22 +460,19 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid line style: must be a string, one of `solid` or `dashed`")
 	}
+	if v == "" {
+		v = LineStyleSolid
+	}
 	switch v {
 	case LineStyleSolid, LineStyleDashed:
-		ls.value = v
+		ls.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line style %q: must be `solid` or `dashed`", v)
 	}
 }
 
-func (ls LineStyle) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ls.Value())
-}
-
-type FillMode struct {
-	value string
-}
+type FillMode struct{ valuer.String }
 
 const (
 	FillModeSolid    = "solid" // default
@@ -477,10 +481,14 @@ const (
 )
 
 func (fm FillMode) Value() string {
-	if fm.value == "" {
+	if fm.IsZero() {
 		return FillModeSolid
 	}
-	return fm.value
+	return fm.StringValue()
+}
+
+func (fm FillMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fm.Value())
 }
 
 func (fm *FillMode) UnmarshalJSON(data []byte) error {
@@ -488,17 +496,16 @@ func (fm *FillMode) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid fill mode: must be a string, one of `solid`, `gradient`, or `none`")
 	}
+	if v == "" {
+		v = FillModeSolid
+	}
 	switch v {
 	case FillModeSolid, FillModeGradient, FillModeNone:
-		fm.value = v
+		fm.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid fill mode %q: must be `solid`, `gradient`, or `none`", v)
 	}
-}
-
-func (fm FillMode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(fm.Value())
 }
 
 // SpanGaps controls whether lines connect across null values.
@@ -509,9 +516,7 @@ type SpanGaps struct {
 	FillLessThan  valuer.TextDuration `json:"fillLessThan"`
 }
 
-type PrecisionOption struct {
-	value string
-}
+type PrecisionOption struct{ valuer.String }
 
 const (
 	PrecisionOption0    = "0"
@@ -523,10 +528,14 @@ const (
 )
 
 func (p PrecisionOption) Value() string {
-	if p.value == "" {
+	if p.IsZero() {
 		return PrecisionOption2
 	}
-	return p.value
+	return p.StringValue()
+}
+
+func (p PrecisionOption) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.Value())
 }
 
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
@@ -535,7 +544,7 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &n); err == nil {
 		switch n {
 		case 0, 1, 2, 3, 4:
-			p.value = strconv.Itoa(n)
+			p.String = valuer.NewString(strconv.Itoa(n))
 			return nil
 		default:
 			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be `0`, `1`, `2`, `3`, `4`, or `full`", n)
@@ -545,15 +554,14 @@ func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
+	if v == "" {
+		v = PrecisionOption2
+	}
 	switch v {
 	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
-		p.value = v
+		p.String = valuer.NewString(v)
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %q: must be `0`, `1`, `2`, `3`, `4`, or `full`", v)
 	}
-}
-
-func (p PrecisionOption) MarshalJSON() ([]byte, error) {
-	return json.Marshal(p.Value())
 }
