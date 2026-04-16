@@ -384,7 +384,7 @@ describe('EditMemberDrawer', () => {
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
 	});
 
-	it('shows "Invite Expired - Regenerate" when token is expired', () => {
+	it('shows "Regenerate Invite Link" when token is expired', () => {
 		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
 			data: {
 				data: {

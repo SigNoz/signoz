@@ -94,7 +94,7 @@ def test_reset_password(
     # Create a reset password token via v2 POST
     response = requests.post(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -109,7 +109,7 @@ def test_reset_password(
     # Calling POST again should return the same token (still valid)
     response = requests.post(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -120,7 +120,7 @@ def test_reset_password(
     # GET should also return the same token
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -168,7 +168,7 @@ def test_reset_password_with_no_password(
     # GET should return 404 since there's no password (and thus no token)
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -178,7 +178,7 @@ def test_reset_password_with_no_password(
     # Generate a new reset password token via v2 POST
     response = requests.post(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -303,7 +303,7 @@ def test_forgot_password_creates_reset_token(
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset-password-token"
+            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
