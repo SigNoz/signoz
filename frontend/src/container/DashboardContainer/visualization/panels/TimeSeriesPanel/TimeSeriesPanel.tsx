@@ -112,6 +112,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}

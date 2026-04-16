@@ -37,6 +37,8 @@ export interface TooltipLayoutInfo {
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	render: (args: TooltipRenderArgs) => ReactNode;

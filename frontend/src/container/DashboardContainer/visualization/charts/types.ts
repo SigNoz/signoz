@@ -14,6 +14,8 @@ interface BaseChartProps {
 	showLegend?: boolean;
 	timezone?: Timezone;
 	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;

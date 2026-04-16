@@ -16,7 +16,6 @@ import {
 } from './tooltipController';
 import {
 	DashboardCursorSync,
-	TooltipClickData,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -31,6 +30,8 @@ const INTERACTIVE_CONTAINER_CLASSNAME = '.tooltip-plugin-container';
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
 const HOVER_DISMISS_DELAY_MS = 100;
+// Default key that pins the tooltip while hovering over the chart.
+export const DEFAULT_PIN_TOOLTIP_KEY = 'l';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function TooltipPlugin({
@@ -42,6 +43,7 @@ export default function TooltipPlugin({
 	syncKey = '_tooltip_sync_global_',
 	pinnedTooltipElement,
 	canPinTooltip = false,
+	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafId = useRef<number | null>(null);
@@ -259,68 +261,73 @@ export default function TooltipPlugin({
 			}
 		};
 
-		// When pinning is enabled, a click on the plot overlay while
-		// hovering converts the transient tooltip into a pinned one.
-		// Uses getPlot(controller) to avoid closing over u (plot), which
-		// would retain the plot and detached canvases across unmounts.
-		const handleUPlotOverClick = (event: MouseEvent): void => {
+		// Pin the tooltip when the user presses the configured pin key while
+		// hovering over the chart. Uses getFocusedSeriesAtPosition with a
+		// synthetic event built from the current uPlot cursor position so the
+		// same series-resolution logic as click-pinning is reused.
+		const handleKeyDown = (event: KeyboardEvent): void => {
+			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
+				return;
+			}
 			const plot = getPlot(controller);
 			if (
-				plot &&
-				event.target === plot.over &&
-				controller.hoverActive &&
-				!controller.pinned &&
-				controller.focusedSeriesIndex != null
+				!plot ||
+				!controller.hoverActive ||
+				controller.pinned ||
+				controller.focusedSeriesIndex == null
 			) {
-				const xValue = plot.posToVal(event.offsetX, 'x');
-				const yValue = plot.posToVal(event.offsetY, 'y');
-				const focusedSeries = getFocusedSeriesAtPosition(event, plot);
-
-				let clickedDataTimestamp = xValue;
-				if (focusedSeries) {
-					const dataIndex = plot.posToIdx(event.offsetX);
-					const xSeriesData = plot.data[0];
-					if (
-						xSeriesData &&
-						dataIndex >= 0 &&
-						dataIndex < xSeriesData.length &&
-						xSeriesData[dataIndex] !== undefined
-					) {
-						clickedDataTimestamp = xSeriesData[dataIndex];
-					}
-				}
-
-				const clickData: TooltipClickData = {
-					xValue,
-					yValue,
-					focusedSeries,
-					clickedDataTimestamp,
-					mouseX: event.offsetX,
-					mouseY: event.offsetY,
-					absoluteMouseX: event.clientX,
-					absoluteMouseY: event.clientY,
-				};
-
-				controller.clickData = clickData;
-
-				setTimeout(() => {
-					controller.pinned = true;
-					scheduleRender(true);
-				}, 0);
+				return;
 			}
+
+			const cursorLeft = plot.cursor.left ?? -1;
+			const cursorTop = plot.cursor.top ?? -1;
+			if (cursorLeft < 0 || cursorTop < 0) {
+				return;
+			}
+
+			const plotRect = plot.over.getBoundingClientRect();
+			const syntheticEvent = ({
+				clientX: plotRect.left + cursorLeft,
+				clientY: plotRect.top + cursorTop,
+				target: plot.over,
+				offsetX: cursorLeft,
+				offsetY: cursorTop,
+			} as unknown) as MouseEvent;
+
+			const xValue = plot.posToVal(cursorLeft, 'x');
+			const yValue = plot.posToVal(cursorTop, 'y');
+			const focusedSeries = getFocusedSeriesAtPosition(syntheticEvent, plot);
+
+			const dataIndex = plot.posToIdx(cursorLeft);
+			let clickedDataTimestamp = xValue;
+			const xSeriesData = plot.data[0];
+			if (
+				xSeriesData &&
+				dataIndex >= 0 &&
+				dataIndex < xSeriesData.length &&
+				xSeriesData[dataIndex] !== undefined
+			) {
+				clickedDataTimestamp = xSeriesData[dataIndex];
+			}
+
+			controller.clickData = {
+				xValue,
+				yValue,
+				focusedSeries,
+				clickedDataTimestamp,
+				mouseX: cursorLeft,
+				mouseY: cursorTop,
+				absoluteMouseX: syntheticEvent.clientX,
+				absoluteMouseY: syntheticEvent.clientY,
+			};
+			controller.pinned = true;
+			scheduleRender(true);
 		};
 
-		let overClickHandler: ((event: MouseEvent) => void) | null = null;
-
-		// Called once per uPlot instance; used to store the instance
-		// on the controller and optionally attach the pinning handler.
+		// Called once per uPlot instance; used to store the instance on the controller.
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
 			updateState({ hasPlot: true });
-			if (canPinTooltip) {
-				overClickHandler = handleUPlotOverClick;
-				u.over.addEventListener('click', overClickHandler);
-			}
 		};
 
 		// If the underlying data changes we drop any pinned tooltip,
@@ -365,6 +372,9 @@ export default function TooltipPlugin({
 
 		window.addEventListener('resize', handleWindowResize);
 		window.addEventListener('scroll', handleScroll, true);
+		if (canPinTooltip) {
+			document.addEventListener('keydown', handleKeyDown, true);
+		}
 
 		return (): void => {
 			layoutRef.current?.observer.disconnect();
@@ -372,6 +382,9 @@ export default function TooltipPlugin({
 			window.removeEventListener('scroll', handleScroll, true);
 			document.removeEventListener('mousedown', onOutsideInteraction, true);
 			document.removeEventListener('keydown', onOutsideInteraction, true);
+			if (canPinTooltip) {
+				document.removeEventListener('keydown', handleKeyDown, true);
+			}
 			cancelPendingRender();
 			removeReadyHook();
 			removeInitHook();
@@ -379,13 +392,6 @@ export default function TooltipPlugin({
 			removeSetSeriesHook();
 			removeSetLegendHook();
 			removeSetCursorHook();
-			if (overClickHandler) {
-				const plot = getPlot(controller);
-				if (plot) {
-					plot.over.removeEventListener('click', overClickHandler);
-				}
-				overClickHandler = null;
-			}
 			clearPlotReferences();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -423,8 +429,12 @@ export default function TooltipPlugin({
 	}, [isHovering, hasPlot]);
 
 	const tooltipBody = useMemo(() => {
-		if (isPinned && pinnedTooltipElement != null && viewState.clickData != null) {
-			return pinnedTooltipElement(viewState.clickData);
+		if (isPinned) {
+			if (pinnedTooltipElement != null && viewState.clickData != null) {
+				return pinnedTooltipElement(viewState.clickData);
+			}
+			// No custom pinned element — keep showing the last hover contents.
+			return contents ?? null;
 		}
 
 		if (isHovering) {
