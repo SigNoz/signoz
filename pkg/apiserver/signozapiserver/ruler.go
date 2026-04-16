@@ -128,7 +128,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.ListDowntimeSchedules), handler.OpenAPIDef{
 		ID:                  "ListDowntimeSchedules",
-		Tags:                []string{"downtime_schedules"},
+		Tags:                []string{"downtimeschedules"},
 		Summary:             "List downtime schedules",
 		Description:         "This endpoint lists all planned maintenance / downtime schedules",
 		Response:            make([]*ruletypes.GettablePlannedMaintenance, 0),
@@ -141,7 +141,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.GetDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                  "GetDowntimeScheduleByID",
-		Tags:                []string{"downtime_schedules"},
+		Tags:                []string{"downtimeschedules"},
 		Summary:             "Get downtime schedule by ID",
 		Description:         "This endpoint returns a downtime schedule by ID",
 		Response:            new(ruletypes.GettablePlannedMaintenance),
@@ -155,7 +155,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authZ.EditAccess(provider.rulerHandler.CreateDowntimeSchedule), handler.OpenAPIDef{
 		ID:                  "CreateDowntimeSchedule",
-		Tags:                []string{"downtime_schedules"},
+		Tags:                []string{"downtimeschedules"},
 		Summary:             "Create downtime schedule",
 		Description:         "This endpoint creates a new planned maintenance / downtime schedule",
 		Request:             new(ruletypes.GettablePlannedMaintenance),
@@ -169,7 +169,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                  "UpdateDowntimeScheduleByID",
-		Tags:                []string{"downtime_schedules"},
+		Tags:                []string{"downtimeschedules"},
 		Summary:             "Update downtime schedule",
 		Description:         "This endpoint updates a downtime schedule by ID",
 		Request:             new(ruletypes.GettablePlannedMaintenance),
@@ -183,7 +183,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                  "DeleteDowntimeScheduleByID",
-		Tags:                []string{"downtime_schedules"},
+		Tags:                []string{"downtimeschedules"},
 		Summary:             "Delete downtime schedule",
 		Description:         "This endpoint deletes a downtime schedule by ID",
 		SuccessStatusCode:   http.StatusNoContent,

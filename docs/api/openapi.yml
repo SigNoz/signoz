@@ -6085,7 +6085,7 @@ paths:
         - VIEWER
       summary: List downtime schedules
       tags:
-      - downtime_schedules
+      - downtimeschedules
     post:
       deprecated: false
       description: This endpoint creates a new planned maintenance / downtime schedule
@@ -6129,7 +6129,7 @@ paths:
         - EDITOR
       summary: Create downtime schedule
       tags:
-      - downtime_schedules
+      - downtimeschedules
   /api/v1/downtime_schedules/{id}:
     delete:
       deprecated: false
@@ -6175,7 +6175,7 @@ paths:
         - EDITOR
       summary: Delete downtime schedule
       tags:
-      - downtime_schedules
+      - downtimeschedules
     get:
       deprecated: false
       description: This endpoint returns a downtime schedule by ID
@@ -6232,7 +6232,7 @@ paths:
         - VIEWER
       summary: Get downtime schedule by ID
       tags:
-      - downtime_schedules
+      - downtimeschedules
     put:
       deprecated: false
       description: This endpoint updates a downtime schedule by ID
@@ -6288,7 +6288,7 @@ paths:
         - EDITOR
       summary: Update downtime schedule
       tags:
-      - downtime_schedules
+      - downtimeschedules
   /api/v1/export_raw_data:
     post:
       deprecated: false
