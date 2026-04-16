@@ -10,14 +10,14 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-// In dev the Go backend is not involved, so replace the [[.BasePath]] placeholder
+// In dev the Go backend is not involved, so replace the [[.BaseHref]] placeholder
 // with "/" so relative assets resolve correctly from the Vite dev server.
 function devBasePathPlugin(): Plugin {
 	return {
 		name: 'dev-base-path',
 		apply: 'serve',
 		transformIndexHtml(html): string {
-			return html.replace('[[.BasePath]]', '/');
+			return html.replace('[[.BaseHref]]', '/');
 		},
 	};
 }
