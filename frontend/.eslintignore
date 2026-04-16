@@ -1,5 +1,7 @@
 node_modules
 build
+eslint-rules/
+stylelint-rules/
 *.typegen.ts
 i18-generate-hash.js
 src/parser/TraceOperatorParser/**

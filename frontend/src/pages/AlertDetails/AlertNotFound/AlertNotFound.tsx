@@ -7,6 +7,10 @@ import { LifeBuoy, List } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { isModifierKeyPressed } from 'utils/app';
 
+import broomUrl from '@/assets/Icons/broom.svg';
+import constructionUrl from '@/assets/Icons/construction.svg';
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import './AlertNotFound.styles.scss';
 
 interface AlertNotFoundProps {
@@ -28,7 +32,7 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 	return (
 		<div className="alert-not-found">
 			<section className="description">
-				<img src="/Icons/no-data.svg" alt="no-data" className="not-found-img" />
+				<img src={noDataUrl} alt="no-data" className="not-found-img" />
 				<Typography.Text className="not-found-text">
 					Uh-oh! We couldn&apos;t find the given alert rule.
 				</Typography.Text>
@@ -42,17 +46,13 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 				{!isTestAlert && (
 					<>
 						<div className="reason">
-							<img
-								src="/Icons/construction.svg"
-								alt="no-data"
-								className="construction-img"
-							/>
+							<img src={constructionUrl} alt="no-data" className="construction-img" />
 							<Typography.Text className="text">
 								The alert rule link is incorrect, please verify it once.
 							</Typography.Text>
 						</div>
 						<div className="reason">
-							<img src="/Icons/broom.svg" alt="no-data" className="broom-img" />
+							<img src={broomUrl} alt="no-data" className="broom-img" />
 							<Typography.Text className="text">
 								The alert rule you&apos;re trying to check has been deleted.
 							</Typography.Text>
@@ -61,7 +61,7 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 				)}
 				{isTestAlert && (
 					<div className="reason">
-						<img src="/Icons/broom.svg" alt="no-data" className="broom-img" />
+						<img src={broomUrl} alt="no-data" className="broom-img" />
 						<Typography.Text className="text">
 							You clicked on the Alert notification link received when testing a new
 							Alert rule. Once the alert rule is saved, future notifications will link
