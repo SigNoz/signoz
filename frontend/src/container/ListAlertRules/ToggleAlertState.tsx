@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import patchAlert from 'api/alerts/patch';
+import { patchRuleByID } from 'api/generated/services/rules';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
 import { GettableAlert } from 'types/api/alerts/get';
@@ -34,47 +34,30 @@ function ToggleAlertState({
 				loading: true,
 			}));
 
-			const response = await patchAlert({
-				id,
-				data: {
-					disabled,
-				},
+			const response = await patchRuleByID({ id }, { disabled } as any);
+			const payload = response.data as any;
+
+			setData((state) =>
+				state.map((alert) => {
+					if (alert.id === id) {
+						return {
+							...alert,
+							disabled: payload.disabled,
+							state: payload.state,
+						};
+					}
+					return alert;
+				}),
+			);
+
+			setAPIStatus((state) => ({
+				...state,
+				loading: false,
+				payload,
+			}));
+			notifications.success({
+				message: 'Success',
 			});
-
-			if (response.statusCode === 200) {
-				setData((state) =>
-					state.map((alert) => {
-						if (alert.id === id) {
-							return {
-								...alert,
-								disabled: response.payload.disabled,
-								state: response.payload.state,
-							};
-						}
-						return alert;
-					}),
-				);
-
-				setAPIStatus((state) => ({
-					...state,
-					loading: false,
-					payload: response.payload,
-				}));
-				notifications.success({
-					message: 'Success',
-				});
-			} else {
-				setAPIStatus((state) => ({
-					...state,
-					loading: false,
-					error: true,
-					errorMessage: response.error || defaultErrorMessage,
-				}));
-
-				notifications.error({
-					message: response.error || defaultErrorMessage,
-				});
-			}
 		} catch (error) {
 			setAPIStatus((state) => ({
 				...state,

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import deleteAlerts from 'api/alerts/delete';
+import { deleteRuleByID } from 'api/generated/services/rules';
 import { State } from 'hooks/useFetch';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';
 import { GettableAlert } from 'types/api/alerts/get';
@@ -26,33 +26,17 @@ function DeleteAlert({
 
 	const onDeleteHandler = async (id: string): Promise<void> => {
 		try {
-			const response = await deleteAlerts({
-				id,
+			await deleteRuleByID({ id });
+
+			setData((state) => state.filter((alert) => alert.id !== id));
+
+			setDeleteAlertState((state) => ({
+				...state,
+				loading: false,
+			}));
+			notifications.success({
+				message: 'Success',
 			});
-
-			if (response.statusCode === 200) {
-				setData((state) => state.filter((alert) => alert.id !== id));
-
-				setDeleteAlertState((state) => ({
-					...state,
-					loading: false,
-					payload: response.payload,
-				}));
-				notifications.success({
-					message: 'Success',
-				});
-			} else {
-				setDeleteAlertState((state) => ({
-					...state,
-					loading: false,
-					error: true,
-					errorMessage: response.error || defaultErrorMessage,
-				}));
-
-				notifications.error({
-					message: response.error || defaultErrorMessage,
-				});
-			}
 		} catch (error) {
 			setDeleteAlertState((state) => ({
 				...state,

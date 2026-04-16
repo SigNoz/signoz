@@ -2,7 +2,19 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Space } from 'antd';
-import getAll from 'api/alerts/getAll';
+import { listRules } from 'api/generated/services/rules';
+import type { SuccessResponse } from 'types/api';
+import type { PayloadProps } from 'types/api/alerts/getAll';
+
+const getAll = async (): Promise<SuccessResponse<PayloadProps>> => {
+	const response = await listRules();
+	return {
+		statusCode: 200,
+		error: null,
+		message: response.status,
+		payload: ((response.data?.rules ?? []) as unknown) as PayloadProps,
+	};
+};
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { useNotifications } from 'hooks/useNotifications';

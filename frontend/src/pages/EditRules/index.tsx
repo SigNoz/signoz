@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { Button, Card } from 'antd';
-import get from 'api/alerts/get';
+import { getRuleByID } from 'api/generated/services/rules';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -36,10 +36,15 @@ function EditRules(): JSX.Element {
 	const { isLoading, data, isRefetching, isError } = useQuery(
 		[REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId],
 		{
-			queryFn: () =>
-				get({
-					id: ruleId || '',
-				}),
+			queryFn: async () => {
+				const response = await getRuleByID({ id: ruleId || '' });
+				return {
+					statusCode: 200 as const,
+					error: null,
+					message: response.status,
+					payload: response.data as any,
+				};
+			},
 			enabled: isValidRuleId,
 			refetchOnMount: false,
 			refetchOnWindowFocus: false,

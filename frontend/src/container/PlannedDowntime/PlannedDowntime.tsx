@@ -4,9 +4,11 @@ import { useHistory } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
-import getAll from 'api/alerts/getAll';
-import { useDeleteDowntimeScheduleByID } from 'api/generated/services/downtimeschedules';
-import { useListDowntimeSchedules } from 'api/generated/services/downtimeschedules';
+import {
+	useDeleteDowntimeScheduleByID,
+	useListDowntimeSchedules,
+} from 'api/generated/services/downtimeschedules';
+import { listRules } from 'api/generated/services/rules';
 import type { RuletypesGettablePlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -31,10 +33,11 @@ import './PlannedDowntime.styles.scss';
 dayjs.locale('en');
 
 export function PlannedDowntime(): JSX.Element {
-	const { data, isError, isLoading } = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
-	});
+	const { data: alertsData, isError, isLoading } = useQuery(
+		['allAlerts'],
+		({ signal }) => listRules(signal),
+		{ cacheTime: 0 },
+	);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
 	const { user } = useAppContext();
@@ -48,11 +51,11 @@ export function PlannedDowntime(): JSX.Element {
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
-			data?.payload?.map((i) => ({
+			alertsData?.data?.rules?.map((i: any) => ({
 				label: i.alert,
 				value: i.id,
 			})),
-		[data],
+		[alertsData],
 	);
 
 	useEffect(() => {

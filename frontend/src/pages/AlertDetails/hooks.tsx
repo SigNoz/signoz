@@ -3,15 +3,17 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
-import deleteAlerts from 'api/alerts/delete';
-import get from 'api/alerts/get';
-import getAll from 'api/alerts/getAll';
-import patchAlert from 'api/alerts/patch';
 import ruleStats from 'api/alerts/ruleStats';
 import save from 'api/alerts/save';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
 import topContributors from 'api/alerts/topContributors';
+import {
+	deleteRuleByID,
+	getRuleByID,
+	listRules,
+	patchRuleByID,
+} from 'api/generated/services/rules';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -162,10 +164,15 @@ export const useGetAlertRuleDetails = (): Props => {
 		isRefetching,
 		isError,
 	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
-		queryFn: () =>
-			get({
-				id: ruleId || '',
-			}),
+		queryFn: async (): Promise<SuccessResponse<PayloadProps>> => {
+			const response = await getRuleByID({ id: ruleId || '' });
+			return {
+				statusCode: 200,
+				error: null,
+				message: response.status,
+				payload: (response.data as unknown) as PayloadProps,
+			};
+		},
 		enabled: isValidRuleId,
 		refetchOnWindowFocus: false,
 	});
@@ -391,14 +398,15 @@ export const useAlertRuleStatusToggle = ({
 
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
-		patchAlert,
+		(args: { id: string; data: Record<string, unknown> }) =>
+			patchRuleByID({ id: args.id }, args.data as any),
 		{
 			onSuccess: (data) => {
-				setAlertRuleState(data?.payload?.state);
+				setAlertRuleState((data?.data as any)?.state);
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
-						data?.payload?.state === 'disabled' ? 'disabled' : 'enabled'
+						(data?.data as any)?.state === 'disabled' ? 'disabled' : 'enabled'
 					}.`,
 				});
 			},
@@ -431,10 +439,11 @@ export const useAlertRuleDuplicate = ({
 
 	const params = useUrlQuery();
 
-	const { refetch } = useQuery(REACT_QUERY_KEY.GET_ALL_ALLERTS, {
-		queryFn: getAll,
-		cacheTime: 0,
-	});
+	const { refetch } = useQuery(
+		[REACT_QUERY_KEY.GET_ALL_ALLERTS],
+		({ signal }) => listRules(signal),
+		{ cacheTime: 0 },
+	);
 	const handleError = useAxiosError();
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
@@ -447,13 +456,9 @@ export const useAlertRuleDuplicate = ({
 
 				const { data: allAlertsData } = await refetch();
 
-				if (
-					allAlertsData &&
-					allAlertsData.payload &&
-					allAlertsData.payload.length > 0
-				) {
-					const clonedAlert =
-						allAlertsData.payload[allAlertsData.payload.length - 1];
+				const rules = allAlertsData?.data?.rules;
+				if (rules && rules.length > 0) {
+					const clonedAlert = rules[rules.length - 1];
 					params.set(QueryParams.ruleId, String(clonedAlert.id));
 					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
@@ -522,7 +527,7 @@ export const useAlertRuleDelete = ({
 
 	const { mutate: deleteAlert } = useMutation(
 		[REACT_QUERY_KEY.REMOVE_ALERT_RULE, ruleId],
-		deleteAlerts,
+		(args: { id: string }) => deleteRuleByID({ id: args.id }),
 		{
 			onSuccess: async () => {
 				notifications.success({
