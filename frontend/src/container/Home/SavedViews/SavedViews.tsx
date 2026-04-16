@@ -20,6 +20,11 @@ import { ViewProps } from 'types/api/saveViews/types';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 
+import floppyDiscUrl from '@/assets/Icons/floppy-disc.svg';
+import logsUrl from '@/assets/Icons/logs.svg';
+
+import { getItemIcon } from '../constants';
+
 export default function SavedViews({
 	onUpdateChecklistDoneItem,
 	loadingUserPreferences,
@@ -151,7 +156,7 @@ export default function SavedViews({
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
 					<img
-						src="/Icons/floppy-disc.svg"
+						src={floppyDiscUrl}
 						alt="empty-alert-icon"
 						className="empty-state-icon"
 					/>
@@ -224,9 +229,7 @@ export default function SavedViews({
 					>
 						<div className="saved-view-item-name-container home-data-item-name-container">
 							<img
-								src={
-									view.id % 2 === 0 ? '/Icons/eight-ball.svg' : '/Icons/circus-tent.svg'
-								}
+								src={getItemIcon(String(view.id))}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>
@@ -345,7 +348,7 @@ export default function SavedViews({
 									className={selectedEntity === 'logs' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('logs')}
 								>
-									<img src="/Icons/logs.svg" alt="logs-icon" className="logs-icon" />
+									<img src={logsUrl} alt="logs-icon" className="logs-icon" />
 									Logs
 								</Button>
 								<Button

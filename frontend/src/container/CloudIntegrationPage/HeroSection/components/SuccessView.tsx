@@ -3,6 +3,8 @@ import Lottie from 'react-lottie';
 import { Alert } from 'antd';
 import integrationsSuccess from 'assets/Lotties/integrations-success.json';
 
+import solidCheckCircleUrl from '@/assets/Icons/solid-check-circle.svg';
+
 import './SuccessView.style.scss';
 
 export function SuccessView(): JSX.Element {
@@ -36,7 +38,7 @@ export function SuccessView(): JSX.Element {
 			)}
 			<div className="cloud-account-setup-success-view">
 				<div className="cloud-account-setup-success-view__icon">
-					<img src="Icons/solid-check-circle.svg" alt="Success" />
+					<img src={solidCheckCircleUrl} alt="Success" />
 				</div>
 				<div className="cloud-account-setup-success-view__content">
 					<div className="cloud-account-setup-success-view__title">

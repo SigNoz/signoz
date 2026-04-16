@@ -1,5 +1,7 @@
 import { Typography } from 'antd';
 
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
+
 export default function HostsEmptyOrIncorrectMetrics({
 	noData,
 	incorrectData,
@@ -10,7 +12,7 @@ export default function HostsEmptyOrIncorrectMetrics({
 	return (
 		<div className="hosts-empty-state-container">
 			<div className="hosts-empty-state-container-content">
-				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+				<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
 
 				{noData && (
 					<div className="no-hosts-message">

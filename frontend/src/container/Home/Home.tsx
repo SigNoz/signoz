@@ -33,6 +33,15 @@ import { isIngestionActive } from 'utils/app';
 import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import crackerUrl from '@/assets/Icons/cracker.svg';
+import dashboardUrl from '@/assets/Icons/dashboard.svg';
+import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
+import wrenchUrl from '@/assets/Icons/wrench.svg';
+import allInOneUrl from '@/assets/Images/allInOne.svg';
+import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
+import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
+import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
+
 import AlertRules from './AlertRules/AlertRules';
 import { defaultChecklistItemsState } from './constants';
 import Dashboards from './Dashboards/Dashboards';
@@ -313,7 +322,7 @@ export default function Home(): JSX.Element {
 										className="periscope-btn secondary welcome-checklist-btn"
 									>
 										<img
-											src="/Icons/spinner-half-blue.svg"
+											src={spinnerHalfBlueUrl}
 											alt="spinner-half-blue"
 											width={16}
 											height={16}
@@ -340,7 +349,7 @@ export default function Home(): JSX.Element {
 					/>
 
 					<div className="divider">
-						<img src="/Images/dotted-divider.svg" alt="divider" />
+						<img src={dottedDividerUrl} alt="divider" />
 					</div>
 
 					<div className="active-ingestions-container">
@@ -483,7 +492,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/wrench.svg"
+													src={wrenchUrl}
 													alt="wrench"
 													width={16}
 													height={16}
@@ -558,12 +567,7 @@ export default function Home(): JSX.Element {
 									<div className="section-container">
 										<div className="section-content">
 											<div className="section-icon">
-												<img
-													src="/Icons/dashboard.svg"
-													alt="dashboard"
-													width={16}
-													height={16}
-												/>
+												<img src={dashboardUrl} alt="dashboard" width={16} height={16} />
 											</div>
 
 											<div className="section-title">
@@ -602,7 +606,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/cracker.svg"
+													src={crackerUrl}
 													alt="cracker"
 													width={16}
 													height={16}
@@ -681,7 +685,7 @@ export default function Home(): JSX.Element {
 											<div className="checklist-container-right-img">
 												<div className="checklist-img-bg-container">
 													<img
-														src="/Images/perilianBackground.svg"
+														src={perilianBackgroundUrl}
 														alt="not-found"
 														className="checklist-img-bg"
 													/>
@@ -689,11 +693,7 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src={
-															isDarkMode
-																? '/Images/allInOne.svg'
-																: '/Images/allInOneLightMode.svg'
-														}
+														src={isDarkMode ? allInOneUrl : allInOneLightModeUrl}
 														alt="checklist-img"
 														className="checklist-img"
 													/>

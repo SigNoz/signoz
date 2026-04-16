@@ -1,5 +1,7 @@
 import { Typography } from 'antd';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import './NoData.styles.scss';
 
 interface INoDataProps {
@@ -11,7 +13,7 @@ function NoData(props: INoDataProps): JSX.Element {
 
 	return (
 		<div className="no-data">
-			<img src="/Icons/no-data.svg" alt="no-data" className="no-data-img" />
+			<img src={noDataUrl} alt="no-data" className="no-data-img" />
 			<Typography.Text className="no-data-text">
 				No {name} found for selected span
 			</Typography.Text>
