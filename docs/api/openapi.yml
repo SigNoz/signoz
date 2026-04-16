@@ -3641,6 +3641,33 @@ components:
       - nodata
       - disabled
       type: string
+    RuletypesBasicRuleThreshold:
+      properties:
+        channels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/RuletypesMatchType'
+        name:
+          type: string
+        op:
+          $ref: '#/components/schemas/RuletypesCompareOperator'
+        recoveryTarget:
+          nullable: true
+          type: number
+        target:
+          nullable: true
+          type: number
+        targetUnit:
+          type: string
+      type: object
+    RuletypesBasicRuleThresholds:
+      items:
+        $ref: '#/components/schemas/RuletypesBasicRuleThreshold'
+      nullable: true
+      type: array
     RuletypesCompareOperator:
       enum:
       - above
@@ -3649,11 +3676,56 @@ components:
       - not_equal
       - outside_bounds
       type: string
+    RuletypesCumulativeSchedule:
+      properties:
+        day:
+          nullable: true
+          type: integer
+        hour:
+          nullable: true
+          type: integer
+        minute:
+          nullable: true
+          type: integer
+        type:
+          type: string
+        weekday:
+          nullable: true
+          type: integer
+      type: object
+    RuletypesCumulativeWindow:
+      properties:
+        frequency:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesCumulativeSchedule'
+        timezone:
+          type: string
+      type: object
+    RuletypesEvaluationCumulative:
+      properties:
+        kind:
+          description: The kind of evaluation.
+          type: string
+        spec:
+          $ref: '#/components/schemas/RuletypesCumulativeWindow'
+      type: object
     RuletypesEvaluationEnvelope:
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       properties:
         kind:
           type: string
         spec: {}
+      type: object
+    RuletypesEvaluationRolling:
+      properties:
+        kind:
+          description: The kind of evaluation.
+          type: string
+        spec:
+          $ref: '#/components/schemas/RuletypesRollingWindow'
       type: object
     RuletypesGettablePlannedMaintenance:
       properties:
@@ -3743,6 +3815,10 @@ components:
           type: string
         version:
           type: string
+      required:
+      - alert
+      - ruleType
+      - condition
       type: object
     RuletypesGettableRules:
       properties:
@@ -3820,6 +3896,10 @@ components:
           type: string
         version:
           type: string
+      required:
+      - alert
+      - ruleType
+      - condition
       type: object
     RuletypesRecurrence:
       properties:
@@ -3849,6 +3929,13 @@ components:
         enabled:
           type: boolean
         interval:
+          type: string
+      type: object
+    RuletypesRollingWindow:
+      properties:
+        evalWindow:
+          type: string
+        frequency:
           type: string
       type: object
     RuletypesRuleCondition:
@@ -3883,6 +3970,8 @@ components:
           $ref: '#/components/schemas/RuletypesRuleThresholdData'
       type: object
     RuletypesRuleThresholdData:
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesThresholdBasic'
       properties:
         kind:
           type: string
@@ -3913,6 +4002,14 @@ components:
       - daily
       - weekly
       type: string
+    RuletypesThresholdBasic:
+      properties:
+        kind:
+          description: The kind of threshold.
+          type: string
+        spec:
+          $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      type: object
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:

@@ -38,14 +38,14 @@ const (
 
 // PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
-	AlertName   string              `json:"alert"`
+	AlertName   string              `json:"alert" required:"true"`
 	AlertType   AlertType           `json:"alertType,omitempty"`
 	Description string              `json:"description,omitempty"`
-	RuleType    RuleType            `json:"ruleType,omitzero"`
+	RuleType    RuleType            `json:"ruleType,omitzero" required:"true"`
 	EvalWindow  valuer.TextDuration `json:"evalWindow,omitzero"`
 	Frequency   valuer.TextDuration `json:"frequency,omitzero"`
 
-	RuleCondition *RuleCondition    `json:"condition,omitempty"`
+	RuleCondition *RuleCondition    `json:"condition,omitempty" required:"true"`
 	Labels        map[string]string `json:"labels,omitempty"`
 	Annotations   map[string]string `json:"annotations,omitempty"`
 

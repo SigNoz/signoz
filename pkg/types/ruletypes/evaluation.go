@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type EvaluationKind struct {
@@ -227,6 +228,29 @@ func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 type EvaluationEnvelope struct {
 	Kind EvaluationKind `json:"kind"`
 	Spec any            `json:"spec"`
+}
+
+// evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.
+type evaluationRolling struct {
+	Kind EvaluationKind `json:"kind" description:"The kind of evaluation."`
+	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification."`
+}
+
+// evaluationCumulative is the OpenAPI schema for an EvaluationEnvelope with kind=cumulative.
+type evaluationCumulative struct {
+	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation."`
+	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification."`
+}
+
+var _ jsonschema.OneOfExposer = EvaluationEnvelope{}
+
+// JSONSchemaOneOf returns the oneOf variants for the EvaluationEnvelope discriminated union.
+// Each variant represents a different evaluation kind with its corresponding spec schema.
+func (EvaluationEnvelope) JSONSchemaOneOf() []any {
+	return []any{
+		evaluationRolling{},
+		evaluationCumulative{},
+	}
 }
 
 func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {

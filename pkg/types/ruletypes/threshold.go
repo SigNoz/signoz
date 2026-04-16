@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type ThresholdKind struct {
@@ -24,6 +25,22 @@ var (
 type RuleThresholdData struct {
 	Kind ThresholdKind `json:"kind"`
 	Spec any           `json:"spec"`
+}
+
+// thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
+type thresholdBasic struct {
+	Kind ThresholdKind       `json:"kind" description:"The kind of threshold."`
+	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)."`
+}
+
+var _ jsonschema.OneOfExposer = RuleThresholdData{}
+
+// JSONSchemaOneOf returns the oneOf variants for the RuleThresholdData discriminated union.
+// Each variant represents a different threshold kind with its corresponding spec schema.
+func (RuleThresholdData) JSONSchemaOneOf() []any {
+	return []any{
+		thresholdBasic{},
+	}
 }
 
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {

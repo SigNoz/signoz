@@ -4557,6 +4557,41 @@ export enum RuletypesAlertStateDTO {
 	nodata = 'nodata',
 	disabled = 'disabled',
 }
+export interface RuletypesBasicRuleThresholdDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	channels?: string[] | null;
+	matchType?: RuletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	op?: RuletypesCompareOperatorDTO;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	recoveryTarget?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	target?: number | null;
+	/**
+	 * @type string
+	 */
+	targetUnit?: string;
+}
+
+/**
+ * @nullable
+ */
+export type RuletypesBasicRuleThresholdsDTO =
+	| RuletypesBasicRuleThresholdDTO[]
+	| null;
+
 export enum RuletypesCompareOperatorDTO {
 	above = 'above',
 	below = 'below',
@@ -4564,12 +4599,77 @@ export enum RuletypesCompareOperatorDTO {
 	not_equal = 'not_equal',
 	outside_bounds = 'outside_bounds',
 }
-export interface RuletypesEvaluationEnvelopeDTO {
+export interface RuletypesCumulativeScheduleDTO {
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	day?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	hour?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	minute?: number | null;
 	/**
 	 * @type string
 	 */
+	type?: string;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	weekday?: number | null;
+}
+
+export interface RuletypesCumulativeWindowDTO {
+	/**
+	 * @type string
+	 */
+	frequency?: string;
+	schedule?: RuletypesCumulativeScheduleDTO;
+	/**
+	 * @type string
+	 */
+	timezone?: string;
+}
+
+export interface RuletypesEvaluationCumulativeDTO {
+	/**
+	 * @type string
+	 * @description The kind of evaluation.
+	 */
 	kind?: string;
-	spec?: unknown;
+	spec?: RuletypesCumulativeWindowDTO;
+}
+
+export type RuletypesEvaluationEnvelopeDTO =
+	| (RuletypesEvaluationRollingDTO & {
+			/**
+			 * @type string
+			 */
+			kind?: string;
+			spec?: unknown;
+	  })
+	| (RuletypesEvaluationCumulativeDTO & {
+			/**
+			 * @type string
+			 */
+			kind?: string;
+			spec?: unknown;
+	  });
+
+export interface RuletypesEvaluationRollingDTO {
+	/**
+	 * @type string
+	 * @description The kind of evaluation.
+	 */
+	kind?: string;
+	spec?: RuletypesRollingWindowDTO;
 }
 
 export interface RuletypesGettablePlannedMaintenanceDTO {
@@ -4627,7 +4727,7 @@ export interface RuletypesGettableRuleDTO {
 	/**
 	 * @type string
 	 */
-	alert?: string;
+	alert: string;
 	/**
 	 * @type string
 	 */
@@ -4636,7 +4736,7 @@ export interface RuletypesGettableRuleDTO {
 	 * @type object
 	 */
 	annotations?: RuletypesGettableRuleDTOAnnotations;
-	condition?: RuletypesRuleConditionDTO;
+	condition: RuletypesRuleConditionDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4678,7 +4778,7 @@ export interface RuletypesGettableRuleDTO {
 	 * @type array
 	 */
 	preferredChannels?: string[];
-	ruleType?: RuletypesRuleTypeDTO;
+	ruleType: RuletypesRuleTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -4755,7 +4855,7 @@ export interface RuletypesPostableRuleDTO {
 	/**
 	 * @type string
 	 */
-	alert?: string;
+	alert: string;
 	/**
 	 * @type string
 	 */
@@ -4764,7 +4864,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type object
 	 */
 	annotations?: RuletypesPostableRuleDTOAnnotations;
-	condition?: RuletypesRuleConditionDTO;
+	condition: RuletypesRuleConditionDTO;
 	/**
 	 * @type string
 	 */
@@ -4791,7 +4891,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type array
 	 */
 	preferredChannels?: string[];
-	ruleType?: RuletypesRuleTypeDTO;
+	ruleType: RuletypesRuleTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -4848,6 +4948,17 @@ export interface RuletypesRenotifyDTO {
 	interval?: string;
 }
 
+export interface RuletypesRollingWindowDTO {
+	/**
+	 * @type string
+	 */
+	evalWindow?: string;
+	/**
+	 * @type string
+	 */
+	frequency?: string;
+}
+
 export interface RuletypesRuleConditionDTO {
 	/**
 	 * @type integer
@@ -4890,13 +5001,13 @@ export interface RuletypesRuleConditionDTO {
 	thresholds?: RuletypesRuleThresholdDataDTO;
 }
 
-export interface RuletypesRuleThresholdDataDTO {
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
 	/**
 	 * @type string
 	 */
 	kind?: string;
 	spec?: unknown;
-}
+};
 
 export enum RuletypesRuleTypeDTO {
 	threshold_rule = 'threshold_rule',
@@ -4926,6 +5037,15 @@ export enum RuletypesSeasonalityDTO {
 	daily = 'daily',
 	weekly = 'weekly',
 }
+export interface RuletypesThresholdBasicDTO {
+	/**
+	 * @type string
+	 * @description The kind of threshold.
+	 */
+	kind?: string;
+	spec?: RuletypesBasicRuleThresholdsDTO;
+}
+
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
