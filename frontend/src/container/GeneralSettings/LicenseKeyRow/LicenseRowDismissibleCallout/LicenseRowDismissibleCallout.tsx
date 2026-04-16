@@ -28,12 +28,8 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 		featureFlags?.find((feature) => feature.name === FeatureKeys.GATEWAY)
 			?.active || false;
 
-	// Service accounts are only accessible to admins
 	const hasServiceAccountsAccess = isAdmin;
 
-	// Ingestion settings are accessible to:
-	// - Cloud users when gateway is not enabled
-	// - Admin/Editor when gateway is enabled
 	const hasIngestionAccess =
 		(isCloudUser && !isGatewayEnabled) ||
 		(isGatewayEnabled && (isAdmin || isEditor));

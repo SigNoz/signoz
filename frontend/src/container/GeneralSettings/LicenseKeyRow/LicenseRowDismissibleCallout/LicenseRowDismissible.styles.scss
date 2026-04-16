@@ -14,7 +14,7 @@
 	.license-key-callout__link {
 		display: inline-flex;
 		align-items: center;
-		padding: 1px 5px;
+		padding: var(--spacing-1) var(--spacing-3);
 		border-radius: 2px;
 		background: var(--callout-primary-background);
 		color: var(--callout-primary-description);

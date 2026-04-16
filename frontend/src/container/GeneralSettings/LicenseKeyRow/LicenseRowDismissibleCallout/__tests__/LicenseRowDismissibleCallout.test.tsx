@@ -125,6 +125,16 @@ describe('LicenseRowDismissibleCallout', () => {
 				expectedText:
 					'This is NOT your ingestion or Service account key. Find your Ingestion key here.',
 			},
+			{
+				scenario: 'editor, cloud, gateway off — ingestion link only',
+				role: USER_ROLES.EDITOR,
+				isCloudUser: true,
+				gatewayActive: false,
+				serviceAccountLink: false,
+				ingestionLink: true,
+				expectedText:
+					'This is NOT your ingestion or Service account key. Find your Ingestion key here.',
+			},
 		])(
 			'$scenario',
 			({
