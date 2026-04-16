@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -34,6 +33,7 @@ func NewFactory(sqlstore sqlstore.SQLStore, queryParser queryparser.QueryParser)
 }
 
 func New(
+	config ruler.Config,
 	cache cache.Cache,
 	alertmanager alertmanager.Alertmanager,
 	sqlstore sqlstore.SQLStore,
@@ -59,7 +59,7 @@ func New(
 		Querier:                querier,
 		Logger:                 providerSettings.Logger,
 		Cache:                  cache,
-		EvalDelay:              constants.GetEvalDelay(),
+		EvalDelay:              config.EvalDelay,
 		PrepareTaskFunc:        prepareTaskFunc,
 		PrepareTestRuleFunc:    prepareTestRuleFunc,
 		Alertmanager:           alertmanager,
