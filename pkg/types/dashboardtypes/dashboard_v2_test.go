@@ -620,8 +620,8 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 	if spec.ChartAppearance.SpanGaps.FillOnlyBelow != false {
 		t.Fatalf("expected SpanGaps.FillOnlyBelow default false, got %v", spec.ChartAppearance.SpanGaps.FillOnlyBelow)
 	}
-	if spec.Visualization.TimePreference.Value() != "globalTime" {
-		t.Fatalf("expected TimePreference default globalTime, got %v", spec.Visualization.TimePreference.Value())
+	if spec.Visualization.TimePreference.Value() != "global_time" {
+		t.Fatalf("expected TimePreference default global_time, got %v", spec.Visualization.TimePreference.Value())
 	}
 	if spec.Legend.Position.Value() != "bottom" {
 		t.Fatalf("expected LegendPosition default bottom, got %v", spec.Legend.Position.Value())

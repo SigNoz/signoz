@@ -243,16 +243,16 @@ type TimePreference struct {
 }
 
 const (
-	TimePreferenceGlobalTime = "globalTime" // default
-	TimePreferenceLast5Min   = "last5Min"
-	TimePreferenceLast15Min  = "last15Min"
-	TimePreferenceLast30Min  = "last30Min"
-	TimePreferenceLast1Hr    = "last1Hr"
-	TimePreferenceLast6Hr    = "last6Hr"
-	TimePreferenceLast1Day   = "last1Day"
-	TimePreferenceLast3Days  = "last3Days"
-	TimePreferenceLast1Week  = "last1Week"
-	TimePreferenceLast1Month = "last1Month"
+	TimePreferenceGlobalTime = "global_time" // default
+	TimePreferenceLast5Min   = "last_5_min"
+	TimePreferenceLast15Min  = "last_15_min"
+	TimePreferenceLast30Min  = "last_30_min"
+	TimePreferenceLast1Hr    = "last_1_hr"
+	TimePreferenceLast6Hr    = "last_6_hr"
+	TimePreferenceLast1Day   = "last_1_day"
+	TimePreferenceLast3Days  = "last_3_days"
+	TimePreferenceLast1Week  = "last_1_week"
+	TimePreferenceLast1Month = "last_1_month"
 )
 
 func (t TimePreference) Value() string {
@@ -272,7 +272,7 @@ func (t *TimePreference) UnmarshalJSON(data []byte) error {
 		t.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `globalTime`, `last5Min`, `last15Min`, `last30Min`, `last1Hr`, `last6Hr`, `last1Day`, `last3Days`, `last1Week`, or `last1Month`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid timePreference %q: must be `global_time`, `last_5_min`, `last_15_min`, `last_30_min`, `last_1_hr`, `last_6_hr`, `last_1_day`, `last_3_days`, `last_1_week`, or `last_1_month`", v)
 	}
 }
 
@@ -402,8 +402,8 @@ type LineInterpolation struct {
 const (
 	LineInterpolationLinear     = "linear"
 	LineInterpolationSpline     = "spline" // default
-	LineInterpolationStepAfter  = "stepAfter"
-	LineInterpolationStepBefore = "stepBefore"
+	LineInterpolationStepAfter  = "step_after"
+	LineInterpolationStepBefore = "step_before"
 )
 
 func (li LineInterpolation) Value() string {
@@ -423,7 +423,7 @@ func (li *LineInterpolation) UnmarshalJSON(data []byte) error {
 		li.value = v
 		return nil
 	default:
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `stepAfter`, or `stepBefore`", v)
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid line interpolation %q: must be `linear`, `spline`, `step_after`, or `step_before`", v)
 	}
 }
 
