@@ -148,9 +148,6 @@ type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
 
-	// rule manager handles rule crud operations
-	RuleManager ruler.Ruler
-
 	// Integrations
 	IntegrationsController *integrations.Controller
 
@@ -206,7 +203,7 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		logger:                        slog.Default(),
 		reader:                        opts.Reader,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
-		ruleManager:                   opts.RuleManager,
+		ruleManager:                   opts.Signoz.Ruler,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
