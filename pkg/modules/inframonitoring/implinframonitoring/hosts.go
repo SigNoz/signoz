@@ -387,7 +387,7 @@ func (m *module) getHostsTableMetadata(ctx context.Context, req *inframonitoring
 // hostCounts is nil when host.name is in the groupBy — in that case, counts are
 // derived directly from activeHostsMap (1/0 per host). When non-nil (custom groupBy
 // without host.name), counts are looked up from the map.
-func (m *module) buildHostRecords(
+func buildHostRecords(
 	isHostNameInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
 	pageGroups []map[string]string,
@@ -529,9 +529,17 @@ func (m *module) getPerGroupActiveInactiveHostCounts(
 	ctx context.Context,
 	req *inframonitoringtypes.HostsListRequest,
 	metricNames []string,
-	filterExpr string,
+	pageGroups []map[string]string,
 	sinceUnixMilli int64,
 ) (map[string]groupHostCounts, error) {
+
+	// Build the full filter expression from req (user filter + status filter) and page groups.
+	reqFilterExpr := ""
+	if req.Filter != nil {
+		reqFilterExpr = req.Filter.Expression
+	}
+	pageGroupsFilterExpr := buildPageGroupsFilterExpr(pageGroups)
+	filterExpr := mergeFilterExpressions(reqFilterExpr, pageGroupsFilterExpr)
 
 	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
 		uint64(req.Start), uint64(req.End), nil,
