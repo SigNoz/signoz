@@ -2,19 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
-import { listRules } from 'api/generated/services/rules';
-import type { SuccessResponse } from 'types/api';
-import type { PayloadProps } from 'types/api/alerts/getAll';
-
-const getAll = async (): Promise<SuccessResponse<PayloadProps>> => {
-	const response = await listRules();
-	return {
-		statusCode: 200,
-		error: null,
-		message: response.status,
-		payload: ((response.data?.rules ?? []) as unknown) as PayloadProps,
-	};
-};
+import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
