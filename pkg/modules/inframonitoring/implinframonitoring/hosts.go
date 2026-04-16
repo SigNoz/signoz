@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
@@ -469,10 +468,8 @@ func (m *module) buildHostRecords(
 // getActiveHostsQuery builds a SelectBuilder that returns distinct host names
 // with metrics reported in the last 10 minutes. The builder is not executed —
 // callers can either execute it (getActiveHosts) or embed it as a subquery
-// (getPerGroupHostCounts).
-func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string) *sqlbuilder.SelectBuilder {
-	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
-
+// (getPerGroupActiveInactiveHostCounts).
+func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string, sinceUnixMilli int64) *sqlbuilder.SelectBuilder {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Distinct()
 	sb.Select("attr_string_value")
@@ -489,8 +486,8 @@ func (m *module) getActiveHostsQuery(metricNames []string, hostNameAttr string) 
 
 // getActiveHosts returns a set of host names that have reported metrics recently.
 // It queries distributed_metadata for hosts where last_reported_unix_milli >= 10 minutes ago.
-func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string) (map[string]bool, error) {
-	sb := m.getActiveHostsQuery(metricNames, hostNameAttr)
+func (m *module) getActiveHosts(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
+	sb := m.getActiveHostsQuery(metricNames, hostNameAttr, sinceUnixMilli)
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
 	rows, err := m.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
@@ -533,6 +530,7 @@ func (m *module) getPerGroupActiveInactiveHostCounts(
 	req *inframonitoringtypes.HostsListRequest,
 	metricNames []string,
 	filterExpr string,
+	sinceUnixMilli int64,
 ) (map[string]groupHostCounts, error) {
 
 	adjustedStart, adjustedEnd, distributedTimeSeriesTableName, _ := telemetrymetrics.WhichTSTableToUse(
@@ -549,7 +547,7 @@ func (m *module) getPerGroupActiveInactiveHostCounts(
 		)
 	}
 
-	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey)
+	activeHostsSQ := m.getActiveHostsQuery(metricNames, hostNameAttrKey, sinceUnixMilli)
 	selectCols = append(selectCols,
 		fmt.Sprintf("uniqExactIf(%s, %s GLOBAL IN (%s)) AS active_host_count", hostNameExpr, hostNameExpr, sb.Var(activeHostsSQ)),
 		fmt.Sprintf("uniqExactIf(%s, %s != '') AS total_host_count", hostNameExpr, hostNameExpr),

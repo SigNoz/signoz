@@ -3,6 +3,7 @@ package implinframonitoring
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
@@ -94,9 +95,11 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	}
 
 	// TODO: replace this separate ClickHouse query with a sub-query inside the main query builder query
-	// once QB supports sub-queries. Tracked in PR #10805 review.
+	// once QB supports sub-queries.
 	// Determine active hosts: those with metrics reported in the last 10 minutes.
-	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey)
+	// Compute the cutoff once so every downstream query/subquery agrees on what "active" means.
+	sinceUnixMilli := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	activeHostsMap, err := m.getActiveHosts(ctx, hostsTableMetricNamesList, hostNameAttrKey, sinceUnixMilli)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +150,7 @@ func (m *module) HostsList(ctx context.Context, orgID valuer.UUID, req *inframon
 	isHostNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, hostNameAttrKey)
 	if !isHostNameInGroupBy {
 		fullFilterExpr := mergeFilterExpressions(hostsFilterExpr, pageGroupsFilterExpr)
-		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, fullFilterExpr)
+		hostCounts, err = m.getPerGroupActiveInactiveHostCounts(ctx, req, hostsTableMetricNamesList, fullFilterExpr, sinceUnixMilli)
 		if err != nil {
 			return nil, err
 		}
