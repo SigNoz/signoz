@@ -2,6 +2,7 @@ package dashboardtypes
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -529,9 +530,20 @@ func (p PrecisionOption) Value() string {
 }
 
 func (p *PrecisionOption) UnmarshalJSON(data []byte) error {
+	// Accept int values 0-4 and store as string.
+	var n int
+	if err := json.Unmarshal(data, &n); err == nil {
+		switch n {
+		case 0, 1, 2, 3, 4:
+			p.value = strconv.Itoa(n)
+			return nil
+		default:
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid precision option %d: must be `0`, `1`, `2`, `3`, `4`, or `full`", n)
+		}
+	}
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be a string, one of `0`, `1`, `2`, `3`, `4`, or `full`")
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid precision option: must be `0`, `1`, `2`, `3`, `4`, or `full`")
 	}
 	switch v {
 	case PrecisionOption0, PrecisionOption1, PrecisionOption2, PrecisionOption3, PrecisionOption4, PrecisionOptionFull:
