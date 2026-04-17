@@ -18,6 +18,14 @@ var (
 	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for EvaluationKind.
+func (EvaluationKind) Enum() []any {
+	return []any{
+		RollingEvaluation,
+		CumulativeEvaluation,
+	}
+}
+
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
 	GetFrequency() valuer.TextDuration
@@ -70,6 +78,16 @@ var (
 	ScheduleTypeWeekly  = ScheduleType{valuer.NewString("weekly")}
 	ScheduleTypeMonthly = ScheduleType{valuer.NewString("monthly")}
 )
+
+// Enum implements jsonschema.Enum; returns the acceptable values for ScheduleType.
+func (ScheduleType) Enum() []any {
+	return []any{
+		ScheduleTypeHourly,
+		ScheduleTypeDaily,
+		ScheduleTypeWeekly,
+		ScheduleTypeMonthly,
+	}
+}
 
 func (cumulativeWindow CumulativeWindow) Validate() error {
 	// Validate schedule

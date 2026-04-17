@@ -22,6 +22,13 @@ var (
 	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for ThresholdKind.
+func (ThresholdKind) Enum() []any {
+	return []any{
+		BasicThresholdKind,
+	}
+}
+
 type RuleThresholdData struct {
 	Kind ThresholdKind `json:"kind"`
 	Spec any           `json:"spec"`

@@ -3688,7 +3688,7 @@ components:
           nullable: true
           type: integer
         type:
-          type: string
+          $ref: '#/components/schemas/RuletypesScheduleType'
         weekday:
           nullable: true
           type: integer
@@ -3705,8 +3705,7 @@ components:
     RuletypesEvaluationCumulative:
       properties:
         kind:
-          description: The kind of evaluation.
-          type: string
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
       type: object
@@ -3716,14 +3715,18 @@ components:
       - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec: {}
       type: object
+    RuletypesEvaluationKind:
+      enum:
+      - rolling
+      - cumulative
+      type: string
     RuletypesEvaluationRolling:
       properties:
         kind:
-          description: The kind of evaluation.
-          type: string
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
       type: object
@@ -3974,7 +3977,7 @@ components:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
       properties:
         kind:
-          type: string
+          $ref: '#/components/schemas/RuletypesThresholdKind'
         spec: {}
       type: object
     RuletypesRuleType:
@@ -3996,6 +3999,13 @@ components:
         timezone:
           type: string
       type: object
+    RuletypesScheduleType:
+      enum:
+      - hourly
+      - daily
+      - weekly
+      - monthly
+      type: string
     RuletypesSeasonality:
       enum:
       - hourly
@@ -4005,11 +4015,14 @@ components:
     RuletypesThresholdBasic:
       properties:
         kind:
-          description: The kind of threshold.
-          type: string
+          $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
       type: object
+    RuletypesThresholdKind:
+      enum:
+      - basic
+      type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:

@@ -4615,10 +4615,7 @@ export interface RuletypesCumulativeScheduleDTO {
 	 * @nullable true
 	 */
 	minute?: number | null;
-	/**
-	 * @type string
-	 */
-	type?: string;
+	type?: RuletypesScheduleTypeDTO;
 	/**
 	 * @type integer
 	 * @nullable true
@@ -4639,36 +4636,26 @@ export interface RuletypesCumulativeWindowDTO {
 }
 
 export interface RuletypesEvaluationCumulativeDTO {
-	/**
-	 * @type string
-	 * @description The kind of evaluation.
-	 */
-	kind?: string;
+	kind?: RuletypesEvaluationKindDTO;
 	spec?: RuletypesCumulativeWindowDTO;
 }
 
 export type RuletypesEvaluationEnvelopeDTO =
 	| (RuletypesEvaluationRollingDTO & {
-			/**
-			 * @type string
-			 */
-			kind?: string;
+			kind?: RuletypesEvaluationKindDTO;
 			spec?: unknown;
 	  })
 	| (RuletypesEvaluationCumulativeDTO & {
-			/**
-			 * @type string
-			 */
-			kind?: string;
+			kind?: RuletypesEvaluationKindDTO;
 			spec?: unknown;
 	  });
 
+export enum RuletypesEvaluationKindDTO {
+	rolling = 'rolling',
+	cumulative = 'cumulative',
+}
 export interface RuletypesEvaluationRollingDTO {
-	/**
-	 * @type string
-	 * @description The kind of evaluation.
-	 */
-	kind?: string;
+	kind?: RuletypesEvaluationKindDTO;
 	spec?: RuletypesRollingWindowDTO;
 }
 
@@ -5002,10 +4989,7 @@ export interface RuletypesRuleConditionDTO {
 }
 
 export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind?: RuletypesThresholdKindDTO;
 	spec?: unknown;
 };
 
@@ -5032,20 +5016,25 @@ export interface RuletypesScheduleDTO {
 	timezone?: string;
 }
 
+export enum RuletypesScheduleTypeDTO {
+	hourly = 'hourly',
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
 export enum RuletypesSeasonalityDTO {
 	hourly = 'hourly',
 	daily = 'daily',
 	weekly = 'weekly',
 }
 export interface RuletypesThresholdBasicDTO {
-	/**
-	 * @type string
-	 * @description The kind of threshold.
-	 */
-	kind?: string;
+	kind?: RuletypesThresholdKindDTO;
 	spec?: RuletypesBasicRuleThresholdsDTO;
 }
 
+export enum RuletypesThresholdKindDTO {
+	basic = 'basic',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
