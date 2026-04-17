@@ -35,7 +35,7 @@ describe('filterAlerts', () => {
 			...mockAlertBase,
 			id: '1',
 			alert: 'High CPU Usage',
-			alertType: 'metrics',
+			alertType: 'METRIC_BASED_ALERT',
 			labels: {
 				severity: 'warning',
 				status: 'ok',
@@ -46,7 +46,7 @@ describe('filterAlerts', () => {
 			...mockAlertBase,
 			id: '2',
 			alert: 'Memory Leak Detected',
-			alertType: 'metrics',
+			alertType: 'METRIC_BASED_ALERT',
 			labels: {
 				severity: 'critical',
 				status: 'firing',
@@ -57,7 +57,7 @@ describe('filterAlerts', () => {
 			...mockAlertBase,
 			id: '3',
 			alert: 'Database Connection Error',
-			alertType: 'metrics',
+			alertType: 'METRIC_BASED_ALERT',
 			labels: {
 				severity: 'error',
 				status: 'pending',
@@ -119,7 +119,7 @@ describe('filterAlerts', () => {
 				...mockAlertBase,
 				id: '4',
 				alert: 'Test Alert',
-				alertType: 'metrics',
+				alertType: 'METRIC_BASED_ALERT',
 				labels: undefined,
 			} as RuletypesGettableRuleDTO,
 		];
@@ -134,7 +134,7 @@ describe('filterAlerts', () => {
 				...mockAlertBase,
 				id: '5',
 				alert: '',
-				alertType: 'metrics',
+				alertType: 'METRIC_BASED_ALERT',
 				labels: {
 					severity: 'warning',
 				},

@@ -18,7 +18,7 @@ function ListAlertRules(): JSX.Element {
 		query: { cacheTime: 0 },
 	});
 
-	const rules = data?.data?.rules ?? [];
+	const rules = data?.data ?? [];
 	const hasLoaded = !isLoading && data !== undefined;
 	const logEventCalledRef = useRef(false);
 

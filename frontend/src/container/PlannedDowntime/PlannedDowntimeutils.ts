@@ -5,7 +5,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
-	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesPlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
@@ -94,7 +94,7 @@ export const defautlInitialValues = ({
 	createdBy: '',
 	editMode: false,
 } as unknown) as Partial<
-	RuletypesGettablePlannedMaintenanceDTO & { editMode: boolean }
+	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
 >;
 
 type DeleteDowntimeScheduleProps = {
@@ -228,7 +228,7 @@ export const getEndTime = ({
 	kind,
 	schedule,
 }: Partial<
-	RuletypesGettablePlannedMaintenanceDTO & {
+	RuletypesPlannedMaintenanceDTO & {
 		editMode: boolean;
 	}
 >): string | dayjs.Dayjs => {
@@ -242,7 +242,7 @@ export const getEndTime = ({
 };
 
 export const isScheduleRecurring = (
-	schedule?: RuletypesGettablePlannedMaintenanceDTO['schedule'] | null,
+	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
 
 function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {

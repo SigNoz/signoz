@@ -8,7 +8,7 @@ import {
 	useListDowntimeSchedules,
 } from 'api/generated/services/downtimeschedules';
 import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesGettablePlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
@@ -44,13 +44,13 @@ export function PlannedDowntime(): JSX.Element {
 	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] = useState<
-		Partial<RuletypesGettablePlannedMaintenanceDTO & { editMode: boolean }>
+		Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>
 	>(defautlInitialValues);
 
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(
 		() =>
-			alertsData?.data?.rules?.map((i: any) => ({
+			alertsData?.data?.map((i) => ({
 				label: i.alert,
 				value: i.id,
 			})),

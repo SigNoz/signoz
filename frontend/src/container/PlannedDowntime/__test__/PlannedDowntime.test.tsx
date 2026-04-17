@@ -113,11 +113,11 @@ jest.mock('api/generated/services/downtimeschedules', () => ({
 }));
 jest.mock('api/generated/services/rules', () => ({
 	useListRules: (): {
-		data: { data: { rules: [] } };
+		data: { data: [] };
 		isError: false;
 		isLoading: false;
 	} => ({
-		data: { data: { rules: [] } },
+		data: { data: [] },
 		isError: false,
 		isLoading: false,
 	}),

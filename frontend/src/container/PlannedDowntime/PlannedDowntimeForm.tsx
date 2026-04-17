@@ -20,7 +20,8 @@ import {
 	updateDowntimeScheduleByID,
 } from 'api/generated/services/downtimeschedules';
 import type {
-	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesPlannedMaintenanceDTO,
+	RuletypesPostablePlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -77,7 +78,7 @@ const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<
-		RuletypesGettablePlannedMaintenanceDTO & {
+		RuletypesPlannedMaintenanceDTO & {
 			editMode: boolean;
 		}
 	>;
@@ -140,7 +141,7 @@ export function PlannedDowntimeForm(
 	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
-			const data: RuletypesGettablePlannedMaintenanceDTO = {
+			const data: RuletypesPostablePlannedMaintenanceDTO = {
 				alertIds: values.alertRules
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
@@ -287,15 +288,19 @@ export function PlannedDowntimeForm(
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
 			recurrence: {
-				...(initialValues.schedule?.recurrence as Record<string, unknown>),
-				repeatType: !isScheduleRecurring(initialValues?.schedule)
+				...((initialValues.schedule?.recurrence as unknown) as Record<
+					string,
+					unknown
+				>),
+				repeatType: (!isScheduleRecurring(initialValues?.schedule)
 					? recurrenceOptions.doesNotRepeat.value
-					: (initialValues.schedule?.recurrence?.repeatType as string),
+					: initialValues.schedule?.recurrence
+							?.repeatType) as RuletypesRecurrenceDTO['repeatType'],
 				duration: String(
 					getDurationInfo(initialValues.schedule?.recurrence?.duration as string)
 						?.value ?? '',
 				),
-			},
+			} as RuletypesRecurrenceDTO,
 			timezone: initialValues.schedule?.timezone as string,
 		};
 		return formData;

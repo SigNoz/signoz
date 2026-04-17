@@ -13,7 +13,7 @@ export const filterAlerts = (
 
 	const value = filter.trim().toLowerCase();
 	return allAlertRules.filter((alert) => {
-		const alertName = alert.alert?.toLowerCase();
+		const alertName = alert.alert.toLowerCase();
 		const severity = alert.labels?.severity?.toLowerCase();
 
 		// Create a string of all label keys and values for searching
@@ -23,7 +23,7 @@ export const filterAlerts = (
 			.toLowerCase();
 
 		return (
-			alertName?.includes(value) ||
+			alertName.includes(value) ||
 			severity?.includes(value) ||
 			labelSearchString.includes(value)
 		);
@@ -52,9 +52,10 @@ export const alertActionLogEvent = (
 			break;
 	}
 	logEvent('Alert: Action', {
-		ruleId: record?.id,
-		dataSource: ALERTS_DATA_SOURCE_MAP[record.alertType as AlertTypes],
-		name: record?.alert,
+		ruleId: record.id,
+		dataSource:
+			ALERTS_DATA_SOURCE_MAP[(record.alertType as unknown) as AlertTypes],
+		name: record.alert,
 		action: actionValue,
 	});
 };

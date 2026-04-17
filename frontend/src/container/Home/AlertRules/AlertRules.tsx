@@ -41,7 +41,7 @@ export default function AlertRules({
 	});
 
 	useEffect(() => {
-		const rules = alerts?.data?.rules ?? [];
+		const rules = alerts?.data ?? [];
 		setRulesExist(rules.length > 0);
 
 		const sortedRules = [...rules].sort((a, b) => {
@@ -54,9 +54,7 @@ export default function AlertRules({
 			}
 
 			// Then sort by updateAt timestamp
-			const aUpdateAt = a.updateAt ? new Date(a.updateAt).getTime() : 0;
-			const bUpdateAt = b.updateAt ? new Date(b.updateAt).getTime() : 0;
-			return bUpdateAt - aUpdateAt;
+			return new Date(b.updateAt).getTime() - new Date(a.updateAt).getTime();
 		});
 
 		if (sortedRules.length > 0 && !loadingUserPreferences) {
@@ -127,19 +125,19 @@ export default function AlertRules({
 		});
 
 		const compositeQuery = mapQueryDataFromApi(
-			(record.condition?.compositeQuery as unknown) as ICompositeMetricQuery,
+			(record.condition.compositeQuery as unknown) as ICompositeMetricQuery,
 		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		const panelType = record.condition?.compositeQuery?.panelType;
+		const panelType = record.condition.compositeQuery.panelType;
 		if (panelType) {
 			params.set(QueryParams.panelTypes, panelType);
 		}
 
-		params.set(QueryParams.ruleId, record.id ?? '');
+		params.set(QueryParams.ruleId, record.id);
 
 		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
@@ -162,7 +160,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={getItemIcon(rule.id ?? '')}
+								src={getItemIcon(rule.id)}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>
@@ -175,9 +173,9 @@ export default function AlertRules({
 						<div className="alert-rule-item-description home-data-item-tag">
 							<Tag color={rule?.labels?.severity}>{rule?.labels?.severity}</Tag>
 
-							{rule?.state === 'firing' && (
+							{rule.state === 'firing' && (
 								<Tag color="red" className="firing-tag">
-									{rule?.state}
+									{rule.state}
 								</Tag>
 							)}
 						</div>

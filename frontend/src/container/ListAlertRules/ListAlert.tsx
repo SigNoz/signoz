@@ -96,7 +96,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			const { data: refetchData, status } = await refetch();
 			if (status === 'success') {
 				const value = searchString.toLowerCase();
-				const filteredData = filterAlerts(refetchData?.data?.rules ?? [], value);
+				const filteredData = filterAlerts(refetchData?.data ?? [], value);
 				setData(filteredData || []);
 			}
 			if (status === 'error') {
@@ -129,21 +129,21 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
 			mapQueryDataFromApi(
-				(record.condition?.compositeQuery as unknown) as ICompositeMetricQuery,
+				(record.condition.compositeQuery as unknown) as ICompositeMetricQuery,
 			),
-			record.alertType as AlertTypes,
+			(record.alertType as unknown) as AlertTypes,
 		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		const panelType = record.condition?.compositeQuery?.panelType;
+		const panelType = record.condition.compositeQuery.panelType;
 		if (panelType) {
 			params.set(QueryParams.panelTypes, panelType);
 		}
 
-		params.set(QueryParams.ruleId, record.id ?? '');
+		params.set(QueryParams.ruleId, record.id);
 
 		setEditLoader(false);
 
@@ -157,7 +157,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	) => async (): Promise<void> => {
 		const copyAlert: RuletypesGettableRuleDTO = {
 			...originalAlert,
-			alert: `${originalAlert.alert ?? ''} - Copy`,
+			alert: `${originalAlert.alert} - Copy`,
 		};
 
 		try {
@@ -170,7 +170,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			});
 
 			const { data: refetchData, status } = await refetch();
-			const rules = refetchData?.data?.rules;
+			const rules = refetchData?.data;
 			if (status === 'success' && rules) {
 				setData(rules);
 				setTimeout(() => {

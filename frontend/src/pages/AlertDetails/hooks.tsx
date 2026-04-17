@@ -415,11 +415,11 @@ export const useAlertRuleStatusToggle = ({
 			),
 		{
 			onSuccess: (data) => {
-				setAlertRuleState(data?.data?.state);
+				setAlertRuleState(data.data.state);
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
-						data?.data?.state === 'disabled' ? 'disabled' : 'enabled'
+						data.data.state === 'disabled' ? 'disabled' : 'enabled'
 					}.`,
 				});
 			},
@@ -468,7 +468,7 @@ export const useAlertRuleDuplicate = ({
 
 				const { data: allAlertsData } = await refetch();
 
-				const rules = allAlertsData?.data?.rules;
+				const rules = allAlertsData?.data;
 				if (rules && rules.length > 0) {
 					const clonedAlert = rules[rules.length - 1];
 					params.set(QueryParams.ruleId, String(clonedAlert.id));

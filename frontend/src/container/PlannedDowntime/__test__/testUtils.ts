@@ -1,6 +1,10 @@
 import type {
-	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesPlannedMaintenanceDTO,
 	RuletypesScheduleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	RuletypesMaintenanceKindDTO,
+	RuletypesMaintenanceStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export const buildSchedule = (
@@ -13,8 +17,8 @@ export const buildSchedule = (
 });
 
 export const createMockDowntime = (
-	overrides: Partial<RuletypesGettablePlannedMaintenanceDTO>,
-): RuletypesGettablePlannedMaintenanceDTO => ({
+	overrides: Partial<RuletypesPlannedMaintenanceDTO>,
+): RuletypesPlannedMaintenanceDTO => ({
 	id: overrides.id ?? '0',
 	name: overrides.name ?? '',
 	description: overrides.description ?? '',
@@ -28,5 +32,6 @@ export const createMockDowntime = (
 	createdBy: overrides.createdBy ?? '',
 	updatedAt: overrides.updatedAt,
 	updatedBy: overrides.updatedBy ?? '',
-	kind: overrides.kind ?? '',
+	kind: overrides.kind ?? RuletypesMaintenanceKindDTO.recurring,
+	status: overrides.status ?? RuletypesMaintenanceStatusDTO.active,
 });

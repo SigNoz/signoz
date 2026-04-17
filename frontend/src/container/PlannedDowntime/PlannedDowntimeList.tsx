@@ -15,7 +15,7 @@ import type { DefaultOptionType } from 'antd/es/select';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
-	RuletypesGettablePlannedMaintenanceDTO,
+	RuletypesPlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
@@ -220,7 +220,7 @@ export function CollapseListContent({
 export function CustomCollapseList(
 	props: DowntimeSchedulesTableData & {
 		setInitialValues: React.Dispatch<
-			React.SetStateAction<Partial<RuletypesGettablePlannedMaintenanceDTO>>
+			React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
 		>;
 		setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 		handleDeleteDowntime: (id: string, name: string) => void;
@@ -255,7 +255,7 @@ export function CustomCollapseList(
 	const endTime = getEndTime({
 		kind,
 		schedule,
-	} as Partial<RuletypesGettablePlannedMaintenanceDTO>);
+	} as Partial<RuletypesPlannedMaintenanceDTO>);
 
 	return (
 		<>
@@ -309,7 +309,7 @@ export function CustomCollapseList(
 	);
 }
 
-export type DowntimeSchedulesTableData = RuletypesGettablePlannedMaintenanceDTO & {
+export type DowntimeSchedulesTableData = RuletypesPlannedMaintenanceDTO & {
 	alertOptions: DefaultOptionType[];
 };
 
@@ -328,7 +328,7 @@ export function PlannedDowntimeList({
 	>;
 	alertOptions: DefaultOptionType[];
 	setInitialValues: React.Dispatch<
-		React.SetStateAction<Partial<RuletypesGettablePlannedMaintenanceDTO>>
+		React.SetStateAction<Partial<RuletypesPlannedMaintenanceDTO>>
 	>;
 	setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	handleDeleteDowntime: (id: string, name: string) => void;
@@ -358,12 +358,12 @@ export function PlannedDowntimeList({
 			}
 			return 0;
 		})
-		?.filter(
+		.filter(
 			(data) =>
-				data?.name?.includes(searchValue.toLocaleString()) ||
-				String(data?.id ?? '') === searchValue.toLocaleString(),
+				data.name.includes(searchValue.toLocaleString()) ||
+				data.id === searchValue.toLocaleString(),
 		)
-		.map?.((data) => {
+		.map((data) => {
 			const specificAlertOptions = getAlertOptionsFromIds(
 				data.alertIds || [],
 				alertOptions,

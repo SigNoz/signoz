@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
 import type {
-	CreateRule200,
+	CreateRule201,
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
 	TestRule200,
@@ -27,7 +27,7 @@ export interface ICreateAlertContextProps {
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
-		CreateRule200,
+		CreateRule201,
 		ErrorType<unknown>,
 		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
