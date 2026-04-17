@@ -382,7 +382,7 @@ type ListPlannedMaintenanceParams struct {
 }
 
 type MaintenanceStore interface {
-	CreatePlannedMaintenance(context.Context, *PostablePlannedMaintenance) (valuer.UUID, error)
+	CreatePlannedMaintenance(context.Context, *PostablePlannedMaintenance) (*PlannedMaintenance, error)
 	DeletePlannedMaintenance(context.Context, valuer.UUID) error
 	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
 	UpdatePlannedMaintenance(context.Context, *PostablePlannedMaintenance, valuer.UUID) error

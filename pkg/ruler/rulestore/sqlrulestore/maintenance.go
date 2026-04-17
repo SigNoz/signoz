@@ -57,10 +57,10 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 	return storableMaintenanceRule.ToPlannedMaintenance(), nil
 }
 
-func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance) (valuer.UUID, error) {
+func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance) (*ruletypes.PlannedMaintenance, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
-		return valuer.UUID{}, err
+		return nil, err
 	}
 
 	storablePlannedMaintenance := ruletypes.StorablePlannedMaintenance{
@@ -85,7 +85,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 	for _, ruleIDStr := range maintenance.AlertIds {
 		ruleID, err := valuer.NewUUID(ruleIDStr)
 		if err != nil {
-			return valuer.UUID{}, err
+			return nil, err
 		}
 
 		maintenanceRules = append(maintenanceRules, &ruletypes.StorablePlannedMaintenanceRule{
@@ -122,10 +122,20 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 		return nil
 	})
 	if err != nil {
-		return valuer.UUID{}, err
+		return nil, err
 	}
 
-	return storablePlannedMaintenance.ID, nil
+	return &ruletypes.PlannedMaintenance{
+		ID:          storablePlannedMaintenance.ID,
+		Name:        storablePlannedMaintenance.Name,
+		Description: storablePlannedMaintenance.Description,
+		Schedule:    storablePlannedMaintenance.Schedule,
+		RuleIDs:     maintenance.AlertIds,
+		CreatedAt:   storablePlannedMaintenance.CreatedAt,
+		CreatedBy:   storablePlannedMaintenance.CreatedBy,
+		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,
+		UpdatedBy:   storablePlannedMaintenance.UpdatedBy,
+	}, nil
 }
 
 func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UUID) error {

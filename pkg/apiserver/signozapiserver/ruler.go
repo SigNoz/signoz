@@ -146,6 +146,8 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates a new planned maintenance / downtime schedule",
 		Request:             new(ruletypes.PostablePlannedMaintenance),
 		RequestContentType:  "application/json",
+		Response:            new(ruletypes.PlannedMaintenance),
+		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),

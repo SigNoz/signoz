@@ -255,13 +255,13 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 		return
 	}
 
-	_, err := handler.ruler.MaintenanceStore().CreatePlannedMaintenance(ctx, schedule)
+	created, err := handler.ruler.MaintenanceStore().CreatePlannedMaintenance(ctx, schedule)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, nil)
+	render.Success(rw, http.StatusCreated, created)
 }
 
 func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *http.Request) {
