@@ -3890,6 +3890,24 @@ components:
         updatedBy:
           type: string
       required:
+      - id
+      - name
+      - schedule
+      type: object
+    RuletypesPostablePlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        description:
+          type: string
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesSchedule'
+      required:
       - name
       - schedule
       type: object
@@ -6294,9 +6312,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
           description: Created
         "400":
           content:
@@ -6447,7 +6477,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
       responses:
         "204":
           description: No Content

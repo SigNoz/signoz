@@ -4811,7 +4811,7 @@ export interface RuletypesPlannedMaintenanceDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -4834,6 +4834,23 @@ export interface RuletypesPlannedMaintenanceDTO {
 	 * @type string
 	 */
 	updatedBy?: string;
+}
+
+export interface RuletypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: RuletypesScheduleDTO;
 }
 
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
@@ -5989,6 +6006,14 @@ export type ListDowntimeSchedules200 = {
 	 * @type array
 	 */
 	data: RuletypesPlannedMaintenanceDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateDowntimeSchedule201 = {
+	data: RuletypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
