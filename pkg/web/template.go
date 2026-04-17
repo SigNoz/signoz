@@ -3,8 +3,8 @@ package web
 import (
 	"bytes"
 	"context"
+	"html/template"
 	"log/slog"
-	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
