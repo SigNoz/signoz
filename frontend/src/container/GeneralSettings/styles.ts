@@ -77,7 +77,7 @@ export const ToolTipContainer = styled.div`
 
 export const ErrorText = styled(TypographyComponent)`
 	&&& {
-		color: #e89a3c;
+		color: var(--warning-background);
 		font-style: italic;
 	}
 `;

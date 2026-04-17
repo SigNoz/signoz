@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useCreateResetPasswordToken,
@@ -64,7 +64,8 @@ jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 	convertToApiError: jest.fn(),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

@@ -4,7 +4,8 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

@@ -4,7 +4,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		background-color: var(--bg-robin-500);
+		background-color: var(--primary-background);
 		z-index: 1000;
 	}
 
@@ -16,8 +16,8 @@
 	&__container {
 		position: absolute;
 		width: 320px;
-		background-color: var(--bg-robin-500);
-		color: var(--text-white);
+		background-color: var(--primary-background);
+		color: var(--primary-foreground);
 		border-radius: 8px;
 		padding: 16px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -32,7 +32,7 @@
 
 	&__close-icon {
 		cursor: pointer;
-		color: var(--text-white);
+		color: var(--primary-foreground);
 	}
 
 	&__message {
@@ -46,8 +46,8 @@
 	}
 
 	&__button {
-		background: var(--bg-vanilla-100);
-		color: var(--bg-robin-500);
+		background: var(--card);
+		color: var(--accent-primary);
 		border: none;
 		padding: 6px 12px;
 		border-radius: 4px;

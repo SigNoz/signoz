@@ -115,7 +115,7 @@
 			.ant-select-selector {
 				height: 32px;
 				background: var(--l3-background) !important;
-				border: 1px solid var(--l3-border) !important;
+				border: 1px solid var(--l1-border) !important;
 				border-radius: 2px;
 				color: var(--l1-foreground) !important;
 
@@ -125,7 +125,7 @@
 			}
 
 			&:hover .ant-select-selector {
-				border-color: var(--l3-border) !important;
+				border-color: var(--l1-border) !important;
 			}
 
 			&.ant-select-focused .ant-select-selector {
@@ -214,7 +214,11 @@
 		}
 
 		&:hover {
-			background: rgba(229, 72, 77, 0.1) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-cherry-500) 10%,
+				transparent
+			) !important;
 			opacity: 0.9 !important;
 			color: var(--destructive) !important;
 
@@ -225,7 +229,11 @@
 
 		&:active {
 			opacity: 0.7 !important;
-			background: rgba(229, 72, 77, 0.15) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-cherry-500) 15%,
+				transparent
+			) !important;
 		}
 	}
 
@@ -265,7 +273,7 @@
 	input {
 		height: 32px;
 		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		border-radius: 2px;
 		color: var(--l1-foreground) !important;
 
@@ -275,7 +283,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&:focus,

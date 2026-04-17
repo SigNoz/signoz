@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Color, Spacing } from '@signozhq/design-tokens';
+import { Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Typography } from 'antd';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -9,7 +9,6 @@ import {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import GetMinMax from 'lib/getMinMax';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { AppState } from 'store/reducers';
@@ -55,7 +54,6 @@ function DomainDetails({
 	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] = useState<
 		IBuilderQuery['filters']
 	>(domainListFilters);
-	const isDarkMode = useIsDarkMode();
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -210,7 +208,7 @@ function DomainDetails({
 			open={!!domainData}
 			style={{
 				overscrollBehavior: 'contain',
-				background: isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100,
+				background: 'var(--l1-background)',
 			}}
 			className="domain-detail-drawer"
 			destroyOnClose

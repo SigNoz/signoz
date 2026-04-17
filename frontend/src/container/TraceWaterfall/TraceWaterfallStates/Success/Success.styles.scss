@@ -11,7 +11,7 @@
 		margin: 16px;
 		padding: 12px;
 		border-radius: 4px;
-		background: rgba(69, 104, 220, 0.1);
+		background: color-mix(in srgb, var(--bg-robin-600) 10%, transparent);
 
 		.left-info {
 			display: flex;
@@ -77,7 +77,7 @@
 			position: sticky;
 			top: 0;
 			z-index: 2;
-			background-color: var(--bg-ink-500) !important;
+			background-color: var(--l1-background) !important;
 
 			.div-tr {
 				height: 16px;
@@ -93,7 +93,11 @@
 
 		.div-tr:hover {
 			border-radius: 4px;
-			background: rgba(171, 189, 255, 0.06) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-robin-200) 6%,
+				transparent
+			) !important;
 
 			.div-td .span-overview .second-row .add-funnel-button {
 				opacity: 1;
@@ -146,7 +150,7 @@
 					align-items: flex-start;
 					gap: 5px;
 					width: 100%;
-					background-color: #0b0c0e;
+					background-color: var(--background);
 					height: 100%;
 					justify-content: center;
 					&:not(:first-child) {
@@ -175,13 +179,13 @@
 								padding: 4px 4px;
 								gap: 4px;
 								border-radius: 2px;
-								border: 1px solid var(--bg-slate-400);
-								background: var(--bg-slate-500);
+								border: 1px solid var(--l1-border);
+								background: var(--l1-border);
 								box-shadow: none;
 								height: 20px;
 
 								.children-count {
-									color: var(--bg-vanilla-400);
+									color: var(--l2-foreground);
 									font-family: 'Space Mono';
 									font-size: 14px;
 									font-style: normal;
@@ -192,7 +196,7 @@
 							}
 
 							.span-name {
-								color: #fff;
+								color: var(--l1-foreground);
 								font-family: 'Inter';
 								font-size: 14px;
 								font-style: normal;
@@ -215,12 +219,12 @@
 							}
 
 							.success {
-								border: 1px solid var(--bg-robin-500);
-								background: var(--bg-robin-500);
+								border: 1px solid var(--primary-background);
+								background: var(--primary-background);
 							}
 
 							.error {
-								border: 1px solid var(--bg-cherry-500);
+								border: 1px solid var(--danger-background);
 								background: var(--bg-cherry-500);
 							}
 						}
@@ -233,7 +237,7 @@
 						height: 18px;
 						width: 100%;
 						.service-name {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 14px;
 							font-style: normal;
@@ -251,7 +255,7 @@
 							transition: opacity 0.1s ease-in-out;
 
 							&__separator {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 							}
 							&__button {
 								display: flex;
@@ -285,7 +289,7 @@
 					transform: translate(-50%, -50%) rotate(45deg);
 					width: 6px;
 					height: 6px;
-					background-color: var(--bg-robin-500);
+					background-color: var(--primary-background);
 					border: 1px solid var(--bg-robin-600);
 					cursor: pointer;
 					z-index: 1;
@@ -318,7 +322,11 @@
 			.interested-span,
 			.selected-non-matching-span {
 				border-radius: 4px;
-				background: rgba(171, 189, 255, 0.06) !important;
+				background: color-mix(
+					in srgb,
+					var(--bg-robin-200) 6%,
+					transparent
+				) !important;
 
 				.span-overview-content {
 					background: unset;
@@ -341,11 +349,11 @@
 		}
 
 		.div-td + .div-td {
-			border-left: 1px solid var(--bg-slate-400);
+			border-left: 1px solid var(--l1-border);
 		}
 
 		.div-th + .div-th {
-			border-left: 1px solid var(--bg-slate-400);
+			border-left: 1px solid var(--l1-border);
 		}
 
 		.div-tr .div-th:nth-child(2) {
@@ -361,14 +369,14 @@
 			height: calc(70vh - 236px);
 			right: 0;
 			width: 2px;
-			background: rgba(35, 196, 248, 0.2);
+			background: color-mix(in srgb, var(--bg-aqua-500) 20%, transparent);
 			cursor: col-resize;
 			user-select: none;
 			touch-action: none;
 		}
 
 		.resizer.isResizing {
-			background: rgba(35, 196, 248, 0.2);
+			background: color-mix(in srgb, var(--bg-aqua-500) 20%, transparent);
 			opacity: 1;
 		}
 
@@ -397,8 +405,8 @@
 		align-items: center;
 		gap: 8px;
 		border-radius: 2px;
-		border: 1px solid var(--Slate-400, #1d212d);
-		background: var(--Slate-500, #161922);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-border);
 		box-shadow: none;
 	}
 }
@@ -409,25 +417,26 @@
 			.div-td {
 				.span-overview {
 					.span-overview-content {
-						background-color: var(--bg-vanilla-200);
+						background-color: var(--l2-background);
+
 						.first-row {
 							.collapse-uncollapse-button {
-								border: 1px solid var(--bg-vanilla-400);
-								background: var(--bg-vanilla-400);
+								border: 1px solid var(--l3-background);
+								background: var(--l3-background);
 
 								.children-count {
-									color: var(--bg-ink-400);
+									color: var(--l2-foreground);
 								}
 							}
 
 							.span-name {
-								color: var(--bg-ink-400);
+								color: var(--l1-foreground);
 							}
 						}
 
 						.second-row {
 							.service-name {
-								color: var(--bg-ink-400);
+								color: var(--l2-foreground);
 							}
 						}
 					}
@@ -435,27 +444,27 @@
 
 				.interested-span {
 					border-radius: 4px;
-					background: var(--bg-vanilla-300);
+					background: var(--l3-background);
 				}
 			}
 
 			.div-td + .div-td {
-				border-left: 1px solid var(--bg-vanilla-300);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.div-th + .div-th {
-				border-left: 1px solid var(--bg-vanilla-300);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.div-thead {
-				background-color: var(--bg-vanilla-200) !important;
+				background-color: var(--l2-background) !important;
 			}
 		}
 	}
 	.span-dets {
 		.related-logs {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 		}
 	}
 }

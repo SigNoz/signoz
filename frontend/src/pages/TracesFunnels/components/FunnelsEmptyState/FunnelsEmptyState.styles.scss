@@ -10,7 +10,7 @@
 		gap: 24px;
 		padding: 105px 172px;
 		border-radius: 6px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--l1-border);
 	}
 
 	&__header {
@@ -25,14 +25,14 @@
 	}
 
 	&__title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 500;
 		letter-spacing: -0.07px;
 	}
 
 	&__subtitle {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 14px;
 		font-weight: 400;
 		letter-spacing: -0.07px;
@@ -50,7 +50,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: 6px;
-		background: var(--bg-robin-500);
+		background: var(--primary-background);
 		border: none;
 		width: 153px;
 		height: 32px;
@@ -64,19 +64,19 @@
 .lightMode {
 	.funnels-empty {
 		&__content {
-			border: 1px dashed var(--bg-vanilla-400);
+			border: 1px dashed var(--l2-foreground);
 		}
 
 		&__icon {
-			color: var(--bg-ink-500);
+			color: var(--l1-background);
 		}
 
 		&__title {
-			color: var(--bg-ink-500);
+			color: var(--l1-background);
 		}
 
 		&__subtitle {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 	}
 }

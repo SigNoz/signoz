@@ -16,7 +16,8 @@ jest.mock('@signozhq/drawer', () => ({
 	}): JSX.Element | null => (open ? <div>{content}</div> : null),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 

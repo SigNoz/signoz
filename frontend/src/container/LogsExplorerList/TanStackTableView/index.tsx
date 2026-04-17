@@ -18,7 +18,7 @@ import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import {
 	ColumnDef,
 	getCoreRowModel,
