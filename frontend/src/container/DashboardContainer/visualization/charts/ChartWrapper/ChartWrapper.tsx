@@ -26,6 +26,7 @@ export default function ChartWrapper({
 	showLegend = true,
 	canPinTooltip = false,
 	pinKey,
+	onClick,
 	syncMode,
 	syncKey,
 	onDestroy = noop,
@@ -95,6 +96,7 @@ export default function ChartWrapper({
 								config={config}
 								canPinTooltip={canPinTooltip}
 								pinKey={pinKey}
+								onClick={onClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,

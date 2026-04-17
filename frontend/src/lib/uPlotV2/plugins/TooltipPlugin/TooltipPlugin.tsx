@@ -1,7 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
-import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
 import {
@@ -22,7 +21,11 @@ import {
 	TooltipPluginProps,
 	TooltipViewState,
 } from './types';
-import { createInitialViewState, createLayoutObserver } from './utils';
+import {
+	buildClickData,
+	createInitialViewState,
+	createLayoutObserver,
+} from './utils';
 
 import './TooltipPlugin.styles.scss';
 
@@ -44,6 +47,7 @@ export default function TooltipPlugin({
 	pinnedTooltipElement,
 	canPinTooltip = false,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
+	onClick,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafId = useRef<number | null>(null);
@@ -262,9 +266,8 @@ export default function TooltipPlugin({
 		};
 
 		// Pin the tooltip when the user presses the configured pin key while
-		// hovering over the chart. Uses getFocusedSeriesAtPosition with a
-		// synthetic event built from the current uPlot cursor position so the
-		// same series-resolution logic as click-pinning is reused.
+		// hovering over the chart. Synthesises a MouseEvent from the current
+		// cursor position so buildClickData can be reused unchanged.
 		const handleKeyDown = (event: KeyboardEvent): void => {
 			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
 				return;
@@ -294,40 +297,31 @@ export default function TooltipPlugin({
 				offsetY: cursorTop,
 			} as unknown) as MouseEvent;
 
-			const xValue = plot.posToVal(cursorLeft, 'x');
-			const yValue = plot.posToVal(cursorTop, 'y');
-			const focusedSeries = getFocusedSeriesAtPosition(syntheticEvent, plot);
-
-			const dataIndex = plot.posToIdx(cursorLeft);
-			let clickedDataTimestamp = xValue;
-			const xSeriesData = plot.data[0];
-			if (
-				xSeriesData &&
-				dataIndex >= 0 &&
-				dataIndex < xSeriesData.length &&
-				xSeriesData[dataIndex] !== undefined
-			) {
-				clickedDataTimestamp = xSeriesData[dataIndex];
-			}
-
-			controller.clickData = {
-				xValue,
-				yValue,
-				focusedSeries,
-				clickedDataTimestamp,
-				mouseX: cursorLeft,
-				mouseY: cursorTop,
-				absoluteMouseX: syntheticEvent.clientX,
-				absoluteMouseY: syntheticEvent.clientY,
-			};
+			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;
 			scheduleRender(true);
 		};
+
+		// Forward overlay clicks to the consumer-provided onClick callback.
+		const handleOverClick = (event: MouseEvent): void => {
+			const plot = getPlot(controller);
+			if (!plot) {
+				return;
+			}
+			const clickData = buildClickData(event, plot);
+			onClick?.(clickData);
+		};
+
+		let overClickHandler: ((event: MouseEvent) => void) | null = null;
 
 		// Called once per uPlot instance; used to store the instance on the controller.
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
 			updateState({ hasPlot: true });
+			if (onClick) {
+				overClickHandler = handleOverClick;
+				u.over.addEventListener('click', overClickHandler);
+			}
 		};
 
 		// If the underlying data changes we drop any pinned tooltip,
@@ -392,6 +386,11 @@ export default function TooltipPlugin({
 			removeSetSeriesHook();
 			removeSetLegendHook();
 			removeSetCursorHook();
+			if (overClickHandler) {
+				const plot = getPlot(controller);
+				plot?.over.removeEventListener('click', overClickHandler);
+				overClickHandler = null;
+			}
 			clearPlotReferences();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
