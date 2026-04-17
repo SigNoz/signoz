@@ -1,3 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
+// Copyright 2019 Prometheus Team
+// SPDX-License-Identifier: Apache-2.0
+
 package msteamsv2
 
 import (
