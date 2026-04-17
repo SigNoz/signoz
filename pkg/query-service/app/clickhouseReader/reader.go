@@ -1070,23 +1070,11 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 		serviceNameToTotalDurationMap = tracedetail.CalculateServiceTime(serviceNameIntervalMap)
 
-		traceCache := model.GetWaterfallSpansForTraceWithMetadataCache{
-			StartTime:                     startTime,
-			EndTime:                       endTime,
-			DurationNano:                  durationNano,
-			TotalSpans:                    totalSpans,
-			TotalErrorSpans:               totalErrorSpans,
-			SpanIdToSpanNodeMap:           spanIdToSpanNodeMap,
-			ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
-			TraceRoots:                    traceRoots,
-			HasMissingSpans:               hasMissingSpans,
-		}
+		// TODO: set the span data (model.GetWaterfallSpansForTraceWithMetadataCache) in cache here
+		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
+		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
 
 		r.logger.Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
-		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
-		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", "traceID", traceID, errorsV2.Attr(err))
-		}
 	}
 
 	processingPostCache := time.Now()
@@ -1259,19 +1247,13 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		}
 
 		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
-		traceCache := model.GetFlamegraphSpansForTraceCache{
-			StartTime:     startTime,
-			EndTime:       endTime,
-			DurationNano:  durationNano,
-			SelectedSpans: selectedSpans,
-			TraceRoots:    traceRoots,
-		}
+
+		// TODO: set the trace data (model.GetFlamegraphSpansForTraceCache) in cache here
+		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
+		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
 
 		r.logger.Info("getFlamegraphSpansForTrace: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
-		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
-		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getFlamegraphSpansForTrace", "traceID", traceID, errorsV2.Attr(err))
-		}
+
 	}
 
 	processingPostCache := time.Now()
