@@ -38,6 +38,8 @@ import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
 import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { Exception, PayloadProps } from 'types/api/errors/getAll';
@@ -71,9 +73,11 @@ type QueryParams = {
 };
 
 function AllErrors(): JSX.Element {
-	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
+	const { loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
 	const { pathname } = useLocation();
 	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
@@ -129,9 +133,15 @@ function AllErrors(): JSX.Element {
 		errorCountResponse,
 	] = useQueries([
 		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
-			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
-				getAll({
+			queryKey: getAutoRefreshQueryKey(
+				selectedTime,
+				'getAllErrors',
+				updatedPath,
+				compositeData,
+			),
+			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+				const { minTime, maxTime } = getMinMaxTime();
+				return getAll({
 					end: maxTime,
 					start: minTime,
 					order: updatedOrder,
@@ -143,20 +153,21 @@ function AllErrors(): JSX.Element {
 					tags: convertCompositeQueryToTraceSelectedTags(
 						compositeData?.builder.queryData?.[0]?.filters?.items || [],
 					),
-				}),
+				});
+			},
 			enabled: !loading,
 		},
 		{
-			queryKey: [
+			queryKey: getAutoRefreshQueryKey(
+				selectedTime,
 				'getErrorCounts',
-				maxTime,
-				minTime,
 				getUpdatedExceptionType,
 				getUpdatedServiceName,
 				compositeData,
-			],
-			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
-				getErrorCounts({
+			),
+			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> => {
+				const { minTime, maxTime } = getMinMaxTime();
+				return getErrorCounts({
 					end: maxTime,
 					start: minTime,
 					exceptionType: getUpdatedExceptionType,
@@ -164,7 +175,8 @@ function AllErrors(): JSX.Element {
 					tags: convertCompositeQueryToTraceSelectedTags(
 						compositeData?.builder.queryData?.[0]?.filters?.items || [],
 					),
-				}),
+				});
+			},
 			enabled: !loading,
 		},
 	]);

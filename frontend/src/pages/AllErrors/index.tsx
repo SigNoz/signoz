@@ -12,6 +12,7 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import RouteTab from 'components/RouteTab';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import ResourceAttributesFilterV2 from 'container/ResourceAttributeFilterV2/ResourceAttributesFilterV2';
 import Toolbar from 'container/Toolbar/Toolbar';
@@ -31,8 +32,7 @@ function AllErrors(): JSX.Element {
 
 	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
 	const handleCancelQuery = useCallback(() => {
-		queryClient.cancelQueries(['getAllErrors']);
-		queryClient.cancelQueries(['getErrorCounts']);
+		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
 	}, [queryClient]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
