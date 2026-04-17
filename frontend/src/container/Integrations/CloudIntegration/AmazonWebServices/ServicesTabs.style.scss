@@ -273,18 +273,29 @@
 				border-radius: 2px;
 				line-height: normal;
 				&--connected {
-					border: 1px solid color-mix(in srgb, var(--success-background) 10%, transparent);
+					border: 1px solid
+						color-mix(in srgb, var(--success-background) 10%, transparent);
 					background: color-mix(in srgb, var(--success-background) 10%, transparent);
 					color: var(--callout-success-title);
 				}
 				&--stale-data {
-					background: color-mix(in srgb, var(--warning-background-hover) 10%, transparent);
-					border: 1px solid color-mix(in srgb, var(--warning-background-hover) 10%, transparent);
+					background: color-mix(
+						in srgb,
+						var(--warning-background-hover) 10%,
+						transparent
+					);
+					border: 1px solid
+						color-mix(in srgb, var(--warning-background-hover) 10%, transparent);
 					color: var(--callout-warning-title);
 				}
 				&--no-data {
-					border: 1px solid color-mix(in srgb, var(--danger-background-hover) 10%, transparent);
-					background: color-mix(in srgb, var(--danger-background-hover) 10%, transparent);
+					border: 1px solid
+						color-mix(in srgb, var(--danger-background-hover) 10%, transparent);
+					background: color-mix(
+						in srgb,
+						var(--danger-background-hover) 10%,
+						transparent
+					);
 					color: var(--callout-error-description);
 				}
 			}
