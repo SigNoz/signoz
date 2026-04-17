@@ -1,6 +1,5 @@
-/**
- * Opens the given path in a new browser tab.
- */
+import { withBasePath } from 'utils/basePath';
+
 export const openInNewTab = (path: string): void => {
-	window.open(path, '_blank');
+	window.open(withBasePath(path), '_blank');
 };

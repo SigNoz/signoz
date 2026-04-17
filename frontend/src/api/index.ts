@@ -11,7 +11,7 @@ import axios, {
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { getBasePath } from 'utils/getBasePath';
+import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
