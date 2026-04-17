@@ -80,22 +80,22 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defautlInitialValues = ({
+export const defautlInitialValues: Partial<
+	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
+> = {
 	name: '',
 	description: '',
 	schedule: {
 		timezone: '',
-		endTime: '',
+		endTime: undefined,
 		recurrence: undefined,
-		startTime: '',
+		startTime: undefined,
 	},
-	alertIds: [] as string[],
-	createdAt: '',
+	alertIds: [],
+	createdAt: undefined,
 	createdBy: '',
 	editMode: false,
-} as unknown) as Partial<
-	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
->;
+};
 
 type DeleteDowntimeScheduleProps = {
 	deleteDowntimeScheduleAsync: UseMutateAsyncFunction<
