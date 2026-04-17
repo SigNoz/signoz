@@ -466,17 +466,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != fieldContext {
 				continue
 			}
-			parts := []string{}
+			fieldKeyConds := []string{}
 			if sel.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-				parts = append(parts, sb.E("name", sel.Name))
+				fieldKeyConds = append(fieldKeyConds, sb.E("name", sel.Name))
 			} else {
-				parts = append(parts, sb.ILike("name", "%"+escapeForLike(sel.Name)+"%"))
+				fieldKeyConds = append(fieldKeyConds, sb.ILike("name", "%"+escapeForLike(sel.Name)+"%"))
 			}
 			if sel.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				parts = append(parts, sb.E("datatype", sel.FieldDataType.TagDataType()))
+				fieldKeyConds = append(fieldKeyConds, sb.E("datatype", sel.FieldDataType.TagDataType()))
 			}
-			if len(parts) > 0 {
-				branches = append(branches, sb.And(parts...))
+			if len(fieldKeyConds) > 0 {
+				branches = append(branches, sb.And(fieldKeyConds...))
 			}
 		}
 		if len(branches) > 0 {
@@ -514,17 +514,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != telemetrytypes.FieldContextBody {
 				continue
 			}
-			parts := []string{}
+			fieldKeyConds := []string{}
 			if sel.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-				parts = append(parts, sb.E("field_name", sel.Name))
+				fieldKeyConds = append(fieldKeyConds, sb.E("field_name", sel.Name))
 			} else {
-				parts = append(parts, sb.ILike("field_name", "%"+escapeForLike(sel.Name)+"%"))
+				fieldKeyConds = append(fieldKeyConds, sb.ILike("field_name", "%"+escapeForLike(sel.Name)+"%"))
 			}
 			if sel.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-				parts = append(parts, sb.E("field_data_type", sel.FieldDataType.StringValue()))
+				fieldKeyConds = append(fieldKeyConds, sb.E("field_data_type", sel.FieldDataType.StringValue()))
 			}
-			if len(parts) > 0 {
-				branches = append(branches, sb.And(parts...))
+			if len(fieldKeyConds) > 0 {
+				branches = append(branches, sb.And(fieldKeyConds...))
 			}
 		}
 		if len(parentPaths) > 0 {
