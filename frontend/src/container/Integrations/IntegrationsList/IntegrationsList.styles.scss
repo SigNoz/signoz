@@ -48,7 +48,7 @@
 					cursor: pointer;
 
 					.text {
-						color: var(--text-robin-400);
+						color: var(--callout-primary-description);
 						font-weight: 500;
 					}
 				}
@@ -147,13 +147,13 @@
 					height: 16px;
 					width: 16px;
 					border-radius: 2px;
-					border: 1px solid var(--bg-ink-50);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l3-border);
+					background: var(--l2-background);
 				}
 			}
 
 			&:hover {
-				background: var(--bg-ink-400);
+				background: var(--l1-background);
 			}
 
 			&:nth-child(even) {

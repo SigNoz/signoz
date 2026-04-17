@@ -30,7 +30,7 @@
 
 	&__sidebar {
 		width: 240px;
-		border-right: 1px solid var(--bg-slate-400);
+		border-right: 1px solid var(--l2-border);
 		height: 100%;
 	}
 
@@ -51,7 +51,7 @@
 	.service-details-loading-item {
 		width: 100%;
 		height: 100%;
-		background-color: var(--bg-slate-400);
+		background-color: var(--muted);
 	}
 }
 
@@ -61,7 +61,7 @@
 	gap: 8px;
 
 	padding: 12px;
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-size: 14px;
 	font-weight: 400;
 	line-height: 20px; /* 142.857% */
@@ -208,7 +208,7 @@
 	}
 
 	&.active {
-		background-color: var(--bg-ink-100); /* keep: no semantic equivalent */
+		background-color: var(--l3-background);
 	}
 	&__icon-wrapper {
 		height: 32px;
@@ -273,19 +273,19 @@
 				border-radius: 2px;
 				line-height: normal;
 				&--connected {
-					border: 1px solid color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-					background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-					color: var(--bg-forest-400);
+					border: 1px solid color-mix(in srgb, var(--success-background) 10%, transparent);
+					background: color-mix(in srgb, var(--success-background) 10%, transparent);
+					color: var(--callout-success-title);
 				}
 				&--stale-data {
-					background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
-					border: 1px solid color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
-					color: var(--bg-amber-400);
+					background: color-mix(in srgb, var(--warning-background-hover) 10%, transparent);
+					border: 1px solid color-mix(in srgb, var(--warning-background-hover) 10%, transparent);
+					color: var(--callout-warning-title);
 				}
 				&--no-data {
-					border: 1px solid color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-					background: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-					color: var(--bg-cherry-400);
+					border: 1px solid color-mix(in srgb, var(--danger-background-hover) 10%, transparent);
+					background: color-mix(in srgb, var(--danger-background-hover) 10%, transparent);
+					color: var(--callout-error-description);
 				}
 			}
 
@@ -446,156 +446,6 @@
 				line-height: 18px; /* 163.636% */
 				letter-spacing: 0.88px;
 				text-transform: uppercase;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.services-tabs {
-		.ant-tabs-tab {
-			&.ant-tabs-tab-active {
-				.ant-tabs-tab-btn {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-
-	.services-filter {
-		.ant-select-selector {
-			background-color: var(--l1-background) !important;
-			border-color: var(--l1-border) !important;
-			color: var(--l1-foreground) !important;
-		}
-
-		.ant-select-arrow {
-			color: var(--l1-foreground);
-		}
-	}
-
-	.service-item {
-		&:not(:last-child) {
-			border-bottom: 1px solid var(--l1-border);
-		}
-
-		&.active {
-			background-color: var(--l3-background);
-		}
-
-		&__icon-wrapper {
-			background-color: var(--l1-background);
-			border-color: var(--l1-border);
-		}
-
-		&__title {
-			color: var(--l1-foreground);
-		}
-	}
-
-	.service-details {
-		&__title-bar {
-			border-bottom: 1px solid var(--l1-border);
-
-			.service-details__details-title {
-				color: var(--l1-foreground);
-			}
-
-			.configure-button {
-				color: var(--l1-foreground);
-				background: var(--l1-background);
-				border-color: var(--l1-border);
-
-				&:hover {
-					border-color: var(--l2-foreground);
-					color: var(--l1-foreground);
-				}
-			}
-
-			.service-status {
-				&--connected {
-					border: 1px solid color-mix(in srgb, var(--bg-forest-500) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-					color: var(--bg-forest-500);
-				}
-
-				&--stale-data {
-					border: 1px solid color-mix(in srgb, var(--bg-amber-400) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
-					color: var(--bg-amber-500);
-				}
-
-				&--no-data {
-					border: 1px solid color-mix(in srgb, var(--bg-cherry-400) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-					color: var(--bg-cherry-500);
-				}
-			}
-		}
-
-		&__overview {
-			color: var(--l1-foreground);
-		}
-
-		&__tabs {
-			.ant-tabs {
-				&-tab {
-					&-btn {
-						color: var(--l1-foreground) !important;
-
-						&[aria-selected='true'] {
-							color: var(--l1-foreground) !important;
-						}
-					}
-
-					&-active {
-						background: var(--l3-background);
-					}
-				}
-
-				&-nav-list {
-					border-color: var(--l1-border);
-					background: var(--l1-background);
-				}
-			}
-		}
-
-		.cloud-service {
-			&-dashboard-item {
-				&__title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			&-data-collected {
-				&__table {
-					.ant-table {
-						border-color: var(--l1-border);
-
-						.ant-table-thead {
-							> tr > th {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.ant-table-tbody {
-							> tr {
-								&:nth-child(odd),
-								&:hover > td {
-									background: var(--l1-background) !important;
-								}
-
-								> td {
-									color: var(--l1-foreground);
-								}
-							}
-						}
-					}
-				}
-
-				&__table-heading {
-					color: var(--l1-foreground);
-				}
 			}
 		}
 	}

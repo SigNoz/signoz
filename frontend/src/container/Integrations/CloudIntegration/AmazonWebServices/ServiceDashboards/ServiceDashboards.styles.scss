@@ -44,11 +44,11 @@
 				transition: background-color 0.15s ease;
 
 				&:hover {
-					background-color: var(--bg-vanilla-200);
+					background-color: var(--muted);
 				}
 
 				&:focus-visible {
-					outline: 1px solid var(--bg-robin-500);
+					outline: 1px solid var(--primary-background);
 					outline-offset: -1px;
 				}
 			}
@@ -104,7 +104,7 @@
 				margin-top: 1px;
 
 				&:hover {
-					background: var(--bg-vanilla-300);
+					background: var(--secondary);
 					color: var(--l1-foreground);
 				}
 			}

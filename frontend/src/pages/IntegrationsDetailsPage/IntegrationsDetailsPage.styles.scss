@@ -11,16 +11,9 @@
 			height: 160px;
 			width: 100%;
 			border-radius: 6px;
-			border: 1px solid var(--bg-slate-500);
-			background: var(--bg-ink-400);
-		}
-	}
-}
-
-.lightMode {
-	.loading-container {
-		.skeleton-item {
-			background-color: var(--bg-vanilla-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
+			color: var(--l1-foreground);
 		}
 	}
 }

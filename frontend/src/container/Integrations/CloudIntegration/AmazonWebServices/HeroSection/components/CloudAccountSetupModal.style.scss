@@ -39,12 +39,18 @@
 			font-family: 'Geist Mono';
 		}
 		&__close-button {
-			background: var(--l1-border);
+			background: var(--l1-background);
+			border: 1px solid var(--l1-border);
 			border-radius: 2px;
 			color: var(--l1-foreground);
 			font-family: 'Inter';
 			font-size: 12px;
 			font-weight: 500;
+
+			&:hover {
+				border-color: var(--l1-border);
+				color: var(--l1-foreground);
+			}
 		}
 	}
 
@@ -149,7 +155,7 @@
 		}
 		&__note {
 			padding: 12px;
-			color: var(--bg-robin-400);
+			color: var(--callout-primary-description);
 			font-size: 12px;
 			line-height: 22px;
 			letter-spacing: -0.06px;
@@ -173,90 +179,6 @@
 			}
 			&:disabled {
 				opacity: 0.4;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.cloud-account-setup-modal {
-		.account-setup-modal-footer {
-			&__confirm-button {
-				background: var(--primary-background);
-				color: var(--primary-foreground);
-			}
-
-			&__close-button {
-				background: var(--l1-background);
-				border: 1px solid var(--l1-border);
-				color: var(--l1-foreground);
-
-				&:hover {
-					border-color: var(--l1-border);
-					color: var(--l1-foreground);
-				}
-			}
-		}
-
-		.cloud-account-setup-form {
-			&__title {
-				color: var(--l1-foreground);
-			}
-
-			&__description {
-				color: var(--l1-foreground);
-			}
-
-			&__select {
-				.ant-select-selection-item {
-					color: var(--l1-foreground);
-				}
-			}
-
-			&__include-all-regions-switch {
-				color: var(--l1-foreground);
-
-				&-label {
-					color: var(--l1-foreground);
-
-					&:hover {
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			&__note {
-				color: var(--primary-foreground);
-				border: 1px solid
-					color-mix(in srgb, var(--primary-background) 20%, transparent);
-				background: color-mix(in srgb, var(--primary-background) 10%, transparent);
-			}
-
-			&__submit-button {
-				background: var(--primary-background);
-				color: var(--primary-foreground);
-			}
-
-			&__alert {
-				&.ant-alert-error {
-					color: var(--danger-foreground);
-					border: 1px solid
-						color-mix(in srgb, var(--danger-background) 20%, transparent);
-					background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-				}
-
-				&.ant-alert-warning {
-					color: var(--warning-foreground);
-					border: 1px solid
-						color-mix(in srgb, var(--warning-background) 20%, transparent);
-					background: color-mix(in srgb, var(--warning-background) 10%, transparent);
-				}
-
-				&-message {
-					.retry-time {
-						color: var(--l1-foreground);
-					}
-				}
 			}
 		}
 	}

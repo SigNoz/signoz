@@ -18,7 +18,7 @@ function Header({ title }: { title: IntegrationType }): JSX.Element {
 							title: (
 								<Link to={ROUTES.INTEGRATIONS}>
 									<span className="cloud-header__breadcrumb-link">
-										<Blocks size={16} color="var(--bg-vanilla-400)" />
+										<Blocks size={16} color="var(--l2-foreground)" />
 										<span className="cloud-header__breadcrumb-title">Integrations</span>
 									</span>
 								</Link>

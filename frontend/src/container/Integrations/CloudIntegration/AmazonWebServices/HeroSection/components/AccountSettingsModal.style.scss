@@ -92,7 +92,6 @@
 
 		&-close-button,
 		&-save-button {
-			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-weight: 500;
@@ -101,18 +100,31 @@
 		}
 		&-close-button {
 			border-radius: 2px;
-			background: var(--l1-border);
-			border: none;
+			background: var(--l1-background);
+			border: 1px solid var(--l1-border);
+			color: var(--l1-foreground);
+
+			&:hover {
+				border-color: var(--l1-border);
+				color: var(--l1-foreground);
+			}
 		}
 		&-save-button {
+			background: var(--primary-background);
+			color: var(--primary-foreground);
+			border: none;
+			border-radius: 2px;
+			margin: 0 !important;
+
 			&:disabled {
 				background: var(--primary-background);
 				color: var(--primary-foreground);
 				opacity: 0.6;
-				border: none;
 			}
-			border-radius: 2px;
-			margin: 0 !important;
+
+			&:not(:disabled):hover {
+				background: var(--primary-background-hover);
+			}
 		}
 	}
 	.ant-modal-body {
@@ -125,83 +137,5 @@
 
 	.integration-detail-content {
 		margin: 0;
-	}
-}
-
-.lightMode {
-	.account-settings-modal {
-		&__title-account-id {
-			color: var(--l1-foreground);
-		}
-
-		&__body {
-			border-color: var(--l1-border);
-
-			&-account-info {
-				&-connected-account-details {
-					&-title {
-						color: var(--l1-foreground);
-					}
-
-					&-account-id {
-						color: var(--l1-foreground);
-
-						&-account-id {
-							color: var(--l1-foreground);
-						}
-					}
-				}
-			}
-
-			&-regions-switch {
-				&-title {
-					color: var(--l1-foreground);
-				}
-
-				&-switch {
-					&-label {
-						color: var(--l1-foreground);
-
-						&:hover {
-							color: var(--l1-foreground);
-						}
-					}
-				}
-			}
-		}
-
-		&__footer {
-			&-close-button,
-			&-save-button {
-				color: var(--l1-background);
-			}
-
-			&-close-button {
-				background: var(--l1-background);
-				border: 1px solid var(--l1-border);
-				color: var(--l1-foreground);
-
-				&:hover {
-					border-color: var(--l1-border);
-					color: var(--l1-foreground);
-				}
-			}
-
-			&-save-button {
-				// Keep primary button same as dark mode
-				background: var(--primary-background);
-				color: var(--primary-foreground);
-
-				&:disabled {
-					background: var(--primary-background);
-					color: var(--primary-foreground);
-					opacity: 0.6;
-				}
-
-				&:not(:disabled):hover {
-					background: var(--bg-robin-400);
-				}
-			}
-		}
 	}
 }

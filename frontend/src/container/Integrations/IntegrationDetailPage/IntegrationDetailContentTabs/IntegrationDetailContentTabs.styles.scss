@@ -41,9 +41,9 @@
 				.category-tab {
 					padding: 2px 8px;
 					border-radius: 4px;
-					border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
-					color: var(--bg-sienna-400);
+					border: 1px solid color-mix(in srgb, var(--accent-sienna) 20%, transparent);
+					background: color-mix(in srgb, var(--accent-sienna) 10%, transparent);
+					color: var(--accent-sienna-hover);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -221,58 +221,5 @@
 		padding: 16px 0px 0px 16px;
 		max-height: 600px;
 		overflow-y: auto;
-	}
-}
-
-.lightMode {
-	.integration-detail-overview {
-		.integration-detail-overview-left-container {
-			.integration-detail-overview-category {
-				.category-tabs {
-					.category-tab {
-						border: 1px solid var(--bg-sienna-600);
-						background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
-						color: var(--bg-sienna-500);
-					}
-				}
-			}
-		}
-	}
-
-	.integration-data-collected {
-		.logs-section {
-			.table-row-dark {
-				background: var(--l3-background);
-			}
-
-			.logs-section-table {
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-			}
-		}
-
-		.metrics-section {
-			.table-row-dark {
-				background: var(--l3-background);
-			}
-
-			.metrics-section-table {
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-			}
-		}
-	}
-
-	.integration-detail-configure {
-		.configure-menu {
-			.configure-menu-item:hover {
-				background-color: var(--l2-background);
-			}
-
-			.active {
-				color: var(--l1-foreground);
-				background-color: var(--l2-background);
-			}
-		}
 	}
 }

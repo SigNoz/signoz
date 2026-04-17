@@ -22,8 +22,8 @@
 	min-height: 120px;
 	padding: 24px;
 	border-radius: 6px;
-	border: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-400);
+	border: 1px solid var(--l1-border);
+	background: var(--l1-background);
 	width: 100%;
 
 	.integrations-not-found-content {
@@ -35,20 +35,9 @@
 	}
 
 	.integrations-not-found-text {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: var(--font-size-sm);
 		text-align: center;
-	}
-}
-
-.lightMode {
-	.integrations-not-found-container {
-		border-color: var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
-
-		.integrations-not-found-text {
-			color: var(--bg-slate-200);
-		}
 	}
 }
 
