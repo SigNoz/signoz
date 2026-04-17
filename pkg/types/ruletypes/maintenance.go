@@ -40,6 +40,51 @@ type PlannedMaintenance struct {
 	Kind        string    `json:"kind"`
 }
 
+// PostablePlannedMaintenance is the input payload for creating or updating a
+// planned maintenance. Server-owned fields (id, timestamps, audit users,
+// derived status / kind) are deliberately not accepted from the client.
+type PostablePlannedMaintenance struct {
+	Name        string    `json:"name" required:"true"`
+	Description string    `json:"description"`
+	Schedule    *Schedule `json:"schedule" required:"true"`
+	AlertIds    []string  `json:"alertIds"`
+}
+
+func (p *PostablePlannedMaintenance) Validate() error {
+	if p.Name == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
+	}
+	if p.Schedule == nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
+	}
+	if p.Schedule.Timezone == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
+	}
+
+	if _, err := time.LoadLocation(p.Schedule.Timezone); err != nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
+	}
+
+	if !p.Schedule.StartTime.IsZero() && !p.Schedule.EndTime.IsZero() {
+		if p.Schedule.StartTime.After(p.Schedule.EndTime) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
+		}
+	}
+
+	if p.Schedule.Recurrence != nil {
+		if p.Schedule.Recurrence.RepeatType.IsZero() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
+		}
+		if p.Schedule.Recurrence.Duration.IsZero() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
+		}
+		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
+		}
+	}
+	return nil
+}
+
 type StorablePlannedMaintenanceRule struct {
 	bun.BaseModel `bun:"table:planned_maintenance_rule"`
 	types.Identifiable
