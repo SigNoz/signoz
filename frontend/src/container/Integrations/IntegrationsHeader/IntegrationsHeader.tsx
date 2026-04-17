@@ -3,7 +3,7 @@ import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { DialogWrapper } from '@signozhq/dialog';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Flex, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';

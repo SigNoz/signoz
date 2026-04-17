@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Badge } from '@signozhq/badge';
 import { Color } from '@signozhq/design-tokens';
+import { Badge } from '@signozhq/ui';
 import { Button, Skeleton, Typography } from 'antd';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';

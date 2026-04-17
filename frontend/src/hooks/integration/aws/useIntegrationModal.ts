@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,

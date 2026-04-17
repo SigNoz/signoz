@@ -1,3 +1,5 @@
+import awsDarkLogoUrl from '@/assets/Logos/aws-dark.svg';
+
 import AccountActions from './components/AccountActions';
 
 import './HeroSection.style.scss';
@@ -8,7 +10,7 @@ function HeroSection(): JSX.Element {
 			<div className="hero-section__details">
 				<div className="hero-section__details-header">
 					<div className="hero-section__icon">
-						<img src="/Logos/aws-dark.svg" alt="AWS" />
+						<img src={awsDarkLogoUrl} alt="AWS" />
 					</div>
 
 					<div className="hero-section__details-title">AWS</div>
