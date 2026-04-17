@@ -42,6 +42,7 @@
 	height: 32px;
 	padding: 10px 16px;
 	background: var(--l2-background);
+	color: var(--l2-foreground);
 	border: none;
 	border-radius: 2px;
 	cursor: pointer;
@@ -63,12 +64,5 @@
 
 	&:hover {
 		opacity: 0.8;
-	}
-}
-
-.lightMode {
-	.auth-header-help-button {
-		background: var(--l2-background);
-		border: 1px solid var(--l1-border);
 	}
 }
