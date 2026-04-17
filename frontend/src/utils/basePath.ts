@@ -24,7 +24,7 @@ export function withBasePath(path: string): string {
 	if (_basePath === '/') {
 		return path;
 	}
-	if (path.startsWith(_basePath)) {
+	if (path.startsWith(_basePath) || path === _basePath.slice(0, -1)) {
 		return path;
 	}
 	return _basePath + path.slice(1);

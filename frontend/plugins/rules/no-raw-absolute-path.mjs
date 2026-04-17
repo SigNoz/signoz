@@ -37,6 +37,16 @@ function isExternalUrl(node) {
 	return false;
 }
 
+
+// window.open(withBasePath(x)) and window.open(getAbsoluteUrl(x)) are already safe.
+function isSafeHelperCall(node) {
+	return (
+		node.type === 'CallExpression' &&
+		node.callee.type === 'Identifier' &&
+		(node.callee.name === 'withBasePath' || node.callee.name === 'getAbsoluteUrl')
+	);
+}
+
 export default {
 	meta: {
 		type: 'suggestion',
@@ -56,7 +66,7 @@ export default {
 
 	create(context) {
 		return {
-			// window.open(path, '_blank') — allow only external string literals
+			// window.open(path, ...) — allow only external first-arg URLs
 			CallExpression(node) {
 				const { callee, arguments: args } = node;
 				if (
@@ -66,9 +76,9 @@ export default {
 					callee.property.name !== 'open'
 				)
 					return;
-				if (args.length < 2) return;
-				if (args[1].type !== 'Literal' || args[1].value !== '_blank') return;
+				if (args.length < 1) return;
 				if (isExternalUrl(args[0])) return;
+				if (isSafeHelperCall(args[0])) return;
 
 				context.report({ node, messageId: 'windowOpen' });
 			},

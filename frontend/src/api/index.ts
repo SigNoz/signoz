@@ -81,14 +81,22 @@ export const interceptorsRequestBasePath = (
 
 	if (value.baseURL?.startsWith('/')) {
 		// Relative baseURL: '/api/v1/' → '/signoz/api/v1/'
-		value.baseURL = basePath + value.baseURL.slice(1);
+		if (!value.baseURL.startsWith(basePath)) {
+			value.baseURL = basePath + value.baseURL.slice(1);
+		}
 	} else if (value.baseURL?.startsWith('http')) {
 		// Absolute baseURL (e.g. VITE_FRONTEND_API_ENDPOINT set for dev/testing):
 		// 'https://host/api/v1/' → 'https://host/signoz/api/v1/'
 		const url = new URL(value.baseURL);
-		url.pathname = basePath + url.pathname.slice(1);
-		value.baseURL = url.toString();
-	} else if (!value.baseURL && value.url?.startsWith('/')) {
+		if (!url.pathname.startsWith(basePath)) {
+			url.pathname = basePath + url.pathname.slice(1);
+			value.baseURL = url.toString();
+		}
+	} else if (
+		!value.baseURL &&
+		value.url?.startsWith('/') &&
+		!value.url.startsWith(basePath)
+	) {
 		// Generated instance: baseURL is '' in prod, path is in url
 		value.url = basePath + value.url.slice(1);
 	}

@@ -73,6 +73,10 @@ describe('at basePath="/signoz/"', () => {
 		expect(m.withBasePath('/signoz/logs')).toBe('/signoz/logs');
 	});
 
+	it('withBasePath is idempotent when path equals the prefix without trailing slash', () => {
+		expect(m.withBasePath('/signoz')).toBe('/signoz');
+	});
+
 	it('withBasePath passes through external URLs', () => {
 		expect(m.withBasePath('https://example.com/foo')).toBe(
 			'https://example.com/foo',

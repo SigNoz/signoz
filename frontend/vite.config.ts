@@ -17,7 +17,7 @@ function devBasePathPlugin(): Plugin {
 		name: 'dev-base-path',
 		apply: 'serve',
 		transformIndexHtml(html): string {
-			return html.replace('[[.BaseHref]]', '/');
+			return html.replaceAll('[[.BaseHref]]', '/');
 		},
 	};
 }
