@@ -25,6 +25,7 @@ type provider struct {
 	manager   *rules.Manager
 	ruleStore ruletypes.RuleStore
 	stopC     chan struct{}
+	healthyC  chan struct{}
 }
 
 func NewFactory(
@@ -70,14 +71,19 @@ func NewFactory(
 			return nil, err
 		}
 
-		return &provider{manager: manager, ruleStore: ruleStore, stopC: make(chan struct{})}, nil
+		return &provider{manager: manager, ruleStore: ruleStore, stopC: make(chan struct{}), healthyC: make(chan struct{})}, nil
 	})
 }
 
 func (provider *provider) Start(ctx context.Context) error {
 	provider.manager.Start(ctx)
+	close(provider.healthyC)
 	<-provider.stopC
 	return nil
+}
+
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.healthyC
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
