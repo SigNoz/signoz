@@ -44,6 +44,15 @@ function Footer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 
+	const handleApiError = useCallback(
+		(error: unknown): void => {
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
+		},
+		[showErrorModal],
+	);
+
 	const handleDiscard = (e: React.MouseEvent): void => {
 		discardAlertRule();
 		safeNavigate('/alerts', { newTab: isModifierKeyPressed(e) });
@@ -93,13 +102,7 @@ function Footer(): JSX.Element {
 					}
 					toast.success('Test notification sent successfully');
 				},
-				onError: (error) => {
-					showErrorModal(
-						convertToApiError(
-							error as AxiosError<RenderErrorResponseDTO>,
-						) as APIError,
-					);
-				},
+				onError: handleApiError,
 			},
 		);
 	}, [
@@ -134,9 +137,7 @@ function Footer(): JSX.Element {
 						toast.success('Alert rule updated successfully');
 						safeNavigate('/alerts');
 					},
-					onError: (error) => {
-						toast.error(error.message);
-					},
+					onError: handleApiError,
 				},
 			);
 		} else {
@@ -147,9 +148,7 @@ function Footer(): JSX.Element {
 						toast.success('Alert rule created successfully');
 						safeNavigate('/alerts');
 					},
-					onError: (error) => {
-						toast.error(error.message);
-					},
+					onError: handleApiError,
 				},
 			);
 		}
@@ -166,7 +165,7 @@ function Footer(): JSX.Element {
 		updateAlertRule,
 		createAlertRule,
 		safeNavigate,
-		showErrorModal,
+		handleApiError,
 	]);
 
 	const disableButtons =
