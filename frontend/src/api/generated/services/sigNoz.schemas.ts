@@ -6328,58 +6328,6 @@ export type UpdateRoutePolicy200 = {
 	status: string;
 };
 
-export type ListRules200 = {
-	data: RuletypesGettableRulesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateRule200 = {
-	data: RuletypesGettableRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteRuleByIDPathParameters = {
-	id: string;
-};
-export type GetRuleByIDPathParameters = {
-	id: string;
-};
-export type GetRuleByID200 = {
-	data: RuletypesGettableRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type PatchRuleByIDPathParameters = {
-	id: string;
-};
-export type PatchRuleByID200 = {
-	data: RuletypesGettableRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdateRuleByIDPathParameters = {
-	id: string;
-};
-export type TestRule200 = {
-	data: RuletypesGettableTestRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListServiceAccounts200 = {
 	/**
 	 * @type array
@@ -6481,14 +6429,6 @@ export type DeleteServiceAccountRolePathParameters = {
 };
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type TestRuleDeprecated200 = {
-	data: RuletypesGettableTestRuleDTO;
 	/**
 	 * @type string
 	 */
@@ -6858,6 +6798,50 @@ export type GetUsersByRoleID200 = {
 	status: string;
 };
 
+export type ListRules200 = {
+	data: RuletypesGettableRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRule200 = {
+	data: RuletypesGettableRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRuleByIDPathParameters = {
+	id: string;
+};
+export type GetRuleByIDPathParameters = {
+	id: string;
+};
+export type GetRuleByID200 = {
+	data: RuletypesGettableRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PatchRuleByIDPathParameters = {
+	id: string;
+};
+export type PatchRuleByID200 = {
+	data: RuletypesGettableRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateRuleByIDPathParameters = {
+	id: string;
+};
 export type GetRuleHistoryFilterKeysPathParameters = {
 	id: string;
 };
@@ -7122,6 +7106,14 @@ export type GetRuleHistoryTopContributors200 = {
 	 * @nullable true
 	 */
 	data: RulestatehistorytypesGettableRuleStateHistoryContributorDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type TestRule200 = {
+	data: RuletypesGettableTestRuleDTO;
 	/**
 	 * @type string
 	 */

@@ -48,7 +48,6 @@ import type {
 	RenderErrorResponseDTO,
 	RuletypesPostableRuleDTO,
 	TestRule200,
-	TestRuleDeprecated200,
 	UpdateRuleByIDPathParameters,
 } from '../sigNoz.schemas';
 
@@ -58,14 +57,14 @@ import type {
  */
 export const listRules = (signal?: AbortSignal) => {
 	return GeneratedAPIInstance<ListRules200>({
-		url: `/api/v1/rules`,
+		url: `/api/v2/rules`,
 		method: 'GET',
 		signal,
 	});
 };
 
 export const getListRulesQueryKey = () => {
-	return [`/api/v1/rules`] as const;
+	return [`/api/v2/rules`] as const;
 };
 
 export const getListRulesQueryOptions = <
@@ -139,7 +138,7 @@ export const createRule = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateRule200>({
-		url: `/api/v1/rules`,
+		url: `/api/v2/rules`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostableRuleDTO,
@@ -219,7 +218,7 @@ export const useCreateRule = <
  */
 export const deleteRuleByID = ({ id }: DeleteRuleByIDPathParameters) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/rules/${id}`,
+		url: `/api/v2/rules/${id}`,
 		method: 'DELETE',
 	});
 };
@@ -299,14 +298,14 @@ export const getRuleByID = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetRuleByID200>({
-		url: `/api/v1/rules/${id}`,
+		url: `/api/v2/rules/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
 export const getGetRuleByIDQueryKey = ({ id }: GetRuleByIDPathParameters) => {
-	return [`/api/v1/rules/${id}`] as const;
+	return [`/api/v2/rules/${id}`] as const;
 };
 
 export const getGetRuleByIDQueryOptions = <
@@ -400,7 +399,7 @@ export const patchRuleByID = (
 	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
 ) => {
 	return GeneratedAPIInstance<PatchRuleByID200>({
-		url: `/api/v1/rules/${id}`,
+		url: `/api/v2/rules/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostableRuleDTO,
@@ -497,7 +496,7 @@ export const updateRuleByID = (
 	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
-		url: `/api/v1/rules/${id}`,
+		url: `/api/v2/rules/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: ruletypesPostableRuleDTO,
@@ -582,174 +581,6 @@ export const useUpdateRuleByID = <
 	TContext
 > => {
 	const mutationOptions = getUpdateRuleByIDMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint fires a test notification for the given rule definition
- * @summary Test alert rule
- */
-export const testRule = (
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<TestRule200>({
-		url: `/api/v1/rules/test`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: ruletypesPostableRuleDTO,
-		signal,
-	});
-};
-
-export const getTestRuleMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof testRule>>,
-		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof testRule>>,
-	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
-	TContext
-> => {
-	const mutationKey = ['testRule'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof testRule>>,
-		{ data: BodyType<RuletypesPostableRuleDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return testRule(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type TestRuleMutationResult = NonNullable<
-	Awaited<ReturnType<typeof testRule>>
->;
-export type TestRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
-export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Test alert rule
- */
-export const useTestRule = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof testRule>>,
-		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof testRule>>,
-	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
-	TContext
-> => {
-	const mutationOptions = getTestRuleMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * Deprecated: use /api/v1/rules/test instead
- * @deprecated
- * @summary Test alert rule (deprecated)
- */
-export const testRuleDeprecated = (
-	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<TestRuleDeprecated200>({
-		url: `/api/v1/testRule`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: ruletypesPostableRuleDTO,
-		signal,
-	});
-};
-
-export const getTestRuleDeprecatedMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof testRuleDeprecated>>,
-		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof testRuleDeprecated>>,
-	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
-	TContext
-> => {
-	const mutationKey = ['testRuleDeprecated'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof testRuleDeprecated>>,
-		{ data: BodyType<RuletypesPostableRuleDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return testRuleDeprecated(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type TestRuleDeprecatedMutationResult = NonNullable<
-	Awaited<ReturnType<typeof testRuleDeprecated>>
->;
-export type TestRuleDeprecatedMutationBody = BodyType<RuletypesPostableRuleDTO>;
-export type TestRuleDeprecatedMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary Test alert rule (deprecated)
- */
-export const useTestRuleDeprecated = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof testRuleDeprecated>>,
-		TError,
-		{ data: BodyType<RuletypesPostableRuleDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof testRuleDeprecated>>,
-	TError,
-	{ data: BodyType<RuletypesPostableRuleDTO> },
-	TContext
-> => {
-	const mutationOptions = getTestRuleDeprecatedMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
@@ -1456,4 +1287,88 @@ export const invalidateGetRuleHistoryTopContributors = async (
 	);
 
 	return queryClient;
+};
+
+/**
+ * This endpoint fires a test notification for the given rule definition
+ * @summary Test alert rule
+ */
+export const testRule = (
+	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<TestRule200>({
+		url: `/api/v2/rules/test`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleDTO,
+		signal,
+	});
+};
+
+export const getTestRuleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof testRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationKey = ['testRule'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof testRule>>,
+		{ data: BodyType<RuletypesPostableRuleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return testRule(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type TestRuleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof testRule>>
+>;
+export type TestRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Test alert rule
+ */
+export const useTestRule = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof testRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationOptions = getTestRuleMutationOptions(options);
+
+	return useMutation(mutationOptions);
 };
