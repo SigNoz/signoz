@@ -8,8 +8,8 @@ import React, {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { Loader } from '@signozhq/icons';
 import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
