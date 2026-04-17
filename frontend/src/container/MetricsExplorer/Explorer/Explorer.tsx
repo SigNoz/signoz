@@ -12,6 +12,7 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { useIsGlobalTimeQueryRefreshing } from 'hooks/globalTime/useIsGlobalTimeQueryRefreshing';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import {
@@ -57,7 +58,7 @@ function Explorer(): JSX.Element {
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
 	const queryClient = useQueryClient();
-	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const isLoadingQueries = useIsGlobalTimeQueryRefreshing();
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
 	}, [queryClient]);
@@ -331,7 +332,6 @@ function Explorer(): JSX.Element {
 				/>
 				<div className="explore-content">
 					<TimeSeries
-						onFetchingStateChange={setIsLoadingQueries}
 						showOneChartPerQuery={showOneChartPerQuery}
 						setWarning={setWarning}
 						areAllMetricUnitsSame={areAllMetricUnitsSame}

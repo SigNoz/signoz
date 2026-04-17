@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/sonner';
@@ -35,7 +35,6 @@ import {
 } from './utils';
 
 function TimeSeries({
-	onFetchingStateChange,
 	showOneChartPerQuery,
 	setWarning,
 	isMetricUnitsLoading,
@@ -134,11 +133,6 @@ function TimeSeries({
 			},
 		})),
 	);
-
-	const isFetching = queries.some((q) => q.isFetching);
-	useEffect(() => {
-		onFetchingStateChange?.(isFetching);
-	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 

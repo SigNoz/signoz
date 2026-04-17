@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -20,11 +20,7 @@ import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-interface TimeSeriesProps {
-	onFetchingStateChange?: (isFetching: boolean) => void;
-}
-
-function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
+function TimeSeries(): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -109,11 +105,6 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 			},
 		})),
 	);
-
-	const isFetching = queries.some((q) => q.isFetching);
-	useEffect(() => {
-		onFetchingStateChange?.(isFetching);
-	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 

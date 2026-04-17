@@ -13,6 +13,7 @@ import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapp
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
+import { useIsGlobalTimeQueryRefreshing } from 'hooks/globalTime/useIsGlobalTimeQueryRefreshing';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -40,7 +41,7 @@ function Explorer(): JSX.Element {
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
 	const queryClient = useQueryClient();
-	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const isLoadingQueries = useIsGlobalTimeQueryRefreshing();
 
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
@@ -183,7 +184,7 @@ function Explorer(): JSX.Element {
 						/>
 
 						<div className="explore-content">
-							<TimeSeries onFetchingStateChange={setIsLoadingQueries} />
+							<TimeSeries />
 						</div>
 					</div>
 					<ExplorerOptionWrapper
