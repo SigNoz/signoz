@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addRulerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/rules", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.ListRules), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.ListRules), handler.OpenAPIDef{
 		ID:                  "ListRules",
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules",
@@ -23,7 +23,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules/{id}", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.GetRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.GetRuleByID), handler.OpenAPIDef{
 		ID:                  "GetRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Get alert rule by ID",
@@ -37,7 +37,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules", handler.New(provider.authZ.EditAccess(provider.rulerHandler.CreateRule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules", handler.New(provider.authZ.EditAccess(provider.rulerHandler.CreateRule), handler.OpenAPIDef{
 		ID:                  "CreateRule",
 		Tags:                []string{"rules"},
 		Summary:             "Create alert rule",
@@ -53,7 +53,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
 		ID:                  "UpdateRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Update alert rule",
@@ -67,7 +67,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
 		ID:                  "DeleteRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Delete alert rule",
@@ -79,7 +79,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.PatchRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.PatchRuleByID), handler.OpenAPIDef{
 		ID:                  "PatchRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Patch alert rule",
@@ -95,7 +95,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/rules/test", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/test", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
 		ID:                  "TestRule",
 		Tags:                []string{"rules"},
 		Summary:             "Test alert rule",
@@ -106,23 +106,6 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/testRule", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
-		ID:                  "TestRuleDeprecated",
-		Tags:                []string{"rules"},
-		Summary:             "Test alert rule (deprecated)",
-		Description:         "Deprecated: use /api/v1/rules/test instead",
-		Request:             new(ruletypes.PostableRule),
-		RequestContentType:  "application/json",
-		Response:            new(ruletypes.GettableTestRule),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		Deprecated:          true,
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
