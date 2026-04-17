@@ -32,8 +32,8 @@ type Evaluation interface {
 }
 
 type RollingWindow struct {
-	EvalWindow valuer.TextDuration `json:"evalWindow"`
-	Frequency  valuer.TextDuration `json:"frequency"`
+	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true"`
+	Frequency  valuer.TextDuration `json:"frequency" required:"true"`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -55,9 +55,9 @@ func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule  `json:"schedule"`
-	Frequency valuer.TextDuration `json:"frequency"`
-	Timezone  string              `json:"timezone"`
+	Schedule  CumulativeSchedule  `json:"schedule" required:"true"`
+	Frequency valuer.TextDuration `json:"frequency" required:"true"`
+	Timezone  string              `json:"timezone" required:"true"`
 }
 
 type CumulativeSchedule struct {
@@ -244,8 +244,8 @@ func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 }
 
 type EvaluationEnvelope struct {
-	Kind EvaluationKind `json:"kind"`
-	Spec any            `json:"spec"`
+	Kind EvaluationKind `json:"kind" required:"true"`
+	Spec any            `json:"spec" required:"true"`
 }
 
 // evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.

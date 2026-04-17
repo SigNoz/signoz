@@ -3662,6 +3662,11 @@ components:
           type: number
         targetUnit:
           type: string
+      required:
+      - name
+      - target
+      - matchType
+      - op
       type: object
     RuletypesBasicRuleThresholds:
       items:
@@ -3701,6 +3706,10 @@ components:
           $ref: '#/components/schemas/RuletypesCumulativeSchedule'
         timezone:
           type: string
+      required:
+      - schedule
+      - frequency
+      - timezone
       type: object
     RuletypesEvaluationCumulative:
       properties:
@@ -3717,6 +3726,9 @@ components:
         kind:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec: {}
+      required:
+      - kind
+      - spec
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -3759,6 +3771,9 @@ components:
           type: string
         updatedBy:
           type: string
+      required:
+      - name
+      - schedule
       type: object
     RuletypesGettableRule:
       properties:
@@ -3940,6 +3955,9 @@ components:
           type: string
         frequency:
           type: string
+      required:
+      - evalWindow
+      - frequency
       type: object
     RuletypesRuleCondition:
       properties:
@@ -3971,6 +3989,10 @@ components:
           type: string
         thresholds:
           $ref: '#/components/schemas/RuletypesRuleThresholdData'
+      required:
+      - compositeQuery
+      - op
+      - matchType
       type: object
     RuletypesRuleThresholdData:
       oneOf:
@@ -3979,6 +4001,9 @@ components:
         kind:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec: {}
+      required:
+      - kind
+      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -3998,6 +4023,8 @@ components:
           type: string
         timezone:
           type: string
+      required:
+      - timezone
       type: object
     RuletypesScheduleType:
       enum:

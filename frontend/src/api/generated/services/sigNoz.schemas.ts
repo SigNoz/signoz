@@ -4563,12 +4563,12 @@ export interface RuletypesBasicRuleThresholdDTO {
 	 * @nullable true
 	 */
 	channels?: string[] | null;
-	matchType?: RuletypesMatchTypeDTO;
+	matchType: RuletypesMatchTypeDTO;
 	/**
 	 * @type string
 	 */
-	name?: string;
-	op?: RuletypesCompareOperatorDTO;
+	name: string;
+	op: RuletypesCompareOperatorDTO;
 	/**
 	 * @type number
 	 * @nullable true
@@ -4578,7 +4578,7 @@ export interface RuletypesBasicRuleThresholdDTO {
 	 * @type number
 	 * @nullable true
 	 */
-	target?: number | null;
+	target: number | null;
 	/**
 	 * @type string
 	 */
@@ -4627,12 +4627,12 @@ export interface RuletypesCumulativeWindowDTO {
 	/**
 	 * @type string
 	 */
-	frequency?: string;
-	schedule?: RuletypesCumulativeScheduleDTO;
+	frequency: string;
+	schedule: RuletypesCumulativeScheduleDTO;
 	/**
 	 * @type string
 	 */
-	timezone?: string;
+	timezone: string;
 }
 
 export interface RuletypesEvaluationCumulativeDTO {
@@ -4642,12 +4642,12 @@ export interface RuletypesEvaluationCumulativeDTO {
 
 export type RuletypesEvaluationEnvelopeDTO =
 	| (RuletypesEvaluationRollingDTO & {
-			kind?: RuletypesEvaluationKindDTO;
-			spec?: unknown;
+			kind: RuletypesEvaluationKindDTO;
+			spec: unknown;
 	  })
 	| (RuletypesEvaluationCumulativeDTO & {
-			kind?: RuletypesEvaluationKindDTO;
-			spec?: unknown;
+			kind: RuletypesEvaluationKindDTO;
+			spec: unknown;
 	  });
 
 export enum RuletypesEvaluationKindDTO {
@@ -4689,8 +4689,8 @@ export interface RuletypesGettablePlannedMaintenanceDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
-	schedule?: RuletypesScheduleDTO;
+	name: string;
+	schedule: RuletypesScheduleDTO;
 	/**
 	 * @type string
 	 */
@@ -4939,11 +4939,11 @@ export interface RuletypesRollingWindowDTO {
 	/**
 	 * @type string
 	 */
-	evalWindow?: string;
+	evalWindow: string;
 	/**
 	 * @type string
 	 */
-	frequency?: string;
+	frequency: string;
 }
 
 export interface RuletypesRuleConditionDTO {
@@ -4960,9 +4960,9 @@ export interface RuletypesRuleConditionDTO {
 	 * @type string
 	 */
 	algorithm?: string;
-	compositeQuery?: RuletypesAlertCompositeQueryDTO;
-	matchType?: RuletypesMatchTypeDTO;
-	op?: RuletypesCompareOperatorDTO;
+	compositeQuery: RuletypesAlertCompositeQueryDTO;
+	matchType: RuletypesMatchTypeDTO;
+	op: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
@@ -4989,8 +4989,8 @@ export interface RuletypesRuleConditionDTO {
 }
 
 export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
-	kind?: RuletypesThresholdKindDTO;
-	spec?: unknown;
+	kind: RuletypesThresholdKindDTO;
+	spec: unknown;
 };
 
 export enum RuletypesRuleTypeDTO {
@@ -5013,7 +5013,7 @@ export interface RuletypesScheduleDTO {
 	/**
 	 * @type string
 	 */
-	timezone?: string;
+	timezone: string;
 }
 
 export enum RuletypesScheduleTypeDTO {

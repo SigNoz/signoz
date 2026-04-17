@@ -30,8 +30,8 @@ func (ThresholdKind) Enum() []any {
 }
 
 type RuleThresholdData struct {
-	Kind ThresholdKind `json:"kind"`
-	Spec any           `json:"spec"`
+	Kind ThresholdKind `json:"kind" required:"true"`
+	Spec any           `json:"spec" required:"true"`
 }
 
 // thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
@@ -112,12 +112,12 @@ type RuleThreshold interface {
 }
 
 type BasicRuleThreshold struct {
-	Name            string          `json:"name"`
-	TargetValue     *float64        `json:"target"`
+	Name            string          `json:"name" required:"true"`
+	TargetValue     *float64        `json:"target" required:"true"`
 	TargetUnit      string          `json:"targetUnit"`
 	RecoveryTarget  *float64        `json:"recoveryTarget"`
-	MatchType       MatchType       `json:"matchType"`
-	CompareOperator CompareOperator `json:"op"`
+	MatchType       MatchType       `json:"matchType" required:"true"`
+	CompareOperator CompareOperator `json:"op" required:"true"`
 	Channels        []string        `json:"channels"`
 }
 
