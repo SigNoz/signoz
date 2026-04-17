@@ -25,6 +25,16 @@ const (
 	AlertTypeExceptions AlertType = "EXCEPTIONS_BASED_ALERT"
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for AlertType.
+func (AlertType) Enum() []any {
+	return []any{
+		AlertTypeMetric,
+		AlertTypeTraces,
+		AlertTypeLogs,
+		AlertTypeExceptions,
+	}
+}
+
 const (
 	DefaultSchemaVersion  = "v1"
 	SchemaVersionV2Alpha1 = "v2alpha1"
