@@ -424,7 +424,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			queryAttributeTable = true
 		} else if selector.FieldContext == telemetrytypes.FieldContextResource {
 			queryResourceTable = true
-		} else if selector.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled {
+		} else if selector.FieldContext == telemetrytypes.FieldContextBody {
 			queryBodyTable = true
 		}
 	}
@@ -593,7 +593,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	defer rows.Close()
 
 	keys := []*telemetrytypes.TelemetryFieldKey{}
-	parentTypeCache := make(map[string][]telemetrytypes.FieldDataType)
+	parentTypes := make(map[string][]telemetrytypes.FieldDataType)
 	rowCount := 0
 	searchTexts := []string{}
 
@@ -623,7 +623,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		switch fieldDataType {
 		case telemetrytypes.FieldDataTypeArrayJSON, telemetrytypes.FieldDataTypeArrayDynamic:
 			if fieldContext == telemetrytypes.FieldContextBody && parentPaths[name] {
-				parentTypeCache[name] = append(parentTypeCache[name], fieldDataType)
+				parentTypes[name] = append(parentTypes[name], fieldDataType)
 				continue
 			}
 		}
@@ -683,7 +683,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
 	if querybuilder.BodyJSONQueryEnabled {
-		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypeCache); err != nil {
+		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypes); err != nil {
 			return nil, false, err
 		}
 	}
