@@ -1,6 +1,10 @@
 import type {
 	RuletypesAlertStateDTO,
+	RuletypesCompareOperatorDTO,
 	RuletypesGettableRuleDTO,
+	RuletypesMatchTypeDTO,
+	RuletypesPanelTypeDTO,
+	RuletypesQueryTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { filterAlerts } from '../utils';
@@ -14,7 +18,15 @@ describe('filterAlerts', () => {
 		updateAt: new Date('2024-01-01T00:00:00Z'),
 		updateBy: 'test-user',
 		version: '1',
-		condition: {},
+		condition: {
+			compositeQuery: {
+				queries: [],
+				panelType: 'graph' as RuletypesPanelTypeDTO,
+				queryType: 'builder' as RuletypesQueryTypeDTO,
+			},
+			matchType: 'at_least_once' as RuletypesMatchTypeDTO,
+			op: 'above' as RuletypesCompareOperatorDTO,
+		},
 		ruleType: 'threshold_rule' as RuletypesGettableRuleDTO['ruleType'],
 	};
 

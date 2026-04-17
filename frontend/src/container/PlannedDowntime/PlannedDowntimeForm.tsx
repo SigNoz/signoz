@@ -154,7 +154,7 @@ export function PlannedDowntimeForm(
 							shouldKeepLocalTime,
 						),
 					),
-					timezone: values.timezone,
+					timezone: values.timezone ?? '',
 					endTime: values.endTime
 						? new Date(
 								handleTimeConversion(
