@@ -244,8 +244,8 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	var schedule ruletypes.PlannedMaintenance
-	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
+	schedule := new(ruletypes.PostablePlannedMaintenance)
+	if err := binding.JSON.BindBody(req.Body, schedule); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -274,8 +274,8 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 		return
 	}
 
-	var schedule ruletypes.PlannedMaintenance
-	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
+	schedule := new(ruletypes.PostablePlannedMaintenance)
+	if err := binding.JSON.BindBody(req.Body, schedule); err != nil {
 		render.Error(rw, err)
 		return
 	}

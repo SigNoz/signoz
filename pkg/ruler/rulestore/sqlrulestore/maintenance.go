@@ -57,7 +57,7 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 	return storableMaintenanceRule.ToPlannedMaintenance(), nil
 }
 
-func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance) (valuer.UUID, error) {
+func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance) (valuer.UUID, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return valuer.UUID{}, err
@@ -82,7 +82,7 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 	}
 
 	maintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
-	for _, ruleIDStr := range maintenance.RuleIDs {
+	for _, ruleIDStr := range maintenance.AlertIds {
 		ruleID, err := valuer.NewUUID(ruleIDStr)
 		if err != nil {
 			return valuer.UUID{}, err
@@ -142,8 +142,13 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 	return nil
 }
 
-func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance, id valuer.UUID) error {
+func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance *ruletypes.PostablePlannedMaintenance, id valuer.UUID) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	existing, err := r.GetPlannedMaintenanceByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -153,11 +158,11 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 			ID: id,
 		},
 		TimeAuditable: types.TimeAuditable{
-			CreatedAt: maintenance.CreatedAt,
+			CreatedAt: existing.CreatedAt,
 			UpdatedAt: time.Now(),
 		},
 		UserAuditable: types.UserAuditable{
-			CreatedBy: maintenance.CreatedBy,
+			CreatedBy: existing.CreatedBy,
 			UpdatedBy: claims.Email,
 		},
 		Name:        maintenance.Name,
@@ -167,7 +172,7 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 	}
 
 	storablePlannedMaintenanceRules := make([]*ruletypes.StorablePlannedMaintenanceRule, 0)
-	for _, ruleIDStr := range maintenance.RuleIDs {
+	for _, ruleIDStr := range maintenance.AlertIds {
 		ruleID, err := valuer.NewUUID(ruleIDStr)
 		if err != nil {
 			return err
