@@ -27,17 +27,17 @@ type StorablePlannedMaintenance struct {
 }
 
 type PlannedMaintenance struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name" required:"true"`
-	Description string    `json:"description"`
-	Schedule    *Schedule `json:"schedule" required:"true"`
-	RuleIDs     []string  `json:"alertIds"`
-	CreatedAt   time.Time `json:"createdAt"`
-	CreatedBy   string    `json:"createdBy"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	UpdatedBy   string    `json:"updatedBy"`
-	Status      string    `json:"status"`
-	Kind        string    `json:"kind"`
+	ID          valuer.UUID `json:"id" required:"true"`
+	Name        string      `json:"name" required:"true"`
+	Description string      `json:"description"`
+	Schedule    *Schedule   `json:"schedule" required:"true"`
+	RuleIDs     []string    `json:"alertIds"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	CreatedBy   string      `json:"createdBy"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	UpdatedBy   string      `json:"updatedBy"`
+	Status      string      `json:"status"`
+	Kind        string      `json:"kind"`
 }
 
 // PostablePlannedMaintenance is the input payload for creating or updating a
@@ -329,19 +329,19 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		Id          string    `json:"id" db:"id"`
-		Name        string    `json:"name" db:"name"`
-		Description string    `json:"description" db:"description"`
-		Schedule    *Schedule `json:"schedule" db:"schedule"`
-		AlertIds    []string  `json:"alertIds" db:"alert_ids"`
-		CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-		CreatedBy   string    `json:"createdBy" db:"created_by"`
-		UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
-		UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
-		Status      string    `json:"status"`
-		Kind        string    `json:"kind"`
+		ID          valuer.UUID `json:"id" db:"id"`
+		Name        string      `json:"name" db:"name"`
+		Description string      `json:"description" db:"description"`
+		Schedule    *Schedule   `json:"schedule" db:"schedule"`
+		AlertIds    []string    `json:"alertIds" db:"alert_ids"`
+		CreatedAt   time.Time   `json:"createdAt" db:"created_at"`
+		CreatedBy   string      `json:"createdBy" db:"created_by"`
+		UpdatedAt   time.Time   `json:"updatedAt" db:"updated_at"`
+		UpdatedBy   string      `json:"updatedBy" db:"updated_by"`
+		Status      string      `json:"status"`
+		Kind        string      `json:"kind"`
 	}{
-		Id:          m.Id,
+		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
 		Schedule:    m.Schedule,
@@ -364,7 +364,7 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
 	}
 
 	return &PlannedMaintenance{
-		Id:          m.ID.StringValue(),
+		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
 		Schedule:    m.Schedule,
