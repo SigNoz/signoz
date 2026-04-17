@@ -157,7 +157,7 @@ const renderSpanDetailsDrawer = (span: Span = createMockSpan()): any => {
 describe('AttributeActions User Flow Tests', () => {
 	describe('Complete Attribute Actions User Flow', () => {
 		it('should allow user to interact with span attribute actions from trace detail page', async () => {
-			const { user } = renderSpanDetailsDrawer();
+			renderSpanDetailsDrawer();
 
 			// Verify Attributes tab is displayed with table view
 			expect(screen.getByText('Attributes')).toBeInTheDocument();
@@ -172,10 +172,8 @@ describe('AttributeActions User Flow Tests', () => {
 			const httpMethodRow = screen.getByText('http.method').closest('.item');
 			expect(httpMethodRow).toBeInTheDocument();
 
-			// Hover over the attribute row to reveal action buttons
-			await user.hover(httpMethodRow!);
-
-			// Verify action buttons are present within this specific row
+			// Action buttons are always mounted in the DOM (only CSS-hidden until :hover),
+			// so we can query them directly without simulating a pointer hover.
 			const actionButtons = httpMethodRow!.querySelector('.action-btn');
 			expect(actionButtons).toBeInTheDocument();
 
@@ -188,8 +186,9 @@ describe('AttributeActions User Flow Tests', () => {
 			expect(filterForButton).toBeInTheDocument();
 			expect(filterOutButton).toBeInTheDocument();
 
-			// Test "Filter for" action
-			await user.click(filterForButton);
+			// Test "Filter for" action — use fireEvent to skip userEvent's pointer
+			// simulation and the Antd Tooltip mouseEnterDelay timers it triggers.
+			fireEvent.click(filterForButton);
 
 			// Verify navigation to traces explorer with inclusive filter
 			await waitFor(() => {
@@ -221,7 +220,7 @@ describe('AttributeActions User Flow Tests', () => {
 			mockRedirectWithQueryBuilderData.mockClear();
 
 			// Test "Filter out" action
-			await user.click(filterOutButton);
+			fireEvent.click(filterOutButton);
 
 			// Verify navigation to traces explorer with exclusive filter
 			await waitFor(() => {
@@ -259,20 +258,20 @@ describe('AttributeActions User Flow Tests', () => {
 
 	describe('Filter Replacement Flow', () => {
 		it('should replace previous filter when applying multiple filters on same field', async () => {
-			const { user } = renderSpanDetailsDrawer();
+			renderSpanDetailsDrawer();
 
 			// Find the http.method attribute row
 			const httpMethodRow = screen.getByText('http.method').closest('.item');
 			expect(httpMethodRow).toBeInTheDocument();
 
-			// Apply first filter
-			await user.hover(httpMethodRow!);
-
+			// Action buttons are always mounted (CSS-hidden until :hover, which jsdom
+			// doesn't evaluate), so we can click them directly via fireEvent and skip
+			// userEvent's pointer simulation + Antd Tooltip mouseEnterDelay timers.
 			const filterForButton = httpMethodRow!.querySelector(
 				'[aria-label="Filter for value"]',
 			) as HTMLElement;
 			expect(filterForButton).toBeInTheDocument();
-			await user.click(filterForButton);
+			fireEvent.click(filterForButton);
 
 			// Verify first filter was applied
 			await waitFor(() => {
@@ -307,7 +306,7 @@ describe('AttributeActions User Flow Tests', () => {
 				'[aria-label="Filter out value"]',
 			) as HTMLElement;
 			expect(filterOutButton).toBeInTheDocument();
-			await user.click(filterOutButton);
+			fireEvent.click(filterOutButton);
 
 			// Verify the new call contains only the new filter (replacement behavior)
 			await waitFor(() => {
