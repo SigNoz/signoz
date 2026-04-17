@@ -305,11 +305,18 @@ export default function TooltipPlugin({
 		// Forward overlay clicks to the consumer-provided onClick callback.
 		const handleOverClick = (event: MouseEvent): void => {
 			const plot = getPlot(controller);
-			if (!plot) {
-				return;
+			/**
+			 * Only trigger onClick if the click happened on the plot overlay and there is a focused series.
+			 * It also ensures that clicks only trigger onClick when there is a relevant data point (i.e. a focused series) to provide context for the click.
+			 */
+			if (
+				plot &&
+				event.target === plot.over &&
+				controller.focusedSeriesIndex != null
+			) {
+				const clickData = buildClickData(event, plot);
+				onClick?.(clickData);
 			}
-			const clickData = buildClickData(event, plot);
-			onClick?.(clickData);
 		};
 
 		let overClickHandler: ((event: MouseEvent) => void) | null = null;
