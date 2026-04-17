@@ -1,3 +1,6 @@
+import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
+import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
+
 import { AzureRegion } from './types';
 
 export const INTEGRATION_TELEMETRY_EVENTS = {
@@ -29,7 +32,7 @@ export const AWS_INTEGRATION = {
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
-	icon: new URL('@/assets/Logos/aws-dark.svg', import.meta.url).href,
+	icon: awsDarkLogo,
 	icon_alt: 'aws-logo',
 	is_installed: false,
 	is_new: false,
@@ -44,7 +47,7 @@ export const AZURE_INTEGRATION = {
 		email: 'integrations@signoz.io',
 		homepage: 'https://signoz.io',
 	},
-	icon: new URL('@/assets/Logos/azure-openai.svg', import.meta.url).href,
+	icon: azureOpenaiLogo,
 	icon_alt: 'azure-logo',
 	is_installed: false,
 	is_new: true,
