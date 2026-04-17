@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
@@ -76,11 +76,21 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		entityVersion: '',
 	});
 
+	// Track previous urlFilters to only sync when the value actually changes
+	// (not when handleChangeQueryData changes due to query updates)
+	const prevUrlFiltersRef = useRef<string | null>(null);
+
 	useEffect(() => {
-		if (urlFilters && urlFilters.items) {
-			handleChangeQueryData('filters', urlFilters);
+		const currentFiltersJson = urlFilters ? JSON.stringify(urlFilters) : null;
+
+		// Only sync if urlFilters value has actually changed
+		if (prevUrlFiltersRef.current !== currentFiltersJson) {
+			prevUrlFiltersRef.current = currentFiltersJson;
+			// Sync filters to query builder, using empty filter when urlFilters is null
+			handleChangeQueryData('filters', urlFilters || { items: [], op: 'and' });
 		}
-	}, [urlFilters, handleChangeQueryData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [urlFilters]); // handleChangeQueryData intentionally omitted - we call the current version but don't re-run when it changes
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -91,8 +101,8 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// update the current query with the new filters
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		const filters = query.builder.queryData[0].filters;
+		// The useEffect will sync filters to query builder, avoiding double state updates
 		setUrlFilters(filters || null);
-		handleChangeQueryData('filters', filters);
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,
