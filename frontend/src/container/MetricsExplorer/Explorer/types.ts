@@ -16,4 +16,5 @@ export interface TimeSeriesProps {
 	yAxisUnit: string | undefined;
 	setYAxisUnit: (unit: string) => void;
 	showYAxisUnitSelector: boolean;
+	isCancelled?: boolean;
 }

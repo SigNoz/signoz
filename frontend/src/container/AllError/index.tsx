@@ -21,6 +21,7 @@ import { FilterConfirmProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -123,6 +124,7 @@ function AllErrors(): JSX.Element {
 	const compositeData = useGetCompositeQueryParam();
 
 	const setIsFetching = useAllErrorsQueryState((s) => s.setIsFetching);
+	const isCancelled = useAllErrorsQueryState((s) => s.isCancelled);
 
 	const [
 		{ isLoading, isFetching: isErrorsFetching, data },
@@ -484,6 +486,12 @@ function AllErrors(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [errorCountResponse.data?.payload]);
+
+	if (isCancelled && !data?.payload?.length) {
+		return (
+			<QueryCancelledPlaceholder subText='Click "Run Query" to load exceptions.' />
+		);
+	}
 
 	return (
 		<ResizeTable
