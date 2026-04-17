@@ -25,6 +25,7 @@ import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import useDrilldown from 'container/GridCardLayout/GridCard/FullView/useDrilldown';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
@@ -50,6 +51,8 @@ import {
 	selectIsDashboardLocked,
 	useDashboardStore,
 } from 'providers/Dashboard/store/useDashboardStore';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -88,6 +91,7 @@ function FullView({
 	const fullViewRef = useRef<HTMLDivElement>(null);
 	const { handleRunQuery } = useQueryBuilder();
 	const queryClient = useQueryClient();
+	const selectedTimeFromStore = useGlobalTimeStore((s) => s.selectedTime);
 
 	useEffect(() => {
 		setCurrentGraphRef(fullViewRef);
@@ -206,15 +210,21 @@ function FullView({
 	}, [selectedPanelType]);
 
 	const queryRangeKey = useMemo(
-		() => [
+		() =>
+			getAutoRefreshQueryKey(
+				selectedTimeFromStore,
+				widget?.query,
+				selectedPanelType,
+				requestData,
+				version,
+			),
+		[
+			selectedTimeFromStore,
 			widget?.query,
 			selectedPanelType,
 			requestData,
 			version,
-			minTime,
-			maxTime,
 		],
-		[widget?.query, selectedPanelType, requestData, version, minTime, maxTime],
 	);
 
 	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
@@ -224,8 +234,8 @@ function FullView({
 	});
 
 	const handleCancelQuery = useCallback(() => {
-		queryClient.cancelQueries(queryRangeKey);
-	}, [queryClient, queryRangeKey]);
+		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
+	}, [queryClient]);
 
 	const onDragSelect = useCallback((start: number, end: number): void => {
 		const startTimestamp = Math.trunc(start);

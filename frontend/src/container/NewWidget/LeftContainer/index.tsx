@@ -1,14 +1,12 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 
 import { WidgetGraphProps } from '../types';
 import ExplorerColumnsRenderer from './ExplorerColumnsRenderer';
@@ -35,24 +33,20 @@ function LeftContainer({
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 	const queryClient = useQueryClient();
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 
-	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
 	const queryRangeKey = useMemo(
-		() => [
-			REACT_QUERY_KEY.GET_QUERY_RANGE,
-			globalSelectedInterval,
-			requestData,
-			minTime,
-			maxTime,
-		],
-		[globalSelectedInterval, requestData, minTime, maxTime],
+		() =>
+			getAutoRefreshQueryKey(
+				selectedTime,
+				REACT_QUERY_KEY.GET_QUERY_RANGE,
+				requestData,
+			),
+		[selectedTime, requestData],
 	);
 	const handleCancelQuery = useCallback(() => {
-		queryClient.cancelQueries(queryRangeKey);
-	}, [queryClient, queryRangeKey]);
+		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
+	}, [queryClient]);
 
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
 		enabled: !!stagedQuery,
