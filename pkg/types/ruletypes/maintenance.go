@@ -26,7 +26,7 @@ type StorablePlannedMaintenance struct {
 	OrgID       string    `bun:"org_id,type:text"`
 }
 
-type GettablePlannedMaintenance struct {
+type PlannedMaintenance struct {
 	Id          string    `json:"id"`
 	Name        string    `json:"name" required:"true"`
 	Description string    `json:"description"`
@@ -47,12 +47,12 @@ type StorablePlannedMaintenanceRule struct {
 	RuleID               valuer.UUID `bun:"rule_id,type:text"`
 }
 
-type GettablePlannedMaintenanceRule struct {
+type PlannedMaintenanceWithRules struct {
 	*StorablePlannedMaintenance `bun:",extend"`
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
-func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
+func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if len(m.RuleIDs) > 0 {
@@ -122,7 +122,7 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
-func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
 		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
@@ -137,7 +137,7 @@ func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recu
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
-func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	// If no days specified, treat as every day (like daily).
 	if len(rec.RepeatOn) == 0 {
 		return m.checkDaily(currentTime, rec, loc)
@@ -169,7 +169,7 @@ func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Rec
 
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
-func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	refDay := rec.StartTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
@@ -201,7 +201,7 @@ func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Re
 	return currentTime.Sub(candidate) <= rec.Duration.Duration()
 }
 
-func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
+func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	ruleID := "maintenance"
 	if len(m.RuleIDs) > 0 {
 		ruleID = (m.RuleIDs)[0]
@@ -209,7 +209,7 @@ func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 	return m.ShouldSkip(ruleID, now)
 }
 
-func (m *GettablePlannedMaintenance) IsUpcoming() bool {
+func (m *PlannedMaintenance) IsUpcoming() bool {
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
 		return false
@@ -225,11 +225,11 @@ func (m *GettablePlannedMaintenance) IsUpcoming() bool {
 	return false
 }
 
-func (m *GettablePlannedMaintenance) IsRecurring() bool {
+func (m *PlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
 }
 
-func (m *GettablePlannedMaintenance) Validate() error {
+func (m *PlannedMaintenance) Validate() error {
 	if m.Name == "" {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
 	}
@@ -265,7 +265,7 @@ func (m *GettablePlannedMaintenance) Validate() error {
 	return nil
 }
 
-func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
+func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
 	var status string
 	if m.IsActive(now) {
@@ -310,7 +310,7 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettableMaintenance() *GettablePlannedMaintenance {
+func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance {
 	ruleIDs := []string{}
 	if m.Rules != nil {
 		for _, storableMaintenanceRule := range m.Rules {
@@ -318,7 +318,7 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 		}
 	}
 
-	return &GettablePlannedMaintenance{
+	return &PlannedMaintenance{
 		Id:          m.ID.StringValue(),
 		Name:        m.Name,
 		Description: m.Description,
@@ -337,9 +337,9 @@ type ListPlannedMaintenanceParams struct {
 }
 
 type MaintenanceStore interface {
-	CreatePlannedMaintenance(context.Context, GettablePlannedMaintenance) (valuer.UUID, error)
+	CreatePlannedMaintenance(context.Context, PlannedMaintenance) (valuer.UUID, error)
 	DeletePlannedMaintenance(context.Context, valuer.UUID) error
-	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*GettablePlannedMaintenance, error)
-	EditPlannedMaintenance(context.Context, GettablePlannedMaintenance, valuer.UUID) error
-	GetAllPlannedMaintenance(context.Context, string) ([]*GettablePlannedMaintenance, error)
+	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
+	EditPlannedMaintenance(context.Context, PlannedMaintenance, valuer.UUID) error
+	GetAllPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
 }

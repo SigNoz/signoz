@@ -198,7 +198,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 	}
 
 	if params.Active != nil {
-		activeSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
+		activeSchedules := make([]*ruletypes.PlannedMaintenance, 0)
 		for _, schedule := range schedules {
 			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
 			if schedule.IsActive(now) == *params.Active {
@@ -209,7 +209,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 	}
 
 	if params.Recurring != nil {
-		recurringSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
+		recurringSchedules := make([]*ruletypes.PlannedMaintenance, 0)
 		for _, schedule := range schedules {
 			if schedule.IsRecurring() == *params.Recurring {
 				recurringSchedules = append(recurringSchedules, schedule)
@@ -244,7 +244,7 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	var schedule ruletypes.GettablePlannedMaintenance
+	var schedule ruletypes.PlannedMaintenance
 	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
 		render.Error(rw, err)
 		return
@@ -274,7 +274,7 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 		return
 	}
 
-	var schedule ruletypes.GettablePlannedMaintenance
+	var schedule ruletypes.PlannedMaintenance
 	if err := binding.JSON.BindBody(req.Body, &schedule); err != nil {
 		render.Error(rw, err)
 		return

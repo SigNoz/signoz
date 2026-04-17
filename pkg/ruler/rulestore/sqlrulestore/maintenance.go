@@ -20,8 +20,8 @@ func NewMaintenanceStore(store sqlstore.SQLStore) ruletypes.MaintenanceStore {
 	return &maintenance{sqlstore: store}
 }
 
-func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.GettablePlannedMaintenance, error) {
-	gettableMaintenancesRules := make([]*ruletypes.GettablePlannedMaintenanceRule, 0)
+func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.PlannedMaintenance, error) {
+	gettableMaintenancesRules := make([]*ruletypes.PlannedMaintenanceWithRules, 0)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -33,16 +33,16 @@ func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string
 		return nil, err
 	}
 
-	gettablePlannedMaintenance := make([]*ruletypes.GettablePlannedMaintenance, 0)
+	gettablePlannedMaintenance := make([]*ruletypes.PlannedMaintenance, 0)
 	for _, gettableMaintenancesRule := range gettableMaintenancesRules {
-		gettablePlannedMaintenance = append(gettablePlannedMaintenance, gettableMaintenancesRule.ConvertGettableMaintenanceRuleToGettableMaintenance())
+		gettablePlannedMaintenance = append(gettablePlannedMaintenance, gettableMaintenancesRule.ToPlannedMaintenance())
 	}
 
 	return gettablePlannedMaintenance, nil
 }
 
-func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.GettablePlannedMaintenance, error) {
-	storableMaintenanceRule := new(ruletypes.GettablePlannedMaintenanceRule)
+func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.UUID) (*ruletypes.PlannedMaintenance, error) {
+	storableMaintenanceRule := new(ruletypes.PlannedMaintenanceWithRules)
 	err := r.sqlstore.
 		BunDB().
 		NewSelect().
@@ -54,10 +54,10 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "planned maintenance with ID: %s does not exist", id.StringValue())
 	}
 
-	return storableMaintenanceRule.ConvertGettableMaintenanceRuleToGettableMaintenance(), nil
+	return storableMaintenanceRule.ToPlannedMaintenance(), nil
 }
 
-func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance) (valuer.UUID, error) {
+func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance) (valuer.UUID, error) {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return valuer.UUID{}, err
@@ -142,7 +142,7 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 	return nil
 }
 
-func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ruletypes.GettablePlannedMaintenance, id valuer.UUID) error {
+func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance, id valuer.UUID) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return err
