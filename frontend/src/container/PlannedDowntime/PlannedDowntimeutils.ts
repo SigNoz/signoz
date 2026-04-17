@@ -93,7 +93,7 @@ export const defautlInitialValues: Partial<
 	},
 	alertIds: [],
 	createdAt: undefined,
-	createdBy: '',
+	createdBy: undefined,
 	editMode: false,
 };
 
