@@ -385,6 +385,6 @@ type MaintenanceStore interface {
 	CreatePlannedMaintenance(context.Context, PlannedMaintenance) (valuer.UUID, error)
 	DeletePlannedMaintenance(context.Context, valuer.UUID) error
 	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
-	EditPlannedMaintenance(context.Context, PlannedMaintenance, valuer.UUID) error
-	GetAllPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
+	UpdatePlannedMaintenance(context.Context, PlannedMaintenance, valuer.UUID) error
+	ListPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
 }

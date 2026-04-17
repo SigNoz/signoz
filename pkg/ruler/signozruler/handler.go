@@ -191,7 +191,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 		return
 	}
 
-	schedules, err := handler.ruler.MaintenanceStore().GetAllPlannedMaintenance(ctx, claims.OrgID)
+	schedules, err := handler.ruler.MaintenanceStore().ListPlannedMaintenance(ctx, claims.OrgID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -285,7 +285,7 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 		return
 	}
 
-	err = handler.ruler.MaintenanceStore().EditPlannedMaintenance(ctx, schedule, id)
+	err = handler.ruler.MaintenanceStore().UpdatePlannedMaintenance(ctx, schedule, id)
 	if err != nil {
 		render.Error(rw, err)
 		return

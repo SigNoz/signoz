@@ -20,7 +20,7 @@ func NewMaintenanceStore(store sqlstore.SQLStore) ruletypes.MaintenanceStore {
 	return &maintenance{sqlstore: store}
 }
 
-func (r *maintenance) GetAllPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.PlannedMaintenance, error) {
+func (r *maintenance) ListPlannedMaintenance(ctx context.Context, orgID string) ([]*ruletypes.PlannedMaintenance, error) {
 	gettableMaintenancesRules := make([]*ruletypes.PlannedMaintenanceWithRules, 0)
 	err := r.sqlstore.
 		BunDB().
@@ -142,7 +142,7 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 	return nil
 }
 
-func (r *maintenance) EditPlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance, id valuer.UUID) error {
+func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance ruletypes.PlannedMaintenance, id valuer.UUID) error {
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
 		return err
