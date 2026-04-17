@@ -3769,7 +3769,6 @@ components:
           $ref: '#/components/schemas/RuletypesRuleCondition'
         createAt:
           format: date-time
-          nullable: true
           type: string
         createBy:
           nullable: true
@@ -3806,7 +3805,6 @@ components:
           $ref: '#/components/schemas/RuletypesAlertState'
         updateAt:
           format: date-time
-          nullable: true
           type: string
         updateBy:
           nullable: true
@@ -3814,17 +3812,13 @@ components:
         version:
           type: string
       required:
+      - id
+      - state
       - alert
       - ruleType
       - condition
-      type: object
-    RuletypesGettableRules:
-      properties:
-        rules:
-          items:
-            $ref: '#/components/schemas/RuletypesGettableRule'
-          nullable: true
-          type: array
+      - createAt
+      - updateAt
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -3833,6 +3827,17 @@ components:
         message:
           type: string
       type: object
+    RuletypesMaintenanceKind:
+      enum:
+      - fixed
+      - recurring
+      type: string
+    RuletypesMaintenanceStatus:
+      enum:
+      - active
+      - upcoming
+      - expired
+      type: string
     RuletypesMatchType:
       enum:
       - at_least_once
@@ -3877,13 +3882,13 @@ components:
         id:
           type: string
         kind:
-          type: string
+          $ref: '#/components/schemas/RuletypesMaintenanceKind'
         name:
           type: string
         schedule:
           $ref: '#/components/schemas/RuletypesSchedule'
         status:
-          type: string
+          $ref: '#/components/schemas/RuletypesMaintenanceStatus'
         updatedAt:
           format: date-time
           type: string
@@ -3893,6 +3898,8 @@ components:
       - id
       - name
       - schedule
+      - status
+      - kind
       type: object
     RuletypesPostablePlannedMaintenance:
       properties:
@@ -10768,7 +10775,9 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesGettableRules'
+                    items:
+                      $ref: '#/components/schemas/RuletypesGettableRule'
+                    type: array
                   status:
                     type: string
                 required:

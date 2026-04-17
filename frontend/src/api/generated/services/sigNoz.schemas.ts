@@ -4677,9 +4677,8 @@ export interface RuletypesGettableRuleDTO {
 	/**
 	 * @type string
 	 * @format date-time
-	 * @nullable true
 	 */
-	createAt?: Date | null;
+	createAt: Date;
 	/**
 	 * @type string
 	 * @nullable true
@@ -4705,7 +4704,7 @@ export interface RuletypesGettableRuleDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type object
 	 */
@@ -4724,13 +4723,12 @@ export interface RuletypesGettableRuleDTO {
 	 * @type string
 	 */
 	source?: string;
-	state?: RuletypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 	/**
 	 * @type string
 	 * @format date-time
-	 * @nullable true
 	 */
-	updateAt?: Date | null;
+	updateAt: Date;
 	/**
 	 * @type string
 	 * @nullable true
@@ -4740,14 +4738,6 @@ export interface RuletypesGettableRuleDTO {
 	 * @type string
 	 */
 	version?: string;
-}
-
-export interface RuletypesGettableRulesDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	rules?: RuletypesGettableRuleDTO[] | null;
 }
 
 export interface RuletypesGettableTestRuleDTO {
@@ -4761,6 +4751,15 @@ export interface RuletypesGettableTestRuleDTO {
 	message?: string;
 }
 
+export enum RuletypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum RuletypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
 export enum RuletypesMatchTypeDTO {
 	at_least_once = 'at_least_once',
 	all_the_times = 'all_the_times',
@@ -4812,19 +4811,13 @@ export interface RuletypesPlannedMaintenanceDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	kind?: string;
+	kind: RuletypesMaintenanceKindDTO;
 	/**
 	 * @type string
 	 */
 	name: string;
 	schedule: RuletypesScheduleDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
+	status: RuletypesMaintenanceStatusDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -6835,7 +6828,10 @@ export type GetUsersByRoleID200 = {
 };
 
 export type ListRules200 = {
-	data: RuletypesGettableRulesDTO;
+	/**
+	 * @type array
+	 */
+	data: RuletypesGettableRuleDTO[];
 	/**
 	 * @type string
 	 */
