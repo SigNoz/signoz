@@ -61,7 +61,7 @@ type CumulativeWindow struct {
 }
 
 type CumulativeSchedule struct {
-	Type    ScheduleType `json:"type"`
+	Type    ScheduleType `json:"type" required:"true"`
 	Minute  *int         `json:"minute,omitempty"`  // 0-59, for all types
 	Hour    *int         `json:"hour,omitempty"`    // 0-23, for daily/weekly/monthly
 	Day     *int         `json:"day,omitempty"`     // 1-31, for monthly
