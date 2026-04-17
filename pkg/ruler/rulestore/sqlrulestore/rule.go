@@ -111,7 +111,7 @@ func (r *rule) GetStoredRule(ctx context.Context, id valuer.UUID) (*ruletypes.Ru
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "rule with ID: %s does not exist", id.StringValue())
 	}
 	return rule, nil
 }

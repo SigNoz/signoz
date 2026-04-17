@@ -51,7 +51,7 @@ func (r *maintenance) GetPlannedMaintenanceByID(ctx context.Context, id valuer.U
 		Where("id = ?", id.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, r.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "planned maintenance with ID: %s does not exist", id.StringValue())
 	}
 
 	return storableMaintenanceRule.ConvertGettableMaintenanceRuleToGettableMaintenance(), nil
