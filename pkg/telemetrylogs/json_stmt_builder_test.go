@@ -761,27 +761,35 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			},
 		},
 		{
-			name:   "dynamic array element comparison",
-			filter: "ids Contains 1",
+			name:   "dynamic_array_element_compare_CONTAINS",
+			filter: "interests[].entities[].product_codes Contains 1",
 			expected: TestExpected{
-				WhereClause: "(((arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))) AND has(JSONAllPaths(body_v2), 'ids'))",
+				WhereClause: "((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)')))), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests'))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "%1%", float64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
-			name:   "dynamic array element comparison",
-			filter: "ids != '1'",
+			name:   "dynamic_array_element_compare_HAS_STRING",
+			filter: "has(interests[].entities[].product_codes, '2002')",
 			expected: TestExpected{
-				WhereClause: "(NOT arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))",
+				WhereClause: "has(arrayFlatten(arrayConcat(arrayMap(`body_v2.interests`->arrayMap(`body_v2.interests[].entities`->dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)",
+				Args:        []any{uint64(1747945619), uint64(1747983448), "2002", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+		{
+			name:   "dynamic_array_element_compare_NOT_EQUAL",
+			filter: "interests[].entities[].product_codes != '1'",
+			expected: TestExpected{
+				WhereClause: "(NOT arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'))), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), int64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
-			name:   "dynamic array element comparison boolean",
-			filter: "ids = true",
+			name:   "dynamic_array_element_compare_HAS_INT",
+			filter: "has(interests[].entities[].product_codes, 1001)",
 			expected: TestExpected{
-				WhereClause: "((arrayExists(x -> accurateCastOrNull(x, 'Bool') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)')))) AND has(JSONAllPaths(body_v2), 'ids'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "has(arrayFlatten(arrayConcat(arrayMap(`body_v2.interests`->arrayMap(`body_v2.interests[].entities`->dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)",
+				Args:        []any{uint64(1747945619), uint64(1747983448), float64(1001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 	}
