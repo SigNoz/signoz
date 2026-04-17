@@ -135,6 +135,12 @@
 				}
 			}
 
+			.aws-service-details-overview-markdown {
+				padding: 12px;
+				background: var(--l1-background);
+				color: var(--l1-foreground);
+			}
+
 			.aws-service-details-actions {
 				display: flex;
 				flex-direction: row;

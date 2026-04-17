@@ -383,6 +383,7 @@ function ServiceDetails(): JSX.Element | null {
 				<MarkdownRenderer
 					variables={{}}
 					markdownContent={serviceDetailsData?.overview}
+					className="aws-service-details-overview-markdown"
 				/>
 				<ServiceDashboards
 					service={serviceDetailsData}

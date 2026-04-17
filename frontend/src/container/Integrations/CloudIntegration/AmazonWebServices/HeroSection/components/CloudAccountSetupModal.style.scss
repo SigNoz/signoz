@@ -1,4 +1,11 @@
 .cloud-account-setup-modal {
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+
+	[data-slot='drawer-title'] {
+		color: var(--l1-foreground);
+	}
+
 	> div {
 		display: flex;
 		flex-direction: column;

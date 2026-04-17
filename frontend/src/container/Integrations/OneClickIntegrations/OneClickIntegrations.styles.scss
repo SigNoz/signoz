@@ -32,6 +32,7 @@
 		display: flex;
 		flex-direction: row;
 		gap: 16px;
+
 		.one-click-integrations-list-item {
 			display: flex;
 			flex-direction: column;
@@ -41,7 +42,7 @@
 
 			border-radius: 3px;
 			border: 1px solid var(--l3-background);
-			background: var(--l1-background);
+			background: var(--l2-background);
 			cursor: pointer;
 			transition: background 0.2s ease-in-out;
 
@@ -67,6 +68,10 @@
 						letter-spacing: -0.08px;
 					}
 				}
+			}
+
+			.one-click-integrations-list-item-description {
+				color: var(--l2-foreground);
 			}
 
 			&:hover {

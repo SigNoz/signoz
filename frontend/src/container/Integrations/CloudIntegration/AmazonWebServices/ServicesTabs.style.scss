@@ -127,6 +127,16 @@
 				text-transform: uppercase;
 			}
 
+			.aws-services-list-view-sidebar-content-item-empty-message {
+				color: var(--l2-foreground);
+				font-family: Inter;
+				font-size: 11px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 18px; /* 163.636% */
+				letter-spacing: 0.44px;
+			}
+
 			.aws-services-list-view-sidebar-content-item {
 				display: flex;
 				flex-direction: row;

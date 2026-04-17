@@ -155,7 +155,6 @@ function CloudAccountSetupModal({
 			open={true}
 			type="panel"
 			className="cloud-account-setup-modal"
-			// allowOutsideClick={false}
 			content={renderContent()}
 			onOpenChange={handleDrawerOpenChange}
 			direction="right"
