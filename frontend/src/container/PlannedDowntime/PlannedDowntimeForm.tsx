@@ -117,9 +117,9 @@ export function PlannedDowntimeForm(
 			?.unit || 'm',
 	);
 
-	const [formData, setFormData] = useState<PlannedDowntimeFormData>(
-		(initialValues?.schedule as unknown) as PlannedDowntimeFormData,
-	);
+	const [formData, setFormData] = useState<Partial<PlannedDowntimeFormData>>({
+		timezone: initialValues.schedule?.timezone,
+	});
 
 	const [recurrenceType, setRecurrenceType] = useState<string | null>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
