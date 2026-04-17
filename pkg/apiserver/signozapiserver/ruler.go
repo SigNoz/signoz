@@ -15,7 +15,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules",
 		Description:         "This endpoint lists all alert rules with their current evaluation state",
-		Response:            new(ruletypes.GettableRules),
+		Response:            make([]*ruletypes.GettableRule, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),

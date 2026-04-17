@@ -34,7 +34,7 @@ func (handler *handler) ListRules(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, rules)
+	render.Success(rw, http.StatusOK, rules.Rules)
 }
 
 func (handler *handler) GetRuleByID(rw http.ResponseWriter, req *http.Request) {
