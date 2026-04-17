@@ -368,7 +368,6 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	return materialisedKeys, nil
 }
 
-
 // getLogsKeys returns the keys from the spans that match the field selection criteria.
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -419,8 +418,18 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	// body keys are gated behind the feature flag
 	queryBodyTable = queryBodyTable && querybuilder.BodyJSONQueryEnabled
 
+	// requestedFieldKeySelectors is the set of names the user explicitly asked for.
+	// Used to ensure a name that is both a parent path AND a directly requested field still surfaces
+	// in the result keys (e.g. "a.b[].c" is a parent of "a.b[].c[].d" but also a queried field).
+	mapOfRequestedSelectors := make(map[string]bool)
+	for _, sel := range fieldKeySelectors {
+		if sel.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
+			mapOfRequestedSelectors[sel.Name] = true
+		}
+	}
+
 	// pre-compute parent array path names from body selectors for JSON plan building;
-	// these will be fetched as a separate UNION arm filtered to ArrayJSON/ArrayDynamic only
+	// these will be fetched as a separate UNION arm filtered to ArrayJSON/ArrayDynamic only.
 	parentPaths := make(map[string]bool)
 	if queryBodyTable {
 		for _, sel := range fieldKeySelectors {
@@ -596,13 +605,17 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
 
-		// body keys with ArrayJSON/ArrayDynamic types are internal container types
-		// used only for JSON access plan building; route to parentTypeCache, not to results
+		// ArrayJSON/ArrayDynamic body rows for parent paths are needed by the JSON access plan
+		// builder (enrichJSONKeys). Always record them in parentTypes. Only skip adding to keys
+		// if the user did not also directly request this name — a field like "education" can be
+		// both a parent of "education[].name" and an explicitly queried field in its own right.
 		switch fieldDataType {
 		case telemetrytypes.FieldDataTypeArrayJSON, telemetrytypes.FieldDataTypeArrayDynamic:
 			if fieldContext == telemetrytypes.FieldContextBody && parentPaths[name] {
 				parentTypes[name] = append(parentTypes[name], fieldDataType)
-				continue
+				if !mapOfRequestedSelectors[name] {
+					continue // skip; don't register the key.
+				}
 			}
 		}
 

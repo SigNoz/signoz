@@ -86,12 +86,12 @@ func (t *telemetryMetaStore) enrichJSONKeys(ctx context.Context, selectors []*te
 	}
 
 	// build JSON access plans using the pre-fetched parent type cache
-	return t.buildJSONPlans(ctx, filteredKeys, parentTypeCache)
+	return t.buildJSONPlans(filteredKeys, parentTypeCache)
 }
 
 // buildJSONPlans builds JSON access plans for the given keys
 // using the provided parent type cache (pre-fetched in the main UNION query).
-func (t *telemetryMetaStore) buildJSONPlans(_ context.Context, keys []*telemetrytypes.TelemetryFieldKey, typeCache map[string][]telemetrytypes.FieldDataType) error {
+func (t *telemetryMetaStore) buildJSONPlans(keys []*telemetrytypes.TelemetryFieldKey, typeCache map[string][]telemetrytypes.FieldDataType) error {
 	if len(keys) == 0 {
 		return nil
 	}
