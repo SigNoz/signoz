@@ -4530,19 +4530,13 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 }
 
 export interface RuletypesAlertCompositeQueryDTO {
-	/**
-	 * @type string
-	 */
-	panelType?: string;
+	panelType: RuletypesPanelTypeDTO;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	queries?: Querybuildertypesv5QueryEnvelopeDTO[] | null;
-	/**
-	 * @type string
-	 */
-	queryType?: string;
+	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	queryType: RuletypesQueryTypeDTO;
 	/**
 	 * @type string
 	 */
@@ -4834,6 +4828,11 @@ export interface RuletypesNotificationSettingsDTO {
 	usePolicy?: boolean;
 }
 
+export enum RuletypesPanelTypeDTO {
+	value = 'value',
+	table = 'table',
+	graph = 'graph',
+}
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
@@ -4893,6 +4892,11 @@ export interface RuletypesPostableRuleDTO {
 	version?: string;
 }
 
+export enum RuletypesQueryTypeDTO {
+	builder = 'builder',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
 export interface RuletypesRecurrenceDTO {
 	/**
 	 * @type string

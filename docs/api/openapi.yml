@@ -3621,16 +3621,20 @@ components:
     RuletypesAlertCompositeQuery:
       properties:
         panelType:
-          type: string
+          $ref: '#/components/schemas/RuletypesPanelType'
         queries:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
           nullable: true
           type: array
         queryType:
-          type: string
+          $ref: '#/components/schemas/RuletypesQueryType'
         unit:
           type: string
+      required:
+      - queries
+      - panelType
+      - queryType
       type: object
     RuletypesAlertState:
       enum:
@@ -3874,6 +3878,12 @@ components:
         usePolicy:
           type: boolean
       type: object
+    RuletypesPanelType:
+      enum:
+      - value
+      - table
+      - graph
+      type: string
     RuletypesPostableRule:
       properties:
         alert:
@@ -3919,6 +3929,12 @@ components:
       - ruleType
       - condition
       type: object
+    RuletypesQueryType:
+      enum:
+      - builder
+      - clickhouse_sql
+      - promql
+      type: string
     RuletypesRecurrence:
       properties:
         duration:
