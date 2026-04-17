@@ -9,6 +9,7 @@ import {
 } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -45,6 +46,7 @@ function TimeSeries({
 	setYAxisUnit,
 	showYAxisUnitSelector,
 	metrics,
+	isCancelled = false,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
@@ -234,7 +236,11 @@ function TimeSeries({
 				})}
 			>
 				{metricNames.length === 0 && <EmptyMetricsSearch />}
-				{metricNames.length > 0 &&
+				{isCancelled && metricNames.length > 0 && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					metricNames.length > 0 &&
 					responseData.map((datapoint, index) => {
 						const isQueryDataItem = index < metricNames.length;
 						const metricName = isQueryDataItem ? metricNames[index] : undefined;

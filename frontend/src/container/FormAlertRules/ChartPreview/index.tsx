@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -369,6 +370,10 @@ function ChartPreview({
 					)}
 					{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
 						<ErrorInPlace error={queryResponse.error as APIError} />
+					)}
+
+					{isCancelled && !chartData && !queryResponse.isLoading && (
+						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (

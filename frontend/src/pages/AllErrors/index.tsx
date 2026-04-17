@@ -31,9 +31,11 @@ function AllErrors(): JSX.Element {
 	const queryClient = useQueryClient();
 
 	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
+	const setIsCancelled = useAllErrorsQueryState((s) => s.setIsCancelled);
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
-	}, [queryClient]);
+		setIsCancelled(true);
+	}, [queryClient, setIsCancelled]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(

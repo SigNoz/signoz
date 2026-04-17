@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { isAxiosError } from 'axios';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -20,7 +21,11 @@ import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
-function TimeSeries(): JSX.Element {
+interface TimeSeriesProps {
+	isCancelled?: boolean;
+}
+
+function TimeSeries({ isCancelled = false }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -126,7 +131,11 @@ function TimeSeries(): JSX.Element {
 			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
 				{!hasMetricSelected && <EmptyMetricsSearch />}
-				{hasMetricSelected &&
+				{isCancelled && hasMetricSelected && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					hasMetricSelected &&
 					responseData.map((datapoint, index) => (
 						<div
 							className="time-series-view-panel"

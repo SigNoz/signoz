@@ -59,8 +59,17 @@ function Explorer(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const isLoadingQueries = useIsGlobalTimeQueryRefreshing();
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
+		setIsCancelled(true);
 	}, [queryClient]);
 
 	const metricNames = useMemo(() => {
@@ -344,6 +353,7 @@ function Explorer(): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						setYAxisUnit={setYAxisUnit}
 						showYAxisUnitSelector={showYAxisUnitSelector}
+						isCancelled={isCancelled}
 					/>
 				</div>
 			</div>

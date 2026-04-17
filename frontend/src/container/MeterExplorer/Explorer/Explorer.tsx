@@ -42,9 +42,17 @@ function Explorer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const queryClient = useQueryClient();
 	const isLoadingQueries = useIsGlobalTimeQueryRefreshing();
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
 
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
+		setIsCancelled(true);
 	}, [queryClient]);
 
 	const [showQuickFilters, setShowQuickFilters] = useState(true);
@@ -184,7 +192,7 @@ function Explorer(): JSX.Element {
 						/>
 
 						<div className="explore-content">
-							<TimeSeries />
+							<TimeSeries isCancelled={isCancelled} />
 						</div>
 					</div>
 					<ExplorerOptionWrapper
