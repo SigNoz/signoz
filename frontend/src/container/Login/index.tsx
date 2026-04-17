@@ -15,6 +15,8 @@ import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
 
+import tvUrl from '@/assets/svgs/tv.svg';
+
 import { FormContainer, Label, ParentContainer } from './styles';
 
 import './Login.styles.scss';
@@ -305,7 +307,7 @@ function Login(): JSX.Element {
 			<FormContainer form={form} onFinish={onSubmitHandler}>
 				<div className="login-form-header">
 					<div className="login-form-emoji">
-						<img src="/svgs/tv.svg" alt="TV" width="32" height="32" />
+						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
 					<Typography.Title level={4} className="login-form-title">
 						Sign in to your workspace

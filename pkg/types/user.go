@@ -284,6 +284,7 @@ type UserStore interface {
 	GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*FactorPassword, error)
 	GetResetPasswordToken(ctx context.Context, token string) (*ResetPasswordToken, error)
 	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
+	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*ResetPasswordToken, error)
 	DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error
 	UpdatePassword(ctx context.Context, password *FactorPassword) error
 

@@ -21,6 +21,8 @@ import { useEventSource } from 'providers/EventSource';
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
+
 import { LiveLogsListProps } from './types';
 
 import './LiveLogsList.styles.scss';
@@ -137,11 +139,7 @@ function LiveLogsList({
 		() => (
 			<div className="live-logs-list-loading">
 				<div className="loading-live-logs-content">
-					<img
-						className="loading-gif"
-						src="/Icons/loading-plane.gif"
-						alt="wait-icon"
-					/>
+					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
 					<Typography>Fetching live logs...</Typography>
 				</div>

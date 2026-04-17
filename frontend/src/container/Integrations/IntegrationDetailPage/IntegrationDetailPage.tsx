@@ -10,6 +10,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
 
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+
 import CloudIntegration from '../CloudIntegration/CloudIntegration';
 import { INTEGRATION_TYPES } from '../constants';
 import { IntegrationType } from '../types';
@@ -84,11 +86,7 @@ function IntegrationDetailPage(): JSX.Element {
 			{isError && (
 				<div className="error-container">
 					<div className="error-content">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="error-emoji"
-							className="error-state-svg"
-						/>
+						<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
 						<Typography.Text>
 							Something went wrong :/ Please retry or contact support.
 						</Typography.Text>

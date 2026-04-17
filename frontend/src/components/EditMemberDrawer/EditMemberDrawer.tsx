@@ -10,8 +10,9 @@ import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getResetPasswordToken,
+	useCreateResetPasswordToken,
 	useDeleteUser,
+	useGetResetPasswordToken,
 	useGetUser,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -55,6 +56,27 @@ function getDeleteTooltip(
 	return undefined;
 }
 
+function getInviteButtonLabel(
+	isLoading: boolean,
+	existingToken: { expiresAt?: Date } | undefined,
+	isExpired: boolean,
+	notFound: boolean,
+): string {
+	if (isLoading) {
+		return 'Checking invite...';
+	}
+	if (existingToken && !isExpired) {
+		return 'Copy Invite Link';
+	}
+	if (isExpired) {
+		return 'Regenerate Invite Link';
+	}
+	if (notFound) {
+		return 'Generate Invite Link';
+	}
+	return 'Copy Invite Link';
+}
+
 function toSaveApiError(err: unknown): APIError {
 	return (
 		convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
@@ -83,9 +105,11 @@ function EditMemberDrawer({
 	const [localRole, setLocalRole] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
-	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [resetLink, setResetLink] = useState<string | null>(null);
+	const [resetLinkExpiresAt, setResetLinkExpiresAt] = useState<string | null>(
+		null,
+	);
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
@@ -120,6 +144,27 @@ function EditMemberDrawer({
 		isLoading: isMemberRolesLoading,
 		applyDiff,
 	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
+
+	// Token status query for invited users
+	const {
+		data: tokenQueryData,
+		isLoading: isLoadingTokenStatus,
+		isError: tokenNotFound,
+	} = useGetResetPasswordToken(
+		{ id: member?.id ?? '' },
+		{ query: { enabled: open && !!member?.id && isInvited } },
+	);
+
+	const existingToken = tokenQueryData?.data;
+	const isTokenExpired =
+		existingToken != null &&
+		new Date(String(existingToken.expiresAt)) < new Date();
+
+	// Create/regenerate token mutation
+	const {
+		mutateAsync: createTokenMutation,
+		isLoading: isGeneratingLink,
+	} = useCreateResetPasswordToken();
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
@@ -338,12 +383,21 @@ function EditMemberDrawer({
 		if (!member) {
 			return;
 		}
-		setIsGeneratingLink(true);
 		try {
-			const response = await getResetPasswordToken({ id: member.id });
+			const response = await createTokenMutation({
+				pathParams: { id: member.id },
+			});
 			if (response?.data?.token) {
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
+				setResetLinkExpiresAt(
+					response.data.expiresAt
+						? formatTimezoneAdjustedTimestamp(
+								String(response.data.expiresAt),
+								DATE_TIME_FORMATS.DASH_DATETIME,
+						  )
+						: null,
+				);
 				setHasCopiedResetLink(false);
 				setLinkType(isInvited ? 'invite' : 'reset');
 				setShowResetLinkDialog(true);
@@ -359,10 +413,8 @@ function EditMemberDrawer({
 				err as AxiosError<RenderErrorResponseDTO, unknown> | null,
 			);
 			showErrorModal(errMsg as APIError);
-		} finally {
-			setIsGeneratingLink(false);
 		}
-	}, [member, isInvited, onClose, showErrorModal]);
+	}, [member, isInvited, onClose, showErrorModal, createTokenMutation]);
 
 	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopyResetLink = useCallback((): void => {
@@ -568,12 +620,19 @@ function EditMemberDrawer({
 								<Button
 									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
 									onClick={handleGenerateResetLink}
-									disabled={isGeneratingLink || isRootUser}
+									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
 								>
 									<RefreshCw size={12} />
-									{isGeneratingLink && 'Generating...'}
-									{!isGeneratingLink && isInvited && 'Copy Invite Link'}
-									{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
+									{isGeneratingLink
+										? 'Generating...'
+										: isInvited
+										? getInviteButtonLabel(
+												isLoadingTokenStatus,
+												existingToken,
+												isTokenExpired,
+												tokenNotFound,
+										  )
+										: 'Generate Password Reset Link'}
 								</Button>
 							</span>
 						</Tooltip>
@@ -623,6 +682,7 @@ function EditMemberDrawer({
 				open={showResetLinkDialog}
 				linkType={linkType}
 				resetLink={resetLink}
+				expiresAt={resetLinkExpiresAt}
 				hasCopied={hasCopiedResetLink}
 				onClose={(): void => {
 					setShowResetLinkDialog(false);

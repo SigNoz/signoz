@@ -84,6 +84,10 @@ import {
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import dashboardsUrl from '@/assets/Icons/dashboards.svg';
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { RequestDashboardBtn } from './RequestDashboardBtn';
@@ -675,11 +679,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboardFetchError ? (
 					<div className="dashboard-error-state">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="something went wrong"
-							className="error-img"
-						/>
+						<img src={awwSnapUrl} alt="something went wrong" className="error-img" />
 
 						<Typography.Text className="error-text">
 							Something went wrong :/ Please retry or contact support.
@@ -705,11 +705,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboards.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
-						<img
-							src="/Icons/dashboards.svg"
-							alt="dashboards"
-							className="dashboard-img"
-						/>
+						<img src={dashboardsUrl} alt="dashboards" className="dashboard-img" />
 						<section className="text">
 							<Typography.Text className="no-dashboard">
 								No dashboards yet.{' '}
@@ -789,7 +785,7 @@ function DashboardsList(): JSX.Element {
 
 						{dashboards.length === 0 ? (
 							<div className="no-search">
-								<img src="/Icons/emptyState.svg" alt="img" className="img" />
+								<img src={emptyStateUrl} alt="img" className="img" />
 								<Typography.Text className="text">
 									No dashboards found for {searchString}. Create a new dashboard?
 								</Typography.Text>

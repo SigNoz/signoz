@@ -30,6 +30,8 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import './spanLogs.styles.scss';
 
 interface SpanLogsProps {
@@ -233,7 +235,7 @@ function SpanLogs({
 	const renderNoLogsFound = (): JSX.Element => (
 		<div className="span-logs-empty-content">
 			<section className="description">
-				<img src="/Icons/no-data.svg" alt="no-data" className="no-data-img" />
+				<img src={noDataUrl} alt="no-data" className="no-data-img" />
 				<Typography.Text className="no-data-text-1">
 					No logs found for selected span.
 					<span className="no-data-text-2">View logs for the current trace.</span>
