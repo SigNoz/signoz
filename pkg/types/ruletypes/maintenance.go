@@ -15,6 +15,25 @@ var (
 	ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 )
 
+type MaintenanceStatus struct {
+	valuer.String
+}
+
+var (
+	MaintenanceStatusActive   = MaintenanceStatus{valuer.NewString("active")}
+	MaintenanceStatusUpcoming = MaintenanceStatus{valuer.NewString("upcoming")}
+	MaintenanceStatusExpired  = MaintenanceStatus{valuer.NewString("expired")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceStatus.
+func (MaintenanceStatus) Enum() []any {
+	return []any{
+		MaintenanceStatusActive,
+		MaintenanceStatusUpcoming,
+		MaintenanceStatusExpired,
+	}
+}
+
 type StorablePlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 	types.Identifiable
@@ -36,8 +55,8 @@ type PlannedMaintenance struct {
 	CreatedBy   string      `json:"createdBy"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
 	UpdatedBy   string      `json:"updatedBy"`
-	Status      string      `json:"status"`
-	Kind        string      `json:"kind"`
+	Status      MaintenanceStatus `json:"status" required:"true"`
+	Kind        string            `json:"kind"`
 }
 
 // PostablePlannedMaintenance is the input payload for creating or updating a
@@ -312,13 +331,13 @@ func (m *PlannedMaintenance) Validate() error {
 
 func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
-	var status string
+	var status MaintenanceStatus
 	if m.IsActive(now) {
-		status = "active"
+		status = MaintenanceStatusActive
 	} else if m.IsUpcoming() {
-		status = "upcoming"
+		status = MaintenanceStatusUpcoming
 	} else {
-		status = "expired"
+		status = MaintenanceStatusExpired
 	}
 	var kind string
 
@@ -329,17 +348,17 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		ID          valuer.UUID `json:"id" db:"id"`
-		Name        string      `json:"name" db:"name"`
-		Description string      `json:"description" db:"description"`
-		Schedule    *Schedule   `json:"schedule" db:"schedule"`
-		AlertIds    []string    `json:"alertIds" db:"alert_ids"`
-		CreatedAt   time.Time   `json:"createdAt" db:"created_at"`
-		CreatedBy   string      `json:"createdBy" db:"created_by"`
-		UpdatedAt   time.Time   `json:"updatedAt" db:"updated_at"`
-		UpdatedBy   string      `json:"updatedBy" db:"updated_by"`
-		Status      string      `json:"status"`
-		Kind        string      `json:"kind"`
+		ID          valuer.UUID       `json:"id" db:"id"`
+		Name        string            `json:"name" db:"name"`
+		Description string            `json:"description" db:"description"`
+		Schedule    *Schedule         `json:"schedule" db:"schedule"`
+		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
+		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
+		CreatedBy   string            `json:"createdBy" db:"created_by"`
+		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
+		UpdatedBy   string            `json:"updatedBy" db:"updated_by"`
+		Status      MaintenanceStatus `json:"status"`
+		Kind        string            `json:"kind"`
 	}{
 		ID:          m.ID,
 		Name:        m.Name,
