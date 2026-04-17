@@ -3645,6 +3645,13 @@ components:
       - nodata
       - disabled
       type: string
+    RuletypesAlertType:
+      enum:
+      - METRIC_BASED_ALERT
+      - TRACES_BASED_ALERT
+      - LOGS_BASED_ALERT
+      - EXCEPTIONS_BASED_ALERT
+      type: string
     RuletypesBasicRuleThreshold:
       properties:
         channels:
@@ -3701,6 +3708,8 @@ components:
         weekday:
           nullable: true
           type: integer
+      required:
+      - type
       type: object
     RuletypesCumulativeWindow:
       properties:
@@ -3746,45 +3755,12 @@ components:
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
       type: object
-    RuletypesGettablePlannedMaintenance:
-      properties:
-        alertIds:
-          items:
-            type: string
-          nullable: true
-          type: array
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        kind:
-          type: string
-        name:
-          type: string
-        schedule:
-          $ref: '#/components/schemas/RuletypesSchedule'
-        status:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - name
-      - schedule
-      type: object
     RuletypesGettableRule:
       properties:
         alert:
           type: string
         alertType:
-          type: string
+          $ref: '#/components/schemas/RuletypesAlertType'
         annotations:
           additionalProperties:
             type: string
@@ -3884,12 +3860,45 @@ components:
       - table
       - graph
       type: string
+    RuletypesPlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesSchedule'
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - name
+      - schedule
+      type: object
     RuletypesPostableRule:
       properties:
         alert:
           type: string
         alertType:
-          type: string
+          $ref: '#/components/schemas/RuletypesAlertType'
         annotations:
           additionalProperties:
             type: string
@@ -3945,14 +3954,18 @@ components:
           type: string
         repeatOn:
           items:
-            type: string
+            $ref: '#/components/schemas/RuletypesRepeatOn'
           nullable: true
           type: array
         repeatType:
-          type: string
+          $ref: '#/components/schemas/RuletypesRepeatType'
         startTime:
           format: date-time
           type: string
+      required:
+      - startTime
+      - duration
+      - repeatType
       type: object
     RuletypesRenotify:
       properties:
@@ -3965,6 +3978,22 @@ components:
         interval:
           type: string
       type: object
+    RuletypesRepeatOn:
+      enum:
+      - sunday
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+      - saturday
+      type: string
+    RuletypesRepeatType:
+      enum:
+      - daily
+      - weekly
+      - monthly
+      type: string
     RuletypesRollingWindow:
       properties:
         evalWindow:
@@ -6222,7 +6251,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+                      $ref: '#/components/schemas/RuletypesPlannedMaintenance'
                     type: array
                   status:
                     type: string
@@ -6265,7 +6294,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+              $ref: '#/components/schemas/RuletypesPlannedMaintenance'
       responses:
         "201":
           description: Created
@@ -6364,7 +6393,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
                   status:
                     type: string
                 required:
@@ -6418,7 +6447,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RuletypesGettablePlannedMaintenance'
+              $ref: '#/components/schemas/RuletypesPlannedMaintenance'
       responses:
         "204":
           description: No Content

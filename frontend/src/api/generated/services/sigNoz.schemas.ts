@@ -4551,6 +4551,12 @@ export enum RuletypesAlertStateDTO {
 	nodata = 'nodata',
 	disabled = 'disabled',
 }
+export enum RuletypesAlertTypeDTO {
+	METRIC_BASED_ALERT = 'METRIC_BASED_ALERT',
+	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
+	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
+	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+}
 export interface RuletypesBasicRuleThresholdDTO {
 	/**
 	 * @type array
@@ -4609,7 +4615,7 @@ export interface RuletypesCumulativeScheduleDTO {
 	 * @nullable true
 	 */
 	minute?: number | null;
-	type?: RuletypesScheduleTypeDTO;
+	type: RuletypesScheduleTypeDTO;
 	/**
 	 * @type integer
 	 * @nullable true
@@ -4653,53 +4659,6 @@ export interface RuletypesEvaluationRollingDTO {
 	spec?: RuletypesRollingWindowDTO;
 }
 
-export interface RuletypesGettablePlannedMaintenanceDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	alertIds?: string[] | null;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id?: string;
-	/**
-	 * @type string
-	 */
-	kind?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	schedule: RuletypesScheduleDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
 export type RuletypesGettableRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesGettableRuleDTOLabels = { [key: string]: string };
@@ -4709,10 +4668,7 @@ export interface RuletypesGettableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	/**
-	 * @type string
-	 */
-	alertType?: string;
+	alertType?: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4833,6 +4789,53 @@ export enum RuletypesPanelTypeDTO {
 	table = 'table',
 	graph = 'graph',
 }
+export interface RuletypesPlannedMaintenanceDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	kind?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: RuletypesScheduleDTO;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
@@ -4842,10 +4845,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	/**
-	 * @type string
-	 */
-	alertType?: string;
+	alertType?: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4901,7 +4901,7 @@ export interface RuletypesRecurrenceDTO {
 	/**
 	 * @type string
 	 */
-	duration?: string;
+	duration: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -4912,16 +4912,13 @@ export interface RuletypesRecurrenceDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	repeatOn?: string[] | null;
-	/**
-	 * @type string
-	 */
-	repeatType?: string;
+	repeatOn?: RuletypesRepeatOnDTO[] | null;
+	repeatType: RuletypesRepeatTypeDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	startTime?: Date;
+	startTime: Date;
 }
 
 export interface RuletypesRenotifyDTO {
@@ -4939,6 +4936,20 @@ export interface RuletypesRenotifyDTO {
 	interval?: string;
 }
 
+export enum RuletypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum RuletypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
 export interface RuletypesRollingWindowDTO {
 	/**
 	 * @type string
@@ -5977,7 +5988,7 @@ export type ListDowntimeSchedules200 = {
 	/**
 	 * @type array
 	 */
-	data: RuletypesGettablePlannedMaintenanceDTO[];
+	data: RuletypesPlannedMaintenanceDTO[];
 	/**
 	 * @type string
 	 */
@@ -5991,7 +6002,7 @@ export type GetDowntimeScheduleByIDPathParameters = {
 	id: string;
 };
 export type GetDowntimeScheduleByID200 = {
-	data: RuletypesGettablePlannedMaintenanceDTO;
+	data: RuletypesPlannedMaintenanceDTO;
 	/**
 	 * @type string
 	 */
