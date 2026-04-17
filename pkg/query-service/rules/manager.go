@@ -856,9 +856,9 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 		} else {
 			ruleResponse.State = rm.State()
 		}
-		ruleResponse.CreatedAt = &s.CreatedAt
+		ruleResponse.CreatedAt = s.CreatedAt
 		ruleResponse.CreatedBy = &s.CreatedBy
-		ruleResponse.UpdatedAt = &s.UpdatedAt
+		ruleResponse.UpdatedAt = s.UpdatedAt
 		ruleResponse.UpdatedBy = &s.UpdatedBy
 		resp = append(resp, &ruleResponse)
 	}
@@ -885,9 +885,9 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	} else {
 		r.State = rm.State()
 	}
-	r.CreatedAt = &s.CreatedAt
+	r.CreatedAt = s.CreatedAt
 	r.CreatedBy = &s.CreatedBy
-	r.UpdatedAt = &s.UpdatedAt
+	r.UpdatedAt = s.UpdatedAt
 	r.UpdatedBy = &s.UpdatedBy
 
 	return &r, nil

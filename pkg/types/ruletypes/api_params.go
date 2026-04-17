@@ -610,10 +610,10 @@ type GettableRule struct {
 	Id    string     `json:"id" required:"true"`
 	State AlertState `json:"state" required:"true"`
 	PostableRule
-	CreatedAt *time.Time `json:"createAt"`
-	CreatedBy *string    `json:"createBy"`
-	UpdatedAt *time.Time `json:"updateAt"`
-	UpdatedBy *string    `json:"updateBy"`
+	CreatedAt time.Time `json:"createAt" required:"true"`
+	CreatedBy *string   `json:"createBy" nullable:"true"`
+	UpdatedAt time.Time `json:"updateAt" required:"true"`
+	UpdatedBy *string   `json:"updateBy" nullable:"true"`
 }
 
 func (g *GettableRule) MarshalJSON() ([]byte, error) {
