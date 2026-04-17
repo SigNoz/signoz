@@ -3,7 +3,7 @@
 	border: none;
 	background: unset;
 	box-shadow: none;
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 
 	.ant-card-body {
 		padding: 0px;
@@ -64,9 +64,9 @@
 				padding: 6px;
 				justify-content: center;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
-				color: var(--bg-vanilla-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -86,9 +86,9 @@
 				padding: 6px;
 				justify-content: center;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
-				color: var(--bg-vanilla-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -104,7 +104,8 @@
 				padding: 5.937px 11.875px;
 				justify-content: center;
 				align-items: center;
-				color: var(--bg-vanilla-100);
+				color: var(--primary-foreground);
+				background: var(--primary-background);
 				font-family: Inter;
 				font-size: 11.875px;
 				font-style: normal;
@@ -126,8 +127,8 @@
 			justify-content: center;
 			align-items: center;
 			border-radius: 20px;
-			border: 1px solid rgba(173, 127, 88, 0.2);
-			background: rgba(173, 127, 88, 0.1);
+			border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+			background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 			color: var(--bg-sienna-400);
 			text-align: center;
 			font-family: Inter;
@@ -140,7 +141,7 @@
 		}
 	}
 	.dashboard-description-section {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -171,11 +172,11 @@
 	.ant-popover-inner {
 		padding: 0px;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		) !important;
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -189,7 +190,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: start;
-			border-bottom: 1px solid #1d212d;
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-btn {
 				display: flex;
@@ -198,7 +199,7 @@
 				padding: 16px 18px 18px 14px;
 				align-items: center;
 				gap: 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -214,7 +215,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: start;
-			border-bottom: 1px solid #1d212d;
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-btn {
 				display: flex;
@@ -223,7 +224,7 @@
 				padding: 16px 18px 18px 14px;
 				align-items: center;
 				gap: 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -265,19 +266,19 @@
 		width: 384px;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 0px;
 
 		.ant-modal-header {
 			height: 52px;
 			padding: 16px;
-			background: var(--bg-ink-400);
-			border-bottom: 1px solid var(--bg-slate-500);
+			background: var(--l2-background);
+			border-bottom: 1px solid var(--l1-border);
 			margin-bottom: 0px;
 			.ant-modal-title {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -297,7 +298,7 @@
 				gap: 8px;
 
 				.name-text {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -312,8 +313,8 @@
 					gap: 4px;
 					align-self: stretch;
 					border-radius: 0px 2px 2px 0px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 			}
 		}
@@ -333,7 +334,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-slate-500);
+					background: var(--l1-border);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -350,7 +351,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -366,19 +367,19 @@
 		width: 384px;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 0px;
 
 		.ant-modal-header {
 			height: 52px;
 			padding: 16px;
-			background: var(--bg-ink-400);
-			border-bottom: 1px solid var(--bg-slate-500);
+			background: var(--l2-background);
+			border-bottom: 1px solid var(--l1-border);
 			margin-bottom: 0px;
 			.ant-modal-title {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -398,7 +399,7 @@
 				gap: 8px;
 
 				.name-text {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -414,8 +415,8 @@
 					gap: 4px;
 					align-self: stretch;
 					border-radius: 0px 2px 2px 0px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 			}
 		}
@@ -435,7 +436,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-slate-500);
+					background: var(--l1-border);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -452,7 +453,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -465,41 +466,38 @@
 
 .lightMode {
 	.dashboard-description-container {
-		color: var(--bg-ink-400);
+		color: var(--l1-foreground);
 
 		.dashboard-details {
 			.left-section {
 				.dashboard-title {
-					color: var(--bg-ink-300);
+					color: var(--l1-foreground);
 				}
 			}
 
 			.right-section {
 				.icons {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-					color: var(--bg-ink-400);
-				}
-				.configure-button {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-					color: var(--bg-ink-400);
+					border: 1px solid var(--l1-border);
+					background: var(--l1-background);
+					color: var(--l1-foreground);
 				}
 
-				.add-panel-btn {
-					color: var(--bg-vanilla-100);
+				.configure-button {
+					border: 1px solid var(--l1-border);
+					background: var(--l1-background);
+					color: var(--l1-foreground);
 				}
 			}
 		}
 
 		.dashboard-description-section {
-			color: var(--bg-ink-400);
+			color: var(--l1-foreground);
 		}
 	}
 	.dashboard-settings {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100) !important;
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background) !important;
 		}
 
 		.menu-content {
@@ -507,17 +505,17 @@
 			flex-direction: column;
 
 			.section-1 {
-				border-bottom: 1px solid var(--bg-vanilla-300);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-btn {
-					color: var(--bg-ink-300);
+					color: var(--l1-foreground);
 				}
 			}
 			.section-2 {
-				border-bottom: 1px solid var(--bg-vanilla-300);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-btn {
-					color: var(--bg-ink-300);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -525,27 +523,27 @@
 
 	.rename-dashboard {
 		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
 
 			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-				border-bottom: 1px solid var(--bg-vanilla-300);
+				background: var(--l1-background);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-modal-title {
-					color: var(--bg-ink-300);
+					color: var(--l1-foreground);
 				}
 			}
 
 			.ant-modal-body {
 				.dashboard-content {
 					.name-text {
-						color: var(--bg-ink-300);
+						color: var(--l1-foreground);
 					}
 
 					.dashboard-name-input {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
+						border: 1px solid var(--l1-border);
+						background: var(--l1-background);
 					}
 				}
 			}
@@ -553,7 +551,7 @@
 			.ant-modal-footer {
 				.dashboard-rename {
 					.cancel-btn {
-						background: var(--bg-vanilla-300);
+						background: var(--l3-background);
 					}
 				}
 			}
@@ -562,27 +560,27 @@
 
 	.section-naming {
 		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
 
 			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-				border-bottom: 1px solid var(--bg-vanilla-300);
+				background: var(--l1-background);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-modal-title {
-					color: var(--bg-ink-300);
+					color: var(--l1-foreground);
 				}
 			}
 
 			.ant-modal-body {
 				.section-naming-content {
 					.name-text {
-						color: var(--bg-ink-300);
+						color: var(--l1-foreground);
 					}
 
 					.section-name-input {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
+						border: 1px solid var(--l1-border);
+						background: var(--l1-background);
 					}
 				}
 			}
@@ -590,7 +588,7 @@
 			.ant-modal-footer {
 				.dashboard-rename {
 					.cancel-btn {
-						background: var(--bg-vanilla-300);
+						background: var(--l3-background);
 					}
 				}
 			}

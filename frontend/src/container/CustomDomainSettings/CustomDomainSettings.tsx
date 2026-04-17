@@ -11,7 +11,7 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,

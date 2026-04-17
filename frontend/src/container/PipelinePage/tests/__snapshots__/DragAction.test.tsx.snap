@@ -45,7 +45,7 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
       aria-label="holder"
       class="anticon anticon-holder"
       role="img"
-      style="font-size: 1.5rem; cursor: move;"
+      style="font-size: 1rem; cursor: move;"
     >
       <svg
         aria-hidden="true"

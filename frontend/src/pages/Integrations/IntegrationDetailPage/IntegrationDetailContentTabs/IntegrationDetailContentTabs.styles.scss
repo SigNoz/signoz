@@ -6,9 +6,9 @@
 		flex-direction: column;
 		width: 30%;
 		gap: 26px;
-		border-right: 1px solid var(--bg-slate-500);
+		border-right: 1px solid var(--l1-border);
 		padding: 16px 0;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 11px;
 		font-style: normal;
@@ -22,7 +22,7 @@
 			flex-direction: column;
 
 			.heading {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -41,8 +41,8 @@
 				.category-tab {
 					padding: 2px 8px;
 					border-radius: 4px;
-					border: 1px solid rgba(173, 127, 88, 0.2);
-					background: rgba(173, 127, 88, 0.1);
+					border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+					background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 					color: var(--bg-sienna-400);
 					font-family: Inter;
 					font-size: 14px;
@@ -60,7 +60,7 @@
 			flex-direction: column;
 
 			.heading {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -73,7 +73,7 @@
 			.assets-list {
 				margin-left: 5px;
 				margin-top: 12px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -99,7 +99,7 @@
 	flex-direction: column;
 	gap: 32px;
 	margin-top: 8px;
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-family: Inter;
 	font-size: 14px;
 	font-style: normal;
@@ -113,13 +113,13 @@
 		gap: 8px;
 
 		.table-row-dark {
-			background: rgba(255, 255, 255, 0.01);
+			background: color-mix(in srgb, var(--l1-foreground) 1%, transparent);
 		}
 
 		.logs-section-table {
 			border-radius: 6px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 
 			.ant-table-thead {
 				text-transform: uppercase;
@@ -148,13 +148,13 @@
 		gap: 8px;
 
 		.table-row-dark {
-			background: rgba(255, 255, 255, 0.01);
+			background: color-mix(in srgb, var(--l1-foreground) 1%, transparent);
 		}
 
 		.metrics-section-table {
 			border-radius: 6px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 
 			.ant-table-thead {
 				text-transform: uppercase;
@@ -187,14 +187,14 @@
 		flex-direction: column;
 		width: 30%;
 		padding: 16px 16px 0px 0px;
-		border-right: 1px solid var(--bg-slate-500);
+		border-right: 1px solid var(--l1-border);
 		gap: 8px;
 
 		.configure-menu-item {
 			padding: 4px 8px;
 			height: auto;
 			text-align: start;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -207,12 +207,12 @@
 		}
 
 		.configure-menu-item:hover {
-			background-color: rgba(255, 255, 255, 0.08);
+			background-color: color-mix(in srgb, var(--l1-foreground) 8%, transparent);
 		}
 
 		.active {
 			color: rgba(255, 255, 255, 0.85);
-			background-color: rgba(255, 255, 255, 0.08);
+			background-color: color-mix(in srgb, var(--l1-foreground) 8%, transparent);
 		}
 	}
 
@@ -227,74 +227,51 @@
 .lightMode {
 	.integration-detail-overview {
 		.integration-detail-overview-left-container {
-			border-right: 1px solid var(--bg-vanilla-400);
-
-			color: var(--bg-slate-100);
-
 			.integration-detail-overview-category {
-				.heading {
-					color: var(--bg-slate-100);
-				}
 				.category-tabs {
 					.category-tab {
 						border: 1px solid var(--bg-sienna-600);
-						background: rgba(173, 127, 88, 0.1);
+						background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 						color: var(--bg-sienna-500);
 					}
-				}
-			}
-
-			.integration-detail-overview-assets {
-				.heading {
-					color: var(--bg-slate-100);
-				}
-				.assets-list {
-					color: var(--bg-slate-100);
 				}
 			}
 		}
 	}
 
 	.integration-data-collected {
-		color: var(--bg-vanilla-400);
-
 		.logs-section {
 			.table-row-dark {
-				background: var(--bg-vanilla-300);
+				background: var(--l3-background);
 			}
 
 			.logs-section-table {
-				border: 1px solid var(--bg-vanilla-400);
-				background: var(--bg-vanilla-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 			}
 		}
 
 		.metrics-section {
 			.table-row-dark {
-				background: var(--bg-vanilla-300);
+				background: var(--l3-background);
 			}
 
 			.metrics-section-table {
-				border: 1px solid var(--bg-vanilla-400);
-				background: var(--bg-vanilla-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 			}
 		}
 	}
 
 	.integration-detail-configure {
 		.configure-menu {
-			border-right: 1px solid var(--bg-vanilla-400);
-
-			.configure-menu-item {
-				color: var(--bg-vanilla-100);
-			}
 			.configure-menu-item:hover {
-				background-color: var(--bg-vanilla-200);
+				background-color: var(--l2-background);
 			}
 
 			.active {
-				color: rgba(255, 255, 255, 0.85);
-				background-color: var(--bg-vanilla-200);
+				color: var(--l1-foreground);
+				background-color: var(--l2-background);
 			}
 		}
 	}

@@ -48,7 +48,7 @@ export const FormContainer = styled(Form)`
 	& .ant-input-password,
 	& .ant-select-selector {
 		background: var(--l3-background) !important;
-		border-color: var(--l3-border) !important;
+		border-color: var(--l1-border) !important;
 		color: var(--l1-foreground) !important;
 
 		.lightMode & {

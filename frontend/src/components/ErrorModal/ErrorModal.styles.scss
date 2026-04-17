@@ -5,7 +5,7 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 20px;
-		background: rgba(229, 72, 77, 0.2);
+		background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		padding-left: 3px;
 		padding-right: 8px;
 		cursor: pointer;
@@ -21,11 +21,11 @@
 	&__wrap {
 		background: linear-gradient(
 			180deg,
-			rgba(11, 12, 14, 0.12) 0.07%,
-			rgba(39, 8, 14, 0.24) 50.04%,
-			rgba(106, 29, 44, 0.36) 75.02%,
-			rgba(197, 57, 85, 0.48) 87.51%,
-			rgba(242, 71, 105, 0.6) 100%
+			color-mix(in srgb, var(--background) 12%, transparent) 0.07%,
+			color-mix(in srgb, var(--bg-sakura-950) 24%, transparent) 50.04%,
+			color-mix(in srgb, var(--bg-sakura-800) 36%, transparent) 75.02%,
+			color-mix(in srgb, var(--bg-sakura-600) 48%, transparent) 87.51%,
+			color-mix(in srgb, var(--bg-sakura-500) 60%, transparent) 100%
 		);
 		-webkit-backdrop-filter: blur(10px);
 		backdrop-filter: blur(10px);
@@ -42,7 +42,7 @@
 	}
 	&__body {
 		padding: 0;
-		background: var(--bg-ink-400);
+		background: var(--l2-background);
 		overflow: hidden;
 		border-top-left-radius: 4px;
 		border-top-right-radius: 4px;
@@ -72,21 +72,21 @@
 				text-transform: uppercase;
 				&,
 				&:hover {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 			&__value {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				pointer-events: none;
 			}
 		}
 		.close-button {
 			padding: 3px 7px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 			display: inline-flex;
 			align-items: center;
 			border-radius: 4px;
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
 			box-shadow: none;
 		}
 	}
@@ -100,19 +100,5 @@
 		border-radius: 4px;
 		overflow: hidden;
 		background: none !important;
-	}
-}
-
-.lightMode {
-	.error-modal {
-		&__body,
-		&__header .close-button {
-			background: var(--bg-vanilla-100);
-		}
-		&__header .close-button {
-			svg {
-				fill: var(--bg-vanilla-100);
-			}
-		}
 	}
 }

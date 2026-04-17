@@ -24,6 +24,30 @@ window.matchMedia =
 		};
 	};
 
+// Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
+// These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
+// jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),
+// causing SyntaxErrors during getComputedStyle / getByRole calls.
+const _origGetComputedStyle = window.getComputedStyle;
+window.getComputedStyle = function (
+	elt: Element,
+	pseudoElt?: string | null,
+): CSSStyleDeclaration {
+	try {
+		return _origGetComputedStyle.call(window, elt, pseudoElt);
+	} catch {
+		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
+		// see the element as visible and without animations.
+		return ({
+			display: '',
+			visibility: '',
+			opacity: '1',
+			animationName: 'none',
+			getPropertyValue: () => '',
+		} as unknown) as CSSStyleDeclaration;
+	}
+};
+
 beforeAll(() => server.listen());
 
 afterEach(() => server.resetHandlers());

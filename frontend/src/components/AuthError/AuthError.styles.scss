@@ -4,12 +4,13 @@
 	animation: horizontal-shaking 300ms ease-out;
 
 	.error-content {
-		background: rgba(229, 72, 77, 0.1);
-		border: 1px solid rgba(229, 72, 77, 0.2);
+		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+		border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		border-radius: 4px;
 
 		&__summary-section {
-			border-bottom: 1px solid rgba(229, 72, 77, 0.2);
+			border-bottom: 1px solid
+				color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		}
 
 		&__summary {
@@ -31,7 +32,7 @@
 		}
 
 		&__error-code {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 			font-size: 13px;
 			font-weight: 500;
 			line-height: 1;
@@ -39,7 +40,7 @@
 		}
 
 		&__error-message {
-			color: #f5b6b8;
+			color: var(--bg-cherry-300);
 			font-size: 13px;
 			font-weight: 400;
 			line-height: 20px;
@@ -51,13 +52,13 @@
 		}
 
 		&__message-badge-label-text {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 		}
 
 		&__message-badge-line {
 			background-image: radial-gradient(
 				circle,
-				rgba(229, 72, 77, 0.3) 1px,
+				color-mix(in srgb, var(--bg-cherry-500) 30%, transparent) 1px,
 				transparent 2px
 			);
 		}
@@ -71,23 +72,23 @@
 		}
 
 		&__message-item {
-			color: #f5b6b8;
+			color: var(--bg-cherry-300);
 			font-size: 13px;
 			font-weight: 400;
 			line-height: 20px;
 			letter-spacing: -0.065px;
 
 			&::before {
-				background: #f5b6b8;
+				background: var(--bg-cherry-300);
 			}
 		}
 
 		&__scroll-hint {
-			background: rgba(229, 72, 77, 0.2);
+			background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		}
 
 		&__scroll-hint-text {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 		}
 	}
 
@@ -100,27 +101,28 @@
 .lightMode {
 	.auth-error-container {
 		.error-content {
-			background: rgba(229, 72, 77, 0.1);
-			border-color: rgba(229, 72, 77, 0.2);
-
 			&__error-code {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 
 			&__error-message {
-				color: var(--bg-ink-400);
+				color: var(--l1-foreground);
+			}
+
+			&__message-badge-label-text {
+				color: var(--l2-foreground);
 			}
 
 			&__message-item {
-				color: var(--bg-ink-400);
+				color: var(--l1-foreground);
 
 				&::before {
-					background: var(--bg-ink-400);
+					background: var(--l3-background);
 				}
 			}
 
 			&__scroll-hint-text {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 		}
 	}

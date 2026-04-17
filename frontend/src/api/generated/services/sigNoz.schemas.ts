@@ -4837,10 +4837,6 @@ export interface TypesChangePasswordRequestDTO {
 	 * @type string
 	 */
 	oldPassword?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
 }
 
 export interface TypesDeprecatedUserDTO {
@@ -5204,9 +5200,6 @@ export type AuthzResources200 = {
 	status: string;
 };
 
-export type ChangePasswordPathParameters = {
-	id: string;
-};
 export type ListChannels200 = {
 	/**
 	 * @type array
@@ -5604,10 +5597,10 @@ export type GetFieldsValues200 = {
 	status: string;
 };
 
-export type GetResetPasswordTokenPathParameters = {
+export type GetResetPasswordTokenDeprecatedPathParameters = {
 	id: string;
 };
-export type GetResetPasswordToken200 = {
+export type GetResetPasswordTokenDeprecated200 = {
 	data: TypesResetPasswordTokenDTO;
 	/**
 	 * @type string
@@ -6579,6 +6572,28 @@ export type GetUser200 = {
 export type UpdateUserPathParameters = {
 	id: string;
 };
+export type GetResetPasswordTokenPathParameters = {
+	id: string;
+};
+export type GetResetPasswordToken200 = {
+	data: TypesResetPasswordTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateResetPasswordTokenPathParameters = {
+	id: string;
+};
+export type CreateResetPasswordToken201 = {
+	data: TypesResetPasswordTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetRolesByUserIDPathParameters = {
 	id: string;
 };

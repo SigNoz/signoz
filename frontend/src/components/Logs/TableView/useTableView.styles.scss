@@ -1,5 +1,5 @@
 .text {
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -35,12 +35,6 @@
 
 	p {
 		margin-bottom: 0;
-	}
-}
-
-.lightMode {
-	.text {
-		color: var(--bg-slate-400);
 	}
 }
 
