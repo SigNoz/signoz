@@ -9,7 +9,6 @@ import {
 	TableColumnType as ColumnType,
 	TablePaginationConfig,
 	TableProps,
-	Typography,
 } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
@@ -371,14 +370,25 @@ export function K8sBaseList<T>({
 
 	const showTableLoadingState = isLoading;
 
-	const emptyTableMessage: React.ReactNode = renderEmptyState?.({
-		isError,
+	const emptyStateContext: K8sBaseListEmptyStateContext = {
+		isError: isError || !!data?.error,
 		error: data?.error,
 		totalCount,
 		hasFilters,
 		isLoading: showTableLoadingState,
 		rawData: data?.rawData,
-	}) || <K8sEmptyState />;
+	};
+
+	const emptyTableMessage: React.ReactNode = renderEmptyState?.(
+		emptyStateContext,
+	) || (
+		<K8sEmptyState
+			isError={emptyStateContext.isError}
+			error={emptyStateContext.error}
+			isLoading={emptyStateContext.isLoading}
+			rawData={emptyStateContext.rawData}
+		/>
+	);
 
 	return (
 		<>
@@ -387,10 +397,6 @@ export function K8sBaseList<T>({
 				entity={entity}
 				showAutoRefresh={!selectedItem}
 			/>
-			{isError && (
-				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
-			)}
-
 			<Table
 				className={styles.k8SListTable}
 				dataSource={showTableLoadingState ? [] : formattedItemsData}
