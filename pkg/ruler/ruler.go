@@ -10,7 +10,7 @@ import (
 )
 
 type Ruler interface {
-	factory.Service
+	factory.ServiceWithHealthy
 	statsreporter.StatsCollector
 
 	// ListRuleStates returns all rules with their current evaluation state.
