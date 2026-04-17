@@ -22,11 +22,7 @@ import {
 } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
-import {
-	errorMessageReceivedFromBackend,
-	improvedErrorMessage,
-	returnToAlertsPage,
-} from './constants';
+import { improvedErrorMessage, returnToAlertsPage } from './constants';
 
 import './EditRules.styles.scss';
 
@@ -85,7 +81,7 @@ function EditRules(): JSX.Element {
 			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">
 					<p className="content">
-						{errorMsg === errorMessageReceivedFromBackend
+						{apiError?.getHttpStatusCode() === 404
 							? improvedErrorMessage
 							: errorMsg || t('something_went_wrong')}
 					</p>
