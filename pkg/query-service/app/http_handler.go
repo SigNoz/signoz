@@ -650,11 +650,14 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID
 }
 
 func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
+
 	rules, err := aH.ruleManager.ListRuleStates(r.Context())
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
+
+	// todo(amol): need to add sorter
 
 	aH.Respond(w, rules)
 }
