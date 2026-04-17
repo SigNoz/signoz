@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Breadcrumb, Button, Divider } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -24,29 +23,8 @@ import { isModifierKeyPressed } from 'utils/app';
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
 import { useGetAlertRuleDetails, useRouteTabUtils } from './hooks';
-import { AlertDetailsStatusRendererProps } from './types';
 
 import './AlertDetails.styles.scss';
-
-function AlertDetailsStatusRenderer({
-	isLoading,
-	isError,
-	isRefetching,
-	data,
-}: AlertDetailsStatusRendererProps): JSX.Element {
-	const alertRuleDetails = useMemo(() => data?.payload?.data, [data]);
-	const { t } = useTranslation('common');
-
-	if (isLoading || isRefetching) {
-		return <Spinner tip="Loading..." />;
-	}
-
-	if (isError) {
-		return <div>{data?.error || t('something_went_wrong')}</div>;
-	}
-
-	return <AlertHeader alertDetails={alertRuleDetails} />;
-}
 
 function BreadCrumbItem({
 	title,
@@ -87,7 +65,6 @@ function AlertDetails(): JSX.Element {
 
 	const {
 		isLoading,
-		isRefetching,
 		isError,
 		ruleId,
 		isValidRuleId,
@@ -169,9 +146,7 @@ function AlertDetails(): JSX.Element {
 				/>
 				<Divider className="divider breadcrumb-divider" />
 
-				<AlertDetailsStatusRenderer
-					{...{ isLoading, isError, isRefetching, data: alertDetailsResponse }}
-				/>
+				{alertRuleDetails && <AlertHeader alertDetails={alertRuleDetails} />}
 				<Divider className="divider" />
 				<div className="tabs-and-filters">
 					<RouteTab
