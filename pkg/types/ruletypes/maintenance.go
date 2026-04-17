@@ -34,6 +34,23 @@ func (MaintenanceStatus) Enum() []any {
 	}
 }
 
+type MaintenanceKind struct {
+	valuer.String
+}
+
+var (
+	MaintenanceKindFixed     = MaintenanceKind{valuer.NewString("fixed")}
+	MaintenanceKindRecurring = MaintenanceKind{valuer.NewString("recurring")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceKind.
+func (MaintenanceKind) Enum() []any {
+	return []any{
+		MaintenanceKindFixed,
+		MaintenanceKindRecurring,
+	}
+}
+
 type StorablePlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 	types.Identifiable
@@ -56,7 +73,7 @@ type PlannedMaintenance struct {
 	UpdatedAt   time.Time   `json:"updatedAt"`
 	UpdatedBy   string      `json:"updatedBy"`
 	Status      MaintenanceStatus `json:"status" required:"true"`
-	Kind        string            `json:"kind"`
+	Kind        MaintenanceKind   `json:"kind" required:"true"`
 }
 
 // PostablePlannedMaintenance is the input payload for creating or updating a
@@ -339,12 +356,12 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	} else {
 		status = MaintenanceStatusExpired
 	}
-	var kind string
+	var kind MaintenanceKind
 
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
-		kind = "fixed"
+		kind = MaintenanceKindFixed
 	} else {
-		kind = "recurring"
+		kind = MaintenanceKindRecurring
 	}
 
 	return json.Marshal(struct {
@@ -358,7 +375,7 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
 		UpdatedBy   string            `json:"updatedBy" db:"updated_by"`
 		Status      MaintenanceStatus `json:"status"`
-		Kind        string            `json:"kind"`
+		Kind        MaintenanceKind   `json:"kind"`
 	}{
 		ID:          m.ID,
 		Name:        m.Name,
