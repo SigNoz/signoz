@@ -1,7 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import type { RuletypesGettableRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { dataSourceForAlertType } from 'constants/alerts';
 
 export const filterAlerts = (
 	allAlertRules: RuletypesGettableRuleDTO[],
@@ -53,8 +52,7 @@ export const alertActionLogEvent = (
 	}
 	logEvent('Alert: Action', {
 		ruleId: record.id,
-		dataSource:
-			ALERTS_DATA_SOURCE_MAP[(record.alertType as unknown) as AlertTypes],
+		dataSource: dataSourceForAlertType(record.alertType),
 		name: record.alert,
 		action: actionValue,
 	});

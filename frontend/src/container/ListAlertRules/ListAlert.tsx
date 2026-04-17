@@ -37,7 +37,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
@@ -131,7 +130,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			mapQueryDataFromApi(
 				(record.condition.compositeQuery as unknown) as ICompositeMetricQuery,
 			),
-			(record.alertType as unknown) as AlertTypes,
+			record.alertType,
 		);
 		params.set(
 			QueryParams.compositeQuery,
