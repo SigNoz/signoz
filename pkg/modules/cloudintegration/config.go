@@ -22,7 +22,7 @@ func newConfig() factory.Config {
 		Agent: AgentConfig{
 			// we will maintain the latest version of cloud integration agent from here,
 			// till we automate it externally or figure out a way to validate it.
-			Version: "v0.0.8",
+			Version: "v0.0.9",
 		},
 	}
 }

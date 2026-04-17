@@ -1,6 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Space, Typography } from 'antd';
 
+import broomUrl from '@/assets/Icons/broom.svg';
+import infraContainersUrl from '@/assets/Icons/infraContainers.svg';
+
 import WaitlistFragment from '../WaitlistFragment/WaitlistFragment';
 
 import './Processes.styles.scss';
@@ -16,7 +19,7 @@ function Processes(): JSX.Element {
 				<div className="dev-status-container">
 					<div className="infra-container-card">
 						<img
-							src="/Icons/infraContainers.svg"
+							src={infraContainersUrl}
 							alt="infra-container"
 							width={32}
 							height={32}
@@ -28,7 +31,7 @@ function Processes(): JSX.Element {
 
 					<div className="infra-container-working-msg">
 						<Space>
-							<img src="/Icons/broom.svg" alt="broom" width={24} height={24} />
+							<img src={broomUrl} alt="broom" width={24} height={24} />
 							<Text className="infra-container-card-text">{t('working_message')}</Text>
 						</Space>
 					</div>

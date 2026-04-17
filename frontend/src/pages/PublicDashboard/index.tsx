@@ -3,6 +3,8 @@ import { Typography } from 'antd';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { FrownIcon } from 'lucide-react';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import PublicDashboardContainer from '../../container/PublicDashboardContainer';
 
 import './PublicDashboard.styles.scss';
@@ -38,11 +40,7 @@ function PublicDashboardPage(): JSX.Element {
 
 					<div className="public-dashboard-error-content-header">
 						<div className="brand">
-							<img
-								src="/Logos/signoz-brand-logo.svg"
-								alt="SigNoz"
-								className="brand-logo"
-							/>
+							<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo" />
 
 							<Typography.Title level={2} className="brand-title">
 								SigNoz

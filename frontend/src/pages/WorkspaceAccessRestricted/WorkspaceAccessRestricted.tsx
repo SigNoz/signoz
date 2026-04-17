@@ -5,6 +5,8 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
+import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
+
 import './WorkspaceAccessRestricted.styles.scss';
 
 function WorkspaceAccessRestricted(): JSX.Element {
@@ -113,10 +115,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 								</Col>
 							</Row>
 							<div className="workspace-access-restricted__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>
 						</>
 					)}

@@ -644,6 +644,22 @@ func TestProvider_EvaluateExpression(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name:       "nonexistent key OR check",
+			expression: `threshold.name = 'warning' OR ruleId = 'rule1'`,
+			labelSet: model.LabelSet{
+				"threshold.name": "warning",
+			},
+			expected: true,
+		},
+		{
+			name:       "nonexistent key && check",
+			expression: `threshold.name = 'warning' && nonexistent = 'auth'`,
+			labelSet: model.LabelSet{
+				"threshold.name": "warning",
+			},
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {

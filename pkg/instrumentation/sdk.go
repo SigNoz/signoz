@@ -14,7 +14,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkmetricnoop "go.opentelemetry.io/otel/metric/noop"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
 )
 

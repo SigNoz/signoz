@@ -15,6 +15,9 @@ import { InfraMonitoringEvents } from 'constants/events';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
+
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
 	EmptyOrLoadingViewProps,
@@ -74,7 +77,7 @@ function EmptyOrLoadingView(
 		return (
 			<div className="hosts-empty-state-container">
 				<div className="hosts-empty-state-container-content">
-					<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+					<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
 					<div className="no-hosts-message">
 						<Typography.Title level={5} className="no-hosts-message-title">
 							Queried time range is before earliest host metrics
@@ -93,7 +96,7 @@ function EmptyOrLoadingView(
 			<div className="no-filtered-hosts-message-container">
 				<div className="no-filtered-hosts-message-content">
 					<img
-						src="/Icons/emptyState.svg"
+						src={emptyStateUrl}
 						alt="thinking-emoji"
 						className="empty-state-svg"
 					/>

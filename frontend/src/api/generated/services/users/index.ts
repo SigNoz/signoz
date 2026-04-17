@@ -20,12 +20,15 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	ChangePasswordPathParameters,
 	CreateInvite201,
+	CreateResetPasswordToken201,
+	CreateResetPasswordTokenPathParameters,
 	DeleteUserPathParameters,
 	GetMyUser200,
 	GetMyUserDeprecated200,
 	GetResetPasswordToken200,
+	GetResetPasswordTokenDeprecated200,
+	GetResetPasswordTokenDeprecatedPathParameters,
 	GetResetPasswordTokenPathParameters,
 	GetRolesByUserID200,
 	GetRolesByUserIDPathParameters,
@@ -54,133 +57,35 @@ import type {
 } from '../sigNoz.schemas';
 
 /**
- * This endpoint changes the password by id
- * @summary Change password
- */
-export const changePassword = (
-	{ id }: ChangePasswordPathParameters,
-	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/changePassword/${id}`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesChangePasswordRequestDTO,
-		signal,
-	});
-};
-
-export const getChangePasswordMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof changePassword>>,
-		TError,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof changePassword>>,
-	TError,
-	{
-		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['changePassword'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof changePassword>>,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return changePassword(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type ChangePasswordMutationResult = NonNullable<
-	Awaited<ReturnType<typeof changePassword>>
->;
-export type ChangePasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
-export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Change password
- */
-export const useChangePassword = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof changePassword>>,
-		TError,
-		{
-			pathParams: ChangePasswordPathParameters;
-			data: BodyType<TypesChangePasswordRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof changePassword>>,
-	TError,
-	{
-		pathParams: ChangePasswordPathParameters;
-		data: BodyType<TypesChangePasswordRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getChangePasswordMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
  * This endpoint returns the reset password token by id
+ * @deprecated
  * @summary Get reset password token
  */
-export const getResetPasswordToken = (
-	{ id }: GetResetPasswordTokenPathParameters,
+export const getResetPasswordTokenDeprecated = (
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetResetPasswordToken200>({
+	return GeneratedAPIInstance<GetResetPasswordTokenDeprecated200>({
 		url: `/api/v1/getResetPasswordToken/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetResetPasswordTokenQueryKey = ({
+export const getGetResetPasswordTokenDeprecatedQueryKey = ({
 	id,
-}: GetResetPasswordTokenPathParameters) => {
+}: GetResetPasswordTokenDeprecatedPathParameters) => {
 	return [`/api/v1/getResetPasswordToken/${id}`] as const;
 };
 
-export const getGetResetPasswordTokenQueryOptions = <
-	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+export const getGetResetPasswordTokenDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 			TError,
 			TData
 		>;
@@ -189,11 +94,11 @@ export const getGetResetPasswordTokenQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getGetResetPasswordTokenQueryKey({ id });
+		queryOptions?.queryKey ?? getGetResetPasswordTokenDeprecatedQueryKey({ id });
 
 	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof getResetPasswordToken>>
-	> = ({ signal }) => getResetPasswordToken({ id }, signal);
+		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
+	> = ({ signal }) => getResetPasswordTokenDeprecated({ id }, signal);
 
 	return {
 		queryKey,
@@ -201,35 +106,39 @@ export const getGetResetPasswordTokenQueryOptions = <
 		enabled: !!id,
 		...queryOptions,
 	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getResetPasswordToken>>,
+		Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetResetPasswordTokenQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getResetPasswordToken>>
+export type GetResetPasswordTokenDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>
 >;
-export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetResetPasswordTokenDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
+ * @deprecated
  * @summary Get reset password token
  */
 
-export function useGetResetPasswordToken<
-	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+export function useGetResetPasswordTokenDeprecated<
+	TData = Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			Awaited<ReturnType<typeof getResetPasswordTokenDeprecated>>,
 			TError,
 			TData
 		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetResetPasswordTokenQueryOptions({ id }, options);
+	const queryOptions = getGetResetPasswordTokenDeprecatedQueryOptions(
+		{ id },
+		options,
+	);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -241,15 +150,16 @@ export function useGetResetPasswordToken<
 }
 
 /**
+ * @deprecated
  * @summary Get reset password token
  */
-export const invalidateGetResetPasswordToken = async (
+export const invalidateGetResetPasswordTokenDeprecated = async (
 	queryClient: QueryClient,
-	{ id }: GetResetPasswordTokenPathParameters,
+	{ id }: GetResetPasswordTokenDeprecatedPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetResetPasswordTokenQueryKey({ id }) },
+		{ queryKey: getGetResetPasswordTokenDeprecatedQueryKey({ id }) },
 		options,
 	);
 
@@ -1408,6 +1318,189 @@ export const useUpdateUser = <
 	return useMutation(mutationOptions);
 };
 /**
+ * This endpoint returns the existing reset password token for a user.
+ * @summary Get reset password token for a user
+ */
+export const getResetPasswordToken = (
+	{ id }: GetResetPasswordTokenPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetResetPasswordToken200>({
+		url: `/api/v2/users/${id}/reset_password_tokens`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetResetPasswordTokenQueryKey = ({
+	id,
+}: GetResetPasswordTokenPathParameters) => {
+	return [`/api/v2/users/${id}/reset_password_tokens`] as const;
+};
+
+export const getGetResetPasswordTokenQueryOptions = <
+	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetResetPasswordTokenPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetResetPasswordTokenQueryKey({ id });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getResetPasswordToken>>
+	> = ({ signal }) => getResetPasswordToken({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getResetPasswordToken>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetResetPasswordTokenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getResetPasswordToken>>
+>;
+export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get reset password token for a user
+ */
+
+export function useGetResetPasswordToken<
+	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetResetPasswordTokenPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getResetPasswordToken>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetResetPasswordTokenQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get reset password token for a user
+ */
+export const invalidateGetResetPasswordToken = async (
+	queryClient: QueryClient,
+	{ id }: GetResetPasswordTokenPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetResetPasswordTokenQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.
+ * @summary Create or regenerate reset password token for a user
+ */
+export const createResetPasswordToken = ({
+	id,
+}: CreateResetPasswordTokenPathParameters) => {
+	return GeneratedAPIInstance<CreateResetPasswordToken201>({
+		url: `/api/v2/users/${id}/reset_password_tokens`,
+		method: 'PUT',
+	});
+};
+
+export const getCreateResetPasswordTokenMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createResetPasswordToken>>,
+		TError,
+		{ pathParams: CreateResetPasswordTokenPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createResetPasswordToken>>,
+	TError,
+	{ pathParams: CreateResetPasswordTokenPathParameters },
+	TContext
+> => {
+	const mutationKey = ['createResetPasswordToken'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createResetPasswordToken>>,
+		{ pathParams: CreateResetPasswordTokenPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return createResetPasswordToken(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateResetPasswordTokenMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createResetPasswordToken>>
+>;
+
+export type CreateResetPasswordTokenMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create or regenerate reset password token for a user
+ */
+export const useCreateResetPasswordToken = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createResetPasswordToken>>,
+		TError,
+		{ pathParams: CreateResetPasswordTokenPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createResetPasswordToken>>,
+	TError,
+	{ pathParams: CreateResetPasswordTokenPathParameters },
+	TContext
+> => {
+	const mutationOptions = getCreateResetPasswordTokenMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
  * This endpoint returns the user roles by user id
  * @summary Get user roles
  */
@@ -1847,6 +1940,87 @@ export const useUpdateMyUserV2 = <
 	TContext
 > => {
 	const mutationOptions = getUpdateMyUserV2MutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint updates the password of the user I belong to
+ * @summary Updates my password
+ */
+export const updateMyPassword = (
+	typesChangePasswordRequestDTO: BodyType<TypesChangePasswordRequestDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/me/factor_password`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesChangePasswordRequestDTO,
+	});
+};
+
+export const getUpdateMyPasswordMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyPassword>>,
+		TError,
+		{ data: BodyType<TypesChangePasswordRequestDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateMyPassword>>,
+	TError,
+	{ data: BodyType<TypesChangePasswordRequestDTO> },
+	TContext
+> => {
+	const mutationKey = ['updateMyPassword'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateMyPassword>>,
+		{ data: BodyType<TypesChangePasswordRequestDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return updateMyPassword(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyPasswordMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMyPassword>>
+>;
+export type UpdateMyPasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type UpdateMyPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Updates my password
+ */
+export const useUpdateMyPassword = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyPassword>>,
+		TError,
+		{ data: BodyType<TypesChangePasswordRequestDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateMyPassword>>,
+	TError,
+	{ data: BodyType<TypesChangePasswordRequestDTO> },
+	TContext
+> => {
+	const mutationOptions = getUpdateMyPasswordMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

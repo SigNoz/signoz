@@ -27,7 +27,6 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -140,8 +139,6 @@ type APIHandler struct {
 
 	pvcsRepo *inframetrics.PvcsRepo
 
-	AlertmanagerAPI *alertmanager.API
-
 	LicensingAPI licensing.API
 
 	QueryParserAPI *queryparser.API
@@ -167,8 +164,6 @@ type APIHandlerOpts struct {
 
 	// Flux Interval
 	FluxInterval time.Duration
-
-	AlertmanagerAPI *alertmanager.API
 
 	LicensingAPI licensing.API
 
@@ -230,7 +225,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
 		QueryParserAPI:                opts.QueryParserAPI,
@@ -502,21 +496,6 @@ func (aH *APIHandler) Respond(w http.ResponseWriter, data interface{}) {
 func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels", am.ViewAccess(aH.AlertmanagerAPI.ListChannels)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetChannelByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateChannelByID)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/channels/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteChannelByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/channels", am.EditAccess(aH.AlertmanagerAPI.CreateChannel)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/testChannel", am.EditAccess(aH.AlertmanagerAPI.TestReceiver)).Methods(http.MethodPost)
-
-	router.HandleFunc("/api/v1/route_policies", am.ViewAccess(aH.AlertmanagerAPI.GetAllRoutePolicies)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.ViewAccess(aH.AlertmanagerAPI.GetRoutePolicyByID)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/route_policies", am.AdminAccess(aH.AlertmanagerAPI.CreateRoutePolicy)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.DeleteRoutePolicyByID)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/route_policies/{id}", am.AdminAccess(aH.AlertmanagerAPI.UpdateRoutePolicy)).Methods(http.MethodPut)
-
-	router.HandleFunc("/api/v1/alerts", am.ViewAccess(aH.AlertmanagerAPI.GetAlerts)).Methods(http.MethodGet)
-
 	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)

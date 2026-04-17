@@ -213,8 +213,8 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
-		ID:                  "GetResetPasswordToken",
+	if err := router.Handle("/api/v1/getResetPasswordToken/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordTokenDeprecated), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordTokenDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get reset password token",
 		Description:         "This endpoint returns the reset password token by id",
@@ -224,9 +224,43 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          true,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "GetResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Get reset password token for a user",
+		Description:         "This endpoint returns the existing reset password token for a user.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
+		ID:                  "CreateResetPasswordToken",
+		Tags:                []string{"users"},
+		Summary:             "Create or regenerate reset password token for a user",
+		Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(types.ResetPasswordToken),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -247,11 +281,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/changePassword/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
-		ID:                  "ChangePassword",
+	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authZ.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
+		ID:                  "UpdateMyPassword",
 		Tags:                []string{"users"},
-		Summary:             "Change password",
-		Description:         "This endpoint changes the password by id",
+		Summary:             "Updates my password",
+		Description:         "This endpoint updates the password of the user I belong to",
 		Request:             new(types.ChangePasswordRequest),
 		RequestContentType:  "application/json",
 		Response:            nil,
@@ -260,7 +294,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
