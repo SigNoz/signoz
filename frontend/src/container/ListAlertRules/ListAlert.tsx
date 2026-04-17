@@ -162,7 +162,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 		try {
 			setCloneLoader(true);
-			await createRule((copyAlert as unknown) as RuletypesPostableRuleDTO);
+			await createRule(copyAlert as RuletypesPostableRuleDTO);
 
 			notificationsApi.success({
 				message: 'Success',
