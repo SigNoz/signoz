@@ -22,8 +22,6 @@ import {
 } from 'types/api/alerts/alertTypesV2';
 import { AlertDef } from 'types/api/alerts/def';
 
-import { improvedErrorMessage, returnToAlertsPage } from './constants';
-
 import './EditRules.styles.scss';
 
 function EditRules(): JSX.Element {
@@ -80,14 +78,10 @@ function EditRules(): JSX.Element {
 		return (
 			<div className="edit-rules-container edit-rules-container--error">
 				<Card size="small" className="edit-rules-card">
-					<p className="content">
-						{apiError?.getHttpStatusCode() === 404
-							? improvedErrorMessage
-							: errorMsg || t('something_went_wrong')}
-					</p>
+					<p className="content">{errorMsg || t('something_went_wrong')}</p>
 					<div className="btn-container">
 						<Button type="default" size="large" onClick={clickHandler}>
-							{returnToAlertsPage}
+							Return to Alerts Page
 						</Button>
 					</div>
 				</Card>
