@@ -252,7 +252,7 @@ func (m *GettablePlannedMaintenance) Validate() error {
 	}
 
 	if m.Schedule.Recurrence != nil {
-		if m.Schedule.Recurrence.RepeatType == "" {
+		if m.Schedule.Recurrence.RepeatType.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
 		if m.Schedule.Recurrence.Duration.IsZero() {
