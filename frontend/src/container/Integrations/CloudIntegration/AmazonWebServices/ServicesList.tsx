@@ -6,6 +6,8 @@ import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/serv
 import cx from 'classnames';
 import useUrlQuery from 'hooks/useUrlQuery';
 
+import emptyStateIconUrl from '@/assets/Icons/emptyState.svg';
+
 interface ServicesListProps {
 	cloudAccountId: string;
 }
@@ -84,7 +86,7 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 			<div className="services-list-empty-message">
 				{' '}
 				<img
-					src="/Icons/emptyState.svg"
+					src={emptyStateIconUrl}
 					alt="no-services-found"
 					className="empty-state-svg"
 				/>{' '}

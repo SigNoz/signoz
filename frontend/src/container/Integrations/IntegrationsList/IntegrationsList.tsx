@@ -7,6 +7,9 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
+import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
+import dottedDoubleLineUrl from '@/assets/svgs/dotted-double-line.svg';
+
 import { handleContactSupport } from '../utils';
 
 import './IntegrationsList.styles.scss';
@@ -56,11 +59,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 		return (
 			<div className="error-container">
 				<div className="error-content">
-					<img
-						src="/Icons/awwSnap.svg"
-						alt="error-emoji"
-						className="error-state-svg"
-					/>
+					<img src={awwSnapIconUrl} alt="error-emoji" className="error-state-svg" />
 					<Typography.Text>
 						Something went wrong :/ Please retry or contact support.
 					</Typography.Text>
@@ -93,7 +92,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 				<div className="integrations-list-header-title">All Integrations</div>
 				<div className="integrations-list-header-dotted-double-line">
 					<img
-						src="/svgs/dotted-double-line.svg"
+						src={dottedDoubleLineUrl}
 						alt="dotted-double-line"
 						width="100%"
 						height="100%"
@@ -117,7 +116,7 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 				<div className="integrations-not-found-container">
 					<div className="integrations-not-found-content">
 						<img
-							src="/Icons/awwSnap.svg"
+							src={awwSnapIconUrl}
 							alt="no-integrations"
 							className="integrations-not-found-image"
 						/>

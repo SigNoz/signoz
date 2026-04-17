@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { Badge } from '@signozhq/badge';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
+import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
+import dottedDoubleLineUrl from '@/assets/svgs/dotted-double-line.svg';
+
 import { ONE_CLICK_INTEGRATIONS } from '../constants';
 
 import './OneClickIntegrations.styles.scss';
@@ -39,7 +42,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 
 				<div className="one-click-integrations-header-dotted-double-line">
 					<img
-						src="/svgs/dotted-double-line.svg"
+						src={dottedDoubleLineUrl}
 						alt="dotted-double-line"
 						width="100%"
 						height="100%"
@@ -52,7 +55,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 					<div className="integrations-not-found-container">
 						<div className="integrations-not-found-content">
 							<img
-								src="/Icons/awwSnap.svg"
+								src={awwSnapIconUrl}
 								alt="no-integrations"
 								className="integrations-not-found-image"
 							/>
