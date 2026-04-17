@@ -73,7 +73,7 @@ func (handler *handler) CreateRule(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, rule)
+	render.Success(rw, http.StatusCreated, rule)
 }
 
 func (handler *handler) UpdateRuleByID(rw http.ResponseWriter, req *http.Request) {

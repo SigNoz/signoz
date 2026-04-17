@@ -20,7 +20,7 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	CreateRule200,
+	CreateRule201,
 	DeleteRuleByIDPathParameters,
 	GetRuleByID200,
 	GetRuleByIDPathParameters,
@@ -137,7 +137,7 @@ export const createRule = (
 	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateRule200>({
+	return GeneratedAPIInstance<CreateRule201>({
 		url: `/api/v2/rules`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

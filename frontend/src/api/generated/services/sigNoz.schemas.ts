@@ -6806,7 +6806,7 @@ export type ListRules200 = {
 	status: string;
 };
 
-export type CreateRule200 = {
+export type CreateRule201 = {
 	data: RuletypesGettableRuleDTO;
 	/**
 	 * @type string

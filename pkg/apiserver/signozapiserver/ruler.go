@@ -46,7 +46,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		Response:            new(ruletypes.GettableRule),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
