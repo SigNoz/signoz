@@ -288,10 +288,7 @@ export function PlannedDowntimeForm(
 				? dayjs(initialValues.schedule?.startTime)
 				: '',
 			recurrence: {
-				...((initialValues.schedule?.recurrence as unknown) as Record<
-					string,
-					unknown
-				>),
+				...initialValues.schedule?.recurrence,
 				repeatType: (!isScheduleRecurring(initialValues?.schedule)
 					? recurrenceOptions.doesNotRepeat.value
 					: initialValues.schedule?.recurrence
