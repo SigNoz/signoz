@@ -65,10 +65,10 @@ var RepeatOnAllMap = map[RepeatOn]time.Weekday{
 }
 
 type Recurrence struct {
-	StartTime  time.Time           `json:"startTime"`
+	StartTime  time.Time           `json:"startTime" required:"true"`
 	EndTime    *time.Time          `json:"endTime,omitempty"`
-	Duration   valuer.TextDuration `json:"duration"`
-	RepeatType RepeatType          `json:"repeatType"`
+	Duration   valuer.TextDuration `json:"duration" required:"true"`
+	RepeatType RepeatType          `json:"repeatType" required:"true"`
 	RepeatOn   []RepeatOn          `json:"repeatOn"`
 }
 
