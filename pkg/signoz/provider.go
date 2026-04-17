@@ -196,6 +196,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
+		sqlmigration.NewAddScheduledDashboardReportsFactory(),
+		sqlmigration.NewAddScheduledDashboardReportVariablesFactory(),
+		sqlmigration.NewAddScheduledDashboardReportRunsFactory(),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 	)
 }

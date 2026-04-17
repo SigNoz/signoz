@@ -28,3 +28,8 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 	provider.settings.Logger().WarnContext(ctx, "using noop provider, no email will be sent", slog.String("to", to), slog.String("subject", subject))
 	return nil
 }
+
+func (provider *provider) SendPlainWithAttachments(ctx context.Context, to string, subject string, body string, attachments []emailing.Attachment) error {
+	provider.settings.Logger().WarnContext(ctx, "using noop provider, no email will be sent", slog.String("to", to), slog.String("subject", subject))
+	return nil
+}
