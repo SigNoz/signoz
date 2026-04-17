@@ -261,7 +261,7 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 		return
 	}
 
-	render.Success(rw, http.StatusOK, nil)
+	render.Success(rw, http.StatusCreated, nil)
 }
 
 func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *http.Request) {
