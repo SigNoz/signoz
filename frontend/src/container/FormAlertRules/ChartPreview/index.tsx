@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
@@ -37,14 +37,14 @@ import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
@@ -122,10 +122,7 @@ function ChartPreview({
 	});
 	const { currentQuery } = useQueryBuilder();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const globalSelectedInterval = useGlobalTimeStore((s) => s.selectedTime);
 
 	const { featureFlags } = useAppContext();
 
@@ -189,14 +186,13 @@ function ChartPreview({
 		// alertDef?.version || DEFAULT_ENTITY_VERSION,
 		ENTITY_VERSION_V5,
 		{
-			queryKey: [
+			queryKey: getAutoRefreshQueryKey(
+				globalSelectedInterval,
 				REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
 				userQueryKey || JSON.stringify(query),
 				selectedInterval,
-				minTime,
-				maxTime,
 				alertDef?.ruleType,
-			],
+			),
 			enabled: canQuery,
 			keepPreviousData: true,
 		},
@@ -215,7 +211,7 @@ function ChartPreview({
 		}
 		setMinTimeScale(startTime);
 		setMaxTimeScale(endTime);
-	}, [maxTime, minTime, globalSelectedInterval, queryResponse, setQueryStatus]);
+	}, [globalSelectedInterval, queryResponse, setQueryStatus]);
 
 	// Initialize graph visibility from localStorage
 	useEffect(() => {

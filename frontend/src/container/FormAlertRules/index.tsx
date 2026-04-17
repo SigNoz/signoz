@@ -131,7 +131,7 @@ function FormAlertRules({
 	const [isLoadingAlertQuery, setIsLoadingAlertQuery] = useState(false);
 
 	const handleCancelAlertQuery = useCallback(() => {
-		ruleCache.cancelQueries(REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW);
+		ruleCache.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
 		setIsChartQueryCancelled(true);
 	}, [ruleCache]);
 
@@ -926,9 +926,7 @@ function FormAlertRules({
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
 							runQuery={(): void => {
 								setIsChartQueryCancelled(false);
-								ruleCache.invalidateQueries([
-									REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
-								]);
+								ruleCache.invalidateQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
 								handleRunQuery();
 							}}
 							isLoadingQueries={isLoadingAlertQuery}
