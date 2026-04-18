@@ -93,17 +93,6 @@ Each flavor exists for a concrete reason:
 
 The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `authDomainConfig` — and owns business methods such as `Update(config)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromConfig`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
 
-### Rule — a migration in progress
-
-The `ruletypes` package is currently making this split explicit. Four types coexist:
-
-- `Rule` (`pkg/types/ruletypes/api_params.go:649`) — the v2 core and read type, aligned with `types.TimeAuditable` / `types.UserAuditable`.
-- `StorableRule` (`pkg/types/ruletypes/rule.go:13`) — the DB row with `Data string`.
-- `PostableRule` (`pkg/types/ruletypes/api_params.go:51`) — the request body; owns validation via `Validate()` and `UnmarshalJSON`.
-- `GettableRule` (`pkg/types/ruletypes/api_params.go:610`) — the v1 response type, kept for Terraform and SDK back-compat. It embeds `PostableRule` plus pointer-typed audit fields.
-
-`NewRule(g *GettableRule) *Rule` bridges the old response type into the new core type. `Rule.Id` currently carries a `TODO` to re-type as `valuer.UUID` — a reminder that these files are actively evolving and that the convention is a guide, not a frozen contract.
-
 ## Conventions that tie the flavors together
 
 - **Constructors** use the `New<Output>From<Input>` form — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)`. Not `.ToStorable()` methods.
