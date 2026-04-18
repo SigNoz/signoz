@@ -1,0 +1,142 @@
+# Types
+
+Domain types in `pkg/types/<domain>/` live on three serialization boundaries — inbound HTTP, outbound HTTP, and SQL — on top of an in-memory domain representation. SigNoz's convention is **core-type-first**: every domain defines a single canonical type `X`, and specialized flavors (`PostableX`, `GettableX`, `UpdatableX`, `StorableX`) are introduced **only when they actually differ from `X`**. This guide spells out when each flavor is warranted and how they relate to each other.
+
+Before reading, make sure you have read [abstractions.md](abstractions.md) — the rules here build on its guidance that every new type must earn its place.
+
+## The core type is required
+
+Every domain package in `pkg/types/<domain>/` defines exactly one core type `X`: `AuthDomain`, `Channel`, `Rule`, `Dashboard`, `Role`, `PlannedMaintenance`. This is the canonical in-memory representation of the domain object. Domain methods, validation invariants, and business logic hang off `X` — not off the flavor types.
+
+Two rules shape how the core type behaves:
+
+- **Conversions are named `New<Output>From<Input>`.** Examples: `NewAuthDomainFromStorableAuthDomain`, `NewAuthDomainFromConfig`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`. There are no `.ToStorable()` or `.ToGettable()` methods — always a constructor on the output side.
+- **`X` can double as the storage row** when the DB shape would be identical. `Channel` embeds `bun.BaseModel` directly, and there is no `StorableChannel`. This is the preferred shape when it works.
+
+Domain packages under `pkg/types/` must not import from other `pkg/` packages. Keep the core type's methods lightweight and push orchestration out to the module layer.
+
+## Add a flavor only when it differs
+
+For each of the four flavors, create it only if its shape diverges from `X`. If a flavor would have the same fields and tags as `X`, reuse `X` directly, or declare a type alias. Every flavor must earn its place per [abstractions.md](abstractions.md) rule 6 ("Wrappers must add semantics, not just rename").
+
+| Flavor       | Create it when it differs in…                                                                                                                                                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PostableX`  | JSON shape differs from `X` — typically no `Id`, no audit fields, no server-computed fields. Often owns input validation via `Validate()` or a custom `UnmarshalJSON`.                                                            |
+| `GettableX`  | Response shape adds server-computed fields, or re-shapes the core type for API back-compat (e.g., `GettableRule` embeds `PostableRule` plus audit pointers for the v1 API).                                                       |
+| `UpdatableX` | Only a strict subset of `PostableX` is replaceable on PUT. If the updatable shape equals `PostableX`, reuse `PostableX`.                                                                                                          |
+| `StorableX`  | DB row shape differs from `X` — usually `X` carries nested typed config while `StorableX` carries a flat `Data string` JSON column, plus bun tags, audit mixins, and an `OrgID`. If `X` already has those, skip the flavor.       |
+
+The failure mode this rule exists to prevent: minting all four flavors on reflex for every new resource, even when two or three are structurally identical. Each unnecessary flavor is another type contributors must understand and another conversion that can drift.
+
+## Worked examples
+
+### Channel — core type only
+
+```go
+// pkg/types/alertmanagertypes/channel.go
+type Channels         = []*Channel
+type GettableChannels = []*Channel
+
+type Channel struct {
+    bun.BaseModel `bun:"table:notification_channel"`
+    types.Identifiable
+    types.TimeAuditable
+    Name  string `json:"name"  required:"true" bun:"name"`
+    Type  string `json:"type"  required:"true" bun:"type"`
+    Data  string `json:"data"  required:"true" bun:"data"`
+    OrgID string `json:"orgId" required:"true" bun:"org_id"`
+}
+```
+
+`Channel` is both the domain type and the bun row. `GettableChannels` is a **type alias** because `*Channel` already serializes correctly as a response. There is no `StorableChannel`, `PostableChannel`, or `UpdatableChannel` — those would be identical to `Channel` and so do not exist. Prefer this shape when it works.
+
+### AuthDomain — all four flavors
+
+```go
+// pkg/types/authtypes/domain.go
+type AuthDomain struct {
+    storableAuthDomain *StorableAuthDomain
+    authDomainConfig   *AuthDomainConfig
+}
+
+type StorableAuthDomain struct {
+    bun.BaseModel `bun:"table:auth_domain"`
+    types.Identifiable
+    Name  string      `bun:"name"`
+    Data  string      `bun:"data"`  // AuthDomainConfig serialized as JSON
+    OrgID valuer.UUID `bun:"org_id"`
+    types.TimeAuditable
+}
+
+type PostableAuthDomain struct {
+    Config AuthDomainConfig `json:"config"`
+    Name   string           `json:"name"`
+}
+
+type UpdateableAuthDomain struct {
+    Config AuthDomainConfig `json:"config"` // Name intentionally absent
+}
+
+type GettableAuthDomain struct {
+    *StorableAuthDomain
+    *AuthDomainConfig
+    AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
+}
+```
+
+Each flavor exists for a concrete reason:
+
+- `StorableAuthDomain` stores the typed config as an opaque `Data string` column, so the schema does not need to migrate every time a config field is added.
+- `PostableAuthDomain` carries the config as a structured object (not a string) for the request.
+- `UpdateableAuthDomain` excludes `Name` because a domain's name cannot change after creation.
+- `GettableAuthDomain` adds `AuthNProviderInfo`, which is derived at read time and never persisted.
+
+The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `authDomainConfig` — and owns business methods such as `Update(config)`. Conversions use the `New<Output>From<Input>` form: `NewAuthDomainFromConfig`, `NewAuthDomainFromStorableAuthDomain`, `NewGettableAuthDomainFromAuthDomain`.
+
+### Rule — a migration in progress
+
+The `ruletypes` package is currently making this split explicit. Four types coexist:
+
+- `Rule` (`pkg/types/ruletypes/api_params.go:649`) — the v2 core and read type, aligned with `types.TimeAuditable` / `types.UserAuditable`.
+- `StorableRule` (`pkg/types/ruletypes/rule.go:13`) — the DB row with `Data string`.
+- `PostableRule` (`pkg/types/ruletypes/api_params.go:51`) — the request body; owns validation via `Validate()` and `UnmarshalJSON`.
+- `GettableRule` (`pkg/types/ruletypes/api_params.go:610`) — the v1 response type, kept for Terraform and SDK back-compat. It embeds `PostableRule` plus pointer-typed audit fields.
+
+`NewRule(g *GettableRule) *Rule` bridges the old response type into the new core type. `Rule.Id` currently carries a `TODO` to re-type as `valuer.UUID` — a reminder that these files are actively evolving and that the convention is a guide, not a frozen contract.
+
+## Conventions that tie the flavors together
+
+- **Constructors** use the `New<Output>From<Input>` form — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)`. Not `.ToStorable()` methods.
+- **Validation** lives on `PostableX`. Use `(p *PostableX) Validate() error` for full validation on the write path, or a custom `UnmarshalJSON` to reject invalid input at decode time (`PostableAuthDomain.UnmarshalJSON` rejects domains that do not match the name regex).
+- **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` and `type UpdatableDashboard = StorableDashboardData` are correct because they add no semantics beyond the underlying type.
+- **Serialization tags** follow [handler.md](handler.md): `required:"true"` means the JSON key must be present, `nullable:"true"` is required on any slice or map that may serialize as `null`, and types with a fixed value set must implement `Enum() []any`.
+
+## A note on `UpdatableX` and `PatchableX`
+
+- `UpdatableX` — the body for PUT (full replace) when the shape is a strict subset of `PostableX`. If the updatable shape equals `PostableX`, reuse `PostableX`.
+- `PatchableX` — the body for PATCH (partial update); only the fields a client is allowed to patch. Example: `PatchableRole { Description string }` at `pkg/types/authtypes/role.go:90` lets clients patch only the description, even though `Role` has many fields.
+
+Both are optional. Do not introduce them if `PostableX` already covers the case.
+
+## What to avoid
+
+- **Do not mint a flavor that mirrors the core type.** If `StorableX` would have the same fields as `X`, use `X` directly with `bun.BaseModel` embedded. `Channel` is the canonical example.
+- **Do not bolt domain methods onto `StorableX`.** Storage types are data carriers. Domain methods live on `X`.
+- **Do not invent new suffixes** (`Creatable`, `Fetchable`, `Savable`). The core type plus `Postable` / `Gettable` / `Updatable` / `Patchable` / `Storable` covers every case that exists today.
+- **Spelling:** use `Updatable`, not `Updateable`. `UpdateableAuthDomain` at `pkg/types/authtypes/domain.go:46` is a known typo that should be renamed the next time that file is touched — do not propagate the spelling to new types.
+
+## What should I remember?
+
+- Every domain package defines the core type `X`. Only `X` is mandatory.
+- Add `PostableX` / `GettableX` / `UpdatableX` / `StorableX` one at a time, only when the shape actually diverges from `X`.
+- Domain logic lives on `X`, not on the flavor types.
+- Conversions are named `New<Output>From<Input>`, not `.ToXyz()` methods.
+- Use a type alias when two shapes are truly identical.
+- `pkg/types/<domain>/` must not import from other `pkg/` packages.
+
+## Further reading
+
+- [abstractions.md](abstractions.md) — when to introduce a new type at all.
+- [handler.md](handler.md) — struct tag rules at the HTTP boundary.
+- [packages.md](packages.md) — where types live under `pkg/types/`.
+- [sql.md](sql.md) — star-schema requirements for `StorableX`.
