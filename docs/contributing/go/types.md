@@ -10,7 +10,15 @@ Every domain package in `pkg/types/<domain>/` defines exactly one core type `X`:
 
 Two rules shape how the core type behaves:
 
-- **Conversions can be either `New<Output>From<Input>` or a receiver-style `(x *X) ToY()` method.** Either form is fine; pick whichever reads best at the call site. The codebase uses both — `NewAuthDomainFromStorableAuthDomain`, `NewGettableDashboardFromDashboard`, `NewRoleFromStorableRole` alongside `(m *PlannedMaintenanceWithRules) ToPlannedMaintenance()` at `pkg/types/ruletypes/maintenance.go:394`.
+- **Conversions can be either `New<Output>From<Input>` or a receiver-style `(x *X) ToY()` method.** Either form is fine; pick whichever reads best at the call site:
+
+    ```go
+    // Constructor form
+    func NewGettableAuthDomainFromAuthDomain(d *AuthDomain, info *AuthNProviderInfo) *GettableAuthDomain
+
+    // Receiver form
+    func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
+    ```
 - **`X` can double as the storage row** when the DB shape would be identical. `Channel` embeds `bun.BaseModel` directly, and there is no `StorableChannel`. This is the preferred shape when it works.
 
 Domain packages under `pkg/types/` must not import from other `pkg/` packages. Keep the core type's methods lightweight and push orchestration out to the module layer.
@@ -33,7 +41,6 @@ The failure mode this rule exists to prevent: minting all four flavors on reflex
 ### Channel — core type only
 
 ```go
-// pkg/types/alertmanagertypes/channel.go
 type Channels         = []*Channel
 type GettableChannels = []*Channel
 
@@ -53,7 +60,6 @@ type Channel struct {
 ### AuthDomain — all four flavors
 
 ```go
-// pkg/types/authtypes/domain.go
 type AuthDomain struct {
     storableAuthDomain *StorableAuthDomain
     authDomainConfig   *AuthDomainConfig
@@ -96,14 +102,39 @@ The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `au
 ## Conventions that tie the flavors together
 
 - **Conversions** use either a `New<Output>From<Input>` constructor — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
-- **Validation belongs on the core type `X`.** Examples: `(m *PlannedMaintenance) Validate()` at `pkg/types/ruletypes/maintenance.go:313`, `(er *RoutePolicy) Validate()` at `pkg/types/alertmanagertypes/expressionroute.go:101`. Putting it on `X` means every write path — HTTP create, HTTP update, in-process migration, replay — runs the same checks. A narrower `Validate()` on `PostableX` is fine only for checks that are specific to the request shape and do not apply to `X` (for example, `(p *PostableRoutePolicy) Validate()` at `pkg/types/alertmanagertypes/expressionroute.go:23` compiles the `Expression` string with `expr.Compile()`, a request-time concern). `UnmarshalJSON` on `PostableX` — such as `PostableAuthDomain.UnmarshalJSON` rejecting malformed domain names — is a separate tool that lives on `PostableX` because decoding only happens at the HTTP boundary.
+- **Validation belongs on the core type `X`.** Putting it on `X` means every write path — HTTP create, HTTP update, in-process migration, replay — runs the same checks. `Validate()` on `PostableX` is reserved for checks that are specific to the request shape and do not apply to `X` (e.g. compiling an expression string at request time). `UnmarshalJSON` on `PostableX` is a separate tool that lives there because decoding only happens at the HTTP boundary.
+
+    ```go
+    // Domain invariants: every write path re-runs these.
+    func (er *RoutePolicy) Validate() error {
+        if er.Name == "" {
+            return errors.NewInvalidInputf(errors.CodeInvalidInput, "name is required")
+        }
+        // ...channel, expression kind, and OrgID checks...
+    }
+
+    // Request-shape-only: compiling the expression is a decode-time concern.
+    func (p *PostableRoutePolicy) Validate() error {
+        // ...shared shape checks...
+        if _, err := expr.Compile(p.Expression); err != nil {
+            return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid expression syntax: %v", err)
+        }
+        return nil
+    }
+    ```
 - **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` and `type UpdatableDashboard = StorableDashboardData` are correct because they add no semantics beyond the underlying type.
 - **Serialization tags** follow [handler.md](handler.md): `required:"true"` means the JSON key must be present, `nullable:"true"` is required on any slice or map that may serialize as `null`, and types with a fixed value set must implement `Enum() []any`.
 
 ## A note on `UpdatableX` and `PatchableX`
 
 - `UpdatableX` — the body for PUT (full replace) when the shape is a strict subset of `PostableX`. If the updatable shape equals `PostableX`, reuse `PostableX`.
-- `PatchableX` — the body for PATCH (partial update); only the fields a client is allowed to patch. Example: `PatchableRole { Description string }` at `pkg/types/authtypes/role.go:90` lets clients patch only the description, even though `Role` has many fields.
+- `PatchableX` — the body for PATCH (partial update); only the fields a client is allowed to patch. For example, `PatchableRole` carries a single `Description` field even though `Role` has many — clients may patch the description but not anything else.
+
+    ```go
+    type PatchableRole struct {
+        Description string `json:"description"`
+    }
+    ```
 
 Both are optional. Do not introduce them if `PostableX` already covers the case.
 
@@ -112,7 +143,7 @@ Both are optional. Do not introduce them if `PostableX` already covers the case.
 - **Do not mint a flavor that mirrors the core type.** If `StorableX` would have the same fields as `X`, use `X` directly with `bun.BaseModel` embedded. `Channel` is the canonical example.
 - **Do not bolt domain methods onto `StorableX`.** Storage types are data carriers. Domain methods live on `X`.
 - **Do not invent new suffixes** (`Creatable`, `Fetchable`, `Savable`). The core type plus `Postable` / `Gettable` / `Updatable` / `Patchable` / `Storable` covers every case that exists today.
-- **Spelling:** use `Updatable`, not `Updateable`. `UpdateableAuthDomain` at `pkg/types/authtypes/domain.go:46` is a known typo that should be renamed the next time that file is touched — do not propagate the spelling to new types.
+- **Spelling:** use `Updatable`, not `Updateable`. `Updateable` is a common typo — prefer the shorter form when introducing new types, and rename any stragglers you come across.
 
 ## What should I remember?
 
