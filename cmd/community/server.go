@@ -83,7 +83,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
-		signoz.NewWebProviderFactories(),
+		signoz.NewWebProviderFactories(config.Global),
 		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
 			return signoz.NewSQLSchemaProviderFactories(sqlstore)
 		},

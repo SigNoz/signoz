@@ -211,6 +211,20 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		return nil, err
 	}
 
+	routePrefix := s.config.Global.ExternalPath()
+	if routePrefix != "" {
+		prefixed := http.StripPrefix(routePrefix, handler)
+		handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			switch req.URL.Path {
+			case "/api/v1/health", "/api/v2/healthz", "/api/v2/readyz", "/api/v2/livez":
+				r.ServeHTTP(w, req)
+				return
+			}
+
+			prefixed.ServeHTTP(w, req)
+		})
+	}
+
 	return &http.Server{
 		Handler: handler,
 	}, nil

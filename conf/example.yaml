@@ -6,6 +6,8 @@
 ##################### Global #####################
 global:
   # the url under which the signoz apiserver is externally reachable.
+  # the path component (e.g. /signoz in https://example.com/signoz) is used
+  # as the base path for all HTTP routes (both API and web frontend).
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
@@ -50,8 +52,8 @@ pprof:
 web:
   # Whether to enable the web frontend
   enabled: true
-  # The prefix to serve web on
-  prefix: /
+  # The index file to use as the SPA entrypoint.
+  index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
 

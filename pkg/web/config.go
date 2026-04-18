@@ -8,10 +8,11 @@ import (
 type Config struct {
 	// Whether the web package is enabled.
 	Enabled bool `mapstructure:"enabled"`
-	// The prefix to serve the files from
-	Prefix string `mapstructure:"prefix"`
-	// The directory containing the static build files. The root of this directory should
-	// have an index.html file.
+
+	// The name of the index file to serve.
+	Index string `mapstructure:"index"`
+
+	// The directory from which to serve the web files.
 	Directory string `mapstructure:"directory"`
 }
 
@@ -22,7 +23,7 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Enabled:   true,
-		Prefix:    "/",
+		Index:     "index.html",
 		Directory: "/etc/signoz/web",
 	}
 }
