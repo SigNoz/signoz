@@ -10,7 +10,7 @@ Every domain package in `pkg/types/<domain>/` defines exactly one core type `X`:
 
 Two rules shape how the core type behaves:
 
-- **Conversions are named `New<Output>From<Input>`.** Examples: `NewAuthDomainFromStorableAuthDomain`, `NewAuthDomainFromConfig`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`. There are no `.ToStorable()` or `.ToGettable()` methods — always a constructor on the output side.
+- **Conversions can be either `New<Output>From<Input>` or a receiver-style `(x *X) ToY()` method.** Either form is fine; pick whichever reads best at the call site. The codebase uses both — `NewAuthDomainFromStorableAuthDomain`, `NewGettableDashboardFromDashboard`, `NewRoleFromStorableRole` alongside `(m *PlannedMaintenanceWithRules) ToPlannedMaintenance()` at `pkg/types/ruletypes/maintenance.go:394`.
 - **`X` can double as the storage row** when the DB shape would be identical. `Channel` embeds `bun.BaseModel` directly, and there is no `StorableChannel`. This is the preferred shape when it works.
 
 Domain packages under `pkg/types/` must not import from other `pkg/` packages. Keep the core type's methods lightweight and push orchestration out to the module layer.
@@ -95,7 +95,7 @@ The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `au
 
 ## Conventions that tie the flavors together
 
-- **Constructors** use the `New<Output>From<Input>` form — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)`. Not `.ToStorable()` methods.
+- **Conversions** use either a `New<Output>From<Input>` constructor — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
 - **Validation** lives on `PostableX`. Use `(p *PostableX) Validate() error` for full validation on the write path, or a custom `UnmarshalJSON` to reject invalid input at decode time (`PostableAuthDomain.UnmarshalJSON` rejects domains that do not match the name regex).
 - **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` and `type UpdatableDashboard = StorableDashboardData` are correct because they add no semantics beyond the underlying type.
 - **Serialization tags** follow [handler.md](handler.md): `required:"true"` means the JSON key must be present, `nullable:"true"` is required on any slice or map that may serialize as `null`, and types with a fixed value set must implement `Enum() []any`.
@@ -119,7 +119,7 @@ Both are optional. Do not introduce them if `PostableX` already covers the case.
 - Every domain package defines the core type `X`. Only `X` is mandatory.
 - Add `PostableX` / `GettableX` / `UpdatableX` / `StorableX` one at a time, only when the shape actually diverges from `X`.
 - Domain logic lives on `X`, not on the flavor types.
-- Conversions are named `New<Output>From<Input>`, not `.ToXyz()` methods.
+- Conversions can be a `New<Output>From<Input>` constructor or a receiver-style `ToY()` method — pick whichever reads best at the call site.
 - Use a type alias when two shapes are truly identical.
 - `pkg/types/<domain>/` must not import from other `pkg/` packages.
 
