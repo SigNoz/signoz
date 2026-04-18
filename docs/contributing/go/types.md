@@ -143,7 +143,8 @@ Both are optional. Do not introduce them if `PostableX` already covers the case.
 - **Do not mint a flavor that mirrors the core type.** If `StorableX` would have the same fields as `X`, use `X` directly with `bun.BaseModel` embedded. `Channel` is the canonical example.
 - **Do not bolt domain methods onto `StorableX`.** Storage types are data carriers. Domain methods live on `X`.
 - **Do not invent new suffixes** (`Creatable`, `Fetchable`, `Savable`). The core type plus `Postable` / `Gettable` / `Updatable` / `Patchable` / `Storable` covers every case that exists today.
-- **Spelling:** use `Updatable`, not `Updateable`. `Updateable` is a common typo — prefer the shorter form when introducing new types, and rename any stragglers you come across.
+- **Spelling — `Updatable`, not `Updateable`.** `Updateable` is a common typo. Prefer the shorter form when introducing new types, and rename any stragglers you come across.
+- **Spelling — `Storable`, not `Storeable`.** `Storeable` is a common typo. Prefer the shorter form when introducing new types, and rename any stragglers you come across.
 
 ## What should I remember?
 
