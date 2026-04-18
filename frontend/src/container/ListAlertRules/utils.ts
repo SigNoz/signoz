@@ -1,11 +1,11 @@
 import logEvent from 'api/common/logEvent';
-import type { RuletypesGettableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { dataSourceForAlertType } from 'constants/alerts';
 
 export const filterAlerts = (
-	allAlertRules: RuletypesGettableRuleDTO[],
+	allAlertRules: RuletypesRuleDTO[],
 	filter: string,
-): RuletypesGettableRuleDTO[] => {
+): RuletypesRuleDTO[] => {
 	if (!filter.trim()) {
 		return allAlertRules;
 	}
@@ -31,7 +31,7 @@ export const filterAlerts = (
 
 export const alertActionLogEvent = (
 	action: string,
-	record: RuletypesGettableRuleDTO,
+	record: RuletypesRuleDTO,
 ): void => {
 	let actionValue = '';
 	switch (action) {

@@ -4,7 +4,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { deleteRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
-	RuletypesGettableRuleDTO,
+	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
@@ -79,7 +79,7 @@ function DeleteAlert({
 
 interface DeleteAlertProps {
 	id: string;
-	setData: Dispatch<SetStateAction<RuletypesGettableRuleDTO[]>>;
+	setData: Dispatch<SetStateAction<RuletypesRuleDTO[]>>;
 	notifications: NotificationInstance;
 }
 

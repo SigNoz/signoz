@@ -3,8 +3,8 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { patchRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
-	RuletypesGettableRuleDTO,
 	RuletypesPostableRuleDTO,
+	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
@@ -19,7 +19,7 @@ function ToggleAlertState({
 	disabled,
 	setData,
 }: ToggleAlertStateProps): JSX.Element {
-	const [apiStatus, setAPIStatus] = useState<State<RuletypesGettableRuleDTO>>({
+	const [apiStatus, setAPIStatus] = useState<State<RuletypesRuleDTO>>({
 		error: false,
 		errorMessage: '',
 		loading: false,
@@ -94,7 +94,7 @@ function ToggleAlertState({
 interface ToggleAlertStateProps {
 	id: string;
 	disabled: boolean;
-	setData: Dispatch<SetStateAction<RuletypesGettableRuleDTO[]>>;
+	setData: Dispatch<SetStateAction<RuletypesRuleDTO[]>>;
 }
 
 export default ToggleAlertState;

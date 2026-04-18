@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
-import type { RuletypesGettableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -28,9 +28,9 @@ export default function AlertRules({
 	const { user } = useAppContext();
 	const [rulesExist, setRulesExist] = useState(false);
 
-	const [sortedAlertRules, setSortedAlertRules] = useState<
-		RuletypesGettableRuleDTO[]
-	>([]);
+	const [sortedAlertRules, setSortedAlertRules] = useState<RuletypesRuleDTO[]>(
+		[],
+	);
 
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
@@ -53,8 +53,10 @@ export default function AlertRules({
 				return 1;
 			}
 
-			// Then sort by updateAt timestamp
-			return new Date(b.updateAt).getTime() - new Date(a.updateAt).getTime();
+			// Then sort by updatedAt timestamp
+			return (
+				new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+			);
 		});
 
 		if (sortedRules.length > 0 && !loadingUserPreferences) {
@@ -117,7 +119,7 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: RuletypesGettableRuleDTO) => (): void => {
+	const onEditHandler = (record: RuletypesRuleDTO) => (): void => {
 		logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,

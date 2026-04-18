@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { RuletypesGettableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import CreateAlertV2Header from 'container/CreateAlertV2/CreateAlertHeader';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useAlertRule } from 'providers/Alert';
@@ -16,7 +16,7 @@ import AlertState from './AlertState/AlertState';
 import './AlertHeader.styles.scss';
 
 export type AlertHeaderProps = {
-	alertDetails: RuletypesGettableRuleDTO | PostableAlertRuleV2;
+	alertDetails: RuletypesRuleDTO | PostableAlertRuleV2;
 };
 function AlertHeader({ alertDetails }: AlertHeaderProps): JSX.Element {
 	const { state, alert: alertName, labels } = alertDetails;

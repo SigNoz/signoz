@@ -1,22 +1,22 @@
 import type {
 	RuletypesAlertStateDTO,
 	RuletypesCompareOperatorDTO,
-	RuletypesGettableRuleDTO,
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { filterAlerts } from '../utils';
 
 describe('filterAlerts', () => {
-	const mockAlertBase: Partial<RuletypesGettableRuleDTO> = {
+	const mockAlertBase: Partial<RuletypesRuleDTO> = {
 		state: 'active' as RuletypesAlertStateDTO,
 		disabled: false,
-		createAt: new Date('2024-01-01T00:00:00Z'),
-		createBy: 'test-user',
-		updateAt: new Date('2024-01-01T00:00:00Z'),
-		updateBy: 'test-user',
+		createdAt: new Date('2024-01-01T00:00:00Z'),
+		createdBy: 'test-user',
+		updatedAt: new Date('2024-01-01T00:00:00Z'),
+		updatedBy: 'test-user',
 		version: '1',
 		condition: {
 			compositeQuery: {
@@ -27,10 +27,10 @@ describe('filterAlerts', () => {
 			matchType: 'at_least_once' as RuletypesMatchTypeDTO,
 			op: 'above' as RuletypesCompareOperatorDTO,
 		},
-		ruleType: 'threshold_rule' as RuletypesGettableRuleDTO['ruleType'],
+		ruleType: 'threshold_rule' as RuletypesRuleDTO['ruleType'],
 	};
 
-	const mockAlerts: RuletypesGettableRuleDTO[] = [
+	const mockAlerts: RuletypesRuleDTO[] = [
 		{
 			...mockAlertBase,
 			id: '1',
@@ -41,7 +41,7 @@ describe('filterAlerts', () => {
 				status: 'ok',
 				environment: 'production',
 			},
-		} as RuletypesGettableRuleDTO,
+		} as RuletypesRuleDTO,
 		{
 			...mockAlertBase,
 			id: '2',
@@ -52,7 +52,7 @@ describe('filterAlerts', () => {
 				status: 'firing',
 				environment: 'staging',
 			},
-		} as RuletypesGettableRuleDTO,
+		} as RuletypesRuleDTO,
 		{
 			...mockAlertBase,
 			id: '3',
@@ -63,7 +63,7 @@ describe('filterAlerts', () => {
 				status: 'pending',
 				environment: 'production',
 			},
-		} as RuletypesGettableRuleDTO,
+		} as RuletypesRuleDTO,
 	];
 
 	it('should return all alerts when filter is empty', () => {
@@ -114,14 +114,14 @@ describe('filterAlerts', () => {
 	});
 
 	it('should handle alerts with missing labels', () => {
-		const alertsWithMissingLabels: RuletypesGettableRuleDTO[] = [
+		const alertsWithMissingLabels: RuletypesRuleDTO[] = [
 			{
 				...mockAlertBase,
 				id: '4',
 				alert: 'Test Alert',
 				alertType: 'METRIC_BASED_ALERT',
 				labels: undefined,
-			} as RuletypesGettableRuleDTO,
+			} as RuletypesRuleDTO,
 		];
 		const result = filterAlerts(alertsWithMissingLabels, 'test');
 		expect(result).toHaveLength(1);
@@ -129,7 +129,7 @@ describe('filterAlerts', () => {
 	});
 
 	it('should handle alerts with missing alert name', () => {
-		const alertsWithMissingName: RuletypesGettableRuleDTO[] = [
+		const alertsWithMissingName: RuletypesRuleDTO[] = [
 			{
 				...mockAlertBase,
 				id: '5',
@@ -138,7 +138,7 @@ describe('filterAlerts', () => {
 				labels: {
 					severity: 'warning',
 				},
-			} as RuletypesGettableRuleDTO,
+			} as RuletypesRuleDTO,
 		];
 		const result = filterAlerts(alertsWithMissingName, 'warning');
 		expect(result).toHaveLength(1);

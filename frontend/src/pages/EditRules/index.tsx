@@ -5,7 +5,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
-	RuletypesGettableRuleDTO,
+	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
@@ -62,7 +62,7 @@ function EditRules(): JSX.Element {
 		}
 	}, [isValidRuleId, ruleId, notifications, safeNavigate]);
 
-	const ruleData: RuletypesGettableRuleDTO | undefined = data?.data;
+	const ruleData: RuletypesRuleDTO | undefined = data?.data;
 
 	const apiError = useMemo(
 		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),

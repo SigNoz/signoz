@@ -10,8 +10,8 @@ import { createRule } from 'api/generated/services/rules';
 import type {
 	ListRules200,
 	RenderErrorResponseDTO,
-	RuletypesGettableRuleDTO,
 	RuletypesPostableRuleDTO,
+	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -67,7 +67,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	const paginationParam = params.get('page');
 	const searchParams = params.get('search');
 	const [searchString, setSearchString] = useState<string>(searchParams || '');
-	const [data, setData] = useState<RuletypesGettableRuleDTO[]>(() => {
+	const [data, setData] = useState<RuletypesRuleDTO[]>(() => {
 		const value = searchString.toLowerCase();
 		const filteredData = filterAlerts(allAlertRules, value);
 		return filteredData || [];
@@ -79,10 +79,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			? orderQueryParam
 			: null;
 
-	const {
-		sortedInfo,
-		handleChange,
-	} = useSortableTable<RuletypesGettableRuleDTO>(
+	const { sortedInfo, handleChange } = useSortableTable<RuletypesRuleDTO>(
 		sortingOrder,
 		orderColumnParam || '',
 		searchString,
@@ -123,7 +120,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	);
 
 	const onEditHandler = (
-		record: RuletypesGettableRuleDTO,
+		record: RuletypesRuleDTO,
 		options?: { newTab?: boolean },
 	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
@@ -152,9 +149,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 	};
 
 	const onCloneHandler = (
-		originalAlert: RuletypesGettableRuleDTO,
+		originalAlert: RuletypesRuleDTO,
 	) => async (): Promise<void> => {
-		const copyAlert: RuletypesGettableRuleDTO = {
+		const copyAlert: RuletypesRuleDTO = {
 			...originalAlert,
 			alert: `${originalAlert.alert} - Copy`,
 		};
@@ -199,19 +196,16 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		setData(filteredData);
 	});
 
-	const dynamicColumns: ColumnsType<RuletypesGettableRuleDTO> = [
+	const dynamicColumns: ColumnsType<RuletypesRuleDTO> = [
 		{
 			title: 'Created At',
-			dataIndex: 'createAt',
+			dataIndex: 'createdAt',
 			width: 80,
 			key: DynamicColumnsKey.CreatedAt,
 			align: 'center',
-			sorter: (
-				a: RuletypesGettableRuleDTO,
-				b: RuletypesGettableRuleDTO,
-			): number => {
-				const prev = a.createAt ? new Date(a.createAt).getTime() : 0;
-				const next = b.createAt ? new Date(b.createAt).getTime() : 0;
+			sorter: (a: RuletypesRuleDTO, b: RuletypesRuleDTO): number => {
+				const prev = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+				const next = b.createdAt ? new Date(b.createdAt).getTime() : 0;
 
 				return prev - next;
 			},
@@ -223,23 +217,20 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		},
 		{
 			title: 'Created By',
-			dataIndex: 'createBy',
+			dataIndex: 'createdBy',
 			width: 80,
 			key: DynamicColumnsKey.CreatedBy,
 			align: 'center',
 		},
 		{
 			title: 'Updated At',
-			dataIndex: 'updateAt',
+			dataIndex: 'updatedAt',
 			width: 80,
 			key: DynamicColumnsKey.UpdatedAt,
 			align: 'center',
-			sorter: (
-				a: RuletypesGettableRuleDTO,
-				b: RuletypesGettableRuleDTO,
-			): number => {
-				const prev = a.updateAt ? new Date(a.updateAt).getTime() : 0;
-				const next = b.updateAt ? new Date(b.updateAt).getTime() : 0;
+			sorter: (a: RuletypesRuleDTO, b: RuletypesRuleDTO): number => {
+				const prev = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+				const next = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
 
 				return prev - next;
 			},
@@ -251,14 +242,14 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		},
 		{
 			title: 'Updated By',
-			dataIndex: 'updateBy',
+			dataIndex: 'updatedBy',
 			width: 80,
 			key: DynamicColumnsKey.UpdatedBy,
 			align: 'center',
 		},
 	];
 
-	const columns: ColumnsType<RuletypesGettableRuleDTO> = [
+	const columns: ColumnsType<RuletypesRuleDTO> = [
 		{
 			title: 'Status',
 			dataIndex: 'state',
@@ -335,7 +326,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 			dataIndex: 'id',
 			key: 'action',
 			width: 10,
-			render: (id: RuletypesGettableRuleDTO['id'], record): JSX.Element => (
+			render: (id: RuletypesRuleDTO['id'], record): JSX.Element => (
 				<div data-testid="alert-actions">
 					<DropDown
 						onDropDownItemClick={(item): void =>
@@ -433,7 +424,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 }
 
 interface ListAlertProps {
-	allAlertRules: RuletypesGettableRuleDTO[];
+	allAlertRules: RuletypesRuleDTO[];
 	refetch: UseQueryResult<
 		ListRules200,
 		ErrorType<RenderErrorResponseDTO>
