@@ -101,7 +101,7 @@ The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `au
 
 ## Conventions that tie the flavors together
 
-- **Conversions** use either a `New<Output>From<Input>` constructor — `NewStorableRoleFromRole`, `NewRoleFromStorableRole`, `NewGettableDashboardFromDashboard`, `NewGettableAuthDomainFromAuthDomain`, `NewRule(*GettableRule)` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
+- **Conversions** use either a `New<Output>From<Input>` constructor — e.g. `NewChannelFromReceiver`, `NewGettableAuthDomainFromAuthDomain` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
 - **Validation belongs on the core type `X`.** Putting it on `X` means every write path — HTTP create, HTTP update, in-process migration, replay — runs the same checks. `Validate()` on `PostableX` is reserved for checks that are specific to the request shape and do not apply to `X` (e.g. compiling an expression string at request time). `UnmarshalJSON` on `PostableX` is a separate tool that lives there because decoding only happens at the HTTP boundary.
 
     ```go
