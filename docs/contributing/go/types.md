@@ -30,7 +30,7 @@ For each of the four flavors, create it only if its shape diverges from `X`. If 
 | Flavor       | Create it when it differs in…                                                                                                                                                                                                     |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PostableX`  | JSON shape differs from `X` — typically no `Id`, no audit fields, no server-computed fields. Often owns input validation via `Validate()` or a custom `UnmarshalJSON`.                                                            |
-| `GettableX`  | Response shape adds server-computed fields, or re-shapes the core type for API back-compat (e.g., `GettableRule` embeds `PostableRule` plus audit pointers for the v1 API).                                                       |
+| `GettableX`  | Response shape adds server-computed fields that are not persisted — e.g., `GettableAuthDomain` adds `AuthNProviderInfo`, which is resolved at read time.                                                                          |
 | `UpdatableX` | Only a strict subset of `PostableX` is replaceable on PUT. If the updatable shape equals `PostableX`, reuse `PostableX`.                                                                                                          |
 | `StorableX`  | DB row shape differs from `X` — usually `X` carries nested typed config while `StorableX` carries a flat `Data string` JSON column, plus bun tags, audit mixins, and an `OrgID`. If `X` already has those, skip the flavor.       |
 
@@ -102,27 +102,16 @@ The core `AuthDomain` holds the two live halves — `storableAuthDomain` and `au
 ## Conventions that tie the flavors together
 
 - **Conversions** use either a `New<Output>From<Input>` constructor — e.g. `NewChannelFromReceiver`, `NewGettableAuthDomainFromAuthDomain` — or a receiver-style `ToY()` method. Both forms coexist in the codebase; use whichever fits the call site.
-- **Validation belongs on the core type `X`.** Putting it on `X` means every write path — HTTP create, HTTP update, in-process migration, replay — runs the same checks. `Validate()` on `PostableX` is reserved for checks that are specific to the request shape and do not apply to `X` (e.g. compiling an expression string at request time). `UnmarshalJSON` on `PostableX` is a separate tool that lives there because decoding only happens at the HTTP boundary.
+- **Validation belongs on the core type `X`.** Putting it on `X` means every write path — HTTP create, HTTP update, in-process migration, replay — runs the same checks. `Validate()` on `PostableX` is reserved for checks that are specific to the request shape and do not apply to `X`. `UnmarshalJSON` on `PostableX` is a separate tool that lives there because decoding only happens at the HTTP boundary — `PostableAuthDomain.UnmarshalJSON` rejecting a malformed domain name at decode time is the canonical example.
 
     ```go
     // Domain invariants: every write path re-runs these.
-    func (er *RoutePolicy) Validate() error {
-        if er.Name == "" {
-            return errors.NewInvalidInputf(errors.CodeInvalidInput, "name is required")
-        }
-        // ...channel, expression kind, and OrgID checks...
-    }
+    func (x *X) Validate() error { ... }
 
-    // Request-shape-only: compiling the expression is a decode-time concern.
-    func (p *PostableRoutePolicy) Validate() error {
-        // ...shared shape checks...
-        if _, err := expr.Compile(p.Expression); err != nil {
-            return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid expression syntax: %v", err)
-        }
-        return nil
-    }
+    // Request-shape-only: checks that do not apply once the value is persisted.
+    func (p *PostableX) Validate() error { ... }
     ```
-- **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` and `type UpdatableDashboard = StorableDashboardData` are correct because they add no semantics beyond the underlying type.
+- **Type aliases, not wrappers**, when two shapes are identical. `type GettableChannels = []*Channel` is correct because it adds no semantics beyond the underlying type.
 - **Serialization tags** follow [handler.md](handler.md): `required:"true"` means the JSON key must be present, `nullable:"true"` is required on any slice or map that may serialize as `null`, and types with a fixed value set must implement `Enum() []any`.
 
 ## A note on `UpdatableX` and `PatchableX`
