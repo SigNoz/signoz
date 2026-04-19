@@ -10,7 +10,6 @@ import { createRule } from 'api/generated/services/rules';
 import type {
 	ListRules200,
 	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
 	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
@@ -37,7 +36,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -124,9 +123,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		options?: { newTab?: boolean },
 	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
-			mapQueryDataFromApi(
-				(record.condition.compositeQuery as unknown) as ICompositeMetricQuery,
-			),
+			mapQueryDataFromApi(toCompositeMetricQuery(record.condition.compositeQuery)),
 			record.alertType,
 		);
 		params.set(
@@ -158,7 +155,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 		try {
 			setCloneLoader(true);
-			await createRule(copyAlert as RuletypesPostableRuleDTO);
+			await createRule(copyAlert);
 
 			notificationsApi.success({
 				message: 'Success',

@@ -20,7 +20,10 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
-import { AlertDef } from 'types/api/alerts/def';
+import {
+	fromRuleDTOToAlertDef,
+	fromRuleDTOToPostableRuleV2,
+} from 'types/api/alerts/convert';
 
 import './EditRules.styles.scss';
 
@@ -95,14 +98,14 @@ function EditRules(): JSX.Element {
 
 	let initialV2AlertValue: PostableAlertRuleV2 | null = null;
 	if (ruleData.schemaVersion === NEW_ALERT_SCHEMA_VERSION) {
-		initialV2AlertValue = (ruleData as unknown) as PostableAlertRuleV2;
+		initialV2AlertValue = fromRuleDTOToPostableRuleV2(ruleData);
 	}
 
 	return (
 		<div className="edit-rules-container">
 			<EditRulesContainer
 				ruleId={ruleId || ''}
-				initialValue={(ruleData as unknown) as AlertDef}
+				initialValue={fromRuleDTOToAlertDef(ruleData)}
 				initialV2AlertValue={initialV2AlertValue}
 			/>
 		</div>

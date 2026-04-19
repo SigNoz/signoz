@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
 import { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import ruleStats from 'api/alerts/ruleStats';
 import timelineGraph from 'api/alerts/timelineGraph';
 import timelineTable from 'api/alerts/timelineTable';
@@ -11,7 +12,6 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createRule,
 	deleteRuleByID,
-	patchRuleByID,
 	updateRuleByID,
 	useGetRuleByID,
 	useListRules,
@@ -45,6 +45,7 @@ import PaginationInfoText from 'periscope/components/PaginationInfoText/Paginati
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
 import {
 	AlertDef,
 	AlertRuleStatsPayload,
@@ -408,11 +409,8 @@ export const useAlertRuleStatusToggle = ({
 
 	const { mutate: toggleAlertState } = useMutation(
 		[REACT_QUERY_KEY.TOGGLE_ALERT_STATE, ruleId],
-		(args: { id: string; data: Record<string, unknown> }) =>
-			patchRuleByID(
-				{ id: args.id },
-				(args.data as unknown) as RuletypesPostableRuleDTO,
-			),
+		(args: { id: string; data: Partial<RuletypesPostableRuleDTO> }) =>
+			patchRulePartial(args.id, args.data),
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
@@ -459,7 +457,7 @@ export const useAlertRuleDuplicate = ({
 	const { mutate: duplicateAlert } = useMutation(
 		[REACT_QUERY_KEY.DUPLICATE_ALERT_RULE],
 		(args: { data: AlertDef }) =>
-			createRule((args.data as unknown) as RuletypesPostableRuleDTO),
+			createRule(toPostableRuleDTOFromAlertDef(args.data)),
 		{
 			onSuccess: async () => {
 				notifications.success({
@@ -506,10 +504,7 @@ export const useAlertRuleUpdate = ({
 	const { mutate: updateAlertRule, isLoading } = useMutation(
 		[REACT_QUERY_KEY.UPDATE_ALERT_RULE, alertDetails.id],
 		(args: { data: AlertDef; id: string }) =>
-			updateRuleByID(
-				{ id: args.id },
-				(args.data as unknown) as RuletypesPostableRuleDTO,
-			),
+			updateRuleByID({ id: args.id }, toPostableRuleDTOFromAlertDef(args.data)),
 		{
 			onMutate: () => setUpdatedName(intermediateName),
 			onSuccess: () =>

@@ -1,9 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
+import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { patchRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
 	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -40,9 +39,7 @@ function ToggleAlertState({
 				loading: true,
 			}));
 
-			const response = await patchRuleByID({ id }, ({
-				disabled,
-			} as unknown) as RuletypesPostableRuleDTO);
+			const response = await patchRulePartial(id, { disabled });
 			const { data: updatedRule } = response;
 
 			setData((state) =>

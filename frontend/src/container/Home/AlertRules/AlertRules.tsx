@@ -11,7 +11,7 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { USER_ROLES } from 'types/roles';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
@@ -127,7 +127,7 @@ export default function AlertRules({
 		});
 
 		const compositeQuery = mapQueryDataFromApi(
-			(record.condition.compositeQuery as unknown) as ICompositeMetricQuery,
+			toCompositeMetricQuery(record.condition.compositeQuery),
 		);
 		params.set(
 			QueryParams.compositeQuery,

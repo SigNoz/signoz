@@ -2,15 +2,13 @@ import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type {
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Loader, Send, X } from 'lucide-react';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -91,7 +89,7 @@ function Footer(): JSX.Element {
 			query: currentQuery,
 		});
 		testAlertRule(
-			{ data: (payload as unknown) as RuletypesPostableRuleDTO },
+			{ data: toPostableRuleDTO(payload) },
 			{
 				onSuccess: (response) => {
 					if (response.data?.alertCount === 0) {
@@ -130,7 +128,7 @@ function Footer(): JSX.Element {
 			updateAlertRule(
 				{
 					pathParams: { id: ruleId },
-					data: (payload as unknown) as RuletypesPostableRuleDTO,
+					data: toPostableRuleDTO(payload),
 				},
 				{
 					onSuccess: () => {
@@ -142,7 +140,7 @@ function Footer(): JSX.Element {
 			);
 		} else {
 			createAlertRule(
-				{ data: (payload as unknown) as RuletypesPostableRuleDTO },
+				{ data: toPostableRuleDTO(payload) },
 				{
 					onSuccess: () => {
 						toast.success('Alert rule created successfully');

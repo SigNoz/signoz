@@ -14,10 +14,8 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import {
-	NEW_ALERT_SCHEMA_VERSION,
-	PostableAlertRuleV2,
-} from 'types/api/alerts/alertTypesV2';
+import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
+import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
 import { isModifierKeyPressed } from 'utils/app';
 
 import AlertHeader from './AlertHeader/AlertHeader';
@@ -95,7 +93,9 @@ function AlertDetails(): JSX.Element {
 
 	const alertRuleDetails = useMemo(
 		() =>
-			(alertDetailsResponse?.data as unknown) as PostableAlertRuleV2 | undefined,
+			alertDetailsResponse?.data
+				? fromRuleDTOToPostableRuleV2(alertDetailsResponse.data)
+				: undefined,
 		[alertDetailsResponse],
 	);
 

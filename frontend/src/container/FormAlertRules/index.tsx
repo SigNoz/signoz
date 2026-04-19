@@ -13,10 +13,7 @@ import {
 	testRule,
 	updateRuleByID,
 } from 'api/generated/services/rules';
-import type {
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
@@ -44,6 +41,7 @@ import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
 import {
 	AlertDef,
 	defaultEvalWindow,
@@ -548,10 +546,10 @@ function FormAlertRules({
 			if (ruleId && !isEmpty(ruleId)) {
 				await updateRuleByID(
 					{ id: ruleId },
-					(postableAlert as unknown) as RuletypesPostableRuleDTO,
+					toPostableRuleDTOFromAlertDef(postableAlert),
 				);
 			} else {
-				await createRule((postableAlert as unknown) as RuletypesPostableRuleDTO);
+				await createRule(toPostableRuleDTOFromAlertDef(postableAlert));
 			}
 
 			logData = {
@@ -642,7 +640,7 @@ function FormAlertRules({
 		setLoading(true);
 		try {
 			const response = await testRule(
-				(postableAlert as unknown) as RuletypesPostableRuleDTO,
+				toPostableRuleDTOFromAlertDef(postableAlert),
 			);
 
 			if (response.data?.alertCount === 0) {
