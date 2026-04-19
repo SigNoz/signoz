@@ -301,8 +301,7 @@ export function PlannedDowntimeForm(
 			timezone: initialValues.schedule?.timezone as string,
 		};
 		return formData;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [initialValues]);
+	}, [initialValues, alertOptions]);
 
 	useEffect(() => {
 		setSelectedTags(formatedInitialValues.alertRules);
