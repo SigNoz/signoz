@@ -130,6 +130,12 @@ function FormAlertRules({
 	const [isChartQueryCancelled, setIsChartQueryCancelled] = useState(false);
 	const [isLoadingAlertQuery, setIsLoadingAlertQuery] = useState(false);
 
+	useEffect(() => {
+		if (isLoadingAlertQuery) {
+			setIsChartQueryCancelled(false);
+		}
+	}, [isLoadingAlertQuery]);
+
 	const handleCancelAlertQuery = useCallback(() => {
 		ruleCache.cancelQueries(REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW);
 		setIsChartQueryCancelled(true);

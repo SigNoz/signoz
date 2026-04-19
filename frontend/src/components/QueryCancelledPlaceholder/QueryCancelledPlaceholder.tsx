@@ -1,7 +1,7 @@
 import { Typography } from 'antd';
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 
-import './QueryCancelledPlaceholder.styles.scss';
+import styles from './QueryCancelledPlaceholder.module.scss';
 
 interface QueryCancelledPlaceholderProps {
 	subText?: string;
@@ -11,15 +11,11 @@ function QueryCancelledPlaceholder({
 	subText,
 }: QueryCancelledPlaceholderProps): JSX.Element {
 	return (
-		<div className="query-cancelled-placeholder">
-			<img
-				className="query-cancelled-placeholder__emoji"
-				src={eyesEmojiUrl}
-				alt="eyes emoji"
-			/>
-			<Typography className="query-cancelled-placeholder__text">
+		<div className={styles.placeholder}>
+			<img className={styles.emoji} src={eyesEmojiUrl} alt="eyes emoji" />
+			<Typography className={styles.text}>
 				Query cancelled.
-				<span className="query-cancelled-placeholder__sub-text">
+				<span className={styles.subText}>
 					{' '}
 					{subText || 'Click "Run Query" to load data.'}
 				</span>

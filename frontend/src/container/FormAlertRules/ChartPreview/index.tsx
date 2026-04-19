@@ -345,11 +345,14 @@ function ChartPreview({
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
+	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
+
 	const isAnomalyDetectionAlert =
 		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
 
 	const chartDataAvailable =
 		chartData &&
+		hasResultData &&
 		!queryResponse.isLoading &&
 		(!queryResponse.isError || isCancelled);
 
@@ -376,7 +379,7 @@ function ChartPreview({
 						<ErrorInPlace error={queryResponse.error as APIError} />
 					)}
 
-					{isCancelled && !chartData && !queryResponse.isLoading && (
+					{isCancelled && !queryResponse.isLoading && !hasResultData && (
 						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
 					)}
 

@@ -5,6 +5,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
@@ -115,10 +116,10 @@ function Inspect({
 
 	// Auto-reset isCancelled when a new query starts fetching
 	useEffect(() => {
-		if (isInspectMetricsRefetching) {
+		if (isInspectMetricsLoading || isInspectMetricsRefetching) {
 			setIsCancelled(false);
 		}
-	}, [isInspectMetricsRefetching]);
+	}, [isInspectMetricsLoading, isInspectMetricsRefetching]);
 
 	const queryClient = useQueryClient();
 	const handleCancelInspectQuery = useCallback(() => {
@@ -210,18 +211,22 @@ function Inspect({
 		}
 
 		if (!inspectMetricsTimeSeries.length) {
+			if (isCancelled) {
+				return (
+					<div
+						data-testid="inspect-metrics-cancelled"
+						className="inspect-metrics-fallback"
+					>
+						<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />
+					</div>
+				);
+			}
 			return (
 				<div
 					data-testid="inspect-metrics-empty"
 					className="inspect-metrics-fallback"
 				>
-					<Empty
-						description={
-							isCancelled
-								? 'Query was cancelled. Run the query to see results.'
-								: 'No time series found for this metric to inspect.'
-						}
-					/>
+					<Empty description="No time series found for this metric to inspect." />
 				</div>
 			);
 		}
