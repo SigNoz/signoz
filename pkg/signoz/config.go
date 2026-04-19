@@ -305,6 +305,15 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		}
 		config.Flagger.Config.Boolean[flagger.FeatureKafkaSpanEval.String()] = os.Getenv("KAFKA_SPAN_EVAL") == "true"
 	}
+
+	if os.Getenv("RULES_EVAL_DELAY") != "" {
+		logger.WarnContext(ctx, "[Deprecated] env RULES_EVAL_DELAY is deprecated and scheduled for removal. Please use SIGNOZ_RULER_EVAL__DELAY instead.")
+		if d, err := time.ParseDuration(os.Getenv("RULES_EVAL_DELAY")); err == nil {
+			config.Ruler.EvalDelay = d
+		} else {
+			logger.WarnContext(ctx, "Error parsing RULES_EVAL_DELAY, using default value of 2m")
+		}
+	}
 }
 
 func (config Config) Collect(_ context.Context, _ valuer.UUID) (map[string]any, error) {

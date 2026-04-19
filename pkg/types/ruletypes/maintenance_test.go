@@ -16,13 +16,13 @@ func TestShouldSkipMaintenance(t *testing.T) {
 
 	cases := []struct {
 		name        string
-		maintenance *GettablePlannedMaintenance
+		maintenance *PlannedMaintenance
 		ts          time.Time
 		skip        bool
 	}{
 		{
 			name: "only-on-saturday",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "Europe/London",
 					Recurrence: &Recurrence{
@@ -39,7 +39,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Testing weekly recurrence with midnight crossing
 		{
 			name: "weekly-across-midnight-previous-day",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -56,7 +56,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Testing weekly recurrence with midnight crossing
 		{
 			name: "weekly-across-midnight-previous-day",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -73,7 +73,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Testing weekly recurrence with multi day duration
 		{
 			name: "weekly-across-midnight-previous-day",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -90,7 +90,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Weekly recurrence where the previous day is not in RepeatOn
 		{
 			name: "weekly-across-midnight-previous-day-not-in-repeaton",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -107,7 +107,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Daily recurrence with midnight crossing
 		{
 			name: "daily-maintenance-across-midnight",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -123,7 +123,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Exactly at start time boundary
 		{
 			name: "at-start-time-boundary",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -139,7 +139,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Exactly at end time boundary
 		{
 			name: "at-end-time-boundary",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -155,7 +155,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Monthly maintenance with multi-day duration
 		{
 			name: "monthly-multi-day-duration",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -171,7 +171,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Weekly maintenance with multi-day duration
 		{
 			name: "weekly-multi-day-duration",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -188,7 +188,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Monthly maintenance that crosses to next month
 		{
 			name: "monthly-crosses-to-next-month",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -204,7 +204,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Different timezone tests
 		{
 			name: "timezone-offset-test",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "America/New_York", // UTC-5 or UTC-4 depending on DST
 					Recurrence: &Recurrence{
@@ -220,7 +220,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Test negative case - time well outside window
 		{
 			name: "daily-maintenance-time-outside-window",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -236,7 +236,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Test for recurring maintenance with an end date that is before the current time
 		{
 			name: "recurring-maintenance-with-past-end-date",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -253,7 +253,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Monthly recurring maintenance spanning end of month into beginning of next month
 		{
 			name: "monthly-maintenance-spans-month-end",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -269,7 +269,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// Test for RepeatOn with empty array (should apply to all days)
 		{
 			name: "weekly-empty-repeaton",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -286,7 +286,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		// February has fewer days than January - test the edge case when maintenance is on 31st
 		{
 			name: "monthly-maintenance-february-fewer-days",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -301,7 +301,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "daily-maintenance-crosses-midnight",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -316,7 +316,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "monthly-maintenance-crosses-month-end",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -331,7 +331,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -346,7 +346,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "weekly-maintenance-crosses-midnight",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -362,7 +362,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-days",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -377,7 +377,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "daily-maintenance-crosses-midnight",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -392,7 +392,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "monthly-maintenance-crosses-month-end-and-duration-is-2-hours",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -407,7 +407,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "fixed planned maintenance start <= ts <= end",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone:  "UTC",
 					StartTime: time.Now().UTC().Add(-time.Hour),
@@ -419,7 +419,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "fixed planned maintenance start >= ts",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone:  "UTC",
 					StartTime: time.Now().UTC().Add(time.Hour),
@@ -431,7 +431,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "fixed planned maintenance ts < start",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone:  "UTC",
 					StartTime: time.Now().UTC().Add(time.Hour),
@@ -443,7 +443,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat sunday, saturday, weekly for 24 hours, in Us/Eastern timezone",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "US/Eastern",
 					Recurrence: &Recurrence{
@@ -459,7 +459,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -474,7 +474,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -489,7 +489,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat daily from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -504,7 +504,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -520,7 +520,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -536,7 +536,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -552,7 +552,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -568,7 +568,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat weekly on monday from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -584,7 +584,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -599,7 +599,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{
@@ -614,7 +614,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 		},
 		{
 			name: "recurring maintenance, repeat monthly on 4th from 12:00 to 14:00",
-			maintenance: &GettablePlannedMaintenance{
+			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
 					Recurrence: &Recurrence{

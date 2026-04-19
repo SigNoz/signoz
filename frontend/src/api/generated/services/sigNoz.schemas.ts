@@ -4529,6 +4529,20 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	state: RuletypesAlertStateDTO;
 }
 
+export interface RuletypesAlertCompositeQueryDTO {
+	panelType: RuletypesPanelTypeDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	queries: Querybuildertypesv5QueryEnvelopeDTO[] | null;
+	queryType: RuletypesQueryTypeDTO;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
 export enum RuletypesAlertStateDTO {
 	inactive = 'inactive',
 	pending = 'pending',
@@ -4536,6 +4550,513 @@ export enum RuletypesAlertStateDTO {
 	firing = 'firing',
 	nodata = 'nodata',
 	disabled = 'disabled',
+}
+export enum RuletypesAlertTypeDTO {
+	METRIC_BASED_ALERT = 'METRIC_BASED_ALERT',
+	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
+	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
+	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+}
+export interface RuletypesBasicRuleThresholdDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	channels?: string[] | null;
+	matchType: RuletypesMatchTypeDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	op: RuletypesCompareOperatorDTO;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	recoveryTarget?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	target: number | null;
+	/**
+	 * @type string
+	 */
+	targetUnit?: string;
+}
+
+/**
+ * @nullable
+ */
+export type RuletypesBasicRuleThresholdsDTO =
+	| RuletypesBasicRuleThresholdDTO[]
+	| null;
+
+export enum RuletypesCompareOperatorDTO {
+	above = 'above',
+	below = 'below',
+	equal = 'equal',
+	not_equal = 'not_equal',
+	outside_bounds = 'outside_bounds',
+}
+export interface RuletypesCumulativeScheduleDTO {
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	day?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	hour?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	minute?: number | null;
+	type: RuletypesScheduleTypeDTO;
+	/**
+	 * @type integer
+	 * @nullable true
+	 */
+	weekday?: number | null;
+}
+
+export interface RuletypesCumulativeWindowDTO {
+	/**
+	 * @type string
+	 */
+	frequency: string;
+	schedule: RuletypesCumulativeScheduleDTO;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export interface RuletypesEvaluationCumulativeDTO {
+	kind?: RuletypesEvaluationKindDTO;
+	spec?: RuletypesCumulativeWindowDTO;
+}
+
+export type RuletypesEvaluationEnvelopeDTO =
+	| (RuletypesEvaluationRollingDTO & {
+			kind: RuletypesEvaluationKindDTO;
+			spec: unknown;
+	  })
+	| (RuletypesEvaluationCumulativeDTO & {
+			kind: RuletypesEvaluationKindDTO;
+			spec: unknown;
+	  });
+
+export enum RuletypesEvaluationKindDTO {
+	rolling = 'rolling',
+	cumulative = 'cumulative',
+}
+export interface RuletypesEvaluationRollingDTO {
+	kind?: RuletypesEvaluationKindDTO;
+	spec?: RuletypesRollingWindowDTO;
+}
+
+export interface RuletypesGettableTestRuleDTO {
+	/**
+	 * @type integer
+	 */
+	alertCount?: number;
+	/**
+	 * @type string
+	 */
+	message?: string;
+}
+
+export enum RuletypesMaintenanceKindDTO {
+	fixed = 'fixed',
+	recurring = 'recurring',
+}
+export enum RuletypesMaintenanceStatusDTO {
+	active = 'active',
+	upcoming = 'upcoming',
+	expired = 'expired',
+}
+export enum RuletypesMatchTypeDTO {
+	at_least_once = 'at_least_once',
+	all_the_times = 'all_the_times',
+	on_average = 'on_average',
+	in_total = 'in_total',
+	last = 'last',
+}
+export interface RuletypesNotificationSettingsDTO {
+	/**
+	 * @type array
+	 */
+	groupBy?: string[];
+	/**
+	 * @type string
+	 */
+	newGroupEvalDelay?: string;
+	renotify?: RuletypesRenotifyDTO;
+	/**
+	 * @type boolean
+	 */
+	usePolicy?: boolean;
+}
+
+export enum RuletypesPanelTypeDTO {
+	value = 'value',
+	table = 'table',
+	graph = 'graph',
+}
+export interface RuletypesPlannedMaintenanceDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	kind: RuletypesMaintenanceKindDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: RuletypesScheduleDTO;
+	status: RuletypesMaintenanceStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface RuletypesPostablePlannedMaintenanceDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	alertIds?: string[] | null;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	schedule: RuletypesScheduleDTO;
+}
+
+export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
+
+export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
+
+export interface RuletypesPostableRuleDTO {
+	/**
+	 * @type string
+	 */
+	alert: string;
+	alertType?: RuletypesAlertTypeDTO;
+	/**
+	 * @type object
+	 */
+	annotations?: RuletypesPostableRuleDTOAnnotations;
+	condition: RuletypesRuleConditionDTO;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	/**
+	 * @type string
+	 */
+	evalWindow?: string;
+	evaluation?: RuletypesEvaluationEnvelopeDTO;
+	/**
+	 * @type string
+	 */
+	frequency?: string;
+	/**
+	 * @type object
+	 */
+	labels?: RuletypesPostableRuleDTOLabels;
+	notificationSettings?: RuletypesNotificationSettingsDTO;
+	/**
+	 * @type array
+	 */
+	preferredChannels?: string[];
+	ruleType: RuletypesRuleTypeDTO;
+	/**
+	 * @type string
+	 */
+	schemaVersion?: string;
+	/**
+	 * @type string
+	 */
+	source?: string;
+	/**
+	 * @type string
+	 */
+	version?: string;
+}
+
+export enum RuletypesQueryTypeDTO {
+	builder = 'builder',
+	clickhouse_sql = 'clickhouse_sql',
+	promql = 'promql',
+}
+export interface RuletypesRecurrenceDTO {
+	/**
+	 * @type string
+	 */
+	duration: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	endTime?: Date | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	repeatOn?: RuletypesRepeatOnDTO[] | null;
+	repeatType: RuletypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: Date;
+}
+
+export interface RuletypesRenotifyDTO {
+	/**
+	 * @type array
+	 */
+	alertStates?: RuletypesAlertStateDTO[];
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	interval?: string;
+}
+
+export enum RuletypesRepeatOnDTO {
+	sunday = 'sunday',
+	monday = 'monday',
+	tuesday = 'tuesday',
+	wednesday = 'wednesday',
+	thursday = 'thursday',
+	friday = 'friday',
+	saturday = 'saturday',
+}
+export enum RuletypesRepeatTypeDTO {
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export interface RuletypesRollingWindowDTO {
+	/**
+	 * @type string
+	 */
+	evalWindow: string;
+	/**
+	 * @type string
+	 */
+	frequency: string;
+}
+
+export type RuletypesRuleDTOAnnotations = { [key: string]: string };
+
+export type RuletypesRuleDTOLabels = { [key: string]: string };
+
+export interface RuletypesRuleDTO {
+	/**
+	 * @type string
+	 */
+	alert: string;
+	alertType?: RuletypesAlertTypeDTO;
+	/**
+	 * @type object
+	 */
+	annotations?: RuletypesRuleDTOAnnotations;
+	condition: RuletypesRuleConditionDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type boolean
+	 */
+	disabled?: boolean;
+	/**
+	 * @type string
+	 */
+	evalWindow?: string;
+	evaluation?: RuletypesEvaluationEnvelopeDTO;
+	/**
+	 * @type string
+	 */
+	frequency?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type object
+	 */
+	labels?: RuletypesRuleDTOLabels;
+	notificationSettings?: RuletypesNotificationSettingsDTO;
+	/**
+	 * @type array
+	 */
+	preferredChannels?: string[];
+	ruleType: RuletypesRuleTypeDTO;
+	/**
+	 * @type string
+	 */
+	schemaVersion?: string;
+	/**
+	 * @type string
+	 */
+	source?: string;
+	state: RuletypesAlertStateDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+	/**
+	 * @type string
+	 */
+	version?: string;
+}
+
+export interface RuletypesRuleConditionDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	absentFor?: number;
+	/**
+	 * @type boolean
+	 */
+	alertOnAbsent?: boolean;
+	/**
+	 * @type string
+	 */
+	algorithm?: string;
+	compositeQuery: RuletypesAlertCompositeQueryDTO;
+	matchType: RuletypesMatchTypeDTO;
+	op: RuletypesCompareOperatorDTO;
+	/**
+	 * @type boolean
+	 */
+	requireMinPoints?: boolean;
+	/**
+	 * @type integer
+	 */
+	requiredNumPoints?: number;
+	seasonality?: RuletypesSeasonalityDTO;
+	/**
+	 * @type string
+	 */
+	selectedQueryName?: string;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	target?: number | null;
+	/**
+	 * @type string
+	 */
+	targetUnit?: string;
+	thresholds?: RuletypesRuleThresholdDataDTO;
+}
+
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
+	kind: RuletypesThresholdKindDTO;
+	spec: unknown;
+};
+
+export enum RuletypesRuleTypeDTO {
+	threshold_rule = 'threshold_rule',
+	promql_rule = 'promql_rule',
+	anomaly_rule = 'anomaly_rule',
+}
+export interface RuletypesScheduleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	endTime?: Date;
+	recurrence?: RuletypesRecurrenceDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime?: Date;
+	/**
+	 * @type string
+	 */
+	timezone: string;
+}
+
+export enum RuletypesScheduleTypeDTO {
+	hourly = 'hourly',
+	daily = 'daily',
+	weekly = 'weekly',
+	monthly = 'monthly',
+}
+export enum RuletypesSeasonalityDTO {
+	hourly = 'hourly',
+	daily = 'daily',
+	weekly = 'weekly',
+}
+export interface RuletypesThresholdBasicDTO {
+	kind?: RuletypesThresholdKindDTO;
+	spec?: RuletypesBasicRuleThresholdsDTO;
+}
+
+export enum RuletypesThresholdKindDTO {
+	basic = 'basic',
 }
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
@@ -5456,6 +5977,57 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type ListDowntimeSchedulesParams = {
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	active?: boolean | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	recurring?: boolean | null;
+};
+
+export type ListDowntimeSchedules200 = {
+	/**
+	 * @type array
+	 */
+	data: RuletypesPlannedMaintenanceDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateDowntimeSchedule201 = {
+	data: RuletypesPlannedMaintenanceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteDowntimeScheduleByIDPathParameters = {
+	id: string;
+};
+export type GetDowntimeScheduleByIDPathParameters = {
+	id: string;
+};
+export type GetDowntimeScheduleByID200 = {
+	data: RuletypesPlannedMaintenanceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateDowntimeScheduleByIDPathParameters = {
+	id: string;
+};
 export type HandleExportRawDataPOSTParams = {
 	/**
 	 * @enum csv,jsonl
@@ -6253,6 +6825,53 @@ export type GetUsersByRoleID200 = {
 	status: string;
 };
 
+export type ListRules200 = {
+	/**
+	 * @type array
+	 */
+	data: RuletypesRuleDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateRule201 = {
+	data: RuletypesRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteRuleByIDPathParameters = {
+	id: string;
+};
+export type GetRuleByIDPathParameters = {
+	id: string;
+};
+export type GetRuleByID200 = {
+	data: RuletypesRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PatchRuleByIDPathParameters = {
+	id: string;
+};
+export type PatchRuleByID200 = {
+	data: RuletypesRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateRuleByIDPathParameters = {
+	id: string;
+};
 export type GetRuleHistoryFilterKeysPathParameters = {
 	id: string;
 };
@@ -6517,6 +7136,14 @@ export type GetRuleHistoryTopContributors200 = {
 	 * @nullable true
 	 */
 	data: RulestatehistorytypesGettableRuleStateHistoryContributorDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type TestRule200 = {
+	data: RuletypesGettableTestRuleDTO;
 	/**
 	 * @type string
 	 */

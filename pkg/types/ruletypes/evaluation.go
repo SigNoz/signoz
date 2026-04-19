@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type EvaluationKind struct {
@@ -17,14 +18,22 @@ var (
 	CumulativeEvaluation = EvaluationKind{valuer.NewString("cumulative")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for EvaluationKind.
+func (EvaluationKind) Enum() []any {
+	return []any{
+		RollingEvaluation,
+		CumulativeEvaluation,
+	}
+}
+
 type Evaluation interface {
 	NextWindowFor(curr time.Time) (time.Time, time.Time)
 	GetFrequency() valuer.TextDuration
 }
 
 type RollingWindow struct {
-	EvalWindow valuer.TextDuration `json:"evalWindow"`
-	Frequency  valuer.TextDuration `json:"frequency"`
+	EvalWindow valuer.TextDuration `json:"evalWindow" required:"true"`
+	Frequency  valuer.TextDuration `json:"frequency" required:"true"`
 }
 
 func (rollingWindow RollingWindow) Validate() error {
@@ -46,13 +55,13 @@ func (rollingWindow RollingWindow) GetFrequency() valuer.TextDuration {
 }
 
 type CumulativeWindow struct {
-	Schedule  CumulativeSchedule  `json:"schedule"`
-	Frequency valuer.TextDuration `json:"frequency"`
-	Timezone  string              `json:"timezone"`
+	Schedule  CumulativeSchedule  `json:"schedule" required:"true"`
+	Frequency valuer.TextDuration `json:"frequency" required:"true"`
+	Timezone  string              `json:"timezone" required:"true"`
 }
 
 type CumulativeSchedule struct {
-	Type    ScheduleType `json:"type"`
+	Type    ScheduleType `json:"type" required:"true"`
 	Minute  *int         `json:"minute,omitempty"`  // 0-59, for all types
 	Hour    *int         `json:"hour,omitempty"`    // 0-23, for daily/weekly/monthly
 	Day     *int         `json:"day,omitempty"`     // 1-31, for monthly
@@ -69,6 +78,16 @@ var (
 	ScheduleTypeWeekly  = ScheduleType{valuer.NewString("weekly")}
 	ScheduleTypeMonthly = ScheduleType{valuer.NewString("monthly")}
 )
+
+// Enum implements jsonschema.Enum; returns the acceptable values for ScheduleType.
+func (ScheduleType) Enum() []any {
+	return []any{
+		ScheduleTypeHourly,
+		ScheduleTypeDaily,
+		ScheduleTypeWeekly,
+		ScheduleTypeMonthly,
+	}
+}
 
 func (cumulativeWindow CumulativeWindow) Validate() error {
 	// Validate schedule
@@ -225,8 +244,31 @@ func (cumulativeWindow CumulativeWindow) GetFrequency() valuer.TextDuration {
 }
 
 type EvaluationEnvelope struct {
-	Kind EvaluationKind `json:"kind"`
-	Spec any            `json:"spec"`
+	Kind EvaluationKind `json:"kind" required:"true"`
+	Spec any            `json:"spec" required:"true"`
+}
+
+// evaluationRolling is the OpenAPI schema for an EvaluationEnvelope with kind=rolling.
+type evaluationRolling struct {
+	Kind EvaluationKind `json:"kind" description:"The kind of evaluation."`
+	Spec RollingWindow  `json:"spec" description:"The rolling window evaluation specification."`
+}
+
+// evaluationCumulative is the OpenAPI schema for an EvaluationEnvelope with kind=cumulative.
+type evaluationCumulative struct {
+	Kind EvaluationKind   `json:"kind" description:"The kind of evaluation."`
+	Spec CumulativeWindow `json:"spec" description:"The cumulative window evaluation specification."`
+}
+
+var _ jsonschema.OneOfExposer = EvaluationEnvelope{}
+
+// JSONSchemaOneOf returns the oneOf variants for the EvaluationEnvelope discriminated union.
+// Each variant represents a different evaluation kind with its corresponding spec schema.
+func (EvaluationEnvelope) JSONSchemaOneOf() []any {
+	return []any{
+		evaluationRolling{},
+		evaluationCumulative{},
+	}
 }
 
 func (e *EvaluationEnvelope) UnmarshalJSON(data []byte) error {

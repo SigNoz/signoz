@@ -6,13 +6,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
-	"io"
 	"log/slog"
 	"math"
 	"net/http"
@@ -78,7 +78,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/version"
 )
 
@@ -98,7 +98,7 @@ func NewRouter() *mux.Router {
 type APIHandler struct {
 	logger       *slog.Logger
 	reader       interfaces.Reader
-	ruleManager  *rules.Manager
+	ruleManager  ruler.Ruler
 	querier      interfaces.Querier
 	querierV2    interfaces.Querier
 	queryBuilder *queryBuilder.QueryBuilder
@@ -149,9 +149,6 @@ type APIHandler struct {
 type APIHandlerOpts struct {
 	// business data reader e.g. clickhouse
 	Reader interfaces.Reader
-
-	// rule manager handles rule crud operations
-	RuleManager *rules.Manager
 
 	// Integrations
 	IntegrationsController *integrations.Controller
@@ -208,7 +205,7 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		logger:                        slog.Default(),
 		reader:                        opts.Reader,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
-		ruleManager:                   opts.RuleManager,
+		ruleManager:                   opts.Signoz.Ruler,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -508,12 +505,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/downtime_schedules", am.ViewAccess(aH.listDowntimeSchedules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.ViewAccess(aH.getDowntimeSchedule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/downtime_schedules", am.EditAccess(aH.createDowntimeSchedule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
-
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
@@ -587,7 +578,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
 
-
 func Intersection(a, b []int) (c []int) {
 	m := make(map[int]bool)
 
@@ -601,26 +591,6 @@ func Intersection(a, b []int) (c []int) {
 		}
 	}
 	return
-}
-
-func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, ruleResponse)
 }
 
 // populateTemporality adds the temporality to the query if it is not present
@@ -678,127 +648,164 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID
 	return nil
 }
 
-func (aH *APIHandler) listDowntimeSchedules(w http.ResponseWriter, r *http.Request) {
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
+func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
 
-	schedules, err := aH.ruleManager.MaintenanceStore().GetAllPlannedMaintenance(r.Context(), claims.OrgID)
+	rules, err := aH.ruleManager.ListRuleStates(r.Context())
 	if err != nil {
-		render.Error(w, err)
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
 
-	// The schedules are stored as JSON in the database, so we need to filter them here
-	// Since the number of schedules is expected to be small, this should be fine
+	// todo(amol): need to add sorter
 
-	if r.URL.Query().Get("active") != "" {
-		activeSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
-		active, _ := strconv.ParseBool(r.URL.Query().Get("active"))
-		for _, schedule := range schedules {
-			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
-			if schedule.IsActive(now) == active {
-				activeSchedules = append(activeSchedules, schedule)
-			}
-		}
-		schedules = activeSchedules
-	}
-
-	if r.URL.Query().Get("recurring") != "" {
-		recurringSchedules := make([]*ruletypes.GettablePlannedMaintenance, 0)
-		recurring, _ := strconv.ParseBool(r.URL.Query().Get("recurring"))
-		for _, schedule := range schedules {
-			if schedule.IsRecurring() == recurring {
-				recurringSchedules = append(recurringSchedules, schedule)
-			}
-		}
-		schedules = recurringSchedules
-	}
-
-	aH.Respond(w, schedules)
+	aH.Respond(w, rules)
 }
 
-func (aH *APIHandler) getDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
-		return
-	}
-
-	schedule, err := aH.ruleManager.MaintenanceStore().GetPlannedMaintenanceByID(r.Context(), id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	aH.Respond(w, schedule)
-}
-
-func (aH *APIHandler) createDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
-	var schedule ruletypes.GettablePlannedMaintenance
-	err := json.NewDecoder(r.Body).Decode(&schedule)
 	if err != nil {
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
-	if err := schedule.Validate(); err != nil {
-		render.Error(w, err)
-		return
-	}
 
-	_, err = aH.ruleManager.MaintenanceStore().CreatePlannedMaintenance(r.Context(), schedule)
+	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
 	if err != nil {
-		render.Error(w, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
+			return
+		}
+		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
 		return
 	}
-	aH.Respond(w, nil)
+	aH.Respond(w, ruleResponse)
 }
 
-func (aH *APIHandler) editDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		aH.logger.ErrorContext(r.Context(), "error reading request body for create rule", errors.Attr(err))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
+	if err != nil {
+		RespondError(w, toApiError(err), nil)
+		return
+	}
+
+	aH.Respond(w, rule)
+}
+
+func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	var schedule ruletypes.GettablePlannedMaintenance
-	err = json.NewDecoder(r.Body).Decode(&schedule)
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	if err := schedule.Validate(); err != nil {
-		render.Error(w, err)
+		aH.logger.ErrorContext(r.Context(), "error reading request body for edit rule", errors.Attr(err))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = aH.ruleManager.MaintenanceStore().EditPlannedMaintenance(r.Context(), schedule, id)
+	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
 	if err != nil {
-		render.Error(w, err)
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
+			return
+		}
+		RespondError(w, toApiError(err), nil)
 		return
 	}
 
-	aH.Respond(w, nil)
+	aH.Respond(w, "rule successfully edited")
 }
 
-func (aH *APIHandler) deleteDowntimeSchedule(w http.ResponseWriter, r *http.Request) {
+func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+
+	err := aH.ruleManager.DeleteRule(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
+			return
+		}
+		RespondError(w, toApiError(err), nil)
+		return
+	}
+
+	aH.Respond(w, "rule successfully deleted")
+}
+
+func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error()))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
 
-	err = aH.ruleManager.MaintenanceStore().DeletePlannedMaintenance(r.Context(), id)
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		aH.logger.ErrorContext(r.Context(), "error reading request body for patch rule", errors.Attr(err))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
+
+	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
+			return
+		}
+		RespondError(w, toApiError(err), nil)
+		return
+	}
+
+	aH.Respond(w, gettableRule)
+}
+
+func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		aH.logger.ErrorContext(r.Context(), "error reading request body for test rule", errors.Attr(err))
+		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
+		return
+	}
 
-	aH.Respond(w, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+
+	alertCount, err := aH.ruleManager.TestNotification(ctx, orgID, string(body))
+	if err != nil {
+		RespondError(w, toApiError(err), nil)
+		return
+	}
+
+	response := map[string]interface{}{
+		"alertCount": alertCount,
+		"message":    "notification sent",
+	}
+	aH.Respond(w, response)
 }
 
 func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
@@ -1012,19 +1019,6 @@ func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, 
 	aH.Respond(w, res)
 }
 
-func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
-
-	rules, err := aH.ruleManager.ListRuleStates(r.Context())
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	// todo(amol): need to add sorter
-
-	aH.Respond(w, rules)
-}
-
 func prepareQuery(r *http.Request) (string, error) {
 	var postData *model.DashboardVars
 
@@ -1224,142 +1218,6 @@ func (aH *APIHandler) queryDashboardVarsV2(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	aH.Respond(w, dashboardVars)
-}
-
-func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for test rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	alertCount, err := aH.ruleManager.TestNotification(ctx, orgID, string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	response := map[string]interface{}{
-		"alertCount": alertCount,
-		"message":    "notification sent",
-	}
-	aH.Respond(w, response)
-}
-
-func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
-
-	id := mux.Vars(r)["id"]
-
-	err := aH.ruleManager.DeleteRule(r.Context(), id)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully deleted")
-
-}
-
-// patchRule updates only requested changes in the rule
-func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for patch rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, gettableRule)
-}
-
-func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for edit rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully edited")
-
-}
-
-func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for create rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, rule)
-
 }
 
 func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) {
