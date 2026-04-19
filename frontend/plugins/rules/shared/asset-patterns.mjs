@@ -1,6 +1,4 @@
-'use strict';
-
-const ALLOWED_ASSET_EXTENSIONS = [
+export const ALLOWED_ASSET_EXTENSIONS = [
 	'.svg',
 	'.png',
 	'.webp',
@@ -13,14 +11,14 @@ const ALLOWED_ASSET_EXTENSIONS = [
  * Returns true if the string ends with an asset extension.
  * e.g. "/Icons/foo.svg" → true, "/Icons/foo.svg.bak" → false
  */
-function hasAssetExtension(str) {
+export function hasAssetExtension(str) {
 	if (typeof str !== 'string') return false;
 	return ALLOWED_ASSET_EXTENSIONS.some((ext) => str.endsWith(ext));
 }
 
 // Like hasAssetExtension but also matches mid-string with boundary check,
 // e.g. "/foo.svg?v=1" → true, "/icons.svg-dir/" → true (- is non-alphanumeric boundary)
-function containsAssetExtension(str) {
+export function containsAssetExtension(str) {
 	if (typeof str !== 'string') return false;
 	return ALLOWED_ASSET_EXTENSIONS.some((ext) => {
 		const idx = str.indexOf(ext);
@@ -42,7 +40,7 @@ function containsAssetExtension(str) {
  *   "url(/Icons/foo.svg)" → "/Icons/foo.svg"
  * Returns null if the string is not a url() wrapper.
  */
-function extractUrlPath(str) {
+export function extractUrlPath(str) {
 	if (typeof str !== 'string') return null;
 	// Match url( [whitespace] [quote?] path [quote?] [whitespace] )
 	// Capture group: [^'")\s]+ matches path until quote, closing paren, or whitespace
@@ -54,7 +52,7 @@ function extractUrlPath(str) {
  * Returns true if the string is an absolute path (starts with /).
  * Absolute paths in url() bypass <base href> and fail under any URL prefix.
  */
-function isAbsolutePath(str) {
+export function isAbsolutePath(str) {
 	if (typeof str !== 'string') return false;
 	return str.startsWith('/') && !str.startsWith('//');
 }
@@ -63,7 +61,7 @@ function isAbsolutePath(str) {
  * Returns true if the path imports from the public/ directory.
  * Relative imports into public/ cause asset duplication in dist/.
  */
-function isPublicRelative(str) {
+export function isPublicRelative(str) {
 	if (typeof str !== 'string') return false;
 	return str.includes('/public/') || str.startsWith('public/');
 }
@@ -73,9 +71,9 @@ function isPublicRelative(str) {
  * e.g. "Icons/foo.svg", `Logos/aws-dark.svg`, "Images/bg.png"
  * These bypass Vite's module pipeline even without a leading slash.
  */
-const PUBLIC_DIR_SEGMENTS = ['Icons/', 'Images/', 'Logos/', 'svgs/'];
+export const PUBLIC_DIR_SEGMENTS = ['Icons/', 'Images/', 'Logos/', 'svgs/'];
 
-function isRelativePublicDir(str) {
+export function isRelativePublicDir(str) {
 	if (typeof str !== 'string') return false;
 	return PUBLIC_DIR_SEGMENTS.some((seg) => str.startsWith(seg));
 }
@@ -85,7 +83,7 @@ function isRelativePublicDir(str) {
  * Valid: @/assets/..., any relative path containing /assets/, or node_modules packages.
  * Invalid: absolute paths, public/ dir, or relative paths outside src/assets/.
  */
-function isValidAssetImport(str) {
+export function isValidAssetImport(str) {
 	if (typeof str !== 'string') return false;
 	if (str.startsWith('@/assets/')) return true;
 	if (str.includes('/assets/')) return true;
@@ -98,7 +96,7 @@ function isValidAssetImport(str) {
  * Returns true if the string is an external URL.
  * Used to avoid false positives on CDN/API URLs with asset extensions.
  */
-function isExternalUrl(str) {
+export function isExternalUrl(str) {
 	if (typeof str !== 'string') return false;
 	return (
 		str.startsWith('http://') ||
@@ -106,16 +104,3 @@ function isExternalUrl(str) {
 		str.startsWith('//')
 	);
 }
-
-module.exports = {
-	ALLOWED_ASSET_EXTENSIONS,
-	PUBLIC_DIR_SEGMENTS,
-	hasAssetExtension,
-	containsAssetExtension,
-	extractUrlPath,
-	isAbsolutePath,
-	isPublicRelative,
-	isRelativePublicDir,
-	isValidAssetImport,
-	isExternalUrl,
-};
