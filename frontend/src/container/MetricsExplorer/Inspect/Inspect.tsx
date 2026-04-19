@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
@@ -114,11 +114,18 @@ function Inspect({
 
 	const [isCancelled, setIsCancelled] = useState(false);
 
-	// Auto-reset isCancelled when a new query starts fetching
+	// Auto-reset isCancelled only on the rising edge of a new fetch
+	// (transition from not-loading → loading). Watching `isLoading` directly
+	// races with the cancel flow — when the user cancels mid-fetch, loading
+	// is still true in the render right after setIsCancelled(true), which
+	// would immediately reset it.
+	const wasLoadingRef = useRef(false);
 	useEffect(() => {
-		if (isInspectMetricsLoading || isInspectMetricsRefetching) {
+		const nowLoading = isInspectMetricsLoading || isInspectMetricsRefetching;
+		if (!wasLoadingRef.current && nowLoading) {
 			setIsCancelled(false);
 		}
+		wasLoadingRef.current = nowLoading;
 	}, [isInspectMetricsLoading, isInspectMetricsRefetching]);
 
 	const queryClient = useQueryClient();
