@@ -192,113 +192,60 @@ function Inspect({
 		setExpandedViewOptions(null);
 	}, [inspectionStep]);
 
-	const content = useMemo(() => {
+	const chartArea = useMemo(() => {
+		const renderFallback = (testId: string, body: JSX.Element): JSX.Element => (
+			<div data-testid={testId} className="inspect-metrics-fallback">
+				<div className="inspect-metrics-fallback-header-placeholder" />
+				<div className="inspect-metrics-fallback-body">{body}</div>
+			</div>
+		);
+
 		// Cancelled state takes precedence over any react-query state — ensures
 		// the placeholder shows immediately on cancel, regardless of whether
 		// isLoading/isRefetching has settled yet.
 		if (isCancelled) {
-			return (
-				<div
-					data-testid="inspect-metrics-cancelled"
-					className="inspect-metrics-fallback"
-				>
-					<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />
-				</div>
+			return renderFallback(
+				'inspect-metrics-cancelled',
+				<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />,
 			);
 		}
 
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
-			return (
-				<div
-					data-testid="inspect-metrics-loading"
-					className="inspect-metrics-fallback"
-				>
-					<Skeleton active />
-				</div>
-			);
+			return renderFallback('inspect-metrics-loading', <Skeleton active />);
 		}
 
 		if (isInspectMetricsError) {
-			const errorMessage = 'Error loading inspect metrics.';
-
-			return (
-				<div
-					data-testid="inspect-metrics-error"
-					className="inspect-metrics-fallback"
-				>
-					<Empty description={errorMessage} />
-				</div>
+			return renderFallback(
+				'inspect-metrics-error',
+				<Empty description="Error loading inspect metrics." />,
 			);
 		}
 
 		if (!inspectMetricsTimeSeries.length) {
-			return (
-				<div
-					data-testid="inspect-metrics-empty"
-					className="inspect-metrics-fallback"
-				>
-					<Empty description="No time series found for this metric to inspect." />
-				</div>
+			return renderFallback(
+				'inspect-metrics-empty',
+				<Empty description="No time series found for this metric to inspect." />,
 			);
 		}
 
 		return (
-			<div className="inspect-metrics-content">
-				<div className="inspect-metrics-content-first-col">
-					<GraphView
-						inspectMetricsTimeSeries={aggregatedTimeSeries}
-						formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
-						resetInspection={resetInspection}
-						metricName={appliedMetricName}
-						metricUnit={selectedMetricUnit}
-						metricType={selectedMetricType}
-						spaceAggregationSeriesMap={spaceAggregationSeriesMap}
-						inspectionStep={inspectionStep}
-						setPopoverOptions={setPopoverOptions}
-						setShowExpandedView={setShowExpandedView}
-						showExpandedView={showExpandedView}
-						setExpandedViewOptions={setExpandedViewOptions}
-						popoverOptions={popoverOptions}
-						metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
-						isInspectMetricsRefetching={isInspectMetricsRefetching}
-					/>
-					<QueryBuilder
-						currentMetricName={currentMetricName}
-						setCurrentMetricName={setCurrentMetricName}
-						setAppliedMetricName={setAppliedMetricName}
-						spaceAggregationLabels={spaceAggregationLabels}
-						currentMetricInspectionOptions={metricInspectionOptions.currentOptions}
-						dispatchMetricInspectionOptions={handleDispatchMetricInspectionOptions}
-						inspectionStep={inspectionStep}
-						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
-						currentQuery={currentQueryData}
-						setCurrentQuery={setCurrentQueryData}
-						isLoadingQueries={isInspectMetricsLoading || isInspectMetricsRefetching}
-						handleCancelQuery={handleCancelInspectQuery}
-						onRunQuery={(): void => {
-							setIsCancelled(false);
-							queryClient.invalidateQueries([
-								REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS,
-							]);
-						}}
-					/>
-				</div>
-				<div className="inspect-metrics-content-second-col">
-					<Stepper
-						inspectionStep={inspectionStep}
-						resetInspection={resetInspection}
-					/>
-					{showExpandedView && (
-						<ExpandedView
-							options={expandedViewOptions}
-							spaceAggregationSeriesMap={spaceAggregationSeriesMap}
-							step={inspectionStep}
-							metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
-							timeAggregatedSeriesMap={timeAggregatedSeriesMap}
-						/>
-					)}
-				</div>
-			</div>
+			<GraphView
+				inspectMetricsTimeSeries={aggregatedTimeSeries}
+				formattedInspectMetricsTimeSeries={formattedInspectMetricsTimeSeries}
+				resetInspection={resetInspection}
+				metricName={appliedMetricName}
+				metricUnit={selectedMetricUnit}
+				metricType={selectedMetricType}
+				spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+				inspectionStep={inspectionStep}
+				setPopoverOptions={setPopoverOptions}
+				setShowExpandedView={setShowExpandedView}
+				showExpandedView={showExpandedView}
+				setExpandedViewOptions={setExpandedViewOptions}
+				popoverOptions={popoverOptions}
+				metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
+				isInspectMetricsRefetching={isInspectMetricsRefetching}
+			/>
 		);
 	}, [
 		isInspectMetricsLoading,
@@ -360,7 +307,46 @@ function Inspect({
 				className="inspect-metrics-modal"
 				destroyOnClose
 			>
-				{content}
+				<div className="inspect-metrics-content">
+					<div className="inspect-metrics-content-first-col">
+						{chartArea}
+						<QueryBuilder
+							currentMetricName={currentMetricName}
+							setCurrentMetricName={setCurrentMetricName}
+							setAppliedMetricName={setAppliedMetricName}
+							spaceAggregationLabels={spaceAggregationLabels}
+							currentMetricInspectionOptions={metricInspectionOptions.currentOptions}
+							dispatchMetricInspectionOptions={handleDispatchMetricInspectionOptions}
+							inspectionStep={inspectionStep}
+							inspectMetricsTimeSeries={inspectMetricsTimeSeries}
+							currentQuery={currentQueryData}
+							setCurrentQuery={setCurrentQueryData}
+							isLoadingQueries={isInspectMetricsLoading || isInspectMetricsRefetching}
+							handleCancelQuery={handleCancelInspectQuery}
+							onRunQuery={(): void => {
+								setIsCancelled(false);
+								queryClient.invalidateQueries([
+									REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS,
+								]);
+							}}
+						/>
+					</div>
+					<div className="inspect-metrics-content-second-col">
+						<Stepper
+							inspectionStep={inspectionStep}
+							resetInspection={resetInspection}
+						/>
+						{showExpandedView && (
+							<ExpandedView
+								options={expandedViewOptions}
+								spaceAggregationSeriesMap={spaceAggregationSeriesMap}
+								step={inspectionStep}
+								metricInspectionAppliedOptions={metricInspectionOptions.appliedOptions}
+								timeAggregatedSeriesMap={timeAggregatedSeriesMap}
+							/>
+						)}
+					</div>
+				</div>
 			</Drawer>
 		</Sentry.ErrorBoundary>
 	);
