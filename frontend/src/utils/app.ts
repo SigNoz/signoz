@@ -20,8 +20,10 @@ export const checkVersionState = (
 	currentVersion: string,
 	latestVersion: string,
 ): boolean => {
-	const versionCore = currentVersion?.split('-')[0];
-	return versionCore === latestVersion;
+	const stripPrefix = (v: string): string => (v?.startsWith('v') ? v.slice(1) : v) ?? '';
+	const versionCore = stripPrefix(currentVersion?.split('-')[0]);
+	const latest = stripPrefix(latestVersion?.split('-')[0]);
+	return versionCore === latest;
 };
 
 // list of forbidden tags to remove in dompurify
