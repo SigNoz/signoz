@@ -141,13 +141,14 @@ export default function TooltipPlugin({
 
 		// Attach / detach global listeners when pin state changes so
 		// we can detect when the user interacts outside the tooltip.
+		// Keyboard unpinning is handled exclusively in handleKeyDown so
+		// that only L (toggle) and Escape (release) can dismiss — not
+		// arbitrary keystrokes like arrow keys or Tab.
 		function toggleOutsideListeners(enable: boolean): void {
 			if (enable) {
 				document.addEventListener('mousedown', onOutsideInteraction, true);
-				document.addEventListener('keydown', onOutsideInteraction, true);
 			} else {
 				document.removeEventListener('mousedown', onOutsideInteraction, true);
-				document.removeEventListener('keydown', onOutsideInteraction, true);
 			}
 		}
 
@@ -265,18 +266,34 @@ export default function TooltipPlugin({
 			}
 		};
 
-		// Pin the tooltip when the user presses the configured pin key while
-		// hovering over the chart. Synthesises a MouseEvent from the current
-		// cursor position so buildClickData can be reused unchanged.
+		// Handles all tooltip-pin keyboard interactions:
+		//   Escape  — always releases the tooltip when pinned (never steals Escape
+		//             from other handlers since we do not call stopPropagation).
+		//   pinKey  — toggles: pins when hovering+unpinned, unpins when pinned.
 		const handleKeyDown = (event: KeyboardEvent): void => {
+			// Escape: release-only (never toggles on).
+			if (event.key === 'Escape') {
+				if (controller.pinned) {
+					dismissTooltip();
+				}
+				return;
+			}
+
 			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
 				return;
 			}
+
+			// Toggle off: L pressed while already pinned.
+			if (controller.pinned) {
+				dismissTooltip();
+				return;
+			}
+
+			// Toggle on: L pressed while hovering.
 			const plot = getPlot(controller);
 			if (
 				!plot ||
 				!controller.hoverActive ||
-				controller.pinned ||
 				controller.focusedSeriesIndex == null
 			) {
 				return;
@@ -382,7 +399,6 @@ export default function TooltipPlugin({
 			window.removeEventListener('resize', handleWindowResize);
 			window.removeEventListener('scroll', handleScroll, true);
 			document.removeEventListener('mousedown', onOutsideInteraction, true);
-			document.removeEventListener('keydown', onOutsideInteraction, true);
 			if (canPinTooltip) {
 				document.removeEventListener('keydown', handleKeyDown, true);
 			}

@@ -1,0 +1,39 @@
+.header-container {
+	padding: 1rem 1rem 0 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&:last-child {
+		padding-bottom: 1rem;
+	}
+
+	.header-row {
+		font-size: 13px;
+		font-weight: 500;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+	}
+
+	.status {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		font-size: 10px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--bg-slate-50);
+		flex-shrink: 0;
+
+		&.statusLightMode {
+			color: var(--bg-ink-300);
+		}
+
+		&.status-pinned {
+			color: var(--bg-robin-400);
+		}
+	}
+}

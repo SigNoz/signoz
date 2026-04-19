@@ -1,0 +1,27 @@
+.list {
+	// Virtuoso absolutely positions its item rows; left: 0 prevents accidental
+	// horizontal offset when the scroller has padding or transform applied.
+	div[data-viewport-type='element'] {
+		left: 0;
+		padding: 4px 8px 4px 16px;
+	}
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-slate-100);
+		border-radius: 0.5rem;
+	}
+
+	&.lightMode {
+		&::-webkit-scrollbar-thumb {
+			background: var(--bg-vanilla-400);
+		}
+	}
+}

@@ -474,7 +474,7 @@ describe('TooltipPlugin', () => {
 			jest.useRealTimers();
 		});
 
-		it('unpins the tooltip on outside keydown', async () => {
+		it('unpins the tooltip when Escape is pressed while pinned', async () => {
 			jest.useFakeTimers();
 			const config = createConfigMock();
 
@@ -512,7 +512,7 @@ describe('TooltipPlugin', () => {
 					?.classList.contains('pinned'),
 			).toBe(true);
 
-			// Press a key outside the tooltip.
+			// Press Escape to release.
 			act(() => {
 				document.body.dispatchEvent(
 					new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
@@ -526,6 +526,113 @@ describe('TooltipPlugin', () => {
 				expect(container.getAttribute('aria-hidden')).toBe('true');
 				expect(container.classList.contains('visible')).toBe(false);
 				expect(container.classList.contains('pinned')).toBe(false);
+			});
+
+			jest.useRealTimers();
+		});
+
+		it('unpins the tooltip when the pin key is pressed a second time (toggle off)', async () => {
+			jest.useFakeTimers();
+			const config = createConfigMock();
+
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+			jest.runAllTimers();
+
+			// First press — pin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen
+						.getByTestId('tooltip-plugin-container')
+						.classList.contains('pinned'),
+				).toBe(true);
+			});
+
+			// Second press — unpin (toggle off).
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				const container = screen.getByTestId('tooltip-plugin-container');
+				expect(container.classList.contains('pinned')).toBe(false);
+			});
+
+			jest.useRealTimers();
+		});
+
+		it('does not unpin on Escape when tooltip is not pinned', () => {
+			const config = createConfigMock();
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+
+			// Escape without pinning first — should be a no-op.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+				);
+			});
+
+			const container = screen.getByTestId('tooltip-plugin-container');
+			// Tooltip should still be hovering (visible), not dismissed.
+			expect(container.classList.contains('visible')).toBe(true);
+			expect(container.classList.contains('pinned')).toBe(false);
+		});
+
+		it('does not unpin on arbitrary keys that are not Escape or the pin key', async () => {
+			jest.useFakeTimers();
+			const config = createConfigMock();
+
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+			jest.runAllTimers();
+
+			// Pin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen
+						.getByTestId('tooltip-plugin-container')
+						.classList.contains('pinned'),
+				).toBe(true);
+			});
+
+			// Arrow key — should NOT unpin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen
+						.getByTestId('tooltip-plugin-container')
+						.classList.contains('pinned'),
+				).toBe(true);
 			});
 
 			jest.useRealTimers();

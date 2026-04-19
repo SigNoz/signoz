@@ -11,10 +11,6 @@
 	opacity: 0;
 	pointer-events: none;
 
-	&.pinned {
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-	}
-
 	&.visible {
 		opacity: 1;
 		pointer-events: all;

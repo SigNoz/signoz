@@ -1,5 +1,6 @@
 import React from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import userEvent from '@testing-library/user-event';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -189,5 +190,97 @@ describe('Tooltip', () => {
 		const list = screen.getByTestId('uplot-tooltip-list');
 		// Falls back to content length: 2 items * 38px = 76px
 		expect(list).toHaveStyle({ height: '76px' });
+	});
+});
+
+describe('Tooltip footer hint', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseIsDarkMode.mockReturnValue(false);
+	});
+
+	it('renders footer with "Press L to lock" hint when not pinned', () => {
+		renderTooltip({ isPinned: false });
+
+		const footer = screen.getByTestId('uplot-tooltip-footer');
+		expect(footer).toBeInTheDocument();
+		expect(footer).toHaveTextContent('Press');
+		expect(footer).toHaveTextContent('L');
+		expect(footer).toHaveTextContent('to lock');
+	});
+
+	it('renders footer with "Press L or Esc to unlock" hint when pinned', () => {
+		renderTooltip({ isPinned: true });
+
+		const footer = screen.getByTestId('uplot-tooltip-footer');
+		expect(footer).toHaveTextContent('Press');
+		expect(footer).toHaveTextContent('L');
+		expect(footer).toHaveTextContent('Esc');
+		expect(footer).toHaveTextContent('to unlock');
+	});
+
+	it('does not render Unpin button when not pinned', () => {
+		renderTooltip({ isPinned: false });
+
+		expect(screen.queryByTestId('uplot-tooltip-unpin')).not.toBeInTheDocument();
+	});
+
+	it('renders Unpin button when pinned', () => {
+		renderTooltip({ isPinned: true });
+
+		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
+		expect(unpinBtn).toBeInTheDocument();
+		expect(unpinBtn).toHaveAttribute('aria-label', 'Unpin tooltip');
+	});
+
+	it('calls dismiss when Unpin button is clicked', async () => {
+		const dismiss = jest.fn();
+		renderTooltip({ isPinned: true, dismiss });
+
+		const user = userEvent.setup();
+		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
+		await user.click(unpinBtn);
+
+		expect(dismiss).toHaveBeenCalledTimes(1);
+	});
+
+	it('footer has role="status" for screen reader announcements', () => {
+		renderTooltip();
+
+		const footer = screen.getByRole('status');
+		expect(footer).toBeInTheDocument();
+	});
+});
+
+describe('Tooltip header status pill', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseIsDarkMode.mockReturnValue(false);
+	});
+
+	it('shows Live status when not pinned and header is visible', () => {
+		const uPlotInstance = createUPlotInstance(0);
+
+		renderTooltip({ uPlotInstance, isPinned: false });
+
+		expect(screen.getByText('Live')).toBeInTheDocument();
+		expect(screen.queryByText('Pinned')).not.toBeInTheDocument();
+	});
+
+	it('shows Pinned status when pinned and header is visible', () => {
+		const uPlotInstance = createUPlotInstance(0);
+
+		renderTooltip({ uPlotInstance, isPinned: true });
+
+		expect(screen.getByText('Pinned')).toBeInTheDocument();
+		expect(screen.queryByText('Live')).not.toBeInTheDocument();
+	});
+
+	it('does not render status pill when showTooltipHeader is false', () => {
+		const uPlotInstance = createUPlotInstance(0);
+
+		renderTooltip({ uPlotInstance, showTooltipHeader: false, isPinned: false });
+
+		expect(screen.queryByTestId('uplot-tooltip-status')).not.toBeInTheDocument();
 	});
 });
