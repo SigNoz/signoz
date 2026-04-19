@@ -3,7 +3,7 @@ import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
 import {
 	invalidateGetMetricMetadata,

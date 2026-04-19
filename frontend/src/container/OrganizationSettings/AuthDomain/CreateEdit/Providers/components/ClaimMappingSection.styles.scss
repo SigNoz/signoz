@@ -105,7 +105,7 @@
 	input {
 		height: 32px;
 		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		border-radius: 2px;
 		color: var(--l1-foreground) !important;
 
@@ -115,7 +115,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&:focus,

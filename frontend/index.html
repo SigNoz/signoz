@@ -62,6 +62,29 @@
 		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
 	</head>
 	<body data-theme="default">
+		<script>
+			// Apply theme class synchronously before React renders to prevent flash.
+			// Mirrors the logic in ThemeProvider (hooks/useDarkMode/index.tsx).
+			(function () {
+				try {
+					var theme = localStorage.getItem('THEME');
+					var autoSwitch = localStorage.getItem('THEME_AUTO_SWITCH') === 'true';
+					if (autoSwitch) {
+						theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+							? 'dark'
+							: 'light';
+					}
+					if (theme === 'light') {
+						document.body.classList.add('lightMode');
+					} else {
+						// Default to dark when no preference is stored
+						document.body.classList.add('dark', 'darkMode');
+					}
+				} catch (e) {
+					document.body.classList.add('dark', 'darkMode');
+				}
+			})();
+		</script>
 		<noscript>You need to enable JavaScript to run this app.</noscript>
 		<div id="root"></div>
 

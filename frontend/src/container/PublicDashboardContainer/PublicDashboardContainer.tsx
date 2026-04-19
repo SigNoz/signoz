@@ -18,6 +18,8 @@ import { SuccessResponseV2 } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { PublicDashboardDataProps } from 'types/api/dashboard/public/get';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import Panel from './Panel';
 
 import './PublicDashboardContainer.styles.scss';
@@ -130,11 +132,7 @@ function PublicDashboardContainer({
 			<div className="public-dashboard-header">
 				<div className="public-dashboard-header-left">
 					<div className="brand-logo">
-						<img
-							src="/Logos/signoz-brand-logo.svg"
-							alt="SigNoz"
-							className="brand-logo-img"
-						/>
+						<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo-img" />
 
 						<Typography className="brand-logo-name">SigNoz</Typography>
 					</div>

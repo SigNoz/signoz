@@ -1,6 +1,6 @@
 .steps-footer {
-	border-top: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-500);
+	border-top: 1px solid var(--l1-border);
+	background: var(--l1-background);
 	padding: 16px;
 	position: absolute;
 	left: 0;
@@ -41,13 +41,13 @@
 		border-radius: 2px;
 
 		&--run {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 		}
 		&--updating {
 			display: flex;
 			align-items: center;
 			gap: 4px;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 12px;
 		}
 	}
@@ -55,11 +55,11 @@
 
 .lightMode {
 	.steps-footer {
-		border-top: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-200);
+		border-top: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		&__left {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 
 		&__valid-traces {
@@ -70,7 +70,7 @@
 
 		&__button {
 			&--save {
-				background: var(--bg-vanilla-300);
+				background: var(--l3-background);
 			}
 			&--run {
 				background-color: var(--bg-robin-400);

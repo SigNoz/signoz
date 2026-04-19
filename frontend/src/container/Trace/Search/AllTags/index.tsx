@@ -77,12 +77,12 @@ function AllTags({
 	if (traces.isTagModalError) {
 		return (
 			<ErrorContainer>
-				<Paragraph style={{ color: '#E89A3C' }}>
+				<Paragraph style={{ color: 'var(--warning-background)' }}>
 					Unrecognized query format. Please reset your query by clicking `X` in the
 					search bar above.
 				</Paragraph>
 
-				<Paragraph style={{ color: '#E89A3C' }}>
+				<Paragraph style={{ color: 'var(--warning-background)' }}>
 					Please click on the search bar to get a drop down to select relevant tags
 				</Paragraph>
 			</ErrorContainer>

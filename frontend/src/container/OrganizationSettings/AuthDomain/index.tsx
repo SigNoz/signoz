@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {

@@ -1,11 +1,11 @@
 .timeline-table {
-	border-top: 1px solid var(--text-slate-500);
+	border-top: 1px solid var(--l1-border);
 	border-radius: 6px;
 	overflow: hidden;
 	margin-top: 4px;
 	min-height: 600px;
 	.ant-table {
-		background: var(--bg-ink-500);
+		background: var(--l1-background);
 		&-cell {
 			padding: 12px 16px !important;
 			vertical-align: baseline;
@@ -14,8 +14,8 @@
 			}
 		}
 		&-thead > tr > th {
-			border-color: var(--bg-slate-500);
-			background: var(--bg-ink-500);
+			border-color: var(--l1-border);
+			background: var(--l1-background);
 			font-size: 12px;
 			font-weight: 500;
 			padding: 12px 16px 8px !important;
@@ -28,11 +28,11 @@
 	.label-filter {
 		padding: 6px 8px;
 		border-radius: 4px;
-		background: var(--text-ink-400);
+		background: var(--l1-foreground);
 		border-width: 0;
 		line-height: 18px;
 		& ::placeholder {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 12px;
 			letter-spacing: 0.6px;
 			text-transform: uppercase;
@@ -43,7 +43,7 @@
 		&-value,
 		&__created-at {
 			font-size: 14px;
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 		}
 		&-value {
 			font-weight: 500;
@@ -55,9 +55,9 @@
 		}
 	}
 	.ant-table.ant-table-middle {
-		border-bottom: 1px solid var(--bg-slate-500);
-		border-left: 1px solid var(--bg-slate-500);
-		border-right: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
+		border-left: 1px solid var(--l1-border);
+		border-right: 1px solid var(--l1-border);
 
 		border-radius: 6px;
 	}
@@ -71,9 +71,10 @@
 			justify-content: center;
 			padding: 1px 8px;
 			border-radius: 2px;
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
+
 			& > a {
-				color: var(--text-ink-500);
+				color: var(--primary-foreground);
 				line-height: 20px;
 				font-weight: 500;
 			}
@@ -82,42 +83,7 @@
 	.alert-history-label-search {
 		.ant-select-selector {
 			border: none;
-		}
-	}
-}
-
-.lightMode {
-	.timeline-table {
-		border-color: var(--bg-vanilla-300);
-
-		.ant-table {
-			background: var(--bg-vanilla-100);
-			&-thead {
-				& > tr > th {
-					background: var(--bg-vanilla-100);
-					border-color: var(--bg-vanilla-300);
-				}
-			}
-			&.ant-table-middle {
-				border-color: var(--bg-vanilla-300);
-			}
-		}
-		.alert-history-label-search {
-			.ant-select-selector {
-				background: var(--bg-vanilla-200);
-			}
-		}
-
-		.alert-rule {
-			&__value,
-			&__created-at {
-				color: var(--text-ink-400);
-			}
-		}
-		.ant-pagination-item {
-			&-active > a {
-				color: var(--text-vanilla-100);
-			}
+			background: var(--l2-background);
 		}
 	}
 }

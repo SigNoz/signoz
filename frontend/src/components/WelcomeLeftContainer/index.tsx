@@ -2,6 +2,8 @@ import { ReactChild } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, Space, Typography } from 'antd';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import { Container, LeftContainer, Logo } from './styles';
 
 const { Title } = Typography;
@@ -16,7 +18,7 @@ function WelcomeLeftContainer({
 		<Container>
 			<LeftContainer direction="vertical">
 				<Space align="center">
-					<Logo src="/Logos/signoz-brand-logo.svg" alt="logo" />
+					<Logo src={signozBrandLogoUrl} alt="logo" />
 					<Title style={{ fontSize: '46px', margin: 0 }}>SigNoz</Title>
 				</Space>
 				<Typography>{t('monitor_signup')}</Typography>

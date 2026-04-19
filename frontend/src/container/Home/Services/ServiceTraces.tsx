@@ -18,6 +18,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
 
+import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
+
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
 
@@ -103,7 +105,7 @@ export default function ServiceTraces({
 				<div className="empty-state-content-container">
 					<div className="empty-state-content">
 						<img
-							src="/Icons/triangle-ruler.svg"
+							src={triangleRulerUrl}
 							alt="empty-alert-icon"
 							className="empty-state-icon"
 						/>

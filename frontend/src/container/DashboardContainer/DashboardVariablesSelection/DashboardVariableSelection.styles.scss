@@ -10,8 +10,8 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		color: var(--bg-robin-300);
 		font-family: Inter;
 		font-size: 12px;
@@ -21,7 +21,7 @@
 
 		.info-icon {
 			margin-left: 4px;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 		}
 	}
 
@@ -33,10 +33,10 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		border-left: none;
-		background: var(--bg-ink-400);
-		color: var(--bg-vanilla-400);
+		background: var(--l2-background);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -62,7 +62,7 @@
 
 		.rc-virtual-list-holder {
 			[data-testid='option-ALL'] {
-				border-bottom: 1px solid var(--bg-slate-400);
+				border-bottom: 1px solid var(--l1-border);
 				padding-bottom: 12px;
 				margin-bottom: 8px;
 			}
@@ -103,15 +103,15 @@
 .lightMode {
 	.variable-item {
 		.variable-name {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
 			color: var(--bg-robin-300);
 		}
 
 		.variable-value {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-			color: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
+			color: var(--l1-foreground);
 
 			&:hover,
 			&:focus-within {

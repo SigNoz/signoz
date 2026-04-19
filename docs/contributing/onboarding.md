@@ -7,12 +7,12 @@ This guide explains how to add new data sources to the SigNoz onboarding flow. T
 The configuration is located at:
 
 ```
-frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json
+frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.ts
 ```
 
-## JSON Structure Overview
+## Structure Overview
 
-The configuration file is a JSON array containing data source objects. Each object represents a selectable option in the onboarding flow.
+The configuration file exports a TypeScript array (`onboardingConfigWithLinks`) containing data source objects. Each object represents a selectable option in the onboarding flow. SVG logos are imported as ES modules at the top of the file.
 
 ## Data Source Object Keys
 
@@ -24,7 +24,7 @@ The configuration file is a JSON array containing data source objects. Each obje
 | `label` | `string` | Display name shown to users (e.g., `"AWS EC2"`) |
 | `tags` | `string[]` | Array of category tags for grouping (e.g., `["AWS"]`, `["database"]`) |
 | `module` | `string` | Destination module after onboarding completion |
-| `imgUrl` | `string` | Path to the logo/icon **(SVG required)** (e.g., `"/Logos/ec2.svg"`) |
+| `imgUrl` | `string` | Imported SVG URL **(SVG required)** (e.g., `import ec2Url from '@/assets/Logos/ec2.svg'`, then use `ec2Url`) |
 
 ### Optional Keys
 
@@ -57,36 +57,34 @@ The `module` key determines where users are redirected after completing onboardi
 
 The `question` object enables multi-step selection flows:
 
-```json
-{
-  "question": {
-    "desc": "What would you like to monitor?",
-    "type": "select",
-    "helpText": "Choose the telemetry type you want to collect.",
-    "helpLink": "/docs/azure-monitoring/overview/",
-    "helpLinkText": "Read the guide →",
-    "options": [
-        {
-            "key": "logging",
-            "label": "Logs",
-            "imgUrl": "/Logos/azure-vm.svg",
-            "link": "/docs/azure-monitoring/app-service/logging/"
-        },
-        {
-            "key": "metrics",
-            "label": "Metrics",
-            "imgUrl": "/Logos/azure-vm.svg",
-            "link": "/docs/azure-monitoring/app-service/metrics/"
-        },
-        {
-            "key": "tracing",
-            "label": "Traces",
-            "imgUrl": "/Logos/azure-vm.svg",
-            "link": "/docs/azure-monitoring/app-service/tracing/"
-        }
-    ]
-  }
-}
+```ts
+question: {
+  desc: 'What would you like to monitor?',
+  type: 'select',
+  helpText: 'Choose the telemetry type you want to collect.',
+  helpLink: '/docs/azure-monitoring/overview/',
+  helpLinkText: 'Read the guide →',
+  options: [
+    {
+      key: 'logging',
+      label: 'Logs',
+      imgUrl: azureVmUrl,
+      link: '/docs/azure-monitoring/app-service/logging/',
+    },
+    {
+      key: 'metrics',
+      label: 'Metrics',
+      imgUrl: azureVmUrl,
+      link: '/docs/azure-monitoring/app-service/metrics/',
+    },
+    {
+      key: 'tracing',
+      label: 'Traces',
+      imgUrl: azureVmUrl,
+      link: '/docs/azure-monitoring/app-service/tracing/',
+    },
+  ],
+},
 ```
 
 ### Question Keys
@@ -106,152 +104,161 @@ Options can be simple (direct link) or nested (with another question):
 
 ### Simple Option (Direct Link)
 
-```json
+```ts
 {
-  "key": "aws-ec2-logs",
-  "label": "Logs",
-  "imgUrl": "/Logos/ec2.svg",
-  "link": "/docs/userguide/collect_logs_from_file/"
-}
+  key: 'aws-ec2-logs',
+  label: 'Logs',
+  imgUrl: ec2Url,
+  link: '/docs/userguide/collect_logs_from_file/',
+},
 ```
 
 ### Option with Internal Redirect
 
-```json
+```ts
 {
-  "key": "aws-ec2-metrics-one-click",
-  "label": "One Click AWS",
-  "imgUrl": "/Logos/ec2.svg",
-  "link": "/integrations?integration=aws-integration&service=ec2",
-  "internalRedirect": true
-}
+  key: 'aws-ec2-metrics-one-click',
+  label: 'One Click AWS',
+  imgUrl: ec2Url,
+  link: '/integrations?integration=aws-integration&service=ec2',
+  internalRedirect: true,
+},
 ```
 
 > **Important**: Set `internalRedirect: true` only for internal app routes (like `/integrations?...`). Docs links should NOT have this flag.
 
 ### Nested Option (Multi-step Flow)
 
-```json
+```ts
 {
-  "key": "aws-ec2-metrics",
-  "label": "Metrics",
-  "imgUrl": "/Logos/ec2.svg",
-  "question": {
-    "desc": "How would you like to set up monitoring?",
-    "helpText": "Choose your setup method.",
-    "options": [...]
-  }
-}
+  key: 'aws-ec2-metrics',
+  label: 'Metrics',
+  imgUrl: ec2Url,
+  question: {
+    desc: 'How would you like to set up monitoring?',
+    helpText: 'Choose your setup method.',
+    options: [...],
+  },
+},
 ```
 
 ## Examples
 
 ### Simple Data Source (Direct Link)
 
-```json
+```ts
+import elbUrl from '@/assets/Logos/elb.svg';
+
+// inside the onboardingConfigWithLinks array:
 {
-  "dataSource": "aws-elb",
-  "label": "AWS ELB",
-  "tags": ["AWS"],
-  "module": "logs",
-  "relatedSearchKeywords": [
-    "aws",
-    "aws elb",
-    "elb logs",
-    "elastic load balancer"
+  dataSource: 'aws-elb',
+  label: 'AWS ELB',
+  tags: ['AWS'],
+  module: 'logs',
+  relatedSearchKeywords: [
+    'aws',
+    'aws elb',
+    'elb logs',
+    'elastic load balancer',
   ],
-  "imgUrl": "/Logos/elb.svg",
-  "link": "/docs/aws-monitoring/elb/"
-}
+  imgUrl: elbUrl,
+  link: '/docs/aws-monitoring/elb/',
+},
 ```
 
 ### Data Source with Single Question Level
 
-```json
+```ts
+import azureVmUrl from '@/assets/Logos/azure-vm.svg';
+
+// inside the onboardingConfigWithLinks array:
 {
-  "dataSource": "app-service",
-  "label": "App Service",
-  "imgUrl": "/Logos/azure-vm.svg",
-  "tags": ["Azure"],
-  "module": "apm",
-  "relatedSearchKeywords": ["azure", "app service"],
-  "question": {
-    "desc": "What telemetry data do you want to visualise?",
-    "type": "select",
-    "options": [
+  dataSource: 'app-service',
+  label: 'App Service',
+  imgUrl: azureVmUrl,
+  tags: ['Azure'],
+  module: 'apm',
+  relatedSearchKeywords: ['azure', 'app service'],
+  question: {
+    desc: 'What telemetry data do you want to visualise?',
+    type: 'select',
+    options: [
       {
-        "key": "logging",
-        "label": "Logs",
-        "imgUrl": "/Logos/azure-vm.svg",
-        "link": "/docs/azure-monitoring/app-service/logging/"
+        key: 'logging',
+        label: 'Logs',
+        imgUrl: azureVmUrl,
+        link: '/docs/azure-monitoring/app-service/logging/',
       },
       {
-        "key": "metrics",
-        "label": "Metrics",
-        "imgUrl": "/Logos/azure-vm.svg",
-        "link": "/docs/azure-monitoring/app-service/metrics/"
+        key: 'metrics',
+        label: 'Metrics',
+        imgUrl: azureVmUrl,
+        link: '/docs/azure-monitoring/app-service/metrics/',
       },
       {
-        "key": "tracing",
-        "label": "Traces",
-        "imgUrl": "/Logos/azure-vm.svg",
-        "link": "/docs/azure-monitoring/app-service/tracing/"
-      }
-    ]
-  }
-}
+        key: 'tracing',
+        label: 'Traces',
+        imgUrl: azureVmUrl,
+        link: '/docs/azure-monitoring/app-service/tracing/',
+      },
+    ],
+  },
+},
 ```
 
 ### Data Source with Nested Questions (2-3 Levels)
 
-```json
+```ts
+import ec2Url from '@/assets/Logos/ec2.svg';
+
+// inside the onboardingConfigWithLinks array:
 {
-  "dataSource": "aws-ec2",
-  "label": "AWS EC2",
-  "tags": ["AWS"],
-  "module": "logs",
-  "relatedSearchKeywords": ["aws", "aws ec2", "ec2 logs", "ec2 metrics"],
-  "imgUrl": "/Logos/ec2.svg",
-  "question": {
-    "desc": "What would you like to monitor for AWS EC2?",
-    "type": "select",
-    "helpText": "Choose the type of telemetry data you want to collect.",
-    "options": [
+  dataSource: 'aws-ec2',
+  label: 'AWS EC2',
+  tags: ['AWS'],
+  module: 'logs',
+  relatedSearchKeywords: ['aws', 'aws ec2', 'ec2 logs', 'ec2 metrics'],
+  imgUrl: ec2Url,
+  question: {
+    desc: 'What would you like to monitor for AWS EC2?',
+    type: 'select',
+    helpText: 'Choose the type of telemetry data you want to collect.',
+    options: [
       {
-        "key": "aws-ec2-logs",
-        "label": "Logs",
-        "imgUrl": "/Logos/ec2.svg",
-        "link": "/docs/userguide/collect_logs_from_file/"
+        key: 'aws-ec2-logs',
+        label: 'Logs',
+        imgUrl: ec2Url,
+        link: '/docs/userguide/collect_logs_from_file/',
       },
       {
-        "key": "aws-ec2-metrics",
-        "label": "Metrics",
-        "imgUrl": "/Logos/ec2.svg",
-        "question": {
-          "desc": "How would you like to set up EC2 Metrics monitoring?",
-          "helpText": "One Click uses AWS CloudWatch integration. Manual setup uses OpenTelemetry.",
-          "helpLink": "/docs/aws-monitoring/one-click-vs-manual/",
-          "helpLinkText": "Read the comparison guide →",
-          "options": [
+        key: 'aws-ec2-metrics',
+        label: 'Metrics',
+        imgUrl: ec2Url,
+        question: {
+          desc: 'How would you like to set up EC2 Metrics monitoring?',
+          helpText: 'One Click uses AWS CloudWatch integration. Manual setup uses OpenTelemetry.',
+          helpLink: '/docs/aws-monitoring/one-click-vs-manual/',
+          helpLinkText: 'Read the comparison guide →',
+          options: [
             {
-              "key": "aws-ec2-metrics-one-click",
-              "label": "One Click AWS",
-              "imgUrl": "/Logos/ec2.svg",
-              "link": "/integrations?integration=aws-integration&service=ec2",
-              "internalRedirect": true
+              key: 'aws-ec2-metrics-one-click',
+              label: 'One Click AWS',
+              imgUrl: ec2Url,
+              link: '/integrations?integration=aws-integration&service=ec2',
+              internalRedirect: true,
             },
             {
-              "key": "aws-ec2-metrics-manual",
-              "label": "Manual Setup",
-              "imgUrl": "/Logos/ec2.svg",
-              "link": "/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/"
-            }
-          ]
-        }
-      }
-    ]
-  }
-}
+              key: 'aws-ec2-metrics-manual',
+              label: 'Manual Setup',
+              imgUrl: ec2Url,
+              link: '/docs/tutorial/opentelemetry-binary-usage-in-virtual-machine/',
+            },
+          ],
+        },
+      },
+    ],
+  },
+},
 ```
 
 ## Best Practices
@@ -270,11 +277,16 @@ Options can be simple (direct link) or nested (with another question):
 
 ### 3. Logos
 
-- Place logo files in `public/Logos/`
+- Place logo files in `src/assets/Logos/`
 - Use SVG format
-- Reference as `"/Logos/your-logo.svg"`
+- Import the SVG at the top of the file and reference the imported variable:
+  ```ts
+  import myServiceUrl from '@/assets/Logos/my-service.svg';
+  // then in the config object:
+  imgUrl: myServiceUrl,
+  ```
 - **Fetching Icons**: New icons can be easily fetched from [OpenBrand](https://openbrand.sh/). Use the pattern `https://openbrand.sh/?url=<TARGET_URL>`, where `<TARGET_URL>` is the URL-encoded link to the service's website. For example, to get Render's logo, use [https://openbrand.sh/?url=https%3A%2F%2Frender.com](https://openbrand.sh/?url=https%3A%2F%2Frender.com).
-- **Optimize new SVGs**: Run any newly downloaded SVGs through an optimizer like [SVGOMG (svgo)](https://svgomg.net/) or use `npx svgo public/Logos/your-logo.svg` to minimise their size before committing.
+- **Optimize new SVGs**: Run any newly downloaded SVGs through an optimizer like [SVGOMG (svgo)](https://svgomg.net/) or use `npx svgo src/assets/Logos/your-logo.svg` to minimise their size before committing.
 
 ### 4. Links
 
@@ -290,8 +302,8 @@ Options can be simple (direct link) or nested (with another question):
 
 ## Adding a New Data Source
 
-1. Add your data source object to the JSON array
-2. Ensure the logo exists in `public/Logos/`
+1. Add the logo SVG to `src/assets/Logos/` and add a top-level import in the config file (e.g., `import myServiceUrl from '@/assets/Logos/my-service.svg'`)
+2. Add your data source object to the `onboardingConfigWithLinks` array, referencing the imported variable for `imgUrl`
 3. Test the flow locally with `yarn dev`
 4. Validation:
    - Navigate to the [onboarding page](http://localhost:3301/get-started-with-signoz-cloud) on your local machine

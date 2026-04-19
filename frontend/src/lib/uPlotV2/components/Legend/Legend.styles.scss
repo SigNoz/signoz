@@ -26,7 +26,7 @@
 
 	.legend-empty-state {
 		font-size: 12px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		text-align: center;
 		padding: 12px;
 		padding: 2rem 0;
@@ -77,7 +77,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-100);
+			background: var(--l3-background);
 			border-radius: 0.5rem;
 		}
 	}
@@ -177,19 +177,19 @@
 		padding: 2px;
 		margin: 0;
 		border: none;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		cursor: pointer;
 		border-radius: 4px;
 		opacity: 1;
 		transition: opacity 0.15s ease, color 0.15s ease;
 
 		&:hover {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 	}
 
 	&:hover {
-		background: rgba(255, 255, 255, 0.05);
+		background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
 		.legend-copy-button {
 			display: flex;
 			opacity: 1;
@@ -201,7 +201,7 @@
 	.legend-container {
 		.legend-virtuoso-container {
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-vanilla-400);
+				background: var(--l2-foreground);
 			}
 		}
 	}
@@ -211,10 +211,10 @@
 			background: rgba(0, 0, 0, 0.05);
 		}
 		.legend-copy-button {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 
 			&:hover {
-				color: var(--bg-ink-500);
+				color: var(--l1-background);
 			}
 		}
 	}

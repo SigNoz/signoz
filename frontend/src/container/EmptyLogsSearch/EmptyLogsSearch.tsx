@@ -7,6 +7,8 @@ import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { Delete } from 'lucide-react';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import './EmptyLogsSearch.styles.scss';
 
 interface EmptyLogsSearchProps {
@@ -46,7 +48,7 @@ export default function EmptyLogsSearch({
 			<div className="empty-logs-search__row">
 				<div className="empty-logs-search__content">
 					<img
-						src="/Icons/emptyState.svg"
+						src={emptyStateUrl}
 						alt="thinking-emoji"
 						className="empty-state-svg"
 					/>
