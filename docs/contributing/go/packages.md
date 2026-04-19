@@ -49,6 +49,43 @@ Follow these rules:
 
 5. **Test files stay alongside source**: Unit tests go in `_test.go` files next to the code they test, in the same package.
 
+## How should I order code within a file?
+
+Within a single `.go` file, declarations should follow this order:
+
+1. Constants
+2. Variables
+3. Types (structs, interfaces)
+4. Constructor functions (`New...`)
+5. Exported methods and functions
+6. Unexported methods and functions
+
+```go
+// 1. Constants
+const defaultTimeout = 30 * time.Second
+
+// 2. Variables
+var ErrNotFound = errors.New(errors.TypeNotFound, errors.CodeNotFound, "resource not found")
+
+// 3. Types
+type Store struct {
+    db *sql.DB
+}
+
+// 4. Constructors
+func NewStore(db *sql.DB) *Store {
+    return &Store{db: db}
+}
+
+// 5. Exported methods
+func (s *Store) Get(ctx context.Context, id string) (*Resource, error) { ... }
+
+// 6. Unexported methods
+func (s *Store) buildQuery(id string) string { ... }
+```
+
+This ordering makes files predictable. A reader scanning from top to bottom sees the contract (constants, types, constructors) before the implementation (methods), and exported behavior before internal helpers.
+
 ## How should I name symbols?
 
 ### Exported symbols
@@ -90,9 +127,7 @@ Never introduce circular imports. If package A needs package B and B needs A, ex
 
 ## Where do shared types go?
 
-Most types belong in `pkg/types/` under a domain-specific sub-package (e.g., `pkg/types/ruletypes`, `pkg/types/authtypes`).
-
-Do not put domain logic in `pkg/types/`. Only data structures, constants, and simple methods.
+See [Types](types.md) for full conventions on type placement, naming variants, composition, and constructors.
 
 ## How do I merge or move packages?
 
@@ -104,6 +139,10 @@ When two packages are tightly coupled (one imports the other's constants, they c
 4. Update all consumers in a single change.
 5. Delete the old packages. Do not leave behind re-export shims.
 6. Verify with `go build ./...`, `go test ./<new-pkg>/...`, and `go vet ./...`.
+
+## When should I use valuer types?
+
+See [Types](types.md#typed-domain-values-pkgvaluer) for valuer types, when to use them, and the enum pattern using `valuer.String`.
 
 ## When should I add documentation?
 
@@ -119,6 +158,10 @@ package cache
 
 - Package names are domain-specific and lowercase. Never generic names like `util` or `common`.
 - The file matching the package name (e.g., `cache.go`) defines the public interface. Implementation details go elsewhere.
+- Within a file, order declarations: constants, variables, types, constructors, exported functions, unexported functions.
+- Segregate types across files by responsibility. A file with 5 unrelated types is harder to navigate than 5 files with one type each.
+- Use valuer types (`valuer.String`, `valuer.Email`, `valuer.UUID`, `valuer.TextDuration`) for domain values that need validation, normalization, or cross-boundary serialization. See [Types](types.md#typed-domain-values-pkgvaluer) for details.
+- Avoid `init()` functions. If you need to initialize a variable, use a package-level `var` with a function call or a `sync.Once`. `init()` hides execution order, makes testing harder, and has caused subtle bugs in large codebases.
 - Never introduce circular imports. Extract shared types into `pkg/types/` when needed.
 - Watch for symbol name collisions when merging packages, prefix to disambiguate.
 - Put test helpers in a `{pkg}test/` sub-package, not in the main package.
