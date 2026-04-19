@@ -244,11 +244,9 @@ export function PlannedDowntimeForm(
 	];
 
 	const handleOk = async (): Promise<void> => {
-		try {
-			await form.validateFields();
-		} catch (error) {
-			console.error(error);
-		}
+		await form.validateFields().catch(() => {
+			// antd renders inline field-level errors; nothing more to do here.
+		});
 	};
 
 	const handleCancel = (): void => {
