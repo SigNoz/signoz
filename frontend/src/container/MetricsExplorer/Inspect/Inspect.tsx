@@ -193,6 +193,20 @@ function Inspect({
 	}, [inspectionStep]);
 
 	const content = useMemo(() => {
+		// Cancelled state takes precedence over any react-query state — ensures
+		// the placeholder shows immediately on cancel, regardless of whether
+		// isLoading/isRefetching has settled yet.
+		if (isCancelled) {
+			return (
+				<div
+					data-testid="inspect-metrics-cancelled"
+					className="inspect-metrics-fallback"
+				>
+					<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />
+				</div>
+			);
+		}
+
 		if (isInspectMetricsLoading && !isInspectMetricsRefetching) {
 			return (
 				<div
@@ -204,7 +218,7 @@ function Inspect({
 			);
 		}
 
-		if (isInspectMetricsError && !isCancelled) {
+		if (isInspectMetricsError) {
 			const errorMessage = 'Error loading inspect metrics.';
 
 			return (
@@ -218,16 +232,6 @@ function Inspect({
 		}
 
 		if (!inspectMetricsTimeSeries.length) {
-			if (isCancelled) {
-				return (
-					<div
-						data-testid="inspect-metrics-cancelled"
-						className="inspect-metrics-fallback"
-					>
-						<QueryCancelledPlaceholder subText='Click "Run Query" to see inspect results.' />
-					</div>
-				);
-			}
 			return (
 				<div
 					data-testid="inspect-metrics-empty"
