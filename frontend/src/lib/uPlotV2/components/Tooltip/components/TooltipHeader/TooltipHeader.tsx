@@ -4,7 +4,7 @@ import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Clock, Pin } from 'lucide-react';
+import { Pin } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 
@@ -70,15 +70,10 @@ export default function TooltipHeader({
 						)}
 						data-testid="uplot-tooltip-status"
 					>
-						{isPinned ? (
+						{isPinned && (
 							<>
 								<Pin size={12} />
 								<span>Pinned</span>
-							</>
-						) : (
-							<>
-								<Clock size={11} />
-								<span>Live</span>
 							</>
 						)}
 					</div>
