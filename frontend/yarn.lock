@@ -5753,6 +5753,21 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
+"@signozhq/tabs@0.0.11":
+  version "0.0.11"
+  resolved "https://registry.yarnpkg.com/@signozhq/tabs/-/tabs-0.0.11.tgz#655732486d1df0581008f4612100b7ba0860c9d6"
+  integrity sha512-Ry3KXao5IJckx5xKoQirCqBfmm7a1O6kcGIWZ10LdYBpaiW2rpolT1AH/fQThUlOZeifkNNpUQVNnr3YIVk3lg==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    "@radix-ui/react-tabs" "^1.1.3"
+    "@signozhq/tooltip" "0.0.2"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
 "@signozhq/toggle-group@0.0.3":
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/@signozhq/toggle-group/-/toggle-group-0.0.3.tgz#6a38312b46198c555ca4c287d4818135a4a9dabe"

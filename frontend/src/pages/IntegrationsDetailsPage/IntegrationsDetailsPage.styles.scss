@@ -1,0 +1,19 @@
+.integrations-details-page {
+	width: 100%;
+	height: 100%;
+
+	.loading-container {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+
+		.skeleton-item {
+			height: 160px;
+			width: 100%;
+			border-radius: 6px;
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background);
+			color: var(--l1-foreground);
+		}
+	}
+}
