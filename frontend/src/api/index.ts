@@ -68,6 +68,12 @@ export const interceptorsRequestResponse = (
 	return value;
 };
 
+// Strips the leading '/' from path and joins with base — idempotent if already prefixed.
+// e.g. prependBase('/signoz/', '/api/v1/') → '/signoz/api/v1/'
+function prependBase(base: string, path: string): string {
+	return path.startsWith(base) ? path : base + path.slice(1);
+}
+
 // Prepends the runtime base path to outgoing requests so API calls work under
 // a URL prefix (e.g. /signoz/api/v1/…). No-op for root deployments and dev
 // (dev baseURL is a full http:// URL, not an absolute path).
@@ -80,25 +86,16 @@ export const interceptorsRequestBasePath = (
 	}
 
 	if (value.baseURL?.startsWith('/')) {
-		// Relative baseURL: '/api/v1/' → '/signoz/api/v1/'
-		if (!value.baseURL.startsWith(basePath)) {
-			value.baseURL = basePath + value.baseURL.slice(1);
-		}
+		// Production relative baseURL: '/api/v1/' → '/signoz/api/v1/'
+		value.baseURL = prependBase(basePath, value.baseURL);
 	} else if (value.baseURL?.startsWith('http')) {
-		// Absolute baseURL (e.g. VITE_FRONTEND_API_ENDPOINT set for dev/testing):
-		// 'https://host/api/v1/' → 'https://host/signoz/api/v1/'
+		// Dev absolute baseURL (VITE_FRONTEND_API_ENDPOINT): 'https://host/api/v1/' → 'https://host/signoz/api/v1/'
 		const url = new URL(value.baseURL);
-		if (!url.pathname.startsWith(basePath)) {
-			url.pathname = basePath + url.pathname.slice(1);
-			value.baseURL = url.toString();
-		}
-	} else if (
-		!value.baseURL &&
-		value.url?.startsWith('/') &&
-		!value.url.startsWith(basePath)
-	) {
-		// Generated instance: baseURL is '' in prod, path is in url
-		value.url = basePath + value.url.slice(1);
+		url.pathname = prependBase(basePath, url.pathname);
+		value.baseURL = url.toString();
+	} else if (!value.baseURL && value.url?.startsWith('/')) {
+		// Orval-generated client (empty baseURL, path in url): '/api/signoz/v1/rules' → '/signoz/api/signoz/v1/rules'
+		value.url = prependBase(basePath, value.url);
 	}
 
 	return value;
