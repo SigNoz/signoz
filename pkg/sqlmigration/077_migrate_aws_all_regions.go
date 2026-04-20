@@ -17,6 +17,13 @@ type migrateAWSAllRegions struct {
 	sqlstore sqlstore.SQLStore
 }
 
+type cloudIntegrationAWSMigrationRow struct {
+	bun.BaseModel `bun:"table:cloud_integration"`
+
+	ID     string `bun:"id"`
+	Config string `bun:"config"`
+}
+
 func NewMigrateAWSAllRegionsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_aws_all_regions"),
@@ -43,53 +50,46 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		_ = tx.Rollback()
 	}()
 
-	rows, err := tx.QueryContext(ctx,
-		`SELECT id, config FROM cloud_integration WHERE provider = ? AND removed_at is NULL`,
-		cloudintegrationtypes.CloudProviderTypeAWS.StringValue(),
-	)
+	var accounts []*cloudIntegrationAWSMigrationRow
+	err = tx.NewSelect().
+		Model(&accounts).
+		Where("provider = ?", cloudintegrationtypes.CloudProviderTypeAWS).
+		Where("removed_at IS NULL").
+		Scan(ctx)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+
+	type awsConfig struct {
+		Regions []string `json:"regions"`
+	}
 
 	var idsToUpdate []string
-
-	for rows.Next() {
-		var id, cfgStr string
-		if err := rows.Scan(&id, &cfgStr); err != nil {
-			return err
-		}
-
-		var cfg cloudintegrationtypes.AWSAccountConfig
-		if err := json.Unmarshal([]byte(cfgStr), &cfg); err != nil {
+	for _, account := range accounts {
+		var cfg awsConfig
+		if err := json.Unmarshal([]byte(account.Config), &cfg); err != nil {
 			continue
 		}
-
-		if !containsAllRegion(cfg.Regions) {
-			continue
+		if containsAllRegion(cfg.Regions) {
+			idsToUpdate = append(idsToUpdate, account.ID)
 		}
-
-		idsToUpdate = append(idsToUpdate, id)
 	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
-	rows.Close()
 
 	if len(idsToUpdate) == 0 {
 		return tx.Commit()
 	}
 
-	newCfg := cloudintegrationtypes.AWSAccountConfig{Regions: allValidAWSRegions()}
-	newBytes, err := json.Marshal(&newCfg)
+	newBytes, err := json.Marshal(map[string]any{"regions": allValidAWSRegions()})
 	if err != nil {
 		return err
 	}
 
-	if _, err := tx.ExecContext(ctx,
-		`UPDATE cloud_integration SET config = ? WHERE id IN (?)`,
-		string(newBytes), bun.In(idsToUpdate),
-	); err != nil {
+	_, err = tx.NewUpdate().
+		Model((*cloudIntegrationAWSMigrationRow)(nil)).
+		Set("config = ?", string(newBytes)).
+		Where("id IN (?)", bun.In(idsToUpdate)).
+		Exec(ctx)
+	if err != nil {
 		return err
 	}
 
