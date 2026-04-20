@@ -24,6 +24,10 @@ type cloudIntegrationAWSMigrationRow struct {
 	Config string `bun:"config"`
 }
 
+type awsConfig struct {
+	Regions []string `json:"regions"`
+}
+
 func NewMigrateAWSAllRegionsFactory(sqlstore sqlstore.SQLStore) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_aws_all_regions"),
@@ -50,7 +54,7 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		_ = tx.Rollback()
 	}()
 
-	var accounts []*cloudIntegrationAWSMigrationRow
+	accounts := make([]*cloudIntegrationAWSMigrationRow, 0)
 	err = tx.NewSelect().
 		Model(&accounts).
 		Where("provider = ?", cloudintegrationtypes.CloudProviderTypeAWS).
@@ -60,11 +64,7 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		return err
 	}
 
-	type awsConfig struct {
-		Regions []string `json:"regions"`
-	}
-
-	var idsToUpdate []string
+	idsToUpdate := make([]string, 0)
 	for _, account := range accounts {
 		var cfg awsConfig
 		if err := json.Unmarshal([]byte(account.Config), &cfg); err != nil {
@@ -79,7 +79,8 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		return tx.Commit()
 	}
 
-	newBytes, err := json.Marshal(map[string]any{"regions": allValidAWSRegions()})
+	cfg := awsConfig{Regions: allValidAWSRegions()}
+	newBytes, err := json.Marshal(cfg)
 	if err != nil {
 		return err
 	}
