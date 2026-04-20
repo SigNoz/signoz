@@ -11,10 +11,8 @@ from fixtures.querier import (
     BuilderQuery,
     OrderBy,
     TelemetryFieldKey,
-    make_query_request,
-)
-from src.querier.util import (
     generate_logs_with_corrupt_metadata,
+    make_query_request,
 )
 
 

@@ -8,17 +8,15 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
+    assert_identical_query_response,
     assert_minutely_bucket_values,
     find_named_result,
+    format_timestamp,
+    generate_traces_with_corrupt_metadata,
     index_series_by_label,
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
-from src.querier.util import (
-    assert_identical_query_response,
-    format_timestamp,
-    generate_traces_with_corrupt_metadata,
-)
 
 
 def test_traces_list(

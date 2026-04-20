@@ -25,11 +25,11 @@ jobs:
         uses: astral-sh/setup-uv@v4
       - name: install
         run: |
-          cd tests/integration && uv sync
+          cd tests && uv sync
       - name: fmt
         run: |
           make py-fmt
-          git diff --exit-code -- tests/integration/
+          git diff --exit-code -- tests/
       - name: lint
         run: |
           make py-lint
@@ -79,7 +79,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
       - name: install
         run: |
-          cd tests/integration && uv sync
+          cd tests && uv sync
       - name: webdriver
         run: |
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
@@ -99,10 +99,10 @@ jobs:
           google-chrome-stable --version
       - name: run
         run: |
-          cd tests/integration && \
+          cd tests && \
             uv run pytest \
             --basetemp=./tmp/ \
-            src/${{matrix.src}} \
+            integration/src/${{matrix.src}} \
             --sqlstore-provider ${{matrix.sqlstore-provider}} \
             --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \

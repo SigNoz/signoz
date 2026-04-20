@@ -9,13 +9,11 @@ from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
 from fixtures.querier import (
+    assert_identical_query_response,
     assert_minutely_bucket_values,
     find_named_result,
     index_series_by_label,
     make_query_request,
-)
-from src.querier.util import (
-    assert_identical_query_response,
 )
 
 

@@ -1,5 +1,5 @@
 [project]
-name = "integration"
+name = "signoz-tests"
 version = "0.1.0"
 description = ""
 authors = [{ name = "therealpandey", email = "vibhupandey28@gmail.com" }]
@@ -27,11 +27,16 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-python_files = "src/**/**.py"
+python_files = "*/src/**/**.py"
+# importlib mode: avoids sys.modules collisions between same-basename tests
+# (e.g. querier/01_logs.py vs rawexportdata/01_logs.py) now that all trees
+# share one rootdir at tests/. importlib also disables pytest's implicit
+# sys.path injection — pythonpath below makes `import fixtures` resolve.
+pythonpath = ["."]
+addopts = "-ra -p no:warnings --import-mode=importlib"
 log_cli = true
 log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
-addopts = "-ra -p no:warnings"
 
 [tool.pylint.main]
 ignore = [".venv"]
