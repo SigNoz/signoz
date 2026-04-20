@@ -95,7 +95,6 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 					color="secondary"
 					className="request-integration-btn"
 					prefix={<Cable size={14} />}
-					size="sm"
 					onClick={(): void => setIsRequestIntegrationDialogOpen(true)}
 				>
 					Request Integration
@@ -112,7 +111,6 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 							Which integration are you looking for?
 						</div>
 						<Input
-							className="request-integration-input"
 							placeholder="Enter integration name..."
 							value={requestedIntegrationName}
 							onChange={(e: ChangeEvent<HTMLInputElement>): void => {
@@ -131,7 +129,6 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 						<Button
 							variant="solid"
 							color="primary"
-							size="sm"
 							prefix={<Check size={14} />}
 							onClick={handleRequestIntegrationSubmit}
 							loading={isSubmittingRequestForIntegration}
@@ -149,8 +146,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				{isGetStartedWithCloudAllowed && (
 					<Button
 						variant="solid"
-						color="secondary"
-						className="view-data-sources-btn"
+						color="primary"
 						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
 					>
 						<span>View 150+ Data Sources</span>

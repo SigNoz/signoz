@@ -814,3 +814,8 @@ notifications	-  2050
 		color: var(--l1-foreground) !important;
 	}
 }
+
+// overrides
+:root {
+	--input-focus-outline-width: 0;
+}

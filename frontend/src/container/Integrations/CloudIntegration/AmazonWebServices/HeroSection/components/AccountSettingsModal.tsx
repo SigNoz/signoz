@@ -104,24 +104,6 @@ function AccountSettingsModal({
 						/>
 					</div>
 				</div>
-
-				<div className="account-settings-modal__footer">
-					<RemoveIntegrationAccount
-						accountId={account?.id}
-						onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
-					/>
-
-					<Button
-						variant="solid"
-						color="secondary"
-						disabled={isSaveDisabled}
-						onClick={handleSubmit}
-						loading={isLoading}
-						prefix={<Save size={14} />}
-					>
-						Update Changes
-					</Button>
-				</div>
 			</Form>
 		);
 	}, [
@@ -146,6 +128,26 @@ function AccountSettingsModal({
 		[handleClose],
 	);
 
+	const footer = (
+		<div className="account-settings-modal__footer">
+			<RemoveIntegrationAccount
+				accountId={account?.id}
+				onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+			/>
+
+			<Button
+				variant="solid"
+				color="secondary"
+				disabled={isSaveDisabled}
+				onClick={handleSubmit}
+				loading={isLoading}
+				prefix={<Save size={14} />}
+			>
+				Update Changes
+			</Button>
+		</div>
+	);
+
 	return (
 		<DrawerWrapper
 			open={true}
@@ -154,6 +156,8 @@ function AccountSettingsModal({
 			direction="right"
 			showCloseButton
 			onOpenChange={handleDrawerOpenChange}
+			width="wide"
+			footer={footer}
 		>
 			{renderAccountDetails()}
 		</DrawerWrapper>

@@ -474,69 +474,71 @@ function ServiceAccountDrawer({
 					</>
 				)}
 			</div>
+		</div>
+	);
 
-			<div className="sa-drawer__footer">
-				{activeTab === ServiceAccountDrawerTab.Keys ? (
-					<Pagination
-						current={keysPage}
-						pageSize={PAGE_SIZE}
-						total={keys.length}
-						showTotal={(total: number, range: number[]): JSX.Element => (
-							<>
-								<span className="sa-drawer__pagination-range">
-									{range[0]} &#8212; {range[1]}
-								</span>
-								<span className="sa-drawer__pagination-total"> of {total}</span>
-							</>
-						)}
-						showSizeChanger={false}
-						hideOnSinglePage
-						onChange={(page): void => {
-							void setKeysPage(page);
-						}}
-						className="sa-drawer__keys-pagination"
-					/>
-				) : (
-					<>
-						{!isDeleted && (
+	const footer = (
+		<div className="sa-drawer__footer">
+			{activeTab === ServiceAccountDrawerTab.Keys ? (
+				<Pagination
+					current={keysPage}
+					pageSize={PAGE_SIZE}
+					total={keys.length}
+					showTotal={(total: number, range: number[]): JSX.Element => (
+						<>
+							<span className="sa-drawer__pagination-range">
+								{range[0]} &#8212; {range[1]}
+							</span>
+							<span className="sa-drawer__pagination-total"> of {total}</span>
+						</>
+					)}
+					showSizeChanger={false}
+					hideOnSinglePage
+					onChange={(page): void => {
+						void setKeysPage(page);
+					}}
+					className="sa-drawer__keys-pagination"
+				/>
+			) : (
+				<>
+					{!isDeleted && (
+						<Button
+							variant="ghost"
+							color="destructive"
+							className="sa-drawer__footer-btn"
+							onClick={(): void => {
+								setIsDeleteOpen(true);
+							}}
+						>
+							<Trash2 size={12} />
+							Delete Service Account
+						</Button>
+					)}
+					{!isDeleted && (
+						<div className="sa-drawer__footer-right">
 							<Button
-								variant="ghost"
-								color="destructive"
-								className="sa-drawer__footer-btn"
-								onClick={(): void => {
-									setIsDeleteOpen(true);
-								}}
+								variant="solid"
+								color="secondary"
+								size="sm"
+								onClick={handleClose}
 							>
-								<Trash2 size={12} />
-								Delete Service Account
+								<X size={14} />
+								Cancel
 							</Button>
-						)}
-						{!isDeleted && (
-							<div className="sa-drawer__footer-right">
-								<Button
-									variant="solid"
-									color="secondary"
-									size="sm"
-									onClick={handleClose}
-								>
-									<X size={14} />
-									Cancel
-								</Button>
-								<Button
-									variant="solid"
-									color="primary"
-									size="sm"
-									loading={isSaving}
-									disabled={!isDirty}
-									onClick={handleSave}
-								>
-									Save Changes
-								</Button>
-							</div>
-						)}
-					</>
-				)}
-			</div>
+							<Button
+								variant="solid"
+								color="primary"
+								size="sm"
+								loading={isSaving}
+								disabled={!isDirty}
+								onClick={handleSave}
+							>
+								Save Changes
+							</Button>
+						</div>
+					)}
+				</>
+			)}
 		</div>
 	);
 
@@ -554,6 +556,8 @@ function ServiceAccountDrawer({
 				showOverlay={false}
 				title="Service Account Details"
 				className="sa-drawer"
+				width="wide"
+				footer={footer}
 			>
 				{drawerContent}
 			</DrawerWrapper>

@@ -1,17 +1,10 @@
 .edit-member-drawer {
-	&__layout {
-		display: flex;
-		flex-direction: column;
-		height: calc(100vh - 48px);
-	}
-
 	&__body {
 		flex: 1;
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
-		padding: var(--padding-5) var(--padding-4);
 	}
 
 	&__field {
@@ -120,11 +113,6 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		height: 56px;
-		padding: 0 var(--padding-4);
-		border-top: 1px solid var(--l1-border);
-		flex-shrink: 0;
-		background: var(--card);
 	}
 
 	&__footer-left {

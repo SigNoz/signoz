@@ -25,6 +25,8 @@ function AuthHeader(): JSX.Element {
 				className="auth-header-help-button"
 				prefix={<LifeBuoy size={12} />}
 				onClick={handleGetHelp}
+				variant="solid"
+				color="none"
 			>
 				Get Help
 			</Button>

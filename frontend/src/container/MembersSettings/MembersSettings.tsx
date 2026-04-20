@@ -178,7 +178,6 @@ function MembersSettings(): JSX.Element {
 					>
 						<Button
 							variant="solid"
-							size="sm"
 							color="secondary"
 							className="members-filter-trigger"
 						>
@@ -203,7 +202,6 @@ function MembersSettings(): JSX.Element {
 
 					<Button
 						variant="solid"
-						size="sm"
 						color="primary"
 						onClick={(): void => setIsInviteModalOpen(true)}
 					>

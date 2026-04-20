@@ -62,7 +62,6 @@ function RemoveIntegrationAccount({
 				variant="solid"
 				color="destructive"
 				prefix={<Unlink size={14} />}
-				size="sm"
 				onClick={handleDisconnect}
 				disabled={isRemoveIntegrationLoading}
 			>

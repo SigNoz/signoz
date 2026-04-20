@@ -662,6 +662,8 @@ function CustomTimePicker({
 						disabled={zoomOutDisabled}
 						data-testid="zoom-out-btn"
 						prefix={<ZoomOut size={14} />}
+						variant="solid"
+						color="none"
 					/>
 				</Tooltip>
 			)}

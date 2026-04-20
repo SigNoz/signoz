@@ -216,7 +216,6 @@ function ServiceAccountsSettings(): JSX.Element {
 					>
 						<Button
 							variant="solid"
-							size="sm"
 							color="secondary"
 							className="sa-settings-filter-trigger"
 						>
@@ -241,7 +240,6 @@ function ServiceAccountsSettings(): JSX.Element {
 
 					<Button
 						variant="solid"
-						size="sm"
 						color="primary"
 						onClick={async (): Promise<void> => {
 							await setIsCreateModalOpen(true);

@@ -59,23 +59,6 @@ function CloudAccountSetupModal({
 					onConnectionTimeout={handleConnectionTimeout}
 					onConnectionError={handleConnectionError}
 				/>
-
-				<div className="cloud-account-setup-modal__footer">
-					<Button
-						variant="solid"
-						color="primary"
-						prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
-						onClick={handleSubmit}
-						disabled={
-							selectedRegions.length === 0 ||
-							isLoading ||
-							isGeneratingUrl ||
-							modalState === ModalStateEnum.WAITING
-						}
-					>
-						Launch Cloud Formation Template
-					</Button>
-				</div>
 			</div>
 		);
 	}, [
@@ -97,6 +80,25 @@ function CloudAccountSetupModal({
 		handleConnectionTimeout,
 		handleConnectionError,
 	]);
+
+	const footer = (
+		<div className="cloud-account-setup-modal__footer">
+			<Button
+				variant="solid"
+				color="primary"
+				prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
+				onClick={handleSubmit}
+				disabled={
+					selectedRegions.length === 0 ||
+					isLoading ||
+					isGeneratingUrl ||
+					modalState === ModalStateEnum.WAITING
+				}
+			>
+				Launch Cloud Formation Template
+			</Button>
+		</div>
+	);
 
 	const getSelectedRegionsCount = useCallback(
 		(): number => selectedRegions.length,
@@ -155,6 +157,8 @@ function CloudAccountSetupModal({
 			direction="right"
 			showCloseButton
 			title={modalConfig.title}
+			width="wide"
+			footer={footer}
 		>
 			{renderContent()}
 		</DrawerWrapper>

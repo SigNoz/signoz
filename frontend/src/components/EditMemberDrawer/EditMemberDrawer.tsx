@@ -593,65 +593,69 @@ function EditMemberDrawer({
 	const drawerContent = (
 		<div className="edit-member-drawer__layout">
 			<div className="edit-member-drawer__body">{drawerBody}</div>
+		</div>
+	);
 
-			{!isDeleted && (
-				<div className="edit-member-drawer__footer">
-					<div className="edit-member-drawer__footer-left">
-						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
-							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-									onClick={(): void => setShowDeleteConfirm(true)}
-									disabled={isRootUser || isSelf}
-								>
-									<Trash2 size={12} />
-									{isInvited ? 'Revoke Invite' : 'Delete Member'}
-								</Button>
-							</span>
-						</Tooltip>
-
-						<div className="edit-member-drawer__footer-divider" />
-						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-									onClick={handleGenerateResetLink}
-									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
-								>
-									<RefreshCw size={12} />
-									{isGeneratingLink
-										? 'Generating...'
-										: isInvited
-										? getInviteButtonLabel(
-												isLoadingTokenStatus,
-												existingToken,
-												isTokenExpired,
-												tokenNotFound,
-										  )
-										: 'Generate Password Reset Link'}
-								</Button>
-							</span>
-						</Tooltip>
-					</div>
-
-					<div className="edit-member-drawer__footer-right">
-						<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
-							<X size={14} />
-							Cancel
-						</Button>
-
+	const footer = (
+		<div className="edit-member-drawer__footer">
+			<div className="edit-member-drawer__footer-left">
+				<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
+					<span className="edit-member-drawer__tooltip-wrapper">
 						<Button
+							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
+							onClick={(): void => setShowDeleteConfirm(true)}
+							disabled={isRootUser || isSelf}
 							variant="solid"
-							color="primary"
-							size="sm"
-							disabled={!isDirty || isSaving || isRootUser}
-							onClick={handleSave}
+							color="none"
 						>
-							{isSaving ? 'Saving...' : 'Save Member Details'}
+							<Trash2 size={12} />
+							{isInvited ? 'Revoke Invite' : 'Delete Member'}
 						</Button>
-					</div>
-				</div>
-			)}
+					</span>
+				</Tooltip>
+
+				<div className="edit-member-drawer__footer-divider" />
+				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+					<span className="edit-member-drawer__tooltip-wrapper">
+						<Button
+							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+							onClick={handleGenerateResetLink}
+							disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
+							variant="solid"
+							color="none"
+						>
+							<RefreshCw size={12} />
+							{isGeneratingLink
+								? 'Generating...'
+								: isInvited
+								? getInviteButtonLabel(
+										isLoadingTokenStatus,
+										existingToken,
+										isTokenExpired,
+										tokenNotFound,
+								  )
+								: 'Generate Password Reset Link'}
+						</Button>
+					</span>
+				</Tooltip>
+			</div>
+
+			<div className="edit-member-drawer__footer-right">
+				<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+					<X size={14} />
+					Cancel
+				</Button>
+
+				<Button
+					variant="solid"
+					color="primary"
+					size="sm"
+					disabled={!isDirty || isSaving || isRootUser}
+					onClick={handleSave}
+				>
+					{isSaving ? 'Saving...' : 'Save Member Details'}
+				</Button>
+			</div>
 		</div>
 	);
 
@@ -668,7 +672,8 @@ function EditMemberDrawer({
 				showCloseButton
 				showOverlay={false}
 				title="Member Details"
-				className="edit-member-drawer"
+				footer={footer}
+				width="wide"
 			>
 				{drawerContent}
 			</DrawerWrapper>

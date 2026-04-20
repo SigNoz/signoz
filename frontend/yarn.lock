@@ -2504,6 +2504,11 @@
     hashery "^1.5.1"
     keyv "^5.6.0"
 
+"@chenglou/pretext@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@chenglou/pretext/-/pretext-0.0.5.tgz#1a6734df005c951c6aecaa0decced0d2a82034f2"
+  integrity sha512-A8GZN10REdFGsyuiUgLV8jjPDDFMg5GmgxGWV0I3igxBOnzj+jgz2VMmVD7g+SFyoctfeqHFxbNatKSzVRWtRg==
+
 "@codemirror/autocomplete@6.18.6", "@codemirror/autocomplete@^6.0.0":
   version "6.18.6"
   resolved "https://registry.yarnpkg.com/@codemirror/autocomplete/-/autocomplete-6.18.6.tgz#de26e864a1ec8192a1b241eb86addbb612964ddb"
@@ -4377,6 +4382,11 @@
   dependencies:
     cross-spawn "^7.0.6"
 
+"@radix-ui/number@1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@radix-ui/number/-/number-1.1.1.tgz#7b2c9225fbf1b126539551f5985769d0048d9090"
+  integrity sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==
+
 "@radix-ui/primitive@1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@radix-ui/primitive/-/primitive-1.0.1.tgz#e46f9958b35d10e9f6dc71c497305c22e3e55dbd"
@@ -4744,6 +4754,33 @@
     "@radix-ui/react-primitive" "2.1.3"
     "@radix-ui/react-use-callback-ref" "1.1.1"
     "@radix-ui/react-use-controllable-state" "1.2.2"
+
+"@radix-ui/react-select@^2.2.6":
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-select/-/react-select-2.2.6.tgz#022cf8dab16bf05d0d1b4df9e53e4bea1b744fd9"
+  integrity sha512-I30RydO+bnn2PQztvo25tswPH+wFBjehVGtmagkU78yMdwTwVf12wnAOF+AeP8S2N8xD+5UPbGhkUfPyvT+mwQ==
+  dependencies:
+    "@radix-ui/number" "1.1.1"
+    "@radix-ui/primitive" "1.1.3"
+    "@radix-ui/react-collection" "1.1.7"
+    "@radix-ui/react-compose-refs" "1.1.2"
+    "@radix-ui/react-context" "1.1.2"
+    "@radix-ui/react-direction" "1.1.1"
+    "@radix-ui/react-dismissable-layer" "1.1.11"
+    "@radix-ui/react-focus-guards" "1.1.3"
+    "@radix-ui/react-focus-scope" "1.1.7"
+    "@radix-ui/react-id" "1.1.1"
+    "@radix-ui/react-popper" "1.2.8"
+    "@radix-ui/react-portal" "1.1.9"
+    "@radix-ui/react-primitive" "2.1.3"
+    "@radix-ui/react-slot" "1.2.3"
+    "@radix-ui/react-use-callback-ref" "1.1.1"
+    "@radix-ui/react-use-controllable-state" "1.2.2"
+    "@radix-ui/react-use-layout-effect" "1.1.1"
+    "@radix-ui/react-use-previous" "1.1.1"
+    "@radix-ui/react-visually-hidden" "1.2.3"
+    aria-hidden "^1.2.4"
+    react-remove-scroll "^2.6.3"
 
 "@radix-ui/react-slot@1.0.2":
   version "1.0.2"
@@ -5375,17 +5412,19 @@
     "@commitlint/cli" "^17.6.7"
     "@commitlint/config-conventional" "^17.6.7"
 
-"@signozhq/ui@0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.5.tgz#8badef53416b7ace0fe61ff01ff3da679a0e4ba5"
-  integrity sha512-4vPvUh3rwpst068qXUZ26JfCQGv1vo1xMSwtKw6wTjiiq1Bf3geP84HWVXycNMIrIeVnUgDGnqe0D4doh+mL8A==
+"@signozhq/ui@0.0.9":
+  version "0.0.9"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.9.tgz#e00f2ec86c5528eea91d1669510a702c4253de0d"
+  integrity sha512-L9DV0OF69Z2sMnxwPEGpSTiDxI/liT6+QfzngGVnxMl/9t3WKcPr1/p8dbPOcAS6bU9lQEBOiYlsoIejM8DsXw==
   dependencies:
+    "@chenglou/pretext" "^0.0.5"
     "@radix-ui/react-checkbox" "^1.2.3"
     "@radix-ui/react-dialog" "^1.1.11"
     "@radix-ui/react-dropdown-menu" "^2.1.16"
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-popover" "^1.1.15"
     "@radix-ui/react-radio-group" "^1.3.4"
+    "@radix-ui/react-select" "^2.2.6"
     "@radix-ui/react-slot" "^1.2.3"
     "@radix-ui/react-switch" "^1.1.4"
     "@radix-ui/react-tabs" "^1.1.3"
@@ -5395,21 +5434,16 @@
     "@tanstack/react-table" "^8.21.3"
     "@tanstack/react-virtual" "^3.13.9"
     "@types/lodash-es" "^4.17.12"
-    class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     cmdk "^1.1.1"
-    date-fns "^4.1.0"
     dayjs "^1.11.10"
     lodash-es "^4.17.21"
-    lucide-react "^0.445.0"
-    lucide-solid "^0.510.0"
     motion "^11.11.17"
     next-themes "^0.4.6"
     nuqs "^2.8.9"
     react-day-picker "^9.8.1"
     react-resizable-panels "^4.7.1"
     sonner "^2.0.7"
-    tailwind-merge "^3.5.0"
 
 "@sinclair/typebox@^0.25.16":
   version "0.25.24"
@@ -8433,13 +8467,6 @@ cjs-module-lexer@^2.1.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-2.2.0.tgz#b3ca5101843389259ade7d88c77bd06ce55849ca"
   integrity sha512-4bHTS2YuzUvtoLjdy+98ykbNB5jS0+07EvFNXerqZQJ89F7DI6ET7OQo/HJuW6K0aVsKA9hj9/RVb2kQVOrPDQ==
-
-class-variance-authority@^0.7.0:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/class-variance-authority/-/class-variance-authority-0.7.1.tgz#4008a798a0e4553a781a57ac5177c9fb5d043787"
-  integrity sha512-Ka+9Trutv7G8M6WT6SeiRWz792K5qEqIGEGzXKhAE6xOWAY6pPH8U+9IY3oCMv6kqTmLsv7Xh/2w2RigkePMsg==
-  dependencies:
-    clsx "^2.1.1"
 
 classnames@2.3.2, classnames@2.x, classnames@^2.2.1, classnames@^2.2.3, classnames@^2.2.5, classnames@^2.2.6, classnames@^2.3.1, classnames@^2.3.2:
   version "2.3.2"
@@ -13953,16 +13980,6 @@ lucide-react@0.498.0:
   resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.498.0.tgz#3109eac93dfd0c1561db7a5cddfe4b9b20c14315"
   integrity sha512-k8IKbvMNV5Dj7CHRrKyIc1wAtmGdEF0r6SCaiGAt5cZ8KnjcEao8mfdydKkWspy65l40MdlcfdK0kT3QrxpnIg==
 
-lucide-react@^0.445.0:
-  version "0.445.0"
-  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.445.0.tgz#35c42341e98fbf0475b2a6cf74fd25ef7cbfcd62"
-  integrity sha512-YrLf3aAHvmd4dZ8ot+mMdNFrFpJD7YRwQ2pUcBhgqbmxtrMP4xDzIorcj+8y+6kpuXBF4JB0NOCTUWIYetJjgA==
-
-lucide-solid@^0.510.0:
-  version "0.510.0"
-  resolved "https://registry.yarnpkg.com/lucide-solid/-/lucide-solid-0.510.0.tgz#f5b17397ef1df3017f62f96f4d00e080abfb492f"
-  integrity sha512-G6rKYxURfSLG/zeOCN/BEl2dq2ezujFKPbcHjl7RLJ4bBQwWk4ZF2Swga/8anWglSVZyqYz7HMrrpb8/+vOcXw==
-
 lunr@^2.3.9:
   version "2.3.9"
   resolved "https://registry.yarnpkg.com/lunr/-/lunr-2.3.9.tgz#18b123142832337dd6e964df1a5a7707b25d35e1"
@@ -18858,11 +18875,6 @@ table@^6.0.9, table@^6.9.0:
     slice-ansi "^4.0.0"
     string-width "^4.2.3"
     strip-ansi "^6.0.1"
-
-tailwind-merge@^3.5.0:
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/tailwind-merge/-/tailwind-merge-3.5.0.tgz#06502f4496ba15151445d97d916a26564d50d1ca"
-  integrity sha512-I8K9wewnVDkL1NTGoqWmVEIlUcB9gFriAEkXkfCjX5ib8ezGxtR3xD7iZIxrfArjEsH7F1CHD4RFUtxefdqV/A==
 
 tapable@^2.2.1:
   version "2.3.0"
