@@ -146,11 +146,10 @@
   },
   "telemetryCollectionStrategy": {
     "azure": {
-      "metrics": {
-        "serviceNames": ["Microsoft.Cdn/profiles"]
-      },
+      "resourceType": "Microsoft.Cdn/profiles",
+      "metrics": {},
       "logs": {
-        "categories": ["allLogs"]
+        "categoryGroups": ["allLogs"]
       }
     }
   },

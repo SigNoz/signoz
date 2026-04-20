@@ -16,14 +16,26 @@
         "description": ""
       },
       {
-        "name": "azure_availability_minimum",
-        "unit": "Percent",
+        "name": "azure_blobcapacity_average",
+        "unit": "Bytes",
         "type": "Gauge",
         "description": ""
       },
       {
-        "name": "azure_availability_maximum",
-        "unit": "Percent",
+        "name": "azure_blobcount_average",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_blobprovisionedsize_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_containercount_average",
+        "unit": "Count",
         "type": "Gauge",
         "description": ""
       },
@@ -34,19 +46,7 @@
         "description": ""
       },
       {
-        "name": "azure_egress_average",
-        "unit": "Bytes",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_egress_minimum",
-        "unit": "Bytes",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_egress_maximum",
+        "name": "azure_indexcapacity_average",
         "unit": "Bytes",
         "type": "Gauge",
         "description": ""
@@ -58,37 +58,7 @@
         "description": ""
       },
       {
-        "name": "azure_ingress_average",
-        "unit": "Bytes",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_ingress_minimum",
-        "unit": "Bytes",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_ingress_maximum",
-        "unit": "Bytes",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
         "name": "azure_successe2elatency_average",
-        "unit": "Milliseconds",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_successe2elatency_minimum",
-        "unit": "Milliseconds",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_successe2elatency_maximum",
         "unit": "Milliseconds",
         "type": "Gauge",
         "description": ""
@@ -100,26 +70,8 @@
         "description": ""
       },
       {
-        "name": "azure_successserverlatency_minimum",
-        "unit": "Milliseconds",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_successserverlatency_maximum",
-        "unit": "Milliseconds",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
         "name": "azure_transactions_total",
         "unit": "Count",
-        "type": "Gauge",
-        "description": ""
-      },
-      {
-        "name": "azure_usedcapacity_average",
-        "unit": "Bytes",
         "type": "Gauge",
         "description": ""
       }
@@ -134,11 +86,10 @@
   },
   "telemetryCollectionStrategy": {
     "azure": {
-      "metrics": {
-        "serviceNames": ["Microsoft.Storage/storageAccounts/blobServices"]
-      },
+      "resourceType": "Microsoft.Storage/storageAccounts/blobServices",
+      "metrics": {},
       "logs": {
-        "categories": ["allLogs"]
+        "categoryGroups": ["allLogs"]
       }
     }
   },
