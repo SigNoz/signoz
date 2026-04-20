@@ -140,7 +140,7 @@ function CreateServiceAccountModal(): JSX.Element {
 
 				<Button
 					type="submit"
-					// @ts-expect-error -- form prop not in @signozhq/ui Button type
+					// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
 					form="create-sa-form"
 					variant="solid"
 					color="primary"

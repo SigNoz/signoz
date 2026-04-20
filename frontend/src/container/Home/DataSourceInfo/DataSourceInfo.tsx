@@ -83,14 +83,7 @@ function DataSourceInfo({
 								className="periscope-btn primary"
 								prefix={<img src={containerPlusUrl} alt="plus" />}
 								onClick={handleConnect}
-								// @ts-expect-error -- role/onKeyDown props not in @signozhq/ui Button type
-								role="button"
-								tabIndex={0}
-								onKeyDown={(e: React.KeyboardEvent): void => {
-									if (e.key === 'Enter') {
-										handleConnect();
-									}
-								}}
+								// TODO - Support tabindex, keyboard events - @H4ad
 							>
 								Connect Data Source
 							</Button>
