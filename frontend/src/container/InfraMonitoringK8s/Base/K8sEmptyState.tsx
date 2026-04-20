@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { Button } from '@signozhq/ui';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import history from 'lib/history';
 import { AlertTriangle, LifeBuoy } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
@@ -18,6 +18,14 @@ export interface K8sListResponseMetadata {
 }
 
 type K8sEmptyStateProps = Partial<K8sBaseListEmptyStateContext>;
+
+const handleContactSupport = (isCloudUser: boolean): void => {
+	if (isCloudUser) {
+		history.push('/support');
+	} else {
+		window.open('https://signoz.io/slack', '_blank');
+	}
+};
 
 export function K8sEmptyState({
 	isError,
