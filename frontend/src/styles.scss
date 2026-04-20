@@ -814,14 +814,3 @@ notifications	-  2050
 		color: var(--l1-foreground) !important;
 	}
 }
-
-.lightMode {
-	[data-slot='drawer-content'] {
-		background: var(--l1-background) !important;
-		border: 1px solid var(--l1-border) !important;
-
-		[data-slot='drawer-title'] {
-			color: var(--l1-foreground) !important;
-		}
-	}
-}
