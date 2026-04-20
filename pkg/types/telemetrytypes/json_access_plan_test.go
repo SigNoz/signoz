@@ -41,7 +41,6 @@ type jsonAccessTestNode struct {
 	MaxDynamicTypes int                            `yaml:"maxDynamicTypes,omitempty"`
 	MaxDynamicPaths int                            `yaml:"maxDynamicPaths,omitempty"`
 	ElemType        string                         `yaml:"elemType,omitempty"`
-	AvailableTypes  []string                       `yaml:"availableTypes,omitempty"`
 	Branches        map[string]*jsonAccessTestNode `yaml:"branches,omitempty"`
 }
 
