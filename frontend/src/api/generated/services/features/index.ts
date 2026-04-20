@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,11 +13,11 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import type { ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns the supported features and their details
@@ -36,7 +37,7 @@ export const getGetFeaturesQueryKey = () => {
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -70,7 +71,7 @@ export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFeatures<
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
