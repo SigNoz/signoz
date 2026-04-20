@@ -689,131 +689,144 @@ class Traces(ABC):
         return traces
 
 
+def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
+    """
+    Insert traces into ClickHouse tables following the same logic as the Go exporter.
+    Handles insertion into:
+    - distributed_signoz_index_v3 (main traces table)
+    - distributed_traces_v3_resource (resource fingerprints)
+    - distributed_tag_attributes_v2 (tag attributes)
+    - distributed_span_attributes_keys (attribute keys)
+    - distributed_signoz_error_index_v2 (error events)
+
+    Pure function so the seeder container (tests/fixtures/seeder/) can reuse
+    the exact insert path used by the pytest fixtures. `conn` is a
+    clickhouse-connect Client.
+    """
+    resources: List[TracesResource] = []
+    for trace in traces:
+        resources.extend(trace.resource)
+
+    if len(resources) > 0:
+        conn.insert(
+            database="signoz_traces",
+            table="distributed_traces_v3_resource",
+            data=[resource.np_arr() for resource in resources],
+        )
+
+    tag_attributes: List[TracesTagAttributes] = []
+    for trace in traces:
+        tag_attributes.extend(trace.tag_attributes)
+
+    if len(tag_attributes) > 0:
+        conn.insert(
+            database="signoz_traces",
+            table="distributed_tag_attributes_v2",
+            data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
+        )
+
+    attribute_keys: List[TracesResourceOrAttributeKeys] = []
+    resource_keys: List[TracesResourceOrAttributeKeys] = []
+    for trace in traces:
+        attribute_keys.extend(trace.attribute_keys)
+        resource_keys.extend(trace.resource_keys)
+
+    if len(attribute_keys) > 0:
+        conn.insert(
+            database="signoz_traces",
+            table="distributed_span_attributes_keys",
+            data=[attribute_key.np_arr() for attribute_key in attribute_keys],
+        )
+
+    if len(resource_keys) > 0:
+        conn.insert(
+            database="signoz_traces",
+            table="distributed_span_attributes_keys",
+            data=[resource_key.np_arr() for resource_key in resource_keys],
+        )
+
+    conn.insert(
+        database="signoz_traces",
+        table="distributed_signoz_index_v3",
+        column_names=[
+            "ts_bucket_start",
+            "resource_fingerprint",
+            "timestamp",
+            "trace_id",
+            "span_id",
+            "trace_state",
+            "parent_span_id",
+            "flags",
+            "name",
+            "kind",
+            "kind_string",
+            "duration_nano",
+            "status_code",
+            "status_message",
+            "status_code_string",
+            "attributes_string",
+            "attributes_number",
+            "attributes_bool",
+            "resources_string",
+            "events",
+            "links",
+            "response_status_code",
+            "external_http_url",
+            "http_url",
+            "external_http_method",
+            "http_method",
+            "http_host",
+            "db_name",
+            "db_operation",
+            "has_error",
+            "is_remote",
+            "resource",
+        ],
+        data=[trace.np_arr() for trace in traces],
+    )
+
+    error_events: List[TracesErrorEvent] = []
+    for trace in traces:
+        error_events.extend(trace.error_events)
+
+    if len(error_events) > 0:
+        conn.insert(
+            database="signoz_traces",
+            table="distributed_signoz_error_index_v2",
+            data=[error_event.np_arr() for error_event in error_events],
+        )
+
+
+_TRACES_TABLES_TO_TRUNCATE = [
+    "signoz_index_v3",
+    "traces_v3_resource",
+    "tag_attributes_v2",
+    "span_attributes_keys",
+    "signoz_error_index_v2",
+]
+
+
+def truncate_traces_tables(conn, cluster: str) -> None:
+    """Truncate all traces tables. Used by the pytest fixture teardown and by
+    the seeder's DELETE /telemetry/traces endpoint."""
+    for table in _TRACES_TABLES_TO_TRUNCATE:
+        conn.query(
+            f"TRUNCATE TABLE signoz_traces.{table} ON CLUSTER '{cluster}' SYNC"
+        )
+
+
 @pytest.fixture(name="insert_traces", scope="function")
 def insert_traces(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[List[Traces]], None], Any, None]:
     def _insert_traces(traces: List[Traces]) -> None:
-        """
-        Insert traces into ClickHouse tables following the same logic as the Go exporter.
-        This function handles insertion into multiple tables:
-        - distributed_signoz_index_v3 (main traces table)
-        - distributed_traces_v3_resource (resource fingerprints)
-        - distributed_tag_attributes_v2 (tag attributes)
-        - distributed_span_attributes_keys (attribute keys)
-        - distributed_signoz_error_index_v2 (error events)
-        """
-        resources: List[TracesResource] = []
-        for trace in traces:
-            resources.extend(trace.resource)
-
-        if len(resources) > 0:
-            clickhouse.conn.insert(
-                database="signoz_traces",
-                table="distributed_traces_v3_resource",
-                data=[resource.np_arr() for resource in resources],
-            )
-
-        tag_attributes: List[TracesTagAttributes] = []
-        for trace in traces:
-            tag_attributes.extend(trace.tag_attributes)
-
-        if len(tag_attributes) > 0:
-            clickhouse.conn.insert(
-                database="signoz_traces",
-                table="distributed_tag_attributes_v2",
-                data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
-            )
-
-        attribute_keys: List[TracesResourceOrAttributeKeys] = []
-        resource_keys: List[TracesResourceOrAttributeKeys] = []
-        for trace in traces:
-            attribute_keys.extend(trace.attribute_keys)
-            resource_keys.extend(trace.resource_keys)
-
-        if len(attribute_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_traces",
-                table="distributed_span_attributes_keys",
-                data=[attribute_key.np_arr() for attribute_key in attribute_keys],
-            )
-
-        if len(resource_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_traces",
-                table="distributed_span_attributes_keys",
-                data=[resource_key.np_arr() for resource_key in resource_keys],
-            )
-
-        # Insert main traces
-        clickhouse.conn.insert(
-            database="signoz_traces",
-            table="distributed_signoz_index_v3",
-            column_names=[
-                "ts_bucket_start",
-                "resource_fingerprint",
-                "timestamp",
-                "trace_id",
-                "span_id",
-                "trace_state",
-                "parent_span_id",
-                "flags",
-                "name",
-                "kind",
-                "kind_string",
-                "duration_nano",
-                "status_code",
-                "status_message",
-                "status_code_string",
-                "attributes_string",
-                "attributes_number",
-                "attributes_bool",
-                "resources_string",
-                "events",
-                "links",
-                "response_status_code",
-                "external_http_url",
-                "http_url",
-                "external_http_method",
-                "http_method",
-                "http_host",
-                "db_name",
-                "db_operation",
-                "has_error",
-                "is_remote",
-                "resource",
-            ],
-            data=[trace.np_arr() for trace in traces],
-        )
-
-        # Insert error events
-        error_events: List[TracesErrorEvent] = []
-        for trace in traces:
-            error_events.extend(trace.error_events)
-
-        if len(error_events) > 0:
-            clickhouse.conn.insert(
-                database="signoz_traces",
-                table="distributed_signoz_error_index_v2",
-                data=[error_event.np_arr() for error_event in error_events],
-            )
+        insert_traces_to_clickhouse(clickhouse.conn, traces)
 
     yield _insert_traces
 
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_traces.signoz_index_v3 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_traces.traces_v3_resource ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_traces.tag_attributes_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_traces.span_attributes_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_traces.signoz_error_index_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
+    truncate_traces_tables(
+        clickhouse.conn,
+        clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
 
 
