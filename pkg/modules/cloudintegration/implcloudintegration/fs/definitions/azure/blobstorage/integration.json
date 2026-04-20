@@ -135,7 +135,7 @@
   "telemetryCollectionStrategy": {
     "azure": {
       "metrics": {
-        "serviceNames": ["Microsoft.Storage/storageAccounts"]
+        "serviceNames": ["Microsoft.Storage/storageAccounts/blobServices"]
       },
       "logs": {
         "categories": ["allLogs"]
