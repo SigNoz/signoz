@@ -121,7 +121,7 @@ type PostableMapper struct {
 // UpdatableMapper is the HTTP request body for updating a mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableMapper struct {
-	FieldContext *FieldContext `json:"field_context,omitempty"`
+	FieldContext FieldContext  `json:"field_context,omitempty"`
 	Config       *MapperConfig `json:"config,omitempty"`
 	Enabled      *bool         `json:"enabled,omitempty"`
 }
