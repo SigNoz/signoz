@@ -2,7 +2,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -79,18 +78,15 @@ function LeftContainer({
 
 	return (
 		<>
-			{isCancelled ? (
-				<QueryCancelledPlaceholder subText='Click "Run Query" to reload the chart.' />
-			) : (
-				<WidgetGraph
-					selectedGraph={selectedGraph}
-					queryResponse={queryResponse}
-					setRequestData={setRequestData}
-					selectedWidget={selectedWidget}
-					isLoadingPanelData={isLoadingPanelData}
-					enableDrillDown={enableDrillDown}
-				/>
-			)}
+			<WidgetGraph
+				selectedGraph={selectedGraph}
+				queryResponse={queryResponse}
+				setRequestData={setRequestData}
+				selectedWidget={selectedWidget}
+				isLoadingPanelData={isLoadingPanelData}
+				enableDrillDown={enableDrillDown}
+				isCancelled={isCancelled}
+			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection
 					selectedGraph={selectedGraph}

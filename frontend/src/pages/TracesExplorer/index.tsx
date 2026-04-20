@@ -92,6 +92,9 @@ function TracesExplorer(): JSX.Element {
 			queryClient.cancelQueries(listQueryKeyRef.current);
 		}
 		setIsCancelled(true);
+		// Reset loading state — the active view unmounts when cancelled, so no
+		// child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
 	}, [queryClient]);
 
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
@@ -227,7 +230,10 @@ function TracesExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
 									isLoadingQueries={isLoadingQueries}
 									handleCancelQuery={handleCancelQuery}
 								/>

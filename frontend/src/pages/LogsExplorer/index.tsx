@@ -93,6 +93,9 @@ function LogsExplorer(): JSX.Element {
 			queryClient.cancelQueries(chartQueryKeyRef.current);
 		}
 		setIsCancelled(true);
+		// Reset loading state — the views container unmounts when cancelled, so
+		// no child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
 	}, [queryClient]);
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
@@ -316,7 +319,10 @@ function LogsExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
 									isLoadingQueries={isLoadingQueries}
 									handleCancelQuery={handleCancelQuery}
 									showLiveLogs={showLiveLogs}
