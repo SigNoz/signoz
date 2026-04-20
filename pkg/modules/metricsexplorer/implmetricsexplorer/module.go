@@ -1122,7 +1122,7 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 	)
 	finalSB.From("__metric_totals mt")
 	finalSB.Join("__total_time_series tts", "1=1")
-	finalSB.OrderBy("percentage").Desc()
+	finalSB.OrderByDesc("percentage")
 	finalSB.Limit(req.Limit)
 
 	query, args := finalSB.BuildWithFlavor(sqlbuilder.ClickHouse)
