@@ -42,6 +42,10 @@
 		align-items: center;
 		gap: 8px;
 		margin-top: 16px;
+
+		input {
+			color: var(--l1-foreground);
+		}
 	}
 }
 
