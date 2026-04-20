@@ -1,7 +1,7 @@
 /**
  * Rule: no-raw-absolute-path
  *
- * Catches two patterns that break at runtime when the app is served from a
+ * Catches patterns that break at runtime when the app is served from a
  * sub-path (e.g. /signoz/):
  *
  *   1. window.open(path, '_blank')
@@ -9,6 +9,12 @@
  *
  *   2. window.location.origin + path  /  `${window.location.origin}${path}`
  *      → use getAbsoluteUrl(path)
+ *
+ *   3. frontendBaseUrl: window.location.origin  (bare origin usage)
+ *      → use getBaseUrl() to include the base path
+ *
+ *   4. window.location.href = path
+ *      → use withBasePath(path) or navigate() for internal navigation
  *
  * External URLs (first arg starts with "http") are explicitly allowed.
  */
@@ -18,6 +24,19 @@ function isOriginAccess(node) {
 		node.type === 'MemberExpression' &&
 		!node.computed &&
 		node.property.name === 'origin' &&
+		node.object.type === 'MemberExpression' &&
+		!node.object.computed &&
+		node.object.property.name === 'location' &&
+		node.object.object.type === 'Identifier' &&
+		node.object.object.name === 'window'
+	);
+}
+
+function isHrefAccess(node) {
+	return (
+		node.type === 'MemberExpression' &&
+		!node.computed &&
+		node.property.name === 'href' &&
 		node.object.type === 'MemberExpression' &&
 		!node.object.computed &&
 		node.object.property.name === 'location' &&
@@ -61,6 +80,10 @@ export default {
 				'Use openInNewTab(path) instead of window.open(path, "_blank") — openInNewTab prepends the base path automatically.',
 			originConcat:
 				'Use getAbsoluteUrl(path) instead of window.location.origin + path — getAbsoluteUrl prepends the base path automatically.',
+			originDirect:
+				'Use getBaseUrl() instead of window.location.origin — getBaseUrl includes the base path.',
+			hrefAssign:
+				'Use withBasePath(path) or navigate() instead of window.location.href = path — ensures the base path is included.',
 		},
 	},
 
@@ -96,6 +119,33 @@ export default {
 				if (node.expressions.some(isOriginAccess)) {
 					context.report({ node, messageId: 'originConcat' });
 				}
+			},
+
+			// window.location.origin used directly (not in concatenation)
+			// Catches: frontendBaseUrl: window.location.origin
+			MemberExpression(node) {
+				if (!isOriginAccess(node)) return;
+
+				const parent = node.parent;
+				// Skip if parent is BinaryExpression with + (handled by BinaryExpression visitor)
+				if (parent.type === 'BinaryExpression' && parent.operator === '+') return;
+				// Skip if inside TemplateLiteral (handled by TemplateLiteral visitor)
+				if (parent.type === 'TemplateLiteral') return;
+
+				context.report({ node, messageId: 'originDirect' });
+			},
+
+			// window.location.href = path
+			AssignmentExpression(node) {
+				if (node.operator !== '=') return;
+				if (!isHrefAccess(node.left)) return;
+
+				// Allow external URLs
+				if (isExternalUrl(node.right)) return;
+				// Allow safe helper calls
+				if (isSafeHelperCall(node.right)) return;
+
+				context.report({ node, messageId: 'hrefAssign' });
 			},
 		};
 	},
