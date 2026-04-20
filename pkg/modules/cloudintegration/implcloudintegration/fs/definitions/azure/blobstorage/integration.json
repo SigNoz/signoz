@@ -1,0 +1,155 @@
+{
+  "id": "blobstorage",
+  "title": "Blob Storage",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supportedSignals": {
+    "metrics": true,
+    "logs": true
+  },
+  "dataCollected": {
+    "metrics": [
+      {
+        "name": "azure_availability_average",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_availability_minimum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_availability_maximum",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_egress_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_egress_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_egress_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_egress_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ingress_total",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ingress_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ingress_minimum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_ingress_maximum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successe2elatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successe2elatency_minimum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successe2elatency_maximum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successserverlatency_average",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successserverlatency_minimum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_successserverlatency_maximum",
+        "unit": "Milliseconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_transactions_total",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "azure_usedcapacity_average",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "Resource ID",
+        "path": "resources.azure.resource.id",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetryCollectionStrategy": {
+    "azure": {
+      "metrics": {
+        "serviceNames": ["Microsoft.Storage/storageAccounts"]
+      },
+      "logs": {
+        "categories": ["allLogs"]
+      }
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Blob Storage Overview",
+        "description": "Overview of Blob Storage",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}
