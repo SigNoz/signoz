@@ -99,11 +99,13 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		const cap = installCapture(page);
 
 		// Seed: create a rule via the list's 'New Alert Rule' flow.
-		await page.goto(`/alerts?tab=AlertRules`);
-		await shot(page, '01_step1_rules-list-empty.png');
+		// Register mark BEFORE navigation so installCapture catches the load-time
+		// GET /api/v2/rules even when the response lands before any waitForResponse
+		// could register. dumpSince's 500ms drain covers late arrivals.
 		{
 			const mark = cap.mark();
-			await page.waitForResponse(r => r.url().includes('/api/v2/rules') && r.request().method() === 'GET');
+			await page.goto(`/alerts?tab=AlertRules`);
+			await shot(page, '01_step1_rules-list-empty.png');
 			await cap.dumpSince(mark, '01_step1.1_GET_rules.json', '1.1', 'flow-1', /\/api\/v2\/rules$/);
 		}
 
