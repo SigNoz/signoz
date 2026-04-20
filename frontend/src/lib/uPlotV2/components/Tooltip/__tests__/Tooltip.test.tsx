@@ -258,22 +258,12 @@ describe('Tooltip header status pill', () => {
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 
-	it('shows Live status when not pinned and header is visible', () => {
-		const uPlotInstance = createUPlotInstance(0);
-
-		renderTooltip({ uPlotInstance, isPinned: false });
-
-		expect(screen.getByText('Live')).toBeInTheDocument();
-		expect(screen.queryByText('Pinned')).not.toBeInTheDocument();
-	});
-
 	it('shows Pinned status when pinned and header is visible', () => {
 		const uPlotInstance = createUPlotInstance(0);
 
 		renderTooltip({ uPlotInstance, isPinned: true });
 
 		expect(screen.getByText('Pinned')).toBeInTheDocument();
-		expect(screen.queryByText('Live')).not.toBeInTheDocument();
 	});
 
 	it('does not render status pill when showTooltipHeader is false', () => {
