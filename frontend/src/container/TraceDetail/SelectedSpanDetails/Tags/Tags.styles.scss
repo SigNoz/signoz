@@ -5,33 +5,11 @@
 		overflow-y: auto;
 		padding: 8px;
 
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 		margin-bottom: 8px;
 	}
 
 	.ant-tooltip-inner {
 		box-shadow: none;
-	}
-}
-
-.lightMode {
-	.tagTooltip {
-		.ant-tooltip-content {
-			background-color: var(--bg-vanilla-300);
-		}
-
-		.ant-tooltip-inner {
-			box-shadow: none;
-			background-color: var(--bg-vanilla-300);
-			color: var(--bg-ink-200);
-		}
-
-		.ant-tooltip-arrow {
-			border-top-color: var(--bg-vanilla-300) !important;
-		}
-
-		&.ant-tooltip {
-			--antd-arrow-background-color: var(--bg-vanilla-300) !important;
-		}
 	}
 }

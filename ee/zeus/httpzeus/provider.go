@@ -109,10 +109,37 @@ func (provider *Provider) GetDeployment(ctx context.Context, key string) ([]byte
 	return []byte(gjson.GetBytes(response, "data").String()), nil
 }
 
+func (provider *Provider) GetMeters(ctx context.Context, key string) ([]byte, error) {
+	response, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
+		http.MethodGet,
+		key,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(gjson.GetBytes(response, "data").String()), nil
+}
+
 func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte) error {
 	_, err := provider.do(
 		ctx,
 		provider.config.DeprecatedURL.JoinPath("/api/v1/usage"),
+		http.MethodPost,
+		key,
+		data,
+	)
+
+	return err
+}
+
+func (provider *Provider) PutMetersV2(ctx context.Context, key string, data []byte) error {
+	_, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
 		http.MethodPost,
 		key,
 		data,

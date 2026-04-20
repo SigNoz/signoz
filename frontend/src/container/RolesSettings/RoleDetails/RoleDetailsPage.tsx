@@ -3,8 +3,8 @@ import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Table2, Trash2, Users } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { toast } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import { useAuthzResources } from 'api/generated/services/authz';
 import {

@@ -5,7 +5,7 @@ import { Style } from '@signozhq/design-tokens';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';

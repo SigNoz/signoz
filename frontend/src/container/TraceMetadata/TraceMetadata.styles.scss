@@ -19,8 +19,8 @@
 				padding: 6px 8px;
 				align-items: center;
 				gap: 4px;
-				border: 1px solid var(--bg-slate-300);
-				background: var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				border-radius: 4px;
 				box-shadow: none;
 			}
@@ -31,16 +31,16 @@
 				margin-left: 6px;
 				align-items: center;
 				gap: 4px;
-				border: 1px solid var(--bg-slate-300);
+				border: 1px solid var(--l1-border);
 				border-radius: 4px 0px 0px 4px;
-				background: var(--bg-slate-500);
+				background: var(--l2-background);
 
 				.drafting {
-					color: white;
+					color: var(--l1-foreground);
 				}
 
 				.trace-id {
-					color: #fff;
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -56,15 +56,15 @@
 				justify-content: center;
 				align-items: center;
 				gap: 10px;
-				background: var(--bg-slate-400);
-				color: var(--Vanilla-400, #c0c1c3);
+				background: var(--l3-background);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 18px; /* 128.571% */
 				letter-spacing: -0.07px;
-				border: 1px solid var(--bg-slate-300);
+				border: 1px solid var(--l1-border);
 				border-left: unset;
 				border-radius: 0px 4px 4px 0px;
 			}
@@ -77,11 +77,11 @@
 			.service-entry-info {
 				display: flex;
 				gap: 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				align-items: center;
 
 				.text {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -96,19 +96,19 @@
 					align-items: center;
 					gap: 8px;
 					border-radius: 50px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-slate-500);
+					border: 1px solid var(--l1-border);
+					background: var(--l1-border);
 				}
 			}
 
 			.trace-duration {
 				display: flex;
 				gap: 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				align-items: center;
 
 				.text {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -121,11 +121,11 @@
 			.start-time-info {
 				display: flex;
 				gap: 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				align-items: center;
 
 				.text {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -143,7 +143,7 @@
 
 		.separator {
 			width: 1px;
-			background: #1d212d;
+			background: var(--l3-background);
 		}
 
 		.data-point {
@@ -153,7 +153,7 @@
 			gap: 4px;
 
 			.text {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				text-align: center;
 				font-family: Inter;
 				font-size: 13px;
@@ -164,7 +164,7 @@
 			}
 
 			.value {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
 				font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
@@ -176,86 +176,6 @@
 				letter-spacing: -0.1px;
 				text-transform: uppercase;
 				text-align: right;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.trace-metadata {
-		.metadata-info {
-			.first-row {
-				.previous-btn {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-200);
-				}
-
-				.trace-name {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-200);
-					border-right: none;
-
-					.drafting {
-						color: var(--bg-ink-100);
-					}
-
-					.trace-id {
-						color: var(--bg-ink-100);
-					}
-				}
-
-				.trace-id-value {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-					border: 1px solid var(--bg-vanilla-300);
-				}
-			}
-
-			.second-row {
-				.service-entry-info {
-					color: var(--bg-ink-400);
-
-					.text {
-						color: var(--bg-ink-400);
-					}
-
-					.root-span-name {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-300);
-					}
-				}
-
-				.trace-duration {
-					color: var(--bg-ink-400);
-
-					.text {
-						color: var(--bg-ink-400);
-					}
-				}
-
-				.start-time-info {
-					color: var(--bg-ink-400);
-
-					.text {
-						color: var(--bg-ink-400);
-					}
-				}
-			}
-		}
-
-		.datapoints-info {
-			.separator {
-				background: var(--bg-vanilla-300);
-			}
-
-			.data-point {
-				.text {
-					color: var(--bg-ink-400);
-				}
-
-				.value {
-					color: var(--bg-ink-100);
-				}
 			}
 		}
 	}

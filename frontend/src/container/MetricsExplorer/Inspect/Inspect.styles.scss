@@ -20,7 +20,7 @@
 			align-items: center;
 			justify-content: center;
 			cursor: default;
-			color: var(--text-vanilla-500);
+			color: var(--l2-foreground);
 		}
 	}
 
@@ -35,7 +35,7 @@
 			flex: 2;
 			gap: 16px;
 			padding-right: 24px;
-			border-right: 1px solid var(--bg-slate-400);
+			border-right: 1px solid var(--l1-border);
 			width: 60%;
 
 			.inspect-metrics-graph-view {
@@ -57,7 +57,7 @@
 							cursor: default;
 
 							span {
-								color: var(--text-vanilla-100);
+								color: var(--l1-foreground);
 							}
 						}
 					}
@@ -133,7 +133,7 @@
 						cursor: default;
 
 						span {
-							color: var(--text-vanilla-100);
+							color: var(--l1-foreground);
 						}
 					}
 				}
@@ -224,14 +224,15 @@
 				}
 
 				.metric-filters {
-					.query-builder-search-container {
+					.query-builder-search-container,
+					.query-builder-search-v2 {
 						width: 100%;
 
 						.ant-select {
 							.ant-select-selector {
-								background-color: var(--bg-ink-400);
-								color: var(--text-vanilla-100);
-								border-color: var(--bg-slate-400);
+								background-color: var(--l1-background);
+								color: var(--l1-foreground);
+								border: 0.5px solid var(--l1-border) !important;
 							}
 						}
 					}
@@ -251,7 +252,7 @@
 				flex-direction: column;
 				gap: 16px;
 				padding-bottom: 32px;
-				border-bottom: 1px solid var(--bg-slate-400);
+				border-bottom: 1px solid var(--l1-border);
 
 				.home-checklist-title {
 					display: flex;
@@ -382,19 +383,19 @@
 		}
 
 		.graph-popover-header-text {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 		}
 
 		.graph-popover-row-label {
-			color: var(--bg-slate-50);
+			color: var(--muted-foreground);
 			width: 10%;
 		}
 
 		.graph-popover-cell {
 			padding: 4px 8px;
-			background-color: #1f1f1f;
+			background-color: var(--l3-background);
 			border-radius: 4px;
-			color: #fff;
+			color: var(--l1-foreground);
 			min-width: 60px;
 			max-width: 60px;
 			text-overflow: ellipsis;
@@ -414,7 +415,7 @@
 
 			.footer-divider {
 				flex: 1;
-				border-top: 1px dashed #ccc;
+				border-top: 1px dashed var(--l1-border);
 				margin: 0 8px;
 			}
 		}
@@ -477,22 +478,22 @@
 	}
 
 	.labels-table {
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 
 		.labels-key {
-			color: var(--bg-vanilla-400);
-			background-color: var(--bg-slate-500);
+			color: var(--l2-foreground);
+			background-color: var(--l3-background);
 			font-family: 'Geist Mono';
 		}
 
 		.labels-value {
-			background-color: var(--bg-slate-500);
+			background-color: var(--l3-background);
 			opacity: 80%;
 			font-family: 'Geist Mono';
 
 			.field-renderer-container {
 				.label {
-					color: var(--bg-slate-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -512,97 +513,5 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 8px;
-	}
-}
-
-.lightMode {
-	.inspect-metrics-modal {
-		.inspect-metrics-title {
-			.inspect-metrics-button {
-				color: var(--text-ink-400);
-			}
-		}
-
-		.inspect-metrics-content {
-			.inspect-metrics-content-first-col {
-				.inspect-metrics-graph-view {
-					.inspect-metrics-graph-view-header {
-						.ant-btn-group {
-							.time-series-button-label,
-							.metric-name-button-label {
-								span {
-									color: var(--text-ink-100);
-								}
-							}
-						}
-					}
-				}
-
-				.inspect-metrics-query-builder {
-					.inspect-metrics-query-builder-header {
-						.query-builder-button-label {
-							span {
-								color: var(--text-ink-100);
-							}
-						}
-					}
-
-					.metric-filters {
-						.query-builder-search-v2 {
-							.ant-select {
-								.ant-select-selector {
-									background-color: var(--bg-vanilla-100);
-									color: var(--text-ink-100);
-									border: 0.5px solid var(--bg-slate-300) !important;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.graph-popover {
-		.graph-popover-card {
-			.graph-popover-header-text {
-				color: var(--text-ink-400);
-			}
-
-			.graph-popover-row-label {
-				color: var(--bg-slate-50);
-			}
-
-			.graph-popover-cell {
-				background-color: var(--bg-vanilla-300);
-				color: var(--text-ink-100);
-			}
-
-			.footer-row {
-				.footer-divider {
-					border-top: 1px dashed var(--bg-slate-300);
-				}
-			}
-		}
-	}
-
-	.expanded-view {
-		.labels-table {
-			border: 1px solid var(--bg-vanilla-400);
-
-			.labels-key {
-				color: var(--bg-slate-400);
-				background-color: var(--bg-vanilla-400);
-			}
-
-			.labels-value {
-				background-color: var(--bg-vanilla-400);
-				.field-renderer-container {
-					.label {
-						color: var(--bg-vanilla-400);
-					}
-				}
-			}
-		}
 	}
 }

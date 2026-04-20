@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Button, Input, Radio, RadioChangeEvent, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';

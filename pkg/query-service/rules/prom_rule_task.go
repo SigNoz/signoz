@@ -330,7 +330,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	}()
 
 	g.logger.InfoContext(ctx, "promql rule task", "name", g.name, "eval_started_at", ts)
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
+	maintenance, err := g.maintenanceStore.ListPlannedMaintenance(ctx, g.orgID.StringValue())
 	if err != nil {
 		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
 	}

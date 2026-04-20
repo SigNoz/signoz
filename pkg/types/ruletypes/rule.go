@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Rule struct {
+type StorableRule struct {
 	bun.BaseModel `bun:"table:rule"`
 	types.Identifiable
 	types.TimeAuditable
@@ -20,7 +20,7 @@ type Rule struct {
 	OrgID   string `bun:"org_id,type:text"`
 }
 
-func NewStatsFromRules(rules []*Rule) map[string]any {
+func NewStatsFromRules(rules []*StorableRule) map[string]any {
 	stats := make(map[string]any)
 	for _, rule := range rules {
 		gettableRule := &GettableRule{}
@@ -54,10 +54,10 @@ type RuleAlert struct {
 }
 
 type RuleStore interface {
-	CreateRule(context.Context, *Rule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
-	EditRule(context.Context, *Rule, func(context.Context) error) error
+	CreateRule(context.Context, *StorableRule, func(context.Context, valuer.UUID) error) (valuer.UUID, error)
+	EditRule(context.Context, *StorableRule, func(context.Context) error) error
 	DeleteRule(context.Context, valuer.UUID, func(context.Context) error) error
-	GetStoredRules(context.Context, string) ([]*Rule, error)
-	GetStoredRule(context.Context, valuer.UUID) (*Rule, error)
+	GetStoredRules(context.Context, string) ([]*StorableRule, error)
+	GetStoredRule(context.Context, valuer.UUID) (*StorableRule, error)
 	GetStoredRulesByMetricName(context.Context, string, string) ([]RuleAlert, error)
 }

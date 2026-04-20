@@ -6,12 +6,13 @@
 	}
 
 	::-webkit-scrollbar-track {
-		box-shadow: inset 0 0 6px rgba(18, 18, 18, 0.3);
+		box-shadow: inset 0 0 6px
+			color-mix(in srgb, var(--background) 30%, transparent);
 	}
 
 	&.dark {
 		.ant-layout-sider-trigger {
-			background-color: #0b0c0e !important;
+			background-color: var(--background) !important;
 		}
 	}
 

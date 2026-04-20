@@ -10,14 +10,14 @@
 		.ant-modal {
 			&-content,
 			&-header {
-				background: var(--bg-ink-500);
+				background: var(--l1-background);
 			}
 
 			&-header {
 				border-bottom: none;
 
 				.ant-modal-title {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 
@@ -30,8 +30,8 @@
 
 			&-footer {
 				margin-top: 0;
-				background: var(--bg-ink-400);
-				border-top: 1px solid var(--bg-slate-500);
+				background: var(--l2-background);
+				border-top: 1px solid var(--l1-border);
 				padding: 16px !important;
 				.add-span-to-funnel-modal {
 					&__save-button {
@@ -39,7 +39,7 @@
 						align-items: center;
 						justify-content: center;
 						gap: 4px;
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 						font-size: 12px;
 						font-weight: 500;
 						line-height: 24px;
@@ -49,16 +49,16 @@
 							display: flex;
 						}
 						&:disabled {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							.ant-btn-icon {
 								svg {
-									stroke: var(--bg-vanilla-400);
+									stroke: var(--l2-foreground);
 								}
 							}
 						}
 					}
 					&__discard-button {
-						background: var(--bg-slate-500);
+						background: var(--l1-border);
 					}
 				}
 				.ant-btn {
@@ -112,7 +112,7 @@
 		&-input {
 			flex: 1;
 			padding: 6px 8px;
-			background: var(--bg-ink-300);
+			background: var(--l3-background);
 
 			.ant-input-prefix {
 				height: 18px;
@@ -129,11 +129,11 @@
 				line-height: 18px;
 				letter-spacing: -0.07px;
 				font-weight: 400;
-				background: var(--bg-ink-300);
+				background: var(--l3-background);
 			}
 
 			input::placeholder {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				opacity: 0.4;
 			}
 		}
@@ -148,10 +148,10 @@
 		gap: 4px;
 		flex-shrink: 0;
 		border-radius: 2px;
-		background: var(--bg-slate-500);
+		background: var(--l1-border);
 		border: none;
 		box-shadow: none;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 		font-weight: 500;
 		line-height: 24px;
@@ -202,7 +202,7 @@
 	&__back-button {
 		@extend %button-base;
 		gap: 6px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 14px;
 		line-height: 20px;
 		margin-bottom: 14px;
@@ -243,19 +243,19 @@
 		.ant-modal {
 			&-content,
 			&-header {
-				background: var(--bg-vanilla-100);
+				background: var(--l1-foreground);
 			}
 
 			&-title {
-				color: var(--bg-ink-500);
+				color: var(--l1-background);
 			}
 
 			&-footer {
-				border-top-color: var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
+				border-top-color: var(--l1-border);
+				background: var(--l1-foreground);
 				.add-span-to-funnel-modal__discard-button {
-					background: var(--bg-vanilla-200);
-					color: var(--bg-ink-500);
+					background: var(--l2-background);
+					color: var(--l1-background);
 				}
 			}
 		}
@@ -263,35 +263,35 @@
 
 	.add-span-to-funnel-modal {
 		&__search-input {
-			background: var(--bg-vanilla-100);
-			border: 1px solid var(--bg-vanilla-300);
-			color: var(--bg-ink-500);
+			background: var(--l1-foreground);
+			border: 1px solid var(--l1-border);
+			color: var(--l1-background);
 
 			input {
-				color: var(--bg-ink-500);
-				background: var(--bg-vanilla-100);
+				color: var(--l1-background);
+				background: var(--l1-foreground);
 
 				&::placeholder {
-					color: var(--bg-ink-400);
+					color: var(--l2-background);
 				}
 			}
 		}
 
 		&__create-button {
-			background: var(--bg-vanilla-300);
-			color: var(--bg-ink-400);
+			background: var(--l3-background);
+			color: var(--l2-background);
 		}
 
 		&__back-button {
-			color: var(--bg-ink-500);
+			color: var(--l1-background);
 
 			&:hover {
-				color: var(--bg-ink-400);
+				color: var(--l2-background);
 			}
 		}
 
 		&__details h3 {
-			color: var(--bg-ink-500);
+			color: var(--l1-background);
 		}
 	}
 }

@@ -25,7 +25,7 @@
 			margin-bottom: 8px;
 
 			strong {
-				color: #666;
+				color: var(--muted-foreground);
 				font-size: 14px;
 			}
 		}
@@ -39,7 +39,7 @@
 			}
 
 			.delete-parameter-btn {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				padding: 4px;
 				height: 32px;
 				width: 32px;
@@ -65,7 +65,7 @@
 		gap: 8px;
 		margin-top: 24px;
 		padding-top: 16px;
-		border-top: 1px solid var(--bg-slate-400);
+		border-top: 1px solid var(--l1-border);
 	}
 }
 
@@ -74,7 +74,7 @@
 		.url-parameters-section {
 			.parameter-row {
 				.delete-parameter-btn {
-					color: var(--bg-slate-400);
+					color: var(--l1-border);
 
 					&:hover {
 						color: var(--bg-cherry-500) !important;
@@ -86,7 +86,7 @@
 		}
 
 		.context-link-footer {
-			border-top-color: var(--bg-vanilla-200);
+			border-top-color: var(--l1-border);
 		}
 	}
 }

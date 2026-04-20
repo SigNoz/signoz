@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -31,6 +32,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/ruler"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/swaggest/jsonschema-go"
@@ -70,7 +72,9 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
+		struct{ alertmanager.Handler }{},
 		struct{ aio11ypricingrule.Handler }{},
+		struct{ ruler.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

@@ -22,7 +22,7 @@
 
 		.dashboards-list-title-container {
 			.title {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-size: var(--font-size-lg);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -31,7 +31,7 @@
 			}
 
 			.subtitle {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -44,18 +44,18 @@
 			.ant-table-cell {
 				padding: 0;
 				border: none;
-				background: var(--bg-ink-500);
+				background: var(--l1-background);
 			}
 
 			.dashboard-list-item {
 				padding: 12px 16px 16px 16px;
-				border: 1px solid var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
 				border-top: none;
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 				cursor: pointer;
 
 				.dashboard-title {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 
 				.title-with-action {
@@ -93,7 +93,7 @@
 						}
 
 						.title {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 							font-size: var(--font-size-sm);
 							font-style: normal;
 							font-weight: var(--font-weight-medium);
@@ -107,7 +107,7 @@
 						}
 
 						.ant-typography {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 							font-size: var(--font-size-sm);
 							font-style: normal;
 							font-weight: var(--font-weight-medium);
@@ -147,8 +147,9 @@
 								gap: 4px;
 								height: 28px;
 								border-radius: 20px;
-								border: 1px solid rgba(173, 127, 88, 0.2);
-								background: rgba(173, 127, 88, 0.1);
+								border: 1px solid
+									color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+								background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 								color: var(--bg-sienna-400);
 								text-align: center;
 								font-family: Inter;
@@ -178,13 +179,13 @@
 						width: 14px;
 						height: 14px;
 						border-radius: 50px;
-						background: var(--bg-slate-300);
+						background: var(--l1-border);
 						display: flex;
 						justify-content: center;
 						align-items: center;
 
 						.tag-text {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							leading-trim: both;
 							text-edge: cap;
 							font-size: 8px;
@@ -203,13 +204,13 @@
 							width: 14px;
 							height: 14px;
 							border-radius: 50px;
-							background: var(--bg-slate-300);
+							background: var(--l1-border);
 							display: flex;
 							justify-content: center;
 							align-items: center;
 
 							.tag-text {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 								leading-trim: both;
 								text-edge: cap;
 								font-size: 8px;
@@ -221,7 +222,7 @@
 						}
 						.dashboard-created-by {
 							margin-left: 8px;
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
 							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -240,13 +241,13 @@
 
 						.ant-typography {
 							margin-left: 6px;
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							font-size: var(--font-size-xs);
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
 							line-height: 18px; /* 128.571% */
 							letter-spacing: -0.07px;
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
 							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -264,13 +265,13 @@
 						align-items: center;
 
 						.text {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							font-size: var(--font-size-xs);
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
 							line-height: 18px; /* 128.571% */
 							letter-spacing: -0.07px;
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
 							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -286,13 +287,13 @@
 							width: 14px;
 							height: 14px;
 							border-radius: 50px;
-							background: var(--bg-slate-300);
+							background: var(--l1-border);
 							display: flex;
 							justify-content: center;
 							align-items: center;
 
 							.tag-text {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 								leading-trim: both;
 								text-edge: cap;
 								font-size: 8px;
@@ -304,7 +305,7 @@
 						}
 						.dashboard-created-by {
 							margin-left: 8px;
-							color: var(--Vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
 							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -326,7 +327,7 @@
 			align-items: center;
 
 			> a {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
 				font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
 				font-size: var(--font-size-sm);
@@ -337,9 +338,9 @@
 		}
 
 		.ant-pagination-item-active {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 			> a {
-				color: var(--bg-ink-500) !important;
+				color: var(--foreground) !important;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-medium);
@@ -379,7 +380,7 @@
 
 		.total {
 			font-family: 'Space Mono';
-			color: var(--bg-vanilla-300);
+			color: var(--l2-foreground);
 		}
 	}
 
@@ -392,11 +393,11 @@
 		justify-content: center;
 		align-items: flex-start;
 		border-radius: 6px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--l1-border);
 		gap: 4px;
 
 		.error-text {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -419,8 +420,8 @@
 				justify-content: center;
 				gap: 5.937px;
 				border-radius: 1.484px;
-				background: var(--bg-slate-500);
-				color: var(--bg-vanilla-100);
+				background: var(--l1-border);
+				color: var(--l1-foreground);
 
 				.ant-btn-icon {
 					margin-inline-end: 0px;
@@ -460,7 +461,7 @@
 		justify-content: center;
 		align-items: flex-start;
 		border-radius: 6px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--l1-border);
 
 		.dashboard-img {
 			width: 32px;
@@ -470,7 +471,7 @@
 		.text {
 			margin-top: 4px;
 			.no-dashboard {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -479,7 +480,7 @@
 				letter-spacing: -0.07px;
 			}
 			.info {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -504,8 +505,8 @@
 				justify-content: center;
 				gap: 5.937px;
 				border-radius: 1.484px;
-				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
+				background: var(--primary-background);
+				color: var(--l1-foreground);
 
 				.ant-btn-icon {
 					margin-inline-end: 0px;
@@ -557,7 +558,7 @@
 		justify-content: center;
 		align-items: flex-start;
 		border-radius: 6px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--l1-border);
 
 		.img {
 			width: 32px;
@@ -565,7 +566,7 @@
 		}
 
 		.text {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -583,12 +584,12 @@
 		height: 44px;
 		flex-shrink: 0;
 		border-radius: 6px 6px 0px 0px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
 
 		.typography {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -622,20 +623,20 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 
 		.ant-modal-body {
 			padding: 0px 16px 28px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -652,8 +653,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
 
@@ -683,7 +684,7 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-slate-500);
+				background: var(--l1-border);
 			}
 
 			.delete-btn {
@@ -696,13 +697,13 @@
 			}
 
 			.delete-btn:hover {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				background: var(--bg-cherry-600);
 			}
 		}
 	}
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: var(--font-size-sm);
 		font-style: normal;
 		font-weight: var(--font-weight-medium);
@@ -716,11 +717,11 @@
 		height: auto;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -737,7 +738,7 @@
 					height: unset;
 					align-items: center;
 					gap: 6px;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -754,7 +755,7 @@
 			.section-2 {
 				display: flex;
 				flex-direction: column;
-				border-top: 1px solid var(--bg-slate-400);
+				border-top: 1px solid var(--l1-border);
 
 				.ant-typography {
 					display: flex;
@@ -780,11 +781,11 @@
 		padding: 0px;
 		align-items: center;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -797,7 +798,7 @@
 			width: 140px;
 
 			.sort-heading {
-				color: var(--bg-slate-200);
+				color: var(--l3-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -814,7 +815,7 @@
 				justify-content: space-between;
 				align-items: center;
 				width: 100%;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -834,11 +835,11 @@
 		align-items: center;
 		border-radius: 4px;
 		padding: 0px;
-		border: 1px solid var(--Slate-400, #1d212d);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -852,7 +853,7 @@
 				text-align: start;
 				align-items: center;
 				width: 100%;
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -870,15 +871,15 @@
 		width: 500px;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--Slate-500, #161922);
-		background: var(--Ink-400, #121317);
+		border: 1px solid var(--l1-border);
+		background: var(--card);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 0px;
 
 		.ant-modal-header {
-			background: var(--Ink-400, #121317);
+			background: var(--card);
 			padding: 16px;
-			border-bottom: 1px solid var(--bg-slate-500);
+			border-bottom: 1px solid var(--l1-border);
 			margin-bottom: 0px;
 		}
 
@@ -897,15 +898,15 @@
 					align-items: flex-start;
 					gap: 7.317px;
 					border-radius: 4px;
-					border: 0.915px solid var(--Slate-500, #161922);
-					background: var(--Ink-300, #16181d);
+					border: 0.915px solid var(--l1-border);
+					background: var(--l2-background);
 
 					.header {
 						display: flex;
 						gap: 4px;
 
 						.title {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 							font-family: Inter;
 							font-size: 12.805px;
 							font-style: normal;
@@ -929,7 +930,7 @@
 							.formatted-time {
 								display: flex;
 								gap: 4px;
-								color: var(--Vanilla-400, #c0c1c3);
+								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
 								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -952,18 +953,18 @@
 									display: flex;
 									justify-content: center;
 									align-items: center;
-									color: var(--bg-vanilla-400);
+									color: var(--l2-foreground);
 									font-size: 8px;
 									font-style: normal;
 									font-weight: var(--font-weight-normal);
 									line-height: normal;
 									letter-spacing: -0.05px;
 									border-radius: 12.805px;
-									background-color: var(--bg-ink-500);
+									background-color: var(--l1-background);
 								}
 
 								.dashboard-created-by {
-									color: var(--Vanilla-400, #c0c1c3);
+									color: var(--l2-foreground);
 									font-variant-numeric: lining-nums tabular-nums stacked-fractions
 										slashed-zero;
 									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -985,7 +986,7 @@
 							.formatted-time {
 								display: flex;
 								gap: 4px;
-								color: var(--Vanilla-400, #c0c1c3);
+								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
 								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -1008,18 +1009,18 @@
 									display: flex;
 									justify-content: center;
 									align-items: center;
-									color: var(--bg-vanilla-400);
+									color: var(--l2-foreground);
 									font-size: 8px;
 									font-style: normal;
 									font-weight: var(--font-weight-normal);
 									line-height: normal;
 									letter-spacing: -0.05px;
 									border-radius: 12.805px;
-									background-color: var(--bg-ink-500);
+									background-color: var(--l1-background);
 								}
 
 								.dashboard-created-by {
-									color: var(--Vanilla-400, #c0c1c3);
+									color: var(--l2-foreground);
 									font-variant-numeric: lining-nums tabular-nums stacked-fractions
 										slashed-zero;
 									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
@@ -1048,7 +1049,7 @@
 					}
 
 					.connection-line {
-						border: 1px dashed var(--bg-slate-400);
+						border: 1px dashed var(--l1-border);
 						min-width: 20px;
 						height: 0px;
 						flex-grow: 1;
@@ -1071,8 +1072,8 @@
 				align-items: center;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--Slate-300, #242834);
-				background: var(--Slate-400, #1d212d);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 			}
 		}
 	}
@@ -1082,93 +1083,93 @@
 	.dashboards-list-container {
 		.dashboards-list-view-content {
 			.title {
-				color: var(--bg-ink-500);
+				color: var(--l1-foreground);
 			}
 			.subtitle {
-				color: var(--bg-ink-300);
+				color: var(--muted-foreground);
 			}
 
 			.ant-table-row {
 				.ant-table-cell {
-					background: var(--bg-vanilla-200);
+					background: var(--l1-background);
 				}
 
 				&:hover {
 					.ant-table-cell {
-						background: var(--bg-vanilla-200) !important;
+						background: var(--l1-background) !important;
 					}
 				}
 
 				.dashboard-list-item {
-					border: 1px solid var(--bg-vanilla-200);
-					background: var(--bg-vanilla-100);
+					border: 1px solid var(--l1-border);
+					background: var(--card);
 
 					.dashboard-title {
-						color: var(--bg-slate-300);
+						color: var(--l2-foreground);
 
 						.title {
-							color: var(--bg-ink-500);
+							color: var(--l1-foreground);
 						}
 					}
 
 					.title-with-action {
 						.dashboard-title {
 							.ant-typography {
-								color: var(--bg-ink-500);
+								color: var(--l1-foreground);
 							}
 						}
 
 						.action-btn {
 							.ant-typography {
-								color: var(--bg-ink-500);
+								color: var(--l1-foreground);
 							}
 						}
 					}
 
 					.dashboard-details {
 						.dashboard-tag {
-							background: var(--bg-vanilla-200);
+							background: var(--l3-background);
 							.tag-text {
-								color: var(--bg-ink-500);
+								color: var(--l1-foreground);
 							}
 						}
 						.created-by {
 							.dashboard-tag {
-								background: var(--bg-vanilla-200);
+								background: var(--l3-background);
 
 								.tag-text {
-									color: var(--bg-ink-500);
+									color: var(--l1-foreground);
 								}
 							}
 							.dashboard-created-by {
-								color: var(--bg-ink-400);
+								color: var(--l2-foreground);
 							}
 						}
 
 						.updated-by {
 							.text {
-								color: var(--bg-ink-400);
+								color: var(--l2-foreground);
 							}
 
 							.dashboard-tag {
-								background: var(--bg-vanilla-200);
+								background: var(--l3-background);
 
 								.tag-text {
-									color: var(--bg-ink-500);
+									color: var(--l1-foreground);
 								}
 							}
 							.dashboard-created-by {
-								color: var(--bg-ink-400);
+								color: var(--l2-foreground);
 							}
 						}
 
 						.dashboard-created-by {
-							color: var(--bg-ink-500);
+							color: var(--l1-foreground);
 						}
 
 						.dashboard-created-at {
 							.ant-typography {
-								color: var(--bg-ink-500);
+								color: var(--l1-foreground);
 							}
 						}
 					}
@@ -1177,41 +1178,41 @@
 		}
 		.no-search {
 			.text {
-				color: var(--bg-ink-300);
+				color: var(--muted-foreground);
 			}
 		}
 
 		.all-dashboards-header {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 
 			.typography {
-				color: var(--bg-ink-400);
+				color: var(--l2-foreground);
 			}
 
 			.right-actions {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 		}
 		.dashboard-empty-state {
 			.text {
 				.no-dashboard {
-					color: var(--bg-ink-100);
+					color: var(--l2-foreground);
 				}
 				.info {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
 		.dashboard-error-state {
 			.error-text {
-				color: var(--bg-ink-300);
+				color: var(--muted-foreground);
 			}
 
 			.action-btns {
 				.retry-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-300);
+					background: var(--l3-background);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -1219,34 +1220,34 @@
 
 	.delete-view-modal {
 		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-200);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--card);
 
 			.ant-modal-header {
-				background: var(--bg-vanilla-100);
+				background: var(--card);
 
 				.title {
-					color: var(--bg-ink-500);
+					color: var(--l1-foreground);
 				}
 			}
 
 			.ant-modal-body {
 				.ant-typography {
-					color: var(--bg-ink-500);
+					color: var(--l1-foreground);
 				}
 
 				.save-view-input {
 					.ant-input {
-						background: var(--bg-vanilla-200);
-						color: var(--bg-ink-500);
+						background: var(--l2-background);
+						color: var(--l1-foreground);
 					}
 				}
 			}
 
 			.ant-modal-footer {
 				.cancel-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
+					background: var(--l3-background);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -1254,18 +1255,18 @@
 
 	.dashboard-actions {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--card);
 
 			.dashboard-action-content {
 				.section-1 {
 					.action-btn {
-						color: var(--bg-ink-400);
+						color: var(--l2-foreground);
 					}
 				}
 
 				.section-2 {
-					border-top: 1px solid var(--bg-vanilla-300);
+					border-top: 1px solid var(--l1-border);
 				}
 			}
 		}
@@ -1273,16 +1274,16 @@
 
 	.sort-dashboards {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--card);
 
 			.sort-content {
 				.sort-heading {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 				}
 
 				.sort-btns {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -1290,11 +1291,11 @@
 
 	.configure-group {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--card);
 			.configure-content {
 				.configure-btn {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -1302,57 +1303,57 @@
 
 	.configure-metadata-root {
 		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--card);
 
 			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-				border-bottom: 1px solid var(--bg-vanilla-300);
+				background: var(--card);
+				border-bottom: 1px solid var(--l1-border);
 			}
 
 			.ant-modal-body {
 				.configure-content {
 					.configure-preview {
-						border: 0.915px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
+						border: 0.915px solid var(--l1-border);
+						background: var(--l2-background);
 
 						.header {
 							.title {
-								color: var(--bg-ink-400);
+								color: var(--l2-foreground);
 							}
 						}
 
 						.details {
 							.createdAt {
 								.formatted-time {
-									color: var(--bg-ink-400);
+									color: var(--l2-foreground);
 								}
 
 								.user {
 									.user-tag {
-										color: var(--bg-ink-400);
-										background-color: var(--bg-vanilla-300);
+										color: var(--l2-foreground);
+										background-color: var(--l3-background);
 									}
 
 									.dashboard-created-by {
-										color: var(--bg-ink-400);
+										color: var(--l2-foreground);
 									}
 								}
 							}
 
 							.updatedAt {
 								.formatted-time {
-									color: var(--bg-ink-400);
+									color: var(--l2-foreground);
 								}
 
 								.user {
 									.user-tag {
-										color: var(--bg-ink-400);
-										background-color: var(--bg-vanilla-300);
+										color: var(--l2-foreground);
+										background-color: var(--l3-background);
 									}
 
 									.dashboard-created-by {
-										color: var(--bg-ink-400);
+										color: var(--l2-foreground);
 									}
 								}
 							}
@@ -1361,7 +1362,7 @@
 
 					.metadata-action {
 						.connection-line {
-							border: 1px dashed var(--bg-vanilla-300);
+							border: 1px dashed var(--l1-border);
 						}
 					}
 				}
@@ -1369,8 +1370,8 @@
 
 			.ant-modal-footer {
 				.save-changes {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-200);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
 				}
 			}
 		}

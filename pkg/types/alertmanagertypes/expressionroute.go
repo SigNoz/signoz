@@ -12,12 +12,12 @@ import (
 )
 
 type PostableRoutePolicy struct {
-	Expression     string         `json:"expression"`
+	Expression     string         `json:"expression" required:"true"`
 	ExpressionKind ExpressionKind `json:"kind"`
-	Channels       []string       `json:"channels"`
-	Name           string         `json:"name"`
+	Channels       []string       `json:"channels" required:"true"`
+	Name           string         `json:"name" required:"true"`
 	Description    string         `json:"description"`
-	Tags           []string       `json:"tags,omitempty"`
+	Tags           []string       `json:"tags,omitempty" nullable:"true"`
 }
 
 func (p *PostableRoutePolicy) Validate() error {
@@ -53,15 +53,13 @@ func (p *PostableRoutePolicy) Validate() error {
 }
 
 type GettableRoutePolicy struct {
-	PostableRoutePolicy // Embedded
+	PostableRoutePolicy
 
-	ID string `json:"id"`
-
-	// Audit fields
-	CreatedAt *time.Time `json:"createdAt"`
-	UpdatedAt *time.Time `json:"updatedAt"`
-	CreatedBy *string    `json:"createdBy"`
-	UpdatedBy *string    `json:"updatedBy"`
+	ID        string    `json:"id" required:"true"`
+	CreatedAt time.Time `json:"createdAt" required:"true"`
+	UpdatedAt time.Time `json:"updatedAt" required:"true"`
+	CreatedBy *string   `json:"createdBy" nullable:"true"`
+	UpdatedBy *string   `json:"updatedBy" nullable:"true"`
 }
 
 type ExpressionKind struct {
@@ -72,6 +70,13 @@ var (
 	RuleBasedExpression   = ExpressionKind{valuer.NewString("rule")}
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
+
+func (ExpressionKind) Enum() []any {
+	return []any{
+		RuleBasedExpression,
+		PolicyBasedExpression,
+	}
+}
 
 // RoutePolicy represents the database model for expression routes.
 type RoutePolicy struct {
