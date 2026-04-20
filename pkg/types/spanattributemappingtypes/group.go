@@ -42,8 +42,8 @@ func (c *Condition) Scan(src any) error {
 	return json.Unmarshal(raw, c)
 }
 
-// SpanAttributeMappingGroup is the domain model for a span attribute mapping group.
-type SpanAttributeMappingGroup struct {
+// Group is the domain model for a span attribute mapping group.
+type Group struct {
 	types.TimeAuditable
 	types.UserAuditable
 
@@ -55,8 +55,8 @@ type SpanAttributeMappingGroup struct {
 	Enabled   bool          `json:"enabled" required:"true"`
 }
 
-func NewSpanAttributeMappingGroupFromStorable(s *StorableSpanAttributeMappingGroup) *SpanAttributeMappingGroup {
-	return &SpanAttributeMappingGroup{
+func NewGroupFromStorable(s *StorableGroup) *Group {
+	return &Group{
 		TimeAuditable: s.TimeAuditable,
 		UserAuditable: s.UserAuditable,
 		ID:            s.ID,
@@ -68,41 +68,41 @@ func NewSpanAttributeMappingGroupFromStorable(s *StorableSpanAttributeMappingGro
 	}
 }
 
-func NewSpanAttributeMappingGroupsFromStorable(ss []*StorableSpanAttributeMappingGroup) []*SpanAttributeMappingGroup {
-	groups := make([]*SpanAttributeMappingGroup, len(ss))
+func NewGroupsFromStorable(ss []*StorableGroup) []*Group {
+	groups := make([]*Group, len(ss))
 	for i, s := range ss {
-		groups[i] = NewSpanAttributeMappingGroupFromStorable(s)
+		groups[i] = NewGroupFromStorable(s)
 	}
 	return groups
 }
 
-// GettableSpanAttributeMappingGroup is the HTTP response representation of a mapping group.
-type GettableSpanAttributeMappingGroup = SpanAttributeMappingGroup
+// GettableGroup is the HTTP response representation of a mapping group.
+type GettableGroup = Group
 
-func NewGettableSpanAttributeMappingGroup(g *SpanAttributeMappingGroup) *GettableSpanAttributeMappingGroup {
+func NewGettableGroup(g *Group) *GettableGroup {
 	return g
 }
 
-type PostableSpanAttributeMappingGroup struct {
+type PostableGroup struct {
 	Name      string        `json:"name"      required:"true"`
 	Category  GroupCategory `json:"category"  required:"true"`
 	Condition Condition     `json:"condition" required:"true"`
 	Enabled   bool          `json:"enabled"`
 }
 
-// UpdatableMappingGroup is the HTTP request body for updating a mapping group.
+// UpdatableGroup is the HTTP request body for updating a mapping group.
 // All fields are optional; only non-nil fields are applied.
-type UpdatableSpanAttributeMappingGroup struct {
+type UpdatableGroup struct {
 	Name      *string    `json:"name,omitempty"`
 	Condition *Condition `json:"condition,omitempty"`
 	Enabled   *bool      `json:"enabled,omitempty"`
 }
 
-type ListSpanAttributeMappingGroupsQuery struct {
+type ListGroupsQuery struct {
 	Category *GroupCategory `query:"category"`
 	Enabled  *bool          `query:"enabled"`
 }
 
-type ListSpanAttributeMappingGroupsResponse struct {
-	Items []*GettableSpanAttributeMappingGroup `json:"items" required:"true" nullable:"true"`
+type ListGroupsResponse struct {
+	Items []*GettableGroup `json:"items" required:"true" nullable:"true"`
 }

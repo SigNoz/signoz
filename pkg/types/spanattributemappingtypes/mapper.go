@@ -72,7 +72,7 @@ func (m *MapperConfig) Scan(src any) error {
 }
 
 // Mapper is the domain model for a span attribute mapper.
-type SpanAttributeMapper struct {
+type Mapper struct {
 	types.TimeAuditable
 	types.UserAuditable
 
@@ -84,9 +84,8 @@ type SpanAttributeMapper struct {
 	Enabled      bool         `json:"enabled"       required:"true"`
 }
 
-// NewMapperFromStorable converts a StorableMapper to a Mapper.
-func NewMapperFromStorable(s *StorableSpanAttributeMapper) *SpanAttributeMapper {
-	return &SpanAttributeMapper{
+func NewMapperFromStorable(s *StorableMapper) *Mapper {
+	return &Mapper{
 		TimeAuditable: s.TimeAuditable,
 		UserAuditable: s.UserAuditable,
 		ID:            s.ID,
@@ -98,21 +97,21 @@ func NewMapperFromStorable(s *StorableSpanAttributeMapper) *SpanAttributeMapper 
 	}
 }
 
-func NewMappersFromStorable(ss []*StorableSpanAttributeMapper) []*SpanAttributeMapper {
-	mappers := make([]*SpanAttributeMapper, len(ss))
+func NewMappersFromStorable(ss []*StorableMapper) []*Mapper {
+	mappers := make([]*Mapper, len(ss))
 	for i, s := range ss {
 		mappers[i] = NewMapperFromStorable(s)
 	}
 	return mappers
 }
 
-type GettableSpanAttributeMapper = SpanAttributeMapper
+type GettableMapper = Mapper
 
-func NewGettableSpanAttributeMapper(m *SpanAttributeMapper) *GettableSpanAttributeMapper {
+func NewGettableMapper(m *Mapper) *GettableMapper {
 	return m
 }
 
-type PostableSpanAttributeMapper struct {
+type PostableMapper struct {
 	Name         string       `json:"name"          required:"true"`
 	FieldContext FieldContext `json:"field_context" required:"true"`
 	Config       MapperConfig `json:"config"        required:"true"`
@@ -121,12 +120,12 @@ type PostableSpanAttributeMapper struct {
 
 // UpdatableMapper is the HTTP request body for updating a mapper.
 // All fields are optional; only non-nil fields are applied.
-type UpdatableSpanAttributeMapper struct {
-	FieldContext *FieldContext `json:"field_context,omitempty"`
+type UpdatableMapper struct {
+	FieldContext *FieldContext  `json:"field_context,omitempty"`
 	Config       *MapperConfig `json:"config,omitempty"`
 	Enabled      *bool         `json:"enabled,omitempty"`
 }
 
-type ListSpanAttributeMappersResponse struct {
-	Items []*GettableSpanAttributeMapper `json:"items" required:"true" nullable:"true"`
+type ListMappersResponse struct {
+	Items []*GettableMapper `json:"items" required:"true" nullable:"true"`
 }

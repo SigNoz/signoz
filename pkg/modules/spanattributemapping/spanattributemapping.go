@@ -11,17 +11,17 @@ import (
 // Module defines the business logic for span attribute mapping groups and mappers.
 type Module interface {
 	// Group operations
-	ListGroups(ctx context.Context, orgID valuer.UUID, q *spanattributemappingtypes.ListSpanAttributeMappingGroupsQuery) ([]*spanattributemappingtypes.SpanAttributeMappingGroup, error)
-	GetGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.SpanAttributeMappingGroup, error)
-	CreateGroup(ctx context.Context, orgID valuer.UUID, createdBy string, req *spanattributemappingtypes.PostableSpanAttributeMappingGroup) (*spanattributemappingtypes.SpanAttributeMappingGroup, error)
-	UpdateGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, req *spanattributemappingtypes.UpdatableSpanAttributeMappingGroup) (*spanattributemappingtypes.SpanAttributeMappingGroup, error)
+	ListGroups(ctx context.Context, orgID valuer.UUID, q *spanattributemappingtypes.ListGroupsQuery) ([]*spanattributemappingtypes.Group, error)
+	GetGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.Group, error)
+	CreateGroup(ctx context.Context, orgID valuer.UUID, createdBy string, req *spanattributemappingtypes.PostableGroup) (*spanattributemappingtypes.Group, error)
+	UpdateGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, req *spanattributemappingtypes.UpdatableGroup) (*spanattributemappingtypes.Group, error)
 	DeleteGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	// Mapper operations
-	ListMappers(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID) ([]*spanattributemappingtypes.SpanAttributeMapper, error)
-	GetMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.SpanAttributeMapper, error)
-	CreateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, createdBy string, req *spanattributemappingtypes.PostableSpanAttributeMapper) (*spanattributemappingtypes.SpanAttributeMapper, error)
-	UpdateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID, updatedBy string, req *spanattributemappingtypes.UpdatableSpanAttributeMapper) (*spanattributemappingtypes.SpanAttributeMapper, error)
+	ListMappers(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID) ([]*spanattributemappingtypes.Mapper, error)
+	GetMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.Mapper, error)
+	CreateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, createdBy string, req *spanattributemappingtypes.PostableMapper) (*spanattributemappingtypes.Mapper, error)
+	UpdateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID, updatedBy string, req *spanattributemappingtypes.UpdatableMapper) (*spanattributemappingtypes.Mapper, error)
 	DeleteMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID) error
 }
 

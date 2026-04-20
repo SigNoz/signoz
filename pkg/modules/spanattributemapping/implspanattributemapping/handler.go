@@ -42,7 +42,7 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var q spanattributemappingtypes.ListSpanAttributeMappingGroupsQuery
+	var q spanattributemappingtypes.ListGroupsQuery
 	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
 		render.Error(rw, err)
 		return
@@ -54,12 +54,12 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*spanattributemappingtypes.GettableSpanAttributeMappingGroup, len(groups))
+	items := make([]*spanattributemappingtypes.GettableGroup, len(groups))
 	for i, g := range groups {
-		items[i] = spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(g)
+		items[i] = spanattributemappingtypes.NewGettableGroup(g)
 	}
 
-	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappingGroupsResponse{Items: items})
+	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListGroupsResponse{Items: items})
 }
 
 // CreateGroup handles POST /api/v1/ai-o11y/mapping/groups.
@@ -79,7 +79,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.PostableSpanAttributeMappingGroup)
+	req := new(spanattributemappingtypes.PostableGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -91,7 +91,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(group))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableGroup(group))
 }
 
 // UpdateGroup handles PUT /api/v1/ai-o11y/mapping/groups/{id}.
@@ -117,7 +117,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.UpdatableSpanAttributeMappingGroup)
+	req := new(spanattributemappingtypes.UpdatableGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -129,7 +129,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(group))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableGroup(group))
 }
 
 // DeleteGroup handles DELETE /api/v1/ai-o11y/mapping/groups/{id}.
@@ -192,12 +192,12 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*spanattributemappingtypes.GettableSpanAttributeMapper, len(mappers))
+	items := make([]*spanattributemappingtypes.GettableMapper, len(mappers))
 	for i, m := range mappers {
-		items[i] = spanattributemappingtypes.NewGettableSpanAttributeMapper(m)
+		items[i] = spanattributemappingtypes.NewGettableMapper(m)
 	}
 
-	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappersResponse{Items: items})
+	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListMappersResponse{Items: items})
 }
 
 // CreateMapper handles POST /api/v1/ai-o11y/mapping/groups/{id}/mappers.
@@ -223,7 +223,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.PostableSpanAttributeMapper)
+	req := new(spanattributemappingtypes.PostableMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -235,7 +235,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableSpanAttributeMapper(mapper))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMapper(mapper))
 }
 
 // UpdateMapper handles PUT /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
@@ -267,7 +267,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.UpdatableSpanAttributeMapper)
+	req := new(spanattributemappingtypes.UpdatableMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -279,7 +279,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableSpanAttributeMapper(mapper))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMapper(mapper))
 }
 
 // DeleteMapper handles DELETE /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.

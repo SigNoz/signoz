@@ -6,7 +6,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type StorableSpanAttributeMappingGroup struct {
+type StorableGroup struct {
 	bun.BaseModel `bun:"table:span_attribute_mapping_group,alias:span_attribute_mapping_group"`
 
 	types.Identifiable
@@ -20,7 +20,7 @@ type StorableSpanAttributeMappingGroup struct {
 	Enabled   bool          `bun:"enabled,notnull,default:true"`
 }
 
-type StorableSpanAttributeMapper struct {
+type StorableMapper struct {
 	bun.BaseModel `bun:"table:span_attribute_mapping,alias:span_attribute_mapping"`
 
 	types.Identifiable
