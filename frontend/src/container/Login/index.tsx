@@ -213,6 +213,7 @@ function Login(): JSX.Element {
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
 
+				// eslint-disable-next-line rulesdir/no-raw-absolute-path
 				window.location.href = url;
 			}
 		} catch (error) {

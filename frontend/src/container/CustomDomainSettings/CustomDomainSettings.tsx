@@ -46,6 +46,7 @@ function DomainUpdateToast({
 					className="custom-domain-toast-visit-btn"
 					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
+						// eslint-disable-next-line rulesdir/no-raw-absolute-path
 						window.open(url, '_blank', 'noopener,noreferrer');
 					}}
 				>

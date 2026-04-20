@@ -35,6 +35,7 @@ export function withBasePath(path: string): string {
  * getAbsoluteUrl(ROUTES.LOGS_EXPLORER) → 'https://host/signoz/logs/logs-explorer'
  */
 export function getAbsoluteUrl(path: string): string {
+	// eslint-disable-next-line rulesdir/no-raw-absolute-path
 	return window.location.origin + withBasePath(path);
 }
 
@@ -44,7 +45,7 @@ export function getAbsoluteUrl(path: string): string {
  * getBaseUrl() → 'https://host/signoz'
  */
 export function getBaseUrl(): string {
-	return (
-		window.location.origin + (_basePath === '/' ? '' : _basePath.slice(0, -1))
-	);
+	// eslint-disable-next-line rulesdir/no-raw-absolute-path
+	const origin = window.location.origin;
+	return origin + (_basePath === '/' ? '' : _basePath.slice(0, -1));
 }

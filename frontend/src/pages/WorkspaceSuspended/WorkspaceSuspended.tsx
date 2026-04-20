@@ -21,6 +21,7 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
 import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
@@ -57,7 +58,7 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [manageCreditCard]);
 

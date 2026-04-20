@@ -108,19 +108,18 @@ export const useSafeNavigate = (
 	const safeNavigate = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(to: string | SafeNavigateParams, options?: NavigateOptions) => {
-			const currentUrl = new URL(
-				`${location.pathname}${location.search}`,
-				window.location.origin,
-			);
+			// eslint-disable-next-line rulesdir/no-raw-absolute-path
+			const base = window.location.origin;
+			const currentUrl = new URL(`${location.pathname}${location.search}`, base);
 
 			let targetUrl: URL;
 
 			if (typeof to === 'string') {
-				targetUrl = new URL(to, window.location.origin);
+				targetUrl = new URL(to, base);
 			} else {
 				targetUrl = new URL(
 					`${to.pathname || location.pathname}${to.search || ''}`,
-					window.location.origin,
+					base,
 				);
 			}
 
