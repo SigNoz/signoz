@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -34,6 +34,8 @@ import { usePreferenceContext } from 'providers/preferences/context/PreferenceCo
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+
+import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 
 import { LiveLogsListProps } from './types';
 
@@ -211,11 +213,7 @@ function LiveLogsList({
 		() => (
 			<div className="live-logs-list-loading">
 				<div className="loading-live-logs-content">
-					<img
-						className="loading-gif"
-						src="/Icons/loading-plane.gif"
-						alt="wait-icon"
-					/>
+					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
 					<Typography>Fetching live logs...</Typography>
 				</div>

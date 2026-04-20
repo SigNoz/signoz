@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -63,6 +64,11 @@ func newProvider(
 		telemetrylogs.TagAttributesV2TableName,
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
+		telemetryaudit.DBName,
+		telemetryaudit.AuditLogsTableName,
+		telemetryaudit.TagAttributesTableName,
+		telemetryaudit.LogAttributeKeysTblName,
+		telemetryaudit.LogResourceKeysTblName,
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
@@ -82,13 +88,13 @@ func newProvider(
 		telemetryStore,
 	)
 
-	// ADD: Create trace operator statement builder
+	// Create trace operator statement builder
 	traceOperatorStmtBuilder := telemetrytraces.NewTraceOperatorStatementBuilder(
 		settings,
 		telemetryMetadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		traceStmtBuilder, // Pass the regular trace statement builder
+		traceStmtBuilder,
 		traceAggExprRewriter,
 	)
 
@@ -110,6 +116,26 @@ func newProvider(
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+	)
+
+	// Create audit statement builder
+	auditFieldMapper := telemetryaudit.NewFieldMapper()
+	auditConditionBuilder := telemetryaudit.NewConditionBuilder(auditFieldMapper)
+	auditAggExprRewriter := querybuilder.NewAggExprRewriter(
+		settings,
+		telemetryaudit.DefaultFullTextColumn,
+		auditFieldMapper,
+		auditConditionBuilder,
+		nil,
+	)
+	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
+		settings,
+		telemetryMetadataStore,
+		auditFieldMapper,
+		auditConditionBuilder,
+		auditAggExprRewriter,
+		telemetryaudit.DefaultFullTextColumn,
+		nil,
 	)
 
 	// Create metric statement builder
@@ -148,6 +174,7 @@ func newProvider(
 		prometheus,
 		traceStmtBuilder,
 		logStmtBuilder,
+		auditStmtBuilder,
 		metricStmtBuilder,
 		meterStmtBuilder,
 		traceOperatorStmtBuilder,

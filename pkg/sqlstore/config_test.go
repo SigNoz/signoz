@@ -19,6 +19,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 	t.Setenv("SIGNOZ_SQLSTORE_SQLITE_BUSY__TIMEOUT", "5s")
 	t.Setenv("SIGNOZ_SQLSTORE_SQLITE_TRANSACTION__MODE", "immediate")
 	t.Setenv("SIGNOZ_SQLSTORE_MAX__OPEN__CONNS", "50")
+	t.Setenv("SIGNOZ_SQLSTORE_MAX__CONN__LIFETIME", "3h")
 
 	conf, err := config.New(
 		context.Background(),
@@ -41,7 +42,8 @@ func TestNewWithEnvProvider(t *testing.T) {
 	expected := &Config{
 		Provider: "sqlite",
 		Connection: ConnectionConfig{
-			MaxOpenConns: 50,
+			MaxOpenConns:    50,
+			MaxConnLifetime: time.Hour * 3,
 		},
 		Sqlite: SqliteConfig{
 			Path:            "/tmp/test.db",

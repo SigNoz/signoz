@@ -3,7 +3,7 @@
 		background: var(--bg-cherry-500) !important;
 	}
 	.delete-funnel-modal-content {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 14px;
 		line-height: 20px; /* 142.857% */
 		letter-spacing: -0.07px;
@@ -20,6 +20,6 @@
 
 .lightMode {
 	.delete-funnel-modal-content {
-		color: var(--bg-ink-100) !important;
+		color: var(--l2-foreground) !important;
 	}
 }

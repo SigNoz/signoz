@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { QueryKey, useIsFetching, useQueryClient } from 'react-query';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui';
 import cx from 'classnames';
 import {
 	ChevronUp,
@@ -50,20 +50,22 @@ function RunQueryBtn({
 
 	return isLoading ? (
 		<Button
-			type="default"
-			icon={<Loader2 size={14} className="loading-icon animate-spin" />}
-			className={cx('cancel-query-btn periscope-btn danger', className)}
+			color="destructive"
+			type="button"
+			prefix={<Loader2 size={14} className="loading-icon animate-spin" />}
+			className={cx('cancel-query-btn', className)}
 			onClick={onCancel}
 		>
 			Cancel
 		</Button>
 	) : (
 		<Button
-			type="primary"
-			className={cx('run-query-btn periscope-btn primary', className)}
+			color="primary"
+			type="button"
+			className={cx('run-query-btn', className)}
 			disabled={isLoading || !onStageRunQuery}
 			onClick={onStageRunQuery}
-			icon={<Play size={14} />}
+			prefix={<Play size={14} />}
 		>
 			{label || 'Run Query'}
 			<div className="cmd-hint">

@@ -45,6 +45,7 @@ func NewLogQueryStatementBuilder(
 		DBName,
 		LogsResourceV2TableName,
 		telemetrytypes.SignalLogs,
+		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,
@@ -699,6 +700,9 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
+	}
+	if stmt == nil {
+		return "", nil, nil
 	}
 
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")

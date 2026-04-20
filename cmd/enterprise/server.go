@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
@@ -16,30 +17,47 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
+	eerules "github.com/SigNoz/signoz/ee/query-service/rules"
 	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
 	enterprisezeus "github.com/SigNoz/signoz/ee/zeus"
 	"github.com/SigNoz/signoz/ee/zeus/httpzeus"
+	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -87,7 +105,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		signoz.NewEmailingProviderFactories(),
 		signoz.NewCacheProviderFactories(),
-		signoz.NewWebProviderFactories(),
+		signoz.NewWebProviderFactories(config.Global),
 		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
 			existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
 			if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
@@ -125,7 +143,6 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule), nil
-
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)
@@ -133,12 +150,35 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(licensing licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config] {
 			return httpgateway.NewProviderFactory(licensing)
 		},
+		func(licensing licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
+			factories := signoz.NewAuditorProviderFactories()
+			if err := factories.Add(otlphttpauditor.NewFactory(licensing, version.Info)); err != nil {
+				panic(err)
+			}
+			return factories
+		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-	)
+		func(sqlStore sqlstore.SQLStore, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
+			defStore := pkgcloudintegration.NewServiceDefinitionStore()
+			awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
+			if err != nil {
+				return nil, err
+			}
+			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
+			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
+				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
+			}
 
+			return implcloudintegration.NewModule(pkgcloudintegration.NewStore(sqlStore), global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
+		},
+		func(c cache.Cache, am alertmanager.Alertmanager, ss sqlstore.SQLStore, ts telemetrystore.TelemetryStore, ms telemetrytypes.MetadataStore, p prometheus.Prometheus, og organization.Getter, rsh rulestatehistory.Module, q querier.Querier, qp queryparser.QueryParser) factory.NamedMap[factory.ProviderFactory[ruler.Ruler, ruler.Config]] {
+			return factory.MustNewNamedMap(signozruler.NewFactory(c, am, ss, ts, ms, p, og, rsh, q, qp, eerules.PrepareTaskFunc, eerules.TestNotification))
+		},
+	)
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", errors.Attr(err))
 		return err

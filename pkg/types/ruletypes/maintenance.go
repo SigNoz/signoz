@@ -15,6 +15,42 @@ var (
 	ErrCodeInvalidPlannedMaintenancePayload = errors.MustNewCode("invalid_planned_maintenance_payload")
 )
 
+type MaintenanceStatus struct {
+	valuer.String
+}
+
+var (
+	MaintenanceStatusActive   = MaintenanceStatus{valuer.NewString("active")}
+	MaintenanceStatusUpcoming = MaintenanceStatus{valuer.NewString("upcoming")}
+	MaintenanceStatusExpired  = MaintenanceStatus{valuer.NewString("expired")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceStatus.
+func (MaintenanceStatus) Enum() []any {
+	return []any{
+		MaintenanceStatusActive,
+		MaintenanceStatusUpcoming,
+		MaintenanceStatusExpired,
+	}
+}
+
+type MaintenanceKind struct {
+	valuer.String
+}
+
+var (
+	MaintenanceKindFixed     = MaintenanceKind{valuer.NewString("fixed")}
+	MaintenanceKindRecurring = MaintenanceKind{valuer.NewString("recurring")}
+)
+
+// Enum implements jsonschema.Enum; returns the acceptable values for MaintenanceKind.
+func (MaintenanceKind) Enum() []any {
+	return []any{
+		MaintenanceKindFixed,
+		MaintenanceKindRecurring,
+	}
+}
+
 type StorablePlannedMaintenance struct {
 	bun.BaseModel `bun:"table:planned_maintenance"`
 	types.Identifiable
@@ -26,18 +62,63 @@ type StorablePlannedMaintenance struct {
 	OrgID       string    `bun:"org_id,type:text"`
 }
 
-type GettablePlannedMaintenance struct {
-	Id          string    `json:"id"`
-	Name        string    `json:"name"`
+type PlannedMaintenance struct {
+	ID          valuer.UUID `json:"id" required:"true"`
+	Name        string      `json:"name" required:"true"`
+	Description string      `json:"description"`
+	Schedule    *Schedule   `json:"schedule" required:"true"`
+	RuleIDs     []string    `json:"alertIds"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	CreatedBy   string      `json:"createdBy"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	UpdatedBy   string      `json:"updatedBy"`
+	Status      MaintenanceStatus `json:"status" required:"true"`
+	Kind        MaintenanceKind   `json:"kind" required:"true"`
+}
+
+// PostablePlannedMaintenance is the input payload for creating or updating a
+// planned maintenance. Server-owned fields (id, timestamps, audit users,
+// derived status / kind) are deliberately not accepted from the client.
+type PostablePlannedMaintenance struct {
+	Name        string    `json:"name" required:"true"`
 	Description string    `json:"description"`
-	Schedule    *Schedule `json:"schedule"`
-	RuleIDs     []string  `json:"alertIds"`
-	CreatedAt   time.Time `json:"createdAt"`
-	CreatedBy   string    `json:"createdBy"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	UpdatedBy   string    `json:"updatedBy"`
-	Status      string    `json:"status"`
-	Kind        string    `json:"kind"`
+	Schedule    *Schedule `json:"schedule" required:"true"`
+	AlertIds    []string  `json:"alertIds"`
+}
+
+func (p *PostablePlannedMaintenance) Validate() error {
+	if p.Name == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
+	}
+	if p.Schedule == nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing schedule in the payload")
+	}
+	if p.Schedule.Timezone == "" {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing timezone in the payload")
+	}
+
+	if _, err := time.LoadLocation(p.Schedule.Timezone); err != nil {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid timezone in the payload")
+	}
+
+	if !p.Schedule.StartTime.IsZero() && !p.Schedule.EndTime.IsZero() {
+		if p.Schedule.StartTime.After(p.Schedule.EndTime) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "start time cannot be after end time")
+		}
+	}
+
+	if p.Schedule.Recurrence != nil {
+		if p.Schedule.Recurrence.RepeatType.IsZero() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
+		}
+		if p.Schedule.Recurrence.Duration.IsZero() {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing duration in the payload")
+		}
+		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
+		}
+	}
+	return nil
 }
 
 type StorablePlannedMaintenanceRule struct {
@@ -47,12 +128,12 @@ type StorablePlannedMaintenanceRule struct {
 	RuleID               valuer.UUID `bun:"rule_id,type:text"`
 }
 
-type GettablePlannedMaintenanceRule struct {
+type PlannedMaintenanceWithRules struct {
 	*StorablePlannedMaintenance `bun:",extend"`
 	Rules                       []*StorablePlannedMaintenanceRule `bun:"rel:has-many,join:id=planned_maintenance_id"`
 }
 
-func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
+func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if len(m.RuleIDs) > 0 {
@@ -122,7 +203,7 @@ func (m *GettablePlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bo
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
 // and returns true if currentTime is within [candidate, candidate+Duration].
-func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkDaily(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	candidate := time.Date(
 		currentTime.Year(), currentTime.Month(), currentTime.Day(),
 		rec.StartTime.Hour(), rec.StartTime.Minute(), 0, 0,
@@ -137,7 +218,7 @@ func (m *GettablePlannedMaintenance) checkDaily(currentTime time.Time, rec *Recu
 // checkWeekly finds the most recent allowed occurrence by rebasing the recurrence’s
 // time-of-day onto the allowed weekday. It does this for each allowed day and returns true
 // if the current time falls within the candidate window.
-func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkWeekly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	// If no days specified, treat as every day (like daily).
 	if len(rec.RepeatOn) == 0 {
 		return m.checkDaily(currentTime, rec, loc)
@@ -169,7 +250,7 @@ func (m *GettablePlannedMaintenance) checkWeekly(currentTime time.Time, rec *Rec
 
 // checkMonthly rebases the candidate occurrence using the recurrence's day-of-month.
 // If the candidate for the current month is in the future, it uses the previous month.
-func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
+func (m *PlannedMaintenance) checkMonthly(currentTime time.Time, rec *Recurrence, loc *time.Location) bool {
 	refDay := rec.StartTime.Day()
 	year, month, _ := currentTime.Date()
 	lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, loc).Day()
@@ -201,7 +282,7 @@ func (m *GettablePlannedMaintenance) checkMonthly(currentTime time.Time, rec *Re
 	return currentTime.Sub(candidate) <= rec.Duration.Duration()
 }
 
-func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
+func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	ruleID := "maintenance"
 	if len(m.RuleIDs) > 0 {
 		ruleID = (m.RuleIDs)[0]
@@ -209,7 +290,7 @@ func (m *GettablePlannedMaintenance) IsActive(now time.Time) bool {
 	return m.ShouldSkip(ruleID, now)
 }
 
-func (m *GettablePlannedMaintenance) IsUpcoming() bool {
+func (m *PlannedMaintenance) IsUpcoming() bool {
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
 		return false
@@ -225,11 +306,11 @@ func (m *GettablePlannedMaintenance) IsUpcoming() bool {
 	return false
 }
 
-func (m *GettablePlannedMaintenance) IsRecurring() bool {
+func (m *PlannedMaintenance) IsRecurring() bool {
 	return m.Schedule.Recurrence != nil
 }
 
-func (m *GettablePlannedMaintenance) Validate() error {
+func (m *PlannedMaintenance) Validate() error {
 	if m.Name == "" {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing name in the payload")
 	}
@@ -252,7 +333,7 @@ func (m *GettablePlannedMaintenance) Validate() error {
 	}
 
 	if m.Schedule.Recurrence != nil {
-		if m.Schedule.Recurrence.RepeatType == "" {
+		if m.Schedule.Recurrence.RepeatType.IsZero() {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "missing repeat type in the payload")
 		}
 		if m.Schedule.Recurrence.Duration.IsZero() {
@@ -265,38 +346,38 @@ func (m *GettablePlannedMaintenance) Validate() error {
 	return nil
 }
 
-func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
+func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	now := time.Now().In(time.FixedZone(m.Schedule.Timezone, 0))
-	var status string
+	var status MaintenanceStatus
 	if m.IsActive(now) {
-		status = "active"
+		status = MaintenanceStatusActive
 	} else if m.IsUpcoming() {
-		status = "upcoming"
+		status = MaintenanceStatusUpcoming
 	} else {
-		status = "expired"
+		status = MaintenanceStatusExpired
 	}
-	var kind string
+	var kind MaintenanceKind
 
 	if !m.Schedule.StartTime.IsZero() && !m.Schedule.EndTime.IsZero() && m.Schedule.EndTime.After(m.Schedule.StartTime) {
-		kind = "fixed"
+		kind = MaintenanceKindFixed
 	} else {
-		kind = "recurring"
+		kind = MaintenanceKindRecurring
 	}
 
 	return json.Marshal(struct {
-		Id          string    `json:"id" db:"id"`
-		Name        string    `json:"name" db:"name"`
-		Description string    `json:"description" db:"description"`
-		Schedule    *Schedule `json:"schedule" db:"schedule"`
-		AlertIds    []string  `json:"alertIds" db:"alert_ids"`
-		CreatedAt   time.Time `json:"createdAt" db:"created_at"`
-		CreatedBy   string    `json:"createdBy" db:"created_by"`
-		UpdatedAt   time.Time `json:"updatedAt" db:"updated_at"`
-		UpdatedBy   string    `json:"updatedBy" db:"updated_by"`
-		Status      string    `json:"status"`
-		Kind        string    `json:"kind"`
+		ID          valuer.UUID       `json:"id" db:"id"`
+		Name        string            `json:"name" db:"name"`
+		Description string            `json:"description" db:"description"`
+		Schedule    *Schedule         `json:"schedule" db:"schedule"`
+		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
+		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
+		CreatedBy   string            `json:"createdBy" db:"created_by"`
+		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
+		UpdatedBy   string            `json:"updatedBy" db:"updated_by"`
+		Status      MaintenanceStatus `json:"status"`
+		Kind        MaintenanceKind   `json:"kind"`
 	}{
-		Id:          m.Id,
+		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
 		Schedule:    m.Schedule,
@@ -310,7 +391,7 @@ func (m GettablePlannedMaintenance) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettableMaintenance() *GettablePlannedMaintenance {
+func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance {
 	ruleIDs := []string{}
 	if m.Rules != nil {
 		for _, storableMaintenanceRule := range m.Rules {
@@ -318,8 +399,8 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 		}
 	}
 
-	return &GettablePlannedMaintenance{
-		Id:          m.ID.StringValue(),
+	return &PlannedMaintenance{
+		ID:          m.ID,
 		Name:        m.Name,
 		Description: m.Description,
 		Schedule:    m.Schedule,
@@ -331,10 +412,15 @@ func (m *GettablePlannedMaintenanceRule) ConvertGettableMaintenanceRuleToGettabl
 	}
 }
 
+type ListPlannedMaintenanceParams struct {
+	Active    *bool `query:"active"`
+	Recurring *bool `query:"recurring"`
+}
+
 type MaintenanceStore interface {
-	CreatePlannedMaintenance(context.Context, GettablePlannedMaintenance) (valuer.UUID, error)
+	CreatePlannedMaintenance(context.Context, *PostablePlannedMaintenance) (*PlannedMaintenance, error)
 	DeletePlannedMaintenance(context.Context, valuer.UUID) error
-	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*GettablePlannedMaintenance, error)
-	EditPlannedMaintenance(context.Context, GettablePlannedMaintenance, valuer.UUID) error
-	GetAllPlannedMaintenance(context.Context, string) ([]*GettablePlannedMaintenance, error)
+	GetPlannedMaintenanceByID(context.Context, valuer.UUID) (*PlannedMaintenance, error)
+	UpdatePlannedMaintenance(context.Context, *PostablePlannedMaintenance, valuer.UUID) error
+	ListPlannedMaintenance(context.Context, string) ([]*PlannedMaintenance, error)
 }

@@ -245,10 +245,9 @@ def test_service_account_key_deleted_account_rejected(
         timeout=5,
     )
 
-    assert response.status_code in (
-        HTTPStatus.UNAUTHORIZED,
-        HTTPStatus.FORBIDDEN,
-    ), f"Expected 401/403 for disabled service account, got {response.status_code}: {response.text}"
+    assert (
+        response.status_code == HTTPStatus.UNAUTHORIZED
+    ), f"Expected 401 for disabled service account, got {response.status_code}: {response.text}"
 
 
 def test_service_account_key_revoked_key_rejected(

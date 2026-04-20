@@ -197,7 +197,7 @@ body {
 					}
 
 					&:hover {
-						background: rgba(255, 255, 255, 0.05);
+						background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
 					}
 				}
 
@@ -222,7 +222,7 @@ body {
 								left: 50%;
 								width: 12px;
 								height: 2px;
-								background: #ff4444;
+								background: var(--bg-cherry-500);
 								transform: translate(-50%, -50%) rotate(45deg);
 								border-radius: 1px;
 							}
@@ -271,7 +271,7 @@ body {
 				max-width: 100%;
 
 				&:hover {
-					background: rgba(255, 255, 255, 0.05);
+					background: color-mix(in srgb, var(--l1-foreground) 5%, transparent);
 				}
 
 				.u-marker {
@@ -331,7 +331,7 @@ body {
 							left: 50%;
 							width: 12px;
 							height: 2px;
-							background: #ff4444;
+							background: var(--bg-cherry-500);
 							transform: translate(-50%, -50%) rotate(45deg);
 							border-radius: 1px;
 						}
@@ -391,9 +391,9 @@ body {
 	font-size: 12px;
 	position: absolute;
 	margin: 0.5rem;
-	background: var(--bg-ink-300);
+	background: var(--l2-background);
 	-webkit-font-smoothing: antialiased;
-	color: var(--bg-vanilla-100);
+	color: var(--l1-foreground);
 	z-index: 10000;
 	// pointer-events: none;
 	overflow: auto;
@@ -474,11 +474,11 @@ body {
 
 	border-radius: 4px;
 	padding: 16px;
-	border: 1px solid var(--bg-slate-400, #1d212d);
+	border: 1px solid var(--l1-border);
 	background: linear-gradient(
 		139deg,
-		rgba(18, 19, 23, 0.8) 0%,
-		rgba(18, 19, 23, 0.9) 98.68%
+		color-mix(in srgb, var(--card) 80%, transparent) 0%,
+		color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 	);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	backdrop-filter: blur(20px);
@@ -562,29 +562,29 @@ body {
 
 .lightMode {
 	#overlay {
-		color: var(--bg-ink-500);
-		background: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-vanilla-300);
+		color: var(--l1-foreground);
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
 	}
 
 	.ant-tooltip {
-		--antd-arrow-background-color: var(--bg-vanilla-100);
+		--antd-arrow-background-color: var(--l1-background);
 
 		.ant-tooltip-inner {
-			background-color: var(--bg-vanilla-100);
-			color: var(---bg-ink-500);
+			background-color: var(--l1-background);
+			color: var(--l1-foreground);
 		}
 	}
 
 	.ant-dropdown-menu {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.ant-dropdown-menu-item {
 		&:hover {
-			background-color: var(--bg-vanilla-300) !important;
+			background-color: var(--l3-background) !important;
 
 			&.ant-dropdown-menu-item-danger {
 				background-color: var(--bg-cherry-500) !important;
@@ -625,7 +625,7 @@ body {
 						opacity: 0.3;
 
 						&::after {
-							background: #cc3333;
+							background: var(--bg-cherry-600);
 						}
 
 						&:hover {
@@ -663,7 +663,7 @@ body {
 						opacity: 0.3;
 
 						&::after {
-							background: #cc3333;
+							background: var(--bg-cherry-600);
 						}
 
 						&:hover {
@@ -721,8 +721,8 @@ notifications	-  2050
 // Custom legend tooltip for immediate display
 .legend-tooltip {
 	position: fixed;
-	background: var(--bg-slate-400);
-	color: var(--text-vanilla-100);
+	background: var(--l2-background);
+	color: var(--l1-foreground);
 	padding: 8px 12px;
 	border-radius: 6px;
 	font-size: 12px;
@@ -732,16 +732,16 @@ notifications	-  2050
 	pointer-events: none;
 	white-space: nowrap;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-	border: 1px solid #374151;
+	border: 1px solid var(--l1-border);
 	-webkit-font-smoothing: antialiased;
 	letter-spacing: 0.025em;
 }
 
 // Light mode styling for legend tooltip
 .lightMode .legend-tooltip {
-	background: #ffffff;
-	color: #1f2937;
-	border: 1px solid #d1d5db;
+	background: var(--card);
+	color: var(--l1-foreground);
+	border: 1px solid var(--l1-border);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -763,4 +763,35 @@ notifications	-  2050
 
 .cursor-pointer {
 	cursor: pointer;
+}
+
+.ant-modal {
+	.ant-modal-content {
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
+		padding: 0;
+	}
+
+	.ant-modal-header {
+		background: var(--l1-background);
+		border-bottom: 1px solid var(--l1-border);
+		padding: 12px;
+	}
+
+	.ant-modal-body {
+		padding: 12px;
+	}
+
+	.ant-modal-footer {
+		padding: 12px;
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.border {
+	border: 1px solid var(--l1-border);
+}
+
+.bg-border {
+	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
 }

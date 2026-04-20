@@ -3,6 +3,8 @@ import get from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import './AppLoading.styles.scss';
 
 function AppLoading(): JSX.Element {
@@ -24,11 +26,7 @@ function AppLoading(): JSX.Element {
 			<div className="perilin-bg" />
 			<div className="app-loading-content">
 				<div className="brand">
-					<img
-						src="/Logos/signoz-brand-logo.svg"
-						alt="SigNoz"
-						className="brand-logo"
-					/>
+					<img src={signozBrandLogoUrl} alt="SigNoz" className="brand-logo" />
 
 					<Typography.Title level={2} className="brand-title">
 						SigNoz

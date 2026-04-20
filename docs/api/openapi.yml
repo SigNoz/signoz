@@ -1,5 +1,126 @@
 components:
   schemas:
+    AlertmanagertypesChannel:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        data:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - type
+      - data
+      - orgId
+      type: object
+    AlertmanagertypesDeprecatedGettableAlert:
+      properties:
+        annotations:
+          $ref: '#/components/schemas/ModelLabelSet'
+        endsAt:
+          format: date-time
+          type: string
+        fingerprint:
+          type: string
+        generatorURL:
+          type: string
+        labels:
+          $ref: '#/components/schemas/ModelLabelSet'
+        receivers:
+          items:
+            type: string
+          nullable: true
+          type: array
+        startsAt:
+          format: date-time
+          type: string
+        status:
+          $ref: '#/components/schemas/TypesAlertStatus'
+      type: object
+    AlertmanagertypesExpressionKind:
+      enum:
+      - rule
+      - policy
+      type: string
+    AlertmanagertypesGettableRoutePolicy:
+      properties:
+        channels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          nullable: true
+          type: string
+        description:
+          type: string
+        expression:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesExpressionKind'
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          nullable: true
+          type: string
+      required:
+      - expression
+      - channels
+      - name
+      - id
+      - createdAt
+      - updatedAt
+      type: object
+    AlertmanagertypesPostableRoutePolicy:
+      properties:
+        channels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        description:
+          type: string
+        expression:
+          type: string
+        kind:
+          $ref: '#/components/schemas/AlertmanagertypesExpressionKind'
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - expression
+      - channels
+      - name
+      type: object
     AuthtypesAttributeMapping:
       properties:
         email:
@@ -403,27 +524,65 @@ components:
       required:
       - regions
       type: object
-    CloudintegrationtypesAWSCollectionStrategy:
+    CloudintegrationtypesAWSCloudWatchLogsSubscription:
       properties:
-        aws_logs:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
-        aws_metrics:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
-        s3_buckets:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          type: object
+        filterPattern:
+          type: string
+        logGroupNamePrefix:
+          type: string
+      required:
+      - logGroupNamePrefix
+      - filterPattern
+      type: object
+    CloudintegrationtypesAWSCloudWatchMetricStreamFilter:
+      properties:
+        metricNames:
+          items:
+            type: string
+          type: array
+        namespace:
+          type: string
+      required:
+      - namespace
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionURL:
+        connectionUrl:
           type: string
       required:
-      - connectionURL
+      - connectionUrl
       type: object
-    CloudintegrationtypesAWSConnectionArtifactRequest:
+    CloudintegrationtypesAWSIntegrationConfig:
+      properties:
+        enabledRegions:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
+      required:
+      - enabledRegions
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesAWSLogsCollectionStrategy:
+      properties:
+        subscriptions:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchLogsSubscription'
+          type: array
+      required:
+      - subscriptions
+      type: object
+    CloudintegrationtypesAWSMetricsCollectionStrategy:
+      properties:
+        streamFilters:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchMetricStreamFilter'
+          type: array
+      required:
+      - streamFilters
+      type: object
+    CloudintegrationtypesAWSPostableAccountConfig:
       properties:
         deploymentRegion:
           type: string
@@ -434,46 +593,6 @@ components:
       required:
       - deploymentRegion
       - regions
-      type: object
-    CloudintegrationtypesAWSIntegrationConfig:
-      properties:
-        enabledRegions:
-          items:
-            type: string
-          type: array
-        telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
-      required:
-      - enabledRegions
-      - telemetry
-      type: object
-    CloudintegrationtypesAWSLogsStrategy:
-      properties:
-        cloudwatch_logs_subscriptions:
-          items:
-            properties:
-              filter_pattern:
-                type: string
-              log_group_name_prefix:
-                type: string
-            type: object
-          nullable: true
-          type: array
-      type: object
-    CloudintegrationtypesAWSMetricsStrategy:
-      properties:
-        cloudwatch_metric_stream_filters:
-          items:
-            properties:
-              MetricNames:
-                items:
-                  type: string
-                type: array
-              Namespace:
-                type: string
-            type: object
-          nullable: true
-          type: array
       type: object
     CloudintegrationtypesAWSServiceConfig:
       properties:
@@ -486,7 +605,7 @@ components:
       properties:
         enabled:
           type: boolean
-        s3_buckets:
+        s3Buckets:
           additionalProperties:
             items:
               type: string
@@ -497,6 +616,19 @@ components:
       properties:
         enabled:
           type: boolean
+      type: object
+    CloudintegrationtypesAWSTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsCollectionStrategy'
+        s3Buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
       type: object
     CloudintegrationtypesAccount:
       properties:
@@ -561,6 +693,26 @@ components:
           nullable: true
           type: array
       type: object
+    CloudintegrationtypesCloudIntegrationService:
+      nullable: true
+      properties:
+        cloudIntegrationId:
+          type: string
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceID'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     CloudintegrationtypesCollectedLogAttribute:
       properties:
         name:
@@ -581,13 +733,6 @@ components:
         unit:
           type: string
       type: object
-    CloudintegrationtypesCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
-      required:
-      - aws
-      type: object
     CloudintegrationtypesConnectionArtifact:
       properties:
         aws:
@@ -595,12 +740,21 @@ components:
       required:
       - aws
       type: object
-    CloudintegrationtypesConnectionArtifactRequest:
+    CloudintegrationtypesCredentials:
       properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
+        ingestionKey:
+          type: string
+        ingestionUrl:
+          type: string
+        sigNozApiKey:
+          type: string
+        sigNozApiUrl:
+          type: string
       required:
-      - aws
+      - sigNozApiUrl
+      - sigNozApiKey
+      - ingestionUrl
+      - ingestionKey
       type: object
     CloudintegrationtypesDashboard:
       properties:
@@ -626,7 +780,7 @@ components:
           nullable: true
           type: array
       type: object
-    CloudintegrationtypesGettableAccountWithArtifact:
+    CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
         connectionArtifact:
           $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
@@ -645,7 +799,7 @@ components:
       required:
       - accounts
       type: object
-    CloudintegrationtypesGettableAgentCheckInResponse:
+    CloudintegrationtypesGettableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -694,12 +848,72 @@ components:
             type: string
           type: array
         telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSCollectionStrategy'
       required:
       - enabled_regions
       - telemetry
       type: object
-    CloudintegrationtypesPostableAgentCheckInRequest:
+    CloudintegrationtypesOldAWSCollectionStrategy:
+      properties:
+        aws_logs:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSLogsStrategy'
+        aws_metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSMetricsStrategy'
+        provider:
+          type: string
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesOldAWSLogsStrategy:
+      properties:
+        cloudwatch_logs_subscriptions:
+          items:
+            properties:
+              filter_pattern:
+                type: string
+              log_group_name_prefix:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesOldAWSMetricsStrategy:
+      properties:
+        cloudwatch_metric_stream_filters:
+          items:
+            properties:
+              MetricNames:
+                items:
+                  type: string
+                type: array
+              Namespace:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesPostableAccount:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesPostableAccountConfig'
+        credentials:
+          $ref: '#/components/schemas/CloudintegrationtypesCredentials'
+      required:
+      - config
+      - credentials
+      type: object
+    CloudintegrationtypesPostableAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesPostableAgentCheckIn:
       properties:
         account_id:
           type: string
@@ -727,6 +941,8 @@ components:
       properties:
         assets:
           $ref: '#/components/schemas/CloudintegrationtypesAssets'
+        cloudIntegrationService:
+          $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
           $ref: '#/components/schemas/CloudintegrationtypesDataCollected'
         icon:
@@ -735,12 +951,10 @@ components:
           type: string
         overview:
           type: string
-        serviceConfig:
-          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
-        supported_signals:
+        supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
         telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -749,9 +963,10 @@ components:
       - icon
       - overview
       - assets
-      - supported_signals
+      - supportedSignals
       - dataCollected
       - telemetryCollectionStrategy
+      - cloudIntegrationService
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -760,6 +975,22 @@ components:
       required:
       - aws
       type: object
+    CloudintegrationtypesServiceID:
+      enum:
+      - alb
+      - api-gateway
+      - dynamodb
+      - ec2
+      - ecs
+      - eks
+      - elasticache
+      - lambda
+      - msk
+      - rds
+      - s3sync
+      - sns
+      - sqs
+      type: string
     CloudintegrationtypesServiceMetadata:
       properties:
         enabled:
@@ -783,6 +1014,13 @@ components:
         metrics:
           type: boolean
       type: object
+    CloudintegrationtypesTelemetryCollectionStrategy:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
+      required:
+      - aws
+      type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
         config:
@@ -796,6 +1034,957 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
       required:
       - config
+      type: object
+    ConfigAuthorization:
+      properties:
+        credentials:
+          type: string
+        credentials_file:
+          type: string
+        credentials_ref:
+          type: string
+        type:
+          type: string
+      type: object
+    ConfigBasicAuth:
+      properties:
+        password:
+          type: string
+        password_file:
+          type: string
+        password_ref:
+          type: string
+        username:
+          type: string
+        username_file:
+          type: string
+        username_ref:
+          type: string
+      type: object
+    ConfigDiscordConfig:
+      properties:
+        avatar_url:
+          type: string
+        content:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        send_resolved:
+          type: boolean
+        title:
+          type: string
+        username:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+        webhook_url_file:
+          type: string
+      type: object
+    ConfigDuration:
+      format: int64
+      type: string
+    ConfigEmailConfig:
+      properties:
+        auth_identity:
+          type: string
+        auth_password:
+          type: string
+        auth_password_file:
+          type: string
+        auth_secret:
+          type: string
+        auth_secret_file:
+          type: string
+        auth_username:
+          type: string
+        force_implicit_tls:
+          nullable: true
+          type: boolean
+        from:
+          type: string
+        headers:
+          additionalProperties:
+            type: string
+          type: object
+        hello:
+          type: string
+        html:
+          type: string
+        require_tls:
+          nullable: true
+          type: boolean
+        send_resolved:
+          type: boolean
+        smarthost:
+          $ref: '#/components/schemas/ConfigHostPort'
+        text:
+          type: string
+        threading:
+          $ref: '#/components/schemas/ConfigThreadingConfig'
+        tls_config:
+          $ref: '#/components/schemas/ConfigTLSConfig'
+        to:
+          type: string
+      type: object
+    ConfigHTTPClientConfig:
+      properties:
+        authorization:
+          $ref: '#/components/schemas/ConfigAuthorization'
+        basic_auth:
+          $ref: '#/components/schemas/ConfigBasicAuth'
+        bearer_token:
+          type: string
+        bearer_token_file:
+          type: string
+        enable_http2:
+          type: boolean
+        follow_redirects:
+          type: boolean
+        http_headers:
+          $ref: '#/components/schemas/ConfigHeaders'
+        no_proxy:
+          type: string
+        oauth2:
+          $ref: '#/components/schemas/ConfigOAuth2'
+        proxy_connect_header:
+          $ref: '#/components/schemas/ConfigProxyHeader'
+        proxy_from_environment:
+          type: boolean
+        proxy_url:
+          $ref: '#/components/schemas/ConfigURL'
+        tls_config:
+          $ref: '#/components/schemas/ConfigTLSConfig'
+      type: object
+    ConfigHeaders:
+      type: object
+    ConfigHostPort:
+      type: object
+    ConfigIncidentioConfig:
+      properties:
+        alert_source_token:
+          type: string
+        alert_source_token_file:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        max_alerts:
+          minimum: 0
+          type: integer
+        send_resolved:
+          type: boolean
+        timeout:
+          $ref: '#/components/schemas/TimeDuration'
+        url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        url_file:
+          type: string
+      type: object
+    ConfigJiraConfig:
+      properties:
+        api_type:
+          type: string
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        custom_fields:
+          additionalProperties: {}
+          type: object
+        description:
+          $ref: '#/components/schemas/ConfigJiraFieldConfig'
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        issue_type:
+          type: string
+        labels:
+          items:
+            type: string
+          type: array
+        priority:
+          type: string
+        project:
+          type: string
+        reopen_duration:
+          $ref: '#/components/schemas/ModelDuration'
+        reopen_transition:
+          type: string
+        resolve_transition:
+          type: string
+        send_resolved:
+          type: boolean
+        summary:
+          $ref: '#/components/schemas/ConfigJiraFieldConfig'
+        wont_fix_resolution:
+          type: string
+      type: object
+    ConfigJiraFieldConfig:
+      properties:
+        enable_update:
+          nullable: true
+          type: boolean
+        template:
+          type: string
+      type: object
+    ConfigMSTeamsConfig:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        send_resolved:
+          type: boolean
+        summary:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+        webhook_url_file:
+          type: string
+      type: object
+    ConfigMSTeamsV2Config:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        title:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+        webhook_url_file:
+          type: string
+      type: object
+    ConfigMattermostAttachment:
+      properties:
+        author_icon:
+          type: string
+        author_link:
+          type: string
+        author_name:
+          type: string
+        color:
+          type: string
+        fallback:
+          type: string
+        fields:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostField'
+          type: array
+        footer:
+          type: string
+        footer_icon:
+          type: string
+        image_url:
+          type: string
+        pretext:
+          type: string
+        text:
+          type: string
+        thumb_url:
+          type: string
+        title:
+          type: string
+        title_link:
+          type: string
+      type: object
+    ConfigMattermostConfig:
+      properties:
+        attachments:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostAttachment'
+          type: array
+        channel:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        icon_emoji:
+          type: string
+        icon_url:
+          type: string
+        priority:
+          $ref: '#/components/schemas/ConfigMattermostPriority'
+        props:
+          $ref: '#/components/schemas/ConfigMattermostProps'
+        send_resolved:
+          type: boolean
+        text:
+          type: string
+        type:
+          type: string
+        username:
+          type: string
+        webhook_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+        webhook_url_file:
+          type: string
+      type: object
+    ConfigMattermostField:
+      properties:
+        short:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        value:
+          type: string
+      type: object
+    ConfigMattermostPriority:
+      properties:
+        persistent_notifications:
+          type: boolean
+        priority:
+          type: string
+        requested_ack:
+          type: boolean
+      type: object
+    ConfigMattermostProps:
+      properties:
+        card:
+          type: string
+      type: object
+    ConfigOAuth2:
+      properties:
+        audience:
+          type: string
+        claims:
+          additionalProperties: {}
+          type: object
+        client_certificate_key:
+          type: string
+        client_certificate_key_file:
+          type: string
+        client_certificate_key_id:
+          type: string
+        client_certificate_key_ref:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        client_secret_file:
+          type: string
+        client_secret_ref:
+          type: string
+        endpoint_params:
+          additionalProperties:
+            type: string
+          type: object
+        grant_type:
+          type: string
+        iss:
+          type: string
+        no_proxy:
+          type: string
+        proxy_connect_header:
+          $ref: '#/components/schemas/ConfigProxyHeader'
+        proxy_from_environment:
+          type: boolean
+        proxy_url:
+          $ref: '#/components/schemas/ConfigURL'
+        scopes:
+          items:
+            type: string
+          type: array
+        signature_algorithm:
+          type: string
+        token_url:
+          type: string
+      type: object
+    ConfigOpsGenieConfig:
+      properties:
+        actions:
+          type: string
+        api_key:
+          type: string
+        api_key_file:
+          type: string
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        description:
+          type: string
+        details:
+          additionalProperties:
+            type: string
+          type: object
+        entity:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        note:
+          type: string
+        priority:
+          type: string
+        responders:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfigResponder'
+          type: array
+        send_resolved:
+          type: boolean
+        source:
+          type: string
+        tags:
+          type: string
+        update_alerts:
+          type: boolean
+      type: object
+    ConfigOpsGenieConfigResponder:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        username:
+          type: string
+      type: object
+    ConfigPagerdutyConfig:
+      properties:
+        class:
+          type: string
+        client:
+          type: string
+        client_url:
+          type: string
+        component:
+          type: string
+        description:
+          type: string
+        details:
+          additionalProperties: {}
+          type: object
+        group:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        images:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyImage'
+          type: array
+        links:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyLink'
+          type: array
+        routing_key:
+          type: string
+        routing_key_file:
+          type: string
+        send_resolved:
+          type: boolean
+        service_key:
+          type: string
+        service_key_file:
+          type: string
+        severity:
+          type: string
+        source:
+          type: string
+        timeout:
+          $ref: '#/components/schemas/TimeDuration'
+        url:
+          $ref: '#/components/schemas/ConfigURLType2'
+      type: object
+    ConfigPagerdutyImage:
+      properties:
+        alt:
+          type: string
+        href:
+          type: string
+        src:
+          type: string
+      type: object
+    ConfigPagerdutyLink:
+      properties:
+        href:
+          type: string
+        text:
+          type: string
+      type: object
+    ConfigProxyHeader:
+      additionalProperties:
+        items:
+          type: string
+        type: array
+      type: object
+    ConfigPushoverConfig:
+      properties:
+        device:
+          type: string
+        expire:
+          $ref: '#/components/schemas/ConfigDuration'
+        html:
+          type: boolean
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        monospace:
+          type: boolean
+        priority:
+          type: string
+        retry:
+          $ref: '#/components/schemas/ConfigDuration'
+        send_resolved:
+          type: boolean
+        sound:
+          type: string
+        title:
+          type: string
+        token:
+          type: string
+        token_file:
+          type: string
+        ttl:
+          $ref: '#/components/schemas/ConfigDuration'
+        url:
+          type: string
+        url_title:
+          type: string
+        user_key:
+          type: string
+        user_key_file:
+          type: string
+      type: object
+    ConfigReceiver:
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
+      type: object
+    ConfigRocketchatAttachmentAction:
+      properties:
+        image_url:
+          type: string
+        is_webview:
+          type: boolean
+        msg:
+          type: string
+        msg_in_chat_window:
+          type: boolean
+        msg_processing_type:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        webview_height_ratio:
+          type: string
+      type: object
+    ConfigRocketchatAttachmentField:
+      properties:
+        short:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        value:
+          type: string
+      type: object
+    ConfigRocketchatConfig:
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatAttachmentAction'
+          type: array
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        channel:
+          type: string
+        color:
+          type: string
+        emoji:
+          type: string
+        fields:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatAttachmentField'
+          type: array
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        icon_url:
+          type: string
+        image_url:
+          type: string
+        link_names:
+          type: boolean
+        send_resolved:
+          type: boolean
+        short_fields:
+          type: boolean
+        text:
+          type: string
+        thumb_url:
+          type: string
+        title:
+          type: string
+        title_link:
+          type: string
+        token:
+          type: string
+        token_file:
+          type: string
+        token_id:
+          type: string
+        token_id_file:
+          type: string
+      type: object
+    ConfigSNSConfig:
+      properties:
+        api_url:
+          type: string
+        attributes:
+          additionalProperties:
+            type: string
+          type: object
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        phone_number:
+          type: string
+        send_resolved:
+          type: boolean
+        sigv4:
+          $ref: '#/components/schemas/Sigv4SigV4Config'
+        subject:
+          type: string
+        target_arn:
+          type: string
+        topic_arn:
+          type: string
+      type: object
+    ConfigSecretURL:
+      type: object
+    ConfigSlackAction:
+      properties:
+        confirm:
+          $ref: '#/components/schemas/ConfigSlackConfirmationField'
+        name:
+          type: string
+        style:
+          type: string
+        text:
+          type: string
+        type:
+          type: string
+        url:
+          type: string
+        value:
+          type: string
+      type: object
+    ConfigSlackConfig:
+      properties:
+        actions:
+          items:
+            $ref: '#/components/schemas/ConfigSlackAction'
+          type: array
+        api_url:
+          $ref: '#/components/schemas/ConfigSecretURL'
+        api_url_file:
+          type: string
+        app_token:
+          type: string
+        app_token_file:
+          type: string
+        app_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        callback_id:
+          type: string
+        channel:
+          type: string
+        color:
+          type: string
+        fallback:
+          type: string
+        fields:
+          items:
+            $ref: '#/components/schemas/ConfigSlackField'
+          type: array
+        footer:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        icon_emoji:
+          type: string
+        icon_url:
+          type: string
+        image_url:
+          type: string
+        link_names:
+          type: boolean
+        message_text:
+          type: string
+        mrkdwn_in:
+          items:
+            type: string
+          type: array
+        pretext:
+          type: string
+        send_resolved:
+          type: boolean
+        short_fields:
+          type: boolean
+        text:
+          type: string
+        thumb_url:
+          type: string
+        timeout:
+          $ref: '#/components/schemas/TimeDuration'
+        title:
+          type: string
+        title_link:
+          type: string
+        username:
+          type: string
+      type: object
+    ConfigSlackConfirmationField:
+      properties:
+        dismiss_text:
+          type: string
+        ok_text:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+      type: object
+    ConfigSlackField:
+      properties:
+        short:
+          nullable: true
+          type: boolean
+        title:
+          type: string
+        value:
+          type: string
+      type: object
+    ConfigTLSConfig:
+      properties:
+        ca:
+          type: string
+        ca_file:
+          type: string
+        ca_ref:
+          type: string
+        cert:
+          type: string
+        cert_file:
+          type: string
+        cert_ref:
+          type: string
+        insecure_skip_verify:
+          type: boolean
+        key:
+          type: string
+        key_file:
+          type: string
+        key_ref:
+          type: string
+        max_version:
+          minimum: 0
+          type: integer
+        min_version:
+          minimum: 0
+          type: integer
+        server_name:
+          type: string
+      type: object
+    ConfigTelegramConfig:
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        chat:
+          format: int64
+          type: integer
+        chat_file:
+          type: string
+        disable_notifications:
+          type: boolean
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        message_thread_id:
+          type: integer
+        parse_mode:
+          type: string
+        send_resolved:
+          type: boolean
+        token:
+          type: string
+        token_file:
+          type: string
+      type: object
+    ConfigThreadingConfig:
+      properties:
+        enabled:
+          type: boolean
+        thread_by_date:
+          type: string
+      type: object
+    ConfigURL:
+      type: object
+    ConfigURLType2:
+      type: object
+    ConfigVictorOpsConfig:
+      properties:
+        api_key:
+          type: string
+        api_key_file:
+          type: string
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        custom_fields:
+          additionalProperties:
+            type: string
+          type: object
+        entity_display_name:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message_type:
+          type: string
+        monitoring_tool:
+          type: string
+        routing_key:
+          type: string
+        send_resolved:
+          type: boolean
+        state_message:
+          type: string
+      type: object
+    ConfigWebexConfig:
+      properties:
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        room_id:
+          type: string
+        send_resolved:
+          type: boolean
+      type: object
+    ConfigWebhookConfig:
+      properties:
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        max_alerts:
+          minimum: 0
+          type: integer
+        send_resolved:
+          type: boolean
+        timeout:
+          $ref: '#/components/schemas/TimeDuration'
+        url:
+          type: string
+        url_file:
+          type: string
+      type: object
+    ConfigWechatConfig:
+      properties:
+        agent_id:
+          type: string
+        api_secret:
+          type: string
+        api_secret_file:
+          type: string
+        api_url:
+          $ref: '#/components/schemas/ConfigURLType2'
+        corp_id:
+          type: string
+        http_config:
+          $ref: '#/components/schemas/ConfigHTTPClientConfig'
+        message:
+          type: string
+        message_type:
+          type: string
+        send_resolved:
+          type: boolean
+        to_party:
+          type: string
+        to_tag:
+          type: string
+        to_user:
+          type: string
       type: object
     DashboardtypesDashboard:
       properties:
@@ -1467,6 +2656,13 @@ components:
       - summary
       - exponentialhistogram
       type: string
+    ModelDuration:
+      format: int64
+      type: integer
+    ModelLabelSet:
+      additionalProperties:
+        type: string
+      type: object
     PreferencetypesPreference:
       properties:
         allowedScopes:
@@ -2422,6 +3618,24 @@ components:
       - start
       - end
       type: object
+    RuletypesAlertCompositeQuery:
+      properties:
+        panelType:
+          $ref: '#/components/schemas/RuletypesPanelType'
+        queries:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5QueryEnvelope'
+          nullable: true
+          type: array
+        queryType:
+          $ref: '#/components/schemas/RuletypesQueryType'
+        unit:
+          type: string
+      required:
+      - queries
+      - panelType
+      - queryType
+      type: object
     RuletypesAlertState:
       enum:
       - inactive
@@ -2430,6 +3644,477 @@ components:
       - firing
       - nodata
       - disabled
+      type: string
+    RuletypesAlertType:
+      enum:
+      - METRIC_BASED_ALERT
+      - TRACES_BASED_ALERT
+      - LOGS_BASED_ALERT
+      - EXCEPTIONS_BASED_ALERT
+      type: string
+    RuletypesBasicRuleThreshold:
+      properties:
+        channels:
+          items:
+            type: string
+          nullable: true
+          type: array
+        matchType:
+          $ref: '#/components/schemas/RuletypesMatchType'
+        name:
+          type: string
+        op:
+          $ref: '#/components/schemas/RuletypesCompareOperator'
+        recoveryTarget:
+          nullable: true
+          type: number
+        target:
+          nullable: true
+          type: number
+        targetUnit:
+          type: string
+      required:
+      - name
+      - target
+      - matchType
+      - op
+      type: object
+    RuletypesBasicRuleThresholds:
+      items:
+        $ref: '#/components/schemas/RuletypesBasicRuleThreshold'
+      nullable: true
+      type: array
+    RuletypesCompareOperator:
+      enum:
+      - above
+      - below
+      - equal
+      - not_equal
+      - outside_bounds
+      type: string
+    RuletypesCumulativeSchedule:
+      properties:
+        day:
+          nullable: true
+          type: integer
+        hour:
+          nullable: true
+          type: integer
+        minute:
+          nullable: true
+          type: integer
+        type:
+          $ref: '#/components/schemas/RuletypesScheduleType'
+        weekday:
+          nullable: true
+          type: integer
+      required:
+      - type
+      type: object
+    RuletypesCumulativeWindow:
+      properties:
+        frequency:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesCumulativeSchedule'
+        timezone:
+          type: string
+      required:
+      - schedule
+      - frequency
+      - timezone
+      type: object
+    RuletypesEvaluationCumulative:
+      properties:
+        kind:
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
+        spec:
+          $ref: '#/components/schemas/RuletypesCumulativeWindow'
+      type: object
+    RuletypesEvaluationEnvelope:
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
+      properties:
+        kind:
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
+        spec: {}
+      required:
+      - kind
+      - spec
+      type: object
+    RuletypesEvaluationKind:
+      enum:
+      - rolling
+      - cumulative
+      type: string
+    RuletypesEvaluationRolling:
+      properties:
+        kind:
+          $ref: '#/components/schemas/RuletypesEvaluationKind'
+        spec:
+          $ref: '#/components/schemas/RuletypesRollingWindow'
+      type: object
+    RuletypesGettableTestRule:
+      properties:
+        alertCount:
+          type: integer
+        message:
+          type: string
+      type: object
+    RuletypesMaintenanceKind:
+      enum:
+      - fixed
+      - recurring
+      type: string
+    RuletypesMaintenanceStatus:
+      enum:
+      - active
+      - upcoming
+      - expired
+      type: string
+    RuletypesMatchType:
+      enum:
+      - at_least_once
+      - all_the_times
+      - on_average
+      - in_total
+      - last
+      type: string
+    RuletypesNotificationSettings:
+      properties:
+        groupBy:
+          items:
+            type: string
+          type: array
+        newGroupEvalDelay:
+          type: string
+        renotify:
+          $ref: '#/components/schemas/RuletypesRenotify'
+        usePolicy:
+          type: boolean
+      type: object
+    RuletypesPanelType:
+      enum:
+      - value
+      - table
+      - graph
+      type: string
+    RuletypesPlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        kind:
+          $ref: '#/components/schemas/RuletypesMaintenanceKind'
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesSchedule'
+        status:
+          $ref: '#/components/schemas/RuletypesMaintenanceStatus'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - name
+      - schedule
+      - status
+      - kind
+      type: object
+    RuletypesPostablePlannedMaintenance:
+      properties:
+        alertIds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        description:
+          type: string
+        name:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/RuletypesSchedule'
+      required:
+      - name
+      - schedule
+      type: object
+    RuletypesPostableRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          $ref: '#/components/schemas/RuletypesAlertType'
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+        condition:
+          $ref: '#/components/schemas/RuletypesRuleCondition'
+        description:
+          type: string
+        disabled:
+          type: boolean
+        evalWindow:
+          type: string
+        evaluation:
+          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+        frequency:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        notificationSettings:
+          $ref: '#/components/schemas/RuletypesNotificationSettings'
+        preferredChannels:
+          items:
+            type: string
+          type: array
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        schemaVersion:
+          type: string
+        source:
+          type: string
+        version:
+          type: string
+      required:
+      - alert
+      - ruleType
+      - condition
+      type: object
+    RuletypesQueryType:
+      enum:
+      - builder
+      - clickhouse_sql
+      - promql
+      type: string
+    RuletypesRecurrence:
+      properties:
+        duration:
+          type: string
+        endTime:
+          format: date-time
+          nullable: true
+          type: string
+        repeatOn:
+          items:
+            $ref: '#/components/schemas/RuletypesRepeatOn'
+          nullable: true
+          type: array
+        repeatType:
+          $ref: '#/components/schemas/RuletypesRepeatType'
+        startTime:
+          format: date-time
+          type: string
+      required:
+      - startTime
+      - duration
+      - repeatType
+      type: object
+    RuletypesRenotify:
+      properties:
+        alertStates:
+          items:
+            $ref: '#/components/schemas/RuletypesAlertState'
+          type: array
+        enabled:
+          type: boolean
+        interval:
+          type: string
+      type: object
+    RuletypesRepeatOn:
+      enum:
+      - sunday
+      - monday
+      - tuesday
+      - wednesday
+      - thursday
+      - friday
+      - saturday
+      type: string
+    RuletypesRepeatType:
+      enum:
+      - daily
+      - weekly
+      - monthly
+      type: string
+    RuletypesRollingWindow:
+      properties:
+        evalWindow:
+          type: string
+        frequency:
+          type: string
+      required:
+      - evalWindow
+      - frequency
+      type: object
+    RuletypesRule:
+      properties:
+        alert:
+          type: string
+        alertType:
+          $ref: '#/components/schemas/RuletypesAlertType'
+        annotations:
+          additionalProperties:
+            type: string
+          type: object
+        condition:
+          $ref: '#/components/schemas/RuletypesRuleCondition'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        description:
+          type: string
+        disabled:
+          type: boolean
+        evalWindow:
+          type: string
+        evaluation:
+          $ref: '#/components/schemas/RuletypesEvaluationEnvelope'
+        frequency:
+          type: string
+        id:
+          type: string
+        labels:
+          additionalProperties:
+            type: string
+          type: object
+        notificationSettings:
+          $ref: '#/components/schemas/RuletypesNotificationSettings'
+        preferredChannels:
+          items:
+            type: string
+          type: array
+        ruleType:
+          $ref: '#/components/schemas/RuletypesRuleType'
+        schemaVersion:
+          type: string
+        source:
+          type: string
+        state:
+          $ref: '#/components/schemas/RuletypesAlertState'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+        version:
+          type: string
+      required:
+      - id
+      - state
+      - alert
+      - ruleType
+      - condition
+      type: object
+    RuletypesRuleCondition:
+      properties:
+        absentFor:
+          minimum: 0
+          type: integer
+        alertOnAbsent:
+          type: boolean
+        algorithm:
+          type: string
+        compositeQuery:
+          $ref: '#/components/schemas/RuletypesAlertCompositeQuery'
+        matchType:
+          $ref: '#/components/schemas/RuletypesMatchType'
+        op:
+          $ref: '#/components/schemas/RuletypesCompareOperator'
+        requireMinPoints:
+          type: boolean
+        requiredNumPoints:
+          type: integer
+        seasonality:
+          $ref: '#/components/schemas/RuletypesSeasonality'
+        selectedQueryName:
+          type: string
+        target:
+          nullable: true
+          type: number
+        targetUnit:
+          type: string
+        thresholds:
+          $ref: '#/components/schemas/RuletypesRuleThresholdData'
+      required:
+      - compositeQuery
+      - op
+      - matchType
+      type: object
+    RuletypesRuleThresholdData:
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesThresholdBasic'
+      properties:
+        kind:
+          $ref: '#/components/schemas/RuletypesThresholdKind'
+        spec: {}
+      required:
+      - kind
+      - spec
+      type: object
+    RuletypesRuleType:
+      enum:
+      - threshold_rule
+      - promql_rule
+      - anomaly_rule
+      type: string
+    RuletypesSchedule:
+      properties:
+        endTime:
+          format: date-time
+          type: string
+        recurrence:
+          $ref: '#/components/schemas/RuletypesRecurrence'
+        startTime:
+          format: date-time
+          type: string
+        timezone:
+          type: string
+      required:
+      - timezone
+      type: object
+    RuletypesScheduleType:
+      enum:
+      - hourly
+      - daily
+      - weekly
+      - monthly
+      type: string
+    RuletypesSeasonality:
+      enum:
+      - hourly
+      - daily
+      - weekly
+      type: string
+    RuletypesThresholdBasic:
+      properties:
+        kind:
+          $ref: '#/components/schemas/RuletypesThresholdKind'
+        spec:
+          $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      type: object
+    RuletypesThresholdKind:
+      enum:
+      - basic
       type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
@@ -2581,6 +4266,8 @@ components:
       - name
       - expiresAt
       type: object
+    Sigv4SigV4Config:
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -2670,13 +4357,29 @@ components:
             type: string
           type: array
       type: object
+    TimeDuration:
+      format: int64
+      type: integer
+    TypesAlertStatus:
+      properties:
+        inhibitedBy:
+          items:
+            type: string
+          nullable: true
+          type: array
+        silencedBy:
+          items:
+            type: string
+          nullable: true
+          type: array
+        state:
+          type: string
+      type: object
     TypesChangePasswordRequest:
       properties:
         newPassword:
           type: string
         oldPassword:
-          type: string
-        userId:
           type: string
       type: object
     TypesDeprecatedUser:
@@ -2941,6 +4644,54 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
+  /api/v1/alerts:
+    get:
+      deprecated: false
+      description: This endpoint returns alerts for the organization
+      operationId: GetAlerts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AlertmanagertypesDeprecatedGettableAlert'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get alerts
+      tags:
+      - alerts
   /api/v1/authz/check:
     post:
       deprecated: false
@@ -3008,11 +4759,217 @@ paths:
       summary: Get resources
       tags:
       - authz
-  /api/v1/changePassword/{id}:
+  /api/v1/channels:
+    get:
+      deprecated: false
+      description: This endpoint lists all notification channels for the organization
+      operationId: ListChannels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AlertmanagertypesChannel'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List notification channels
+      tags:
+      - channels
     post:
       deprecated: false
-      description: This endpoint changes the password by id
-      operationId: ChangePassword
+      description: This endpoint creates a notification channel
+      operationId: CreateChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigReceiver'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create notification channel
+      tags:
+      - channels
+  /api/v1/channels/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a notification channel by ID
+      operationId: DeleteChannelByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete notification channel
+      tags:
+      - channels
+    get:
+      deprecated: false
+      description: This endpoint returns a notification channel by ID
+      operationId: GetChannelByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesChannel'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get notification channel by ID
+      tags:
+      - channels
+    put:
+      deprecated: false
+      description: This endpoint updates a notification channel by ID
+      operationId: UpdateChannelByID
       parameters:
       - in: path
         name: id
@@ -3023,7 +4980,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesChangePasswordRequest'
+              $ref: '#/components/schemas/ConfigReceiver'
       responses:
         "204":
           description: No Content
@@ -3062,9 +5019,54 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Change password
+      summary: Update notification channel
       tags:
-      - users
+      - channels
+  /api/v1/channels/test:
+    post:
+      deprecated: false
+      description: This endpoint tests a notification channel by sending a test notification
+      operationId: TestChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigReceiver'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Test notification channel
+      tags:
+      - channels
   /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
     post:
       deprecated: true
@@ -3081,7 +5083,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3089,7 +5091,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:
@@ -3190,22 +5192,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAccount'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithConnectionArtifact'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "401":
           content:
             application/json:
@@ -3394,6 +5396,61 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    put:
+      deprecated: false
+      description: This endpoint updates a service for the specified cloud provider
+      operationId: UpdateService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update service
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
     post:
       deprecated: false
@@ -3409,7 +5466,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckIn'
       responses:
         "200":
           content:
@@ -3417,7 +5474,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckIn'
                   status:
                     type: string
                 required:
@@ -3451,6 +5508,59 @@ paths:
       summary: Agent check-in
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/credentials:
+    get:
+      deprecated: false
+      description: This endpoint retrieves the connection credentials required for
+        integration
+      operationId: GetConnectionCredentials
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesCredentials'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get connection credentials
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/services:
     get:
       deprecated: false
@@ -3458,6 +5568,11 @@ paths:
         provider
       operationId: ListServicesMetadata
       parameters:
+      - in: query
+        name: cloud_integration_id
+        required: false
+        schema:
+          type: string
       - in: path
         name: cloud_provider
         required: true
@@ -3510,6 +5625,11 @@ paths:
       description: This endpoint gets a service for the specified cloud provider
       operationId: GetService
       parameters:
+      - in: query
+        name: cloud_integration_id
+        required: false
+        schema:
+          type: string
       - in: path
         name: cloud_provider
         required: true
@@ -3559,55 +5679,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Get service
-      tags:
-      - cloudintegration
-    put:
-      deprecated: false
-      description: This endpoint updates a service for the specified cloud provider
-      operationId: UpdateService
-      parameters:
-      - in: path
-        name: cloud_provider
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: service_id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update service
       tags:
       - cloudintegration
   /api/v1/complete/google:
@@ -4177,6 +6248,280 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/downtime_schedules:
+    get:
+      deprecated: false
+      description: This endpoint lists all planned maintenance / downtime schedules
+      operationId: ListDowntimeSchedules
+      parameters:
+      - in: query
+        name: active
+        schema:
+          nullable: true
+          type: boolean
+      - in: query
+        name: recurring
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List downtime schedules
+      tags:
+      - downtimeschedules
+    post:
+      deprecated: false
+      description: This endpoint creates a new planned maintenance / downtime schedule
+      operationId: CreateDowntimeSchedule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create downtime schedule
+      tags:
+      - downtimeschedules
+  /api/v1/downtime_schedules/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a downtime schedule by ID
+      operationId: DeleteDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete downtime schedule
+      tags:
+      - downtimeschedules
+    get:
+      deprecated: false
+      description: This endpoint returns a downtime schedule by ID
+      operationId: GetDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesPlannedMaintenance'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get downtime schedule by ID
+      tags:
+      - downtimeschedules
+    put:
+      deprecated: false
+      description: This endpoint updates a downtime schedule by ID
+      operationId: UpdateDowntimeScheduleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostablePlannedMaintenance'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update downtime schedule
+      tags:
+      - downtimeschedules
   /api/v1/export_raw_data:
     post:
       deprecated: false
@@ -4280,6 +6625,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: metricNamespace
+        schema:
+          type: string
+      - in: query
         name: searchText
         schema:
           type: string
@@ -4365,6 +6714,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: metricNamespace
+        schema:
+          type: string
+      - in: query
         name: searchText
         schema:
           type: string
@@ -4419,9 +6772,9 @@ paths:
       - fields
   /api/v1/getResetPasswordToken/{id}:
     get:
-      deprecated: false
+      deprecated: true
       description: This endpoint returns the reset password token by id
-      operationId: GetResetPasswordToken
+      operationId: GetResetPasswordTokenDeprecated
       parameters:
       - in: path
         name: id
@@ -5491,6 +7844,281 @@ paths:
       summary: Patch objects for a role by relation
       tags:
       - role
+  /api/v1/route_policies:
+    get:
+      deprecated: false
+      description: This endpoint lists all route policies for the organization
+      operationId: GetAllRoutePolicies
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AlertmanagertypesGettableRoutePolicy'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List route policies
+      tags:
+      - routepolicies
+    post:
+      deprecated: false
+      description: This endpoint creates a route policy
+      operationId: CreateRoutePolicy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesPostableRoutePolicy'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableRoutePolicy'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create route policy
+      tags:
+      - routepolicies
+  /api/v1/route_policies/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a route policy by ID
+      operationId: DeleteRoutePolicyByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete route policy
+      tags:
+      - routepolicies
+    get:
+      deprecated: false
+      description: This endpoint returns a route policy by ID
+      operationId: GetRoutePolicyByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableRoutePolicy'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get route policy by ID
+      tags:
+      - routepolicies
+    put:
+      deprecated: false
+      description: This endpoint updates a route policy by ID
+      operationId: UpdateRoutePolicy
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertmanagertypesPostableRoutePolicy'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AlertmanagertypesGettableRoutePolicy'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update route policy
+      tags:
+      - routepolicies
   /api/v1/service_accounts:
     get:
       deprecated: false
@@ -6248,6 +8876,51 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
+  /api/v1/testChannel:
+    post:
+      deprecated: true
+      description: 'Deprecated: use /api/v1/channels/test instead'
+      operationId: TestChannelDeprecated
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigReceiver'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Test notification channel (deprecated)
+      tags:
+      - channels
   /api/v1/user:
     get:
       deprecated: false
@@ -8085,6 +10758,338 @@ paths:
       summary: Get users by role id
       tags:
       - users
+  /api/v2/rules:
+    get:
+      deprecated: false
+      description: This endpoint lists all alert rules with their current evaluation
+        state
+      operationId: ListRules
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RuletypesRule'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List alert rules
+      tags:
+      - rules
+    post:
+      deprecated: false
+      description: This endpoint creates a new alert rule
+      operationId: CreateRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Create alert rule
+      tags:
+      - rules
+  /api/v2/rules/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes an alert rule by ID
+      operationId: DeleteRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete alert rule
+      tags:
+      - rules
+    get:
+      deprecated: false
+      description: This endpoint returns an alert rule by ID
+      operationId: GetRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get alert rule by ID
+      tags:
+      - rules
+    patch:
+      deprecated: false
+      description: This endpoint applies a partial update to an alert rule by ID
+      operationId: PatchRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Patch alert rule
+      tags:
+      - rules
+    put:
+      deprecated: false
+      description: This endpoint updates an alert rule by ID
+      operationId: UpdateRuleByID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Update alert rule
+      tags:
+      - rules
   /api/v2/rules/{id}/history/filter_keys:
     get:
       deprecated: false
@@ -8124,6 +11129,10 @@ paths:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
+        schema:
+          type: string
+      - in: query
+        name: metricNamespace
         schema:
           type: string
       - in: query
@@ -8221,6 +11230,10 @@ paths:
           $ref: '#/components/schemas/TelemetrytypesFieldDataType'
       - in: query
         name: metricName
+        schema:
+          type: string
+      - in: query
+        name: metricNamespace
         schema:
           type: string
       - in: query
@@ -8597,6 +11610,63 @@ paths:
       summary: Get top contributors to rule firing
       tags:
       - rules
+  /api/v2/rules/test:
+    post:
+      deprecated: false
+      description: This endpoint fires a test notification for the given rule definition
+      operationId: TestRule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuletypesPostableRule'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RuletypesGettableTestRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Test alert rule
+      tags:
+      - rules
   /api/v2/sessions:
     delete:
       deprecated: false
@@ -8917,6 +11987,129 @@ paths:
       summary: Update user v2
       tags:
       - users
+  /api/v2/users/{id}/reset_password_tokens:
+    get:
+      deprecated: false
+      description: This endpoint returns the existing reset password token for a user.
+      operationId: GetResetPasswordToken
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get reset password token for a user
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint creates or regenerates a reset password token for
+        a user. If a valid token exists, it is returned. If expired, a new one is
+        created.
+      operationId: CreateResetPasswordToken
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesResetPasswordToken'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or regenerate reset password token for a user
+      tags:
+      - users
   /api/v2/users/{id}/roles:
     get:
       deprecated: false
@@ -9155,6 +12348,57 @@ paths:
       security:
       - tokenizer: []
       summary: Update my user v2
+      tags:
+      - users
+  /api/v2/users/me/factor_password:
+    put:
+      deprecated: false
+      description: This endpoint updates the password of the user I belong to
+      operationId: UpdateMyPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesChangePasswordRequest'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Updates my password
       tags:
       - users
   /api/v2/zeus/hosts:

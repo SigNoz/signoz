@@ -11,10 +11,16 @@ type Store interface {
 	GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) (*StorableCloudIntegration, error)
 
 	// GetConnectedAccount for a given provider
-	GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, providerAccountID string) (*StorableCloudIntegration, error)
+	GetConnectedAccount(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) (*StorableCloudIntegration, error)
+
+	// GetConnectedAccountByProviderAccountID returns the connected cloud integration account for a given provider account id
+	GetConnectedAccountByProviderAccountID(ctx context.Context, orgID valuer.UUID, providerAccountID string, provider CloudProviderType) (*StorableCloudIntegration, error)
 
 	// ListConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
 	ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
+
+	// CountConnectedAccounts returns the count of connected accounts for the org and cloud provider
+	CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) (int, error)
 
 	// CreateAccount creates a new cloud integration account
 	CreateAccount(ctx context.Context, account *StorableCloudIntegration) error
@@ -38,6 +44,8 @@ type Store interface {
 
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
+
+	RunInTx(context.Context, func(ctx context.Context) error) error
 }
 
 type ServiceDefinitionStore interface {

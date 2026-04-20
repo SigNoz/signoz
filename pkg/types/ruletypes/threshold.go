@@ -11,6 +11,7 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 type ThresholdKind struct {
@@ -21,9 +22,32 @@ var (
 	BasicThresholdKind = ThresholdKind{valuer.NewString("basic")}
 )
 
+// Enum implements jsonschema.Enum; returns the acceptable values for ThresholdKind.
+func (ThresholdKind) Enum() []any {
+	return []any{
+		BasicThresholdKind,
+	}
+}
+
 type RuleThresholdData struct {
-	Kind ThresholdKind `json:"kind"`
-	Spec any           `json:"spec"`
+	Kind ThresholdKind `json:"kind" required:"true"`
+	Spec any           `json:"spec" required:"true"`
+}
+
+// thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
+type thresholdBasic struct {
+	Kind ThresholdKind       `json:"kind" description:"The kind of threshold."`
+	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)."`
+}
+
+var _ jsonschema.OneOfExposer = RuleThresholdData{}
+
+// JSONSchemaOneOf returns the oneOf variants for the RuleThresholdData discriminated union.
+// Each variant represents a different threshold kind with its corresponding spec schema.
+func (RuleThresholdData) JSONSchemaOneOf() []any {
+	return []any{
+		thresholdBasic{},
+	}
 }
 
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
@@ -88,12 +112,12 @@ type RuleThreshold interface {
 }
 
 type BasicRuleThreshold struct {
-	Name            string          `json:"name"`
-	TargetValue     *float64        `json:"target"`
+	Name            string          `json:"name" required:"true"`
+	TargetValue     *float64        `json:"target" required:"true"`
 	TargetUnit      string          `json:"targetUnit"`
 	RecoveryTarget  *float64        `json:"recoveryTarget"`
-	MatchType       MatchType       `json:"matchType"`
-	CompareOperator CompareOperator `json:"op"`
+	MatchType       MatchType       `json:"matchType" required:"true"`
+	CompareOperator CompareOperator `json:"op" required:"true"`
 	Channels        []string        `json:"channels"`
 }
 

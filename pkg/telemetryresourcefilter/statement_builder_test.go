@@ -104,7 +104,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		query       qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
 		start       uint64
 		end         uint64
-		expected    qbtypes.Statement
+		expected    *qbtypes.Statement
 		expectedErr error
 	}{
 		{
@@ -117,7 +117,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -132,7 +132,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", "production", "%k8s.namespace.name%", "%k8s.namespace.name\":\"production%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -145,12 +145,9 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 					Expression: "service.name = 'redis-manual' OR http.request.method = 'GET'",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // OR with non-resource field: entire CTE is skipped
 		},
 		{
 			name: "resource filter with empty filter expression",
@@ -160,12 +157,9 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 					Expression: "",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // no filter: CTE is skipped
 		},
 		{
 			name: "resource filter with nil filter",
@@ -173,12 +167,9 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 				Signal: telemetrytypes.SignalTraces,
 				Filter: nil,
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // no filter: CTE is skipped
 		},
 		{
 			name: "resource filter with LIKE operator",
@@ -190,7 +181,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (LOWER(simpleJSONExtractString(labels, 'service.name')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis%", "%service.name%", "%service.name%redis%%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -205,7 +196,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONHas(labels, 'service.name') = ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{true, "%service.name%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -220,7 +211,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONHas(labels, 'service.name') <> ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{true, expectedBucketStart, expectedBucketEnd},
 			},
@@ -235,7 +226,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? OR simpleJSONExtractString(labels, 'service.name') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis", "postgres", "%service.name%", "%service.name\":\"redis%", "%service.name\":\"postgres%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -250,7 +241,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE ((simpleJSONExtractString(labels, 'service.name') <> ? AND simpleJSONExtractString(labels, 'service.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis", "postgres", "%service.name\":\"redis%", "%service.name\":\"postgres%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -265,7 +256,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (LOWER(simpleJSONExtractString(labels, 'service.name')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"%redis%", "%service.name%", "%service.name%redis%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -280,7 +271,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (match(simpleJSONExtractString(labels, 'service.name'), ?) AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis.*", "%service.name%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -295,25 +286,22 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') <> ? AND labels NOT LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis", "%service.name\":\"redis%", expectedBucketStart, expectedBucketEnd},
 			},
 		},
 		{
-			name: "resource filter with attribute-only filter (should return true)",
+			name: "resource filter with attribute-only filter",
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces,
 				Filter: &qbtypes.Filter{
 					Expression: "http.request.method = 'POST'",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // only non-resource fields: CTE is skipped
 		},
 		{
 			name: "resource filter with zero end time",
@@ -325,7 +313,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   0,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ?",
 				Args:  []any{"redis", "%service.name%", "%service.name\":\"redis%", expectedBucketStart},
 			},
@@ -340,7 +328,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE NOT (((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?))) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis", "%service.name%", "%service.name\":\"redis%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -350,20 +338,14 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces,
 				Filter: &qbtypes.Filter{
-					// http.request.method is an attribute field, not a resource field
-					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
-					// In this system, SkipConditionLiteral means "this condition is not evaluable here"
-					// and the negation of "not evaluable" is also "not evaluable",
-					// so true is the right no-op. Returning false would incorrectly exclude all rows.
+					// http.request.method is an attribute field, not a resource field.
+					// NOT of a non-evaluable condition is also non-evaluable: CTE is skipped.
 					Expression: "NOT (http.request.method = 'GET')",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // only non-resource fields: CTE is skipped
 		},
 	}
 
@@ -375,6 +357,7 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		"signoz_traces",
 		"distributed_traces_v3_resource",
 		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
 		nil,
 		nil,
@@ -389,8 +372,13 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, stmt.Query)
-				require.Equal(t, c.expected.Args, stmt.Args)
+				if c.expected == nil {
+					require.Nil(t, stmt)
+				} else {
+					require.NotNil(t, stmt)
+					require.Equal(t, c.expected.Query, stmt.Query)
+					require.Equal(t, c.expected.Args, stmt.Args)
+				}
 			}
 		})
 	}
@@ -402,7 +390,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
 		start       uint64
 		end         uint64
-		expected    qbtypes.Statement
+		expected    *qbtypes.Statement
 		expectedErr error
 	}{
 		{
@@ -415,7 +403,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -426,12 +414,9 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Filter: nil,
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // no filter: CTE is skipped
 		},
 		{
 			name: "resource filter with empty filter expression for logs",
@@ -441,12 +426,9 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 					Expression: "",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // no filter: CTE is skipped
 		},
 		{
 			name: "resource filter with multiple conditions for logs",
@@ -458,7 +440,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis", "%service.name%", "%service.name\":\"redis%", "default", "%k8s.namespace.name%", "%k8s.namespace.name\":\"default%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -469,14 +451,14 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// env and k8s.deployment.name are resource fields
-					// severity_text is an attribute field (returns true)
-					// Multiple grouped conditions with attribute fields
+					// severity_text is an attribute field (skipped)
+					// Mixed AND: resource conditions are kept, attribute conditions are dropped
 					Expression: "env = 'prod' AND k8s.deployment.name = 'prod-deployment' AND severity_text = 'ERROR' AND severity_text = 'WARN' AND (severity_text = 'INFO' AND severity_text = 'DEBUG') AND (severity_text = 'TRACE' AND severity_text = 'FATAL') AND (severity_text = 'a' AND severity_text = 'b') AND (severity_text = 'c' AND severity_text = 'd') AND (severity_text = 'e' AND severity_text = 'f')",
 				},
 			},
 			start: uint64(1769976178000000000), // These will give bucket start 1769974378 and end 1770062578
 			end:   uint64(1770062578000000000),
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'env') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.deployment.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"prod", "%env%", "%env\":\"prod%", "prod-deployment", "%k8s.deployment.name%", "%k8s.deployment.name\":\"prod-deployment%", uint64(1769974378), uint64(1770062578)},
 			},
@@ -486,101 +468,77 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// using not with full text search
 					Expression: "NOT 'error'",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil,
 		},
 		{
 			name: "NOT with unknown key should not generate not()",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// unknown.key is not in the metadata store, so with IgnoreNotFoundKeys=true
-					// the condition returns empty, and NOT should also return empty (not "not()")
+					// unknown.key not in metadata store; with IgnoreNotFoundKeys=true → no-op
 					Expression: "NOT (unknown.key = 'value')",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // unknown key ignored: CTE is skipped
 		},
 		{
 			name: "NOT EQUAL with unknown key should not generate not()",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// unknown.key is not in the metadata store, so with IgnoreNotFoundKeys=true
-					// the condition returns empty, and NOT should also return empty (not "not()")
+					// unknown.key not in metadata store; with IgnoreNotFoundKeys=true → no-op
 					Expression: "not(unknown.key = 'value1' and unknown.key = 'value2')",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // unknown key ignored: CTE is skipped
 		},
 		{
 			name: "NOT with attribute field should not generate NOT (true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// http.request.method is an attribute field, not a resource field
-					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					// http.request.method is an attribute field: CTE is skipped
 					Expression: "not(http.request.method = 'POST')",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // only non-resource fields: CTE is skipped
 		},
 		{
 			name: "NOT with multiple attribute fields should not generate NOT (true and true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// http.request.method is an attribute field, not a resource field
-					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					// all attribute fields: CTE is skipped
 					Expression: "not(http.request.method = 'POST' and module.name = 'abc')",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // only non-resource fields: CTE is skipped
 		},
 		{
 			name: "NOT with multiple attribute fields and values should not generate NOT (true and true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
-					// http.request.method is an attribute field, not a resource field
-					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					// all attribute fields: CTE is skipped
 					Expression: "not(http.request.method = 'POST' and (not 'error' and http.request.method = 'GET'))",
 				},
 			},
-			start: testStartNs,
-			end:   testEndNs,
-			expected: qbtypes.Statement{
-				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{expectedBucketStart, expectedBucketEnd},
-			},
+			start:    testStartNs,
+			end:      testEndNs,
+			expected: nil, // only non-resource fields: CTE is skipped
 		},
 	}
 
@@ -592,6 +550,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		"signoz_logs",
 		"distributed_logs_v2_resource",
 		telemetrytypes.SignalLogs,
+		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
 		nil,
 		nil,
@@ -606,8 +565,13 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, stmt.Query)
-				require.Equal(t, c.expected.Args, stmt.Args)
+				if c.expected == nil {
+					require.Nil(t, stmt)
+				} else {
+					require.NotNil(t, stmt)
+					require.Equal(t, c.expected.Query, stmt.Query)
+					require.Equal(t, c.expected.Args, stmt.Args)
+				}
 			}
 		})
 	}
@@ -620,7 +584,7 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		variables   map[string]qbtypes.VariableItem
 		start       uint64
 		end         uint64
-		expected    qbtypes.Statement
+		expected    *qbtypes.Statement
 		expectedErr error
 	}{
 		{
@@ -638,7 +602,7 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 			},
 			start: testStartNs,
 			end:   testEndNs,
-			expected: qbtypes.Statement{
+			expected: &qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
 				Args:  []any{"redis-manual", "%service.name%", "%service.name\":\"redis-manual%", expectedBucketStart, expectedBucketEnd},
 			},
@@ -653,6 +617,7 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		"signoz_traces",
 		"distributed_traces_v3_resource",
 		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
 		mockMetadataStore,
 		nil,
 		nil,
@@ -667,8 +632,13 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 				require.Contains(t, err.Error(), c.expectedErr.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, c.expected.Query, stmt.Query)
-				require.Equal(t, c.expected.Args, stmt.Args)
+				if c.expected == nil {
+					require.Nil(t, stmt)
+				} else {
+					require.NotNil(t, stmt)
+					require.Equal(t, c.expected.Query, stmt.Query)
+					require.Equal(t, c.expected.Args, stmt.Args)
+				}
 			}
 		})
 	}

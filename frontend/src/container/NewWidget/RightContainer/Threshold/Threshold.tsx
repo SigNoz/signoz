@@ -249,6 +249,7 @@ function Threshold({
 								<Input
 									defaultValue={label}
 									onChange={handleLabelChange}
+									data-testid="threshold-label-input"
 									bordered={!isDarkMode}
 									className="label-input"
 								/>
@@ -275,6 +276,7 @@ function Threshold({
 												onChange={handleTableOptionsChange}
 												rootClassName="operator-input-root"
 												className="operator-input"
+												data-testid="table-operator-input-selector"
 											/>
 											<Typography.Text className="typography">is</Typography.Text>
 										</Space>
@@ -287,6 +289,7 @@ function Threshold({
 										style={{ marginLeft: '10px' }}
 										rootClassName="operator-input-root"
 										className="operator-input"
+										data-testid="operator-input-selector"
 									/>
 								</div>
 							) : (
@@ -321,6 +324,7 @@ function Threshold({
 							defaultValue={value}
 							onChange={handleValueChange}
 							className="unit-input"
+							data-testid="threshold-value-input"
 						/>
 					) : (
 						<ShowCaseValue value={value} className="unit-input" />
@@ -332,6 +336,7 @@ function Threshold({
 							placeholder="Select unit"
 							source={YAxisSource.DASHBOARDS}
 							initialValue={unit}
+							data-testid="threshold-unit-input"
 							categoriesOverride={unitSelectCategories}
 							containerClassName="unit-selection"
 						/>
@@ -349,6 +354,7 @@ function Threshold({
 								defaultValue={format}
 								options={showAsOptions}
 								onChange={handlerFormatChange}
+								data-testid="threshold-color-selector"
 								rootClassName="color-format"
 							/>
 						</>

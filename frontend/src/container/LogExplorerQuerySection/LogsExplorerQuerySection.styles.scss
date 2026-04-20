@@ -3,8 +3,9 @@
 
 	.ant-select-selector {
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400) !important;
-		background-color: var(--bg-ink-300) !important;
+		border: 1px solid var(--l1-border) !important;
+		background-color: var(--l1-background) !important;
+		color: var(--l2-foreground);
 
 		input {
 			font-size: 12px;
@@ -12,16 +13,6 @@
 
 		.ant-tag .ant-typography {
 			font-size: 12px;
-		}
-	}
-}
-
-.lightMode {
-	.qb-search-view-container {
-		.ant-select-selector {
-			border-color: var(--bg-vanilla-300) !important;
-			background-color: var(--bg-vanilla-100) !important;
-			color: var(--bg-ink-200);
 		}
 	}
 }

@@ -30,7 +30,7 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" required:"true"`
+	Name          string        `json:"name" validate:"required" required:"true"`
 	Description   string        `json:"description,omitempty"`
 	Unit          string        `json:"unit,omitempty"`
 	Signal        Signal        `json:"signal,omitzero"`
@@ -268,7 +268,8 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName string `json:"metricName"`
+	MetricName      string `json:"metricName"`
+	MetricNamespace string `json:"metricNamespace,omitempty"`
 }
 
 type FieldKeySelector struct {
@@ -297,15 +298,16 @@ type GettableFieldKeys struct {
 }
 
 type PostableFieldKeysParams struct {
-	Signal         Signal        `query:"signal"`
-	Source         Source        `query:"source"`
-	Limit          int           `query:"limit"`
-	StartUnixMilli int64         `query:"startUnixMilli"`
-	EndUnixMilli   int64         `query:"endUnixMilli"`
-	FieldContext   FieldContext  `query:"fieldContext"`
-	FieldDataType  FieldDataType `query:"fieldDataType"`
-	MetricName     string        `query:"metricName"`
-	SearchText     string        `query:"searchText"`
+	Signal          Signal        `query:"signal"`
+	Source          Source        `query:"source"`
+	Limit           int           `query:"limit"`
+	StartUnixMilli  int64         `query:"startUnixMilli"`
+	EndUnixMilli    int64         `query:"endUnixMilli"`
+	FieldContext    FieldContext  `query:"fieldContext"`
+	FieldDataType   FieldDataType `query:"fieldDataType"`
+	MetricName      string        `query:"metricName"`
+	MetricNamespace string        `query:"metricNamespace"`
+	SearchText      string        `query:"searchText"`
 }
 
 type GettableFieldValues struct {
@@ -344,9 +346,10 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 		req.Limit = 1000
 	}
 
-	if params.MetricName != "" {
+	if params.MetricName != "" || params.MetricNamespace != "" {
 		req.MetricContext = &MetricContext{
-			MetricName: params.MetricName,
+			MetricName:      params.MetricName,
+			MetricNamespace: params.MetricNamespace,
 		}
 	}
 

@@ -6,7 +6,7 @@ exports[`PipelinePage container test should render DeleteAction section 1`] = `
     aria-label="delete"
     class="anticon anticon-delete"
     role="img"
-    style="font-size: 1.5rem;"
+    style="font-size: 1rem;"
     tabindex="-1"
   >
     <svg

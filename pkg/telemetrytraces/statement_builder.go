@@ -49,6 +49,7 @@ func NewTraceQueryStatementBuilder(
 		DBName,
 		TracesResourceV3TableName,
 		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		nil,
 		nil,
@@ -814,6 +815,9 @@ func (b *traceQueryStatementBuilder) maybeAttachResourceFilter(
 	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
+	}
+	if stmt == nil {
+		return "", nil, nil
 	}
 
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")

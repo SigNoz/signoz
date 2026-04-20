@@ -1934,9 +1934,9 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/ElastiCache"
+            "namespace": "AWS/ElastiCache"
           }
         ]
       }

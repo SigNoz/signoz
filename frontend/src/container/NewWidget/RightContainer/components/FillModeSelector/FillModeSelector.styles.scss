@@ -8,14 +8,14 @@
 		text-transform: uppercase;
 		font-size: 12px;
 		font-weight: 500;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 	}
 }
 
 .lightMode {
 	.fill-mode-selector {
 		.fill-mode-label {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 	}
 }

@@ -6,6 +6,8 @@
 ##################### Global #####################
 global:
   # the url under which the signoz apiserver is externally reachable.
+  # the path component (e.g. /signoz in https://example.com/signoz) is used
+  # as the base path for all HTTP routes (both API and web frontend).
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
@@ -50,8 +52,8 @@ pprof:
 web:
   # Whether to enable the web frontend
   enabled: true
-  # The prefix to serve web on
-  prefix: /
+  # The index file to use as the SPA entrypoint.
+  index: index.html
   # The directory containing the static build files.
   directory: /etc/signoz/web
 
@@ -82,6 +84,9 @@ sqlstore:
   provider: sqlite
   # The maximum number of open connections to the database.
   max_open_conns: 100
+  # The maximum amount of time a connection may be reused.
+  # If max_conn_lifetime == 0, connections are not closed due to a connection's age.
+  max_conn_lifetime: 0
   sqlite:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
@@ -364,3 +369,41 @@ serviceaccount:
   analytics:
     # toggle service account analytics
     enabled: true
+
+##################### Auditor #####################
+auditor:
+  # Specifies the auditor provider to use.
+  # noop: discards all audit events (community default).
+  # otlphttp: exports audit events via OTLP HTTP (enterprise).
+  provider: noop
+  # The async channel capacity for audit events. Events are dropped when full (fail-open).
+  buffer_size: 1000
+  # The maximum number of events per export batch.
+  batch_size: 100
+  # The maximum time between export flushes.
+  flush_interval: 1s
+  otlphttp:
+    # The target scheme://host:port/path of the OTLP HTTP endpoint.
+    endpoint: http://localhost:4318/v1/logs
+    # Whether to use HTTP instead of HTTPS.
+    insecure: false
+    # The maximum duration for an export attempt.
+    timeout: 10s
+    # Additional HTTP headers sent with every export request.
+    headers: {}
+    retry:
+      # Whether to retry on transient failures.
+      enabled: true
+      # The initial wait time before the first retry.
+      initial_interval: 5s
+      # The upper bound on backoff interval.
+      max_interval: 30s
+      # The total maximum time spent retrying.
+      max_elapsed_time: 60s
+
+##################### Cloud Integration #####################
+cloudintegration:
+  # cloud integration agent configuration
+  agent:
+    # The version of the cloud integration agent.
+    version: v0.0.8

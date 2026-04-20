@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -92,8 +91,6 @@ export default function QueryFunctions({
 			name: normalizeFunctionName(func.name) as any,
 		})),
 	);
-
-	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
 	const hasFunctions = functions.length > 0;
@@ -189,10 +186,7 @@ export default function QueryFunctions({
 				disabled={hasFunctions}
 				onClick={handleAddNewFunction}
 			>
-				<FunctionIcon
-					className="function-icon"
-					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}
-				/>
+				<FunctionIcon className="function-icon" fillColor="var(--l1-foreground)" />
 			</Button>
 
 			<div className="query-functions-list">
@@ -238,7 +232,7 @@ export default function QueryFunctions({
 					disabled={functions && functions.length >= maxFunctions}
 					onClick={handleAddNewFunction}
 				>
-					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
+					<Plus size={14} color="var(--l1-foreground)" />
 				</Button>
 			</Tooltip>
 		</div>

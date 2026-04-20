@@ -21,6 +21,7 @@ type resourceFilterStatementBuilder[T any] struct {
 	conditionBuilder qbtypes.ConditionBuilder
 	metadataStore    telemetrytypes.MetadataStore
 	signal           telemetrytypes.Signal
+	source           telemetrytypes.Source
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -37,6 +38,7 @@ func New[T any](
 	dbName string,
 	tableName string,
 	signal telemetrytypes.Signal,
+	source telemetrytypes.Source,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
@@ -52,6 +54,7 @@ func New[T any](
 		conditionBuilder: cb,
 		metadataStore:    metadataStore,
 		signal:           signal,
+		source:           source,
 		fullTextColumn:   fullTextColumn,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
@@ -72,6 +75,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 			continue
 		}
 		keySelectors[idx].Signal = b.signal
+		keySelectors[idx].Source = b.source
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 		filteredKeySelectors = append(filteredKeySelectors, keySelectors[idx])
 	}
@@ -98,8 +102,12 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, err
 	}
 
-	if err := b.addConditions(ctx, q, start, end, query, keys, variables); err != nil {
+	isNoOp, err := b.addConditions(ctx, q, start, end, query, keys, variables)
+	if err != nil {
 		return nil, err
+	}
+	if isNoOp {
+		return nil, nil //nolint:nilnil
 	}
 
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -110,6 +118,8 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 }
 
 // addConditions adds both filter and time conditions to the query.
+// Returns true (isNoOp) when the filter expression evaluated to no resource conditions,
+// meaning the CTE would select all fingerprints and should be skipped entirely.
 func (b *resourceFilterStatementBuilder[T]) addConditions(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -117,7 +127,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	query qbtypes.QueryBuilderQuery[T],
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
-) error {
+) (bool, error) {
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
 
@@ -140,16 +150,22 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 		})
 
 		if err != nil {
-			return err
+			return false, err
 		}
-		if filterWhereClause != nil {
-			sb.AddWhereClause(filterWhereClause.WhereClause)
+		if filterWhereClause == nil {
+			// this means all conditions evaluated to no-op (non-resource fields, unknown keys, skipped full-text/functions)
+			// the CTE would select all fingerprints, so skip it entirely
+			return true, nil
 		}
+		sb.AddWhereClause(filterWhereClause.WhereClause)
+	} else {
+		// No filter expression means we would select all fingerprints — skip the CTE.
+		return true, nil
 	}
 
 	// Add time filter
 	b.addTimeFilter(sb, start, end)
-	return nil
+	return false, nil
 }
 
 // addTimeFilter adds time-based filtering conditions.

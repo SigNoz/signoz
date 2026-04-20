@@ -40,6 +40,9 @@ import {
 	sanitizeDashboardData,
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
+// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
+// see more: https://github.com/lucide-icons/lucide/issues/94
+import { handleContactSupport } from 'container/Integrations/utils';
 import dayjs from 'dayjs';
 import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -69,9 +72,6 @@ import {
 	Search,
 	SquareArrowOutUpRight,
 } from 'lucide-react';
-// #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
-// see more: https://github.com/lucide-icons/lucide/issues/94
-import { handleContactSupport } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -83,6 +83,10 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
+
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import dashboardsUrl from '@/assets/Icons/dashboards.svg';
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -560,6 +564,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="import-json-menu-cta"
 						onClick={(): void => onModalHandler(false)}
 					>
 						<Radius size={14} /> Import JSON
@@ -573,6 +578,7 @@ function DashboardsList(): JSX.Element {
 						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
+						data-testid="view-templates-menu-cta"
 					>
 						<Flex
 							justify="space-between"
@@ -596,6 +602,7 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						data-testid="create-dashboard-menu-cta"
 						onClick={(): void => {
 							onNewDashboardHandler();
 						}}
@@ -672,11 +679,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboardFetchError ? (
 					<div className="dashboard-error-state">
-						<img
-							src="/Icons/awwSnap.svg"
-							alt="something went wrong"
-							className="error-img"
-						/>
+						<img src={awwSnapUrl} alt="something went wrong" className="error-img" />
 
 						<Typography.Text className="error-text">
 							Something went wrong :/ Please retry or contact support.
@@ -702,11 +705,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				) : dashboards.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
-						<img
-							src="/Icons/dashboards.svg"
-							alt="dashboards"
-							className="dashboard-img"
-						/>
+						<img src={dashboardsUrl} alt="dashboards" className="dashboard-img" />
 						<section className="text">
 							<Typography.Text className="no-dashboard">
 								No dashboards yet.{' '}
@@ -759,6 +758,7 @@ function DashboardsList(): JSX.Element {
 								placeholder="Search by name, description, or tags..."
 								prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
 								value={searchString}
+								data-testid="dashboards-list-search"
 								onChange={handleSearch}
 							/>
 							{createNewDashboard && (
@@ -772,6 +772,7 @@ function DashboardsList(): JSX.Element {
 										type="primary"
 										className="periscope-btn primary btn"
 										icon={<Plus size={14} />}
+										data-testid="new-dashboard-cta"
 										onClick={(): void => {
 											logEvent('Dashboard List: New dashboard clicked', {});
 										}}
@@ -784,7 +785,7 @@ function DashboardsList(): JSX.Element {
 
 						{dashboards.length === 0 ? (
 							<div className="no-search">
-								<img src="/Icons/emptyState.svg" alt="img" className="img" />
+								<img src={emptyStateUrl} alt="img" className="img" />
 								<Typography.Text className="text">
 									No dashboards found for {searchString}. Create a new dashboard?
 								</Typography.Text>

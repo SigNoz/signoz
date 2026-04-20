@@ -8,7 +8,7 @@
 				display: flex;
 				align-items: center;
 				gap: 8px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -20,7 +20,7 @@
 
 		.ant-tabs-tab-active {
 			.tab-item {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 		.ant-tabs-nav {
@@ -29,7 +29,7 @@
 		}
 
 		.ant-tabs-nav::before {
-			border-bottom: 1px solid var(--bg-slate-400) !important;
+			border-bottom: 1px solid var(--l1-border) !important;
 		}
 
 		.ant-tabs-nav-list {
@@ -40,7 +40,7 @@
 	.old-switch {
 		display: flex;
 		align-items: center;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 
 		/* Bifrost (Ancient)/Content/sm */
 		font-family: Inter;
@@ -71,7 +71,7 @@
 				align-items: center;
 				justify-content: center;
 				height: 31px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				padding: 5px 20px;
 				font-family: Inter;
 				font-size: 14px;
@@ -92,7 +92,7 @@
 				justify-content: center;
 				height: 31px;
 				padding: 5px 20px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -108,18 +108,18 @@
 			.trace-visualisation-tabs {
 				.ant-tabs-tab {
 					border-radius: 2px 0px 0px 0px;
-					background: var(--bg-ink-400);
+					background: var(--l2-background);
 					border-radius: 2px 2px 0px 0px;
-					border: 1px solid var(--bg-slate-400);
+					border: 1px solid var(--l1-border);
 					box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 					height: 31px;
 				}
 
 				.ant-tabs-tab-active {
-					background-color: var(--bg-ink-500);
+					background-color: var(--l1-background);
 
 					.ant-btn {
-						color: var(--bg-vanilla-100) !important;
+						color: var(--l1-foreground) !important;
 					}
 				}
 
@@ -130,7 +130,7 @@
 
 				.ant-tabs-ink-bar {
 					height: 1px !important;
-					background: var(--bg-ink-500) !important;
+					background: var(--l1-background) !important;
 				}
 
 				.ant-tabs-nav-list {
@@ -138,7 +138,7 @@
 				}
 
 				.ant-tabs-nav::before {
-					border-bottom: 1px solid var(--bg-slate-400);
+					border-bottom: 1px solid var(--l1-border);
 				}
 
 				.ant-tabs-nav {
@@ -155,54 +155,54 @@
 		.trace-module {
 			.ant-tabs-tab {
 				.tab-item {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 			}
 
 			.ant-tabs-tab-active {
 				.tab-item {
-					color: var(--bg-ink-100);
+					color: var(--l1-foreground);
 				}
 			}
 
 			.ant-tabs-nav::before {
-				border-bottom: 1px solid var(--bg-vanilla-300) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
 			}
 		}
 		.old-switch {
-			color: var(--bg-ink-400);
+			color: var(--l2-foreground);
 		}
 
 		.trace-layout {
 			.flamegraph-waterfall-toggle {
-				color: var(--bg-ink-400);
+				color: var(--l2-foreground);
 			}
 
 			.span-list-toggle {
-				color: var(--bg-ink-400);
+				color: var(--l2-foreground);
 			}
 
 			.trace-visualisation-tabs {
 				.ant-tabs-tab {
-					background: var(--bg-vanilla-100);
-					border: 1px solid var(--bg-vanilla-300);
+					background: var(--l3-background);
+					border: 1px solid var(--l1-border);
 				}
 
 				.ant-tabs-tab-active {
-					background-color: var(--bg-vanilla-200);
+					background-color: var(--l1-background);
 
 					.ant-btn {
-						color: var(--bg-ink-100) !important;
+						color: var(--l1-foreground) !important;
 					}
 				}
 
 				.ant-tabs-ink-bar {
 					height: 1px !important;
-					background: var(--bg-vanilla-200) !important;
+					background: var(--l1-background) !important;
 				}
 
 				.ant-tabs-nav::before {
-					border-bottom: 1px solid var(--bg-vanilla-300);
+					border-bottom: 1px solid var(--l1-border);
 				}
 			}
 		}

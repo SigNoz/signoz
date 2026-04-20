@@ -123,7 +123,7 @@ function Trace(props: TraceProps): JSX.Element {
 	const width = (value * 1e2) / (globalSpread * 1e6);
 	const panelWidth = SPAN_DETAILS_LEFT_COL_WIDTH - level * (16 + 1) - 48;
 
-	const iconStyles = useMemo(() => getIconStyles(isDarkMode), [isDarkMode]);
+	const iconStyles = useMemo(() => getIconStyles(), []);
 
 	const icon = useMemo(
 		() =>

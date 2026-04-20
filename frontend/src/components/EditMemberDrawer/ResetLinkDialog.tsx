@@ -6,6 +6,7 @@ interface ResetLinkDialogProps {
 	open: boolean;
 	linkType: 'invite' | 'reset' | null;
 	resetLink: string | null;
+	expiresAt: string | null;
 	hasCopied: boolean;
 	onClose: () => void;
 	onCopy: () => void;
@@ -15,6 +16,7 @@ function ResetLinkDialog({
 	open,
 	linkType,
 	resetLink,
+	expiresAt,
 	hasCopied,
 	onClose,
 	onCopy,
@@ -53,6 +55,11 @@ function ResetLinkDialog({
 						{hasCopied ? 'Copied!' : 'Copy'}
 					</Button>
 				</div>
+				{expiresAt && (
+					<p className="reset-link-dialog__description">
+						This link expires on {expiresAt}.
+					</p>
+				)}
 			</div>
 		</DialogWrapper>
 	);

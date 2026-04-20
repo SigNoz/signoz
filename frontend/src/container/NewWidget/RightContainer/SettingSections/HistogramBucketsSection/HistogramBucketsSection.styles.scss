@@ -12,11 +12,11 @@
 		gap: 4px;
 		align-self: stretch;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		.ant-input {
-			background: var(--bg-ink-300);
+			background: var(--l2-background);
 		}
 	}
 
@@ -26,7 +26,7 @@
 		margin-top: 8px;
 
 		.histogram-settings__merge-label {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
@@ -40,15 +40,15 @@
 .lightMode {
 	.histogram-settings__bucket-config {
 		.histogram-settings__merge-label {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 
 		.histogram-settings__bucket-input {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 
 			.ant-input {
-				background: var(--bg-vanilla-300);
+				background: var(--l2-background);
 			}
 		}
 	}

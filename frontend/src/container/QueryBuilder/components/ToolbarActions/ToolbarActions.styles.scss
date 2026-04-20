@@ -10,14 +10,14 @@
 		width: 40px;
 		height: 32px;
 		margin-right: 12px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 	}
 
 	.left-toolbar-query-actions {
 		display: flex;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		flex-direction: row;
 		border-bottom: none;
 		margin-bottom: -1px;
@@ -36,22 +36,23 @@
 			padding: 9px;
 			box-shadow: none;
 			border-radius: 0px;
-			border-left: 1px solid var(--bg-slate-400);
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-left: 1px solid var(--l1-border);
+			border-bottom: 1px solid var(--l1-border);
 
 			gap: 8px;
 
 			&.active-tab {
-				background-color: var(--bg-robin-500);
-				border-bottom: 1px solid var(--bg-robin-500);
+				background-color: var(--primary-background);
+				border-bottom: 1px solid var(--primary-background);
+				color: var(--primary-foreground);
 
 				&:hover {
-					background-color: var(--bg-robin-500) !important;
+					background-color: var(--primary-background) !important;
 				}
 			}
 
 			&:disabled {
-				background-color: var(--bg-ink-300);
+				background-color: var(--l3-background);
 				opacity: 0.6;
 			}
 
@@ -62,7 +63,7 @@
 			&:hover {
 				background-color: transparent !important;
 				border-left: 1px solid transparent !important;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 	}
@@ -101,7 +102,7 @@
 		gap: 6px;
 		flex-shrink: 0;
 		border-radius: 2px;
-		background: var(--bg-slate-300);
+		background: var(--l3-background);
 		box-shadow: none;
 		border: none;
 	}
@@ -119,43 +120,7 @@
 		border: none;
 	}
 	.cancel-run:hover {
-		background-color: #ff7875 !important;
-		color: var(--bg-vanilla-100) !important;
-	}
-}
-
-.lightMode {
-	.left-toolbar {
-		.filter-btn {
-			border-color: var(--bg-vanilla-300) !important;
-		}
-
-		.left-toolbar-query-actions {
-			border-color: var(--bg-vanilla-300) !important;
-			background: var(--bg-vanilla-100) !important;
-
-			.ant-btn {
-				border-color: var(--bg-vanilla-300) !important;
-				background: var(--bg-vanilla-100) !important;
-				color: var(--bg-ink-200) !important;
-
-				&.active-tab {
-					background-color: var(--bg-robin-100) !important;
-				}
-			}
-		}
-	}
-	.loading-container {
-		.loading-btn {
-			background: var(--bg-vanilla-300) !important;
-		}
-
-		.cancel-run {
-			color: var(--bg-vanilla-100) !important;
-		}
-
-		.cancel-run:hover {
-			background-color: #ff7875 !important;
-		}
+		background-color: var(--bg-cherry-400) !important;
+		color: var(--l1-foreground) !important;
 	}
 }

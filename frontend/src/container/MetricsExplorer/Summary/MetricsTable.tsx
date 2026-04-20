@@ -13,6 +13,8 @@ import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sig
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { Info } from 'lucide-react';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import { MetricsListItemRowData, MetricsTableProps } from './types';
 import { getMetricsTableColumns } from './utils';
 
@@ -95,7 +97,7 @@ function MetricsTable({
 								data-testid="metrics-table-empty-state"
 							>
 								<img
-									src="/Icons/emptyState.svg"
+									src={emptyStateUrl}
 									alt="thinking-emoji"
 									className="empty-state-svg"
 								/>

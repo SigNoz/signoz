@@ -14,7 +14,7 @@
 		margin: 0 !important;
 	}
 	& > * {
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: -0.07px;
@@ -24,16 +24,6 @@
 		& span,
 		&:hover {
 			color: var(--bg-forest-400);
-		}
-	}
-}
-
-.lightMode {
-	.copy-to-clipboard {
-		&:not(&--success) {
-			& > * {
-				color: var(--text-ink-400);
-			}
 		}
 	}
 }

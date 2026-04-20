@@ -4,7 +4,7 @@
 	justify-content: center;
 	gap: 6px;
 	&__label {
-		color: var(--bg-slate-50);
+		color: var(--muted-foreground);
 		font-size: 12px;
 		font-weight: 600;
 		line-height: 18px;
@@ -16,7 +16,7 @@
 		width: 100%;
 		.ant-divider {
 			margin: 0;
-			border-color: var(--bg-slate-400);
+			border-color: var(--l1-border);
 		}
 	}
 	&__time-range {
@@ -29,7 +29,7 @@
 			}
 			&,
 			input {
-				background: var(--bg-ink-300);
+				background: var(--l3-background);
 				font-size: 12px;
 			}
 		}
@@ -39,7 +39,7 @@
 .lightMode {
 	.steps-header {
 		&__label {
-			color: var(--bg-ink-400);
+			color: var(--l2-foreground);
 		}
 		.timeSelection-input {
 			&,

@@ -10,6 +10,8 @@ import {
 import { UnfoldVertical } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import ErrorState from './ErrorState';
 
 import '../DomainDetails.styles.scss';
@@ -78,7 +80,7 @@ function DependentServices({
 								<div className="no-status-code-data-message-container">
 									<div className="no-status-code-data-message-content">
 										<img
-											src="/Icons/emptyState.svg"
+											src={emptyStateUrl}
 											alt="thinking-emoji"
 											className="empty-state-svg"
 										/>

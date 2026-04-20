@@ -54,11 +54,8 @@ def test_get_me_requires_sa_identity(
     )
 
     # user JWT has no service account ID in claims, should fail
-    assert response.status_code in (
-        HTTPStatus.BAD_REQUEST,
-        HTTPStatus.FORBIDDEN,
-        HTTPStatus.NOT_FOUND,
-        HTTPStatus.UNAUTHORIZED,
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected error for user JWT on service account /me, got {response.status_code}: {response.text}"
 
 

@@ -309,8 +309,8 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *routeRequest,
 		ID:                  route.ID.StringValue(),
-		CreatedAt:           &route.CreatedAt,
-		UpdatedAt:           &route.UpdatedAt,
+		CreatedAt:           route.CreatedAt,
+		UpdatedAt:           route.UpdatedAt,
 		CreatedBy:           &route.CreatedBy,
 		UpdatedBy:           &route.UpdatedBy,
 	}, nil
@@ -365,8 +365,8 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		results = append(results, &alertmanagertypes.GettableRoutePolicy{
 			PostableRoutePolicy: *routeRequest,
 			ID:                  route.ID.StringValue(),
-			CreatedAt:           &route.CreatedAt,
-			UpdatedAt:           &route.UpdatedAt,
+			CreatedAt:           route.CreatedAt,
+			UpdatedAt:           route.UpdatedAt,
 			CreatedBy:           &route.CreatedBy,
 			UpdatedBy:           &route.UpdatedBy,
 		})
@@ -405,8 +405,8 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 			Tags:           route.Tags,
 		},
 		ID:        route.ID.StringValue(),
-		CreatedAt: &route.CreatedAt,
-		UpdatedAt: &route.UpdatedAt,
+		CreatedAt: route.CreatedAt,
+		UpdatedAt: route.UpdatedAt,
 		CreatedBy: &route.CreatedBy,
 		UpdatedBy: &route.UpdatedBy,
 	}, nil
@@ -439,8 +439,8 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 				Tags:           route.Tags,
 			},
 			ID:        route.ID.StringValue(),
-			CreatedAt: &route.CreatedAt,
-			UpdatedAt: &route.UpdatedAt,
+			CreatedAt: route.CreatedAt,
+			UpdatedAt: route.UpdatedAt,
 			CreatedBy: &route.CreatedBy,
 			UpdatedBy: &route.UpdatedBy,
 		})
@@ -508,8 +508,8 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *route,
 		ID:                  updatedRoute.ID.StringValue(),
-		CreatedAt:           &updatedRoute.CreatedAt,
-		UpdatedAt:           &updatedRoute.UpdatedAt,
+		CreatedAt:           updatedRoute.CreatedAt,
+		UpdatedAt:           updatedRoute.UpdatedAt,
 		CreatedBy:           &updatedRoute.CreatedBy,
 		UpdatedBy:           &updatedRoute.UpdatedBy,
 	}, nil

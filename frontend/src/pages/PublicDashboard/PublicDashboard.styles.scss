@@ -30,7 +30,7 @@
 				.brand-title {
 					font-size: 20px;
 					font-weight: 600;
-					color: var(--bg-vanilla-100, #ffffff); // White text for dark theme
+					color: var(--l1-foreground);
 					margin: 0;
 				}
 			}
@@ -39,7 +39,7 @@
 				margin-bottom: 24px;
 
 				.ant-typography {
-					color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -66,17 +66,7 @@
 			}
 
 			.public-dashboard-error-message-icon {
-				color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
-			}
-		}
-	}
-}
-
-.lightMode {
-	.public-dashboard-error-container {
-		.public-dashboard-error-content-header {
-			.brand-title {
-				color: var(--bg-ink-400, #121317) !important; // Dark text for light theme
+				color: var(--l2-foreground);
 			}
 		}
 	}
