@@ -105,9 +105,10 @@ func containsAllRegion(regions []string) bool {
 }
 
 func allValidAWSRegions() []string {
-	out := make([]string, 0, len(cloudintegrationtypes.ValidAWSRegions))
-	for r := range cloudintegrationtypes.ValidAWSRegions {
-		out = append(out, r)
+	awsRegions := cloudintegrationtypes.SupportedRegions[cloudintegrationtypes.CloudProviderTypeAWS]
+	out := make([]string, 0, len(awsRegions))
+	for _, r := range awsRegions {
+		out = append(out, r.StringValue())
 	}
 	sort.Strings(out)
 	return out
