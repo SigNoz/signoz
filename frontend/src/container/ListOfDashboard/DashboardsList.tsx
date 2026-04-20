@@ -83,6 +83,8 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 import dashboardsUrl from '@/assets/Icons/dashboards.svg';
@@ -457,7 +459,7 @@ function DashboardsList(): JSX.Element {
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
-														window.open(getLink(), '_blank');
+														openInNewTab(getLink());
 													}}
 												>
 													Open in New Tab
@@ -469,7 +471,7 @@ function DashboardsList(): JSX.Element {
 													onClick={(e): void => {
 														e.stopPropagation();
 														e.preventDefault();
-														setCopy(`${window.location.origin}${getLink()}`);
+														setCopy(getAbsoluteUrl(getLink()));
 													}}
 												>
 													Copy Link
