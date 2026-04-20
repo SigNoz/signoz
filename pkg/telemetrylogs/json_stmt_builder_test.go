@@ -836,7 +836,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
+				WhereClause: "((lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) = ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
 				Args:        []any{"alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -848,7 +848,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.`user.address.zip`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'user.address.zip'))",
+				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.user.address.zip, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'user.address.zip'))",
 				Args:        []any{float64(110001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -877,7 +877,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ?)",
+				WhereClause: "(lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) <> ?)",
 				Args:        []any{"alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -891,7 +891,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "(((toFloat64(assumeNotNull(dynamicElement(body_v2.`http-status`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')) OR ((toFloat64OrNull(assumeNotNull(dynamicElement(body_v2.`http-status`, 'String'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')))",
+				WhereClause: "(((toFloat64(assumeNotNull(dynamicElement(body_v2.`http-status`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')) OR ((toFloat64OrNull(lower(assumeNotNull(dynamicElement(body_v2.`http-status`, 'String')))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')))",
 				Args:        []any{float64(200), float64(200), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
@@ -903,7 +903,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.`response.time-taken`, 'Float64'))) > ?) AND has(JSONAllPaths(body_v2), 'response.time-taken'))",
+				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.response.`time-taken`, 'Float64'))) > ?) AND has(JSONAllPaths(body_v2), 'response.time-taken'))",
 				Args:        []any{float64(1.5), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
