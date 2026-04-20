@@ -947,7 +947,6 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			return response, nil
 		}
 		totalSpans = uint64(len(searchScanResponses))
-		processingBeforeCache := time.Now()
 		for _, item := range searchScanResponses {
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
@@ -1073,8 +1072,6 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		// TODO: set the span data (model.GetWaterfallSpansForTraceWithMetadataCache) in cache here
 		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
 		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
-
-		r.logger.Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
 	}
 
 	processingPostCache := time.Now()
@@ -1165,7 +1162,6 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			return trace, nil
 		}
 
-		processingBeforeCache := time.Now()
 		for _, item := range searchScanResponses {
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
@@ -1251,9 +1247,6 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		// TODO: set the trace data (model.GetFlamegraphSpansForTraceCache) in cache here
 		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
 		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
-
-		r.logger.Info("getFlamegraphSpansForTrace: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
-
 	}
 
 	processingPostCache := time.Now()
