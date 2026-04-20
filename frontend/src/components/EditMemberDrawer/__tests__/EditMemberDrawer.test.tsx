@@ -20,17 +20,29 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
-	DrawerWrapper: ({
-		content,
-		open,
-	}: {
-		content?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+jest.mock('api/generated/services/users', () => ({
+	useDeleteUser: jest.fn(),
+	useGetUser: jest.fn(),
+	useUpdateUser: jest.fn(),
+	useUpdateMyUserV2: jest.fn(),
+	useSetRoleByUserID: jest.fn(),
+	useGetResetPasswordToken: jest.fn(),
+	useCreateResetPasswordToken: jest.fn(),
 }));
 
-jest.mock('@signozhq/dialog', () => ({
+jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
+	convertToApiError: jest.fn(),
+}));
+
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
+	DrawerWrapper: ({
+		children,
+		open,
+	}: {
+		children?: ReactNode;
+		open: boolean;
+	}): JSX.Element | null => (open ? <div>{children}</div> : null),
 	DialogWrapper: ({
 		children,
 		open,
@@ -48,24 +60,6 @@ jest.mock('@signozhq/dialog', () => ({
 	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
-}));
-
-jest.mock('api/generated/services/users', () => ({
-	useDeleteUser: jest.fn(),
-	useGetUser: jest.fn(),
-	useUpdateUser: jest.fn(),
-	useUpdateMyUserV2: jest.fn(),
-	useSetRoleByUserID: jest.fn(),
-	useGetResetPasswordToken: jest.fn(),
-	useCreateResetPasswordToken: jest.fn(),
-}));
-
-jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
-	convertToApiError: jest.fn(),
-}));
-
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

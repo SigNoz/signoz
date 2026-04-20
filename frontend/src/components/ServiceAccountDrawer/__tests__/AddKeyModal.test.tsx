@@ -1,7 +1,13 @@
 import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	waitForElementToBeRemoved,
+} from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
 
@@ -128,11 +134,9 @@ describe('AddKeyModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await screen.findByRole('dialog', { name: /Add a New Key/i });
+		const dialog = await screen.findByRole('dialog', { name: /Add a New Key/i });
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(
-			screen.queryByRole('dialog', { name: /Add a New Key/i }),
-		).not.toBeInTheDocument();
+		await waitForElementToBeRemoved(dialog);
 	});
 });
