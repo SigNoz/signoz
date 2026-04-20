@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/span_attribute_groups", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups", handler.New(
 		provider.authZ.ViewAccess(provider.spanAttributeMappingHandler.ListGroups),
 		handler.OpenAPIDef{
 			ID:                  "ListSpanAttributeMappingGroups",
@@ -31,7 +31,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.CreateGroup),
 		handler.OpenAPIDef{
 			ID:                  "CreateMappingGroup",
@@ -51,7 +51,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{id}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.UpdateGroup),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMappingGroup",
@@ -71,7 +71,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{id}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.DeleteGroup),
 		handler.OpenAPIDef{
 			ID:                  "DeleteMappingGroup",
@@ -91,7 +91,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{id}/mappers", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}/mappers", handler.New(
 		provider.authZ.ViewAccess(provider.spanAttributeMappingHandler.ListMappers),
 		handler.OpenAPIDef{
 			ID:                  "ListMappers",
@@ -111,7 +111,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{id}/mappers", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}/mappers", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.CreateMapper),
 		handler.OpenAPIDef{
 			ID:                  "CreateMapper",
@@ -131,7 +131,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{groupId}/mappers/{mapperId}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.UpdateMapper),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMapper",
@@ -151,7 +151,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_groups/{groupId}/mappers/{mapperId}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.DeleteMapper),
 		handler.OpenAPIDef{
 			ID:                  "DeleteMapper",

@@ -56,7 +56,7 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 
 	items := make([]*spanattributemappingtypes.GettableSpanAttributeMappingGroup, len(groups))
 	for i, g := range groups {
-		items[i] = spanattributemappingtypes.NewGettableMappingGroup(g)
+		items[i] = spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(g)
 	}
 
 	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappingGroupsResponse{Items: items})
@@ -91,7 +91,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMappingGroup(group))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(group))
 }
 
 // UpdateGroup handles PUT /api/v1/ai-o11y/mapping/groups/{id}.
@@ -129,7 +129,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMappingGroup(group))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableSpanAttributeMappingGroup(group))
 }
 
 // DeleteGroup handles DELETE /api/v1/ai-o11y/mapping/groups/{id}.
@@ -194,7 +194,7 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 
 	items := make([]*spanattributemappingtypes.GettableSpanAttributeMapper, len(mappers))
 	for i, m := range mappers {
-		items[i] = spanattributemappingtypes.NewGettableMapper(m)
+		items[i] = spanattributemappingtypes.NewGettableSpanAttributeMapper(m)
 	}
 
 	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappersResponse{Items: items})
@@ -235,7 +235,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableSpanAttributeMapper(mapper))
 }
 
 // UpdateMapper handles PUT /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
@@ -279,7 +279,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableSpanAttributeMapper(mapper))
 }
 
 // DeleteMapper handles DELETE /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.

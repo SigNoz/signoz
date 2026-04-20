@@ -35,14 +35,10 @@ func (MapperOperation) Enum() []any {
 
 // MapperSource describes one candidate source for a target attribute.
 type MapperSource struct {
-	// Key is the span/resource attribute key to read from.
-	Key string `json:"key"`
-	// Context indicates whether to read from span attributes or resource attributes.
-	Context FieldContext `json:"context"`
-	// Operation determines whether to move or copy the source value.
+	Key       string          `json:"key"`
+	Context   FieldContext    `json:"context"`
 	Operation MapperOperation `json:"operation"`
-	// Priority controls the evaluation order; lower value = higher priority.
-	Priority int `json:"priority"`
+	Priority  int             `json:"priority"`
 }
 
 // MapperConfig holds the mapping logic for a single target attribute.
@@ -102,7 +98,6 @@ func NewMapperFromStorable(s *StorableSpanAttributeMapper) *SpanAttributeMapper 
 	}
 }
 
-// NewMappersFromStorable converts a slice of StorableMapper to a slice of Mapper.
 func NewMappersFromStorable(ss []*StorableSpanAttributeMapper) []*SpanAttributeMapper {
 	mappers := make([]*SpanAttributeMapper, len(ss))
 	for i, s := range ss {
@@ -111,15 +106,12 @@ func NewMappersFromStorable(ss []*StorableSpanAttributeMapper) []*SpanAttributeM
 	return mappers
 }
 
-// GettableMapper is the HTTP response representation of a mapper.
 type GettableSpanAttributeMapper = SpanAttributeMapper
 
-// NewGettableMapper converts a domain Mapper to a GettableMapper.
-func NewGettableMapper(m *SpanAttributeMapper) *GettableSpanAttributeMapper {
+func NewGettableSpanAttributeMapper(m *SpanAttributeMapper) *GettableSpanAttributeMapper {
 	return m
 }
 
-// PostableMapper is the HTTP request body for creating a mapper.
 type PostableSpanAttributeMapper struct {
 	Name         string       `json:"name"          required:"true"`
 	FieldContext FieldContext `json:"field_context" required:"true"`
@@ -135,7 +127,6 @@ type UpdatableSpanAttributeMapper struct {
 	Enabled      *bool         `json:"enabled,omitempty"`
 }
 
-// ListMappersResponse is the response for listing mappers within a group.
 type ListSpanAttributeMappersResponse struct {
 	Items []*GettableSpanAttributeMapper `json:"items" required:"true" nullable:"true"`
 }

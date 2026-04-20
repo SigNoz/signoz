@@ -79,8 +79,7 @@ func NewSpanAttributeMappingGroupsFromStorable(ss []*StorableSpanAttributeMappin
 // GettableSpanAttributeMappingGroup is the HTTP response representation of a mapping group.
 type GettableSpanAttributeMappingGroup = SpanAttributeMappingGroup
 
-// NewGettableMappingGroup converts a domain MappingGroup to a GettableMappingGroup.
-func NewGettableMappingGroup(g *SpanAttributeMappingGroup) *GettableSpanAttributeMappingGroup {
+func NewGettableSpanAttributeMappingGroup(g *SpanAttributeMappingGroup) *GettableSpanAttributeMappingGroup {
 	return g
 }
 
@@ -99,13 +98,11 @@ type UpdatableSpanAttributeMappingGroup struct {
 	Enabled   *bool      `json:"enabled,omitempty"`
 }
 
-// ListMappingGroupsQuery holds optional filter parameters for listing mapping groups.
 type ListSpanAttributeMappingGroupsQuery struct {
 	Category *GroupCategory `query:"category"`
 	Enabled  *bool          `query:"enabled"`
 }
 
-// ListMappingGroupsResponse is the response for listing mapping groups.
 type ListSpanAttributeMappingGroupsResponse struct {
 	Items []*GettableSpanAttributeMappingGroup `json:"items" required:"true" nullable:"true"`
 }
