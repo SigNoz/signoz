@@ -14,6 +14,7 @@ type Module interface {
 	Create(ctx context.Context, orgID valuer.UUID, createdBy string, req *aio11ypricingruletypes.PostablePricingRule) (*aio11ypricingruletypes.PricingRule, error)
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, req *aio11ypricingruletypes.UpdatablePricingRule) (*aio11ypricingruletypes.PricingRule, error)
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+	Sync(ctx context.Context, orgID valuer.UUID, req *aio11ypricingruletypes.SyncPricingRulesRequest) (*aio11ypricingruletypes.SyncPricingRulesResponse, error)
 }
 
 // Handler defines the HTTP handler interface for pricing rule endpoints.
@@ -23,4 +24,5 @@ type Handler interface {
 	Create(rw http.ResponseWriter, r *http.Request)
 	Update(rw http.ResponseWriter, r *http.Request)
 	Delete(rw http.ResponseWriter, r *http.Request)
+	Sync(rw http.ResponseWriter, r *http.Request)
 }

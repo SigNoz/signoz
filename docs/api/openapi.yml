@@ -5,75 +5,12 @@ components:
       - subtract
       - additive
       - unknown
-      nullable: true
       type: string
-    Aio11YpricingruletypesGettablePricingRule:
-      properties:
-        cache_mode:
-          $ref: '#/components/schemas/Aio11YpricingruletypesCacheMode'
-        cost_cache_read:
-          format: double
-          type: number
-        cost_cache_write:
-          format: double
-          type: number
-        cost_input:
-          format: double
-          type: number
-        cost_output:
-          format: double
-          type: number
-        created_at:
-          format: date-time
-          type: string
-        created_by:
-          type: string
-        enabled:
-          type: boolean
-        id:
-          type: string
-        is_override:
-          type: boolean
-        model_name:
-          type: string
-        model_pattern:
-          items:
-            type: string
-          nullable: true
-          type: array
-        synced_at:
-          format: date-time
-          nullable: true
-          type: string
-        unit:
-          $ref: '#/components/schemas/Aio11YpricingruletypesUnit'
-        updated_at:
-          format: date-time
-          type: string
-        updated_by:
-          type: string
-      required:
-      - id
-      - model_name
-      - model_pattern
-      - unit
-      - cache_mode
-      - cost_input
-      - cost_output
-      - cost_cache_read
-      - cost_cache_write
-      - is_override
-      - enabled
-      - created_at
-      - updated_at
-      - created_by
-      - updated_by
-      type: object
     Aio11YpricingruletypesListPricingRulesResponse:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/Aio11YpricingruletypesGettablePricingRule'
+            $ref: '#/components/schemas/Aio11YpricingruletypesPricingRule'
           nullable: true
           type: array
         limit:
@@ -90,25 +27,25 @@ components:
       type: object
     Aio11YpricingruletypesPostablePricingRule:
       properties:
-        cache_mode:
+        cacheMode:
           $ref: '#/components/schemas/Aio11YpricingruletypesCacheMode'
-        cost_cache_read:
+        costCacheRead:
           format: double
           type: number
-        cost_cache_write:
+        costCacheWrite:
           format: double
           type: number
-        cost_input:
+        costInput:
           format: double
           type: number
-        cost_output:
+        costOutput:
           format: double
           type: number
         enabled:
           type: boolean
-        model_name:
+        modelName:
           type: string
-        model_pattern:
+        modelPattern:
           items:
             type: string
           nullable: true
@@ -116,47 +53,168 @@ components:
         unit:
           $ref: '#/components/schemas/Aio11YpricingruletypesUnit'
       required:
-      - model_name
-      - model_pattern
+      - modelName
+      - modelPattern
       - unit
-      - cache_mode
-      - cost_input
-      - cost_output
-      - cost_cache_read
-      - cost_cache_write
+      - cacheMode
+      - costInput
+      - costOutput
+      - costCacheRead
+      - costCacheWrite
       - enabled
+      type: object
+    Aio11YpricingruletypesPricingRule:
+      properties:
+        cacheMode:
+          $ref: '#/components/schemas/Aio11YpricingruletypesCacheMode'
+        costCacheRead:
+          format: double
+          type: number
+        costCacheWrite:
+          format: double
+          type: number
+        costInput:
+          format: double
+          type: number
+        costOutput:
+          format: double
+          type: number
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        isOverride:
+          type: boolean
+        model:
+          type: string
+        modelPattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        orgId:
+          type: string
+        syncedAt:
+          format: date-time
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/Aio11YpricingruletypesUnit'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - model
+      - modelPattern
+      - unit
+      - cacheMode
+      - costInput
+      - costOutput
+      - costCacheRead
+      - costCacheWrite
+      - isOverride
+      - enabled
+      type: object
+    Aio11YpricingruletypesSyncPricingRulesRequest:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/Aio11YpricingruletypesSyncablePricingRule'
+          nullable: true
+          type: array
+      required:
+      - rules
+      type: object
+    Aio11YpricingruletypesSyncPricingRulesResponse:
+      properties:
+        refreshed:
+          type: integer
+        synced:
+          type: integer
+      required:
+      - synced
+      - refreshed
+      type: object
+    Aio11YpricingruletypesSyncablePricingRule:
+      properties:
+        cacheMode:
+          $ref: '#/components/schemas/Aio11YpricingruletypesCacheMode'
+        costCacheRead:
+          format: double
+          type: number
+        costCacheWrite:
+          format: double
+          type: number
+        costInput:
+          format: double
+          type: number
+        costOutput:
+          format: double
+          type: number
+        enabled:
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        sourceId:
+          type: string
+        unit:
+          $ref: '#/components/schemas/Aio11YpricingruletypesUnit'
+      required:
+      - modelName
+      - modelPattern
+      - unit
+      - cacheMode
+      - costInput
+      - costOutput
+      - costCacheRead
+      - costCacheWrite
+      - enabled
+      - sourceId
       type: object
     Aio11YpricingruletypesUnit:
       enum:
       - per_million_tokens
-      nullable: true
       type: string
     Aio11YpricingruletypesUpdatablePricingRule:
       properties:
-        cache_mode:
+        cacheMode:
           $ref: '#/components/schemas/Aio11YpricingruletypesCacheMode'
-        cost_cache_read:
+        costCacheRead:
           nullable: true
           type: number
-        cost_cache_write:
+        costCacheWrite:
           nullable: true
           type: number
-        cost_input:
+        costInput:
           nullable: true
           type: number
-        cost_output:
+        costOutput:
           nullable: true
           type: number
         enabled:
           nullable: true
           type: boolean
-        is_override:
+        isOverride:
           nullable: true
           type: boolean
-        model_name:
+        modelName:
           nullable: true
           type: string
-        model_pattern:
+        modelPattern:
           items:
             type: string
           type: array
@@ -4807,7 +4865,7 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
-  /api/v1/ai-o11y/pricing/rules:
+  /api/v1/ai-o11y/pricing_rules:
     get:
       deprecated: false
       description: Returns all LLM pricing rules for the authenticated org, with pagination.
@@ -4885,7 +4943,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/Aio11YpricingruletypesGettablePricingRule'
+                    $ref: '#/components/schemas/Aio11YpricingruletypesPricingRule'
                   status:
                     type: string
                 required:
@@ -4931,7 +4989,7 @@ paths:
       summary: Create a pricing rule
       tags:
       - ai-o11y
-  /api/v1/ai-o11y/pricing/rules/{id}:
+  /api/v1/ai-o11y/pricing_rules/{id}:
     delete:
       deprecated: false
       description: Hard-deletes a pricing rule. If auto-synced, it will be recreated
@@ -4995,7 +5053,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/Aio11YpricingruletypesGettablePricingRule'
+                    $ref: '#/components/schemas/Aio11YpricingruletypesPricingRule'
                   status:
                     type: string
                 required:
@@ -5035,7 +5093,7 @@ paths:
       summary: Get a pricing rule
       tags:
       - ai-o11y
-    put:
+    patch:
       deprecated: false
       description: Partially updates an existing pricing rule. Changing any cost field
         sets is_override = true.
@@ -5058,7 +5116,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/Aio11YpricingruletypesGettablePricingRule'
+                    $ref: '#/components/schemas/Aio11YpricingruletypesPricingRule'
                   status:
                     type: string
                 required:
@@ -5102,6 +5160,64 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a pricing rule
+      tags:
+      - ai-o11y
+  /api/v1/ai-o11y/pricing_rules/sync:
+    put:
+      deprecated: false
+      description: Zeus bulk-upserts upstream pricing. Non-override rules get costs
+        updated; override rules get only SourceConfig refreshed.
+      operationId: SyncPricingRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aio11YpricingruletypesSyncPricingRulesRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Aio11YpricingruletypesSyncPricingRulesResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Bulk sync pricing rules
       tags:
       - ai-o11y
   /api/v1/alerts:

@@ -61,7 +61,7 @@ type provider struct {
 	cloudIntegrationHandler  cloudintegration.Handler
 	ruleStateHistoryHandler  rulestatehistory.Handler
 	alertmanagerHandler      alertmanager.Handler
-	aio11yPricingRuleHandler aio11ypricingrule.Handler
+	aiO11yPricingRuleHandler aio11ypricingrule.Handler
 	rulerHandler             ruler.Handler
 }
 

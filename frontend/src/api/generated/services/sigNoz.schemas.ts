@@ -4,6 +4,251 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+export enum Aio11YpricingruletypesCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export interface Aio11YpricingruletypesListPricingRulesResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: Aio11YpricingruletypesPricingRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface Aio11YpricingruletypesPostablePricingRuleDTO {
+	cacheMode: Aio11YpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheRead: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheWrite: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costInput: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costOutput: number;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	unit: Aio11YpricingruletypesUnitDTO;
+}
+
+export interface Aio11YpricingruletypesPricingRuleDTO {
+	cacheMode: Aio11YpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheRead: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheWrite: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costInput: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costOutput: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isOverride: boolean;
+	/**
+	 * @type string
+	 */
+	model: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	syncedAt?: Date | null;
+	unit: Aio11YpricingruletypesUnitDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface Aio11YpricingruletypesSyncPricingRulesRequestDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	rules: Aio11YpricingruletypesSyncablePricingRuleDTO[] | null;
+}
+
+export interface Aio11YpricingruletypesSyncPricingRulesResponseDTO {
+	/**
+	 * @type integer
+	 */
+	refreshed: number;
+	/**
+	 * @type integer
+	 */
+	synced: number;
+}
+
+export interface Aio11YpricingruletypesSyncablePricingRuleDTO {
+	cacheMode: Aio11YpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheRead: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheWrite: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costInput: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costOutput: number;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	/**
+	 * @type string
+	 */
+	sourceId: string;
+	unit: Aio11YpricingruletypesUnitDTO;
+}
+
+export enum Aio11YpricingruletypesUnitDTO {
+	per_million_tokens = 'per_million_tokens',
+}
+export interface Aio11YpricingruletypesUpdatablePricingRuleDTO {
+	cacheMode?: Aio11YpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	costCacheRead?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	costCacheWrite?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	costInput?: number | null;
+	/**
+	 * @type number
+	 * @nullable true
+	 */
+	costOutput?: number | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	isOverride?: boolean | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	modelName?: string | null;
+	/**
+	 * @type array
+	 */
+	modelPattern?: string[];
+	unit?: Aio11YpricingruletypesUnitDTO;
+}
+
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -5690,6 +5935,68 @@ export interface ZeustypesPostableProfileDTO {
 	 */
 	where_did_you_discover_signoz: string;
 }
+
+export type ListPricingRulesParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListPricingRules200 = {
+	data: Aio11YpricingruletypesListPricingRulesResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreatePricingRule201 = {
+	data: Aio11YpricingruletypesPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeletePricingRulePathParameters = {
+	id: string;
+};
+export type GetPricingRulePathParameters = {
+	id: string;
+};
+export type GetPricingRule200 = {
+	data: Aio11YpricingruletypesPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdatePricingRulePathParameters = {
+	id: string;
+};
+export type UpdatePricingRule200 = {
+	data: Aio11YpricingruletypesPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type SyncPricingRules200 = {
+	data: Aio11YpricingruletypesSyncPricingRulesResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
 
 export type GetAlerts200 = {
 	/**

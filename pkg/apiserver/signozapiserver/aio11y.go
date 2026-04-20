@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/ai-o11y/pricing/rules", handler.New(
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules", handler.New(
 		provider.authZ.ViewAccess(provider.aiO11yPricingRuleHandler.List),
 		handler.OpenAPIDef{
 			ID:                  "ListPricingRules",
@@ -31,7 +31,7 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/pricing/rules", handler.New(
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules", handler.New(
 		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Create),
 		handler.OpenAPIDef{
 			ID:                  "CreatePricingRule",
@@ -51,7 +51,27 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/pricing/rules/{id}", handler.New(
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/sync", handler.New(
+		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Sync),
+		handler.OpenAPIDef{
+			ID:                  "SyncPricingRules",
+			Tags:                []string{"ai-o11y"},
+			Summary:             "Bulk sync pricing rules",
+			Description:         "Zeus bulk-upserts upstream pricing. Non-override rules get costs updated; override rules get only SourceConfig refreshed.",
+			Request:             new(aio11ypricingruletypes.SyncPricingRulesRequest),
+			RequestContentType:  "application/json",
+			Response:            new(aio11ypricingruletypes.SyncPricingRulesResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin), // not sure of this
+		},
+	)).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/{id}", handler.New(
 		provider.authZ.ViewAccess(provider.aiO11yPricingRuleHandler.Get),
 		handler.OpenAPIDef{
 			ID:                  "GetPricingRule",
@@ -71,7 +91,7 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/pricing/rules/{id}", handler.New(
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/{id}", handler.New(
 		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Update),
 		handler.OpenAPIDef{
 			ID:                  "UpdatePricingRule",
@@ -87,11 +107,11 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-	)).Methods(http.MethodPut).GetError(); err != nil {
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/pricing/rules/{id}", handler.New(
+	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/{id}", handler.New(
 		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Delete),
 		handler.OpenAPIDef{
 			ID:                  "DeletePricingRule",

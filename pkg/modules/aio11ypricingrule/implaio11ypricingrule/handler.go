@@ -27,7 +27,7 @@ func NewHandler(module aio11ypricingrule.Module, providerSettings factory.Provid
 	return &handler{module: module, providerSettings: providerSettings}
 }
 
-// List handles GET /api/v1/ai-o11y/pricing/rules.
+// List handles GET /api/v1/ai-o11y/pricing_rules.
 func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -79,7 +79,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Get handles GET /api/v1/ai-o11y/pricing/rules/{id}.
+// Get handles GET /api/v1/ai-o11y/pricing_rules/{id}.
 func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -111,7 +111,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRule(rule))
 }
 
-// Create handles POST /api/v1/ai-o11y/pricing/rules.
+// Create handles POST /api/v1/ai-o11y/pricing_rules.
 func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -143,7 +143,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, aio11ypricingruletypes.NewGettablePricingRule(rule))
 }
 
-// Update handles PUT /api/v1/ai-o11y/pricing/rules/{id}
+// Update handles PUT /api/v1/ai-o11y/pricing_rules/{id}.
 func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -181,7 +181,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRule(rule))
 }
 
-// Delete handles DELETE /api/v1/ai-o11y/pricing/rules/{id}
+// Delete handles DELETE /api/v1/ai-o11y/pricing_rules/{id}.
 func (h *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -210,6 +210,41 @@ func (h *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusNoContent, nil)
+}
+
+// Sync handles PUT /api/v1/ai-o11y/pricing_rules/sync.
+// Zeus sends a bulk payload of rules across any number of sources.
+// Rules with isOverride=false get costs updated; rules with isOverride=true
+// get only SourceConfig refreshed so users can revert to the new upstream value.
+func (h *handler) Sync(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(aio11ypricingruletypes.SyncPricingRulesRequest)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	resp, err := h.module.Sync(ctx, orgID, req)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, resp)
 }
 
 // ruleIDFromPath extracts and validates the {id} path variable.

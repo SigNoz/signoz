@@ -3,9 +3,9 @@ package aio11ypricingruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -37,7 +37,7 @@ func (s *StringSlice) Scan(src any) error {
 		*s = nil
 		return nil
 	default:
-		return fmt.Errorf("aio11ypricingruletypes: cannot scan %T into StringSlice", src)
+		return errors.NewInternalf(errors.CodeInternal, "aio11ypricingruletypes: cannot scan %T into StringSlice", src)
 	}
 	return json.Unmarshal(raw, s)
 }
@@ -51,6 +51,7 @@ type StorablePricingRule struct {
 	types.UserAuditable
 
 	OrgID          valuer.UUID `bun:"org_id,type:text,notnull"`
+	SourceID       valuer.UUID `bun:"source_id,type:text,notnull"`
 	Model          string      `bun:"model,type:text,notnull"`
 	ModelPattern   StringSlice `bun:"model_pattern,type:text,notnull"`
 	Unit           Unit        `bun:"unit,type:text,notnull"`
