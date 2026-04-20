@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';

@@ -7,8 +7,8 @@
 	.error-container {
 		display: flex;
 		border-radius: 6px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		align-items: center;
 		justify-content: center;
 		flex-direction: column;
@@ -73,7 +73,7 @@
 		align-items: center;
 		height: 24px;
 		padding-left: 0px;
-		color: #c0c1c3;
+		color: var(--muted-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -93,8 +93,8 @@
 		padding: 16px;
 		gap: 12px;
 		border-radius: 6px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		.integration-detail-header {
 			display: flex;
@@ -106,8 +106,8 @@
 				width: 40px;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--bg-ink-50);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -121,7 +121,7 @@
 				display: flex;
 				flex-direction: column;
 				.heading {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-style: normal;
@@ -131,7 +131,7 @@
 				}
 
 				.description {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -151,9 +151,9 @@
 				height: 30px;
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-ink-50);
-				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
+				border: 1px solid var(--l1-border);
+				background: var(--primary-background);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -164,9 +164,9 @@
 
 				&.test-connection {
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
-					color: var(--bg-vanilla-400);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -191,38 +191,42 @@
 
 		.testingConnection {
 			border-radius: 4px;
-			border: 1px solid rgba(255, 205, 86, 0.1);
-			background: rgba(255, 205, 86, 0.1);
-			color: var(--bg-amber-400);
+			border: 1px solid
+				color-mix(in srgb, var(--warning-background) 10%, transparent);
+			background: color-mix(in srgb, var(--warning-background) 10%, transparent);
+			color: var(--warning-foreground);
 		}
 
 		.connected {
 			border-radius: 4px;
-			border: 1px solid rgba(37, 225, 146, 0.1);
-			background: rgba(37, 225, 146, 0.1);
-			color: var(--bg-forest-400);
+			border: 1px solid
+				color-mix(in srgb, var(--success-background) 10%, transparent);
+			background: color-mix(in srgb, var(--success-background) 10%, transparent);
+			color: var(--success-foreground);
 		}
 
 		.connectionFailed {
 			border-radius: 4px;
-			border: 1px solid rgba(218, 85, 101, 0.2);
-			background: rgba(218, 85, 101, 0.06);
-			color: var(--bg-cherry-500);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 6%, transparent);
+			color: var(--danger-foreground);
 		}
 
 		.noDataSinceLong {
 			border-radius: 4px;
-			border: 1px solid rgba(78, 116, 248, 0.1);
-			background: rgba(78, 116, 248, 0.1);
-			color: var(--bg-robin-400);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+			color: var(--primary-foreground);
 		}
 	}
 
 	.integration-detail-container {
 		border-radius: 6px;
 		padding: 10px 16px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400, #121317);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		.integration-tab-btns {
 			display: flex;
@@ -231,7 +235,7 @@
 			padding: 8px 8px 18px 8px !important;
 
 			.typography {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -268,8 +272,8 @@
 		display: flex;
 		padding: 16px;
 		border-radius: 4px;
-		border: 1px solid rgba(218, 85, 101, 0.2);
-		background: rgba(218, 85, 101, 0.06);
+		border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+		background: color-mix(in srgb, var(--bg-sakura-500) 6%, transparent);
 		gap: 32px;
 
 		.unintall-integration-bar-text {
@@ -306,7 +310,7 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			text-align: center;
 			font-family: Inter;
 			font-size: 12px;
@@ -317,7 +321,7 @@
 
 		.uninstall-integration-btn:hover {
 			&.ant-btn-default {
-				color: var(--bg-vanilla-100) !important;
+				color: var(--l1-foreground) !important;
 			}
 		}
 	}
@@ -329,9 +333,9 @@
 		min-height: 200px;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-		background: var(--bg-ink-400);
+		background: var(--l2-background);
 	}
 
 	.ant-modal-footer {
@@ -344,7 +348,7 @@
 	}
 
 	.ant-modal-title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -354,7 +358,7 @@
 	}
 
 	.remove-integration-text {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -370,8 +374,8 @@
 		min-height: 170px;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
@@ -379,7 +383,7 @@
 		}
 
 		.ant-modal-body {
-			border-top: 1px solid var(--bg-slate-500);
+			border-top: 1px solid var(--l1-border);
 			padding-top: 16px;
 		}
 
@@ -394,10 +398,10 @@
 				.understandBtn {
 					width: 50%;
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
 					box-shadow: none;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -413,7 +417,7 @@
 				}
 				.configureBtn {
 					width: 50%;
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -421,7 +425,7 @@
 					line-height: 10px; /* 83.333% */
 					letter-spacing: 0.12px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					display: flex;
 					height: 34px;
 					padding: 6px;
@@ -480,7 +484,7 @@
 			align-items: center;
 
 			.connection-line {
-				border: 1px dashed var(--bg-slate-200);
+				border: 1px dashed var(--l1-border);
 				min-width: 20px;
 				height: 0px;
 				flex-grow: 1;
@@ -488,7 +492,7 @@
 			}
 
 			.last-data {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -498,7 +502,7 @@
 			}
 
 			.last-value {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -509,212 +513,34 @@
 		}
 		.testingConnection {
 			border-radius: 4px;
-			border: 1px solid rgba(255, 205, 86, 0.1);
-			background: rgba(255, 205, 86, 0.1);
-			color: var(--bg-amber-400);
+			border: 1px solid
+				color-mix(in srgb, var(--warning-background) 10%, transparent);
+			background: color-mix(in srgb, var(--warning-background) 10%, transparent);
+			color: var(--warning-foreground);
 		}
 
 		.connected {
 			border-radius: 4px;
-			border: 1px solid rgba(37, 225, 146, 0.1);
-			background: rgba(37, 225, 146, 0.1);
-			color: var(--bg-forest-400);
+			border: 1px solid
+				color-mix(in srgb, var(--success-background) 10%, transparent);
+			background: color-mix(in srgb, var(--success-background) 10%, transparent);
+			color: var(--success-foreground);
 		}
 
 		.connectionFailed {
 			border-radius: 4px;
-			border: 1px solid rgba(218, 85, 101, 0.2);
-			background: rgba(218, 85, 101, 0.06);
-			color: var(--bg-cherry-500);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 6%, transparent);
+			color: var(--danger-foreground);
 		}
 
 		.noDataSinceLong {
 			border-radius: 4px;
-			border: 1px solid rgba(78, 116, 248, 0.1);
-			background: rgba(78, 116, 248, 0.1);
-			color: var(--bg-robin-400);
-		}
-	}
-}
-
-.lightMode {
-	.integration-detail-content {
-		.error-container {
-			border: 1px solid var(--bg-slate-500);
-			background: var(--bg-ink-400);
-
-			.error-content {
-				.error-btns {
-					.contact-support {
-						.text {
-							color: var(--text-robin-400);
-							font-weight: 500;
-						}
-					}
-				}
-			}
-		}
-
-		.all-integrations-btn {
-			color: var(--bg-slate-300);
-		}
-
-		.all-integrations-btn:hover {
-			&.ant-btn-text {
-				background-color: unset !important;
-			}
-		}
-
-		.integration-connection-header {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-
-			.integration-detail-header {
-				.image-container {
-					border: 1.111px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
-				.details {
-					.heading {
-						color: var(--bg-ink-500);
-					}
-
-					.description {
-						color: var(--bg-slate-200);
-					}
-				}
-				.configure-btn {
-					&.test-connection {
-						border: 1px solid rgba(53, 59, 76, 0.2);
-						background: var(--bg-vanilla-200);
-						color: var(--bg-slate-200);
-					}
-				}
-			}
-
-			.testingConnection {
-				border: 1px solid rgba(255, 205, 86, 0.4);
-				background: rgba(255, 205, 86, 0.2);
-				color: var(--bg-amber-600);
-			}
-
-			.connected {
-				border: 1px solid rgba(37, 225, 146, 0.1);
-				background: rgba(37, 225, 146, 0.1);
-				color: var(--bg-forest-600);
-			}
-
-			.noDataSinceLong {
-				border: 1px solid rgba(78, 116, 248, 0.1);
-				background: rgba(78, 116, 248, 0.1);
-				color: var(--bg-robin-400);
-			}
-		}
-
-		.integration-detail-container {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-
-			.integration-tab-btns {
-				.typography {
-					color: var(--bg-ink-500);
-				}
-			}
-		}
-
-		.uninstall-integration-bar {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-
-			.unintall-integration-bar-text {
-				.heading {
-					color: var(--bg-ink-500);
-				}
-
-				.subtitle {
-					color: var(--bg-slate-100);
-				}
-			}
-
-			.uninstall-integration-btn {
-				background: var(--bg-cherry-500, #e5484d);
-				border-color: none !important;
-				color: var(--bg-vanilla-100);
-			}
-
-			.uninstall-integration-btn:hover {
-				&.ant-btn-default {
-					color: var(--bg-vanilla-300) !important;
-				}
-			}
-		}
-	}
-
-	.remove-integration-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-400);
-			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-			background: var(--bg-vanilla-100);
-		}
-
-		.ant-modal-title {
-			color: var(--bg-ink-500);
-		}
-
-		.remove-integration-text {
-			color: var(--bg-slate-400);
-		}
-	}
-
-	.test-connection-modal {
-		.ant-modal-content {
-			border: 1px solid rgba(53, 59, 76, 0.2);
-			background: var(--bg-vanilla-100);
-			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-
-			.ant-modal-body {
-				border-top: 1px solid var(--bg-vanilla-400);
-			}
-
-			.ant-modal-footer {
-				.understandBtn {
-					border: 1px solid rgba(53, 59, 76, 0.2);
-					background: var(--bg-vanilla-200);
-					color: var(--bg-slate-400);
-				}
-			}
-		}
-
-		.connection-content {
-			.data-info {
-				.connection-line {
-					border: 1px dashed var(--bg-vanilla-400);
-				}
-				.last-data {
-					color: var(--bg-slate-400);
-				}
-
-				.last-value {
-					color: var(--bg-slate-100);
-				}
-			}
-			.testingConnection {
-				border: 1px solid rgba(255, 205, 86, 0.4);
-				background: rgba(255, 205, 86, 0.2);
-				color: var(--bg-amber-600);
-			}
-
-			.connected {
-				border: 1px solid rgba(37, 225, 146, 0.1);
-				background: rgba(37, 225, 146, 0.1);
-				color: var(--bg-forest-600);
-			}
-
-			.noDataSinceLong {
-				border: 1px solid rgba(78, 116, 248, 0.1);
-				background: rgba(78, 116, 248, 0.1);
-				color: var(--bg-robin-400);
-			}
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+			color: var(--primary-foreground);
 		}
 	}
 }

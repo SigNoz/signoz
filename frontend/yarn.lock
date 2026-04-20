@@ -4865,7 +4865,7 @@
     "@babel/runtime" "^7.13.10"
     "@radix-ui/react-compose-refs" "1.0.1"
 
-"@radix-ui/react-slot@1.2.3", "@radix-ui/react-slot@^1.1.0", "@radix-ui/react-slot@^1.2.0", "@radix-ui/react-slot@^1.2.3":
+"@radix-ui/react-slot@1.2.3", "@radix-ui/react-slot@^1.1.0", "@radix-ui/react-slot@^1.2.3":
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-slot/-/react-slot-1.2.3.tgz#502d6e354fc847d4169c3bc5f189de777f68cfe1"
   integrity sha512-aeNmHnBxbi2St0au6VBVC7JXFlhLlOnvIIlePNniyUNAClzmtAUEY8/pBiK3iHjufOlwA+c20/8jngo7xcrg8A==
@@ -5503,33 +5503,21 @@
   resolved "https://registry.yarnpkg.com/@shikijs/vscode-textmate/-/vscode-textmate-10.0.2.tgz#a90ab31d0cc1dfb54c66a69e515bf624fa7b2224"
   integrity sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==
 
-"@signozhq/badge@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/badge/-/badge-0.0.2.tgz#7fab5ce43ee2f48c9c4fddf082c0e91cd0c34ed1"
-  integrity sha512-JibNUs/aewIxFQei0JOm+AUpROu0ykbzIQsQ4wvfYGxr1TaIWjxR2thjFCa7Vt82f6pCJAcH+UiMmZkNjMxLyA==
-  dependencies:
-    "@radix-ui/react-icons" "^1.3.0"
-    "@radix-ui/react-slot" "^1.2.0"
-    class-variance-authority "^0.7.0"
-    clsx "^2.1.1"
-    lucide-react "^0.445.0"
-    tailwind-merge "^2.5.2"
-    tailwindcss-animate "^1.0.7"
-
-"@signozhq/button@0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@signozhq/button/-/button-0.0.1.tgz#7d3204454b0361bd3fdf91fa6604af01a481a9db"
-  integrity sha512-k5WFpckNXzwcTS82jU+65M3V1KdriopBObB1ls7W2OU0RKof6Gf+/9uqDXnuu+Y4Cxn2cPo8+6MfiQbS02LHeg==
+"@signozhq/button@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@signozhq/button/-/button-0.0.5.tgz#e8220a6e9ed78552694f41700c277956f26232e1"
+  integrity sha512-fgobypuXv2kWGDkqXZoEjcySPHELzI/X515cdcR1hx4N9rizzOglLtYEjGTLR13iQrzLwSsNX8xxsv0/iSCjQg==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/icons" "^0.1.0"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/button@0.0.2", "@signozhq/button@^0.0.2":
+"@signozhq/button@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@signozhq/button/-/button-0.0.2.tgz#c13edef1e735134b784a41f874b60a14bc16993f"
   integrity sha512-434/gbTykC00LrnzFPp7c33QPWZkf9n+8+SToLZFTB0rzcaS/xoB4b7QKhvk+8xLCj4zpw6BxfeRAL+gSoOUJw==
@@ -5542,14 +5530,28 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/calendar@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/calendar/-/calendar-0.0.0.tgz#93b2cec2586efee814df934f88a2193cec95bae9"
-  integrity sha512-lm7tzPEhaHNjrksvi2GPGH4suEe6x2DQJ2dpku+JmKyLGB5rg9saSAosvrZVKhXLoZuSSjlBSkz+oHYEKIdHfA==
+"@signozhq/button@workspace:*":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@signozhq/button/-/button-0.0.3.tgz#ce6c722b24859198f8c18a708b9d09249b184e3e"
+  integrity sha512-b0JGoP0AIoYep/ApQUOn9LiK8dUATfqikz7jAKe20dPc8SjwUtsLPOao9j6I+2W4qd0CZDffJADBVpF2SAIsPQ==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/icons" "^0.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/calendar@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@signozhq/calendar/-/calendar-0.1.1.tgz#8fb6432c4397ad2e8204b0ce9fb1b7aaa231e4cc"
+  integrity sha512-Mw5cVtqSI1F57YwG+ufuJKJs/KrkrTSeP6aVPcTvO3tHJ5H4aZ1oaeZtGzTEDMqUvusDlRdZPSHhklJiUg/ixQ==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.2.3"
-    "@signozhq/button" "0.0.1"
+    "@signozhq/button" "workspace:*"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     date-fns "^4.1.0"
@@ -5558,13 +5560,14 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/callout@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/callout/-/callout-0.0.2.tgz#131ca15f89a8ee6729fecc4d322f11359c02e5cf"
-  integrity sha512-tmguHm+/JVRKjMElJOFyG7LJcdqCW1hHnFfp8ZkjQ+Gi7MfFt/r2foLZG2DNdOcfxSvhf2zhzr7D+epgvmbQ1A==
+"@signozhq/callout@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/callout/-/callout-0.0.4.tgz#8d0c224cc4f64930a04bd0d075597358ae7ec1d8"
+  integrity sha512-g1NXkzAkuMdmH+z58t9CSL4+MZdWB5zPLyOHKeJYnQk1JXSYpEGK8CzSz4ZtVb4OrMS7mDkWxnqMK0EHxwVOWA==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/icons" "^0.1.0"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lucide-react "^0.445.0"
@@ -5572,10 +5575,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/checkbox@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/checkbox/-/checkbox-0.0.2.tgz#d11fb5eff3927c540937e3bd24351bfc1fdef9ec"
-  integrity sha512-odQdh839GaTy1kqC8yavUKrOYP5tiIppUIV7xGNyxs/KnLGDWLw3ZSdACRV1Z55CLddjQ6OWKiwyVV7t+sxEuw==
+"@signozhq/checkbox@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/checkbox/-/checkbox-0.0.4.tgz#2cf83d7bfd4db4aaec815e5788061e3fe5f86483"
+  integrity sha512-X93EqHEy06pfpGcEJkJpNrxvkZryJaA+M0NQ09oTb1wzFweGMw+fR1Hgjl8lMqQPkHtz3MCP820uLhxvOJhktg==
   dependencies:
     "@radix-ui/react-checkbox" "^1.2.3"
     "@radix-ui/react-icons" "^1.3.0"
@@ -5586,10 +5589,24 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/combobox@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/combobox/-/combobox-0.0.2.tgz#019cc6d619e4eb6d1061fdfa00d4bd99d6aa727f"
-  integrity sha512-QnGCNJAHd55Wqblw0CLOEOJoLFx8dgP+q/9hXbN5qil72DjRzxBgb5DAkIkon0owCmlagDQknFiOygYnzVJS8g==
+"@signozhq/checkbox@workspace:*":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@signozhq/checkbox/-/checkbox-0.0.3.tgz#9ccf8bd3b118405b2407c71db780089de050e651"
+  integrity sha512-x2uqV3GsLmnDz4Zd2oY9/sExSqTY9gw/tw5gVd9ZziSNWOhy9rBKI8xwVpaAYiaZZHH3NReEwASwjx7C4EKKiQ==
+  dependencies:
+    "@radix-ui/react-checkbox" "^1.2.3"
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/combobox@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/combobox/-/combobox-0.0.4.tgz#7195416144ae881874e3744f7b71251fbacc4f3e"
+  integrity sha512-8mXlpkZ6066+JE+9EXmuR47ky+tJLwZ1W/9qXa69x5F1r7zXxuWvNQe/GYiGetpxohV/jO6QQDN1WpCV9hNjiw==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-popover" "^1.1.2"
@@ -5602,10 +5619,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/command@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/command/-/command-0.0.0.tgz#bd1e1cac7346e862dd61df64b756302e89e1a322"
-  integrity sha512-AwRYxZTi4o8SBOL4hmgcgbhCKXl2Qb/TUSLbSYEMFdiQSl5VYA8XZJv5fSYVMJkAIlOaHzFzR04XNEU7lZcBpw==
+"@signozhq/command@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/command/-/command-0.0.2.tgz#9d72f0d8d0945773461350f8d311072b2b4f96c6"
+  integrity sha512-MFMDtm6qC/aG84k+q9XVCkRR46kNQYVP0qP59Xg34gx5baD76iivu13rZLc27MEhOucHacP2UODRJ4uMGZt/Mw==
   dependencies:
     "@radix-ui/react-dialog" "^1.1.11"
     "@radix-ui/react-icons" "^1.3.0"
@@ -5617,29 +5634,30 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/design-tokens@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
-  integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
+"@signozhq/design-tokens@2.1.4":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.4.tgz#f209da6fbd2ac97ab4434b71472f741009306550"
+  integrity sha512-Ny7/VA5YGFFmZx58jMh7ATFyu7VePaJ4ySmj/DopP1hilmfdxQsKWnpqKaZJWRXrbNkc0gmq3cR7q7Z8nnN7ZQ==
 
-"@signozhq/dialog@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/dialog/-/dialog-0.0.2.tgz#55bd8e693f76325fda9aabe3197350e0adc163c4"
-  integrity sha512-YT5t3oZpGkAuWptTqhCgVtLjxsRQrEIrQHFoXpP9elM1+O4TS9WHr+07BLQutOVg6u9n9pCvW3OYf0SCETkDVQ==
+"@signozhq/dialog@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/dialog/-/dialog-0.0.4.tgz#54f385aa7cc17c6281653437e448f81dee0190ff"
+  integrity sha512-j/RPhx98sCTyfg1VlSxbHfLzG/cVKCdd1JZrVkfzs4WK1ijM7Scpl4MUnFxn0ShCFrJ8trbR6I5NioKUIojK2g==
   dependencies:
     "@radix-ui/react-dialog" "^1.1.11"
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/checkbox" "workspace:*"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/drawer@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.4.tgz#7c6e6779602113f55df8a55076e68b9cc13c7d79"
-  integrity sha512-m/shStl5yVPjHjrhDAh3EeKqqTtMmZUBVlgJPUGgoNV3sFsuN6JNaaAtEJI8cQBWkbEEiHLWKVkL/vhbQ7YrUg==
+"@signozhq/drawer@0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.6.tgz#ea280d71af6bc665679c7da26e0703a7bf96aa0e"
+  integrity sha512-xoDHdsVZuj4rHK5gTnM4px7E2rv/6Jgqm81uxs1CfheOQsEAnPuiq3Dpdrdsf6XxCeORwnpcGUR5PEJhnAsjmA==
   dependencies:
     "@radix-ui/react-dialog" "^1.1.11"
     "@radix-ui/react-icons" "^1.3.0"
@@ -5660,23 +5678,24 @@
     "@commitlint/cli" "^17.6.7"
     "@commitlint/config-conventional" "^17.6.7"
 
-"@signozhq/input@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/input/-/input-0.0.2.tgz#b2fea8c0979a53984ebcd5e3c3c50b38082eb1b1"
-  integrity sha512-Iti9GkvexSsULX1pQsN6FT6Gw96YWilts72wITZd5fzgZq1yKqaDtQl98/QNuyoS3I3WEh+hVF4EIeCCe7oRsQ==
+"@signozhq/input@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/input/-/input-0.0.4.tgz#f07dddb26ac4dda1cc8e07bfe605e8b34299955e"
+  integrity sha512-S6tIcrkRZAsmwA80eAJCwZlgHLuioUHMTeszx4PRf/DUqVQ8cjIjmTfHDwzO0zIbMcVHpxqxVNpYArIqUJtgZQ==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
+    "@signozhq/button" "workspace:*"
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/popover@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/popover/-/popover-0.0.0.tgz#675baf1c18ca0180369b4df0700c24e2c55ad758"
-  integrity sha512-XW0MhzxWzZNQWjVeb+BFjiOIbBbYCT+9MCUOIW8kiL0axFaaimnk0QPi1rk09u136MMGByI6fYuCJ5Qa07l1dA==
+"@signozhq/popover@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/popover/-/popover-0.1.2.tgz#73b418be584e8a671ff4189ed47a540ed73bbde6"
+  integrity sha512-6TVMVjWuO7XcKfFMrndcmDdg4JsGvRLe0SV43CRPNV6OkL5uFwUHFJZK2BU3v8S9xMoOf3LsdpfxPuCeK8QKCA==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-popover" "^1.1.15"
@@ -5688,10 +5707,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/radio-group@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/radio-group/-/radio-group-0.0.2.tgz#4b13567bfee2645226f2cf41f261bbb288e1be4b"
-  integrity sha512-ahykmA5hPujOC964CFveMlQ12tWSyut2CUiFRqT1QxRkOLS2R44Qn2hh2psqJJ18JMX/24ZYCAIh9Bdd5XW+7g==
+"@signozhq/radio-group@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/radio-group/-/radio-group-0.0.4.tgz#2fbd28bf48bb761063d642d3a169c3e0c098639d"
+  integrity sha512-1t1idP+TsYV52GoQM/5KaxUQtA9/CAxAcVOvT6sBXAbyR12azUaR7GL4S0VxRRfOlA+pZ9bT9TqlfQT7LWUTDg==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-radio-group" "^1.3.4"
@@ -5702,10 +5721,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/resizable@0.0.0":
-  version "0.0.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/resizable/-/resizable-0.0.0.tgz#a517818b9f9bcdaeafc55ae134be86522bc90e9f"
-  integrity sha512-yAkJdMgTkh8kv42ZuabwTZguxalwYqIp4b44YdSrw6jRUSq9tscUBXVllNN79T71lPUtc5AV13uQ4Qm5AcfVbQ==
+"@signozhq/resizable@0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/resizable/-/resizable-0.0.2.tgz#76b9212c5f1b1e982013bec1b618e967a752e705"
+  integrity sha512-xMdCDHOUDssPknFYRmwNTlQIy583wMpJSx6aHmjeYEcVfhDfDBrW+KEko/ODFoM8dOB0CpMtDjlLU14BchsNnA==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"
@@ -5713,35 +5732,6 @@
     clsx "^2.1.1"
     lucide-react "^0.445.0"
     react-resizable-panels "^3.0.5"
-    tailwind-merge "^2.5.2"
-    tailwindcss-animate "^1.0.7"
-
-"@signozhq/sonner@0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@signozhq/sonner/-/sonner-0.1.0.tgz#1310cc530c60459608246550eb977a1ae27b6ce4"
-  integrity sha512-P4gc1WdNiX89FZIAhIvR4Bj3sdL7VIpoM80L6otnoeLCZhyFfEOXHGAElvO2z7BuBqJBp1f3pdVDrBQNE6bhyw==
-  dependencies:
-    "@radix-ui/react-icons" "^1.3.0"
-    "@radix-ui/react-slot" "^1.1.0"
-    class-variance-authority "^0.7.0"
-    clsx "^2.1.1"
-    lucide-react "^0.445.0"
-    next-themes "^0.4.6"
-    sonner "^2.0.7"
-    tailwind-merge "^2.5.2"
-    tailwindcss-animate "^1.0.7"
-
-"@signozhq/switch@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@signozhq/switch/-/switch-0.0.2.tgz#58003ce9c0cd1f2ad8266a7045182607ce51df76"
-  integrity sha512-3B3Y5dzIyepO6EQJ7agx97bPmwg1dcOY46q2lqviHnMxNk3Sv079nSNCaztjQlo0VR0qu2JgVXhWi5Lw9WBN8A==
-  dependencies:
-    "@radix-ui/react-icons" "^1.3.0"
-    "@radix-ui/react-slot" "^1.1.0"
-    "@radix-ui/react-switch" "^1.1.4"
-    class-variance-authority "^0.7.0"
-    clsx "^2.1.1"
-    lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
@@ -5763,10 +5753,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/toggle-group@0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@signozhq/toggle-group/-/toggle-group-0.0.1.tgz#c82ff1da34e77b24da53c2d595ad6b4a0d1b1de4"
-  integrity sha512-871bQayL5MaqsuNOFHKexidu9W2Hlg1y4xmH8C5mGmlfZ4bd0ovJ9OweQrM6Puys3jeMwi69xmJuesYCfKQc1g==
+"@signozhq/toggle-group@0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@signozhq/toggle-group/-/toggle-group-0.0.3.tgz#6a38312b46198c555ca4c287d4818135a4a9dabe"
+  integrity sha512-qWoxC9jxW/otq1AdD/9ATGEJi4KyTfQSY8BSXlqu+4z4iEVjW4eeWSiyaoHcnB9UaypHDMFDMR+gPkyavtMY2Q==
   dependencies:
     "@radix-ui/react-icons" "^1.3.0"
     "@radix-ui/react-slot" "^1.1.0"

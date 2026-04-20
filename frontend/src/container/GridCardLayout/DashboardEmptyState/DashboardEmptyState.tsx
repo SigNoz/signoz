@@ -125,7 +125,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							/>
 						</SettingsDrawer>
 					</div>
-					<div className="actions-1">
+					<div className="actions-2">
 						<div className="actions-add-panel">
 							<div className="actions-panel-text">
 								<img

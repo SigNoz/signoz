@@ -11,8 +11,8 @@
 		.alert-condition-tabs {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
 			margin-bottom: -1px;
@@ -26,24 +26,24 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--bg-slate-400);
-				border-bottom: 0.5px solid var(--bg-slate-400);
+				border-left: 0.5px solid var(--l1-border);
+				border-bottom: 0.5px solid var(--l1-border);
 				width: 120px;
 				height: 36px;
 
 				gap: 8px;
 
 				&.active-tab {
-					background-color: var(--bg-ink-500);
+					background-color: var(--l1-background);
 					border-bottom: none;
 
 					&:hover {
-						background-color: var(--bg-ink-500) !important;
+						background-color: var(--l1-background) !important;
 					}
 				}
 
 				&:disabled {
-					background-color: var(--bg-ink-300);
+					background-color: var(--l2-background);
 					opacity: 0.6;
 				}
 
@@ -54,7 +54,7 @@
 				&:hover {
 					background-color: transparent !important;
 					border-left: 1px solid transparent !important;
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -65,8 +65,8 @@
 .anomaly-threshold-container {
 	padding: 24px;
 	padding-right: 72px;
-	background-color: var(--bg-ink-500);
-	border: 1px solid var(--bg-slate-400);
+	background-color: var(--l1-background);
+	border: 1px solid var(--l1-border);
 	width: 100%;
 
 	.alert-condition-sentences {
@@ -81,7 +81,7 @@
 			flex-wrap: wrap;
 
 			.sentence-text {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: 14px;
 				line-height: 1.5;
 				display: flex;
@@ -93,27 +93,27 @@
 				width: 240px;
 
 				.ant-select-selector {
-					background-color: var(--bg-ink-300);
-					border: 1px solid var(--bg-slate-400);
-					color: var(--text-vanilla-400);
+					background-color: var(--l2-background);
+					border: 1px solid var(--l1-border);
+					color: var(--muted-foreground);
 					font-family: 'Space Mono';
 
 					&:hover {
-						border-color: var(--bg-vanilla-300);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--bg-vanilla-300);
+						border-color: var(--l1-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 				}
 
 				.ant-select-selection-item {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 
 				.ant-select-arrow {
-					color: var(--bg-vanilla-400);
+					color: var(--muted-foreground);
 				}
 			}
 		}
@@ -151,9 +151,9 @@
 					flex-wrap: wrap;
 
 					.ant-input {
-						background-color: var(--bg-ink-400);
-						border: 1px solid var(--bg-slate-400);
-						color: var(--bg-vanilla-100);
+						background-color: var(--card);
+						border: 1px solid var(--l1-border);
+						color: var(--l1-foreground);
 						height: 32px;
 
 						&::placeholder {
@@ -161,28 +161,28 @@
 						}
 
 						&:hover {
-							border-color: var(--bg-vanilla-300);
+							border-color: var(--l1-border);
 						}
 
 						&:focus {
-							border-color: var(--bg-vanilla-300);
+							border-color: var(--l1-border);
 							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 						}
 					}
 
 					.ant-select {
 						.ant-select-selector {
-							background-color: var(--bg-ink-400);
-							border: 1px solid var(--bg-slate-400);
-							color: var(--bg-vanilla-100);
+							background-color: var(--card);
+							border: 1px solid var(--l1-border);
+							color: var(--l1-foreground);
 							height: 32px;
 
 							&:hover {
-								border-color: var(--bg-vanilla-300);
+								border-color: var(--l1-border);
 							}
 
 							&:focus {
-								border-color: var(--bg-vanilla-300);
+								border-color: var(--l1-border);
 								box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 							}
 
@@ -192,17 +192,17 @@
 						}
 
 						.ant-select-selection-item {
-							color: var(--bg-vanilla-100);
+							color: var(--l1-foreground);
 						}
 
 						.ant-select-arrow {
-							color: var(--bg-vanilla-400);
+							color: var(--muted-foreground);
 						}
 					}
 
 					.icon-btn {
-						color: var(--bg-vanilla-400);
-						border: 1px solid var(--bg-slate-400);
+						color: var(--muted-foreground);
+						border: 1px solid var(--l1-border);
 						border-radius: 4px;
 						display: flex;
 						align-items: center;
@@ -225,9 +225,9 @@
 				.recovery-threshold-btn {
 					pointer-events: none;
 					cursor: default;
-					color: var(--bg-vanilla-400);
-					background-color: var(--bg-ink-400) !important;
-					border: 1px solid var(--bg-slate-400);
+					color: var(--muted-foreground);
+					background-color: var(--card) !important;
+					border: 1px solid var(--l1-border);
 					border-radius: 4px;
 					display: flex;
 					align-items: center;
@@ -235,9 +235,9 @@
 				}
 
 				.ant-input {
-					background-color: var(--bg-ink-400);
-					border: 1px solid var(--bg-slate-400);
-					color: var(--bg-vanilla-100);
+					background-color: var(--card);
+					border: 1px solid var(--l1-border);
+					color: var(--l1-foreground);
 					height: 32px;
 
 					&::placeholder {
@@ -245,11 +245,11 @@
 					}
 
 					&:hover {
-						border-color: var(--bg-vanilla-300);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--bg-vanilla-300);
+						border-color: var(--l1-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 				}
@@ -258,8 +258,8 @@
 
 		.add-threshold-btn {
 			margin-top: 8px;
-			border: 1px dashed var(--bg-slate-400);
-			color: var(--bg-vanilla-300);
+			border: 1px dashed var(--l1-border);
+			color: var(--l2-foreground);
 			background-color: transparent;
 			border-radius: 4px;
 			height: 32px;
@@ -269,8 +269,8 @@
 			justify-content: center;
 
 			&:hover {
-				border-color: var(--bg-vanilla-300);
-				color: var(--bg-vanilla-100);
+				border-color: var(--l1-border);
+				color: var(--l1-foreground);
 			}
 
 			.anticon {
@@ -285,8 +285,12 @@
 		justify-content: space-between;
 		gap: 8px;
 		margin-top: 16px;
-		background-color: #4568dc1a;
-		border: 1px solid var(--bg-robin-500);
+		background-color: color-mix(
+			in srgb,
+			var(--primary-background) 10%,
+			transparent
+		);
+		border: 1px solid var(--primary-background);
 		padding: 8px 16px;
 
 		.routing-policies-info-banner-right {
@@ -295,7 +299,7 @@
 			gap: 8px;
 
 			.view-routing-policies-button {
-				color: var(--bg-robin-500);
+				color: var(--accent-primary);
 				font-size: 12px;
 				font-weight: 500;
 				display: flex;
@@ -305,7 +309,7 @@
 		}
 
 		.ant-typography {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 		}
 	}
 }
@@ -335,11 +339,11 @@
 		min-width: 240px;
 		width: auto;
 		justify-content: space-between;
-		background-color: var(--bg-ink-300);
-		border: 1px solid var(--bg-slate-400);
+		background-color: var(--l2-background);
+		border: 1px solid var(--l1-border);
 
 		.evaluate-alert-conditions-button-left {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 12px;
 			flex-shrink: 0;
 		}
@@ -347,207 +351,15 @@
 		.evaluate-alert-conditions-button-right {
 			display: flex;
 			align-items: center;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			gap: 8px;
 			flex-shrink: 0;
 
 			.evaluate-alert-conditions-button-right-text {
 				font-size: 12px;
 				font-weight: 500;
-				background-color: var(--bg-slate-400);
+				background-color: var(--l1-border);
 				padding: 1px 4px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.alert-condition-container {
-		.alert-condition {
-			.alert-condition-tabs {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-
-				.explorer-view-option {
-					border-left: 0.5px solid var(--bg-vanilla-300);
-					border-bottom: 0.5px solid var(--bg-vanilla-300);
-
-					&.active-tab {
-						background-color: var(--bg-vanilla-100);
-
-						&:hover {
-							background-color: var(--bg-vanilla-100) !important;
-						}
-					}
-
-					&:disabled {
-						background-color: var(--bg-vanilla-300);
-					}
-
-					&:hover {
-						color: var(--bg-ink-400);
-					}
-				}
-			}
-		}
-	}
-
-	.alert-threshold-container,
-	.anomaly-threshold-container {
-		background-color: var(--bg-vanilla-100);
-		border: 1px solid var(--bg-vanilla-300);
-
-		.alert-condition-sentences {
-			.alert-condition-sentence {
-				.sentence-text {
-					color: var(--text-ink-400);
-				}
-
-				.ant-select {
-					.ant-select-selector {
-						background-color: var(--bg-vanilla-300);
-						border: 1px solid var(--bg-vanilla-300);
-						color: var(--text-ink-400);
-
-						&:hover {
-							border-color: var(--bg-ink-300);
-						}
-
-						&:focus {
-							border-color: var(--bg-ink-300);
-							box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-						}
-					}
-
-					.ant-select-selection-item {
-						color: var(--bg-ink-400);
-					}
-
-					.ant-select-arrow {
-						color: var(--bg-ink-400);
-					}
-				}
-			}
-		}
-
-		.thresholds-section {
-			.threshold-item {
-				.threshold-row {
-					.threshold-controls {
-						.threshold-inputs {
-							display: flex;
-							align-items: center;
-							gap: 8px;
-						}
-
-						.ant-input {
-							background-color: var(--bg-vanilla-200);
-							border: 1px solid var(--bg-vanilla-300);
-							color: var(--bg-ink-400);
-
-							&:hover {
-								border-color: var(--bg-ink-300);
-							}
-
-							&:focus {
-								border-color: var(--bg-ink-300);
-								box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-							}
-						}
-
-						.ant-select {
-							.ant-select-selector {
-								background-color: var(--bg-vanilla-200);
-								border: 1px solid var(--bg-vanilla-300);
-								color: var(--bg-ink-400);
-
-								&:hover {
-									border-color: var(--bg-ink-300);
-								}
-
-								&:focus {
-									border-color: var(--bg-ink-300);
-									box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-								}
-							}
-
-							.ant-select-selection-item {
-								color: var(--bg-ink-400);
-							}
-
-							.ant-select-arrow {
-								color: var(--bg-ink-400);
-							}
-						}
-
-						.icon-btn {
-							color: var(--bg-ink-400);
-							border: 1px solid var(--bg-vanilla-300);
-						}
-					}
-				}
-
-				.recovery-threshold-input-group {
-					.recovery-threshold-btn {
-						color: var(--bg-ink-400);
-						background-color: var(--bg-vanilla-200) !important;
-						border: 1px solid var(--bg-vanilla-300);
-					}
-
-					.ant-input {
-						background-color: var(--bg-vanilla-200);
-						border: 1px solid var(--bg-vanilla-300);
-						color: var(--bg-ink-400);
-
-						&:hover {
-							border-color: var(--bg-ink-300);
-						}
-
-						&:focus {
-							border-color: var(--bg-ink-300);
-							box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-						}
-					}
-				}
-			}
-
-			.add-threshold-btn,
-			.ant-btn.add-threshold-btn {
-				border: 1px dashed var(--bg-vanilla-300);
-				color: var(--bg-ink-300);
-				background-color: transparent;
-
-				.ant-typography {
-					color: var(--bg-ink-400);
-				}
-
-				&:hover {
-					border-color: var(--bg-ink-300);
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-	}
-
-	.condensed-evaluation-settings-container {
-		.ant-btn {
-			background-color: var(--bg-vanilla-300);
-			border: 1px solid var(--bg-vanilla-300);
-			min-width: 240px;
-			width: auto;
-
-			.evaluate-alert-conditions-button-left {
-				color: var(--bg-ink-400);
-				flex-shrink: 0;
-			}
-
-			.evaluate-alert-conditions-button-right {
-				color: var(--bg-ink-400);
-				flex-shrink: 0;
-
-				.evaluate-alert-conditions-button-right-text {
-					background-color: var(--bg-vanilla-300);
-				}
 			}
 		}
 	}
@@ -577,12 +389,12 @@
 
 	.tooltip-example {
 		margin-bottom: 8px;
-		color: #8b92a0;
+		color: var(--l2-foreground);
 	}
 
 	.tooltip-link {
 		.tooltip-link-text {
-			color: #1890ff;
+			color: var(--accent-primary);
 			font-size: 11px;
 			text-decoration: none;
 

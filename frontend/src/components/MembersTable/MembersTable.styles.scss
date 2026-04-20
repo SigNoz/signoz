@@ -54,7 +54,7 @@
 
 			.ant-table-column-sorter-up.active,
 			.ant-table-column-sorter-down.active {
-				color: var(--bg-base-white);
+				color: var(--l1-foreground);
 				opacity: 1;
 			}
 		}
@@ -69,10 +69,14 @@
 		}
 
 		> tr.members-table-row--tinted > td {
-			background: rgba(171, 189, 255, 0.02);
+			background: color-mix(in srgb, var(--bg-robin-200) 2%, transparent);
 		}
 		> tr:hover > td {
-			background: rgba(171, 189, 255, 0.04) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-robin-200) 4%,
+				transparent
+			) !important;
 		}
 	}
 
@@ -166,7 +170,7 @@
 
 		strong {
 			font-weight: var(--font-weight-medium);
-			color: var(--bg-base-white);
+			color: var(--l1-foreground);
 		}
 	}
 }
@@ -202,14 +206,6 @@
 
 			> tr:hover > td {
 				background: rgba(0, 0, 0, 0.03) !important;
-			}
-		}
-	}
-
-	.members-empty-state {
-		&__text {
-			strong {
-				color: var(--bg-base-black);
 			}
 		}
 	}

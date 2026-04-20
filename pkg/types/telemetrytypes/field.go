@@ -30,7 +30,7 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name          string        `json:"name" required:"true"`
+	Name          string        `json:"name" validate:"required" required:"true"`
 	Description   string        `json:"description,omitempty"`
 	Unit          string        `json:"unit,omitempty"`
 	Signal        Signal        `json:"signal,omitzero"`

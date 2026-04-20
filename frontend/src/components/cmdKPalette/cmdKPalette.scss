@@ -11,7 +11,7 @@
 
 .cmdk-section-heading [cmdk-group-heading] {
 	text-transform: uppercase;
-	color: var(--bg-slate-100);
+	color: var(--l3-foreground);
 }
 
 /* Hide scrollbar but keep scroll */
@@ -33,12 +33,12 @@
 
 .cmdk-item-light:hover {
 	cursor: pointer;
-	background-color: var(--bg-vanilla-200) !important;
+	background-color: var(--background) !important;
 }
 
 .cmdk-item-light[data-selected='true'] {
-	background-color: var(--bg-vanilla-300) !important;
-	color: var(--bg-ink-500);
+	background-color: var(--l3-background) !important;
+	color: var(--foreground);
 }
 
 .cmdk-item {

@@ -7,7 +7,7 @@
 		flex: 1;
 
 		.completed-checklist-title {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -37,9 +37,9 @@
 				width: 18px;
 				height: 18px;
 				border-radius: 50%;
-				background-color: var(--bg-ink-400);
-				border: 1px solid var(--bg-slate-400);
-				color: var(--bg-ink-400);
+				background-color: var(--l2-background);
+				border: 1px solid var(--l1-border);
+				color: var(--l2-background);
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -70,7 +70,7 @@
 			}
 
 			.completed-checklist-item-title {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -80,7 +80,7 @@
 			}
 
 			.completed-checklist-item-description {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -94,7 +94,7 @@
 		flex: 1;
 
 		.whats-next-checklist-title {
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -129,9 +129,9 @@
 				width: 18px;
 				height: 18px;
 				border-radius: 50%;
-				background-color: var(--bg-ink-400);
-				border: 1px dashed var(--bg-slate-100);
-				color: var(--bg-ink-400);
+				background-color: var(--l2-background);
+				border: 1px dashed var(--l1-border);
+				color: var(--l2-background);
 				display: flex;
 				align-items: center;
 				justify-content: center;
@@ -140,7 +140,7 @@
 
 			&.active {
 				&:before {
-					background-color: #4568dc;
+					background-color: var(--bg-robin-600);
 					content: '';
 					display: inline-block;
 					background: url('../../../assets/Icons/status-inprogress-pill.svg')
@@ -148,7 +148,7 @@
 					background-size: contain;
 					border: none !important;
 
-					color: #fff;
+					color: var(--bg-vanilla-100);
 					font-size: 16px;
 					border: 1px dashed white;
 					border-radius: 50%;
@@ -165,7 +165,7 @@
 					background-size: contain;
 					border: none;
 
-					color: var(--bg-ink-400);
+					color: var(--foreground);
 					font-size: 16px;
 					border-radius: 50%;
 
@@ -185,8 +185,8 @@
 				height: 100%;
 				background: linear-gradient(
 					to bottom,
-					var(--bg-slate-100) 0%,
-					var(--bg-slate-100) 50%,
+					var(--l1-border) 0%,
+					var(--l1-border) 50%,
 					transparent 50%,
 					transparent 100%
 				);
@@ -234,7 +234,7 @@
 			}
 
 			.whats-next-checklist-item-title {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -245,7 +245,7 @@
 			}
 
 			.whats-next-checklist-item-description {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -267,7 +267,7 @@
 
 			&:hover {
 				.whats-next-checklist-item-title {
-					color: var(--Vanilla-100, #fff) !important;
+					color: var(--l1-foreground) !important;
 				}
 			}
 
@@ -279,7 +279,7 @@
 
 			&.active {
 				.whats-next-checklist-item-title {
-					color: var(--Vanilla-100, #fff) !important;
+					color: var(--l1-foreground) !important;
 				}
 			}
 
@@ -297,83 +297,14 @@
 
 				.periscope-btn.secondary {
 					border-radius: 2px;
-					border: 1px solid var(--Slate-200, #2c3140);
-					background: var(--Ink-200, #23262e);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 					box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 				}
 
 				.skip-btn {
 					&:hover {
 						color: var(--bg-amber-400);
-					}
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.home-checklist-container {
-		.completed-checklist-container {
-			.completed-checklist-title {
-				color: var(--bg-ink-300);
-			}
-
-			.completed-checklist-item {
-				&:before {
-					border: 1px solid var(--bg-vanilla-300);
-					color: var(--bg-ink-300);
-					background-color: var(--bg-forest-400);
-				}
-
-				.completed-checklist-item-title {
-					color: var(--bg-ink-300);
-				}
-
-				.completed-checklist-item-description {
-					color: var(--bg-ink-300);
-				}
-			}
-		}
-
-		.whats-next-checklist-container {
-			.whats-next-checklist-title {
-				color: var(--bg-ink-300);
-			}
-
-			.whats-next-checklist-item {
-				&:before {
-					background-color: var(--bg-vanilla-100);
-					border: 1px dashed var(--bg-vanilla-300);
-					color: var(--bg-ink-300);
-				}
-
-				.whats-next-checklist-item-title {
-					color: var(--bg-ink-300);
-				}
-
-				.whats-next-checklist-item-description {
-					color: var(--bg-ink-300);
-				}
-
-				&:hover {
-					.whats-next-checklist-item-title {
-						color: var(--bg-ink-300) !important;
-					}
-				}
-
-				&.active {
-					.whats-next-checklist-item-title {
-						color: var(--bg-ink-300) !important;
-					}
-				}
-
-				.whats-next-checklist-item-action-buttons {
-					.periscope-btn.secondary {
-						border-radius: 2px;
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
-						box-shadow: 0px 0px 8px 0px rgba(255, 255, 255, 0.1);
 					}
 				}
 			}

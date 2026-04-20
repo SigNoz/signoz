@@ -27,7 +27,7 @@
 		border-top-left-radius: 0px !important;
 		border-bottom-left-radius: 0px !important;
 
-		background-color: var(--bg-slate-500) !important;
+		background-color: var(--l1-border) !important;
 		opacity: 0.8;
 
 		&:disabled {
@@ -65,8 +65,8 @@
 			left: -8px;
 			top: 16px;
 			z-index: 0;
-			color: var(--bg-ink-200);
-			background-color: var(--bg-ink-200);
+			color: var(--muted-foreground);
+			background-color: var(--l3-background);
 		}
 
 		&::after {
@@ -77,8 +77,8 @@
 			right: -8px;
 			top: 16px;
 			z-index: 0;
-			color: var(--bg-ink-200);
-			background-color: var(--bg-ink-200);
+			color: var(--muted-foreground);
+			background-color: var(--l3-background);
 		}
 
 		.query-function-name-selector {
@@ -87,7 +87,7 @@
 
 			.ant-select-selector {
 				border: none;
-				background: var(--bg-ink-200);
+				background: var(--l3-background);
 			}
 
 			&.showInput {
@@ -101,7 +101,7 @@
 		.query-function-value {
 			width: 70px;
 			border-left: 0;
-			background: var(--bg-ink-200);
+			background: var(--l3-background);
 			border-radius: 0;
 			border: 1px solid transparent;
 
@@ -126,21 +126,21 @@
 .lightMode {
 	.query-functions-container {
 		.add-function-btn {
-			background-color: var(--bg-vanilla-100) !important;
+			background-color: var(--l3-background) !important;
 		}
 	}
 
 	.query-functions-list {
 		.query-function {
-			border: 1px solid var(--bg-vanilla-300);
+			border: 1px solid var(--l1-border);
 			.query-function-name-selector {
 				.ant-select-selector {
-					background: var(--bg-vanilla-100);
+					background: var(--l3-background);
 				}
 			}
 
 			.query-function-value {
-				background: var(--bg-vanilla-100);
+				background: var(--l3-background);
 
 				&:focus {
 					border-color: transparent !important;
@@ -149,8 +149,8 @@
 
 			&::before,
 			&::after {
-				color: var(--bg-vanilla-300);
-				background-color: var(--bg-vanilla-300);
+				color: var(--l3-background);
+				background-color: var(--l3-background);
 			}
 		}
 	}

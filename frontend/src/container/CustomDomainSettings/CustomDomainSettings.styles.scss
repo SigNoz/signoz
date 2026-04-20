@@ -10,7 +10,7 @@
 		position: absolute;
 		inset: 1px;
 		border-radius: 50%;
-		background: rgba(78, 116, 248, 0.2);
+		background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 	}
 
 	&::after {
@@ -29,7 +29,7 @@
 	width: 100%;
 	max-width: 768px;
 	border-radius: 4px;
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 	background: var(--l2-background);
 	overflow: hidden;
 
@@ -45,7 +45,7 @@
 		gap: var(--spacing-6);
 
 		.custom-domain-edit-button {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 
 			&:hover {
@@ -118,7 +118,7 @@
 
 	.custom-domain-card-divider {
 		height: 1px;
-		background: var(--l2-border);
+		background: var(--l1-border);
 		margin: 0;
 	}
 }

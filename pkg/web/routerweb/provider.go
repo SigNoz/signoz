@@ -8,56 +8,55 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
 )
 
-const (
-	indexFileName string = "index.html"
-)
-
 type provider struct {
-	config web.Config
+	config        web.Config
+	indexContents []byte
+	fileHandler   http.Handler
 }
 
-func NewFactory() factory.ProviderFactory[web.Web, web.Config] {
-	return factory.NewProviderFactory(factory.MustNewName("router"), New)
+func NewFactory(globalConfig global.Config) factory.ProviderFactory[web.Web, web.Config] {
+	return factory.NewProviderFactory(factory.MustNewName("router"), func(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
+		return New(ctx, settings, config, globalConfig)
+	})
 }
 
-func New(ctx context.Context, settings factory.ProviderSettings, config web.Config) (web.Web, error) {
+func New(ctx context.Context, settings factory.ProviderSettings, config web.Config, globalConfig global.Config) (web.Web, error) {
 	fi, err := os.Stat(config.Directory)
 	if err != nil {
 		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access web directory")
 	}
 
-	ok := fi.IsDir()
-	if !ok {
+	if !fi.IsDir() {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "web directory is not a directory")
 	}
 
-	fi, err = os.Stat(filepath.Join(config.Directory, indexFileName))
+	indexPath := filepath.Join(config.Directory, config.Index)
+	raw, err := os.ReadFile(indexPath)
 	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot access %q in web directory", indexFileName)
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read %q in web directory", config.Index)
 	}
 
-	if os.IsNotExist(err) || fi.IsDir() {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "%q does not exist", indexFileName)
-	}
+	logger := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/web/routerweb").Logger()
+	indexContents := web.NewIndex(ctx, logger, config.Index, raw, web.TemplateData{BaseHref: globalConfig.ExternalPathTrailing()})
 
 	return &provider{
-		config: config,
+		config:        config,
+		indexContents: indexContents,
+		fileHandler:   http.FileServer(http.Dir(config.Directory)),
 	}, nil
 }
 
 func (provider *provider) AddToRouter(router *mux.Router) error {
 	cache := middleware.NewCache(0)
-	err := router.PathPrefix(provider.config.Prefix).
+	err := router.PathPrefix("/").
 		Handler(
-			http.StripPrefix(
-				provider.config.Prefix,
-				cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
-			),
+			cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
 		).GetError()
 	if err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "unable to add web to router")
@@ -75,7 +74,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
-			http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+			provider.serveIndex(rw)
 			return
 		}
 
@@ -87,10 +86,15 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fi.IsDir() {
 		// path is a directory, serve index.html
-		http.ServeFile(rw, req, filepath.Join(provider.config.Directory, indexFileName))
+		provider.serveIndex(rw)
 		return
 	}
 
 	// otherwise, use http.FileServer to serve the static file
-	http.FileServer(http.Dir(provider.config.Directory)).ServeHTTP(rw, req)
+	provider.fileHandler.ServeHTTP(rw, req)
+}
+
+func (provider *provider) serveIndex(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = rw.Write(provider.indexContents)
 }

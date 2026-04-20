@@ -34,17 +34,17 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 				border-radius: 0.5px;
 			}
 
 			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-slate-300);
+				background: var(--l3-background);
 			}
 
 			/* Firefox scrollbar styling */
 			scrollbar-width: thin;
-			scrollbar-color: var(--bg-slate-400) transparent;
+			scrollbar-color: var(--l1-border) transparent;
 		}
 
 		.legend-item-wrapper {
@@ -83,8 +83,8 @@
 			border: 1px solid transparent;
 
 			&:hover {
-				background-color: var(--bg-slate-400);
-				border-color: var(--bg-slate-500);
+				background-color: var(--l1-border);
+				border-color: var(--l1-border);
 				transform: translateY(-1px);
 			}
 
@@ -148,20 +148,20 @@
 		.legend-colors-content {
 			.legend-items {
 				&::-webkit-scrollbar-thumb {
-					background: var(--bg-vanilla-400);
+					background: var(--l2-foreground);
 				}
 
 				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-vanilla-500);
+					background: var(--l3-background);
 				}
 
-				scrollbar-color: var(--bg-vanilla-400) transparent;
+				scrollbar-color: var(--l2-foreground) transparent;
 			}
 
 			.legend-item {
 				&:hover {
-					background-color: var(--bg-vanilla-100);
-					border-color: var(--bg-slate-100);
+					background-color: var(--l3-background);
+					border-color: var(--l1-border);
 				}
 			}
 		}
