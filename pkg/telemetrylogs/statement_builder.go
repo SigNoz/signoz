@@ -701,6 +701,9 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	if err != nil {
 		return "", nil, err
 	}
+	if stmt == nil {
+		return "", nil, nil
+	}
 
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
