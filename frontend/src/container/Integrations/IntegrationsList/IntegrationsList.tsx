@@ -152,9 +152,10 @@ function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 										alt={integration.title}
 										className="integrations-list-item-name-image-container-image"
 									/>
-									<div className="integrations-list-item-name-text">
-										{integration.title}
-									</div>
+								</div>
+
+								<div className="integrations-list-item-name-text">
+									{integration.title}
 								</div>
 							</div>
 							<div className="integrations-list-item-column">

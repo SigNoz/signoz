@@ -132,7 +132,6 @@
 			flex-direction: row;
 			gap: 10px;
 			padding: 8px 16px;
-			border-radius: 3px;
 			color: var(--l1-foreground);
 
 			cursor: pointer;
@@ -142,22 +141,24 @@
 				flex-direction: row;
 				gap: 10px;
 				align-items: center;
+				padding: 4px;
+
+				border: 1px solid var(--l3-border);
+				background: var(--l3-background);
+				border-radius: 2px;
 
 				.integrations-list-item-name-image-container-image {
-					height: 16px;
-					width: 16px;
-					border-radius: 2px;
-					border: 1px solid var(--l3-border);
-					background: var(--l2-background);
+					height: 12px;
+					width: 12px;
 				}
-			}
-
-			&:hover {
-				background: var(--l1-background);
 			}
 
 			&:nth-child(even) {
 				background: var(--l2-background);
+			}
+
+			&:hover {
+				background: var(--l3-background-hover);
 			}
 		}
 

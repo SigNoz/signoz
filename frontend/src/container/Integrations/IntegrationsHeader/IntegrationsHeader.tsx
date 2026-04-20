@@ -113,6 +113,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 							Which integration are you looking for?
 						</div>
 						<Input
+							className="request-integration-input"
 							placeholder="Enter integration name..."
 							value={requestedIntegrationName}
 							onChange={(e): void => {
