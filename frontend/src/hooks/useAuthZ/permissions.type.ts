@@ -18,7 +18,7 @@ export default {
 			{
 				name: 'roles',
 				type: 'metaresources',
-			}
+			},
 		],
 		relations: {
 			assignee: ['role'],
@@ -26,7 +26,7 @@ export default {
 			delete: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
 			list: ['metaresources'],
 			read: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
-			update: ['user', 'serviceaccount', 'role', 'organization', 'metaresource']
+			update: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
 		},
 	},
 } as const;
