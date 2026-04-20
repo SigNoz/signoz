@@ -1,6 +1,6 @@
 .host-detail-drawer {
-	border-left: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-400);
+	border-left: 1px solid var(--l1-border);
+	background: var(--l2-background);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 	.ant-drawer-header {
@@ -9,8 +9,8 @@
 
 		align-items: stretch;
 
-		border-bottom: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l2-background);
 	}
 
 	.ant-drawer-close {
@@ -24,7 +24,7 @@
 	}
 
 	.title {
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 14px;
 		font-style: normal;
@@ -38,8 +38,8 @@
 		align-items: center;
 		justify-content: center;
 		padding-top: var(--padding-1);
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
 
@@ -58,7 +58,7 @@
 			}
 
 			.host-details-metadata-label {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -97,7 +97,7 @@
 
 			.ant-card {
 				&.ant-card-bordered {
-					border: 1px solid var(--bg-slate-500) !important;
+					border: 1px solid var(--l1-border) !important;
 				}
 			}
 		}
@@ -111,8 +111,8 @@
 
 		.action-btn {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			display: flex;
 			align-items: center;
@@ -127,7 +127,7 @@
 		align-items: center;
 
 		.views-tabs {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 
 			.view-title {
 				display: flex;
@@ -140,22 +140,22 @@
 			}
 
 			.tab {
-				border: 1px solid var(--bg-slate-400);
+				border: 1px solid var(--l1-border);
 				width: 114px;
 			}
 
 			.tab::before {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 
 			.selected_view {
-				background: var(--bg-slate-300);
-				color: var(--text-vanilla-100);
-				border: 1px solid var(--bg-slate-400);
+				background: var(--l3-background);
+				color: var(--l1-foreground);
+				border: 1px solid var(--l1-border);
 			}
 
 			.selected_view::before {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 		}
 
@@ -164,70 +164,13 @@
 			height: 30px;
 
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}
 	}
 
 	.ant-drawer-close {
 		padding: 0px;
-	}
-}
-
-.lightMode {
-	.ant-drawer-header {
-		border-bottom: 1px solid var(--bg-vanilla-400);
-		background: var(--bg-vanilla-100);
-	}
-
-	.host-detail-drawer {
-		.title {
-			color: var(--text-ink-300);
-		}
-
-		.host-detail-drawer__host {
-			.ant-typography {
-				color: var(--text-ink-300);
-				background: transparent;
-			}
-		}
-
-		.radio-button {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-100);
-			color: var(--text-ink-300);
-		}
-
-		.views-tabs {
-			.tab {
-				background: var(--bg-vanilla-100);
-			}
-
-			.selected_view {
-				background: var(--bg-vanilla-300);
-				border: 1px solid var(--bg-slate-300);
-				color: var(--text-ink-400);
-			}
-
-			.selected_view::before {
-				background: var(--bg-vanilla-300);
-				border-left: 1px solid var(--bg-slate-300);
-			}
-		}
-
-		.compass-button {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-		}
-
-		.tabs-and-search {
-			.action-btn {
-				border: 1px solid var(--bg-vanilla-400);
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-		}
 	}
 }

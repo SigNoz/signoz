@@ -1,5 +1,5 @@
 .evaluation-cadence-container {
-	border-bottom: 1px solid var(--bg-slate-500);
+	border-bottom: 1px solid var(--l1-border);
 	.evaluation-cadence-item {
 		border-bottom: none !important;
 	}
@@ -12,14 +12,14 @@
 		padding: 16px;
 
 		.ant-typography {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 13px;
 
 			.highlight {
-				background-color: var(--bg-slate-500);
+				background-color: var(--l1-background);
 				padding: 4px 8px;
 				border-radius: 4px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-weight: 500;
 				margin: 0 4px;
 				font-size: 14px;
@@ -28,8 +28,8 @@
 
 		.ant-btn-group {
 			.ant-btn {
-				border: 1px solid var(--bg-slate-400);
-				color: var(--bg-vanilla-400);
+				border: 1px solid var(--l1-border);
+				color: var(--l2-foreground);
 				font-size: 14px;
 				display: flex;
 				align-items: center;
@@ -44,10 +44,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 
 	.evaluation-cadence-details-title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 500;
 		padding-left: 16px;
@@ -61,8 +61,8 @@
 		.query-section-query-actions {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
 			margin-bottom: -1px;
@@ -76,24 +76,24 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--bg-slate-400);
-				border-bottom: 0.5px solid var(--bg-slate-400);
+				border-left: 0.5px solid var(--l1-border);
+				border-bottom: 0.5px solid var(--l1-border);
 				width: 120px;
 				height: 36px;
 
 				gap: 8px;
 
 				&.active-tab {
-					background-color: var(--bg-ink-500);
+					background-color: var(--l1-background);
 					border-bottom: none;
 
 					&:hover {
-						background-color: var(--bg-ink-500) !important;
+						background-color: var(--l1-background) !important;
 					}
 				}
 
 				&:disabled {
-					background-color: var(--bg-ink-300);
+					background-color: var(--l2-background);
 					opacity: 0.6;
 				}
 
@@ -104,7 +104,7 @@
 				&:hover {
 					background-color: transparent !important;
 					border-left: 1px solid transparent !important;
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -113,7 +113,7 @@
 	.evaluation-cadence-details-content {
 		display: flex;
 		gap: 16px;
-		border-top: 1px solid var(--bg-slate-500);
+		border-top: 1px solid var(--l1-border);
 		padding: 16px;
 
 		.evaluation-cadence-details-content-row {
@@ -133,16 +133,16 @@
 
 				textarea {
 					height: 200px;
-					background: var(--bg-ink-300);
-					border: 1px solid var(--bg-slate-400);
+					background: var(--l2-background);
+					border: 1px solid var(--l1-border);
 					border-radius: 4px;
-					color: var(--bg-vanilla-400) !important;
+					color: var(--l2-foreground) !important;
 					font-family: 'Space Mono';
 					font-size: 14px;
 
 					&::placeholder {
 						font-family: 'Space Mono';
-						color: var(--bg-vanilla-400) !important;
+						color: var(--muted-foreground) !important;
 					}
 				}
 
@@ -152,36 +152,36 @@
 					gap: 4px;
 
 					.ant-typography {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 						font-size: 13px;
 						font-weight: 500;
 					}
 
 					.ant-select {
-						border: 1px solid var(--bg-slate-400);
+						border: 1px solid var(--l1-border);
 
 						.ant-select-selector {
-							background-color: var(--bg-ink-300);
-							border: 1px solid var(--bg-slate-400);
-							color: var(--bg-vanilla-100);
+							background-color: var(--l2-background);
+							border: 1px solid var(--l1-border);
+							color: var(--l1-foreground);
 
 							&:hover {
-								border-color: var(--bg-vanilla-300);
+								border-color: var(--l1-border);
 							}
 
 							&:focus {
-								border-color: var(--bg-vanilla-300);
+								border-color: var(--l1-border);
 							}
 						}
 					}
 
 					.ant-picker {
-						background-color: var(--bg-ink-300);
-						border: 1px solid var(--bg-slate-400);
+						background-color: var(--l2-background);
+						border: 1px solid var(--l1-border);
 
 						.ant-picker-input {
-							background-color: var(--bg-ink-300);
-							color: var(--bg-vanilla-100);
+							background-color: var(--l2-background);
+							color: var(--l1-foreground);
 						}
 					}
 				}
@@ -201,7 +201,7 @@
 				flex-direction: column;
 				gap: 8px;
 				height: 100%;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-size: 14px;
 			}
 
@@ -217,14 +217,14 @@
 					align-items: center;
 					gap: 8px;
 					padding: 8px 0;
-					background-color: var(--bg-ink-400);
+					background-color: var(--card);
 					position: sticky;
 					top: 0;
 					z-index: 1;
-					border-bottom: 1px solid var(--bg-slate-500);
+					border-bottom: 1px solid var(--l1-border);
 
 					.schedule-preview-title {
-						color: var(--bg-vanilla-300);
+						color: var(--l2-foreground);
 						font-size: 14px;
 						font-weight: 500;
 					}
@@ -247,11 +247,11 @@
 					}
 
 					&::-webkit-scrollbar-thumb {
-						background: var(--bg-slate-300);
+						background: var(--l1-border);
 					}
 
 					&::-webkit-scrollbar-thumb:hover {
-						background: var(--bg-slate-200);
+						background: var(--l3-background);
 					}
 
 					.schedule-preview-item {
@@ -269,7 +269,7 @@
 							.schedule-preview-timeline-line {
 								width: 1px;
 								height: 20px;
-								background-color: var(--bg-slate-400);
+								background-color: var(--l2-background);
 							}
 						}
 
@@ -280,7 +280,7 @@
 							flex: 1;
 
 							.schedule-preview-date {
-								color: var(--bg-vanilla-300);
+								color: var(--l2-foreground);
 								font-size: 14px;
 								font-weight: 400;
 								white-space: nowrap;
@@ -289,11 +289,11 @@
 							.schedule-preview-separator {
 								flex: 1;
 								height: 1px;
-								border-top: 1px dashed var(--bg-slate-400);
+								border-top: 1px dashed var(--l1-border);
 							}
 
 							.schedule-preview-timezone {
-								color: var(--bg-vanilla-400);
+								color: var(--muted-foreground);
 								font-size: 12px;
 								font-weight: 400;
 								white-space: nowrap;
@@ -307,53 +307,53 @@
 }
 
 .ant-picker-date-panel {
-	background-color: var(--bg-ink-300);
-	border: 1px solid var(--bg-slate-300);
+	background-color: var(--l2-background);
+	border: 1px solid var(--l1-border);
 }
 
 .ant-picker-date-panel-layout {
-	background-color: var(--bg-ink-300);
-	border: 1px solid var(--bg-slate-300);
+	background-color: var(--l2-background);
+	border: 1px solid var(--l1-border);
 }
 
 .ant-picker-date-panel-header {
-	background-color: var(--bg-ink-300);
-	border: 1px solid var(--bg-slate-300);
+	background-color: var(--l2-background);
+	border: 1px solid var(--l1-border);
 }
 
 // Custom modal styles for preview
 .evaluation-cadence-preview-modal {
 	.ant-modal-content {
-		background-color: var(--bg-ink-400);
-		border: 1px solid var(--bg-slate-500);
+		background-color: var(--l2-background);
+		border: 1px solid var(--l1-border);
 		border-radius: 8px;
 	}
 
 	.ant-modal-header {
-		background-color: var(--bg-ink-400);
-		border-bottom: 1px solid var(--bg-slate-500);
+		background-color: var(--l2-background);
+		border-bottom: 1px solid var(--l1-border);
 		padding: 16px 20px;
 
 		.ant-modal-title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 16px;
 			font-weight: 600;
 		}
 	}
 
 	.ant-modal-close {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		top: 16px;
 		right: 20px;
 
 		&:hover {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 	}
 
 	.ant-modal-body {
 		padding: 0;
-		background-color: var(--bg-ink-400);
+		background-color: var(--l2-background);
 	}
 
 	.evaluation-cadence-details {
@@ -379,23 +379,23 @@
 				}
 
 				&::-webkit-scrollbar-thumb {
-					background: var(--bg-slate-400);
+					background: var(--l2-background);
 					border-radius: 3px;
 				}
 
 				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-slate-300);
+					background: var(--l3-background);
 				}
 
 				.schedule-preview {
 					.schedule-preview-header {
-						background-color: var(--bg-ink-400);
-						border-bottom: 1px solid var(--bg-slate-500);
+						background-color: var(--card);
+						border-bottom: 1px solid var(--l1-border);
 						padding: 12px 16px;
 						margin: -12px -12px 16px -12px;
 
 						.schedule-preview-title {
-							color: var(--bg-vanilla-300);
+							color: var(--l1-foreground);
 							font-size: 14px;
 							font-weight: 500;
 						}
@@ -404,7 +404,7 @@
 					.schedule-preview-list {
 						.schedule-preview-item {
 							padding: 12px 0;
-							border-bottom: 1px solid var(--bg-slate-500);
+							border-bottom: 1px solid var(--l1-border);
 
 							&:last-child {
 								border-bottom: none;
@@ -414,20 +414,20 @@
 								.schedule-preview-timeline-line {
 									width: 2px;
 									height: 24px;
-									background-color: var(--bg-robin-500);
+									background-color: var(--primary-background);
 									border-radius: 1px;
 								}
 							}
 
 							.schedule-preview-content {
 								.schedule-preview-date {
-									color: var(--bg-vanilla-300);
+									color: var(--l1-foreground);
 									font-size: 14px;
 									font-weight: 500;
 								}
 
 								.schedule-preview-timezone {
-									background-color: var(--bg-slate-500);
+									background-color: var(--l1-background);
 									padding: 4px 8px;
 									border-radius: 4px;
 									font-size: 12px;
@@ -442,7 +442,7 @@
 					padding: 40px 12px;
 
 					svg {
-						color: var(--bg-slate-400);
+						color: var(--muted-foreground);
 					}
 				}
 			}
@@ -451,267 +451,3 @@
 }
 
 // Light mode styles
-.lightMode {
-	.evaluation-cadence-container {
-		border-bottom: 1px solid var(--bg-vanilla-300);
-
-		.edit-custom-schedule {
-			.ant-typography {
-				color: var(--bg-ink-400);
-
-				.highlight {
-					background-color: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-				}
-			}
-
-			.ant-btn-group {
-				.ant-btn {
-					border: 1px solid var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-	}
-
-	.evaluation-cadence-details {
-		border: 1px solid var(--bg-vanilla-300);
-
-		.evaluation-cadence-details-title {
-			color: var(--bg-ink-400);
-		}
-
-		.query-section-tabs {
-			.query-section-query-actions {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-
-				.explorer-view-option {
-					border-left: 0.5px solid var(--bg-vanilla-300);
-					border-bottom: 0.5px solid var(--bg-vanilla-300);
-
-					&.active-tab {
-						background-color: var(--bg-vanilla-100);
-
-						&:hover {
-							background-color: var(--bg-vanilla-100) !important;
-						}
-					}
-
-					&:disabled {
-						background-color: var(--bg-vanilla-300);
-					}
-
-					&:hover {
-						color: var(--bg-ink-400);
-					}
-				}
-			}
-		}
-
-		.evaluation-cadence-details-content {
-			border-top: 1px solid var(--bg-vanilla-300);
-
-			.evaluation-cadence-details-content-row {
-				.editor-view,
-				.rrule-view {
-					textarea {
-						background: var(--bg-vanilla-300);
-						border: 1px solid var(--bg-vanilla-300);
-						color: var(--bg-ink-400) !important;
-
-						&::placeholder {
-							color: var(--bg-ink-400) !important;
-						}
-					}
-
-					.select-group {
-						.ant-typography {
-							color: var(--bg-ink-400);
-						}
-
-						.ant-select {
-							border: 1px solid var(--bg-vanilla-300);
-
-							.ant-select-selector {
-								background-color: var(--bg-vanilla-300);
-								border: 1px solid var(--bg-vanilla-300);
-								color: var(--bg-ink-400);
-
-								&:hover {
-									border-color: var(--bg-ink-300);
-								}
-
-								&:focus {
-									border-color: var(--bg-ink-300);
-									box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
-								}
-							}
-						}
-
-						.ant-picker {
-							background-color: var(--bg-vanilla-300);
-							border: 1px solid var(--bg-vanilla-300);
-
-							.ant-picker-input {
-								background-color: var(--bg-vanilla-300);
-								color: var(--bg-ink-400);
-							}
-						}
-					}
-				}
-
-				.no-schedule {
-					color: var(--bg-ink-400);
-				}
-
-				.schedule-preview {
-					.schedule-preview-header {
-						background-color: var(--bg-vanilla-200);
-						border-bottom: 1px solid var(--bg-vanilla-300);
-
-						.schedule-preview-title {
-							color: var(--bg-ink-300);
-						}
-					}
-
-					.schedule-preview-list {
-						&::-webkit-scrollbar-thumb {
-							background: var(--bg-vanilla-300);
-						}
-
-						&::-webkit-scrollbar-thumb:hover {
-							background: var(--bg-vanilla-400);
-						}
-
-						.schedule-preview-item {
-							.schedule-preview-timeline {
-								.schedule-preview-timeline-line {
-									background-color: var(--bg-vanilla-300);
-								}
-							}
-
-							.schedule-preview-content {
-								.schedule-preview-date {
-									color: var(--bg-ink-300);
-								}
-
-								.schedule-preview-separator {
-									border-top: 1px dashed var(--bg-vanilla-300);
-								}
-
-								.schedule-preview-timezone {
-									color: var(--bg-ink-400);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.ant-picker-date-panel {
-		background-color: var(--bg-vanilla-300);
-		border: 1px solid var(--bg-vanilla-300);
-	}
-
-	.ant-picker-date-panel-layout {
-		background-color: var(--bg-vanilla-300);
-		border: 1px solid var(--bg-vanilla-300);
-	}
-
-	.ant-picker-date-panel-header {
-		background-color: var(--bg-vanilla-300);
-		border: 1px solid var(--bg-vanilla-300);
-	}
-
-	// Light mode styles for preview modal
-	.evaluation-cadence-preview-modal {
-		.ant-modal-content {
-			background-color: var(--bg-vanilla-200);
-			border: 1px solid var(--bg-vanilla-300);
-		}
-
-		.ant-modal-header {
-			background-color: var(--bg-vanilla-200);
-			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.ant-modal-title {
-				color: var(--bg-ink-400);
-			}
-		}
-
-		.ant-modal-close {
-			color: var(--bg-ink-400);
-
-			&:hover {
-				color: var(--bg-ink-300);
-			}
-		}
-
-		.ant-modal-body {
-			background-color: var(--bg-vanilla-200);
-		}
-
-		.evaluation-cadence-details {
-			.evaluation-cadence-details-content {
-				.evaluation-cadence-details-content-row {
-					&::-webkit-scrollbar-thumb {
-						background: var(--bg-vanilla-300);
-					}
-
-					&::-webkit-scrollbar-thumb:hover {
-						background: var(--bg-vanilla-400);
-					}
-
-					.schedule-preview {
-						.schedule-preview-header {
-							background-color: var(--bg-vanilla-200);
-							border-bottom: 1px solid var(--bg-vanilla-300);
-
-							.schedule-preview-title {
-								color: var(--bg-ink-300);
-							}
-						}
-
-						.schedule-preview-list {
-							.schedule-preview-item {
-								border-bottom: 1px solid var(--bg-vanilla-300);
-
-								.schedule-preview-timeline {
-									.schedule-preview-timeline-line {
-										background-color: var(--bg-robin-500);
-									}
-								}
-
-								.schedule-preview-content {
-									.schedule-preview-date {
-										color: var(--bg-ink-300);
-									}
-
-									.schedule-preview-separator {
-										border-top: 1px dashed var(--bg-vanilla-300);
-									}
-
-									.schedule-preview-timezone {
-										background-color: var(--bg-vanilla-300);
-										color: var(--bg-ink-400);
-									}
-								}
-							}
-						}
-					}
-
-					.no-schedule {
-						color: var(--bg-ink-400);
-
-						svg {
-							color: var(--bg-vanilla-300);
-						}
-					}
-				}
-			}
-		}
-	}
-}

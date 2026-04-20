@@ -1,6 +1,6 @@
 .account-settings-modal {
 	&__title-account-id {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: 'Geist Mono';
 		font-size: 14px;
 		font-weight: 600;
@@ -12,19 +12,19 @@
 		flex-direction: column;
 		gap: 17px;
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 		padding: 14px;
 		&-account-info {
 			&-connected-account-details {
 				&-title {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-size: 14px;
 					font-weight: 500;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 				}
 				&-account-id {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-size: 12px;
 					line-height: 18px;
 					letter-spacing: -0.06px;
@@ -43,7 +43,7 @@
 			flex-direction: column;
 			gap: 10px;
 			&-title {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-size: 14px;
 				font-weight: 500;
 				line-height: 20px;
@@ -54,7 +54,7 @@
 				align-items: center;
 				gap: 10px;
 				&-label {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					background-color: transparent;
 					border: none;
 					font-family: Inter;
@@ -74,7 +74,7 @@
 	&__footer {
 		&-close-button,
 		&-save-button {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-weight: 500;
@@ -83,13 +83,13 @@
 		}
 		&-close-button {
 			border-radius: 2px;
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 			border: none;
 		}
 		&-save-button {
 			&:disabled {
-				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 				opacity: 0.6;
 				border: none;
 			}
@@ -113,23 +113,23 @@
 .lightMode {
 	.account-settings-modal {
 		&__title-account-id {
-			color: var(--bg-ink-500);
+			color: var(--l1-foreground);
 		}
 
 		&__body {
-			border-color: var(--bg-vanilla-300);
+			border-color: var(--l1-border);
 
 			&-account-info {
 				&-connected-account-details {
 					&-title {
-						color: var(--bg-ink-500);
+						color: var(--l1-foreground);
 					}
 
 					&-account-id {
-						color: var(--bg-ink-400);
+						color: var(--l1-foreground);
 
 						&-account-id {
-							color: var(--bg-ink-500);
+							color: var(--l1-foreground);
 						}
 					}
 				}
@@ -137,15 +137,15 @@
 
 			&-regions-switch {
 				&-title {
-					color: var(--bg-ink-500);
+					color: var(--l1-foreground);
 				}
 
 				&-switch {
 					&-label {
-						color: var(--bg-ink-400);
+						color: var(--l1-foreground);
 
 						&:hover {
-							color: var(--bg-ink-500);
+							color: var(--l1-foreground);
 						}
 					}
 				}
@@ -155,28 +155,28 @@
 		&__footer {
 			&-close-button,
 			&-save-button {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-background);
 			}
 
 			&-close-button {
-				background: var(--bg-vanilla-100);
-				border: 1px solid var(--bg-vanilla-300);
-				color: var(--bg-ink-400);
+				background: var(--l1-background);
+				border: 1px solid var(--l1-border);
+				color: var(--l1-foreground);
 
 				&:hover {
-					border-color: var(--bg-vanilla-400);
-					color: var(--bg-ink-500);
+					border-color: var(--l1-border);
+					color: var(--l1-foreground);
 				}
 			}
 
 			&-save-button {
 				// Keep primary button same as dark mode
-				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 
 				&:disabled {
-					background: var(--bg-robin-500);
-					color: var(--bg-vanilla-100);
+					background: var(--primary-background);
+					color: var(--primary-foreground);
 					opacity: 0.6;
 				}
 

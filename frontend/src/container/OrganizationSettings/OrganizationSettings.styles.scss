@@ -6,8 +6,8 @@
 
 	padding: 16px;
 
-	border: 1px solid var(--Slate-500, #161922);
-	background: var(--Ink-400, #121317);
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
 	border-radius: 3px;
 }
 
@@ -32,12 +32,5 @@
 
 	h3 {
 		margin-bottom: 0px;
-	}
-}
-
-.lightMode {
-	.organization-settings-container {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
 	}
 }

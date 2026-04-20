@@ -9,13 +9,13 @@
 			display: flex;
 			align-items: center;
 			gap: 10px;
-			color: var(--text-vanilla-400);
-			background: var(--bg-ink-400);
+			color: var(--l2-foreground);
+			background: var(--l2-background);
 			font-size: 13px;
 			line-height: 18px;
 			letter-spacing: -0.07px;
 			padding: 6px 24px;
-			border-color: var(--bg-slate-400);
+			border-color: var(--l1-border);
 			justify-content: center;
 		}
 		&.reset-button {
@@ -25,24 +25,8 @@
 			padding: 6px 12px;
 		}
 		&.selected {
-			color: var(--text-vanilla-100);
-			background: var(--bg-slate-400);
-		}
-	}
-}
-
-.lightMode {
-	.tabs-wrapper {
-		.tab {
-			&.ant-btn-default {
-				color: var(--text-ink-400);
-				background: var(--bg-vanilla-300);
-				border-color: var(--bg-vanilla-300);
-			}
-			&.selected {
-				color: var(--text-robin-500);
-				background: var(--bg-vanilla-100);
-			}
+			color: var(--l1-foreground);
+			background: var(--l1-background-hover);
 		}
 	}
 }

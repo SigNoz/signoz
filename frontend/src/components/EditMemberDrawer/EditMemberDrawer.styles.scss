@@ -32,7 +32,7 @@
 	&__input {
 		height: 32px;
 		background: var(--l2-background);
-		border-color: var(--border);
+		border-color: var(--l1-border);
 		color: var(--l1-foreground);
 		box-shadow: none;
 
@@ -49,7 +49,7 @@
 		padding: var(--padding-1) var(--padding-2);
 		border-radius: 2px;
 		background: var(--l2-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 
 		&--disabled {
 			cursor: not-allowed;
@@ -122,7 +122,7 @@
 		width: 100%;
 		height: 56px;
 		padding: 0 var(--padding-4);
-		border-top: 1px solid var(--border);
+		border-top: 1px solid var(--l1-border);
 		flex-shrink: 0;
 		background: var(--card);
 	}
@@ -142,7 +142,7 @@
 	&__footer-divider {
 		width: 1px;
 		height: 21px;
-		background: var(--border);
+		background: var(--l1-border);
 		flex-shrink: 0;
 	}
 
@@ -175,7 +175,7 @@
 		}
 
 		&--danger {
-			color: var(--destructive);
+			color: var(--accent-cherry);
 		}
 
 		&--warning {
@@ -186,7 +186,7 @@
 
 .delete-dialog {
 	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 
 	[data-slot='dialog-title'] {
 		color: var(--l1-foreground);
@@ -216,10 +216,10 @@
 
 .reset-link-dialog {
 	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 
 	[data-slot='dialog-header'] {
-		border-color: var(--l2-border);
+		border-color: var(--l1-border);
 		color: var(--l1-foreground);
 	}
 
@@ -250,7 +250,7 @@
 		height: 32px;
 		overflow: hidden;
 		background: var(--l2-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 	}
 
@@ -280,7 +280,7 @@
 		border-top: none;
 		border-right: none;
 		border-bottom: none;
-		border-left: 1px solid var(--border);
+		border-left: 1px solid var(--l1-border);
 		min-width: 64px;
 	}
 }

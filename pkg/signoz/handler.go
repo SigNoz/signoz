@@ -3,6 +3,8 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
+	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/ruler/signozruler"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/authz/signozauthzapi"
@@ -65,6 +67,7 @@ type Handlers struct {
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
 	AlertmanagerHandler     alertmanager.Handler
+	RulerHandler            ruler.Handler
 }
 
 func NewHandlers(
@@ -81,6 +84,7 @@ func NewHandlers(
 	zeusService zeus.Zeus,
 	registryHandler factory.Handler,
 	alertmanagerService alertmanager.Alertmanager,
+	rulerService ruler.Ruler,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -104,5 +108,6 @@ func NewHandlers(
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		RulerHandler:            signozruler.NewHandler(rulerService),
 	}
 }
