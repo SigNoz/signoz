@@ -445,55 +445,6 @@ wheels = [
 ]
 
 [[package]]
-name = "integration"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "clickhouse-connect" },
-    { name = "isodate" },
-    { name = "numpy" },
-    { name = "psycopg2" },
-    { name = "pytest" },
-    { name = "requests" },
-    { name = "selenium" },
-    { name = "sqlalchemy" },
-    { name = "svix-ksuid" },
-    { name = "testcontainers", extra = ["keycloak"] },
-    { name = "wiremock" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "autoflake" },
-    { name = "black" },
-    { name = "isort" },
-    { name = "pylint" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "clickhouse-connect", specifier = ">=0.8.18" },
-    { name = "isodate", specifier = ">=0.7.2" },
-    { name = "numpy", specifier = ">=2.3.2" },
-    { name = "psycopg2", specifier = ">=2.9.10" },
-    { name = "pytest", specifier = ">=8.3.5" },
-    { name = "requests", specifier = ">=2.32.4" },
-    { name = "selenium", specifier = ">=4.40.0" },
-    { name = "sqlalchemy", specifier = ">=2.0.43" },
-    { name = "svix-ksuid", specifier = ">=0.6.2" },
-    { name = "testcontainers", extras = ["clickhouse", "keycloak", "postgres"], specifier = ">=4.13.1" },
-    { name = "wiremock", specifier = ">=2.6.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "autoflake", specifier = ">=2.3.1" },
-    { name = "black", specifier = ">=25.1.0" },
-    { name = "isort", specifier = ">=6.0.1" },
-    { name = "pylint", specifier = ">=3.3.6" },
-]
-
-[[package]]
 name = "isodate"
 version = "0.7.2"
 source = { registry = "https://pypi.org/simple" }
@@ -861,6 +812,55 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/66/ef/a5727fa7b33d20d296322adf851b76072d8d3513e1b151969d3228437faf/selenium-4.40.0.tar.gz", hash = "sha256:a88f5905d88ad0b84991c2386ea39e2bbde6d6c334be38df5842318ba98eaa8c", size = 930444, upload-time = "2026-01-18T23:12:31.565Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9d/74/eb9d6540aca1911106fa0877b8e9ef24171bc18857937a6b0ffe0586c623/selenium-4.40.0-py3-none-any.whl", hash = "sha256:c8823fc02e2c771d9ad9a0cf899cee7de1a57a6697e3d0b91f67566129f2b729", size = 9608184, upload-time = "2026-01-18T23:12:29.435Z" },
+]
+
+[[package]]
+name = "signoz-tests"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "clickhouse-connect" },
+    { name = "isodate" },
+    { name = "numpy" },
+    { name = "psycopg2" },
+    { name = "pytest" },
+    { name = "requests" },
+    { name = "selenium" },
+    { name = "sqlalchemy" },
+    { name = "svix-ksuid" },
+    { name = "testcontainers", extra = ["keycloak"] },
+    { name = "wiremock" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "autoflake" },
+    { name = "black" },
+    { name = "isort" },
+    { name = "pylint" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "clickhouse-connect", specifier = ">=0.8.18" },
+    { name = "isodate", specifier = ">=0.7.2" },
+    { name = "numpy", specifier = ">=2.3.2" },
+    { name = "psycopg2", specifier = ">=2.9.10" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "requests", specifier = ">=2.32.4" },
+    { name = "selenium", specifier = ">=4.40.0" },
+    { name = "sqlalchemy", specifier = ">=2.0.43" },
+    { name = "svix-ksuid", specifier = ">=0.6.2" },
+    { name = "testcontainers", extras = ["clickhouse", "keycloak", "postgres"], specifier = ">=4.13.1" },
+    { name = "wiremock", specifier = ">=2.6.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "autoflake", specifier = ">=2.3.1" },
+    { name = "black", specifier = ">=25.1.0" },
+    { name = "isort", specifier = ">=6.0.1" },
+    { name = "pylint", specifier = ">=3.3.6" },
 ]
 
 [[package]]

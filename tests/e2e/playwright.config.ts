@@ -32,6 +32,12 @@ function getRoleGrepPattern(): string | undefined {
 export default defineConfig({
   testDir: './tests',
 
+  // Pulls backend coordinates from .signoz-backend.json (written by the pytest
+  // bootstrap) and sets SIGNOZ_E2E_BASE_URL/USERNAME/PASSWORD before the suite
+  // runs. A no-op when SIGNOZ_E2E_BASE_URL is already set (staging mode, or
+  // when pytest shelled out to `yarn test` with env pre-injected).
+  globalSetup: require.resolve('./global.setup.ts'),
+
   // Filter tests based on user role
   grep: getRoleGrepPattern() ? new RegExp(getRoleGrepPattern()!) : undefined,
 
