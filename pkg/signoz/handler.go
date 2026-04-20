@@ -35,6 +35,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/spanattributemapping"
+	"github.com/SigNoz/signoz/pkg/modules/spanattributemapping/implspanattributemapping"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -89,27 +90,28 @@ func NewHandlers(
 	rulerService ruler.Ruler,
 ) Handlers {
 	return Handlers{
-		SavedView:               implsavedview.NewHandler(modules.SavedView),
-		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
-		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
-		Services:                implservices.NewHandler(modules.Services),
-		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
-		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
-		Global:                  signozglobal.NewHandler(global),
-		FlaggerHandler:          flagger.NewHandler(flaggerService),
-		GatewayHandler:          gateway.NewHandler(gatewayService),
-		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AuthzHandler:            signozauthzapi.NewHandler(authz),
-		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
-		QuerierHandler:          querierHandler,
-		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
-		RegistryHandler:         registryHandler,
-		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
-		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
-		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
-		RulerHandler:            signozruler.NewHandler(rulerService),
+		SavedView:                  implsavedview.NewHandler(modules.SavedView),
+		Apdex:                      implapdex.NewHandler(modules.Apdex),
+		Dashboard:                  impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
+		QuickFilter:                implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:                impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:              implrawdataexport.NewHandler(modules.RawDataExport),
+		Services:                   implservices.NewHandler(modules.Services),
+		MetricsExplorer:            implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		SpanPercentile:             implspanpercentile.NewHandler(modules.SpanPercentile),
+		Global:                     signozglobal.NewHandler(global),
+		FlaggerHandler:             flagger.NewHandler(flaggerService),
+		GatewayHandler:             gateway.NewHandler(gatewayService),
+		Fields:                     implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AuthzHandler:               signozauthzapi.NewHandler(authz),
+		ZeusHandler:                zeus.NewHandler(zeusService, licensing),
+		QuerierHandler:             querierHandler,
+		ServiceAccountHandler:      implserviceaccount.NewHandler(modules.ServiceAccount),
+		RegistryHandler:            registryHandler,
+		RuleStateHistory:           implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		CloudIntegrationHandler:    implcloudintegration.NewHandler(modules.CloudIntegration),
+		SpanAttributeMappingHander: implspanattributemapping.NewHandler(nil, providerSettings), // todo(nitya): will update this in future PR
+		AlertmanagerHandler:        signozalertmanager.NewHandler(alertmanagerService),
+		RulerHandler:               signozruler.NewHandler(rulerService),
 	}
 }

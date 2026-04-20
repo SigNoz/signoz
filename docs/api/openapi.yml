@@ -4285,7 +4285,6 @@ components:
       enum:
       - attribute
       - resource
-      nullable: true
       type: string
     SpanattributemappingtypesGroup:
       properties:

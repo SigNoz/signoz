@@ -3,8 +3,8 @@ package spanattributemappingtypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -66,7 +66,7 @@ func (m *MapperConfig) Scan(src any) error {
 		*m = MapperConfig{}
 		return nil
 	default:
-		return fmt.Errorf("spanattributemapping: cannot scan %T into MapperConfig", src)
+		return errors.NewInternalf(errors.CodeInternal, "spanattributemapping: cannot scan %T into MapperConfig", src)
 	}
 	return json.Unmarshal(raw, m)
 }
@@ -121,7 +121,7 @@ type PostableMapper struct {
 // UpdatableMapper is the HTTP request body for updating a mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableMapper struct {
-	FieldContext *FieldContext  `json:"field_context,omitempty"`
+	FieldContext *FieldContext `json:"field_context,omitempty"`
 	Config       *MapperConfig `json:"config,omitempty"`
 	Enabled      *bool         `json:"enabled,omitempty"`
 }

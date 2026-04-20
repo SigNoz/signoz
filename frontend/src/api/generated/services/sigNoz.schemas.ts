@@ -5243,6 +5243,198 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
+export interface SpanattributemappingtypesConditionDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	attributes?: string[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resource?: string[] | null;
+}
+
+export enum SpanattributemappingtypesFieldContextDTO {
+	attribute = 'attribute',
+	resource = 'resource',
+}
+export interface SpanattributemappingtypesGroupDTO {
+	/**
+	 * @type string
+	 */
+	category: string;
+	condition: SpanattributemappingtypesConditionDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	ordId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpanattributemappingtypesListGroupsResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: SpanattributemappingtypesGroupDTO[] | null;
+}
+
+export interface SpanattributemappingtypesListMappersResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: SpanattributemappingtypesMapperDTO[] | null;
+}
+
+export interface SpanattributemappingtypesMapperDTO {
+	config: SpanattributemappingtypesMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	field_context: SpanattributemappingtypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	group_id: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpanattributemappingtypesMapperConfigDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	sources?: SpanattributemappingtypesMapperSourceDTO[] | null;
+}
+
+export enum SpanattributemappingtypesMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpanattributemappingtypesMapperSourceDTO {
+	context?: SpanattributemappingtypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key?: string;
+	operation?: SpanattributemappingtypesMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority?: number;
+}
+
+export interface SpanattributemappingtypesPostableGroupDTO {
+	/**
+	 * @type string
+	 */
+	category: string;
+	condition: SpanattributemappingtypesConditionDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpanattributemappingtypesPostableMapperDTO {
+	config: SpanattributemappingtypesMapperConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	field_context: SpanattributemappingtypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpanattributemappingtypesUpdatableGroupDTO {
+	condition?: SpanattributemappingtypesConditionDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	name?: string | null;
+}
+
+export interface SpanattributemappingtypesUpdatableMapperDTO {
+	config?: SpanattributemappingtypesMapperConfigDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	field_context?: SpanattributemappingtypesFieldContextDTO;
+}
+
 export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
@@ -6456,6 +6648,89 @@ export type DeleteServiceAccountRolePathParameters = {
 };
 export type GetMyServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListSpanAttributeMappingGroupsParams = {
+	/**
+	 * @type string
+	 * @nullable true
+	 * @description undefined
+	 */
+	category?: string | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	enabled?: boolean | null;
+};
+
+export type ListSpanAttributeMappingGroups200 = {
+	data: SpanattributemappingtypesListGroupsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateMappingGroup201 = {
+	data: SpanattributemappingtypesGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
+export type UpdateMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
+export type UpdateMapper200 = {
+	data: SpanattributemappingtypesMapperDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteMappingGroupPathParameters = {
+	id: string;
+};
+export type UpdateMappingGroupPathParameters = {
+	id: string;
+};
+export type UpdateMappingGroup200 = {
+	data: SpanattributemappingtypesGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListMappersPathParameters = {
+	id: string;
+};
+export type ListMappers200 = {
+	data: SpanattributemappingtypesListMappersResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateMapperPathParameters = {
+	id: string;
+};
+export type CreateMapper201 = {
+	data: SpanattributemappingtypesMapperDTO;
 	/**
 	 * @type string
 	 */

@@ -3,13 +3,13 @@ package spanattributemappingtypes
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// as of now it can be llm, tool, agent but can extend to more things in future
+// as of now it can be llm, tool, agent but can extend to more things in future.
 type GroupCategory string
 
 // A group runs when any of the listed attribute/resource key patterns match.
@@ -37,7 +37,7 @@ func (c *Condition) Scan(src any) error {
 		*c = Condition{}
 		return nil
 	default:
-		return fmt.Errorf("spanattributemappingtypes: cannot scan %T into Condition", src)
+		return errors.NewInternalf(errors.CodeInternal, "spanattributemappingtypes: cannot scan %T into Condition", src)
 	}
 	return json.Unmarshal(raw, c)
 }
