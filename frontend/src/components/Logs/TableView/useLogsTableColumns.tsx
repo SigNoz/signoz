@@ -89,7 +89,7 @@ export function useLogsTableColumns({
 					header: 'Body',
 					accessorFn: (log): string => log.body,
 					canBeHidden: false,
-					width: { default: '100%', min: 640 },
+					width: { default: '100%', min: 300 },
 					cell: ({ value, isActive }): ReactElement => (
 						<TanStackTable.Text
 							dangerouslySetInnerHTML={{
