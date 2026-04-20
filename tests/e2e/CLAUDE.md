@@ -4,25 +4,34 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Playwright-based E2E testing framework for the SigNoz frontend. Tests are organized around a **test-plan-first** workflow: write a markdown test plan in `specs/`, then generate tests in `tests/`.
+Playwright-based E2E suite for the SigNoz frontend, wired into the shared pytest project at `signoz/tests/`. Pytest fixtures (under `tests/fixtures/`) bring up the backend (ClickHouse + Postgres + migrator + SigNoz-with-web) and seed dashboards/alerts/telemetry before Playwright runs. Tests follow a test-plan-first workflow: write a markdown plan in `specs/`, then generate tests in `tests/`.
 
 ## Commands
 
 ```bash
-# Setup
-yarn install
-yarn install:browsers       # Install Playwright browsers
-cp .env.example .env        # Configure environment variables
+# One-command local run (pytest owns lifecycle; shells out to Playwright):
+cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --with-web \
+  e2e/src/bootstrap/run.py::test_e2e
 
-# Run tests
-yarn test                   # All tests, headless
-yarn test:ui                # Interactive UI mode
-yarn test:headed            # Headed mode (see browser)
-yarn test:debug             # Step-through debugging
-yarn test:chromium          # Single browser
-yarn test tests/roles/roles-listing.spec.ts  # Single file
+# Warm the backend for iterative dev (keeps containers under --reuse):
+cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
+  e2e/src/bootstrap/setup.py::test_setup
+# Then, from signoz/tests/e2e:
+yarn install && yarn install:browsers    # first time only
+yarn test                 # headless
+yarn test:ui              # interactive
+yarn test:headed          # headed
+yarn test:debug           # step-through
+yarn test tests/roles/roles-listing.spec.ts  # single file
 
-# Run by role
+# Staging fallback (skips all pytest lifecycle, hits remote env):
+yarn test:staging
+
+# Teardown the warm backend:
+cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --teardown \
+  e2e/src/bootstrap/setup.py::test_teardown
+
+# Role-filtered runs (auto-set by global.setup.ts when backend is up):
 SIGNOZ_USER_ROLE=Admin yarn test
 SIGNOZ_USER_ROLE=Editor yarn test
 SIGNOZ_USER_ROLE=Viewer yarn test
@@ -32,8 +41,8 @@ yarn typecheck
 yarn lint:fix
 
 # Reports
-yarn report                 # Open HTML report
-yarn codegen                # Generate test code interactively
+yarn report               # Open HTML report
+yarn codegen              # Generate test code interactively
 ```
 
 ## Environment Variables

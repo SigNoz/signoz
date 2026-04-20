@@ -1,21 +1,58 @@
 # SigNoz E2E
 
-E2E tests for SigNoz frontend using Playwright.
+Playwright tests for the SigNoz frontend. Lives alongside `tests/integration/` and reuses its pytest fixture graph to bring up a containerized backend, register an admin, and seed dashboards + telemetry before Playwright runs.
 
-## Setup
+## Two ways to run
 
-### Project Dependencies and Environment
+### 1. One-command (local backend, recommended)
+
+Pytest owns the lifecycle. It provisions containers, registers the admin, seeds dashboards/alerts/telemetry, writes backend coordinates to `.signoz-backend.json`, then shells out to `yarn test`:
 
 ```bash
-# Install dependencies
+cd signoz/tests
+uv sync                                               # first time only
+uv run pytest --basetemp=./tmp/ -vv --with-web \
+  e2e/src/bootstrap/run.py::test_e2e
+```
+
+For iterative Playwright dev, bring the backend up once (`--reuse` keeps containers warm) and drive Playwright directly:
+
+```bash
+cd signoz/tests
+uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
+  e2e/src/bootstrap/setup.py::test_setup
+cd e2e && yarn install && yarn install:browsers       # first time
+yarn test:ui                                          # iterate
+```
+
+Teardown when done:
+
+```bash
+cd signoz/tests
+uv run pytest --basetemp=./tmp/ -vv --teardown \
+  e2e/src/bootstrap/setup.py::test_teardown
+```
+
+### 2. Staging fallback
+
+Point `SIGNOZ_E2E_BASE_URL` at a remote env (e.g. staging) — `global.setup.ts` becomes a no-op and Playwright hits the URL directly:
+
+```bash
+cp .env.example .env              # fill SIGNOZ_E2E_USERNAME/PASSWORD
+yarn test:staging
+```
+
+## Setup details
+
+```bash
+# Install dependencies (local deps for Playwright)
 yarn install
 
 # Install Playwright browsers
 yarn install:browsers
 
-# Copy .env.example to .env and configure
+# Copy .env.example to .env (only needed for staging mode)
 cp .env.example .env
-# Edit .env with your test credentials
 ```
 
 ### Playwright CLI Setup (token-efficient browser automation)
