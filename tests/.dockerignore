@@ -1,0 +1,20 @@
+# Build context for tests/fixtures/seeder/Dockerfile. Keep the context lean —
+# the seeder image only needs fixtures/ to be importable.
+
+.venv
+.pytest_cache
+tmp
+**/__pycache__
+**/*.pyc
+
+# e2e Playwright outputs and deps
+e2e/node_modules
+e2e/test-results
+e2e/playwright-report
+e2e/.auth
+e2e/.playwright-cli
+e2e/tests/alerts-downtime/run-spec-*
+
+# Integration-side outputs (if any stale dirs remain)
+integration/tmp
+integration/testdata

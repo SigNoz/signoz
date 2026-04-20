@@ -24,6 +24,7 @@ pytest_plugins = [
     "fixtures.alerts",
     "fixtures.cloudintegrations",
     "fixtures.dashboards",
+    "fixtures.seeder",
 ]
 
 
