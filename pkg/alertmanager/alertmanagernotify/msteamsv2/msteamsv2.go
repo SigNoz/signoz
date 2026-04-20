@@ -1,3 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
+// Copyright 2019 Prometheus Team
+// SPDX-License-Identifier: Apache-2.0
+
 package msteamsv2
 
 import (
@@ -25,6 +29,10 @@ const (
 	colorRed   = "Attention"
 	colorGreen = "Good"
 	colorGrey  = "Warning"
+)
+
+const (
+	Integration = "msteamsv2"
 )
 
 type Notifier struct {
@@ -87,7 +95,7 @@ type teamsMessage struct {
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
 func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := commoncfg.NewClientFromConfig(*c.HTTPConfig, "msteamsv2", httpOpts...)
+	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

@@ -23,6 +23,8 @@ import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
 
+import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
+
 import './WorkspaceSuspended.styles.scss';
 
 function WorkspaceSuspended(): JSX.Element {
@@ -165,10 +167,7 @@ function WorkspaceSuspended(): JSX.Element {
 								</Row>
 							)}
 							<div className="workspace-suspended__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>
 						</>
 					)}

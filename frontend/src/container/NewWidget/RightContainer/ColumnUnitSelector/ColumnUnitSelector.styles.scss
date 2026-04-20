@@ -4,7 +4,7 @@
 	gap: 8px;
 
 	.heading {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Space Mono';
 		font-size: 13px;
 		font-style: normal;
@@ -42,7 +42,7 @@
 .lightMode {
 	.column-unit-selector {
 		.heading {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 	}
 }

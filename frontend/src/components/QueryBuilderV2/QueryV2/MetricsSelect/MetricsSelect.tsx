@@ -150,6 +150,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 					options={SOURCE_OPTIONS}
 					value={source}
 					defaultValue="metrics"
+					data-testid={`metrics-source-selector-${index}`}
 					onChange={handleSignalSourceChange}
 				/>
 			)}
@@ -157,6 +158,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 			<MetricNameSelector
 				onChange={handleChangeAggregatorAttribute}
 				query={query}
+				data-testid={`metric-name-selector-${index}`}
 				signalSource={signalSource || ''}
 			/>
 		</div>

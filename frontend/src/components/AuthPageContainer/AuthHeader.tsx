@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { Button } from '@signozhq/button';
 import { LifeBuoy } from 'lucide-react';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import './AuthHeader.styles.scss';
 
 function AuthHeader(): JSX.Element {
@@ -13,7 +15,7 @@ function AuthHeader(): JSX.Element {
 		<header className="auth-header">
 			<div className="auth-header-logo">
 				<img
-					src="/Logos/signoz-brand-logo.svg"
+					src={signozBrandLogoUrl}
 					alt="SigNoz"
 					className="auth-header-logo-icon"
 				/>

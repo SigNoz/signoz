@@ -33,6 +33,8 @@ import { useAppContext } from 'providers/App/App';
 import { Span } from 'types/api/trace/getTraceV2';
 import { toFixed } from 'utils/toFixed';
 
+import funnelAddUrl from '@/assets/Icons/funnel-add.svg';
+
 import Filters from './Filters/Filters';
 
 import './Success.styles.scss';
@@ -189,7 +191,7 @@ function SpanOverview({
 										icon={
 											<img
 												className="add-funnel-button__icon"
-												src="/Icons/funnel-add.svg"
+												src={funnelAddUrl}
 												alt="funnel-icon"
 											/>
 										}

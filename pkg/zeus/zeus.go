@@ -26,8 +26,14 @@ type Zeus interface {
 	// Returns the deployment for the given license key.
 	GetDeployment(context.Context, string) ([]byte, error)
 
-	// Puts the meters for the given license key.
+	// Returns the billing details for the given license key.
+	GetMeters(context.Context, string) ([]byte, error)
+
+	// Puts the meters for the given license key using the legacy subscriptions service.
 	PutMeters(context.Context, string, []byte) error
+
+	// Puts the meters for the given license key using Zeus.
+	PutMetersV2(context.Context, string, []byte) error
 
 	// Put profile for the given license key.
 	PutProfile(context.Context, string, *zeustypes.PostableProfile) error

@@ -16,9 +16,11 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/model"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
@@ -43,15 +45,18 @@ type Manager struct {
 	zeus zeus.Zeus
 
 	orgGetter organization.Getter
+
+	flagger flagger.Flagger
 }
 
-func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, orgGetter organization.Getter) (*Manager, error) {
+func New(licenseService licensing.Licensing, clickhouseConn clickhouse.Conn, zeus zeus.Zeus, orgGetter organization.Getter, flagger flagger.Flagger) (*Manager, error) {
 	m := &Manager{
 		clickhouseConn: clickhouseConn,
 		licenseService: licenseService,
 		scheduler:      gocron.NewScheduler(time.UTC).Every(1).Day().At("00:00"), // send usage every at 00:00 UTC
 		zeus:           zeus,
 		orgGetter:      orgGetter,
+		flagger:        flagger,
 	}
 	return m, nil
 }
@@ -168,7 +173,14 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 			return
 		}
 
-		errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+		evalCtx := featuretypes.NewFlaggerEvaluationContext(organization.ID)
+		useZeus := lm.flagger.BooleanOrEmpty(ctx, flagger.FeaturePutMetersInZeus, evalCtx)
+
+		if useZeus {
+			errv2 = lm.zeus.PutMetersV2(ctx, payload.LicenseKey.String(), body)
+		} else {
+			errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
+		}
 		if errv2 != nil {
 			slog.ErrorContext(ctx, "failed to upload usage", errors.Attr(errv2))
 			// not returning error here since it is captured in the failed count

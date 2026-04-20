@@ -1,7 +1,7 @@
-import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Check, Copy } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
 
 export interface KeyCreatedPhaseProps {

@@ -2,10 +2,12 @@ package cloudintegrationtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -97,6 +99,15 @@ func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountCo
 	}
 }
 
+func NewCredentials(sigNozAPIURL, sigNozAPIKey, ingestionURL, ingestionKey string) *Credentials {
+	return &Credentials{
+		SigNozAPIURL: sigNozAPIURL,
+		SigNozAPIKey: sigNozAPIKey,
+		IngestionURL: ingestionURL,
+		IngestionKey: ingestionKey,
+	}
+}
+
 func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account, error) {
 	// config can not be empty
 	if storableAccount.Config == "" {
@@ -146,60 +157,140 @@ func NewAccountsFromStorables(storableAccounts []*StorableCloudIntegration) ([]*
 	return accounts, nil
 }
 
-func (account *Account) Update(config *AccountConfig) error {
-	if account.RemovedAt != nil {
-		return errors.New(errors.TypeUnsupported, ErrCodeCloudIntegrationRemoved, "this operation is not supported for a removed cloud integration account")
+func NewGettableAccountWithConnectionArtifact(account *Account, connectionArtifact *ConnectionArtifact) *GettableAccountWithConnectionArtifact {
+	return &GettableAccountWithConnectionArtifact{
+		ID:                 account.ID,
+		ConnectionArtifact: connectionArtifact,
 	}
-	account.Config = config
-	account.UpdatedAt = time.Now()
-	return nil
 }
 
-func (account *Account) IsRemoved() bool {
-	return account.RemovedAt != nil
+func NewGettableAccounts(accounts []*Account) *GettableAccounts {
+	return &GettableAccounts{
+		Accounts: accounts,
+	}
 }
 
 func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAccountConfig) (*AccountConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
 		if config.Aws == nil {
-			return nil, errors.NewInternalf(errors.CodeInternal, "AWS config is nil")
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config can not be nil for AWS provider")
 		}
-		return &AccountConfig{
-			AWS: &AWSAccountConfig{
-				Regions: config.Aws.Regions,
-			},
-		}, nil
-	}
 
-	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+		if err := validateAWSRegion(config.Aws.DeploymentRegion); err != nil {
+			return nil, err
+		}
+
+		if len(config.Aws.Regions) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one region is required")
+		}
+
+		for _, region := range config.Aws.Regions {
+			if err := validateAWSRegion(region); err != nil {
+				return nil, err
+			}
+		}
+
+		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Aws.Regions}}, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
 }
 
-// func NewAccountFromPostableAccount(provider CloudProviderType, account *PostableAccount) (*Account, error) {
-// 	req := &Account{
-// 		Credentials: account.Credentials,
-// 	}
+func NewAccountConfigFromUpdatable(provider CloudProviderType, config *UpdatableAccount) (*AccountConfig, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if config.Config.AWS == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config can not be nil for AWS provider")
+		}
 
-// 	switch provider {
-// 	case CloudProviderTypeAWS:
-// 		req.Config = &ConnectionArtifactRequestConfig{
-// 			Aws: &AWSConnectionArtifactRequest{
-// 				DeploymentRegion: artifact.Config.Aws.DeploymentRegion,
-// 				Regions:          artifact.Config.Aws.Regions,
-// 			},
-// 		}
+		if len(config.Config.AWS.Regions) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one region is required")
+		}
 
-// 		return req, nil
-// 	default:
-// 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
-// 	}
-// }
+		for _, region := range config.Config.AWS.Regions {
+			if err := validateAWSRegion(region); err != nil {
+				return nil, err
+			}
+		}
+
+		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Config.AWS.Regions}}, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
 
 func NewAgentReport(data map[string]any) *AgentReport {
 	return &AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            data,
 	}
+}
+
+func GetSigNozAPIURLFromDeployment(deployment *zeustypes.GettableDeployment) (string, error) {
+	if deployment.Name == "" || deployment.Cluster.Region.DNS == "" {
+		return "", errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "invalid deployment: missing name or DNS")
+	}
+
+	return fmt.Sprintf("https://%s.%s", deployment.Name, deployment.Cluster.Region.DNS), nil
+}
+
+func (account *Account) Update(provider CloudProviderType, config *AccountConfig) error {
+	account.Config = config
+	account.UpdatedAt = time.Now()
+	return nil
+}
+
+func (postableAccount *PostableAccount) UnmarshalJSON(data []byte) error {
+	type Alias PostableAccount
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Config == nil || temp.Credentials == nil {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "config and credentials are required")
+	}
+
+	if temp.Credentials.SigNozAPIURL == "" {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "sigNozApiURL can not be empty")
+	}
+
+	if temp.Credentials.SigNozAPIKey == "" {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "sigNozApiKey can not be empty")
+	}
+
+	if temp.Credentials.IngestionURL == "" {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "ingestionUrl can not be empty")
+	}
+
+	if temp.Credentials.IngestionKey == "" {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "ingestionKey can not be empty")
+	}
+
+	*postableAccount = PostableAccount(temp)
+	return nil
+}
+
+func (updatableAccount *UpdatableAccount) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableAccount
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Config == nil {
+		return errors.NewInvalidInputf(ErrCodeInvalidInput, "config is required")
+	}
+
+	*updatableAccount = UpdatableAccount(temp)
+	return nil
+}
+
+func (config *PostableAccountConfig) SetAgentVersion(agentVersion string) {
+	config.AgentVersion = agentVersion
 }
 
 // ToJSON return JSON bytes for the provider's config
@@ -211,105 +302,4 @@ func (config *AccountConfig) ToJSON() ([]byte, error) {
 	}
 
 	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
-}
-
-func (config *PostableAccountConfig) AddAgentVersion(agentVersion string) {
-	config.AgentVersion = agentVersion
-}
-
-// Validate checks that the connection artifact request has a valid provider-specific block
-// with non-empty, valid regions and a valid deployment region.
-func (account *PostableAccount) Validate(provider CloudProviderType) error {
-	if account.Config == nil || account.Credentials == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"config and credentials are required")
-	}
-
-	if account.Credentials.SigNozAPIURL == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"sigNozApiURL can not be empty")
-	}
-
-	if account.Credentials.SigNozAPIKey == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"sigNozApiKey can not be empty")
-	}
-
-	if account.Credentials.IngestionURL == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"ingestionUrl can not be empty")
-	}
-
-	if account.Credentials.IngestionKey == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"ingestionKey can not be empty")
-	}
-
-	switch provider {
-	case CloudProviderTypeAWS:
-		if account.Config.Aws == nil {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-				"aws configuration is required")
-		}
-		return account.Config.Aws.Validate()
-	}
-
-	return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider)
-}
-
-// Validate checks that the AWS connection artifact request has a valid deployment region
-// and a non-empty list of valid regions.
-func (req *AWSPostableAccountConfig) Validate() error {
-	if req.DeploymentRegion == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"deploymentRegion is required")
-	}
-	if _, ok := ValidAWSRegions[req.DeploymentRegion]; !ok {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
-			"invalid deployment region: %s", req.DeploymentRegion)
-	}
-
-	if len(req.Regions) == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"at least one region is required")
-	}
-	for _, region := range req.Regions {
-		if _, ok := ValidAWSRegions[region]; !ok {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
-				"invalid AWS region: %s", region)
-		}
-	}
-	return nil
-}
-
-func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
-	if updatable.Config == nil {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"config is required")
-	}
-
-	switch provider {
-	case CloudProviderTypeAWS:
-		if updatable.Config.AWS == nil {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-				"aws configuration is required")
-		}
-
-		if len(updatable.Config.AWS.Regions) == 0 {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-				"at least one region is required")
-		}
-
-		for _, region := range updatable.Config.AWS.Regions {
-			if _, ok := ValidAWSRegions[region]; !ok {
-				return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
-					"invalid AWS region: %s", region)
-			}
-		}
-	default:
-		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
-			"invalid cloud provider: %s", provider.StringValue())
-	}
-
-	return nil
 }

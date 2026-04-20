@@ -6,7 +6,7 @@ export const StyledSelect = styled(Select)`
 `;
 
 export const StyledCreateChannelOption = styled.div`
-	color: var(--bg-robin-500);
+	color: var(--accent-primary);
 	display: flex;
 	align-items: center;
 	gap: 8px;

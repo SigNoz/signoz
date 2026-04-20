@@ -66,7 +66,8 @@ jest.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, () => void] => [null, jest.fn()],
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: { success: jest.fn() },
 }));
 

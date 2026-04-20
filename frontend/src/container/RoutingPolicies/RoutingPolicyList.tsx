@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { Button, Table, TableProps, Typography } from 'antd';
 import { RotateCw } from 'lucide-react';
 
+import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import RoutingPolicyListItem from './RoutingPolicyListItem';
 import { RoutingPolicy, RoutingPolicyListProps } from './types';
 
@@ -36,10 +39,10 @@ function RoutingPolicyList({
 		() => (
 			<div className="no-routing-policies-message-container">
 				{showError ? (
-					<img src="/Icons/awwSnap.svg" alt="aww-snap" className="error-state-svg" />
+					<img src={awwSnapUrl} alt="aww-snap" className="error-state-svg" />
 				) : (
 					<img
-						src="/Icons/emptyState.svg"
+						src={emptyStateUrl}
 						alt="thinking-emoji"
 						className="empty-state-svg"
 					/>

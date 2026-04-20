@@ -14,7 +14,8 @@ const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
 
 jest.mock('api/v1/invite/create');
 jest.mock('api/v1/invite/bulk/create');
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

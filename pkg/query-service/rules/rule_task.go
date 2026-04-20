@@ -318,7 +318,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
-	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
+	maintenance, err := g.maintenanceStore.ListPlannedMaintenance(ctx, g.orgID.StringValue())
 
 	if err != nil {
 		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))

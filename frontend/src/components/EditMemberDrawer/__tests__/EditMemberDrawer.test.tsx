@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	getResetPasswordToken,
+	useCreateResetPasswordToken,
 	useDeleteUser,
+	useGetResetPasswordToken,
 	useGetUser,
 	useSetRoleByUserID,
 	useUpdateMyUserV2,
@@ -55,14 +56,16 @@ jest.mock('api/generated/services/users', () => ({
 	useUpdateUser: jest.fn(),
 	useUpdateMyUserV2: jest.fn(),
 	useSetRoleByUserID: jest.fn(),
-	getResetPasswordToken: jest.fn(),
+	useGetResetPasswordToken: jest.fn(),
+	useCreateResetPasswordToken: jest.fn(),
 }));
 
 jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 	convertToApiError: jest.fn(),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -82,7 +85,7 @@ jest.mock('react-use', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockDeleteMutate = jest.fn();
-const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
+const mockCreateTokenMutateAsync = jest.fn();
 
 const showErrorModal = jest.fn();
 jest.mock('providers/ErrorModalProvider', () => ({
@@ -182,6 +185,31 @@ describe('EditMemberDrawer', () => {
 		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
 			mutate: mockDeleteMutate,
+			isLoading: false,
+		});
+		// Token query: valid token for invited members
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					token: 'invite-tok-valid',
+					id: 'token-1',
+					expiresAt: new Date(Date.now() + 86400000).toISOString(),
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+		// Create token mutation
+		mockCreateTokenMutateAsync.mockResolvedValue({
+			status: 'success',
+			data: {
+				token: 'reset-tok-abc',
+				id: 'user-1',
+				expiresAt: new Date(Date.now() + 86400000).toISOString(),
+			},
+		});
+		(useCreateResetPasswordToken as jest.Mock).mockReturnValue({
+			mutateAsync: mockCreateTokenMutateAsync,
 			isLoading: false,
 		});
 	});
@@ -355,6 +383,40 @@ describe('EditMemberDrawer', () => {
 		).not.toBeInTheDocument();
 		expect(screen.getByText('Invited On')).toBeInTheDocument();
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
+	});
+
+	it('shows "Regenerate Invite Link" when token is expired', () => {
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					token: 'old-tok',
+					id: 'token-1',
+					expiresAt: new Date(Date.now() - 86400000).toISOString(), // expired yesterday
+				},
+			},
+			isLoading: false,
+			isError: false,
+		});
+
+		renderDrawer({ member: invitedMember });
+
+		expect(
+			screen.getByRole('button', { name: /regenerate invite link/i }),
+		).toBeInTheDocument();
+	});
+
+	it('shows "Generate Invite Link" when no token exists', () => {
+		(useGetResetPasswordToken as jest.Mock).mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			isError: true,
+		});
+
+		renderDrawer({ member: invitedMember });
+
+		expect(
+			screen.getByRole('button', { name: /generate invite link/i }),
+		).toBeInTheDocument();
 	});
 
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
@@ -609,7 +671,7 @@ describe('EditMemberDrawer', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('does not call getResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
+		it('does not call createResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDrawer();
 
@@ -617,20 +679,16 @@ describe('EditMemberDrawer', () => {
 				screen.getByRole('button', { name: /generate password reset link/i }),
 			);
 
-			expect(mockGetResetPasswordToken).not.toHaveBeenCalled();
+			expect(mockCreateTokenMutateAsync).not.toHaveBeenCalled();
 		});
 	});
 
 	describe('Generate Password Reset Link', () => {
 		beforeEach(() => {
 			mockCopyToClipboard.mockClear();
-			mockGetResetPasswordToken.mockResolvedValue({
-				status: 'success',
-				data: { token: 'reset-tok-abc', id: 'user-1' },
-			});
 		});
 
-		it('calls getResetPasswordToken and opens the reset link dialog with the generated link', async () => {
+		it('calls POST and opens the reset link dialog with the generated link and expiry', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			renderDrawer();
@@ -642,11 +700,12 @@ describe('EditMemberDrawer', () => {
 			const dialog = await screen.findByRole('dialog', {
 				name: /password reset link/i,
 			});
-			expect(mockGetResetPasswordToken).toHaveBeenCalledWith({
-				id: 'user-1',
+			expect(mockCreateTokenMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
 			});
 			expect(dialog).toBeInTheDocument();
 			expect(dialog).toHaveTextContent('reset-tok-abc');
+			expect(dialog).toHaveTextContent(/this link expires on/i);
 		});
 
 		it('copies the link to clipboard and shows "Copied!" on the button', async () => {

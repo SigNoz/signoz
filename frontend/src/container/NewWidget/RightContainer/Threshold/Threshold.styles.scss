@@ -1,6 +1,6 @@
 .operator-input-root {
 	width: auto !important;
-	color: var(--bg-vanilla-400);
+	color: var(--l2-foreground);
 	font-family: 'Space Mono';
 	font-size: 12px;
 	font-style: normal;
@@ -20,8 +20,8 @@
 		flex-shrink: 0;
 		padding: 12px;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		.edit-action-btns {
 			position: absolute;
@@ -38,11 +38,11 @@
 				align-items: center;
 				gap: 10px;
 				flex-shrink: 0;
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 
 			.ant-btn + .ant-btn {
-				border-left: 1px solid var(--bg-slate-200);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.edit-btn {
@@ -57,14 +57,14 @@
 		.time-series-alerts {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			width: 100%;
 			align-items: center;
 
 			.label {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -81,10 +81,10 @@
 				width: 80%;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border-left: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-400);
+				border-left: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -101,10 +101,10 @@
 
 			.operator-input {
 				.ant-select-selector {
-					background-color: var(--bg-ink-300) !important;
+					background-color: var(--l3-background) !important;
 					min-width: 50px;
 					max-width: 150px;
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-family: 'Space Mono';
 					font-size: 12px;
 					font-style: normal;
@@ -114,7 +114,7 @@
 			}
 
 			.typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -123,14 +123,14 @@
 				letter-spacing: 0.48px;
 			}
 			.typography-preview {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
 				letter-spacing: 0.48px;
-				background-color: var(--bg-ink-300) !important;
+				background-color: var(--l3-background) !important;
 				max-width: 150px;
 				overflow-x: hidden;
 				text-overflow: ellipsis;
@@ -139,8 +139,8 @@
 		.threshold-units-selector {
 			display: flex;
 			border-radius: 2px 2px 0px 0px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			height: 32px;
 			flex-shrink: 0;
@@ -149,20 +149,20 @@
 			.unit-input {
 				width: 50%;
 				border: none;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 			}
 
 			.unit-selection {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--bg-slate-400);
-				color: var(--bg-vanilla-400);
+				border-left: 1px solid var(--l1-border);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -176,7 +176,7 @@
 				.ant-select-selector {
 					border: none;
 					height: unset;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: 'Space Mono';
 					font-size: 12px;
 					font-style: normal;
@@ -188,14 +188,14 @@
 			.unit-selection-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--bg-slate-400);
-				color: var(--bg-vanilla-400);
+				border-left: 1px solid var(--l1-border);
+				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 			}
 		}
 
@@ -203,9 +203,9 @@
 			display: flex;
 			align-items: center;
 			border-radius: 0px 0px 2px 2px;
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			border-top: none;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			height: 32px;
 			flex-shrink: 0;
@@ -214,13 +214,13 @@
 
 			.color-selector {
 				width: 50%;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 
 				.ant-btn {
 					box-shadow: none;
@@ -230,8 +230,8 @@
 			.color-format {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--bg-slate-400);
-				color: var(--bg-vanilla-100);
+				border-left: 1px solid var(--l1-border);
+				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -241,7 +241,7 @@
 				.ant-select-selector {
 					border: none;
 					height: unset;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: 'Space Mono';
 					font-size: 12px;
 					font-style: normal;
@@ -254,14 +254,14 @@
 			.color-format-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--bg-slate-400);
-				color: var(--bg-vanilla-100);
+				border-left: 1px solid var(--l1-border);
+				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 			}
 		}
 
@@ -281,8 +281,8 @@
 				gap: 6px;
 				flex: 1 0 0;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 				box-shadow: none;
 			}
 
@@ -297,13 +297,13 @@
 				flex: 1 0 0;
 				border-radius: 2px;
 				border: 1px solid var(--bg-robin-500);
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				box-shadow: none;
 			}
 		}
 
 		.invalid-unit {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: 'Giest Mono';
 			font-size: 11px;
 			font-style: normal;
@@ -322,36 +322,36 @@
 
 .lightMode {
 	.operator-input-root {
-		color: var(--bg-ink-400);
+		color: var(--l2-background);
 	}
 	.threshold-container {
 		.threshold-card-container {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-foreground);
 
 			.edit-action-btns {
 				.ant-btn {
-					background: var(--bg-vanilla-300);
+					background: var(--l3-background);
 				}
 
 				.ant-btn + .ant-btn {
-					border-left: 1px solid var(--bg-vanilla-100);
+					border-left: 1px solid var(--l1-foreground);
 				}
 			}
 
 			.time-series-alerts {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-foreground);
 
 				.label {
-					color: var(--bg-ink-400);
+					color: var(--l2-background);
 				}
 
 				.label-input {
-					border-left: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-300);
-					border: 1px solid var(--bg-vanilla-300);
+					border-left: 1px solid var(--l1-border);
+					background: var(--l3-background);
+					color: var(--l3-background);
+					border: 1px solid var(--l1-border);
 					box-shadow: none;
 				}
 			}
@@ -359,81 +359,81 @@
 			.value-table-alerts {
 				.operator-input {
 					.ant-select-selector {
-						background-color: var(--bg-vanilla-300) !important;
-						color: var(--bg-ink-300);
+						background-color: var(--l3-background) !important;
+						color: var(--l3-background);
 					}
 				}
 
 				.typography {
-					color: var(--bg-ink-400);
+					color: var(--l2-background);
 				}
 				.typography-preview {
-					color: var(--bg-ink-400);
-					border: 1px solid var(--bg-vanilla-300);
-					background-color: var(--bg-vanilla-300) !important;
+					color: var(--l2-background);
+					border: 1px solid var(--l1-border);
+					background-color: var(--l3-background) !important;
 				}
 			}
 			.threshold-units-selector {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 
 				.unit-input {
-					color: var(--bg-ink-400);
-					background: var(--bg-vanilla-300);
+					color: var(--l2-background);
+					background: var(--l3-background);
 				}
 
 				.unit-selection {
-					border-left: 1px solid var(--bg-vanilla-100);
-					color: var(--bg-ink-400);
+					border-left: 1px solid var(--l1-foreground);
+					color: var(--l2-background);
 
 					.ant-select-selector {
-						background-color: var(--bg-vanilla-300);
-						color: var(--bg-ink-400);
+						background-color: var(--l3-background);
+						color: var(--l2-background);
 					}
 				}
 
 				.unit-selection-prev {
-					border-left: 1px solid var(--bg-vanilla-100);
-					color: var(--bg-ink-400);
-					background: var(--bg-vanilla-300);
+					border-left: 1px solid var(--l1-foreground);
+					color: var(--l2-background);
+					background: var(--l3-background);
 				}
 			}
 
 			.thresholds-color-selector {
-				border: 1px solid var(--bg-vanilla-300);
-				border-top: 1px solid var(--bg-vanilla-100);
-				background: var(--bg-vanilla-300);
+				border: 1px solid var(--l1-border);
+				border-top: 1px solid var(--l1-foreground);
+				background: var(--l3-background);
 
 				.color-selector {
-					color: var(--bg-ink-300);
-					background: var(--bg-vanilla-300);
-					border: 1px solid var(--bg-vanilla-300);
-					border-top: 1px solid var(--bg-vanilla-100);
+					color: var(--l3-background);
+					background: var(--l3-background);
+					border: 1px solid var(--l1-border);
+					border-top: 1px solid var(--l1-foreground);
 				}
 				.color-format {
-					border-left: 1px solid var(--bg-vanilla-100);
-					color: var(--bg-ink-300);
+					border-left: 1px solid var(--l1-foreground);
+					color: var(--l3-background);
 
 					.ant-select-selector {
-						color: var(--bg-ink-400);
+						color: var(--l2-background);
 					}
 				}
 
 				.color-format-prev {
-					border-left: 1px solid var(--bg-vanilla-100);
-					color: var(--bg-ink-300);
-					background: var(--bg-vanilla-300);
+					border-left: 1px solid var(--l1-foreground);
+					color: var(--l3-background);
+					background: var(--l3-background);
 				}
 			}
 
 			.threshold-action-button {
 				.discard-btn {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 
 				.save-changes {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 				}
 			}
 		}

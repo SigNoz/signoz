@@ -2,10 +2,10 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	color: var(--bg-slate-400);
+	color: var(--l1-border);
 	.ant-divider-vertical {
 		height: 16px;
-		border-color: var(--bg-slate-400);
+		border-color: var(--l1-border);
 		margin: 0;
 	}
 	.dropdown-icon {
@@ -17,8 +17,8 @@
 	box-shadow: none;
 	background: linear-gradient(
 		138.7deg,
-		rgba(18, 19, 23, 0.8) 0%,
-		rgba(18, 19, 23, 0.9) 98.68%
+		color-mix(in srgb, var(--card) 80%, transparent) 0%,
+		color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 	);
 
 	.dropdown-divider {
@@ -34,30 +34,11 @@
 		&,
 		& span {
 			&:hover {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 				color: var(--bg-cherry-400);
 			}
 			color: var(--bg-cherry-400);
 			font-size: 14px;
-		}
-	}
-}
-
-.lightMode {
-	.alert-action-buttons {
-		.ant-divider-vertical {
-			border-color: var(--bg-vanilla-300);
-		}
-	}
-	.dropdown-menu {
-		background: inherit;
-		.delete-button {
-			&,
-			&span {
-				&:hover {
-					background: var(--bg-vanilla-300);
-				}
-			}
 		}
 	}
 }

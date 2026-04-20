@@ -13,6 +13,7 @@ interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	isNewDashboard: boolean;
+	'data-testid'?: string;
 }
 
 export function ColumnUnitSelector(
@@ -83,6 +84,7 @@ export function ColumnUnitSelector(
 							}
 							fieldLabel={label}
 							key={value}
+							data-testid={props['data-testid']}
 							selectedQueryName={baseQueryName}
 							// Update the column unit value automatically only in create mode
 							shouldUpdateYAxisUnit={isNewDashboard}

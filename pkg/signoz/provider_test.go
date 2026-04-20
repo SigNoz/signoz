@@ -8,10 +8,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlschema/sqlschematest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -34,7 +34,7 @@ func TestNewProviderFactories(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		NewWebProviderFactories()
+		NewWebProviderFactories(global.Config{})
 	})
 
 	assert.NotPanics(t, func() {
@@ -62,11 +62,6 @@ func TestNewProviderFactories(t *testing.T) {
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil)
 		notificationManager := nfmanagertest.NewMock()
 		NewAlertmanagerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), orgGetter, notificationManager)
-	})
-
-	assert.NotPanics(t, func() {
-		queryParser := queryparser.New(instrumentationtest.New().ToProviderSettings())
-		NewRulerProviderFactories(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual), queryParser)
 	})
 
 	assert.NotPanics(t, func() {
