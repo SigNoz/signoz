@@ -5,14 +5,12 @@ import {
 	getHostLists,
 	HostData,
 	HostListPayload,
-	HostListResponse,
 } from 'api/infraMonitoring/getHostLists';
 import {
 	createFilterItem,
 	K8sDetailsFilters,
 	K8sDetailsMetadataConfig,
 } from 'container/InfraMonitoringK8s/Base/K8sBaseDetails';
-import type { K8sBaseListEmptyStateContext } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
 import {
 	getHostQueryPayload,
@@ -23,12 +21,8 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
-
-import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import { getHostListsQuery } from './utils';
 
-import hostsEmptyStateStyles from './HostsEmptyOrIncorrectMetrics.module.scss';
 import infraHostsStyles from './InfraMonitoringHosts.module.scss';
 
 export function getProgressColor(percent: number): string {
@@ -192,52 +186,4 @@ export async function fetchHostEntityData(
 		data: records.length > 0 ? records[0] : null,
 		error: response.error,
 	};
-}
-
-function EndTimeBeforeRetentionMessage(): JSX.Element {
-	return (
-		<div className={hostsEmptyStateStyles.hostsEmptyStateContainer}>
-			<div className={hostsEmptyStateStyles.hostsEmptyStateContainerContent}>
-				<img
-					className={hostsEmptyStateStyles.eyesEmoji}
-					src={eyesEmojiUrl}
-					alt="eyes emoji"
-				/>
-				<div className={hostsEmptyStateStyles.noHostsMessage}>
-					<h5 className={hostsEmptyStateStyles.noHostsMessageTitle}>
-						Queried time range is before earliest host metrics
-					</h5>
-					<p className={hostsEmptyStateStyles.messageBody}>
-						Your requested end time is earlier than the earliest detected time of host
-						metrics data, please adjust your end time.
-					</p>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-export function hostRenderEmptyState(
-	context: K8sBaseListEmptyStateContext,
-): React.ReactNode | null {
-	if (context.isLoading) {
-		return null;
-	}
-
-	const rawData = context.rawData as HostListResponse['data'] | undefined;
-
-	if (!rawData?.sentAnyHostMetricsData || rawData?.isSendingK8SAgentMetrics) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={!rawData?.sentAnyHostMetricsData}
-				incorrectData={!!rawData?.isSendingK8SAgentMetrics}
-			/>
-		);
-	}
-
-	if (rawData?.endTimeBeforeRetention) {
-		return <EndTimeBeforeRetentionMessage />;
-	}
-
-	return null;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -29,7 +29,6 @@ import {
 	hostGetSelectedItemFilters,
 	hostInitialEventsFilter,
 	hostInitialLogTracesFilter,
-	hostRenderEmptyState,
 	hostWidgetInfo,
 } from './constants';
 import {
@@ -58,11 +57,21 @@ function Hosts(): JSX.Element {
 		entityVersion: '',
 	});
 
+	// Track previous urlFilters to only sync when the value actually changes
+	// (not when handleChangeQueryData changes due to query updates)
+	const prevUrlFiltersRef = useRef<string | null>(null);
+
 	useEffect(() => {
-		if (urlFilters && urlFilters.items) {
-			handleChangeQueryData('filters', urlFilters);
+		const currentFiltersJson = urlFilters ? JSON.stringify(urlFilters) : null;
+
+		// Only sync if urlFilters value has actually changed
+		if (prevUrlFiltersRef.current !== currentFiltersJson) {
+			prevUrlFiltersRef.current = currentFiltersJson;
+			// Sync filters to query builder, using empty filter when urlFilters is null
+			handleChangeQueryData('filters', urlFilters || { items: [], op: 'and' });
 		}
-	}, [urlFilters, handleChangeQueryData]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [urlFilters]); // handleChangeQueryData intentionally omitted - we call the current version but don't re-run when it changes
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -70,8 +79,9 @@ function Hosts(): JSX.Element {
 
 	const handleQuickFiltersChange = (query: Query): void => {
 		const filters = query.builder.queryData[0].filters;
+		// Nuqs batches these calls into a single URL update
+		// The useEffect will sync filters to query builder
 		setUrlFilters(filters || null);
-		handleChangeQueryData('filters', filters);
 		setCurrentPage(1);
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.HostEntity,
@@ -164,7 +174,6 @@ function Hosts(): JSX.Element {
 							tableColumns={hostColumnsConfig}
 							fetchListData={fetchListData}
 							renderRowData={hostRenderRowData}
-							renderEmptyState={hostRenderEmptyState}
 							eventCategory={InfraMonitoringEvents.HostEntity}
 						/>
 					</div>

@@ -402,6 +402,10 @@ describe('K8sBaseList', () => {
 				data: [],
 				total: 0,
 				error: null,
+				rawData: {
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+				},
 			});
 
 			renderComponent<{ id: string }>({
@@ -482,6 +486,180 @@ describe('K8sBaseList', () => {
 		it('should call fetchListData even when error occurs', async () => {
 			await waitFor(() => {
 				expect(fetchListDataMock).toHaveBeenCalled();
+			});
+		});
+
+		it('should display error message when data.error is set', async () => {
+			await waitFor(() => {
+				expect(screen.getByText(/Failed to fetch pods/i)).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('with no metrics data (sentAnyHostMetricsData=false)', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
+			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [],
+				total: 0,
+				error: null,
+				rawData: {
+					sentAnyHostMetricsData: false,
+					isSendingK8SAgentMetrics: false,
+				},
+			});
+
+			renderComponent<{ id: string }>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				renderRowData: (data) => ({
+					id: data.id,
+					itemKey: data.id,
+					groupedByMeta: {},
+					key: data.id,
+				}),
+				tableColumnsDefinitions: [
+					{
+						id: 'id',
+						label: 'Id',
+						value: 'id',
+						defaultVisibility: true,
+						canBeHidden: false,
+						behavior: 'always-visible',
+					},
+				],
+				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+			});
+		});
+
+		it('should display no metrics data message', async () => {
+			await waitFor(() => {
+				expect(
+					screen.getByText(/No host metrics data received yet/i),
+				).toBeInTheDocument();
+			});
+		});
+
+		it('should display link to documentation', async () => {
+			await waitFor(() => {
+				const link = screen.getByRole('link', { name: /our documentation/i });
+				expect(link).toBeInTheDocument();
+				expect(link).toHaveAttribute(
+					'href',
+					'https://signoz.io/docs/userguide/hostmetrics/',
+				);
+			});
+		});
+	});
+
+	describe('with incorrect K8s agent metrics (isSendingK8SAgentMetrics=true)', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
+			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [],
+				total: 0,
+				error: null,
+				rawData: {
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: true,
+				},
+			});
+
+			renderComponent<{ id: string }>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				renderRowData: (data) => ({
+					id: data.id,
+					itemKey: data.id,
+					groupedByMeta: {},
+					key: data.id,
+				}),
+				tableColumnsDefinitions: [
+					{
+						id: 'id',
+						label: 'Id',
+						value: 'id',
+						defaultVisibility: true,
+						canBeHidden: false,
+						behavior: 'always-visible',
+					},
+				],
+				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+			});
+		});
+
+		it('should display upgrade message', async () => {
+			await waitFor(() => {
+				expect(
+					screen.getByText(/upgrade to the latest version of SigNoz k8s-infra/i),
+				).toBeInTheDocument();
+			});
+		});
+	});
+
+	describe('with end time before retention (endTimeBeforeRetention=true)', () => {
+		const fetchListDataMock = jest.fn<
+			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
+			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+		>();
+
+		beforeEach(() => {
+			fetchListDataMock.mockClear();
+			fetchListDataMock.mockResolvedValue({
+				data: [],
+				total: 0,
+				error: null,
+				rawData: {
+					sentAnyHostMetricsData: true,
+					isSendingK8SAgentMetrics: false,
+					endTimeBeforeRetention: true,
+				},
+			});
+
+			renderComponent<{ id: string }>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				renderRowData: (data) => ({
+					id: data.id,
+					itemKey: data.id,
+					groupedByMeta: {},
+					key: data.id,
+				}),
+				tableColumnsDefinitions: [
+					{
+						id: 'id',
+						label: 'Id',
+						value: 'id',
+						defaultVisibility: true,
+						canBeHidden: false,
+						behavior: 'always-visible',
+					},
+				],
+				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+			});
+		});
+
+		it('should display time range before retention message', async () => {
+			await waitFor(() => {
+				expect(
+					screen.getByText(/Queried time range is before earliest K8s metrics/i),
+				).toBeInTheDocument();
+				expect(
+					screen.getByText(/please adjust your end time/i),
+				).toBeInTheDocument();
 			});
 		});
 	});

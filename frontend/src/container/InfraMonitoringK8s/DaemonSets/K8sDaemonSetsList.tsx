@@ -52,6 +52,7 @@ function K8sDaemonSetsList({
 				data: response.payload?.data.records || [],
 				total: response.payload?.data.total || 0,
 				error: response.error,
+				rawData: response.payload?.data,
 			};
 		},
 		[dotMetricsEnabled],

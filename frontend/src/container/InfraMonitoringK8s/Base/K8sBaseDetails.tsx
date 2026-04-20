@@ -18,6 +18,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -35,6 +36,11 @@ import {
 	ScrollText,
 	X,
 } from 'lucide-react';
+import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from 'store/globalTime/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -47,15 +53,6 @@ import {
 } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-	isCustomTimeRange,
-	useGlobalTimeStore,
-} from '../../../store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from '../../../store/globalTime/utils';
-import { DEFAULT_TIME_RANGE } from '../../TopNav/DateTimeSelectionV2/constants';
 import { filterDuplicateFilters } from '../commonUtils';
 import { InfraMonitoringEntity, VIEW_TYPES, VIEWS } from '../constants';
 import EntityContainers from '../EntityDetailsUtils/EntityContainers';
@@ -208,6 +205,7 @@ function K8sBaseDetails<T>({
 		endTime: endMs,
 	}));
 
+	// TODO(h4ad): Remove this and use context/zustand
 	const lastSelectedInterval = useRef<Time | null>(null);
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
 		lastSelectedInterval.current
@@ -602,16 +600,6 @@ function K8sBaseDetails<T>({
 
 	const handleClose = (): void => {
 		lastSelectedInterval.current = null;
-		setSelectedInterval(selectedTime as Time);
-
-		if (selectedTime !== 'custom') {
-			const { maxTime, minTime } = GetMinMax(selectedTime);
-
-			setModalTimeRange({
-				startTime: Math.floor(minTime / TimeRangeOffset),
-				endTime: Math.floor(maxTime / TimeRangeOffset),
-			});
-		}
 
 		setSelectedItem(null);
 		setSelectedView(null);
