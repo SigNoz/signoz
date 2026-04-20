@@ -58,6 +58,7 @@ function AccountActionsRenderer({
 							value={activeAccount?.providerAccountId}
 							options={selectOptions}
 							rootClassName="cloud-account-selector"
+							popupMatchSelectWidth={false}
 							placeholder="Select AWS Account"
 							suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 							onChange={onAccountChange}

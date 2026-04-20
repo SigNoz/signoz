@@ -24,7 +24,7 @@ import '@signozhq/input';
 import '@signozhq/popover';
 import '@signozhq/radio-group';
 import '@signozhq/resizable';
-import '@signozhq/table';
 import '@signozhq/tabs';
+import '@signozhq/table';
 import '@signozhq/toggle-group';
 import '@signozhq/ui';
