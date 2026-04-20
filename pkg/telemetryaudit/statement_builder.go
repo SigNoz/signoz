@@ -606,6 +606,10 @@ func (b *auditQueryStatementBuilder) maybeAttachResourceFilter(
 		return "", nil, err
 	}
 
+	if stmt == nil {
+		return "", nil, nil
+	}
+
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")
 
 	return fmt.Sprintf("__resource_filter AS (%s)", stmt.Query), stmt.Args, nil
