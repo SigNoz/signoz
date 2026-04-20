@@ -1,0 +1,32 @@
+.remove-integration-account-modal {
+	.ant-modal-content {
+		background-color: var(--l1-background);
+		border: 1px solid var(--l3-background);
+		border-radius: 4px;
+		padding: 12px;
+	}
+
+	.ant-modal-close {
+		color: var(--l1-foreground);
+	}
+
+	.ant-modal-header {
+		background-color: var(--l1-background);
+		color: var(--l1-foreground);
+
+		.ant-modal-title {
+			color: var(--l1-foreground);
+		}
+	}
+
+	.ant-modal-body {
+		margin-top: 16px;
+		color: var(--l1-foreground);
+		background-color: var(--l1-background);
+	}
+
+	.ant-modal-footer {
+		margin-top: 16px;
+		background-color: var(--l1-background);
+	}
+}

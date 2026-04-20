@@ -14,7 +14,6 @@ interface UseRegionSelection {
 }
 
 export function useRegionSelection({
-	selectedRegions,
 	setSelectedRegions,
 	setIncludeAllRegions,
 }: UseRegionSelectionProps): UseRegionSelection {
@@ -24,28 +23,22 @@ export function useRegionSelection({
 	);
 	const handleSelectAll = (checked: boolean): void => {
 		setIncludeAllRegions(checked);
-		setSelectedRegions(checked ? ['all'] : []);
+		setSelectedRegions(checked ? allRegionIds : []);
 	};
 
 	const handleRegionSelect = (regionId: string): void => {
-		if (selectedRegions.includes('all')) {
-			const filteredRegionIds = allRegionIds.filter((id) => id !== regionId);
-
-			setSelectedRegions(filteredRegionIds);
-			setIncludeAllRegions(false);
-			return;
-		}
-
 		setSelectedRegions((prev) => {
-			const newSelection = prev.includes(regionId)
-				? prev.filter((id) => id !== regionId)
-				: [...prev, regionId];
+			const normalizedPrev = prev.includes('all') ? allRegionIds : prev;
+			const newSelection = normalizedPrev.includes(regionId)
+				? normalizedPrev.filter((id) => id !== regionId)
+				: [...normalizedPrev, regionId];
 
 			if (newSelection.length === allRegionIds.length) {
 				setIncludeAllRegions(true);
-				return ['all'];
+				return allRegionIds;
 			}
 
+			setIncludeAllRegions(false);
 			return newSelection;
 		});
 	};
