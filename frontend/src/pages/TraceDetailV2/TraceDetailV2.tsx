@@ -4,7 +4,7 @@ import {
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
-} from '@signozhq/resizable';
+} from '@signozhq/ui';
 import { Button, Tabs } from 'antd';
 import FlamegraphImg from 'assets/TraceDetail/Flamegraph';
 import cx from 'classnames';
@@ -127,11 +127,7 @@ function TraceDetailsV2(): JSX.Element {
 	];
 
 	return (
-		<ResizablePanelGroup
-			direction="horizontal"
-			autoSaveId="trace-drawer"
-			className="trace-layout"
-		>
+		<ResizablePanelGroup orientation="horizontal" className="trace-layout">
 			<ResizablePanel minSize={20} maxSize={80} className="trace-left-content">
 				<TraceMetadata
 					traceID={traceId}

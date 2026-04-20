@@ -7,11 +7,11 @@ import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import {
+	Button,
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
-} from '@signozhq/resizable';
-import { Button } from '@signozhq/ui';
+} from '@signozhq/ui';
 import { Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
@@ -857,9 +857,8 @@ function NewWidget({
 
 			<PanelContainer>
 				<ResizablePanelGroup
-					direction="horizontal"
+					orientation="horizontal"
 					className="widget-resizable-panel-group"
-					autoSaveId="panel-editor"
 				>
 					<ResizablePanel
 						minSize={70}

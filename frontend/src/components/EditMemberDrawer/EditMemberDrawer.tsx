@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { Badge, toast } from '@signozhq/ui';
+import { Badge, Button, DrawerWrapper, Input, toast } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -668,14 +665,13 @@ function EditMemberDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
 				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Member Details' }}
-				content={drawerContent}
+				title="Member Details"
 				className="edit-member-drawer"
-			/>
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<ResetLinkDialog
 				open={showResetLinkDialog}

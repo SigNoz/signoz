@@ -1,8 +1,6 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Button } from '@signozhq/button';
-import { Input } from '@signozhq/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Button, Input, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { DatePicker } from 'antd';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -56,7 +54,7 @@ function KeyFormPhase({
 							<ToggleGroup
 								type="single"
 								value={field.value}
-								onValueChange={(val): void => {
+								onChange={(val): void => {
 									if (val) {
 										field.onChange(val);
 									}
@@ -112,6 +110,7 @@ function KeyFormPhase({
 					</Button>
 					<Button
 						type="submit"
+						// @ts-expect-error -- form prop not in @signozhq/ui Button type
 						form={FORM_ID}
 						variant="solid"
 						color="primary"

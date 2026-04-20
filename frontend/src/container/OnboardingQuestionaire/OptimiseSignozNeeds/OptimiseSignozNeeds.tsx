@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Slider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, Loader2, Minus } from 'lucide-react';
@@ -290,7 +290,7 @@ function OptimiseSignozNeeds({
 						}`}
 						onClick={handleOnNext}
 						disabled={isUpdatingProfile || isNextDisabled}
-						suffixIcon={
+						suffix={
 							isUpdatingProfile ? (
 								<Loader2 className="animate-spin" size={12} />
 							) : (

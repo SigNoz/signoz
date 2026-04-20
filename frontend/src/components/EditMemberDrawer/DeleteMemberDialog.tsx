@@ -1,6 +1,5 @@
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
+import { Button, DialogFooter, DialogWrapper } from '@signozhq/ui';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 
 interface DeleteMemberDialogProps {

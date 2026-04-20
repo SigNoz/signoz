@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
 import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
-import { toast } from '@signozhq/ui';
+import {
+	Button,
+	DrawerWrapper,
+	toast,
+	ToggleGroup,
+	ToggleGroupItem,
+} from '@signozhq/ui';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -379,7 +382,7 @@ function ServiceAccountDrawer({
 				<ToggleGroup
 					type="single"
 					value={activeTab}
-					onValueChange={(val): void => {
+					onChange={(val): void => {
 						if (val) {
 							setActiveTab(val as ServiceAccountDrawerTab);
 							if (val !== ServiceAccountDrawerTab.Keys) {
@@ -547,14 +550,13 @@ function ServiceAccountDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
 				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Service Account Details' }}
-				content={drawerContent}
+				title="Service Account Details"
 				className="sa-drawer"
-			/>
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<DeleteAccountModal />
 

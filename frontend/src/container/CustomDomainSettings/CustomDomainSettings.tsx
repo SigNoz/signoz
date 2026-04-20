@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import {
 	Check,
 	ChevronDown,
@@ -11,7 +9,7 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { toast } from '@signozhq/ui';
+import { Button, Callout, toast } from '@signozhq/ui';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -44,9 +42,9 @@ function DomainUpdateToast({
 			<div className="custom-domain-toast-actions">
 				<Button
 					variant="ghost"
-					size="xs"
+					size="sm"
 					className="custom-domain-toast-visit-btn"
-					suffixIcon={<ExternalLink size={12} />}
+					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
 						window.open(url, '_blank', 'noopener,noreferrer');
 					}}
@@ -61,7 +59,7 @@ function DomainUpdateToast({
 						toast.dismiss(toastId);
 					}}
 					aria-label="Dismiss"
-					prefixIcon={<X size={14} />}
+					prefix={<X size={14} />}
 				/>
 			</div>
 		</div>
@@ -246,7 +244,7 @@ export default function CustomDomainSettings(): JSX.Element {
 						>
 							<Button
 								type="button"
-								size="xs"
+								size="sm"
 								className="workspace-url-trigger"
 								disabled={isFetchingHosts}
 							>
@@ -266,7 +264,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					variant="solid"
 					size="sm"
 					className="custom-domain-edit-button"
-					prefixIcon={<FilePenLine size={12} />}
+					prefix={<FilePenLine size={12} />}
 					disabled={isFetchingHosts || isPollingEnabled}
 					onClick={(): void => setIsEditModalOpen(true)}
 				>
@@ -281,7 +279,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					className="custom-domain-callout"
 					size="small"
 					icon={<SolidAlertCircle size={13} color="primary" />}
-					message={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+					title={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
 				/>
 			)}
 

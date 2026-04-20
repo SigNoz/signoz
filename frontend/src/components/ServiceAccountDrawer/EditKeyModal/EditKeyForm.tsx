@@ -1,10 +1,13 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Button } from '@signozhq/button';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
-import { Badge } from '@signozhq/ui';
+import {
+	Badge,
+	Button,
+	Input,
+	ToggleGroup,
+	ToggleGroupItem,
+} from '@signozhq/ui';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -72,7 +75,7 @@ function EditKeyForm({
 							<ToggleGroup
 								type="single"
 								value={field.value}
-								onValueChange={(val): void => {
+								onChange={(val): void => {
 									if (val) {
 										field.onChange(val);
 									}
@@ -147,6 +150,7 @@ function EditKeyForm({
 					</Button>
 					<Button
 						type="submit"
+						// @ts-expect-error -- form prop not in @signozhq/ui Button type
 						form={FORM_ID}
 						variant="solid"
 						color="primary"

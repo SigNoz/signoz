@@ -1,7 +1,5 @@
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import { Check, Copy } from '@signozhq/icons';
-import { Badge } from '@signozhq/ui';
+import { Badge, Button, Callout } from '@signozhq/ui';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
 
 export interface KeyCreatedPhaseProps {
@@ -43,7 +41,7 @@ function KeyCreatedPhase({
 			<Callout
 				type="info"
 				showIcon
-				message="Store the key securely. This is the only time it will be displayed."
+				title="Store the key securely. This is the only time it will be displayed."
 			/>
 		</div>
 	);

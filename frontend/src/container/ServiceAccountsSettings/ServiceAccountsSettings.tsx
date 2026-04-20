@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, Input } from '@signozhq/ui';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
@@ -237,7 +236,6 @@ function ServiceAccountsSettings(): JSX.Element {
 								setPage(1);
 							}}
 							className="sa-settings-search-input"
-							color="secondary"
 						/>
 					</div>
 
