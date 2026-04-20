@@ -1,0 +1,55 @@
+.container {
+	height: 30vh;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-3);
+	width: fit-content;
+	max-width: 500px;
+	padding: 24px;
+	text-align: center;
+}
+
+.title {
+	font-weight: 500;
+	margin: 0;
+}
+
+.message {
+	max-width: 400px;
+}
+
+.noDataMessage {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.emptyStateSvg {
+	width: 32px;
+	max-width: 100%;
+}
+
+.eyesEmoji {
+	height: 32px;
+	width: 32px;
+}
+
+.errorIcon {
+	color: var(--bg-cherry-500);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+}
