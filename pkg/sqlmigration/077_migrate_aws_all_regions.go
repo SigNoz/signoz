@@ -85,7 +85,7 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 	}
 
 	_, err = tx.NewUpdate().
-		Model((*cloudIntegrationAWSMigrationRow)(nil)).
+		TableExpr("cloud_integration").
 		Set("config = ?", string(newBytes)).
 		Where("id IN (?)", bun.In(idsToUpdate)).
 		Exec(ctx)
