@@ -24,9 +24,13 @@ export default async function globalSetup(): Promise<void> {
     base_url: string;
     admin_email: string;
     admin_password: string;
+    seeder_url?: string;
   };
 
   process.env.SIGNOZ_E2E_BASE_URL = endpoints.base_url;
   process.env.SIGNOZ_E2E_USERNAME = endpoints.admin_email;
   process.env.SIGNOZ_E2E_PASSWORD = endpoints.admin_password;
+  if (endpoints.seeder_url) {
+    process.env.SIGNOZ_E2E_SEEDER_URL = endpoints.seeder_url;
+  }
 }
