@@ -84,7 +84,7 @@ function AccountSettingsModal({
 							<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
 								AWS Account:{' '}
 								<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
-									{account?.id}
+									{account?.providerAccountId}
 								</span>
 							</div>
 						</div>
