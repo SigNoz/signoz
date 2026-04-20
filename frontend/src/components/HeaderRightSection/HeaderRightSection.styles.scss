@@ -23,7 +23,7 @@
 		justify-content: space-between;
 
 		.absolute-relative-time-toggler-label {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 13px;
 			font-style: normal;
 			font-weight: 500;
@@ -40,7 +40,7 @@
 
 	.absolute-relative-time-error {
 		font-size: 12px;
-		color: var(--bg-amber-600);
+		color: var(--accent-amber);
 	}
 
 	.share-link {
@@ -57,7 +57,7 @@
 
 				.url-share-title,
 				.url-share-sub-title {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-size: 13px;
 					font-style: normal;
 					font-weight: 500;
@@ -67,7 +67,7 @@
 
 				.url-share-sub-title {
 					font-size: 12px;
-					color: var(--bg-vanilla-300);
+					color: var(--l3-foreground);
 					font-weight: 400;
 					line-height: 18px;
 					letter-spacing: -0.06px;
@@ -86,14 +86,14 @@
 			flex: 1;
 			margin: 0px !important;
 
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 
 			&:before {
 				display: none;
 			}
 
 			.ant-radio-button-checked {
-				background-color: var(--bg-slate-400);
+				background-color: var(--l3-background);
 			}
 		}
 
@@ -108,15 +108,15 @@
 			}
 
 			.feedback-tab {
-				background-color: var(--bg-sakura-500);
+				background-color: var(--danger-background);
 			}
 
 			.bug-tab {
-				background-color: var(--bg-amber-500);
+				background-color: var(--warning-background);
 			}
 
 			.feature-tab {
-				background-color: var(--bg-robin-500);
+				background-color: var(--primary-background);
 			}
 		}
 
@@ -125,9 +125,9 @@
 				padding: 6px 16px;
 
 				border-radius: 2px;
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 				box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.1);
-				border: 1px solid var(--bg-slate-400);
+				border: 1px solid var(--l1-border);
 
 				margin: 0 !important;
 
@@ -140,13 +140,13 @@
 				}
 
 				&-active {
-					background: var(--bg-slate-400);
-					color: var(--bg-vanilla-100);
+					background: var(--l3-background);
+					color: var(--l1-foreground);
 
 					border-bottom: none !important;
 
 					.ant-tabs-tab-btn {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 					}
 				}
 			}
@@ -181,7 +181,7 @@
 
 		.feedback-modal-content-footer-info-text {
 			font-size: 12px;
-			color: var(--bg-vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			text-align: center;
 
 			/* button/ small  */
@@ -196,57 +196,6 @@
 				color: var(--bg-robin-400);
 				font-weight: 500;
 				font-size: 12px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.share-modal-content,
-	.feedback-modal-container {
-		.absolute-relative-time-toggler-container {
-			.absolute-relative-time-toggler-label {
-				color: var(--bg-ink-400);
-			}
-		}
-
-		.share-link {
-			.url-share-container {
-				.url-share-container-header {
-					.url-share-title,
-					.url-share-sub-title {
-						color: var(--bg-ink-400);
-					}
-
-					.url-share-sub-title {
-						color: var(--bg-ink-300);
-					}
-				}
-			}
-		}
-	}
-
-	.feedback-modal-container {
-		.feedback-modal-tabs {
-			.ant-radio-button-wrapper {
-				flex: 1;
-				margin: 0px !important;
-
-				border: 1px solid var(--bg-vanilla-300);
-
-				&:before {
-					display: none;
-				}
-
-				.ant-radio-button-checked {
-					background-color: var(--bg-vanilla-300);
-				}
-			}
-		}
-
-		.feedback-modal-content-footer {
-			.feedback-modal-content-footer-info-text {
-				color: var(--bg-slate-400);
 			}
 		}
 	}

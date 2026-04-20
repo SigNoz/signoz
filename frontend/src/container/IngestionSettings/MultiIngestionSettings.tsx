@@ -1665,6 +1665,7 @@ function MultiIngestionSettings(): JSX.Element {
 							`${range[0]}-${range[1]} of ${total} Ingestion keys`,
 						total: totalIngestionKeys,
 					}}
+					className="ingestion-keys-table"
 				/>
 			</div>
 

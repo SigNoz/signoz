@@ -7,8 +7,8 @@
 }
 
 .user-info-container {
-	border: 1px solid var(--Slate-500, #161922);
-	background: var(--Ink-400, #121317);
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
 	border-radius: 3px;
 	padding: 16px;
 
@@ -31,7 +31,7 @@
 		flex: 1;
 
 		.user-name {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 13px;
 			font-style: normal;
@@ -50,7 +50,7 @@
 				align-items: center;
 				gap: 8px;
 
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -66,7 +66,7 @@
 
 				text-transform: capitalize;
 
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -94,21 +94,21 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
-			border-bottom: 1px solid var(--bg-slate-500);
+			background: var(--l2-background);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		.ant-modal-body {
 			padding: 12px 16px 0px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -132,8 +132,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
 
@@ -162,8 +162,8 @@
 				display: flex;
 				align-items: center;
 				border-radius: 2px;
-				background-color: var(--bg-robin-500) !important;
-				color: var(--bg-vanilla-100) !important;
+				background-color: var(--primary-background) !important;
+				color: var(--primary-foreground) !important;
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -174,62 +174,11 @@
 	}
 
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 13px;
 		font-style: normal;
 		font-weight: 400;
 		line-height: 20px;
-	}
-}
-
-.lightMode {
-	.user-info-container {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
-
-		.user-info {
-			.user-name {
-				color: var(--bg-ink-400);
-			}
-
-			.user-info-subsection {
-				.user-email {
-					color: var(--bg-ink-400);
-				}
-
-				.user-role {
-					color: var(--bg-ink-300);
-				}
-			}
-		}
-	}
-
-	.update-name-modal,
-	.reset-password-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-				border-bottom: 1px solid var(--bg-vanilla-300);
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--bg-ink-400);
-				}
-
-				.ant-color-picker-trigger {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
-			}
-		}
-
-		.title {
-			color: var(--bg-ink-400);
-		}
 	}
 }

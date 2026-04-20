@@ -36,8 +36,8 @@
 	.ant-popover-content {
 		.ant-popover-inner {
 			padding: 0;
-			background: var(--bg-ink-400);
-			border: 1px solid var(--bg-slate-500);
+			background: var(--l2-background);
+			border: 1px solid var(--l1-border);
 			border-radius: 4px;
 
 			.sort-content {
@@ -45,7 +45,7 @@
 				min-width: 160px;
 
 				.sort-heading {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-size: 14px;
 					padding: 6px 8px;
 				}
@@ -53,14 +53,14 @@
 				.sort-btns {
 					width: 100%;
 					text-align: left;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					display: flex;
 					justify-content: space-between;
 					align-items: center;
 					padding: 6px 8px;
 
 					&:hover {
-						background: var(--bg-slate-500);
+						background: var(--l1-border);
 						border-radius: 4px;
 					}
 				}
@@ -70,39 +70,3 @@
 }
 
 // Light mode styles
-.lightMode {
-	.traces-funnels {
-		&__content {
-			.title {
-				color: var(--bg-ink-500);
-			}
-
-			.subtitle {
-				color: var(--bg-ink-400);
-			}
-		}
-	}
-
-	.sort-funnels {
-		.ant-popover-content {
-			.ant-popover-inner {
-				background: var(--bg-vanilla-100);
-				border: 1px solid var(--bg-vanilla-300);
-
-				.sort-content {
-					.sort-heading {
-						color: var(--bg-ink-400);
-					}
-
-					.sort-btns {
-						color: var(--bg-ink-500);
-
-						&:hover {
-							background: var(--bg-vanilla-200);
-						}
-					}
-				}
-			}
-		}
-	}
-}

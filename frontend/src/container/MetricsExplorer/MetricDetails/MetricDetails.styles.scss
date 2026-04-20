@@ -23,7 +23,7 @@
 			display: flex;
 			align-items: center;
 			gap: 4px;
-			background-color: var(--bg-slate-300);
+			background-color: var(--l1-border);
 		}
 
 		.inspect-metrics-button {
@@ -80,7 +80,7 @@
 			}
 
 			.values-row {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: 'Geist Mono';
 				font-style: normal;
 				font-weight: 600;
@@ -149,7 +149,7 @@
 				}
 
 				&::-webkit-scrollbar-thumb {
-					background: var(--bg-slate-300);
+					background: var(--l3-background);
 					border-radius: 1px;
 				}
 			}
@@ -167,7 +167,7 @@
 
 					.lucide-info {
 						cursor: pointer;
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 					}
 				}
 
@@ -189,7 +189,7 @@
 						align-self: flex-start;
 						.ant-typography {
 							font-family: 'Inter';
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 						}
 					}
 				}
@@ -220,7 +220,7 @@
 						}
 						.all-attributes-contribution {
 							font-family: 'Geist Mono';
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 						}
 					}
 				}
@@ -242,7 +242,7 @@
 						}
 
 						&::-webkit-scrollbar-thumb {
-							background: var(--bg-slate-300);
+							background: var(--l3-background);
 							border-radius: 1px;
 						}
 						.all-attributes-value-item {
@@ -260,14 +260,14 @@
 						.ant-btn {
 							text-align: left;
 							width: fit-content;
-							background-color: var(--bg-slate-300);
+							background-color: var(--l1-border);
 							.ant-typography {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 								font-family: 'Geist Mono';
 								text-overflow: ellipsis;
 							}
 							&:hover {
-								background-color: var(--bg-slate-400);
+								background-color: var(--l1-border);
 							}
 						}
 					}
@@ -292,18 +292,18 @@
 				vertical-align: middle;
 				.field-renderer-container {
 					.label {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 					}
 				}
 			}
 
 			.metric-metadata-value {
 				height: 67px;
-				background: rgba(22, 25, 34, 0.4);
+				background: color-mix(in srgb, var(--l1-border) 40%, transparent);
 				overflow-x: scroll;
 				.field-renderer-container {
 					.label {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 						padding-right: 10px;
 					}
 				}
@@ -354,7 +354,7 @@
 			gap: 12px;
 			height: 34px;
 			width: 100%;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			padding: 0 12px;
 			align-items: center;
 			position: relative;
@@ -364,15 +364,15 @@
 			}
 
 			.top-attributes-item-count {
-				background-color: var(--bg-slate-300);
+				background-color: var(--l1-border);
 				border-radius: 50px;
 				padding: 2px 6px;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				z-index: 2;
 			}
 
 			.top-attributes-item-progress-bar {
-				background-color: var(--bg-slate-400);
+				background-color: var(--l1-border);
 				height: 100%;
 				position: absolute;
 				top: 0;
@@ -395,7 +395,7 @@
 				.action-menu {
 					.action-button {
 						.ant-typography {
-							color: var(--bg-slate-400);
+							color: var(--l1-border);
 						}
 					}
 				}
@@ -405,34 +405,34 @@
 				.metric-metadata-key {
 					.field-renderer-container {
 						.label {
-							color: var(--bg-slate-300);
+							color: var(--l2-foreground);
 						}
 					}
 
 					.all-attributes-key {
 						.all-attributes-contribution {
-							color: var(--bg-slate-400);
+							color: var(--l1-border);
 						}
 					}
 				}
 
 				.metric-metadata-value {
-					background-color: var(--bg-vanilla-300);
+					background-color: var(--l3-background);
 					.all-attributes-value {
 						.ant-btn {
-							background-color: var(--bg-vanilla-400);
+							background-color: var(--l2-foreground);
 							.ant-typography {
-								color: var(--bg-slate-400);
+								color: var(--l1-border);
 							}
 							&:hover {
-								background-color: var(--bg-vanilla-100);
+								background-color: var(--l1-foreground);
 							}
 						}
 					}
 
 					.field-renderer-container {
 						.label {
-							color: var(--bg-slate-400);
+							color: var(--l1-border);
 						}
 					}
 				}
@@ -451,7 +451,7 @@
 
 			.top-attributes-item-key,
 			.top-attributes-item-count {
-				color: var(--bg-slate-400);
+				color: var(--l1-border);
 			}
 		}
 	}
@@ -479,11 +479,11 @@
 	.ant-popover-inner {
 		padding: 0 !important;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -506,11 +506,11 @@
 	.ant-popover-inner {
 		padding: 0 !important;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
-			rgba(18, 19, 23, 0.8) 0%,
-			rgba(18, 19, 23, 0.9) 98.68%
+			color-mix(in srgb, var(--card) 80%, transparent) 0%,
+			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -540,7 +540,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--bg-slate-300);
+			background: var(--l3-background);
 			border-radius: 1px;
 		}
 	}
@@ -554,7 +554,7 @@
 		gap: 8px;
 
 		&:hover {
-			background: rgba(255, 255, 255, 0.04);
+			background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
 		}
 
 		.all-values-item-text {
@@ -589,8 +589,8 @@
 	.attribute-key-popover-overlay,
 	.all-values-popover-overlay {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-100) !important;
+			border: 1px solid var(--l2-foreground);
+			background: var(--l1-foreground) !important;
 		}
 	}
 

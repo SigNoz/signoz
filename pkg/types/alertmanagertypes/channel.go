@@ -34,10 +34,10 @@ type Channel struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name  string `json:"name" bun:"name"`
-	Type  string `json:"type" bun:"type"`
-	Data  string `json:"data" bun:"data"`
-	OrgID string `json:"org_id" bun:"org_id"`
+	Name  string `json:"name" required:"true" bun:"name"`
+	Type  string `json:"type" required:"true" bun:"type"`
+	Data  string `json:"data" required:"true" bun:"data"`
+	OrgID string `json:"orgId" required:"true" bun:"org_id"`
 }
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.

@@ -24,6 +24,8 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import EndPointsDropDown from './components/EndPointsDropDown';
 import ErrorState from './components/ErrorState';
 import { SPAN_ATTRIBUTES } from './constants';
@@ -209,7 +211,7 @@ function TopErrors({
 								<div className="no-filtered-endpoints-message-container">
 									<div className="no-filtered-endpoints-message-content">
 										<img
-											src="/Icons/emptyState.svg"
+											src={emptyStateUrl}
 											alt="thinking-emoji"
 											className="empty-state-svg"
 										/>

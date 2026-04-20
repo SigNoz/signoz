@@ -21,7 +21,7 @@
 
 	.ant-divider {
 		margin: 8px 0 !important;
-		border: 0.5px solid var(--bg-slate-400);
+		border: 0.5px solid var(--l1-border);
 	}
 
 	.explorer-columns-contents {
@@ -49,8 +49,12 @@
 				padding: 4px;
 				min-width: 200px;
 				border-radius: 2px;
-				border: 1px solid var(--colorBorder, rgba(118, 136, 201, 0.12));
-				background: var(--bg-slate-500);
+				border: 1px solid
+					var(
+						--colorBorder,
+						color-mix(in srgb, var(--bg-robin-300) 12%, transparent)
+					);
+				background: var(--l1-border);
 				cursor: unset;
 
 				.explorer-column-title {
@@ -86,10 +90,10 @@
 }
 
 .explorer-columns-search {
-	border: 1px solid rgba(118, 136, 201, 0.12);
+	border: 1px solid color-mix(in srgb, var(--bg-robin-300) 12%, transparent);
 	border-radius: 6px;
 	padding: 0px;
-	background: #141414;
+	background: var(--background);
 	> input {
 		height: 32px;
 		padding: 0 6px;
@@ -98,7 +102,7 @@
 
 .explorer-columns-dropdown {
 	height: 200px;
-	background-color: var(--bg-slate-500);
+	background-color: var(--l1-border);
 	overflow: hidden !important;
 	.ant-dropdown-menu {
 		padding: 0;
@@ -121,64 +125,17 @@
 			}
 
 			.attribute-columns::-webkit-scrollbar-track {
-				background: var(--bg-slate-500); /* Color of the track */
+				background: var(--l1-border); /* Color of the track */
 			}
 
 			.attribute-columns::-webkit-scrollbar-thumb {
-				background: var(--bg-vanilla-400); /* Color of the thumb */
+				background: var(--l2-foreground); /* Color of the thumb */
 				border-radius: 4px; /* Roundness of the thumb */
 			}
 
 			.attribute-columns::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-vanilla-300); /* Color of the thumb on hover */
+				background: var(--l1-border); /* Color of the thumb on hover */
 			}
 		}
-	}
-}
-
-.lightMode {
-	.explorer-columns-renderer {
-		.ant-divider {
-			border: 0.5px solid var(--bg-vanilla-300);
-		}
-
-		.explorer-columns {
-			.explorer-column-card {
-				border: 1px solid var(--colorBorder, rgba(118, 136, 201, 0.12));
-				background: var(--bg-vanilla-200);
-			}
-		}
-
-		.explorer-columns-search {
-			border: 1px solid rgba(118, 136, 201, 0.12);
-		}
-	}
-
-	.explorer-columns-dropdown {
-		background-color: var(--bg-vanilla-100);
-
-		.ant-dropdown-menu-item {
-			.attribute-columns {
-				&::-webkit-scrollbar {
-					width: 3px; /* Width of the scrollbar */
-				}
-
-				&::-webkit-scrollbar-track {
-					background: var(--bg-vanilla-200); /* Color of the track */
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background: var(--bg-vanilla-400); /* Color of the thumb */
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-vanilla-300); /* Color of the thumb on hover */
-				}
-			}
-		}
-	}
-
-	.explorer-columns-search {
-		background: var(--bg-vanilla-100);
 	}
 }

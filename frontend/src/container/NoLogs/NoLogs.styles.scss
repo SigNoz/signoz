@@ -24,7 +24,7 @@
 
 			.sub-text {
 				font-weight: 400;
-				color: #c0c1c3;
+				color: var(--muted-foreground);
 			}
 		}
 
@@ -33,7 +33,7 @@
 			align-items: center;
 			gap: 8px;
 
-			color: #7190f9;
+			color: var(--bg-robin-400);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 500;

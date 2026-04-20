@@ -37,18 +37,18 @@
 		padding: 8px 17px;
 
 		&.primary {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			border: none;
-			color: var(--bg-vanilla-100);
+			color: var(--primary-foreground);
 		}
 
 		&.secondary {
 			display: flex;
 			align-items: center;
-			border: 1px solid var(--bg-ink-300);
-			color: var(--bg-vanilla-100);
+			border: 1px solid var(--l3-background);
+			color: var(--l1-foreground);
 			border-radius: 2px;
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 			box-shadow: none;
 		}
 	}
@@ -56,22 +56,22 @@
 
 .cloud-account-selector {
 	border-radius: 2px;
-	border: 1px solid var(--bg-ink-300);
+	border: 1px solid var(--l3-background);
 	background: linear-gradient(
 		139deg,
-		rgba(18, 19, 23, 0.8) 0%,
-		rgba(18, 19, 23, 0.9) 98.68%
+		color-mix(in srgb, var(--card) 80%, transparent) 0%,
+		color-mix(in srgb, var(--card) 90%, transparent) 98.68%
 	);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	-webkit-backdrop-filter: blur(20px);
 	backdrop-filter: blur(20px);
 	.ant-select-selector {
-		border-color: var(--bg-slate-400) !important;
-		background: var(--bg-ink-300) !important;
+		border-color: var(--l1-border) !important;
+		background: var(--l3-background) !important;
 		padding: 6px 8px !important;
 	}
 	.ant-select-selection-item {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 16px;
@@ -87,7 +87,11 @@
 			justify-content: center;
 			height: 14px;
 			width: 14px;
-			background-color: rgba(192, 193, 195, 0.2); /* #C0C1C3 with 0.2 opacity */
+			background-color: color-mix(
+				in srgb,
+				var(--border) 20%,
+				transparent
+			); /* #C0C1C3 with 0.2 opacity */
 			border-radius: 2px;
 		}
 	}
@@ -95,48 +99,48 @@
 .lightMode {
 	.hero-section__action-button {
 		&.primary {
-			background: var(--bg-robin-500);
-			color: var(--bg-vanilla-100);
+			background: var(--primary-background);
+			color: var(--primary-foreground);
 		}
 
 		&.secondary {
-			border-color: var(--bg-vanilla-300);
-			color: var(--bg-ink-400);
-			background: var(--bg-vanilla-100);
+			border-color: var(--l1-border);
+			color: var(--l1-foreground);
+			background: var(--l1-background);
 
 			&:hover {
-				border-color: var(--bg-vanilla-400);
-				color: var(--bg-ink-500);
+				border-color: var(--l1-border);
+				color: var(--l1-foreground);
 			}
 		}
 	}
 
 	.cloud-account-selector {
-		background: var(--bg-vanilla-100);
+		background: var(--l1-background);
 		.ant-select-selector {
-			background: var(--bg-vanilla-100) !important;
-			border-color: var(--bg-vanilla-400) !important;
+			background: var(--l1-background) !important;
+			border-color: var(--l1-border) !important;
 		}
 		.ant-select-item-option-active {
-			background: var(--bg-vanilla-400) !important;
+			background: var(--l3-background) !important;
 		}
 
 		.ant-select-selection-item {
-			color: var(--bg-ink-400);
+			color: var(--l1-foreground);
 		}
 
 		&:hover {
 			.ant-select-selector {
-				border-color: var(--bg-vanilla-400) !important;
+				border-color: var(--l1-border) !important;
 			}
 		}
 	}
 
 	.account-option-item {
-		color: var(--bg-ink-400);
+		color: var(--l1-foreground);
 
 		&__selected {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 		}
 	}
 }

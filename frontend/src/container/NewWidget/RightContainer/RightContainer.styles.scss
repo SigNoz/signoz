@@ -10,7 +10,7 @@
 
 	.section-heading {
 		font-family: 'Space Mono';
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 13px;
 		font-style: normal;
 		font-weight: 400;
@@ -21,7 +21,7 @@
 
 	.section-heading-small {
 		font-family: 'Space Mono';
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 400;
@@ -43,7 +43,7 @@
 			background: var(--bg-robin-400);
 		}
 		.header-text {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -69,8 +69,8 @@
 			align-items: center;
 			padding: 12px;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 		}
 
 		.toggle-card-text-container {
@@ -89,13 +89,13 @@
 				gap: 4px;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 			}
 		}
 
 		.toggle-card-description {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 12px;
 			font-style: normal;
@@ -128,11 +128,11 @@
 				gap: 4px;
 				align-self: stretch;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 
 				.ant-input {
-					background: var(--bg-ink-300);
+					background: var(--l2-background);
 				}
 			}
 		}
@@ -144,8 +144,8 @@
 					border-radius: 2px;
 
 					.ant-select-selector {
-						border: 1px solid var(--bg-slate-400);
-						background: var(--bg-ink-300);
+						border: 1px solid var(--l1-border);
+						background: var(--l2-background);
 					}
 				}
 			}
@@ -164,12 +164,12 @@
 				align-items: center;
 				width: 50%;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 				.text {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-size: 12px;
 					font-style: normal;
 					font-weight: 400;
@@ -182,7 +182,7 @@
 				.input {
 					width: 50%;
 					border: none;
-					border-left: 1px solid var(--bg-slate-400);
+					border-left: 1px solid var(--l1-border);
 				}
 			}
 		}
@@ -195,12 +195,12 @@
 
 	.context-links {
 		padding: 12px 12px 16px 12px;
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	.thresholds-section {
 		padding: 12px 12px 16px 12px;
-		border-top: 1px solid var(--bg-slate-500);
+		border-top: 1px solid var(--l1-border);
 	}
 }
 
@@ -214,7 +214,7 @@
 	}
 
 	.display {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -225,27 +225,27 @@
 
 .lightMode {
 	.right-container {
-		background-color: var(--bg-vanilla-100);
+		background-color: var(--l1-background);
 		.section-heading,
 		.section-heading-small {
-			color: var(--bg-ink-400);
+			color: var(--l2-foreground);
 		}
 		.header {
 			.header-text {
-				color: var(--bg-ink-400);
+				color: var(--l2-foreground);
 			}
 		}
 
 		.panel-config {
 			.panel-type-select {
 				.ant-select-selector {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
 				}
 
 				.select-option {
 					.display {
-						color: var(--bg-ink-300);
+						color: var(--l2-foreground);
 					}
 				}
 			}
@@ -254,54 +254,54 @@
 				.y-axis-unit-selector-component {
 					.ant-select {
 						.ant-select-selector {
-							border: 1px solid var(--bg-vanilla-300);
-							background: var(--bg-vanilla-300);
+							border: 1px solid var(--l1-border);
+							background: var(--l2-background);
 						}
 					}
 				}
 			}
 
 			.toggle-card {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 
 				.fill-gaps-text {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 				.toggle-card-description {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 			}
 
 			.panel-time-text {
-				color: var(--bg-ink-400);
+				color: var(--l2-foreground);
 			}
 
 			.y-axis-unit-selector,
 			.y-axis-unit-selector-v2 {
 				.heading {
-					color: var(--bg-ink-400);
+					color: var(--l2-foreground);
 				}
 
 				.input {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
 
 					.ant-input {
-						background: var(--bg-vanilla-300);
+						background: var(--l2-background);
 					}
 				}
 			}
 			.soft-min-max {
 				.container {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l2-background);
 
 					.text {
-						color: var(--bg-ink-300);
+						color: var(--l2-foreground);
 					}
 					.input {
-						border-left: 1px solid var(--bg-vanilla-300);
+						border-left: 1px solid var(--l1-border);
 					}
 				}
 			}
@@ -310,7 +310,7 @@
 
 	.select-option {
 		.display {
-			color: var(--bg-ink-100);
+			color: var(--l2-foreground);
 		}
 	}
 }

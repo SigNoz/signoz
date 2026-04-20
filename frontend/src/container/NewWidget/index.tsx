@@ -11,7 +11,8 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/resizable';
-import { Button, Flex, Modal, Space, Typography } from 'antd';
+import { Button } from '@signozhq/ui';
+import { Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -818,6 +819,7 @@ function NewWidget({
 				<div className="right-header">
 					{showSwitchToViewModeButton && (
 						<Button
+							color="primary"
 							data-testid="switch-to-view-mode"
 							disabled={isSaveDisabled || !currentQuery}
 							onClick={handleSwitchToViewMode}
@@ -827,7 +829,7 @@ function NewWidget({
 					)}
 					{isSaveDisabled && (
 						<Button
-							type="primary"
+							color="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
@@ -839,12 +841,12 @@ function NewWidget({
 					)}
 					{!isSaveDisabled && (
 						<Button
-							type="primary"
+							color="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
-							icon={<Check size={14} />}
+							prefix={<Check size={14} />}
 							className="save-btn"
 						>
 							Save Changes

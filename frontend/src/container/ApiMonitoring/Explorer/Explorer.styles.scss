@@ -8,7 +8,8 @@
 
 		.api-quick-filters-header {
 			padding: 12px;
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--l1-border);
+			border-right: 1px solid var(--l1-border);
 
 			display: flex;
 			align-items: center;
@@ -25,8 +26,7 @@
 		width: 100%;
 
 		.toolbar {
-			border-top: 0px;
-			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		.api-monitoring-list-header {
@@ -54,7 +54,7 @@
 				line-height: 18px;
 				border-bottom: none;
 
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -71,21 +71,19 @@
 			}
 
 			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				border-bottom: none;
 			}
 
 			.ant-table-cell:has(.domain-list-name-col-value) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.round-metric-tag {
@@ -96,13 +94,21 @@
 				width: fit-content;
 
 				border-radius: 50px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 				text-transform: lowercase;
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: rgba(255, 255, 255, 0.04);
+				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
+			}
+
+			.ant-table-tbody > tr:hover > td:has(.domain-list-name-col-value) {
+				background: color-mix(
+					in srgb,
+					var(--l1-foreground) 4%,
+					color-mix(in srgb, var(--l3-background) 60%, transparent)
+				);
 			}
 
 			.ant-table-cell:first-child {
@@ -141,7 +147,7 @@
 			}
 
 			.table-row-dark {
-				background: var(--bg-ink-300);
+				background: var(--l3-background);
 			}
 
 			.expanded-clickable-row {
@@ -189,7 +195,7 @@
 		flex-direction: column;
 
 		.no-domain-title {
-			color: var(--bg-vanilla-100, #fff);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -198,7 +204,7 @@
 		}
 
 		.no-domain-subtitle {
-			color: var(--bg-vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -236,11 +242,11 @@
 		.no-filtered-domains-message-content {
 			.no-filtered-domains-message {
 				.no-domain-title {
-					color: var(--text-ink-500);
+					color: var(--l1-foreground);
 				}
 
 				.no-domain-subtitle {
-					color: var(--text-ink-400);
+					color: var(--l2-foreground);
 
 					.attribute {
 						font-family: 'Space Mono';
@@ -251,26 +257,8 @@
 	}
 	.api-monitoring-domain-list-table {
 		.ant-table {
-			.ant-table-thead > tr > th {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-thead > tr > th:has(.domain-list-name-col-header) {
-				background: var(--bg-vanilla-100);
-			}
-
 			.ant-table-cell {
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-500);
-			}
-
-			.ant-table-cell:has(.domain-list-name-col-value) {
-				background: var(--bg-vanilla-100);
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
+				color: var(--l1-foreground);
 			}
 
 			.table-row-light {
@@ -282,7 +270,7 @@
 			}
 
 			.round-metric-tag {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 	}

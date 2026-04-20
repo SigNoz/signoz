@@ -27,6 +27,8 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
 import {
@@ -677,7 +679,7 @@ function K8sDaemonSetsList({
 						<div className="no-filtered-hosts-message-container">
 							<div className="no-filtered-hosts-message-content">
 								<img
-									src="/Icons/emptyState.svg"
+									src={emptyStateUrl}
 									alt="thinking-emoji"
 									className="empty-state-svg"
 								/>

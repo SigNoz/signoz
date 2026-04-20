@@ -4,7 +4,7 @@
 	font-size: 14px;
 	line-height: 18px;
 	letter-spacing: -0.005em;
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 	border: none;
 	cursor: pointer;
 }
@@ -14,13 +14,4 @@
 	gap: 6px;
 	flex-wrap: wrap;
 	width: 300px;
-}
-
-.lightMode {
-	.see-more-button {
-		color: var(--text-ink-400);
-	}
-	.see-more-popover-content {
-		background: var(--bg-vanilla-100);
-	}
 }

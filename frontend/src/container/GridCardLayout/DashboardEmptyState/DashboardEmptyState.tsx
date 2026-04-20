@@ -16,6 +16,10 @@ import {
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
+import dashboardEmojiUrl from '@/assets/Icons/dashboard_emoji.svg';
+import landscapeUrl from '@/assets/Icons/landscape.svg';
+import toolsUrl from '@/assets/Icons/tools.svg';
+
 import './DashboardEmptyState.styles.scss';
 
 export default function DashboardEmptyState(): JSX.Element {
@@ -72,7 +76,7 @@ export default function DashboardEmptyState(): JSX.Element {
 			<div className="dashboard-content">
 				<section className="heading">
 					<img
-						src="/Icons/dashboard_emoji.svg"
+						src={dashboardEmojiUrl}
 						alt="header-image"
 						style={{ height: '32px', width: '32px' }}
 					/>
@@ -88,7 +92,7 @@ export default function DashboardEmptyState(): JSX.Element {
 						<div className="actions-configure">
 							<div className="actions-configure-text">
 								<img
-									src="/Icons/tools.svg"
+									src={toolsUrl}
 									alt="header-image"
 									style={{ height: '14px', width: '14px' }}
 								/>
@@ -121,11 +125,11 @@ export default function DashboardEmptyState(): JSX.Element {
 							/>
 						</SettingsDrawer>
 					</div>
-					<div className="actions-1">
+					<div className="actions-2">
 						<div className="actions-add-panel">
 							<div className="actions-panel-text">
 								<img
-									src="/Icons/landscape.svg"
+									src={landscapeUrl}
 									alt="header-image"
 									style={{ height: '14px', width: '14px' }}
 								/>

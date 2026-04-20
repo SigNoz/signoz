@@ -218,6 +218,10 @@ func (module *getter) GetRolesByUserID(ctx context.Context, userID valuer.UUID) 
 	return userRoles, nil
 }
 
+func (module *getter) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	return module.store.GetResetPasswordTokenByOrgIDAndUserID(ctx, orgID, userID)
+}
+
 func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
 	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 }

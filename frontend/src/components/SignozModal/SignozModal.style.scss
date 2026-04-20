@@ -1,15 +1,15 @@
 .signoz-modal {
 	.ant-modal-content {
 		padding: 0;
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-slate-500);
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
 	}
 
 	.ant-modal-header {
-		background: var(--bg-ink-400);
+		background: var(--l1-background);
 		border-bottom: none;
 		padding: 12px 24px 8px;
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 		margin-bottom: 0;
 	}
 
@@ -23,7 +23,7 @@
 	}
 
 	.ant-modal-title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 20px;
@@ -41,30 +41,35 @@
 	}
 
 	.ant-typography {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 	}
 
 	.ant-select {
 		border-radius: 2px !important;
 		&-selector {
-			background: var(--bg-ink-300) !important;
-			border: 1px solid var(--bg-slate-400) !important;
+			background: var(--l1-background) !important;
+			border: 1px solid var(--l1-border) !important;
 			border-radius: 2px !important;
 		}
 	}
 
 	.ant-select-dropdown {
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-ink-300);
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
 		-webkit-backdrop-filter: blur(20px);
 		backdrop-filter: blur(20px);
 	}
 
 	.ant-select-item {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 
 		&-option-selected {
-			background: var(--bg-ink-300);
+			background: var(--l3-background);
+			color: var(--l1-foreground);
+		}
+
+		&-option-active {
+			background: var(--l2-background);
 		}
 	}
 
@@ -75,53 +80,6 @@
 			gap: 4px;
 			&-icon {
 				margin: 0 !important;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.signoz-modal {
-		.ant-modal-content {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-300);
-		}
-
-		.ant-modal-header {
-			background: var(--bg-vanilla-100);
-			border-bottom-color: var(--bg-vanilla-300);
-		}
-
-		.ant-modal-title {
-			color: var(--bg-ink-500);
-		}
-
-		.ant-typography {
-			color: var(--bg-ink-500);
-		}
-
-		.ant-select {
-			&-selector {
-				background: var(--bg-vanilla-100) !important;
-				border-color: var(--bg-vanilla-300) !important;
-			}
-		}
-
-		.ant-select-dropdown {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-300);
-		}
-
-		.ant-select-item {
-			color: var(--bg-ink-400);
-
-			&-option-selected {
-				background: var(--bg-vanilla-300);
-				color: var(--bg-ink-500);
-			}
-
-			&-option-active {
-				background: var(--bg-vanilla-200);
 			}
 		}
 	}
