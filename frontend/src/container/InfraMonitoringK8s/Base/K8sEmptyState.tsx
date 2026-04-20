@@ -1,4 +1,8 @@
-import { AlertTriangle } from 'lucide-react';
+import { useCallback } from 'react';
+import { Button } from '@signozhq/ui';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AlertTriangle, LifeBuoy } from 'lucide-react';
+import { handleContactSupport } from 'pages/Integrations/utils';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
@@ -21,6 +25,12 @@ export function K8sEmptyState({
 	isLoading,
 	rawData,
 }: K8sEmptyStateProps): JSX.Element | null {
+	const { isCloudUser } = useGetTenantLicense();
+
+	const handleSupport = useCallback(() => {
+		handleContactSupport(isCloudUser);
+	}, [isCloudUser]);
+
 	if (isLoading) {
 		return null;
 	}
@@ -33,6 +43,20 @@ export function K8sEmptyState({
 					<span className={styles.message}>
 						{error || 'An error occurred while fetching data.'}
 					</span>
+					<p>
+						Our team is getting on top to resolve this. Please reach out to support if
+						the issue persists.
+					</p>
+					<div className={styles.actions}>
+						<Button
+							onClick={handleSupport}
+							variant="solid"
+							color="secondary"
+							prefix={<LifeBuoy size={14} />}
+						>
+							Contact Support
+						</Button>
+					</div>
 				</div>
 			</div>
 		);

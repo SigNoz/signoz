@@ -46,3 +46,10 @@
 .errorIcon {
 	color: var(--bg-cherry-500);
 }
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+}
