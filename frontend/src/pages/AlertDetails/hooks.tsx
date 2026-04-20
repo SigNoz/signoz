@@ -385,15 +385,6 @@ export const useTimelineTable = ({
 	return { paginationConfig, onChangeHandler };
 };
 
-const handleMutationError = (
-	showErrorModal: (error: APIError) => void,
-	error: unknown,
-): void => {
-	showErrorModal(
-		convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
-	);
-};
-
 export const useAlertRuleStatusToggle = ({
 	ruleId,
 }: {
@@ -423,7 +414,9 @@ export const useAlertRuleStatusToggle = ({
 			},
 			onError: (error) => {
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
-				handleMutationError(showErrorModal, error);
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
 			},
 		},
 	);
@@ -473,7 +466,10 @@ export const useAlertRuleDuplicate = ({
 					history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 				}
 			},
-			onError: (error) => handleMutationError(showErrorModal, error),
+			onError: (error) =>
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				),
 		},
 	);
 
@@ -511,7 +507,9 @@ export const useAlertRuleUpdate = ({
 				notifications.success({ message: 'Alert renamed successfully' }),
 			onError: (error) => {
 				setUpdatedName(alertDetails.alert);
-				handleMutationError(showErrorModal, error);
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
 			},
 		},
 	);
@@ -547,7 +545,11 @@ export const useAlertRuleDelete = ({
 
 				history.push(ROUTES.LIST_ALL_ALERT);
 			},
-			onError: (error) => handleMutationError(showErrorModal, error),
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			onError: (error) =>
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				),
 		},
 	);
 
