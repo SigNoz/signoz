@@ -279,7 +279,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
 			handlers.RuleStateHistory,
-			handlers.AiO11yMappingHandler,
+			handlers.SpanAttributeMappingHander,
 			handlers.AlertmanagerHandler,
 			handlers.RulerHandler,
 		),

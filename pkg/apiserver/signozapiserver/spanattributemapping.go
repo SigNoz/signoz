@@ -5,24 +5,22 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/aio11ymappingtypes"
+	"github.com/SigNoz/signoz/pkg/types/spanattributemappingtypes"
 	"github.com/gorilla/mux"
 )
 
-func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
-	// --- Mapping Groups ---
-
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups", handler.New(
-		provider.authZ.ViewAccess(provider.aio11yMappingHandler.ListGroups),
+func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v1/span_attribute_groups", handler.New(
+		provider.authZ.ViewAccess(provider.spanAttributeMappingHandler.ListGroups),
 		handler.OpenAPIDef{
-			ID:                  "ListMappingGroups",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "List mapping groups",
+			ID:                  "ListSpanAttributeMappingGroups",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "List span attribute mapping groups",
 			Description:         "Returns all span attribute mapping groups for the authenticated org.",
 			Request:             nil,
 			RequestContentType:  "",
-			RequestQuery:        new(aio11ymappingtypes.ListMappingGroupsQuery),
-			Response:            new(aio11ymappingtypes.ListMappingGroupsResponse),
+			RequestQuery:        new(spanattributemappingtypes.ListSpanAttributeMappingGroupsQuery),
+			Response:            new(spanattributemappingtypes.ListSpanAttributeMappingGroupsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -33,16 +31,16 @@ func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.CreateGroup),
+	if err := router.Handle("/api/v1/span_attribute_groups", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.CreateGroup),
 		handler.OpenAPIDef{
 			ID:                  "CreateMappingGroup",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Create a mapping group",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Create a span attribute mapping group",
 			Description:         "Creates a new span attribute mapping group for the org.",
-			Request:             new(aio11ymappingtypes.PostableMappingGroup),
+			Request:             new(spanattributemappingtypes.PostableSpanAttributeMappingGroup),
 			RequestContentType:  "application/json",
-			Response:            new(aio11ymappingtypes.GettableMappingGroup),
+			Response:            new(spanattributemappingtypes.GettableSpanAttributeMappingGroup),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
@@ -53,32 +51,32 @@ func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.UpdateGroup),
+	if err := router.Handle("/api/v1/span_attribute_groups/{id}", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.UpdateGroup),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMappingGroup",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Update a mapping group",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Update a span attribute mapping group",
 			Description:         "Partially updates an existing mapping group's name, condition, or enabled state.",
-			Request:             new(aio11ymappingtypes.UpdatableMappingGroup),
+			Request:             new(spanattributemappingtypes.UpdatableSpanAttributeMappingGroup),
 			RequestContentType:  "application/json",
-			Response:            new(aio11ymappingtypes.GettableMappingGroup),
+			Response:            new(spanattributemappingtypes.GettableSpanAttributeMappingGroup),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-	)).Methods(http.MethodPut).GetError(); err != nil {
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.DeleteGroup),
+	if err := router.Handle("/api/v1/span_attribute_groups/{id}", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.DeleteGroup),
 		handler.OpenAPIDef{
 			ID:                  "DeleteMappingGroup",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Delete a mapping group",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Delete a span attribute mapping group",
 			Description:         "Hard-deletes a mapping group and cascades to all its mappers.",
 			Request:             nil,
 			RequestContentType:  "",
@@ -93,19 +91,16 @@ func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// --- Mappers ---
-
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{id}/mappers", handler.New(
-		provider.authZ.ViewAccess(provider.aio11yMappingHandler.ListMappers),
+	if err := router.Handle("/api/v1/span_attribute_groups/{id}/mappers", handler.New(
+		provider.authZ.ViewAccess(provider.spanAttributeMappingHandler.ListMappers),
 		handler.OpenAPIDef{
 			ID:                  "ListMappers",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "List mappers for a group",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "List span attribute mappers for a group",
 			Description:         "Returns all attribute mappers belonging to a mapping group.",
 			Request:             nil,
 			RequestContentType:  "",
-			RequestQuery:        new(aio11ymappingtypes.ListMappersQuery),
-			Response:            new(aio11ymappingtypes.ListMappersResponse),
+			Response:            new(spanattributemappingtypes.ListSpanAttributeMappersResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -116,16 +111,16 @@ func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{id}/mappers", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.CreateMapper),
+	if err := router.Handle("/api/v1/span_attribute_groups/{id}/mappers", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.CreateMapper),
 		handler.OpenAPIDef{
 			ID:                  "CreateMapper",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Create a mapper",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Create a span attribute mapper",
 			Description:         "Adds a new attribute mapper to the specified mapping group.",
-			Request:             new(aio11ymappingtypes.PostableMapper),
+			Request:             new(spanattributemappingtypes.PostableSpanAttributeMapper),
 			RequestContentType:  "application/json",
-			Response:            new(aio11ymappingtypes.GettableMapper),
+			Response:            new(spanattributemappingtypes.GettableSpanAttributeMapper),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound, http.StatusConflict},
@@ -136,32 +131,32 @@ func (provider *provider) addAIO11yMappingRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.UpdateMapper),
+	if err := router.Handle("/api/v1/span_attribute_groups/{groupId}/mappers/{mapperId}", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.UpdateMapper),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMapper",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Update a mapper",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Update a span attribute mapper",
 			Description:         "Partially updates an existing mapper's field context, config, or enabled state.",
-			Request:             new(aio11ymappingtypes.UpdatableMapper),
+			Request:             new(spanattributemappingtypes.UpdatableSpanAttributeMapper),
 			RequestContentType:  "application/json",
-			Response:            new(aio11ymappingtypes.GettableMapper),
+			Response:            new(spanattributemappingtypes.GettableSpanAttributeMapper),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-	)).Methods(http.MethodPut).GetError(); err != nil {
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}", handler.New(
-		provider.authZ.AdminAccess(provider.aio11yMappingHandler.DeleteMapper),
+	if err := router.Handle("/api/v1/span_attribute_groups/{groupId}/mappers/{mapperId}", handler.New(
+		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.DeleteMapper),
 		handler.OpenAPIDef{
 			ID:                  "DeleteMapper",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Delete a mapper",
+			Tags:                []string{"span-attribute-mapping"},
+			Summary:             "Delete a span attribute mapper",
 			Description:         "Hard-deletes a mapper from a mapping group.",
 			Request:             nil,
 			RequestContentType:  "",

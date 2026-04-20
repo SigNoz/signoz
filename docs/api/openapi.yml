@@ -1,199 +1,5 @@
 components:
   schemas:
-    Aio11YmappingtypesCondition:
-      properties:
-        attributes:
-          items:
-            type: string
-          nullable: true
-          type: array
-        resource:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    Aio11YmappingtypesFieldContext:
-      enum:
-      - span_attribute
-      - resource
-      nullable: true
-      type: string
-    Aio11YmappingtypesGettableMapper:
-      properties:
-        config:
-          $ref: '#/components/schemas/Aio11YmappingtypesMapperConfig'
-        created_at:
-          format: date-time
-          type: string
-        created_by:
-          type: string
-        enabled:
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/Aio11YmappingtypesFieldContext'
-        group_id:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        updated_at:
-          format: date-time
-          type: string
-        updated_by:
-          type: string
-      required:
-      - id
-      - group_id
-      - name
-      - field_context
-      - config
-      - enabled
-      - created_at
-      - updated_at
-      - created_by
-      - updated_by
-      type: object
-    Aio11YmappingtypesGettableMappingGroup:
-      properties:
-        category:
-          $ref: '#/components/schemas/Aio11YmappingtypesGroupCategory'
-        condition:
-          $ref: '#/components/schemas/Aio11YmappingtypesCondition'
-        created_at:
-          format: date-time
-          type: string
-        created_by:
-          type: string
-        enabled:
-          type: boolean
-        id:
-          type: string
-        name:
-          type: string
-        updated_at:
-          format: date-time
-          type: string
-        updated_by:
-          type: string
-      required:
-      - id
-      - name
-      - category
-      - condition
-      - enabled
-      - created_at
-      - updated_at
-      - created_by
-      - updated_by
-      type: object
-    Aio11YmappingtypesGroupCategory:
-      enum:
-      - llm
-      - tool
-      - agent
-      type: string
-    Aio11YmappingtypesListMappersResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/Aio11YmappingtypesGettableMapper'
-          nullable: true
-          type: array
-      required:
-      - items
-      type: object
-    Aio11YmappingtypesListMappingGroupsResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/Aio11YmappingtypesGettableMappingGroup'
-          nullable: true
-          type: array
-      required:
-      - items
-      type: object
-    Aio11YmappingtypesMapperConfig:
-      properties:
-        sources:
-          items:
-            $ref: '#/components/schemas/Aio11YmappingtypesMapperSource'
-          nullable: true
-          type: array
-      type: object
-    Aio11YmappingtypesMapperOperation:
-      enum:
-      - move
-      - copy
-      type: string
-    Aio11YmappingtypesMapperSource:
-      properties:
-        context:
-          $ref: '#/components/schemas/Aio11YmappingtypesSourceContext'
-        key:
-          type: string
-        operation:
-          $ref: '#/components/schemas/Aio11YmappingtypesMapperOperation'
-        priority:
-          type: integer
-      type: object
-    Aio11YmappingtypesPostableMapper:
-      properties:
-        config:
-          $ref: '#/components/schemas/Aio11YmappingtypesMapperConfig'
-        enabled:
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/Aio11YmappingtypesFieldContext'
-        name:
-          type: string
-      required:
-      - name
-      - field_context
-      - config
-      type: object
-    Aio11YmappingtypesPostableMappingGroup:
-      properties:
-        category:
-          $ref: '#/components/schemas/Aio11YmappingtypesGroupCategory'
-        condition:
-          $ref: '#/components/schemas/Aio11YmappingtypesCondition'
-        enabled:
-          type: boolean
-        name:
-          type: string
-      required:
-      - name
-      - category
-      - condition
-      type: object
-    Aio11YmappingtypesSourceContext:
-      enum:
-      - attribute
-      - resource
-      type: string
-    Aio11YmappingtypesUpdatableMapper:
-      properties:
-        config:
-          $ref: '#/components/schemas/Aio11YmappingtypesMapperConfig'
-        enabled:
-          nullable: true
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/Aio11YmappingtypesFieldContext'
-      type: object
-    Aio11YmappingtypesUpdatableMappingGroup:
-      properties:
-        condition:
-          $ref: '#/components/schemas/Aio11YmappingtypesCondition'
-        enabled:
-          nullable: true
-          type: boolean
-        name:
-          nullable: true
-          type: string
-      type: object
     AlertmanagertypesChannel:
       properties:
         createdAt:
@@ -4462,6 +4268,184 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
+    SpanattributemappingtypesCondition:
+      properties:
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        resource:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    SpanattributemappingtypesFieldContext:
+      enum:
+      - attribute
+      - resource
+      nullable: true
+      type: string
+    SpanattributemappingtypesListSpanAttributeMappersResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMapper'
+          nullable: true
+          type: array
+      required:
+      - items
+      type: object
+    SpanattributemappingtypesListSpanAttributeMappingGroupsResponse:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMappingGroup'
+          nullable: true
+          type: array
+      required:
+      - items
+      type: object
+    SpanattributemappingtypesMapperConfig:
+      properties:
+        sources:
+          items:
+            $ref: '#/components/schemas/SpanattributemappingtypesMapperSource'
+          nullable: true
+          type: array
+      type: object
+    SpanattributemappingtypesMapperOperation:
+      enum:
+      - move
+      - copy
+      type: string
+    SpanattributemappingtypesMapperSource:
+      properties:
+        context:
+          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+        key:
+          type: string
+        operation:
+          $ref: '#/components/schemas/SpanattributemappingtypesMapperOperation'
+        priority:
+          type: integer
+      type: object
+    SpanattributemappingtypesPostableSpanAttributeMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+        name:
+          type: string
+      required:
+      - name
+      - field_context
+      - config
+      type: object
+    SpanattributemappingtypesPostableSpanAttributeMappingGroup:
+      properties:
+        category:
+          type: string
+        condition:
+          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
+        enabled:
+          type: boolean
+        name:
+          type: string
+      required:
+      - name
+      - category
+      - condition
+      type: object
+    SpanattributemappingtypesSpanAttributeMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+        group_id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - group_id
+      - name
+      - field_context
+      - config
+      - enabled
+      type: object
+    SpanattributemappingtypesSpanAttributeMappingGroup:
+      properties:
+        category:
+          type: string
+        condition:
+          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        name:
+          type: string
+        ordId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - ordId
+      - name
+      - category
+      - condition
+      - enabled
+      type: object
+    SpanattributemappingtypesUpdatableSpanAttributeMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
+        enabled:
+          nullable: true
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+      type: object
+    SpanattributemappingtypesUpdatableSpanAttributeMappingGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
+        enabled:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -4838,514 +4822,6 @@ info:
   version: ""
 openapi: 3.0.3
 paths:
-  /api/v1/ai-o11y/mapping/groups:
-    get:
-      deprecated: false
-      description: Returns all span attribute mapping groups for the authenticated
-        org.
-      operationId: ListMappingGroups
-      parameters:
-      - in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/Aio11YmappingtypesGroupCategory'
-      - in: query
-        name: enabled
-        schema:
-          nullable: true
-          type: boolean
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesListMappingGroupsResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List mapping groups
-      tags:
-      - ai-o11y
-    post:
-      deprecated: false
-      description: Creates a new span attribute mapping group for the org.
-      operationId: CreateMappingGroup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Aio11YmappingtypesPostableMappingGroup'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesGettableMappingGroup'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create a mapping group
-      tags:
-      - ai-o11y
-  /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}:
-    delete:
-      deprecated: false
-      description: Hard-deletes a mapper from a mapping group.
-      operationId: DeleteMapper
-      parameters:
-      - in: path
-        name: groupId
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: mapperId
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete a mapper
-      tags:
-      - ai-o11y
-    put:
-      deprecated: false
-      description: Partially updates an existing mapper's field context, config, or
-        enabled state.
-      operationId: UpdateMapper
-      parameters:
-      - in: path
-        name: groupId
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: mapperId
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Aio11YmappingtypesUpdatableMapper'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesGettableMapper'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update a mapper
-      tags:
-      - ai-o11y
-  /api/v1/ai-o11y/mapping/groups/{id}:
-    delete:
-      deprecated: false
-      description: Hard-deletes a mapping group and cascades to all its mappers.
-      operationId: DeleteMappingGroup
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete a mapping group
-      tags:
-      - ai-o11y
-    put:
-      deprecated: false
-      description: Partially updates an existing mapping group's name, condition,
-        or enabled state.
-      operationId: UpdateMappingGroup
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Aio11YmappingtypesUpdatableMappingGroup'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesGettableMappingGroup'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update a mapping group
-      tags:
-      - ai-o11y
-  /api/v1/ai-o11y/mapping/groups/{id}/mappers:
-    get:
-      deprecated: false
-      description: Returns all attribute mappers belonging to a mapping group.
-      operationId: ListMappers
-      parameters:
-      - in: query
-        name: enabled
-        schema:
-          nullable: true
-          type: boolean
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesListMappersResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List mappers for a group
-      tags:
-      - ai-o11y
-    post:
-      deprecated: false
-      description: Adds a new attribute mapper to the specified mapping group.
-      operationId: CreateMapper
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Aio11YmappingtypesPostableMapper'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YmappingtypesGettableMapper'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create a mapper
-      tags:
-      - ai-o11y
   /api/v1/alerts:
     get:
       deprecated: false
@@ -9578,6 +9054,510 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
+  /api/v1/span_attribute_groups:
+    get:
+      deprecated: false
+      description: Returns all span attribute mapping groups for the authenticated
+        org.
+      operationId: ListSpanAttributeMappingGroups
+      parameters:
+      - in: query
+        name: category
+        schema:
+          nullable: true
+          type: string
+      - in: query
+        name: enabled
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesListSpanAttributeMappingGroupsResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List span attribute mapping groups
+      tags:
+      - span-attribute-mapping
+    post:
+      deprecated: false
+      description: Creates a new span attribute mapping group for the org.
+      operationId: CreateMappingGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesPostableSpanAttributeMappingGroup'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMappingGroup'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+  /api/v1/span_attribute_groups/{groupId}/mappers/{mapperId}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a mapper from a mapping group.
+      operationId: DeleteMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: mapperId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a span attribute mapper
+      tags:
+      - span-attribute-mapping
+    patch:
+      deprecated: false
+      description: Partially updates an existing mapper's field context, config, or
+        enabled state.
+      operationId: UpdateMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: mapperId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableSpanAttributeMapper'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMapper'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a span attribute mapper
+      tags:
+      - span-attribute-mapping
+  /api/v1/span_attribute_groups/{id}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a mapping group and cascades to all its mappers.
+      operationId: DeleteMappingGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+    patch:
+      deprecated: false
+      description: Partially updates an existing mapping group's name, condition,
+        or enabled state.
+      operationId: UpdateMappingGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableSpanAttributeMappingGroup'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMappingGroup'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+  /api/v1/span_attribute_groups/{id}/mappers:
+    get:
+      deprecated: false
+      description: Returns all attribute mappers belonging to a mapping group.
+      operationId: ListMappers
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesListSpanAttributeMappersResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List span attribute mappers for a group
+      tags:
+      - span-attribute-mapping
+    post:
+      deprecated: false
+      description: Adds a new attribute mapper to the specified mapping group.
+      operationId: CreateMapper
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesPostableSpanAttributeMapper'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesSpanAttributeMapper'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a span attribute mapper
+      tags:
+      - span-attribute-mapping
   /api/v1/testChannel:
     post:
       deprecated: true

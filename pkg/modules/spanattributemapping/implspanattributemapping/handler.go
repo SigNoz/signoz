@@ -1,4 +1,4 @@
-package impiaio11ymapping
+package implspanattributemapping
 
 import (
 	"context"
@@ -9,19 +9,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/aio11ymapping"
-	"github.com/SigNoz/signoz/pkg/types/aio11ymappingtypes"
+	"github.com/SigNoz/signoz/pkg/modules/spanattributemapping"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/spanattributemappingtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 type handler struct {
-	module           aio11ymapping.Module
+	module           spanattributemapping.Module
 	providerSettings factory.ProviderSettings
 }
 
-func NewHandler(module aio11ymapping.Module, providerSettings factory.ProviderSettings) aio11ymapping.Handler {
+func NewHandler(module spanattributemapping.Module, providerSettings factory.ProviderSettings) spanattributemapping.Handler {
 	return &handler{module: module, providerSettings: providerSettings}
 }
 
@@ -42,7 +42,7 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var q aio11ymappingtypes.ListMappingGroupsQuery
+	var q spanattributemappingtypes.ListSpanAttributeMappingGroupsQuery
 	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
 		render.Error(rw, err)
 		return
@@ -54,12 +54,12 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*aio11ymappingtypes.GettableMappingGroup, len(groups))
+	items := make([]*spanattributemappingtypes.GettableSpanAttributeMappingGroup, len(groups))
 	for i, g := range groups {
-		items[i] = aio11ymappingtypes.NewGettableMappingGroup(g)
+		items[i] = spanattributemappingtypes.NewGettableMappingGroup(g)
 	}
 
-	render.Success(rw, http.StatusOK, &aio11ymappingtypes.ListMappingGroupsResponse{Items: items})
+	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappingGroupsResponse{Items: items})
 }
 
 // CreateGroup handles POST /api/v1/ai-o11y/mapping/groups.
@@ -79,7 +79,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(aio11ymappingtypes.PostableMappingGroup)
+	req := new(spanattributemappingtypes.PostableSpanAttributeMappingGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -91,7 +91,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, aio11ymappingtypes.NewGettableMappingGroup(group))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMappingGroup(group))
 }
 
 // UpdateGroup handles PUT /api/v1/ai-o11y/mapping/groups/{id}.
@@ -117,7 +117,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(aio11ymappingtypes.UpdatableMappingGroup)
+	req := new(spanattributemappingtypes.UpdatableSpanAttributeMappingGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -129,7 +129,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, aio11ymappingtypes.NewGettableMappingGroup(group))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMappingGroup(group))
 }
 
 // DeleteGroup handles DELETE /api/v1/ai-o11y/mapping/groups/{id}.
@@ -186,24 +186,18 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var q aio11ymappingtypes.ListMappersQuery
-	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	mappers, err := h.module.ListMappers(ctx, orgID, groupID, &q)
+	mappers, err := h.module.ListMappers(ctx, orgID, groupID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	items := make([]*aio11ymappingtypes.GettableMapper, len(mappers))
+	items := make([]*spanattributemappingtypes.GettableSpanAttributeMapper, len(mappers))
 	for i, m := range mappers {
-		items[i] = aio11ymappingtypes.NewGettableMapper(m)
+		items[i] = spanattributemappingtypes.NewGettableMapper(m)
 	}
 
-	render.Success(rw, http.StatusOK, &aio11ymappingtypes.ListMappersResponse{Items: items})
+	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListSpanAttributeMappersResponse{Items: items})
 }
 
 // CreateMapper handles POST /api/v1/ai-o11y/mapping/groups/{id}/mappers.
@@ -229,7 +223,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(aio11ymappingtypes.PostableMapper)
+	req := new(spanattributemappingtypes.PostableSpanAttributeMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -241,7 +235,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, aio11ymappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMapper(mapper))
 }
 
 // UpdateMapper handles PUT /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
@@ -273,7 +267,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(aio11ymappingtypes.UpdatableMapper)
+	req := new(spanattributemappingtypes.UpdatableSpanAttributeMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -285,7 +279,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, aio11ymappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMapper(mapper))
 }
 
 // DeleteMapper handles DELETE /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
@@ -333,11 +327,11 @@ func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 		raw = vars["id"]
 	}
 	if raw == "" {
-		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, aio11ymappingtypes.ErrCodeMappingInvalidInput, "group id is missing from the path")
+		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "group id is missing from the path")
 	}
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, aio11ymappingtypes.ErrCodeMappingInvalidInput, "group id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "group id is not a valid uuid")
 	}
 	return id, nil
 }
@@ -346,11 +340,11 @@ func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 func mapperIDFromPath(r *http.Request) (valuer.UUID, error) {
 	raw := mux.Vars(r)["mapperId"]
 	if raw == "" {
-		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, aio11ymappingtypes.ErrCodeMappingInvalidInput, "mapper id is missing from the path")
+		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "mapper id is missing from the path")
 	}
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, aio11ymappingtypes.ErrCodeMappingInvalidInput, "mapper id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "mapper id is not a valid uuid")
 	}
 	return id, nil
 }
