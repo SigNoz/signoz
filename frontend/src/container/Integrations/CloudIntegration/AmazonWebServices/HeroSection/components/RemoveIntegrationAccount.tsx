@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
@@ -61,7 +61,7 @@ function RemoveIntegrationAccount({
 			<Button
 				variant="solid"
 				color="destructive"
-				prefixIcon={<Unlink size={14} />}
+				prefix={<Unlink size={14} />}
 				size="sm"
 				onClick={handleDisconnect}
 				disabled={isRemoveIntegrationLoading}

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
-import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { DrawerWrapper } from '@signozhq/drawer';
+import { Button, DrawerWrapper } from '@signozhq/ui';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 
@@ -65,9 +64,7 @@ function CloudAccountSetupModal({
 					<Button
 						variant="solid"
 						color="primary"
-						prefixIcon={
-							<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
-						}
+						prefix={<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />}
 						onClick={handleSubmit}
 						disabled={
 							selectedRegions.length === 0 ||
@@ -153,16 +150,14 @@ function CloudAccountSetupModal({
 	return (
 		<DrawerWrapper
 			open={true}
-			type="panel"
 			className="cloud-account-setup-modal"
-			content={renderContent()}
 			onOpenChange={handleDrawerOpenChange}
 			direction="right"
 			showCloseButton
-			header={{
-				title: modalConfig.title,
-			}}
-		/>
+			title={modalConfig.title}
+		>
+			{renderContent()}
+		</DrawerWrapper>
 	);
 }
 

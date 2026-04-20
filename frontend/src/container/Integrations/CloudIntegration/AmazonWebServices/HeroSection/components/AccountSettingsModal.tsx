@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
+import { Button, DrawerWrapper } from '@signozhq/ui';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -118,7 +117,7 @@ function AccountSettingsModal({
 						disabled={isSaveDisabled}
 						onClick={handleSubmit}
 						loading={isLoading}
-						prefixIcon={<Save size={14} />}
+						prefix={<Save size={14} />}
 					>
 						Update Changes
 					</Button>
@@ -150,16 +149,14 @@ function AccountSettingsModal({
 	return (
 		<DrawerWrapper
 			open={true}
-			type="panel"
 			className="account-settings-modal"
-			header={{
-				title: 'Account Settings',
-			}}
+			title="Account Settings"
 			direction="right"
 			showCloseButton
-			content={renderAccountDetails()}
 			onOpenChange={handleDrawerOpenChange}
-		/>
+		>
+			{renderAccountDetails()}
+		</DrawerWrapper>
 	);
 }
 
