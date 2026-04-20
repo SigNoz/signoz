@@ -1,0 +1,742 @@
+# SigNoz E2E Testing - Cursor Rules
+
+## Project Overview
+
+This is a Playwright-based E2E testing framework for SigNoz frontend application. The project follows a test-plan-first approach where comprehensive test plans are created before generating automated tests.
+
+## Directory Structure
+
+```
+signoz-e2e/
+├── examples/              # Test plan templates and examples
+│   └── example-test-plan.md
+├── specs/                 # Test plans in markdown format
+│   └── [feature]/
+│       └── [feature]-test-plan.md
+├── tests/                 # Playwright test files
+│   ├── seed.spec.ts      # Reference test for patterns
+│   └── [feature]/
+│       └── [feature].spec.ts
+├── utils/                 # Shared utilities
+│   └── login.util.ts
+├── playwright.config.ts   # Playwright configuration
+└── .env                   # Environment variables
+```
+
+## Writing Test Plans
+
+### Test Plan Structure
+
+Test plans MUST follow this structure (see `examples/example-test-plan.md`):
+
+```markdown
+# [Feature Name] - Test Plan
+
+## Application Overview
+[Describe the feature/module being tested with key functionality and user flows]
+
+## User Role Permissions (Optional)
+- **@admin**: [Admin capabilities]
+- **@editor**: [Editor capabilities]
+- **@viewer**: [Viewer capabilities]
+
+## Test Scenarios
+
+### 1. [Main Scenario Category] **[Role Tag]**
+
+**Seed:** `tests/seed.spec.ts`
+
+#### 1.1 [Specific Test Case] **[Role Tag]**
+
+**Pre-conditions:**
+- [List any setup needed]
+
+**Steps:**
+1. [Action step]
+2. [Action step]
+...
+
+**Expected Results:**
+- [Expected outcome]
+- [Expected state]
+...
+
+**Data:** (Optional)
+- Input field: "test value"
+- Select option: "option name"
+
+### 2. [Another Scenario Category]
+...
+
+## Edge Cases
+[Document edge cases and error scenarios]
+
+## Notes
+- [Special considerations]
+- [Known limitations]
+```
+
+### Test Plan Best Practices
+
+1. **Be Specific**: Include exact UI element names, button labels, and navigation paths
+2. **Role-Based**: Tag scenarios with appropriate role tags (@admin, @editor, @viewer)
+3. **Seed Reference**: Always reference `tests/seed.spec.ts` as the seed test
+4. **Data-Driven**: Include specific test data values in the plan
+5. **Comprehensive**: Cover happy paths, edge cases, and error scenarios
+6. **Actionable Steps**: Write steps that can be directly translated to Playwright code
+7. **Expected Results**: Be explicit about what should happen after each action
+
+### Creating Test Plans Manually
+
+1. Use `examples/example-test-plan.md` as template
+2. Explore the feature thoroughly in the application
+3. Document all user flows and interactions
+4. Include metadata (created by, created on, etc.) validation
+5. Consider different user roles and permissions
+6. Document error states and validation messages
+7. Save to `specs/[feature]/[feature]-test-plan.md`
+
+### Creating Test Plans with Playwright Agents
+
+```bash
+# Initialize agents first (if not done)
+npx playwright init-agents --loop=vscode
+
+# Use the planner agent
+@🎭 planner @tests/seed.spec.ts
+
+Create a comprehensive test plan for: [feature name]
+Save to: specs/[feature]/[feature]-test-plan.md
+```
+
+The planner will:
+- Explore the application using the seed test for context
+- Generate a detailed test plan following the template
+- Include all scenarios, edge cases, and validation checks
+
+## Writing Playwright Tests
+
+### Test File Structure
+
+Every test file MUST follow this structure:
+
+```typescript
+// spec: specs/[feature]/[feature]-test-plan.md
+// seed: tests/seed.spec.ts
+
+import { expect, test } from '@playwright/test';
+import { ensureLoggedIn } from '../../utils/login.util';
+
+test.describe('[Feature Name]', () => {
+  test.beforeEach(async ({ page }) => {
+    // Login to the application
+    await ensureLoggedIn(page);
+
+    // Navigate to the feature (specific to each feature)
+    // Example navigation steps here
+  });
+
+  test(
+    '[Test Name]',
+    {
+      tag: '@viewer', // or @editor, @admin
+    },
+    async ({ page }) => {
+      // Test implementation with numbered comments
+      // 1. [Step description]
+      // 2. [Step description]
+      ...
+    },
+  );
+});
+```
+
+### Test Implementation Best Practices
+
+1. **Always Reference**: Include spec and seed references at the top of the file
+
+2. **Use ensureLoggedIn**: Always use `ensureLoggedIn(page)` for authentication
+   ```typescript
+   await ensureLoggedIn(page);
+   ```
+
+3. **Role-Based Tags**: Tag every test with appropriate role
+   ```typescript
+   test(
+     'Test Name',
+     { tag: '@admin' },  // @admin, @editor, or @viewer
+     async ({ page }) => { ... }
+   );
+   ```
+
+4. **Semantic Locators**: Prefer Playwright's built-in locators (in order of preference):
+   ```typescript
+   // ✅ GOOD
+   page.getByRole('button', { name: 'Submit' })
+   page.getByLabel('Email')
+   page.getByPlaceholder('Enter email...')
+   page.getByText('Welcome')
+   page.getByTestId('login-button')
+
+   // ❌ AVOID
+   page.locator('.btn-submit')  // CSS selectors
+   page.locator('#email')       // ID selectors
+   ```
+
+5. **Step Comments**: Add numbered comments matching test plan steps
+   ```typescript
+   // 1. Click "New routing policy" button
+   await page.getByRole('button', { name: 'plus New routing policy' }).click();
+
+   // 2. Fill in routing policy name
+   await page.getByRole('textbox', { name: 'e.g. Base routing policy...' }).fill('My Policy');
+   ```
+
+6. **Explicit Waits**: Wait for elements to be visible before interacting
+   ```typescript
+   await expect(page.getByRole('dialog', { name: 'Create policy' })).toBeVisible();
+   ```
+
+7. **Assertions**: Use explicit assertions for all validations
+   ```typescript
+   await expect(page.getByText('Success message')).toBeVisible();
+   await expect(field).toHaveValue('expected value');
+   await expect(element).toBeHidden();
+   ```
+
+8. **Unique Test Data**: Use timestamps or unique identifiers for test data
+   ```typescript
+   const uniqueName = `Test Policy ${Date.now()}`;
+   ```
+
+9. **Navigation in beforeEach**: Put common navigation steps in beforeEach
+   ```typescript
+   test.beforeEach(async ({ page }) => {
+     await ensureLoggedIn(page);
+     await page.locator('svg.lucide-bell-dot').click();
+     await page.getByRole('tab', { name: 'Configuration' }).click();
+   });
+   ```
+
+10. **Handle Async Operations**: Add appropriate waits for async operations
+    ```typescript
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Saved successfully')).toBeVisible();
+    ```
+
+### Writing Tests Manually
+
+1. Read the test plan in `specs/[feature]/[feature]-test-plan.md`
+2. Use `tests/seed.spec.ts` as reference for patterns
+3. Create test file at `tests/[feature]/[feature].spec.ts`
+4. Implement each scenario from the test plan
+5. Use Playwright codegen for complex interactions: `yarn codegen`
+6. Run tests to verify: `yarn test:ui`
+
+### Writing Tests with Playwright Agents
+
+```bash
+# Use the generator agent
+@🎭 generator @specs/[feature]/[feature]-test-plan.md @tests/seed.spec.ts
+
+Generate Playwright tests from the test plan
+Save to: tests/[feature]/[feature].spec.ts
+```
+
+The generator will:
+- Read the test plan
+- Use seed.spec.ts for patterns and context
+- Generate properly structured test files
+- Use semantic locators and best practices
+- Include proper role tags and assertions
+
+### Fixing Failing Tests with Playwright Agents
+
+```bash
+# Use the healer agent
+@🎭 healer @tests/[feature]/[failing-test].spec.ts
+
+Fix the failing test: [test name]
+Error: [paste error message from test output]
+```
+
+The healer will:
+- Replay the failing steps
+- Update locators if UI elements changed
+- Add proper waits for timing issues
+- Re-run until the test passes
+
+## Locator Strategies
+
+### Priority Order (use in this order):
+
+1. **Role-based** (Preferred): `getByRole(role, { name })`
+2. **Label**: `getByLabel(text)`
+3. **Placeholder**: `getByPlaceholder(text)`
+4. **Text**: `getByText(text)`
+5. **Test ID**: `getByTestId(id)`
+6. **CSS/XPath** (Last Resort): `locator(selector)`
+
+### Common Patterns
+
+```typescript
+// Buttons
+page.getByRole('button', { name: 'Submit' })
+page.getByRole('button', { name: 'plus New policy' }) // with icon
+
+// Text inputs
+page.getByRole('textbox', { name: 'Email' })
+page.getByPlaceholder('Enter email...')
+
+// Dropdowns
+page.locator('.ant-select').click()  // If no semantic alternative
+page.locator('.ant-select-item').first().click()
+
+// Tables
+page.getByRole('table')
+page.getByRole('row')
+page.getByRole('cell')
+
+// Dialogs/Modals
+page.getByRole('dialog', { name: 'Create policy' })
+
+// Tabs
+page.getByRole('tab', { name: 'Configuration' })
+
+// Headings
+page.getByRole('heading', { name: 'Dashboard' })
+
+// Links
+page.getByRole('link', { name: 'Learn more' })
+```
+
+## Role-Based Testing
+
+### Role Hierarchy
+
+- **@viewer**: Read-only access (view, search, filter)
+- **@editor**: Create and edit access (all @viewer tests + create/edit)
+- **@admin**: Full access (all @viewer + @editor tests + delete/admin operations)
+
+### Tagging Guidelines
+
+```typescript
+// Viewer tests - read-only operations
+test('View dashboard', { tag: '@viewer' }, async ({ page }) => { ... });
+test('Search policies', { tag: '@viewer' }, async ({ page }) => { ... });
+
+// Editor tests - create/edit operations
+test('Create policy', { tag: '@editor' }, async ({ page }) => { ... });
+test('Edit policy', { tag: '@editor' }, async ({ page }) => { ... });
+
+// Admin tests - delete/admin operations
+test('Delete policy', { tag: '@admin' }, async ({ page }) => { ... });
+test('Manage users', { tag: '@admin' }, async ({ page }) => { ... });
+```
+
+### Running Tests by Role
+
+```bash
+# Set role in .env file
+SIGNOZ_USER_ROLE=Admin    # Runs all tests
+SIGNOZ_USER_ROLE=Editor   # Runs @editor and @viewer tests
+SIGNOZ_USER_ROLE=Viewer   # Runs @viewer tests only
+
+# Or pass directly
+SIGNOZ_USER_ROLE=Admin yarn test
+```
+
+## Environment Configuration
+
+### Required Environment Variables
+
+Create `.env` file with:
+
+```bash
+SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud
+SIGNOZ_E2E_USERNAME=your-email@example.com
+SIGNOZ_E2E_PASSWORD=your-password
+SIGNOZ_USER_ROLE=Admin  # or Editor, Viewer
+```
+
+### Using Environment Variables in Tests
+
+```typescript
+// Already handled in playwright.config.ts
+// baseURL from SIGNOZ_E2E_BASE_URL
+// credentials from SIGNOZ_E2E_USERNAME and SIGNOZ_E2E_PASSWORD
+```
+
+## Common Patterns & Utilities
+
+### Login Pattern
+
+```typescript
+import { ensureLoggedIn } from '../../utils/login.util';
+
+test.beforeEach(async ({ page }) => {
+  await ensureLoggedIn(page);
+});
+```
+
+### Navigation Pattern
+
+```typescript
+// Navigate through sidebar
+await page.locator('svg.lucide-bell-dot').click();  // Alerts icon
+await page.getByRole('tab', { name: 'Configuration' }).click();
+await page.getByRole('tab', { name: 'Routing Policies' }).click();
+
+// Navigate by URL
+await page.goto('/alerts?tab=Configuration');
+```
+
+### Form Filling Pattern
+
+```typescript
+// Fill form fields
+await page.getByRole('textbox', { name: 'Name' }).fill('Test Name');
+await page.getByRole('textbox', { name: 'Description' }).fill('Test Description');
+
+// Select dropdown
+await page.locator('.ant-select').click();
+await page.locator('.ant-select-item').first().click();
+
+// Submit form
+await page.getByRole('button', { name: 'Save' }).click();
+```
+
+### Search Pattern
+
+```typescript
+const searchBox = page.getByRole('textbox', { name: 'Search...' });
+await searchBox.fill('search term');
+await page.keyboard.press('Enter');
+await expect(page.getByText('search term')).toBeVisible();
+```
+
+### CRUD Operations Pattern
+
+```typescript
+// Create
+await page.getByRole('button', { name: 'New Item' }).click();
+// ... fill form ...
+await page.getByRole('button', { name: 'Save' }).click();
+await expect(page.getByText('Created successfully')).toBeVisible();
+
+// Read/View
+await page.getByText('Item Name').click();
+await expect(page.getByText('Item Details')).toBeVisible();
+
+// Update
+await page.getByTestId('edit-item').click();
+// ... update form ...
+await page.getByRole('button', { name: 'Save' }).click();
+await expect(page.getByText('Updated successfully')).toBeVisible();
+
+// Delete
+await page.getByTestId('delete-item').click();
+await page.getByRole('button', { name: 'Delete' }).click();
+await expect(page.getByText('Deleted successfully')).toBeVisible();
+```
+
+### Expandable Details Pattern
+
+```typescript
+// Expand to view details
+const expandButton = page.getByRole('tab', { name: 'right' }).first();
+await expandButton.click();
+await new Promise(resolve => setTimeout(resolve, 1000));
+
+// Verify details
+await expect(page.getByText('Created by')).toBeVisible();
+await expect(page.getByText('Created on')).toBeVisible();
+```
+
+## Testing Best Practices
+
+### 1. Test Independence
+- Each test should be independent and not rely on other tests
+- Use `beforeEach` for common setup
+- Clean up test data if necessary
+
+### 2. Stable Selectors
+- Always prefer semantic locators over CSS selectors
+- Use test IDs when semantic locators are not available
+- Avoid fragile selectors like `.class-name:nth-child(3)`
+
+### 3. Explicit Waits
+```typescript
+// ✅ GOOD - Wait for element to be visible
+await expect(page.getByRole('dialog')).toBeVisible();
+await page.getByRole('button', { name: 'Submit' }).click();
+
+// ❌ BAD - Arbitrary timeout
+await page.waitForTimeout(5000);
+```
+
+### 4. Assertions
+- Always add assertions to verify expected outcomes
+- Use appropriate assertion methods
+- Check for both positive and negative cases
+
+```typescript
+// Visibility assertions
+await expect(element).toBeVisible();
+await expect(element).toBeHidden();
+
+// Value assertions
+await expect(input).toHaveValue('expected');
+await expect(element).toHaveText('expected');
+
+// State assertions
+await expect(button).toBeEnabled();
+await expect(button).toBeDisabled();
+```
+
+### 5. Error Handling
+```typescript
+// Verify error messages
+await expect(page.getByText('Error: Invalid input')).toBeVisible();
+
+// Verify validation
+await expect(page.getByText('Please provide a name')).toBeVisible();
+```
+
+### 6. Test Data Management
+```typescript
+// Use unique identifiers
+const uniqueName = `Test ${Date.now()}`;
+const uniqueId = `test-${Math.random().toString(36).substring(7)}`;
+
+// Clean up after tests if needed
+test.afterEach(async ({ page }) => {
+  // Delete created test data
+});
+```
+
+## Debugging Tests
+
+### Debug Commands
+
+```bash
+# UI Mode - interactive debugging
+yarn test:ui
+
+# Debug Mode - step through tests
+yarn test:debug
+
+# Headed Mode - see browser
+yarn test:headed
+
+# Run specific test
+yarn test tests/[feature]/[test].spec.ts
+
+# Run with specific role
+SIGNOZ_USER_ROLE=Admin yarn test:ui
+```
+
+### Using Playwright Inspector
+
+```typescript
+// Add breakpoint in test
+await page.pause();  // Test will pause here
+```
+
+### Viewing Test Reports
+
+```bash
+# Open HTML report
+yarn report
+
+# View JSON results
+cat test-results/results.json
+```
+
+## Complete Workflow
+
+### Creating New Test Suite
+
+1. **Plan First**
+   ```bash
+   # Use planner agent (recommended)
+   @🎭 planner @tests/seed.spec.ts
+   Create test plan for: [feature name]
+   Save to: specs/[feature]/[feature]-test-plan.md
+
+   # OR create manually using template
+   cp examples/example-test-plan.md specs/[feature]/[feature]-test-plan.md
+   # Edit the plan
+   ```
+
+2. **Generate Tests**
+   ```bash
+   # Use generator agent (recommended)
+   @🎭 generator @specs/[feature]/[feature]-test-plan.md @tests/seed.spec.ts
+   Generate tests and save to: tests/[feature]/[feature].spec.ts
+
+   # OR write tests manually using seed.spec.ts as reference
+   ```
+
+3. **Run Tests**
+   ```bash
+   yarn test:ui  # Interactive mode
+   yarn test     # Headless mode
+   ```
+
+4. **Fix Failures**
+   ```bash
+   # Use healer agent (recommended)
+   @🎭 healer @tests/[feature]/[failing-test].spec.ts
+   Fix the failing test: [test name]
+   Error: [paste error]
+
+   # OR debug manually
+   yarn test:debug tests/[feature]/[failing-test].spec.ts
+   ```
+
+5. **Verify & Commit**
+   ```bash
+   # Run all tests
+   yarn test
+
+   # Check types
+   yarn typecheck
+
+   # Lint code
+   yarn lint:fix
+   ```
+
+## Code Quality
+
+### Linting
+```bash
+# Check for issues
+yarn lint
+
+# Auto-fix issues
+yarn lint:fix
+```
+
+### Type Checking
+```bash
+# Verify TypeScript types
+yarn typecheck
+```
+
+### Before Committing
+1. Run `yarn typecheck`
+2. Run `yarn lint:fix`
+3. Run `yarn test` to ensure all tests pass
+4. Update test plan if feature changed
+
+## Anti-Patterns to Avoid
+
+### ❌ DON'T
+
+```typescript
+// Don't use arbitrary timeouts
+await page.waitForTimeout(5000);
+
+// Don't use fragile CSS selectors
+await page.locator('.css-12345').click();
+
+// Don't skip error handling
+// (missing validation checks)
+
+// Don't hardcode URLs
+await page.goto('https://hardcoded-url.com');
+
+// Don't use test.only in committed code
+test.only('My test', async ({ page }) => { ... });
+
+// Don't write tests without tags
+test('Create item', async ({ page }) => { ... }); // Missing role tag!
+```
+
+### ✅ DO
+
+```typescript
+// Use explicit waits
+await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
+
+// Use semantic locators
+await page.getByRole('button', { name: 'Submit' }).click();
+
+// Add proper assertions
+await expect(page.getByText('Success')).toBeVisible();
+
+// Use baseURL from config
+await page.goto('/dashboard');  // Uses baseURL from config
+
+// Remove test.only before committing
+test('Create item', { tag: '@editor' }, async ({ page }) => { ... });
+
+// Always tag tests with roles
+test('Create item', { tag: '@editor' }, async ({ page }) => { ... });
+```
+
+## Playwright Agents Quick Reference
+
+### When to Use Each Agent
+
+- **🎭 Planner**: When you need to create a comprehensive test plan for a new feature or update an existing one
+- **🎭 Generator**: When you have a test plan and need to generate Playwright tests from it
+- **🎭 Healer**: When tests are failing due to locator issues, timing problems, or UI changes
+
+### Agent Commands
+
+```bash
+# Planner
+@🎭 planner @tests/seed.spec.ts
+Create test plan for: [feature]
+Save to: specs/[feature]/test-plan.md
+
+# Generator
+@🎭 generator @specs/[feature]/test-plan.md @tests/seed.spec.ts
+Generate tests
+Save to: tests/[feature]/[feature].spec.ts
+
+# Healer
+@🎭 healer @tests/[feature]/[test].spec.ts
+Fix failing test: [test name]
+Error: [error message]
+```
+
+## Additional Resources
+
+- Playwright Documentation: https://playwright.dev
+- Playwright Agents: https://playwright.dev/docs/test-agents
+- Playwright Best Practices: https://playwright.dev/docs/best-practices
+- TypeScript Handbook: https://www.typescriptlang.org/docs/
+
+## Summary Checklist
+
+When creating test plans:
+- [ ] Use template from `examples/example-test-plan.md`
+- [ ] Include Application Overview section
+- [ ] Add role-based permissions if applicable
+- [ ] Write specific, actionable steps
+- [ ] Include expected results for each scenario
+- [ ] Add edge cases and error scenarios
+- [ ] Save to `specs/[feature]/[feature]-test-plan.md`
+
+When writing tests:
+- [ ] Reference test plan and seed in comments
+- [ ] Import and use `ensureLoggedIn` utility
+- [ ] Add `beforeEach` with navigation
+- [ ] Tag every test with role (@admin, @editor, @viewer)
+- [ ] Use semantic locators (getByRole, getByLabel, etc.)
+- [ ] Add numbered comments matching test plan steps
+- [ ] Include explicit assertions
+- [ ] Use unique test data with timestamps
+- [ ] Run tests and verify they pass
+- [ ] Run linting and type checking
+
+When debugging:
+- [ ] Use `yarn test:ui` for interactive debugging
+- [ ] Use `yarn test:debug` for step-through debugging
+- [ ] Check test reports with `yarn report`
+- [ ] Use healer agent for fixing locator/timing issues
+- [ ] Verify tests pass in all browsers if needed
+
