@@ -461,8 +461,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			fmt.Sprintf("%d AS priority", getPriorityForContext(fieldContext)),
 		).From(tblName)
 
-		branches := []string{}
+		conds := []string{}
 		for _, sel := range fieldKeySelectors {
+			// Include this selector if:
+			// 1. It has unspecified context (matches all tables)
+			// 2. Its context matches the current table's context
 			if sel.FieldContext != telemetrytypes.FieldContextUnspecified && sel.FieldContext != fieldContext {
 				continue
 			}
@@ -476,11 +479,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 				fieldKeyConds = append(fieldKeyConds, sb.E("datatype", sel.FieldDataType.TagDataType()))
 			}
 			if len(fieldKeyConds) > 0 {
-				branches = append(branches, sb.And(fieldKeyConds...))
+				conds = append(conds, sb.And(fieldKeyConds...))
 			}
 		}
-		if len(branches) > 0 {
-			sb.Where(sb.Or(branches...))
+		if len(conds) > 0 {
+			sb.Where(sb.Or(conds...))
 		}
 		sb.GroupBy("name", "datatype")
 		query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
