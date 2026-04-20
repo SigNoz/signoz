@@ -1,7 +1,8 @@
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -50,8 +51,11 @@ function LeftContainer({
 		],
 		[globalSelectedInterval, requestData, minTime, maxTime],
 	);
+	const [isCancelled, setIsCancelled] = useState(false);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries(queryRangeKey);
+		setIsCancelled(true);
 	}, [queryClient, queryRangeKey]);
 
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
@@ -59,6 +63,12 @@ function LeftContainer({
 		queryKey: queryRangeKey,
 		keepPreviousData: true,
 	});
+
+	useEffect(() => {
+		if (queryResponse.isFetching) {
+			setIsCancelled(false);
+		}
+	}, [queryResponse.isFetching]);
 
 	// Update parent component with query response for legend colors
 	useEffect(() => {
@@ -69,14 +79,18 @@ function LeftContainer({
 
 	return (
 		<>
-			<WidgetGraph
-				selectedGraph={selectedGraph}
-				queryResponse={queryResponse}
-				setRequestData={setRequestData}
-				selectedWidget={selectedWidget}
-				isLoadingPanelData={isLoadingPanelData}
-				enableDrillDown={enableDrillDown}
-			/>
+			{isCancelled ? (
+				<QueryCancelledPlaceholder subText='Click "Run Query" to reload the chart.' />
+			) : (
+				<WidgetGraph
+					selectedGraph={selectedGraph}
+					queryResponse={queryResponse}
+					setRequestData={setRequestData}
+					selectedWidget={selectedWidget}
+					isLoadingPanelData={isLoadingPanelData}
+					enableDrillDown={enableDrillDown}
+				/>
+			)}
 			<QueryContainer className="query-section-left-container">
 				<QuerySection
 					selectedGraph={selectedGraph}
