@@ -29,9 +29,14 @@ function renderModal(
 		account: 'sa-1',
 		'edit-key': 'key-1',
 	},
+	onUrlUpdate?: jest.Mock,
 ): ReturnType<typeof render> {
 	return render(
-		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
+		<NuqsTestingAdapter
+			searchParams={searchParams}
+			hasMemory
+			onUrlUpdate={onUrlUpdate}
+		>
 			<EditKeyModal keyItem={keyItem} />
 		</NuqsTestingAdapter>,
 	);
@@ -97,14 +102,31 @@ describe('EditKeyModal (URL-controlled)', () => {
 
 	it('cancel clears edit-key param and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		renderModal();
+		const onUrlUpdate = jest.fn();
+		renderModal(mockKey, undefined, onUrlUpdate);
 
 		await screen.findByDisplayValue('Original Key Name');
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(
-			screen.queryByRole('dialog', { name: /Edit Key Details/i }),
-		).not.toBeInTheDocument();
+		await waitFor(() => {
+			expect(onUrlUpdate).toHaveBeenCalled();
+		});
+
+		const latestUrlUpdate =
+			onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1]?.[0];
+		expect(latestUrlUpdate).toEqual(
+			expect.objectContaining({
+				queryString: expect.any(String),
+			}),
+		);
+		expect(latestUrlUpdate.queryString).toContain('account=sa-1');
+		expect(latestUrlUpdate.queryString).not.toContain('edit-key=');
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it('revoke flow: clicking Revoke Key shows confirmation inside same dialog', async () => {

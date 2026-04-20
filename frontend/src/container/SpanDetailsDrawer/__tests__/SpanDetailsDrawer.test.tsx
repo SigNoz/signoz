@@ -334,6 +334,7 @@ describe('SpanDetailsDrawer', () => {
 	let apiCallHistory: any = {};
 
 	beforeEach(() => {
+		jest.useRealTimers();
 		jest.clearAllMocks();
 		apiCallHistory = {
 			span_logs: null,
@@ -1081,6 +1082,7 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 	const SEARCH_PLACEHOLDER = 'Search for attribute...';
 
 	beforeEach(() => {
+		jest.useRealTimers();
 		jest.clearAllMocks();
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
@@ -1180,6 +1182,7 @@ describe('SpanDetailsDrawer - Search Visibility User Flows', () => {
 
 describe('SpanDetailsDrawer - Status Message Truncation User Flows', () => {
 	beforeEach(() => {
+		jest.useRealTimers();
 		jest.clearAllMocks();
 		mockSafeNavigate.mockClear();
 		mockWindowOpen.mockClear();
