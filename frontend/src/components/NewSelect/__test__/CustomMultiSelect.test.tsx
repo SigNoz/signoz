@@ -6,6 +6,7 @@ import {
 	screen,
 	waitFor,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -286,6 +287,7 @@ describe('CustomMultiSelect Component', () => {
 
 	describe('section visibility when ALL is selected', () => {
 		it('keeps group headers visible when every grouped value is selected', async () => {
+			const user = userEvent.setup();
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockGroupedOptions}
@@ -293,7 +295,7 @@ describe('CustomMultiSelect Component', () => {
 				/>,
 			);
 
-			fireEvent.mouseDown(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox'));
 
 			await waitFor(() => {
 				expect(screen.getByText('Group 1')).toBeInTheDocument();
@@ -302,6 +304,7 @@ describe('CustomMultiSelect Component', () => {
 		});
 
 		it('keeps every grouped option visible within its section when all are selected', async () => {
+			const user = userEvent.setup();
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockGroupedOptions}
@@ -309,7 +312,7 @@ describe('CustomMultiSelect Component', () => {
 				/>,
 			);
 
-			fireEvent.mouseDown(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox'));
 
 			await waitFor(() => {
 				const group1Region = screen.getByRole('group', {
@@ -329,6 +332,7 @@ describe('CustomMultiSelect Component', () => {
 		});
 
 		it('keeps group headers visible when value is the ALL sentinel', async () => {
+			const user = userEvent.setup();
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockGroupedOptions}
@@ -336,7 +340,7 @@ describe('CustomMultiSelect Component', () => {
 				/>,
 			);
 
-			fireEvent.mouseDown(screen.getByRole('combobox'));
+			await user.click(screen.getByRole('combobox'));
 
 			await waitFor(() => {
 				expect(screen.getByText('Group 1')).toBeInTheDocument();
