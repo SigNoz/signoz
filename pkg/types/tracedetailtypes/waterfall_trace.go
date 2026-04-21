@@ -17,7 +17,7 @@ type TraceSummary struct {
 	NumSpans uint64    `ch:"num_spans"`
 }
 
-// WaterfallTrace holds processed trace data with childern populated in spans
+// WaterfallTrace holds processed trace data with childern populated in spans.
 type WaterfallTrace struct {
 	StartTime                     uint64                    `json:"startTime"`
 	EndTime                       uint64                    `json:"endTime"`

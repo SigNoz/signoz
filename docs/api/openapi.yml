@@ -4373,20 +4373,7 @@ components:
           minimum: 0
           type: integer
       type: object
-    TracedetailtypesWaterfallRequest:
-      properties:
-        limit:
-          minimum: 0
-          type: integer
-        selectedSpanId:
-          type: string
-        uncollapsedSpans:
-          items:
-            type: string
-          nullable: true
-          type: array
-      type: object
-    TracedetailtypesWaterfallResponse:
+    TracedetailtypesGettableWaterfallTrace:
       properties:
         endTimestampMillis:
           minimum: 0
@@ -4419,6 +4406,19 @@ components:
         totalSpansCount:
           minimum: 0
           type: integer
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    TracedetailtypesWaterfallRequest:
+      properties:
+        limit:
+          minimum: 0
+          type: integer
+        selectedSpanId:
+          type: string
         uncollapsedSpans:
           items:
             type: string
@@ -4462,9 +4462,6 @@ components:
           type: string
         is_remote:
           type: string
-        kind:
-          format: int32
-          type: integer
         kind_string:
           type: string
         level:
@@ -4490,9 +4487,6 @@ components:
         status_message:
           type: string
         sub_tree_node_count:
-          minimum: 0
-          type: integer
-        timestamp:
           minimum: 0
           type: integer
         trace_id:
@@ -12736,7 +12730,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TracedetailtypesWaterfallResponse'
+                    $ref: '#/components/schemas/TracedetailtypesGettableWaterfallTrace'
                   status:
                     type: string
                 required:

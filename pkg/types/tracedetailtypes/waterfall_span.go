@@ -271,7 +271,7 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 	}
 }
 
-// getSpanIndex returns the index of matched span and -1 for no match
+// getSpanIndex returns the index of matched span and -1 for no match.
 func getSpanIndex(spans []*WaterfallSpan, targetSpanID string) int {
 	for i, s := range spans {
 		if s != nil && s.SpanID == targetSpanID {
