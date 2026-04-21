@@ -1,6 +1,9 @@
+/* eslint-disable no-restricted-globals */
+import { getScopedKey } from 'utils/storage';
+
 const get = (key: string): string | null => {
 	try {
-		return localStorage.getItem(key);
+		return localStorage.getItem(getScopedKey(key));
 	} catch (e) {
 		return '';
 	}
