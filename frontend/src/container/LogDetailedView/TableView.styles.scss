@@ -1,6 +1,6 @@
 .attribute-table-container {
 	.ant-table {
-		background: var(--l1-background);
+		background: var(--l2-background);
 
 		.ant-table-row:hover {
 			.ant-table-cell {
@@ -19,6 +19,7 @@
 
 		.ant-table-cell {
 			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 		}
 
 		.attribute-name {
@@ -54,10 +55,10 @@
 		}
 
 		.value-field-container {
-			background: var(--l3-background);
+			background: var(--l2-background);
 
 			&.attribute-pin {
-				background: var(--l1-background);
+				background: var(--l2-background);
 			}
 
 			.value-field {

@@ -50,7 +50,8 @@
 		.ant-collapse-header {
 			align-items: center;
 			border-radius: 2px;
-			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
+			background-color: var(--l3-background);
+			border: 1px solid var(--l3-border);
 
 			padding: 8px;
 
@@ -70,7 +71,7 @@
 
 		.ant-collapse-content {
 			padding: 0;
-			background: var(--l1-background);
+			background: var(--l2-background);
 			border-top: 1px solid var(--l1-border);
 
 			.ant-collapse-content-box {
