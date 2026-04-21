@@ -48,8 +48,8 @@ jest.mock(
 					{JSON.stringify({
 						legendPosition: props.legendConfig?.position,
 						isQueriesMerged: props.isQueriesMerged,
-						yAxisUnit: props.yAxisUnit,
-						decimalPrecision: props.decimalPrecision,
+						yAxisUnit: props?.yAxisUnit,
+						decimalPrecision: props?.decimalPrecision,
 					})}
 				</div>
 				{props.layoutChildren}
