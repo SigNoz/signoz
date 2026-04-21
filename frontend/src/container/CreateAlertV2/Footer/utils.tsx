@@ -47,6 +47,12 @@ export function validateCreateAlertState(
 		if (!notificationSettings.routingPolicies && !threshold.channels.length) {
 			return 'Please select at least one channel for each threshold or enable routing policies';
 		}
+		if (
+			threshold.recoveryThresholdValue &&
+			threshold.recoveryThresholdValue > threshold.thresholdValue
+		) {
+			return 'Recovery threshold should be less than threshold value';
+		}
 	}
 
 	return null;
@@ -236,6 +242,11 @@ export function buildCreateThresholdAlertRulePayload(
 			op: thresholdState.operator,
 			channels: threshold.channels,
 			targetUnit: threshold.unit,
+			recoveryTarget:
+				threshold.recoveryThresholdValue !== null &&
+				threshold.recoveryThresholdValue.toString() !== ''
+					? parseFloat(threshold.recoveryThresholdValue.toString())
+					: undefined,
 		}),
 	);
 

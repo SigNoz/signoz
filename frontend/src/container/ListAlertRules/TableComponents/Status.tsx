@@ -1,3 +1,4 @@
+import { Color } from '@signozhq/design-tokens';
 import { Tag } from 'antd';
 import { GettableAlert } from 'types/api/alerts/get';
 
@@ -17,6 +18,20 @@ function Status({ status }: StatusProps): JSX.Element {
 
 		case 'disabled': {
 			return <Tag>Disabled</Tag>;
+		}
+
+		case 'recovering': {
+			return (
+				<Tag
+					style={{
+						backgroundColor: `${Color.BG_CHERRY_300}20`,
+						borderColor: Color.BG_CHERRY_300,
+						color: Color.BG_CHERRY_300,
+					}}
+				>
+					Recovering
+				</Tag>
+			);
 		}
 
 		default: {
