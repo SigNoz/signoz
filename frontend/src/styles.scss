@@ -224,7 +224,7 @@ body {
 								left: 50%;
 								width: 12px;
 								height: 2px;
-								background: var(--bg-cherry-500);
+								background: var(--danger-background);
 								transform: translate(-50%, -50%) rotate(45deg);
 								border-radius: 1px;
 							}
@@ -333,7 +333,7 @@ body {
 							left: 50%;
 							width: 12px;
 							height: 2px;
-							background: var(--bg-cherry-500);
+							background: var(--danger-background);
 							transform: translate(-50%, -50%) rotate(45deg);
 							border-radius: 1px;
 						}
@@ -589,7 +589,7 @@ body {
 			background-color: var(--l3-background) !important;
 
 			&.ant-dropdown-menu-item-danger {
-				background-color: var(--bg-cherry-500) !important;
+				background-color: var(--danger-background) !important;
 			}
 		}
 	}
@@ -818,4 +818,14 @@ notifications	-  2050
 // overrides
 :root {
 	--input-focus-outline-width: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-size: inherit;
+	font-weight: inherit;
 }

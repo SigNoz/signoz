@@ -182,10 +182,11 @@ function ConfigureOIDCAuthnProvider({
 							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 						</Tooltip>
 					</div>
-
-					<Callout type="warning" size="small" showIcon className="callout">
-						OIDC won&apos;t be enabled unless you enter all the attributes above
-					</Callout>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							OIDC won&apos;t be enabled unless you enter all the attributes above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Advanced Settings */}

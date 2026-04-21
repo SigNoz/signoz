@@ -32,7 +32,7 @@
 			border-left: none !important;
 
 			&.hasErrors {
-				border-color: var(--bg-cherry-500);
+				border-color: var(--danger-background);
 			}
 		}
 	}
@@ -41,7 +41,7 @@
 		&.hasErrors {
 			.cm-editor {
 				.cm-content {
-					border-color: var(--bg-cherry-500);
+					border-color: var(--danger-background);
 					border-top-right-radius: 0px !important;
 					border-bottom-right-radius: 0px !important;
 				}
@@ -213,7 +213,7 @@
 
 		.invalid {
 			background-color: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-			color: var(--bg-cherry-500);
+			color: var(--danger-background);
 		}
 
 		.query-validation-status {
@@ -234,7 +234,7 @@
 
 				font-size: 12px;
 				font-family: 'Space Mono', monospace !important;
-				color: var(--bg-cherry-500);
+				color: var(--danger-background);
 				padding: 8px;
 			}
 		}

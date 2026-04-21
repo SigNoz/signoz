@@ -129,7 +129,6 @@ function CreateServiceAccountModal(): JSX.Element {
 					type="button"
 					variant="solid"
 					color="secondary"
-					size="sm"
 					onClick={handleClose}
 				>
 					<X size={12} />
@@ -142,7 +141,6 @@ function CreateServiceAccountModal(): JSX.Element {
 					form="create-sa-form"
 					variant="solid"
 					color="primary"
-					size="sm"
 					loading={isSubmitting}
 					disabled={!isValid}
 				>

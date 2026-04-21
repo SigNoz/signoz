@@ -502,9 +502,8 @@ function ServiceAccountDrawer({
 				<>
 					{!isDeleted && (
 						<Button
-							variant="ghost"
+							variant="link"
 							color="destructive"
-							className="sa-drawer__footer-btn"
 							onClick={(): void => {
 								setIsDeleteOpen(true);
 							}}
@@ -515,19 +514,13 @@ function ServiceAccountDrawer({
 					)}
 					{!isDeleted && (
 						<div className="sa-drawer__footer-right">
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								onClick={handleClose}
-							>
+							<Button variant="solid" color="secondary" onClick={handleClose}>
 								<X size={14} />
 								Cancel
 							</Button>
 							<Button
 								variant="solid"
 								color="primary"
-								size="sm"
 								loading={isSaving}
 								disabled={!isDirty}
 								onClick={handleSave}

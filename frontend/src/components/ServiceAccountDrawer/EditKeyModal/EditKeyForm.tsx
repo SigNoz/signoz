@@ -135,16 +135,12 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<Button
-					type="button"
-					className="edit-key-modal__footer-danger"
-					onClick={onRevokeClick}
-				>
+				<Button variant="ghost" color="destructive" onClick={onRevokeClick}>
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
 				<div className="edit-key-modal__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
+					<Button variant="solid" color="secondary" onClick={onClose}>
 						<X size={12} />
 						Cancel
 					</Button>
@@ -154,7 +150,6 @@ function EditKeyForm({
 						form={FORM_ID}
 						variant="solid"
 						color="primary"
-						size="sm"
 						loading={isSaving}
 						disabled={!isDirty}
 					>

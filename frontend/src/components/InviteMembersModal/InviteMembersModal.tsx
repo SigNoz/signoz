@@ -274,7 +274,6 @@ function InviteMembersModal({
 											<Button
 												variant="ghost"
 												color="destructive"
-												className="remove-team-member-button"
 												onClick={(): void => removeRow(row.id)}
 												aria-label="Remove row"
 											>
@@ -289,15 +288,16 @@ function InviteMembersModal({
 				</div>
 
 				{(hasInvalidEmails || hasInvalidRoles) && (
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						icon={<CircleAlert size={12} />}
-						className="invite-team-members-error-callout"
-					>
-						{getValidationErrorMessage()}
-					</Callout>
+					<div className="invite-members-modal__error-callout">
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							icon={<CircleAlert size={12} />}
+						>
+							{getValidationErrorMessage()}
+						</Callout>
+					</div>
 				)}
 			</div>
 
@@ -305,7 +305,6 @@ function InviteMembersModal({
 				<Button
 					variant="dashed"
 					color="secondary"
-					size="sm"
 					className="add-another-member-button"
 					prefix={<Plus size={12} color={Style.L1_FOREGROUND} />}
 					onClick={addRow}
@@ -318,7 +317,6 @@ function InviteMembersModal({
 						type="button"
 						variant="solid"
 						color="secondary"
-						size="sm"
 						onClick={resetAndClose}
 					>
 						<X size={12} />
@@ -328,7 +326,6 @@ function InviteMembersModal({
 					<Button
 						variant="solid"
 						color="primary"
-						size="sm"
 						onClick={handleSubmit}
 						disabled={isSubmitDisabled}
 						loading={isSubmitting}

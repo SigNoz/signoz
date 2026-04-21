@@ -160,9 +160,11 @@ function ConfigureSAMLAuthnProvider({
 						</Tooltip>
 					</div>
 
-					<Callout type="warning" size="small" showIcon className="callout">
-						SAML won&apos;t be enabled unless you enter all the attributes above
-					</Callout>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							SAML won&apos;t be enabled unless you enter all the attributes above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Advanced Settings */}

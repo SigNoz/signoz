@@ -5,12 +5,12 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 20px;
-		background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 20%, transparent);
 		padding-left: 3px;
 		padding-right: 8px;
 		cursor: pointer;
 		span {
-			color: var(--bg-cherry-500);
+			color: var(--danger-background);
 			font-size: 10px;
 			font-weight: 500;
 			line-height: 20px; /* 200% */

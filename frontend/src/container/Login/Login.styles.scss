@@ -65,13 +65,14 @@
 	width: 100%;
 
 	.error-content {
-		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-		border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--danger-background) 20%, transparent);
 		border-radius: 4px;
 
 		&__summary-section {
 			border-bottom: 1px solid
-				color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
 		}
 
 		&__summary {
@@ -124,7 +125,7 @@
 		&__message-badge-line {
 			background-image: radial-gradient(
 				circle,
-				color-mix(in srgb, var(--bg-cherry-500) 30%, transparent) 1px,
+				color-mix(in srgb, var(--danger-background) 30%, transparent) 1px,
 				transparent 2px
 			);
 		}
@@ -150,7 +151,7 @@
 		}
 
 		&__scroll-hint {
-			background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 20%, transparent);
 		}
 
 		&__scroll-hint-text {
@@ -166,8 +167,8 @@
 
 	.login-error-container {
 		.error-content {
-			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-			border-color: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+			border-color: color-mix(in srgb, var(--danger-background) 20%, transparent);
 
 			&__error-code {
 				color: var(--l2-foreground);

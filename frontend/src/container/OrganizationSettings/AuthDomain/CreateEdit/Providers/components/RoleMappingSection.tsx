@@ -193,10 +193,10 @@ function RoleMappingSection({
 											))}
 
 											<Button
-												variant="dashed"
+												variant="outlined"
+												color="secondary"
 												onClick={(): void => add({ groupName: '', role: 'VIEWER' })}
 												prefix={<Plus size={14} />}
-												className="role-mapping-section__add-btn"
 											>
 												Add Group Mapping
 											</Button>

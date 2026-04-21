@@ -6,7 +6,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
-		margin-bottom: 16px;
+		margin-bottom: 36px;
 	}
 
 	&__title {
@@ -82,18 +82,18 @@
 	input,
 	textarea {
 		height: 32px;
-		background: var(--l3-background) !important;
-		border: 1px solid var(--l1-border) !important;
+		background: var(--l2-background) !important;
+		border: 1px solid var(--l2-border) !important;
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
+		color: var(--l2-foreground) !important;
 
 		&::placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 			opacity: 1;
 		}
 
 		&:hover {
-			border-color: var(--l1-border) !important;
+			border-color: var(--l2-border) !important;
 		}
 
 		&:focus,
@@ -111,21 +111,21 @@
 		min-height: 60px !important;
 		max-height: 200px;
 		resize: vertical;
-		background: var(--l3-background) !important;
-		border: 1px solid var(--l1-border) !important;
+		background: var(--l2-background) !important;
+		border: 1px solid var(--l2-border) !important;
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
+		color: var(--l2-foreground) !important;
 		font-family: 'SF Mono', monospace;
 		font-size: 12px;
 		line-height: 18px;
 
 		&::placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 			font-family: Inter, sans-serif;
 		}
 
 		&:hover {
-			border-color: var(--l1-border) !important;
+			border-color: var(--l2-border) !important;
 		}
 
 		&:focus,
@@ -225,7 +225,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--l3-foreground);
+			background: var(--l2-foreground);
 			border-radius: 4px;
 
 			&:hover {
@@ -234,7 +234,11 @@
 		}
 
 		scrollbar-width: thin;
-		scrollbar-color: var(--l3-foreground) transparent;
+		scrollbar-color: var(--l2-foreground) transparent;
+	}
+
+	&__callout-wrapper {
+		display: flex;
 	}
 
 	.callout {

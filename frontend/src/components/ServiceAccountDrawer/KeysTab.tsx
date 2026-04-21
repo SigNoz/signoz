@@ -177,8 +177,8 @@ function KeysTab({
 					</a>
 				</p>
 				<Button
-					type="button"
-					className="keys-tab__learn-more"
+					variant="link"
+					color="primary"
 					onClick={async (): Promise<void> => {
 						await setIsAddKeyOpen(true);
 					}}

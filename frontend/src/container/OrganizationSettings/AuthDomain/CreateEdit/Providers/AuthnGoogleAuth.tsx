@@ -156,10 +156,12 @@ function ConfigureGoogleAuthAuthnProvider({
 						</Tooltip>
 					</div>
 
-					<Callout type="warning" size="small" showIcon className="callout">
-						Google OAuth2 won&apos;t be enabled unless you enter all the attributes
-						above
-					</Callout>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							Google OAuth2 won&apos;t be enabled unless you enter all the attributes
+							above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Google Workspace Groups (Advanced) */}

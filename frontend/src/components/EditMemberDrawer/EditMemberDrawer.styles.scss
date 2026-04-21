@@ -43,6 +43,7 @@
 		border-radius: 2px;
 		background: var(--l2-background);
 		border: 1px solid var(--l1-border);
+		box-sizing: border-box;
 
 		&--disabled {
 			cursor: not-allowed;
@@ -118,7 +119,6 @@
 	&__footer-left {
 		display: flex;
 		align-items: center;
-		gap: var(--spacing-8);
 	}
 
 	&__footer-right {

@@ -28,7 +28,7 @@
 				&.error {
 					.cm-editor {
 						.cm-content {
-							border-color: var(--bg-cherry-500) !important;
+							border-color: var(--danger-background) !important;
 						}
 					}
 				}
@@ -186,7 +186,7 @@
 					max-width: 300px;
 
 					.query-aggregation-error-message {
-						color: var(--bg-cherry-500);
+						color: var(--danger-background);
 						font-size: 12px;
 						line-height: 16px;
 					}

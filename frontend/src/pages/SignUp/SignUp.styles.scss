@@ -136,8 +136,9 @@
 		}
 
 		.signup-error-callout {
-			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-			border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
 			border-radius: 4px;
 			animation: horizontal-shaking 300ms ease-out;
 		}
