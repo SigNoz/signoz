@@ -5,10 +5,14 @@
 	gap: 10px;
 	padding: 7px 12px;
 	border-top: 1px solid var(--bg-slate-400);
-	background: rgba(0, 0, 0, 0.25);
+	background: var(--l3-background);
 	border-radius: 0 0 6px 6px;
-	// Pull the footer up against the flex gap from the parent container.
-	margin-top: -8px;
+
+	.kbdPinned {
+		background: var(--callout-primary-background);
+		border-color: var(--bg-robin-500);
+		color: var(--bg-robin-500);
+	}
 
 	&.lightMode {
 		background: rgba(0, 0, 0, 0.04);
@@ -17,22 +21,10 @@
 		.hint {
 			color: var(--bg-ink-400);
 		}
-
-		.unpin-button {
-			color: var(--bg-ink-400);
-			border-color: var(--bg-vanilla-300);
-
-			&:hover {
-				color: var(--bg-ink-500);
-				border-color: var(--bg-vanilla-400);
-				background: var(--bg-vanilla-200);
-			}
-		}
 	}
 
 	&.footer-pinned {
-		background: rgba(78, 116, 248, 0.06);
-		border-top-color: rgba(78, 116, 248, 0.25);
+		border-top-color: var(--bg-robin-800);
 	}
 
 	.hint {
@@ -41,27 +33,5 @@
 		gap: 5px;
 		font-size: 11px;
 		color: var(--bg-vanilla-400);
-	}
-
-	.unpin-button {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 3px 8px 3px 6px;
-		background: transparent;
-		border: 1px solid var(--bg-slate-200);
-		border-radius: 3px;
-		color: var(--bg-vanilla-400);
-		font-family: 'Inter', sans-serif;
-		font-size: 11px;
-		cursor: pointer;
-		transition: all 150ms ease;
-		flex-shrink: 0;
-
-		&:hover {
-			color: var(--bg-vanilla-100);
-			border-color: var(--bg-slate-100);
-			background: var(--bg-ink-200);
-		}
 	}
 }

@@ -6,24 +6,12 @@
 	height: 18px;
 	padding: 0 5px;
 	border-radius: 3px;
-	background: var(--bg-ink-200);
-	border: 1px solid var(--bg-slate-200);
+	background: var(--l2-background);
+	border: 1px solid var(--l3-border);
 	border-bottom-width: 2px;
-	color: var(--bg-vanilla-100);
+	color: var(--l2-foreground);
 	font-family: 'Space Mono', monospace;
 	font-size: 10px;
 	font-weight: 600;
 	line-height: 1;
-
-	&.lightMode {
-		background: var(--bg-vanilla-200);
-		border-color: var(--bg-vanilla-400);
-		color: var(--bg-ink-400);
-	}
-
-	&.pinned {
-		background: rgba(78, 116, 248, 0.12);
-		border-color: rgba(78, 116, 248, 0.5);
-		color: var(--bg-robin-300);
-	}
 }

@@ -1,27 +1,12 @@
 import cx from 'classnames';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import Styles from './Kbd.module.scss';
 
 interface KbdProps {
 	children: React.ReactNode;
-	isPinned?: boolean;
+	className?: string;
 }
 
-export default function Kbd({
-	children,
-	isPinned = false,
-}: KbdProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
-	return (
-		<kbd
-			className={cx(Styles.kbd, {
-				[Styles.lightMode]: !isDarkMode,
-				[Styles.pinned]: isPinned,
-			})}
-		>
-			{children}
-		</kbd>
-	);
+export default function Kbd({ children, className }: KbdProps): JSX.Element {
+	return <kbd className={cx(Styles.kbd, className)}>{children}</kbd>;
 }

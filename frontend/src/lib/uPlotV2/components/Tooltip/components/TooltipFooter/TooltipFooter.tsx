@@ -1,3 +1,4 @@
+import { Button } from '@signozhq/ui';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
@@ -34,9 +35,11 @@ export default function TooltipFooter({
 				{isPinned ? (
 					<>
 						<span>Press</span>
-						<Kbd isPinned>{pinKey.toUpperCase()}</Kbd>
+						<Kbd className={cx({ [Styles.kbdPinned]: isPinned })}>
+							{pinKey.toUpperCase()}
+						</Kbd>
 						<span>or</span>
-						<Kbd isPinned>Esc</Kbd>
+						<Kbd className={cx({ [Styles.kbdPinned]: isPinned })}>Esc</Kbd>
 						<span>to unpin</span>
 					</>
 				) : (
@@ -49,16 +52,17 @@ export default function TooltipFooter({
 			</div>
 
 			{isPinned && (
-				<button
-					type="button"
-					className={Styles.unpinButton}
+				<Button
+					variant="outlined"
+					color="secondary"
+					size="sm"
 					onClick={dismiss}
 					aria-label="Unpin tooltip"
 					data-testid="uplot-tooltip-unpin"
 				>
 					<X size={10} />
 					<span>Unpin</span>
-				</button>
+				</Button>
 			)}
 		</div>
 	);

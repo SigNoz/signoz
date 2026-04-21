@@ -22,6 +22,10 @@
 		.divider {
 			background-color: var(--bg-vanilla-300);
 		}
+
+		&.pinned {
+			border-color: var(--bg-robin-500);
+		}
 	}
 
 	.divider {

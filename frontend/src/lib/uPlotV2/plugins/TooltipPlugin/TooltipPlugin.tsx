@@ -29,9 +29,8 @@ import {
 	createLayoutObserver,
 } from './utils';
 
-import './TooltipPlugin.styles.scss';
+import Styles from './TooltipPlugin.module.scss';
 
-const INTERACTIVE_CONTAINER_CLASSNAME = '.tooltip-plugin-container';
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
 const HOVER_DISMISS_DELAY_MS = 100;
@@ -136,8 +135,8 @@ export default function TooltipPlugin({
 		// Dismiss the tooltip when the user clicks / presses a key
 		// outside the tooltip container while it is pinned.
 		const onOutsideInteraction = (event: Event): void => {
-			const target = event.target as HTMLElement;
-			if (!target.closest(INTERACTIVE_CONTAINER_CLASSNAME)) {
+			const target = event.target as Node;
+			if (!containerRef.current?.contains(target)) {
 				dismissTooltip();
 			}
 		};
@@ -502,9 +501,8 @@ export default function TooltipPlugin({
 
 	return createPortal(
 		<div
-			className={cx('tooltip-plugin-container', {
-				pinned: isPinned,
-				visible: isTooltipVisible,
+			className={cx(Styles.tooltipPluginContainer, {
+				[Styles.visible]: isTooltipVisible,
 			})}
 			style={{
 				...style,
@@ -515,6 +513,7 @@ export default function TooltipPlugin({
 			aria-atomic="true"
 			aria-hidden={!isTooltipVisible}
 			ref={containerRef}
+			data-pinned={isPinned}
 			data-testid="tooltip-plugin-container"
 		>
 			{tooltipBody}

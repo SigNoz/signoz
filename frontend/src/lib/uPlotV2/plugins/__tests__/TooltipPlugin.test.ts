@@ -149,7 +149,7 @@ describe('TooltipPlugin', () => {
 				}),
 			);
 
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+			expect(screen.queryByTestId('tooltip-plugin-container')).toBeNull();
 		});
 
 		it('registers all required uPlot hooks on mount', () => {
@@ -187,9 +187,7 @@ describe('TooltipPlugin', () => {
 			expect(renderTooltip).toHaveBeenCalled();
 			expect(screen.getByText('tooltip-body')).toBeInTheDocument();
 
-			const container = document.querySelector(
-				'.tooltip-plugin-container',
-			) as HTMLElement;
+			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).not.toBeNull();
 			expect(container.parentElement).toBe(document.body);
 		});
@@ -208,9 +206,7 @@ describe('TooltipPlugin', () => {
 
 			renderAndActivateHover(config);
 
-			const container = document.querySelector(
-				'.tooltip-plugin-container',
-			) as HTMLElement;
+			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container.parentElement).toBe(document.body);
 
 			const fullscreenRoot = document.createElement('div');
@@ -256,7 +252,7 @@ describe('TooltipPlugin', () => {
 			renderAndActivateHover(config, undefined, { canPinTooltip: true });
 
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 
 			act(() => {
 				document.body.dispatchEvent(
@@ -270,7 +266,7 @@ describe('TooltipPlugin', () => {
 			return waitFor(() => {
 				const updated = screen.getByTestId('tooltip-plugin-container');
 				expect(updated).toBeInTheDocument();
-				expect(updated.classList.contains('pinned')).toBe(true);
+				expect(updated.getAttribute('data-pinned') === 'true').toBe(true);
 			});
 		});
 
@@ -341,13 +337,10 @@ describe('TooltipPlugin', () => {
 				);
 			});
 
-			// Wait until the tooltip is actually pinned (pointer events enabled)
+			// Wait until the tooltip is actually pinned.
 			await waitFor(() => {
-				const container = document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement | null;
-				expect(container).not.toBeNull();
-				expect(container?.classList.contains('pinned')).toBe(true);
+				const container = screen.getByTestId('tooltip-plugin-container');
+				expect(container.getAttribute('data-pinned') === 'true').toBe(true);
 			});
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
@@ -360,8 +353,7 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 				expect(container.textContent).toBe('');
 			});
 		});
@@ -399,9 +391,9 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				(document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement)?.classList.contains('pinned'),
+				screen
+					.getByTestId('tooltip-plugin-container')
+					.getAttribute('data-pinned') === 'true',
 			).toBe(true);
 
 			// Simulate data update – should dismiss the pinned tooltip.
@@ -413,8 +405,7 @@ describe('TooltipPlugin', () => {
 			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).toBeInTheDocument();
 			expect(container.getAttribute('aria-hidden')).toBe('true');
-			expect(container.classList.contains('visible')).toBe(false);
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 
 			jest.useRealTimers();
 		});
@@ -452,9 +443,9 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				document
-					.querySelector('.tooltip-plugin-container')
-					?.classList.contains('pinned'),
+				screen
+					.getByTestId('tooltip-plugin-container')
+					.getAttribute('data-pinned') === 'true',
 			).toBe(true);
 
 			// Click outside the tooltip container.
@@ -468,8 +459,7 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -508,9 +498,9 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				document
-					.querySelector('.tooltip-plugin-container')
-					?.classList.contains('pinned'),
+				screen
+					.getByTestId('tooltip-plugin-container')
+					.getAttribute('data-pinned') === 'true',
 			).toBe(true);
 
 			// Press Escape to release.
@@ -525,8 +515,7 @@ describe('TooltipPlugin', () => {
 				const container = screen.getByTestId('tooltip-plugin-container');
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -554,7 +543,7 @@ describe('TooltipPlugin', () => {
 				expect(
 					screen
 						.getByTestId('tooltip-plugin-container')
-						.classList.contains('pinned'),
+						.getAttribute('data-pinned') === 'true',
 				).toBe(true);
 			});
 
@@ -571,7 +560,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const container = screen.getByTestId('tooltip-plugin-container');
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -590,8 +579,8 @@ describe('TooltipPlugin', () => {
 
 			const container = screen.getByTestId('tooltip-plugin-container');
 			// Tooltip should still be hovering (visible), not dismissed.
-			expect(container.classList.contains('visible')).toBe(true);
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.getAttribute('aria-hidden')).toBe('false');
+			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 		});
 
 		it('does not unpin on arbitrary keys that are not Escape or the pin key', async () => {
@@ -616,7 +605,7 @@ describe('TooltipPlugin', () => {
 				expect(
 					screen
 						.getByTestId('tooltip-plugin-container')
-						.classList.contains('pinned'),
+						.getAttribute('data-pinned') === 'true',
 				).toBe(true);
 			});
 
@@ -632,7 +621,7 @@ describe('TooltipPlugin', () => {
 				expect(
 					screen
 						.getByTestId('tooltip-plugin-container')
-						.classList.contains('pinned'),
+						.getAttribute('data-pinned') === 'true',
 				).toBe(true);
 			});
 
@@ -676,7 +665,7 @@ describe('TooltipPlugin', () => {
 			});
 
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
 		});
 
 		it('does not pin when hover is not active', () => {
@@ -710,8 +699,8 @@ describe('TooltipPlugin', () => {
 			// The container exists once the plot is initialised, but it should
 			// be hidden and not pinned since hover was never activated.
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.classList.contains('pinned')).toBe(false);
-			expect(container.classList.contains('visible')).toBe(false);
+			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.getAttribute('aria-hidden')).toBe('true');
 		});
 
 		it('ignores other keys and only pins on the configured pinKey', async () => {
@@ -722,11 +711,11 @@ describe('TooltipPlugin', () => {
 				pinKey: 'p',
 			});
 
-			// Default key 'l' should NOT pin when pinKey is 'p'.
+			// 'l' should NOT pin when pinKey is 'p'.
 			act(() => {
 				document.body.dispatchEvent(
 					new KeyboardEvent('keydown', {
-						key: DEFAULT_PIN_TOOLTIP_KEY,
+						key: 'l',
 						bubbles: true,
 					}),
 				);
@@ -736,7 +725,7 @@ describe('TooltipPlugin', () => {
 				expect(
 					screen
 						.getByTestId('tooltip-plugin-container')
-						.classList.contains('pinned'),
+						.getAttribute('data-pinned') === 'true',
 				).toBe(false);
 			});
 
@@ -751,7 +740,7 @@ describe('TooltipPlugin', () => {
 				expect(
 					screen
 						.getByTestId('tooltip-plugin-container')
-						.classList.contains('pinned'),
+						.getAttribute('data-pinned') === 'true',
 				).toBe(true);
 			});
 		});
