@@ -10819,7 +10819,7 @@ paths:
                 description: Two disabled log count queries (A = errors, B = total)
                   combined via a builder_formula into a percentage. Classic service-level
                   error-rate alert pattern for log-based signals.
-                summary: Logs error rate — error count / total count × 100
+                summary: Logs error rate error count / total count × 100
                 value:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
@@ -10901,7 +10901,7 @@ paths:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
                   count exceeds zero.
-                summary: Logs threshold — count() over filter
+                summary: Logs threshold count() over filter
                 value:
                   alert: Payments service panic logs
                   alertType: LOGS_BASED_ALERT
@@ -10967,7 +10967,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality — SigNoz compares
+                  in the `anomaly` function with daily seasonality SigNoz compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -11027,7 +11027,7 @@ paths:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
                   for queries that combine series with group_right or other Prom operators.
-                summary: Metric threshold — PromQL rule
+                summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
                   alertType: METRIC_BASED_ALERT
@@ -11063,7 +11063,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 10m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -11084,7 +11084,7 @@ paths:
                   * 100 by combining two disabled base queries with a builder_formula.
                   The formula emits 0–100, so compositeQuery.unit is set to "percent"
                   and the target is a bare number.
-                summary: Metric threshold — multi-query formula
+                summary: Metric threshold multi-query formula
                 value:
                   alert: PersistentVolume above 80% utilization
                   alertType: METRIC_BASED_ALERT
@@ -11155,8 +11155,8 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
-                      frequency: 1m
+                      evalWindow: 30m
+                      frequency: 5m
                   labels:
                     severity: critical
                   notificationSettings:
@@ -11173,10 +11173,8 @@ paths:
                   version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
-                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`
-                  (a request-derived 0–1 ratio — the deprecated `k8s.pod.cpu.utilization`
-                  reports cores-per-second, not a ratio).
-                summary: Metric threshold — single builder query
+                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
+                summary: Metric threshold single builder query
                 value:
                   alert: Pod CPU above 80% of request
                   alertType: METRIC_BASED_ALERT
@@ -11225,7 +11223,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 15m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -11343,13 +11341,13 @@ paths:
                   version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
-                  with its own target, op, matchType, and channels — so warnings and
+                  with its own target, op, matchType, and channels so warnings and
                   pages route to different receivers. `alertOnAbsent` + `absentFor`
                   fires a no-data alert when the query returns no series for 15 consecutive
                   evaluations.
                 summary: Tiered thresholds with per-tier channels
                 value:
-                  alert: Kafka consumer lag — warn / critical
+                  alert: Kafka consumer lag warn / critical
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Consumer lag for {{$topic}} partition {{$partition}}
@@ -11445,7 +11443,7 @@ paths:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
                   a percentage. Mirrors the common request-error-rate dashboard shape.
-                summary: Traces error rate — error spans / total spans × 100
+                summary: Traces error rate error spans / total spans × 100
                 value:
                   alert: Search-api error rate above 5%
                   alertType: TRACES_BASED_ALERT
@@ -11534,9 +11532,9 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) — SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
                   shape when series and target live in different units.
-                summary: Traces threshold — p99 latency (ns → s conversion)
+                summary: Traces threshold p99 latency (ns → s conversion)
                 value:
                   alert: Search API p99 latency above 5s
                   alertType: TRACES_BASED_ALERT
@@ -11770,7 +11768,7 @@ paths:
                 description: Two disabled log count queries (A = errors, B = total)
                   combined via a builder_formula into a percentage. Classic service-level
                   error-rate alert pattern for log-based signals.
-                summary: Logs error rate — error count / total count × 100
+                summary: Logs error rate error count / total count × 100
                 value:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
@@ -11852,7 +11850,7 @@ paths:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
                   count exceeds zero.
-                summary: Logs threshold — count() over filter
+                summary: Logs threshold count() over filter
                 value:
                   alert: Payments service panic logs
                   alertType: LOGS_BASED_ALERT
@@ -11918,7 +11916,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality — SigNoz compares
+                  in the `anomaly` function with daily seasonality SigNoz compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -11978,7 +11976,7 @@ paths:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
                   for queries that combine series with group_right or other Prom operators.
-                summary: Metric threshold — PromQL rule
+                summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
                   alertType: METRIC_BASED_ALERT
@@ -12014,7 +12012,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 10m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -12035,7 +12033,7 @@ paths:
                   * 100 by combining two disabled base queries with a builder_formula.
                   The formula emits 0–100, so compositeQuery.unit is set to "percent"
                   and the target is a bare number.
-                summary: Metric threshold — multi-query formula
+                summary: Metric threshold multi-query formula
                 value:
                   alert: PersistentVolume above 80% utilization
                   alertType: METRIC_BASED_ALERT
@@ -12106,8 +12104,8 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
-                      frequency: 1m
+                      evalWindow: 30m
+                      frequency: 5m
                   labels:
                     severity: critical
                   notificationSettings:
@@ -12124,10 +12122,8 @@ paths:
                   version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
-                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`
-                  (a request-derived 0–1 ratio — the deprecated `k8s.pod.cpu.utilization`
-                  reports cores-per-second, not a ratio).
-                summary: Metric threshold — single builder query
+                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
+                summary: Metric threshold single builder query
                 value:
                   alert: Pod CPU above 80% of request
                   alertType: METRIC_BASED_ALERT
@@ -12176,7 +12172,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 15m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -12294,13 +12290,13 @@ paths:
                   version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
-                  with its own target, op, matchType, and channels — so warnings and
+                  with its own target, op, matchType, and channels so warnings and
                   pages route to different receivers. `alertOnAbsent` + `absentFor`
                   fires a no-data alert when the query returns no series for 15 consecutive
                   evaluations.
                 summary: Tiered thresholds with per-tier channels
                 value:
-                  alert: Kafka consumer lag — warn / critical
+                  alert: Kafka consumer lag warn / critical
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Consumer lag for {{$topic}} partition {{$partition}}
@@ -12396,7 +12392,7 @@ paths:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
                   a percentage. Mirrors the common request-error-rate dashboard shape.
-                summary: Traces error rate — error spans / total spans × 100
+                summary: Traces error rate error spans / total spans × 100
                 value:
                   alert: Search-api error rate above 5%
                   alertType: TRACES_BASED_ALERT
@@ -12485,9 +12481,9 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) — SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
                   shape when series and target live in different units.
-                summary: Traces threshold — p99 latency (ns → s conversion)
+                summary: Traces threshold p99 latency (ns → s conversion)
                 value:
                   alert: Search API p99 latency above 5s
                   alertType: TRACES_BASED_ALERT
@@ -12624,7 +12620,7 @@ paths:
                 description: Two disabled log count queries (A = errors, B = total)
                   combined via a builder_formula into a percentage. Classic service-level
                   error-rate alert pattern for log-based signals.
-                summary: Logs error rate — error count / total count × 100
+                summary: Logs error rate error count / total count × 100
                 value:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
@@ -12706,7 +12702,7 @@ paths:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
                   count exceeds zero.
-                summary: Logs threshold — count() over filter
+                summary: Logs threshold count() over filter
                 value:
                   alert: Payments service panic logs
                   alertType: LOGS_BASED_ALERT
@@ -12772,7 +12768,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality — SigNoz compares
+                  in the `anomaly` function with daily seasonality SigNoz compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -12832,7 +12828,7 @@ paths:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
                   for queries that combine series with group_right or other Prom operators.
-                summary: Metric threshold — PromQL rule
+                summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
                   alertType: METRIC_BASED_ALERT
@@ -12868,7 +12864,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 10m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -12889,7 +12885,7 @@ paths:
                   * 100 by combining two disabled base queries with a builder_formula.
                   The formula emits 0–100, so compositeQuery.unit is set to "percent"
                   and the target is a bare number.
-                summary: Metric threshold — multi-query formula
+                summary: Metric threshold multi-query formula
                 value:
                   alert: PersistentVolume above 80% utilization
                   alertType: METRIC_BASED_ALERT
@@ -12960,8 +12956,8 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
-                      frequency: 1m
+                      evalWindow: 30m
+                      frequency: 5m
                   labels:
                     severity: critical
                   notificationSettings:
@@ -12978,10 +12974,8 @@ paths:
                   version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
-                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`
-                  (a request-derived 0–1 ratio — the deprecated `k8s.pod.cpu.utilization`
-                  reports cores-per-second, not a ratio).
-                summary: Metric threshold — single builder query
+                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
+                summary: Metric threshold single builder query
                 value:
                   alert: Pod CPU above 80% of request
                   alertType: METRIC_BASED_ALERT
@@ -13030,7 +13024,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 15m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -13148,13 +13142,13 @@ paths:
                   version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
-                  with its own target, op, matchType, and channels — so warnings and
+                  with its own target, op, matchType, and channels so warnings and
                   pages route to different receivers. `alertOnAbsent` + `absentFor`
                   fires a no-data alert when the query returns no series for 15 consecutive
                   evaluations.
                 summary: Tiered thresholds with per-tier channels
                 value:
-                  alert: Kafka consumer lag — warn / critical
+                  alert: Kafka consumer lag warn / critical
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Consumer lag for {{$topic}} partition {{$partition}}
@@ -13250,7 +13244,7 @@ paths:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
                   a percentage. Mirrors the common request-error-rate dashboard shape.
-                summary: Traces error rate — error spans / total spans × 100
+                summary: Traces error rate error spans / total spans × 100
                 value:
                   alert: Search-api error rate above 5%
                   alertType: TRACES_BASED_ALERT
@@ -13339,9 +13333,9 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) — SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
                   shape when series and target live in different units.
-                summary: Traces threshold — p99 latency (ns → s conversion)
+                summary: Traces threshold p99 latency (ns → s conversion)
                 value:
                   alert: Search API p99 latency above 5s
                   alertType: TRACES_BASED_ALERT
@@ -13981,7 +13975,7 @@ paths:
                 description: Two disabled log count queries (A = errors, B = total)
                   combined via a builder_formula into a percentage. Classic service-level
                   error-rate alert pattern for log-based signals.
-                summary: Logs error rate — error count / total count × 100
+                summary: Logs error rate error count / total count × 100
                 value:
                   alert: Payments-api error log rate above 1%
                   alertType: LOGS_BASED_ALERT
@@ -14063,7 +14057,7 @@ paths:
                 description: Counts matching log records (ERROR severity + body contains)
                   over a rolling window. Fires at least once per evaluation when the
                   count exceeds zero.
-                summary: Logs threshold — count() over filter
+                summary: Logs threshold count() over filter
                 value:
                   alert: Payments service panic logs
                   alertType: LOGS_BASED_ALERT
@@ -14129,7 +14123,7 @@ paths:
               metric_anomaly:
                 description: Anomaly rules are not yet supported under schemaVersion
                   v2alpha1, so this example uses the v1 shape. Wraps a builder query
-                  in the `anomaly` function with daily seasonality — SigNoz compares
+                  in the `anomaly` function with daily seasonality SigNoz compares
                   each point against the forecast for that time of day. Fires when
                   the anomaly score stays below the threshold for the entire window;
                   `requireMinPoints` guards against noisy intervals.
@@ -14189,7 +14183,7 @@ paths:
                 description: PromQL expression instead of the builder. Dotted OTEL
                   resource attributes are quoted ("deployment.environment"). Useful
                   for queries that combine series with group_right or other Prom operators.
-                summary: Metric threshold — PromQL rule
+                summary: Metric threshold PromQL rule
                 value:
                   alert: Kafka consumer group lag above 1000
                   alertType: METRIC_BASED_ALERT
@@ -14225,7 +14219,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 10m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -14246,7 +14240,7 @@ paths:
                   * 100 by combining two disabled base queries with a builder_formula.
                   The formula emits 0–100, so compositeQuery.unit is set to "percent"
                   and the target is a bare number.
-                summary: Metric threshold — multi-query formula
+                summary: Metric threshold multi-query formula
                 value:
                   alert: PersistentVolume above 80% utilization
                   alertType: METRIC_BASED_ALERT
@@ -14317,8 +14311,8 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
-                      frequency: 1m
+                      evalWindow: 30m
+                      frequency: 5m
                   labels:
                     severity: critical
                   notificationSettings:
@@ -14335,10 +14329,8 @@ paths:
                   version: v5
               metric_threshold_single:
                 description: Fires when a pod consumes more than 80% of its requested
-                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`
-                  (a request-derived 0–1 ratio — the deprecated `k8s.pod.cpu.utilization`
-                  reports cores-per-second, not a ratio).
-                summary: Metric threshold — single builder query
+                  CPU for the whole evaluation window. Uses `k8s.pod.cpu_request_utilization`.
+                summary: Metric threshold single builder query
                 value:
                   alert: Pod CPU above 80% of request
                   alertType: METRIC_BASED_ALERT
@@ -14387,7 +14379,7 @@ paths:
                   evaluation:
                     kind: rolling
                     spec:
-                      evalWindow: 5m
+                      evalWindow: 15m
                       frequency: 1m
                   labels:
                     severity: critical
@@ -14505,13 +14497,13 @@ paths:
                   version: v5
               tiered_thresholds:
                 description: Two tiers (warning and critical) in a single rule, each
-                  with its own target, op, matchType, and channels — so warnings and
+                  with its own target, op, matchType, and channels so warnings and
                   pages route to different receivers. `alertOnAbsent` + `absentFor`
                   fires a no-data alert when the query returns no series for 15 consecutive
                   evaluations.
                 summary: Tiered thresholds with per-tier channels
                 value:
-                  alert: Kafka consumer lag — warn / critical
+                  alert: Kafka consumer lag warn / critical
                   alertType: METRIC_BASED_ALERT
                   annotations:
                     description: Consumer lag for {{$topic}} partition {{$partition}}
@@ -14607,7 +14599,7 @@ paths:
                 description: Two disabled trace count queries (A = error spans where
                   hasError=true, B = total spans) combined via a builder_formula into
                   a percentage. Mirrors the common request-error-rate dashboard shape.
-                summary: Traces error rate — error spans / total spans × 100
+                summary: Traces error rate error spans / total spans × 100
                 value:
                   alert: Search-api error rate above 5%
                   alertType: TRACES_BASED_ALERT
@@ -14696,9 +14688,9 @@ paths:
               traces_threshold_latency:
                 description: Builder query against the traces signal with p99(duration_nano).
                   The series unit is ns (compositeQuery.unit), the target is in seconds
-                  (threshold.targetUnit) — SigNoz converts before comparing. Canonical
+                  (threshold.targetUnit) SigNoz converts before comparing. Canonical
                   shape when series and target live in different units.
-                summary: Traces threshold — p99 latency (ns → s conversion)
+                summary: Traces threshold p99 latency (ns → s conversion)
                 value:
                   alert: Search API p99 latency above 5s
                   alertType: TRACES_BASED_ALERT

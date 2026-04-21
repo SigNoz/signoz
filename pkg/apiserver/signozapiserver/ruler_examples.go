@@ -72,7 +72,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 						},
 					},
 				},
-				"evaluation": rolling("5m", "1m"),
+				"evaluation": rolling("15m", "1m"),
 				"notificationSettings": map[string]any{
 					"groupBy":  []any{"k8s.pod.name", "deployment.environment"},
 					"renotify": renotify("4h", "firing"),
@@ -155,7 +155,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 						},
 					},
 				},
-				"evaluation": rolling("5m", "1m"),
+				"evaluation": rolling("30m", "5m"),
 				"notificationSettings": map[string]any{
 					"groupBy":  []any{"k8s.namespace.name", "k8s.persistentvolumeclaim.name"},
 					"renotify": renotify("2h", "firing"),
@@ -207,7 +207,7 @@ func postableRuleExamples() []handler.OpenAPIExample {
 						},
 					},
 				},
-				"evaluation": rolling("5m", "1m"),
+				"evaluation": rolling("10m", "1m"),
 				"notificationSettings": map[string]any{
 					"groupBy":  []any{"group", "topic"},
 					"renotify": renotify("1h", "firing"),

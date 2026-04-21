@@ -4774,7 +4774,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4899,7 +4899,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4984,8 +4984,8 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	algorithm?: string;
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType: RuletypesMatchTypeDTO;
-	op: RuletypesCompareOperatorDTO;
+	matchType?: RuletypesMatchTypeDTO;
+	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
