@@ -172,7 +172,7 @@ describe('K8sBaseList', () => {
 
 		it('should call fetchListData with default filters', async () => {
 			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledWith();
+				expect(fetchListDataMock).toHaveBeenCalled();
 			});
 
 			const [filters] = fetchListDataMock.mock.calls[0];
@@ -354,7 +354,7 @@ describe('K8sBaseList', () => {
 
 		it('should call fetchListData with orderBy/groupBy/offset/limit from URL', async () => {
 			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledWith();
+				expect(fetchListDataMock).toHaveBeenCalled();
 			});
 
 			const [filters] = fetchListDataMock.mock.calls[0];
@@ -445,7 +445,7 @@ describe('K8sBaseList', () => {
 
 		it('should still call fetchListData', async () => {
 			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledWith();
+				expect(fetchListDataMock).toHaveBeenCalled();
 			});
 		});
 	});
@@ -490,7 +490,7 @@ describe('K8sBaseList', () => {
 
 		it('should call fetchListData even when error occurs', async () => {
 			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledWith();
+				expect(fetchListDataMock).toHaveBeenCalled();
 			});
 		});
 

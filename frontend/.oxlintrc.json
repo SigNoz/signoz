@@ -434,7 +434,7 @@
     "jest/no-standalone-expect": "warn",
     "jest/no-test-prefixes": "warn",
     "jest/no-test-return-statement": "warn",
-    "jest/prefer-called-with": "warn",
+    "jest/prefer-called-with": "off", // The auto-fix for this can break the tests when the function has args
     "jest/prefer-comparison-matcher": "warn",
     "jest/prefer-equality-matcher": "warn",
     "jest/prefer-expect-resolves": "warn",
