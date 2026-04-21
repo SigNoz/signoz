@@ -1445,11 +1445,18 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 	// Custom dropdown render with sections support
 	const customDropdownRender = useCallback((): React.ReactElement => {
-		// Process options based on current search
-		const processedOptions =
-			selectedValues.length > 0 && isEmpty(searchText)
-				? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
-				: filteredOptions;
+		// When ALL is selected, skip prioritization so section headers
+		// (e.g. "Related values" / "All values") remain visible instead of
+		// being collapsed away by every option getting hoisted to the top.
+		const shouldPrioritize =
+			selectedValues.length > 0 &&
+			isEmpty(searchText) &&
+			!allOptionShown &&
+			!isAllSelected;
+
+		const processedOptions = shouldPrioritize
+			? prioritizeOrAddOptionForMultiSelect(filteredOptions, selectedValues)
+			: filteredOptions;
 
 		const { sectionOptions, nonSectionOptions } = splitOptions(processedOptions);
 
@@ -1747,6 +1754,8 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	}, [
 		selectedValues,
 		searchText,
+		allOptionShown,
+		isAllSelected,
 		filteredOptions,
 		splitOptions,
 		isLabelPresent,
