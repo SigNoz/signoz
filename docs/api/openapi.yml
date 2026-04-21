@@ -4286,10 +4286,29 @@ components:
       - attribute
       - resource
       type: string
+    SpanattributemappingtypesGettableGroups:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpanattributemappingtypesGroup'
+          nullable: true
+          type: array
+      required:
+      - items
+      type: object
+    SpanattributemappingtypesGettableMappers:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpanattributemappingtypesMapper'
+          type: array
+      required:
+      - items
+      type: object
     SpanattributemappingtypesGroup:
       properties:
         category:
-          type: string
+          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
         condition:
           $ref: '#/components/schemas/SpanattributemappingtypesCondition'
         createdAt:
@@ -4303,7 +4322,7 @@ components:
           type: string
         name:
           type: string
-        ordId:
+        orgId:
           type: string
         updatedAt:
           format: date-time
@@ -4312,31 +4331,13 @@ components:
           type: string
       required:
       - id
-      - ordId
+      - orgId
       - name
       - category
       - condition
       - enabled
       type: object
-    SpanattributemappingtypesListGroupsResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpanattributemappingtypesGroup'
-          nullable: true
-          type: array
-      required:
-      - items
-      type: object
-    SpanattributemappingtypesListMappersResponse:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpanattributemappingtypesMapper'
-          nullable: true
-          type: array
-      required:
-      - items
+    SpanattributemappingtypesGroupCategory:
       type: object
     SpanattributemappingtypesMapper:
       properties:
@@ -4397,7 +4398,7 @@ components:
     SpanattributemappingtypesPostableGroup:
       properties:
         category:
-          type: string
+          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
         condition:
           $ref: '#/components/schemas/SpanattributemappingtypesCondition'
         enabled:
@@ -9060,11 +9061,12 @@ paths:
         org.
       operationId: ListSpanAttributeMappingGroups
       parameters:
-      - in: query
+      - explode: true
+        in: query
         name: category
         schema:
-          nullable: true
-          type: string
+          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
+        style: deepObject
       - in: query
         name: enabled
         schema:
@@ -9077,7 +9079,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesListGroupsResponse'
+                    $ref: '#/components/schemas/SpanattributemappingtypesGettableGroups'
                   status:
                     type: string
                 required:
@@ -9177,6 +9179,259 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Create a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+  /api/v1/span_attribute_mapping_groups/{groupId}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a mapping group and cascades to all its mappers.
+      operationId: DeleteMappingGroup
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+    patch:
+      deprecated: false
+      description: Partially updates an existing mapping group's name, condition,
+        or enabled state.
+      operationId: UpdateMappingGroup
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableGroup'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesGroup'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a span attribute mapping group
+      tags:
+      - span-attribute-mapping
+  /api/v1/span_attribute_mapping_groups/{groupId}/mappers:
+    get:
+      deprecated: false
+      description: Returns all attribute mappers belonging to a mapping group.
+      operationId: ListMappers
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesGettableMappers'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List span attribute mappers for a group
+      tags:
+      - span-attribute-mapping
+    post:
+      deprecated: false
+      description: Adds a new attribute mapper to the specified mapping group.
+      operationId: CreateMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanattributemappingtypesPostableMapper'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanattributemappingtypesMapper'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a span attribute mapper
       tags:
       - span-attribute-mapping
   /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}:
@@ -9302,259 +9557,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Update a span attribute mapper
-      tags:
-      - span-attribute-mapping
-  /api/v1/span_attribute_mapping_groups/{id}:
-    delete:
-      deprecated: false
-      description: Hard-deletes a mapping group and cascades to all its mappers.
-      operationId: DeleteMappingGroup
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete a span attribute mapping group
-      tags:
-      - span-attribute-mapping
-    patch:
-      deprecated: false
-      description: Partially updates an existing mapping group's name, condition,
-        or enabled state.
-      operationId: UpdateMappingGroup
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableGroup'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesGroup'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update a span attribute mapping group
-      tags:
-      - span-attribute-mapping
-  /api/v1/span_attribute_mapping_groups/{id}/mappers:
-    get:
-      deprecated: false
-      description: Returns all attribute mappers belonging to a mapping group.
-      operationId: ListMappers
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesListMappersResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: List span attribute mappers for a group
-      tags:
-      - span-attribute-mapping
-    post:
-      deprecated: false
-      description: Adds a new attribute mapper to the specified mapping group.
-      operationId: CreateMapper
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesPostableMapper'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesMapper'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create a span attribute mapper
       tags:
       - span-attribute-mapping
   /api/v1/testChannel:

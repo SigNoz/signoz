@@ -20,7 +20,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 			Request:             nil,
 			RequestContentType:  "",
 			RequestQuery:        new(spanattributemappingtypes.ListGroupsQuery),
-			Response:            new(spanattributemappingtypes.ListGroupsResponse),
+			Response:            new(spanattributemappingtypes.GettableGroups),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -51,7 +51,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.UpdateGroup),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMappingGroup",
@@ -71,7 +71,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.DeleteGroup),
 		handler.OpenAPIDef{
 			ID:                  "DeleteMappingGroup",
@@ -91,7 +91,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}/mappers", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}/mappers", handler.New(
 		provider.authZ.ViewAccess(provider.spanAttributeMappingHandler.ListMappers),
 		handler.OpenAPIDef{
 			ID:                  "ListMappers",
@@ -100,7 +100,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 			Description:         "Returns all attribute mappers belonging to a mapping group.",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(spanattributemappingtypes.ListMappersResponse),
+			Response:            new(spanattributemappingtypes.GettableMappers),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -111,7 +111,7 @@ func (provider *provider) addSpanAttributeMappingRoutes(router *mux.Router) erro
 		return err
 	}
 
-	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{id}/mappers", handler.New(
+	if err := router.Handle("/api/v1/span_attribute_mapping_groups/{groupId}/mappers", handler.New(
 		provider.authZ.AdminAccess(provider.spanAttributeMappingHandler.CreateMapper),
 		handler.OpenAPIDef{
 			ID:                  "CreateMapper",

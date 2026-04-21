@@ -5260,11 +5260,23 @@ export enum SpanattributemappingtypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
-export interface SpanattributemappingtypesGroupDTO {
+export interface SpanattributemappingtypesGettableGroupsDTO {
 	/**
-	 * @type string
+	 * @type array
+	 * @nullable true
 	 */
-	category: string;
+	items: SpanattributemappingtypesGroupDTO[] | null;
+}
+
+export interface SpanattributemappingtypesGettableMappersDTO {
+	/**
+	 * @type array
+	 */
+	items: SpanattributemappingtypesMapperDTO[];
+}
+
+export interface SpanattributemappingtypesGroupDTO {
+	category: SpanattributemappingtypesGroupCategoryDTO;
 	condition: SpanattributemappingtypesConditionDTO;
 	/**
 	 * @type string
@@ -5290,7 +5302,7 @@ export interface SpanattributemappingtypesGroupDTO {
 	/**
 	 * @type string
 	 */
-	ordId: string;
+	orgId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -5302,20 +5314,8 @@ export interface SpanattributemappingtypesGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpanattributemappingtypesListGroupsResponseDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	items: SpanattributemappingtypesGroupDTO[] | null;
-}
-
-export interface SpanattributemappingtypesListMappersResponseDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	items: SpanattributemappingtypesMapperDTO[] | null;
+export interface SpanattributemappingtypesGroupCategoryDTO {
+	[key: string]: unknown;
 }
 
 export interface SpanattributemappingtypesMapperDTO {
@@ -5383,10 +5383,7 @@ export interface SpanattributemappingtypesMapperSourceDTO {
 }
 
 export interface SpanattributemappingtypesPostableGroupDTO {
-	/**
-	 * @type string
-	 */
-	category: string;
+	category: SpanattributemappingtypesGroupCategoryDTO;
 	condition: SpanattributemappingtypesConditionDTO;
 	/**
 	 * @type boolean
@@ -6656,11 +6653,9 @@ export type GetMyServiceAccount200 = {
 
 export type ListSpanAttributeMappingGroupsParams = {
 	/**
-	 * @type string
-	 * @nullable true
 	 * @description undefined
 	 */
-	category?: string | null;
+	category?: SpanattributemappingtypesGroupCategoryDTO;
 	/**
 	 * @type boolean
 	 * @nullable true
@@ -6670,7 +6665,7 @@ export type ListSpanAttributeMappingGroupsParams = {
 };
 
 export type ListSpanAttributeMappingGroups200 = {
-	data: SpanattributemappingtypesListGroupsResponseDTO;
+	data: SpanattributemappingtypesGettableGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -6679,6 +6674,42 @@ export type ListSpanAttributeMappingGroups200 = {
 
 export type CreateMappingGroup201 = {
 	data: SpanattributemappingtypesGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteMappingGroupPathParameters = {
+	groupId: string;
+};
+export type UpdateMappingGroupPathParameters = {
+	groupId: string;
+};
+export type UpdateMappingGroup200 = {
+	data: SpanattributemappingtypesGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListMappersPathParameters = {
+	groupId: string;
+};
+export type ListMappers200 = {
+	data: SpanattributemappingtypesGettableMappersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateMapperPathParameters = {
+	groupId: string;
+};
+export type CreateMapper201 = {
+	data: SpanattributemappingtypesMapperDTO;
 	/**
 	 * @type string
 	 */
@@ -6694,42 +6725,6 @@ export type UpdateMapperPathParameters = {
 	mapperId: string;
 };
 export type UpdateMapper200 = {
-	data: SpanattributemappingtypesMapperDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteMappingGroupPathParameters = {
-	id: string;
-};
-export type UpdateMappingGroupPathParameters = {
-	id: string;
-};
-export type UpdateMappingGroup200 = {
-	data: SpanattributemappingtypesGroupDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListMappersPathParameters = {
-	id: string;
-};
-export type ListMappers200 = {
-	data: SpanattributemappingtypesListMappersResponseDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateMapperPathParameters = {
-	id: string;
-};
-export type CreateMapper201 = {
 	data: SpanattributemappingtypesMapperDTO;
 	/**
 	 * @type string

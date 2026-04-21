@@ -230,6 +230,384 @@ export const useCreateMappingGroup = <
 	return useMutation(mutationOptions);
 };
 /**
+ * Hard-deletes a mapping group and cascades to all its mappers.
+ * @summary Delete a span attribute mapping group
+ */
+export const deleteMappingGroup = ({
+	groupId,
+}: DeleteMappingGroupPathParameters) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/span_attribute_mapping_groups/${groupId}`,
+		method: 'DELETE',
+	});
+};
+
+export const getDeleteMappingGroupMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteMappingGroup>>,
+		TError,
+		{ pathParams: DeleteMappingGroupPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteMappingGroup>>,
+	TError,
+	{ pathParams: DeleteMappingGroupPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteMappingGroup'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteMappingGroup>>,
+		{ pathParams: DeleteMappingGroupPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteMappingGroup(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMappingGroupMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteMappingGroup>>
+>;
+
+export type DeleteMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete a span attribute mapping group
+ */
+export const useDeleteMappingGroup = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteMappingGroup>>,
+		TError,
+		{ pathParams: DeleteMappingGroupPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteMappingGroup>>,
+	TError,
+	{ pathParams: DeleteMappingGroupPathParameters },
+	TContext
+> => {
+	const mutationOptions = getDeleteMappingGroupMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Partially updates an existing mapping group's name, condition, or enabled state.
+ * @summary Update a span attribute mapping group
+ */
+export const updateMappingGroup = (
+	{ groupId }: UpdateMappingGroupPathParameters,
+	spanattributemappingtypesUpdatableGroupDTO: BodyType<SpanattributemappingtypesUpdatableGroupDTO>,
+) => {
+	return GeneratedAPIInstance<UpdateMappingGroup200>({
+		url: `/api/v1/span_attribute_mapping_groups/${groupId}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: spanattributemappingtypesUpdatableGroupDTO,
+	});
+};
+
+export const getUpdateMappingGroupMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMappingGroup>>,
+		TError,
+		{
+			pathParams: UpdateMappingGroupPathParameters;
+			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateMappingGroup>>,
+	TError,
+	{
+		pathParams: UpdateMappingGroupPathParameters;
+		data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateMappingGroup'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateMappingGroup>>,
+		{
+			pathParams: UpdateMappingGroupPathParameters;
+			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateMappingGroup(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMappingGroupMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMappingGroup>>
+>;
+export type UpdateMappingGroupMutationBody = BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+export type UpdateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update a span attribute mapping group
+ */
+export const useUpdateMappingGroup = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMappingGroup>>,
+		TError,
+		{
+			pathParams: UpdateMappingGroupPathParameters;
+			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateMappingGroup>>,
+	TError,
+	{
+		pathParams: UpdateMappingGroupPathParameters;
+		data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getUpdateMappingGroupMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns all attribute mappers belonging to a mapping group.
+ * @summary List span attribute mappers for a group
+ */
+export const listMappers = (
+	{ groupId }: ListMappersPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListMappers200>({
+		url: `/api/v1/span_attribute_mapping_groups/${groupId}/mappers`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListMappersQueryKey = ({
+	groupId,
+}: ListMappersPathParameters) => {
+	return [`/api/v1/span_attribute_mapping_groups/${groupId}/mappers`] as const;
+};
+
+export const getListMappersQueryOptions = <
+	TData = Awaited<ReturnType<typeof listMappers>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ groupId }: ListMappersPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listMappers>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListMappersQueryKey({ groupId });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listMappers>>> = ({
+		signal,
+	}) => listMappers({ groupId }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!groupId,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listMappers>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListMappersQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listMappers>>
+>;
+export type ListMappersQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List span attribute mappers for a group
+ */
+
+export function useListMappers<
+	TData = Awaited<ReturnType<typeof listMappers>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ groupId }: ListMappersPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listMappers>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListMappersQueryOptions({ groupId }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary List span attribute mappers for a group
+ */
+export const invalidateListMappers = async (
+	queryClient: QueryClient,
+	{ groupId }: ListMappersPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListMappersQueryKey({ groupId }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Adds a new attribute mapper to the specified mapping group.
+ * @summary Create a span attribute mapper
+ */
+export const createMapper = (
+	{ groupId }: CreateMapperPathParameters,
+	spanattributemappingtypesPostableMapperDTO: BodyType<SpanattributemappingtypesPostableMapperDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateMapper201>({
+		url: `/api/v1/span_attribute_mapping_groups/${groupId}/mappers`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: spanattributemappingtypesPostableMapperDTO,
+		signal,
+	});
+};
+
+export const getCreateMapperMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createMapper>>,
+		TError,
+		{
+			pathParams: CreateMapperPathParameters;
+			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createMapper>>,
+	TError,
+	{
+		pathParams: CreateMapperPathParameters;
+		data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['createMapper'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createMapper>>,
+		{
+			pathParams: CreateMapperPathParameters;
+			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return createMapper(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMapperMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createMapper>>
+>;
+export type CreateMapperMutationBody = BodyType<SpanattributemappingtypesPostableMapperDTO>;
+export type CreateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create a span attribute mapper
+ */
+export const useCreateMapper = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createMapper>>,
+		TError,
+		{
+			pathParams: CreateMapperPathParameters;
+			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createMapper>>,
+	TError,
+	{
+		pathParams: CreateMapperPathParameters;
+		data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getCreateMapperMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
  * Hard-deletes a mapper from a mapping group.
  * @summary Delete a span attribute mapper
  */
@@ -403,382 +781,6 @@ export const useUpdateMapper = <
 	TContext
 > => {
 	const mutationOptions = getUpdateMapperMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * Hard-deletes a mapping group and cascades to all its mappers.
- * @summary Delete a span attribute mapping group
- */
-export const deleteMappingGroup = ({
-	id,
-}: DeleteMappingGroupPathParameters) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/span_attribute_mapping_groups/${id}`,
-		method: 'DELETE',
-	});
-};
-
-export const getDeleteMappingGroupMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteMappingGroup>>,
-		TError,
-		{ pathParams: DeleteMappingGroupPathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteMappingGroup>>,
-	TError,
-	{ pathParams: DeleteMappingGroupPathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteMappingGroup'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteMappingGroup>>,
-		{ pathParams: DeleteMappingGroupPathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteMappingGroup(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteMappingGroupMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteMappingGroup>>
->;
-
-export type DeleteMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Delete a span attribute mapping group
- */
-export const useDeleteMappingGroup = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteMappingGroup>>,
-		TError,
-		{ pathParams: DeleteMappingGroupPathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteMappingGroup>>,
-	TError,
-	{ pathParams: DeleteMappingGroupPathParameters },
-	TContext
-> => {
-	const mutationOptions = getDeleteMappingGroupMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * Partially updates an existing mapping group's name, condition, or enabled state.
- * @summary Update a span attribute mapping group
- */
-export const updateMappingGroup = (
-	{ id }: UpdateMappingGroupPathParameters,
-	spanattributemappingtypesUpdatableGroupDTO: BodyType<SpanattributemappingtypesUpdatableGroupDTO>,
-) => {
-	return GeneratedAPIInstance<UpdateMappingGroup200>({
-		url: `/api/v1/span_attribute_mapping_groups/${id}`,
-		method: 'PATCH',
-		headers: { 'Content-Type': 'application/json' },
-		data: spanattributemappingtypesUpdatableGroupDTO,
-	});
-};
-
-export const getUpdateMappingGroupMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateMappingGroup>>,
-		TError,
-		{
-			pathParams: UpdateMappingGroupPathParameters;
-			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof updateMappingGroup>>,
-	TError,
-	{
-		pathParams: UpdateMappingGroupPathParameters;
-		data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['updateMappingGroup'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateMappingGroup>>,
-		{
-			pathParams: UpdateMappingGroupPathParameters;
-			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return updateMappingGroup(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateMappingGroupMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateMappingGroup>>
->;
-export type UpdateMappingGroupMutationBody = BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-export type UpdateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Update a span attribute mapping group
- */
-export const useUpdateMappingGroup = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateMappingGroup>>,
-		TError,
-		{
-			pathParams: UpdateMappingGroupPathParameters;
-			data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof updateMappingGroup>>,
-	TError,
-	{
-		pathParams: UpdateMappingGroupPathParameters;
-		data: BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getUpdateMappingGroupMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * Returns all attribute mappers belonging to a mapping group.
- * @summary List span attribute mappers for a group
- */
-export const listMappers = (
-	{ id }: ListMappersPathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<ListMappers200>({
-		url: `/api/v1/span_attribute_mapping_groups/${id}/mappers`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListMappersQueryKey = ({ id }: ListMappersPathParameters) => {
-	return [`/api/v1/span_attribute_mapping_groups/${id}/mappers`] as const;
-};
-
-export const getListMappersQueryOptions = <
-	TData = Awaited<ReturnType<typeof listMappers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ id }: ListMappersPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listMappers>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListMappersQueryKey({ id });
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listMappers>>> = ({
-		signal,
-	}) => listMappers({ id }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!id,
-		...queryOptions,
-	} as UseQueryOptions<
-		Awaited<ReturnType<typeof listMappers>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListMappersQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listMappers>>
->;
-export type ListMappersQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary List span attribute mappers for a group
- */
-
-export function useListMappers<
-	TData = Awaited<ReturnType<typeof listMappers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ id }: ListMappersPathParameters,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof listMappers>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListMappersQueryOptions({ id }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary List span attribute mappers for a group
- */
-export const invalidateListMappers = async (
-	queryClient: QueryClient,
-	{ id }: ListMappersPathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListMappersQueryKey({ id }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * Adds a new attribute mapper to the specified mapping group.
- * @summary Create a span attribute mapper
- */
-export const createMapper = (
-	{ id }: CreateMapperPathParameters,
-	spanattributemappingtypesPostableMapperDTO: BodyType<SpanattributemappingtypesPostableMapperDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<CreateMapper201>({
-		url: `/api/v1/span_attribute_mapping_groups/${id}/mappers`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: spanattributemappingtypesPostableMapperDTO,
-		signal,
-	});
-};
-
-export const getCreateMapperMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createMapper>>,
-		TError,
-		{
-			pathParams: CreateMapperPathParameters;
-			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createMapper>>,
-	TError,
-	{
-		pathParams: CreateMapperPathParameters;
-		data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['createMapper'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createMapper>>,
-		{
-			pathParams: CreateMapperPathParameters;
-			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return createMapper(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateMapperMutationResult = NonNullable<
-	Awaited<ReturnType<typeof createMapper>>
->;
-export type CreateMapperMutationBody = BodyType<SpanattributemappingtypesPostableMapperDTO>;
-export type CreateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Create a span attribute mapper
- */
-export const useCreateMapper = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createMapper>>,
-		TError,
-		{
-			pathParams: CreateMapperPathParameters;
-			data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createMapper>>,
-	TError,
-	{
-		pathParams: CreateMapperPathParameters;
-		data: BodyType<SpanattributemappingtypesPostableMapperDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getCreateMapperMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

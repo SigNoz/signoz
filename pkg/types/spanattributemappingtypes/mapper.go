@@ -9,29 +9,31 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// FieldContext is where the target attribute is written.
-type FieldContext string
-
-const (
-	FieldContextSpanAttribute FieldContext = "attribute"
-	FieldContextResource      FieldContext = "resource"
+var (
+	ErrCodeMapperNotFound      = errors.MustNewCode("span_attribute_mapper_not_found")
+	ErrCodeMapperAlreadyExists = errors.MustNewCode("span_attribute_mapper_already_exists")
+	ErrCodeMappingInvalidInput = errors.MustNewCode("span_attribute_mapping_invalid_input")
 )
 
-func (FieldContext) Enum() []any {
-	return []any{FieldContextSpanAttribute, FieldContextResource}
+// FieldContext is where the target attribute is written.
+type FieldContext struct {
+	valuer.String
 }
+
+var (
+	FieldContextSpanAttribute = FieldContext{valuer.NewString("attribute")}
+	FieldContextResource      = FieldContext{valuer.NewString("resource")}
+)
 
 // MapperOperation determines whether the source attribute is moved (deleted) or copied.
-type MapperOperation string
-
-const (
-	MapperOperationMove MapperOperation = "move"
-	MapperOperationCopy MapperOperation = "copy"
-)
-
-func (MapperOperation) Enum() []any {
-	return []any{MapperOperationMove, MapperOperationCopy}
+type MapperOperation struct {
+	valuer.String
 }
+
+var (
+	MapperOperationMove = MapperOperation{valuer.NewString("move")}
+	MapperOperationCopy = MapperOperation{valuer.NewString("copy")}
+)
 
 // MapperSource describes one candidate source for a target attribute.
 type MapperSource struct {
@@ -45,6 +47,48 @@ type MapperSource struct {
 // It implements driver.Valuer and sql.Scanner for JSON text column storage.
 type MapperConfig struct {
 	Sources []MapperSource `json:"sources"`
+}
+
+// Mapper is the domain model for a span attribute mapper.
+type Mapper struct {
+	types.TimeAuditable
+	types.UserAuditable
+
+	ID           valuer.UUID  `json:"id"            required:"true"`
+	GroupID      valuer.UUID  `json:"group_id"      required:"true"`
+	Name         string       `json:"name"          required:"true"`
+	FieldContext FieldContext `json:"field_context" required:"true"`
+	Config       MapperConfig `json:"config"        required:"true"`
+	Enabled      bool         `json:"enabled"       required:"true"`
+}
+
+type PostableMapper struct {
+	Name         string       `json:"name"          required:"true"`
+	FieldContext FieldContext `json:"field_context" required:"true"`
+	Config       MapperConfig `json:"config"        required:"true"`
+	Enabled      bool         `json:"enabled"`
+}
+
+// UpdatableMapper is the HTTP request body for updating a mapper.
+// All fields are optional; only non-nil fields are applied.
+type UpdatableMapper struct {
+	FieldContext FieldContext  `json:"field_context,omitempty"`
+	Config       *MapperConfig `json:"config,omitempty"`
+	Enabled      *bool         `json:"enabled,omitempty"`
+}
+
+type GettableMapper = Mapper
+
+type GettableMappers struct {
+	Items []*GettableMapper `json:"items" required:"true" nullable:"false"`
+}
+
+func (FieldContext) Enum() []any {
+	return []any{FieldContextSpanAttribute, FieldContextResource}
+}
+
+func (MapperOperation) Enum() []any {
+	return []any{MapperOperationMove, MapperOperationCopy}
 }
 
 func (m MapperConfig) Value() (driver.Value, error) {
@@ -71,19 +115,6 @@ func (m *MapperConfig) Scan(src any) error {
 	return json.Unmarshal(raw, m)
 }
 
-// Mapper is the domain model for a span attribute mapper.
-type Mapper struct {
-	types.TimeAuditable
-	types.UserAuditable
-
-	ID           valuer.UUID  `json:"id"            required:"true"`
-	GroupID      valuer.UUID  `json:"group_id"      required:"true"`
-	Name         string       `json:"name"          required:"true"`
-	FieldContext FieldContext `json:"field_context" required:"true"`
-	Config       MapperConfig `json:"config"        required:"true"`
-	Enabled      bool         `json:"enabled"       required:"true"`
-}
-
 func NewMapperFromStorable(s *StorableMapper) *Mapper {
 	return &Mapper{
 		TimeAuditable: s.TimeAuditable,
@@ -97,6 +128,29 @@ func NewMapperFromStorable(s *StorableMapper) *Mapper {
 	}
 }
 
+func NewMapperFromPostable(req *PostableMapper) *Mapper {
+	return &Mapper{
+		Name:         req.Name,
+		FieldContext: req.FieldContext,
+		Config:       req.Config,
+		Enabled:      req.Enabled,
+	}
+}
+
+func NewMapperFromUpdatable(req *UpdatableMapper) *Mapper {
+	m := &Mapper{}
+	if req.FieldContext != (FieldContext{}) {
+		m.FieldContext = req.FieldContext
+	}
+	if req.Config != nil {
+		m.Config = *req.Config
+	}
+	if req.Enabled != nil {
+		m.Enabled = *req.Enabled
+	}
+	return m
+}
+
 func NewMappersFromStorable(ss []*StorableMapper) []*Mapper {
 	mappers := make([]*Mapper, len(ss))
 	for i, s := range ss {
@@ -105,27 +159,6 @@ func NewMappersFromStorable(ss []*StorableMapper) []*Mapper {
 	return mappers
 }
 
-type GettableMapper = Mapper
-
-func NewGettableMapper(m *Mapper) *GettableMapper {
-	return m
-}
-
-type PostableMapper struct {
-	Name         string       `json:"name"          required:"true"`
-	FieldContext FieldContext `json:"field_context" required:"true"`
-	Config       MapperConfig `json:"config"        required:"true"`
-	Enabled      bool         `json:"enabled"`
-}
-
-// UpdatableMapper is the HTTP request body for updating a mapper.
-// All fields are optional; only non-nil fields are applied.
-type UpdatableMapper struct {
-	FieldContext FieldContext  `json:"field_context,omitempty"`
-	Config       *MapperConfig `json:"config,omitempty"`
-	Enabled      *bool         `json:"enabled,omitempty"`
-}
-
-type ListMappersResponse struct {
-	Items []*GettableMapper `json:"items" required:"true" nullable:"true"`
+func NewGettableMappers(m []*Mapper) *GettableMappers {
+	return &GettableMappers{Items: m}
 }

@@ -25,7 +25,7 @@ func NewHandler(module spanattributemapping.Module, providerSettings factory.Pro
 	return &handler{module: module, providerSettings: providerSettings}
 }
 
-// ListGroups handles GET /api/v1/ai-o11y/mapping/groups.
+// ListGroups handles GET /api/v1/span_attribute_mapping_groups.
 func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -54,15 +54,10 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*spanattributemappingtypes.GettableGroup, len(groups))
-	for i, g := range groups {
-		items[i] = spanattributemappingtypes.NewGettableGroup(g)
-	}
-
-	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListGroupsResponse{Items: items})
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableGroups(groups))
 }
 
-// CreateGroup handles POST /api/v1/ai-o11y/mapping/groups.
+// CreateGroup handles POST /api/v1/span_attribute_mapping_groups.
 func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -85,16 +80,16 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.module.CreateGroup(ctx, orgID, claims.Email, req)
+	group, err := h.module.CreateGroup(ctx, orgID, claims.Email, spanattributemappingtypes.NewGroupFromPostable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableGroup(group))
+	render.Success(rw, http.StatusCreated, group)
 }
 
-// UpdateGroup handles PUT /api/v1/ai-o11y/mapping/groups/{id}.
+// UpdateGroup handles PUT /api/v1/span_attribute_mapping_groups/{id}.
 func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -123,16 +118,16 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.module.UpdateGroup(ctx, orgID, id, claims.Email, req)
+	group, err := h.module.UpdateGroup(ctx, orgID, id, claims.Email, spanattributemappingtypes.NewGroupFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableGroup(group))
+	render.Success(rw, http.StatusOK, group)
 }
 
-// DeleteGroup handles DELETE /api/v1/ai-o11y/mapping/groups/{id}.
+// DeleteGroup handles DELETE /api/v1/span_attribute_mapping_groups/{id}.
 func (h *handler) DeleteGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -163,7 +158,7 @@ func (h *handler) DeleteGroup(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// ListMappers handles GET /api/v1/ai-o11y/mapping/groups/{id}/mappers.
+// ListMappers handles GET /api/v1/span_attribute_mapping_groups/{id}/mappers.
 func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -192,15 +187,10 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*spanattributemappingtypes.GettableMapper, len(mappers))
-	for i, m := range mappers {
-		items[i] = spanattributemappingtypes.NewGettableMapper(m)
-	}
-
-	render.Success(rw, http.StatusOK, &spanattributemappingtypes.ListMappersResponse{Items: items})
+	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMappers(mappers))
 }
 
-// CreateMapper handles POST /api/v1/ai-o11y/mapping/groups/{id}/mappers.
+// CreateMapper handles POST /api/v1/span_attribute_mapping_groups/{id}/mappers.
 func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -229,16 +219,16 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapper, err := h.module.CreateMapper(ctx, orgID, groupID, claims.Email, req)
+	mapper, err := h.module.CreateMapper(ctx, orgID, groupID, claims.Email, spanattributemappingtypes.NewMapperFromPostable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, spanattributemappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusCreated, mapper)
 }
 
-// UpdateMapper handles PUT /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
+// UpdateMapper handles PUT /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}.
 func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -273,16 +263,16 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapper, err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, req)
+	mapper, err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spanattributemappingtypes.NewMapperFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMapper(mapper))
+	render.Success(rw, http.StatusOK, mapper)
 }
 
-// DeleteMapper handles DELETE /api/v1/ai-o11y/mapping/groups/{groupId}/mappers/{mapperId}.
+// DeleteMapper handles DELETE /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}.
 func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -323,15 +313,9 @@ func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 	vars := mux.Vars(r)
 	raw := vars["groupId"]
-	if raw == "" {
-		raw = vars["id"]
-	}
-	if raw == "" {
-		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "group id is missing from the path")
-	}
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "group id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeMappingInvalidInput, "group id is not a valid uuid")
 	}
 	return id, nil
 }
@@ -339,12 +323,9 @@ func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 // mapperIDFromPath extracts and validates the {mapperId} path variable.
 func mapperIDFromPath(r *http.Request) (valuer.UUID, error) {
 	raw := mux.Vars(r)["mapperId"]
-	if raw == "" {
-		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "mapper id is missing from the path")
-	}
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeSpanAttributeMappingInvalidInput, "mapper id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeMappingInvalidInput, "mapper id is not a valid uuid")
 	}
 	return id, nil
 }
