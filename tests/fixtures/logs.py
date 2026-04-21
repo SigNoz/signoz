@@ -391,112 +391,126 @@ class Logs(ABC):
         return logs
 
 
+def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
+    """
+    Insert logs into ClickHouse tables following the same logic as the Go exporter.
+    Handles insertion into:
+    - distributed_logs_v2 (main logs table)
+    - distributed_logs_v2_resource (resource fingerprints)
+    - distributed_tag_attributes_v2 (tag attributes)
+    - distributed_logs_attribute_keys (attribute keys)
+    - distributed_logs_resource_keys (resource keys)
+
+    Pure function so the seeder container can reuse the exact insert path
+    used by the pytest fixture. `conn` is a clickhouse-connect Client.
+    """
+    resources: List[LogsResource] = []
+    for log in logs:
+        resources.extend(log.resource)
+
+    if len(resources) > 0:
+        conn.insert(
+            database="signoz_logs",
+            table="distributed_logs_v2_resource",
+            data=[resource.np_arr() for resource in resources],
+            column_names=[
+                "labels",
+                "fingerprint",
+                "seen_at_ts_bucket_start",
+            ],
+        )
+
+    tag_attributes: List[LogsTagAttributes] = []
+    for log in logs:
+        tag_attributes.extend(log.tag_attributes)
+
+    if len(tag_attributes) > 0:
+        conn.insert(
+            database="signoz_logs",
+            table="distributed_tag_attributes_v2",
+            data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
+        )
+
+    attribute_keys: List[LogsResourceOrAttributeKeys] = []
+    for log in logs:
+        attribute_keys.extend(log.attribute_keys)
+
+    if len(attribute_keys) > 0:
+        conn.insert(
+            database="signoz_logs",
+            table="distributed_logs_attribute_keys",
+            data=[attribute_key.np_arr() for attribute_key in attribute_keys],
+        )
+
+    resource_keys: List[LogsResourceOrAttributeKeys] = []
+    for log in logs:
+        resource_keys.extend(log.resource_keys)
+
+    if len(resource_keys) > 0:
+        conn.insert(
+            database="signoz_logs",
+            table="distributed_logs_resource_keys",
+            data=[resource_key.np_arr() for resource_key in resource_keys],
+        )
+
+    conn.insert(
+        database="signoz_logs",
+        table="distributed_logs_v2",
+        data=[log.np_arr() for log in logs],
+        column_names=[
+            "ts_bucket_start",
+            "resource_fingerprint",
+            "timestamp",
+            "observed_timestamp",
+            "id",
+            "trace_id",
+            "span_id",
+            "trace_flags",
+            "severity_text",
+            "severity_number",
+            "body",
+            "attributes_string",
+            "attributes_number",
+            "attributes_bool",
+            "resources_string",
+            "scope_name",
+            "scope_version",
+            "scope_string",
+            "resource",
+        ],
+    )
+
+
+_LOGS_TABLES_TO_TRUNCATE = [
+    "logs_v2",
+    "logs_v2_resource",
+    "tag_attributes_v2",
+    "logs_attribute_keys",
+    "logs_resource_keys",
+]
+
+
+def truncate_logs_tables(conn, cluster: str) -> None:
+    """Truncate all logs tables. Used by the pytest fixture teardown and by
+    the seeder's DELETE /telemetry/logs endpoint."""
+    for table in _LOGS_TABLES_TO_TRUNCATE:
+        conn.query(
+            f"TRUNCATE TABLE signoz_logs.{table} ON CLUSTER '{cluster}' SYNC"
+        )
+
+
 @pytest.fixture(name="insert_logs", scope="function")
 def insert_logs(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[List[Logs]], None], Any, None]:
     def _insert_logs(logs: List[Logs]) -> None:
-        """
-        Insert logs into ClickHouse tables following the same logic as the Go exporter.
-        This function handles insertion into multiple tables:
-        - distributed_logs_v2 (main logs table)
-        - distributed_logs_v2_resource (resource fingerprints)
-        - distributed_tag_attributes_v2 (tag attributes)
-        - distributed_logs_attribute_keys (attribute keys)
-        - distributed_logs_resource_keys (resource keys)
-        """
-        resources: List[LogsResource] = []
-        for log in logs:
-            resources.extend(log.resource)
-
-        if len(resources) > 0:
-            clickhouse.conn.insert(
-                database="signoz_logs",
-                table="distributed_logs_v2_resource",
-                data=[resource.np_arr() for resource in resources],
-                column_names=[
-                    "labels",
-                    "fingerprint",
-                    "seen_at_ts_bucket_start",
-                ],
-            )
-
-        tag_attributes: List[LogsTagAttributes] = []
-        for log in logs:
-            tag_attributes.extend(log.tag_attributes)
-
-        if len(tag_attributes) > 0:
-            clickhouse.conn.insert(
-                database="signoz_logs",
-                table="distributed_tag_attributes_v2",
-                data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
-            )
-
-        attribute_keys: List[LogsResourceOrAttributeKeys] = []
-        for log in logs:
-            attribute_keys.extend(log.attribute_keys)
-
-        if len(attribute_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_logs",
-                table="distributed_logs_attribute_keys",
-                data=[attribute_key.np_arr() for attribute_key in attribute_keys],
-            )
-
-        resource_keys: List[LogsResourceOrAttributeKeys] = []
-        for log in logs:
-            resource_keys.extend(log.resource_keys)
-
-        if len(resource_keys) > 0:
-            clickhouse.conn.insert(
-                database="signoz_logs",
-                table="distributed_logs_resource_keys",
-                data=[resource_key.np_arr() for resource_key in resource_keys],
-            )
-
-        clickhouse.conn.insert(
-            database="signoz_logs",
-            table="distributed_logs_v2",
-            data=[log.np_arr() for log in logs],
-            column_names=[
-                "ts_bucket_start",
-                "resource_fingerprint",
-                "timestamp",
-                "observed_timestamp",
-                "id",
-                "trace_id",
-                "span_id",
-                "trace_flags",
-                "severity_text",
-                "severity_number",
-                "body",
-                "attributes_string",
-                "attributes_number",
-                "attributes_bool",
-                "resources_string",
-                "scope_name",
-                "scope_version",
-                "scope_string",
-                "resource",
-            ],
-        )
+        insert_logs_to_clickhouse(clickhouse.conn, logs)
 
     yield _insert_logs
 
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_logs.logs_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_logs.logs_v2_resource ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_logs.tag_attributes_v2 ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_logs.logs_attribute_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_logs.logs_resource_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
+    truncate_logs_tables(
+        clickhouse.conn,
+        clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
     )
 
 

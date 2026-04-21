@@ -417,151 +417,168 @@ class Metrics(ABC):
         return metrics
 
 
+def insert_metrics_to_clickhouse(conn, metrics: List[Metrics]) -> None:
+    """
+    Insert metrics into ClickHouse tables.
+    Handles insertion into:
+    - distributed_time_series_v4 (time series metadata)
+    - distributed_samples_v4 (actual sample values)
+    - distributed_metadata (metric attribute metadata)
+
+    Pure function so the seeder container can reuse the exact insert path
+    used by the pytest fixture. `conn` is a clickhouse-connect Client.
+    """
+    time_series_map: dict[int, MetricsTimeSeries] = {}
+    for metric in metrics:
+        fp = int(metric.time_series.fingerprint)
+        if fp not in time_series_map:
+            time_series_map[fp] = metric.time_series
+
+    if len(time_series_map) > 0:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_time_series_v4",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "description",
+                "unit",
+                "type",
+                "is_monotonic",
+                "fingerprint",
+                "unix_milli",
+                "labels",
+                "attrs",
+                "scope_attrs",
+                "resource_attrs",
+                "__normalized",
+            ],
+            data=[ts.to_row() for ts in time_series_map.values()],
+        )
+
+    samples = [metric.sample for metric in metrics]
+    if len(samples) > 0:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_samples_v4",
+            column_names=[
+                "env",
+                "temporality",
+                "metric_name",
+                "fingerprint",
+                "unix_milli",
+                "value",
+                "flags",
+            ],
+            data=[sample.to_row() for sample in samples],
+        )
+
+    # (metric_name, attr_type, attr_name, attr_value) -> MetricsMetadata
+    metadata_map: dict[tuple, MetricsMetadata] = {}
+    for metric in metrics:
+        ts = metric.time_series
+        for attr_name, attr_value in metric.labels.items():
+            key = (ts.metric_name, "point", attr_name, str(attr_value))
+            if key not in metadata_map:
+                metadata_map[key] = MetricsMetadata(
+                    metric_name=ts.metric_name,
+                    attr_name=attr_name,
+                    attr_type="point",
+                    attr_datatype="String",
+                    attr_string_value=str(attr_value),
+                    timestamp=metric.timestamp,
+                    temporality=ts.temporality,
+                    description=ts.description,
+                    unit=ts.unit,
+                    type_=ts.type,
+                    is_monotonic=ts.is_monotonic,
+                )
+        for attr_name, attr_value in ts.resource_attrs.items():
+            key = (ts.metric_name, "resource", attr_name, str(attr_value))
+            if key not in metadata_map:
+                metadata_map[key] = MetricsMetadata(
+                    metric_name=ts.metric_name,
+                    attr_name=attr_name,
+                    attr_type="resource",
+                    attr_datatype="String",
+                    attr_string_value=str(attr_value),
+                    timestamp=metric.timestamp,
+                    temporality=ts.temporality,
+                    description=ts.description,
+                    unit=ts.unit,
+                    type_=ts.type,
+                    is_monotonic=ts.is_monotonic,
+                )
+        for attr_name, attr_value in ts.scope_attrs.items():
+            key = (ts.metric_name, "scope", attr_name, str(attr_value))
+            if key not in metadata_map:
+                metadata_map[key] = MetricsMetadata(
+                    metric_name=ts.metric_name,
+                    attr_name=attr_name,
+                    attr_type="scope",
+                    attr_datatype="String",
+                    attr_string_value=str(attr_value),
+                    timestamp=metric.timestamp,
+                    temporality=ts.temporality,
+                    description=ts.description,
+                    unit=ts.unit,
+                    type_=ts.type,
+                    is_monotonic=ts.is_monotonic,
+                )
+
+    if len(metadata_map) > 0:
+        conn.insert(
+            database="signoz_metrics",
+            table="distributed_metadata",
+            column_names=[
+                "temporality",
+                "metric_name",
+                "description",
+                "unit",
+                "type",
+                "is_monotonic",
+                "attr_name",
+                "attr_type",
+                "attr_datatype",
+                "attr_string_value",
+                "first_reported_unix_milli",
+                "last_reported_unix_milli",
+            ],
+            data=[m.to_row() for m in metadata_map.values()],
+        )
+
+
+_METRICS_TABLES_TO_TRUNCATE = [
+    "time_series_v4",
+    "samples_v4",
+    "exp_hist",
+    "metadata",
+]
+
+
+def truncate_metrics_tables(conn, cluster: str) -> None:
+    """Truncate all metrics tables. Used by the pytest fixture teardown and by
+    the seeder's DELETE /telemetry/metrics endpoint."""
+    for table in _METRICS_TABLES_TO_TRUNCATE:
+        conn.query(
+            f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC"
+        )
+
+
 @pytest.fixture(name="insert_metrics", scope="function")
 def insert_metrics(
     clickhouse: types.TestContainerClickhouse,
 ) -> Generator[Callable[[List[Metrics]], None], Any, None]:
     def _insert_metrics(metrics: List[Metrics]) -> None:
-        """
-        Insert metrics into ClickHouse tables.
-        This function handles insertion into:
-        - distributed_time_series_v4 (time series metadata)
-        - distributed_samples_v4 (actual sample values)
-        - distributed_metadata (metric attribute metadata)
-        """
-        time_series_map: dict[int, MetricsTimeSeries] = {}
-        for metric in metrics:
-            fp = int(metric.time_series.fingerprint)
-            if fp not in time_series_map:
-                time_series_map[fp] = metric.time_series
-
-        if len(time_series_map) > 0:
-            clickhouse.conn.insert(
-                database="signoz_metrics",
-                table="distributed_time_series_v4",
-                column_names=[
-                    "env",
-                    "temporality",
-                    "metric_name",
-                    "description",
-                    "unit",
-                    "type",
-                    "is_monotonic",
-                    "fingerprint",
-                    "unix_milli",
-                    "labels",
-                    "attrs",
-                    "scope_attrs",
-                    "resource_attrs",
-                    "__normalized",
-                ],
-                data=[ts.to_row() for ts in time_series_map.values()],
-            )
-
-        samples = [metric.sample for metric in metrics]
-        if len(samples) > 0:
-            clickhouse.conn.insert(
-                database="signoz_metrics",
-                table="distributed_samples_v4",
-                column_names=[
-                    "env",
-                    "temporality",
-                    "metric_name",
-                    "fingerprint",
-                    "unix_milli",
-                    "value",
-                    "flags",
-                ],
-                data=[sample.to_row() for sample in samples],
-            )
-
-        # (metric_name, attr_type, attr_name, attr_value) -> MetricsMetadata
-        metadata_map: dict[tuple, MetricsMetadata] = {}
-        for metric in metrics:
-            ts = metric.time_series
-            for attr_name, attr_value in metric.labels.items():
-                key = (ts.metric_name, "point", attr_name, str(attr_value))
-                if key not in metadata_map:
-                    metadata_map[key] = MetricsMetadata(
-                        metric_name=ts.metric_name,
-                        attr_name=attr_name,
-                        attr_type="point",
-                        attr_datatype="String",
-                        attr_string_value=str(attr_value),
-                        timestamp=metric.timestamp,
-                        temporality=ts.temporality,
-                        description=ts.description,
-                        unit=ts.unit,
-                        type_=ts.type,
-                        is_monotonic=ts.is_monotonic,
-                    )
-            for attr_name, attr_value in ts.resource_attrs.items():
-                key = (ts.metric_name, "resource", attr_name, str(attr_value))
-                if key not in metadata_map:
-                    metadata_map[key] = MetricsMetadata(
-                        metric_name=ts.metric_name,
-                        attr_name=attr_name,
-                        attr_type="resource",
-                        attr_datatype="String",
-                        attr_string_value=str(attr_value),
-                        timestamp=metric.timestamp,
-                        temporality=ts.temporality,
-                        description=ts.description,
-                        unit=ts.unit,
-                        type_=ts.type,
-                        is_monotonic=ts.is_monotonic,
-                    )
-            for attr_name, attr_value in ts.scope_attrs.items():
-                key = (ts.metric_name, "scope", attr_name, str(attr_value))
-                if key not in metadata_map:
-                    metadata_map[key] = MetricsMetadata(
-                        metric_name=ts.metric_name,
-                        attr_name=attr_name,
-                        attr_type="scope",
-                        attr_datatype="String",
-                        attr_string_value=str(attr_value),
-                        timestamp=metric.timestamp,
-                        temporality=ts.temporality,
-                        description=ts.description,
-                        unit=ts.unit,
-                        type_=ts.type,
-                        is_monotonic=ts.is_monotonic,
-                    )
-
-        if len(metadata_map) > 0:
-            clickhouse.conn.insert(
-                database="signoz_metrics",
-                table="distributed_metadata",
-                column_names=[
-                    "temporality",
-                    "metric_name",
-                    "description",
-                    "unit",
-                    "type",
-                    "is_monotonic",
-                    "attr_name",
-                    "attr_type",
-                    "attr_datatype",
-                    "attr_string_value",
-                    "first_reported_unix_milli",
-                    "last_reported_unix_milli",
-                ],
-                data=[m.to_row() for m in metadata_map.values()],
-            )
+        insert_metrics_to_clickhouse(clickhouse.conn, metrics)
 
     yield _insert_metrics
 
-    cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-    tables_to_truncate = [
-        "time_series_v4",
-        "samples_v4",
-        "exp_hist",
-        "metadata",
-    ]
-    for table in tables_to_truncate:
-        clickhouse.conn.query(
-            f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+    truncate_metrics_tables(
+        clickhouse.conn,
+        clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"],
+    )
 
 
 @pytest.fixture(name="remove_metrics_ttl_and_storage_settings", scope="function")
