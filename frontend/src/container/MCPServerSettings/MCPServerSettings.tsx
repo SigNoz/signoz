@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TFunction, useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Input, Tabs, Tooltip, Typography } from 'antd';
@@ -400,10 +400,7 @@ function MCPServerSettings(): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const instanceUrl = window.location.origin;
 
-	const {
-		data: globalConfig,
-		isFetched: isGlobalConfigFetched,
-	} = useGetGlobalConfig();
+	const { data: globalConfig } = useGetGlobalConfig();
 	const regionFromHost = useMemo(() => getCloudRegion(), []);
 	const regionFromIngestion = useMemo(
 		() =>
@@ -423,22 +420,19 @@ function MCPServerSettings(): JSX.Element {
 
 	const endpoint = resolvedRegion ? buildMcpEndpoint(resolvedRegion) : '';
 
-	const hasLoggedPageViewRef = useRef(false);
+	// Fire once on mount so we reliably capture every visit, even if the
+	// globalConfig fetch is slow or fails. Region is best-effort from the
+	// hostname at mount time; if ingestion_url resolves later we skip logging
+	// again to avoid double-fires.
 	useEffect(() => {
-		// Wait for globalConfig to resolve so `region` reflects the settled value.
-		// Without this gate, PAGE_VIEWED fires once on mount and again when the
-		// async ingestion_url arrives and changes autoDetectedRegion.
-		if (hasLoggedPageViewRef.current || !isGlobalConfigFetched) {
-			return;
-		}
-		hasLoggedPageViewRef.current = true;
 		logEvent(ANALYTICS.PAGE_VIEWED, {
 			isCloudUser,
 			role: user.role,
-			region: autoDetectedRegion,
-			isAutoDetected: Boolean(autoDetectedRegion),
+			region: regionFromHost.region,
+			isAutoDetected: Boolean(regionFromHost.region),
 		});
-	}, [isGlobalConfigFetched, isCloudUser, user.role, autoDetectedRegion]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const handleCopySnippet = useCallback(
 		(clientKey: string, snippet: string) => {
