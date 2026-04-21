@@ -138,22 +138,7 @@ const processAnomalyDetectionData = (
 			legend,
 		} = queryData;
 
-		// Skip if required anomaly detection fields are missing
-		if (!series || !predictedSeries || !upperBoundSeries || !lowerBoundSeries) {
-			continue;
-		}
-
 		for (let index = 0; index < series?.length; index++) {
-			// Skip if any series at this index is missing
-			if (
-				!series[index] ||
-				!predictedSeries[index] ||
-				!upperBoundSeries[index] ||
-				!lowerBoundSeries[index]
-			) {
-				continue;
-			}
-
 			const label = getLabelName(
 				series[index].labels,
 				queryName || '', // query
@@ -164,10 +149,14 @@ const processAnomalyDetectionData = (
 				anomalyDetectionData.length > 1 ? `${queryName}-${label}` : label;
 
 			// Single iteration instead of 5 separate map operations
-			const { values: seriesValues } = series[index];
-			const { values: predictedValues } = predictedSeries[index];
-			const { values: upperBoundValues } = upperBoundSeries[index];
-			const { values: lowerBoundValues } = lowerBoundSeries[index];
+			const { values: seriesValues } = series[index] || { values: [] };
+			const { values: predictedValues } = predictedSeries[index] || { values: [] };
+			const { values: upperBoundValues } = upperBoundSeries[index] || {
+				values: [],
+			};
+			const { values: lowerBoundValues } = lowerBoundSeries[index] || {
+				values: [],
+			};
 			const length = seriesValues.length;
 
 			const timestamps: number[] = new Array(length);
@@ -178,10 +167,10 @@ const processAnomalyDetectionData = (
 
 			for (let i = 0; i < length; i++) {
 				timestamps[i] = seriesValues[i].timestamp / 1000;
-				values[i] = seriesValues[i].value;
-				predicted[i] = predictedValues[i].value;
-				upperBound[i] = upperBoundValues[i].value;
-				lowerBound[i] = lowerBoundValues[i].value;
+				values[i] = seriesValues[i]?.value ?? null;
+				predicted[i] = predictedValues[i]?.value ?? null;
+				upperBound[i] = upperBoundValues[i]?.value ?? null;
+				lowerBound[i] = lowerBoundValues[i]?.value ?? null;
 			}
 
 			processedData[objKey] = {
