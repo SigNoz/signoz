@@ -516,7 +516,7 @@ describe('TooltipPlugin', () => {
 			);
 
 			expect(setCursorSpy).toHaveBeenCalledWith({
-				sync: { key: 'dashboard-sync', scales: ['x', null] },
+				sync: { key: 'dashboard-sync', scales: ['x', 'y'] },
 			});
 		});
 

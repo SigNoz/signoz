@@ -44,7 +44,6 @@ func (c *conditionBuilder) conditionFor(
 			}
 			return cond, nil
 		}
-
 	}
 
 	if operator.IsStringSearchOperator() {
