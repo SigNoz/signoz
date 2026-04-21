@@ -102,6 +102,19 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 	}
 }
 
+// SortChildren recursively sorts children of each span by TimeUnixNano then Name.
+func (s *WaterfallSpan) SortChildren() {
+	sort.Slice(s.Children, func(i, j int) bool {
+		if s.Children[i].TimeUnixNano == s.Children[j].TimeUnixNano {
+			return s.Children[i].Name < s.Children[j].Name
+		}
+		return s.Children[i].TimeUnixNano < s.Children[j].TimeUnixNano
+	})
+	for _, child := range s.Children {
+		child.SortChildren()
+	}
+}
+
 // CopyWithoutChildren creates a shallow copy and resets tree-structure fields.
 // SubTreeNodeCount is preserved (must be pre-computed via computeSubTreeNodeCount).
 func (s *WaterfallSpan) CopyWithoutChildren(level uint64) *WaterfallSpan {
@@ -121,19 +134,6 @@ func (s *WaterfallSpan) computeSubTreeNodeCount() uint64 {
 	}
 	s.SubTreeNodeCount = count
 	return count
-}
-
-// SortChildren recursively sorts children of each span by TimeUnixNano then Name.
-func (s *WaterfallSpan) SortChildren() {
-	sort.Slice(s.Children, func(i, j int) bool {
-		if s.Children[i].TimeUnixNano == s.Children[j].TimeUnixNano {
-			return s.Children[i].Name < s.Children[j].Name
-		}
-		return s.Children[i].TimeUnixNano < s.Children[j].TimeUnixNano
-	})
-	for _, child := range s.Children {
-		child.SortChildren()
-	}
 }
 
 // getPreOrderedSpans returns spans in pre-order, including a span's children only when

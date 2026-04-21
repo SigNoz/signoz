@@ -29,7 +29,7 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, cache cache.Cache, 
 	}
 }
 
-func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.WaterfallResponse, error) {
+func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.GettableWaterfallTrace, error) {
 	waterfallTrace, err := m.getTraceData(ctx, orgID, traceID)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (m *module) GetWaterfall(ctx context.Context, orgID valuer.UUID, traceID st
 		selectedSpans, uncollapsedSpans = waterfallTrace.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID)
 	}
 
-	return tracedetailtypes.NewWaterfallResponseFromWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectAllSpans), nil
+	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectAllSpans), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.
@@ -75,7 +75,7 @@ func (m *module) getTraceData(ctx context.Context, orgID valuer.UUID, traceID st
 		return nil, tracedetailtypes.ErrTraceNotFound
 	}
 
-	traceData := computeWaterfallTrace(spanItems)
+	traceData := tracedetailtypes.NewWaterfallTraceFromSpans(spanItems)
 
 	if cacheErr := m.cache.Set(ctx, orgID, waterfallCacheKey(traceID), traceData, tracedetailtypes.WaterfallCacheTTL); cacheErr != nil {
 		m.logger.ErrorContext(ctx, "failed to store v3 waterfall cache", slog.String("trace_id", traceID), errors.Attr(cacheErr))

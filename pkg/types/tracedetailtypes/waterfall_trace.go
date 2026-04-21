@@ -207,8 +207,8 @@ func (c *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, c)
 }
 
-// WaterfallResponse is the response for the v3 waterfall API.
-type WaterfallResponse struct {
+// GettableWaterfallTrace is the response for the v3 waterfall API.
+type GettableWaterfallTrace struct {
 	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
 	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
 	RootServiceName               string            `json:"rootServiceName"`
@@ -222,13 +222,13 @@ type WaterfallResponse struct {
 	HasMore                       bool              `json:"hasMore"`
 }
 
-// NewWaterfallResponseFromWaterfallTrace constructs a WaterfallResponse from processed trace data and selected spans.
-func NewWaterfallResponseFromWaterfallTrace(
+// NewGettableWaterfallTrace constructs a WaterfallResponse from processed trace data and selected spans.
+func NewGettableWaterfallTrace(
 	traceData *WaterfallTrace,
 	selectedSpans []*WaterfallSpan,
 	uncollapsedSpans []string,
 	selectAllSpans bool,
-) *WaterfallResponse {
+) *GettableWaterfallTrace {
 	var rootServiceName, rootServiceEntryPoint string
 	if len(traceData.TraceRoots) > 0 {
 		rootServiceName = traceData.TraceRoots[0].ServiceName
@@ -245,7 +245,7 @@ func NewWaterfallResponseFromWaterfallTrace(
 		span.TimeUnixNano = span.TimeUnixNano / 1_000_000
 	}
 
-	return &WaterfallResponse{
+	return &GettableWaterfallTrace{
 		Spans:                         selectedSpans,
 		UncollapsedSpans:              uncollapsedSpans,
 		StartTimestampMillis:          traceData.StartTime / 1_000_000,
