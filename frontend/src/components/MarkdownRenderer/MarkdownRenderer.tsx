@@ -100,16 +100,19 @@ function MarkdownRenderer({
 	variables,
 	trackCopyAction,
 	elementDetails,
+	className,
 }: {
 	markdownContent: any;
 	variables: any;
 	trackCopyAction?: boolean;
 	elementDetails?: Record<string, unknown>;
+	className?: string;
 }): JSX.Element {
 	const interpolatedMarkdown = interpolateMarkdown(markdownContent, variables);
 
 	return (
 		<ReactMarkdown
+			className={className}
 			rehypePlugins={[rehypeRaw as any]}
 			components={{
 				// @ts-ignore

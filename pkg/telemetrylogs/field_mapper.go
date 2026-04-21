@@ -276,12 +276,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					continue
 				}
 
-				if key.JSONDataType == nil {
+				if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 					return "", qbtypes.ErrColumnNotFound
-				}
-
-				if key.KeyNameContainsArray() && !key.JSONDataType.IsArray {
-					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
 				}
 
 				expr, err := m.buildFieldForJSON(key)
@@ -354,7 +350,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-
 	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
@@ -393,6 +388,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
+	} else if err != nil {
+		return "", err
 	}
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
