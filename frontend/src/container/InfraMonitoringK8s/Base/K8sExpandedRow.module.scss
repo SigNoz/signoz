@@ -1,0 +1,28 @@
+.expandedClickableRow {
+	cursor: pointer;
+}
+
+.expandedTableContainer {
+	border: 1px solid var(--l1-border);
+	overflow-x: auto;
+	padding-left: 48px;
+
+	:global(.ant-table-tbody > tr:hover > td) {
+		background: none !important;
+	}
+}
+
+.expandedTableFooter {
+	display: flex;
+	justify-content: flex-start;
+	gap: 8px;
+	padding: 8px;
+	padding-left: 42px;
+	margin-top: 8px;
+}
+
+.viewAllButton {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+}
