@@ -41,7 +41,7 @@ func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID stri
 	return &summary, nil
 }
 
-func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.SpanModel, error) {
+func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)
@@ -57,7 +57,7 @@ func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string
 		ORDER BY timestamp ASC, name ASC`,
 		tracedetailtypes.TraceDB, tracedetailtypes.TraceTable,
 	)
-	var spanItems []tracedetailtypes.SpanModel
+	var spanItems []tracedetailtypes.StorableSpan
 	err := s.telemetryStore.ClickhouseDB().Select(
 		ctx, &spanItems, query,
 		traceID,

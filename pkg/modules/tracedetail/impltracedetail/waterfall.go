@@ -3,7 +3,6 @@ package impltracedetail
 import (
 	"maps"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
@@ -15,12 +14,12 @@ type traverseOpts struct {
 	selectAll        bool
 }
 
-func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) ([]*tracedetailtypes.WaterfallSpan, []string, string, string) {
-	uncollapsedSpanMap := getUncollapsedSpanMap(uncollapsedSpans, selectedSpanID, traceRoots, spanIDToSpanNodeMap)
+func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, trace *tracedetailtypes.WaterfallTrace, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) ([]*tracedetailtypes.WaterfallSpan, []string) {
+	uncollapsedSpanMap := trace.CalculateUncollapsedSpanIDs(uncollapsedSpans, selectedSpanID)
 
 	var preOrderTraversal = make([]*tracedetailtypes.WaterfallSpan, 0)
 	selectedSpanIndex := -1
-	for _, rootSpanID := range traceRoots {
+	for _, rootSpanID := range trace.TraceRoots {
 		rootNode, exists := spanIDToSpanNodeMap[rootSpanID.SpanID]
 		if !exists {
 			continue
@@ -43,63 +42,32 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 
 	startIndex, endIndex := windowAroundIndex(selectedSpanIndex, len(preOrderTraversal))
 
-	var rootServiceName, rootServiceEntryPoint string
-	if len(traceRoots) > 0 {
-		rootServiceName = traceRoots[0].ServiceName
-		rootServiceEntryPoint = traceRoots[0].Name
-	}
-
-	return preOrderTraversal[startIndex:endIndex], slices.Collect(maps.Keys(uncollapsedSpanMap)), rootServiceName, rootServiceEntryPoint
-}
-
-func GetAllSpans(traceRoots []*tracedetailtypes.WaterfallSpan) (spans []*tracedetailtypes.WaterfallSpan, rootServiceName, rootEntryPoint string) {
-	if len(traceRoots) > 0 {
-		rootServiceName = traceRoots[0].ServiceName
-		rootEntryPoint = traceRoots[0].Name
-	}
-	for _, root := range traceRoots {
-		childSpans, _ := traverseTrace(root, traverseOpts{selectAll: true}, 0, true, 0)
-		spans = append(spans, childSpans...)
-	}
-	return
-}
-
-// SortSpanChildren recursively sorts children of each span by TimeUnixNano then Name.
-func SortSpanChildren(span *tracedetailtypes.WaterfallSpan) {
-	sort.Slice(span.Children, func(i, j int) bool {
-		if span.Children[i].TimeUnixMilli == span.Children[j].TimeUnixMilli {
-			return span.Children[i].Name < span.Children[j].Name
-		}
-		return span.Children[i].TimeUnixMilli < span.Children[j].TimeUnixMilli
-	})
-	for _, child := range span.Children {
-		SortSpanChildren(child)
-	}
+	return preOrderTraversal[startIndex:endIndex], slices.Collect(maps.Keys(uncollapsedSpanMap))
 }
 
 // getUncollapsedSpanMap creates a map from uncollapsed spans ids and root to selected span path.
-func getUncollapsedSpanMap(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) map[string]struct{} {
-	uncollapsedSpanMap := make(map[string]struct{}, len(uncollapsedSpans))
-	for _, spanID := range uncollapsedSpans {
-		uncollapsedSpanMap[spanID] = struct{}{}
-	}
+// func getUncollapsedSpanMap(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) map[string]struct{} {
+// 	uncollapsedSpanMap := make(map[string]struct{}, len(uncollapsedSpans))
+// 	for _, spanID := range uncollapsedSpans {
+// 		uncollapsedSpanMap[spanID] = struct{}{}
+// 	}
 
-	for _, root := range traceRoots {
-		rootNode, exists := spanIDToSpanNodeMap[root.SpanID]
-		if !exists {
-			continue
-		}
-		if found, path := getPathFromRootToSelectedSpanID(rootNode, selectedSpanID); found {
-			for _, spanID := range path {
-				if spanID != selectedSpanID {
-					uncollapsedSpanMap[spanID] = struct{}{}
-				}
-			}
-			break
-		}
-	}
-	return uncollapsedSpanMap
-}
+// 	for _, root := range traceRoots {
+// 		rootNode, exists := spanIDToSpanNodeMap[root.SpanID]
+// 		if !exists {
+// 			continue
+// 		}
+// 		if found, path := getPathFromRootToSelectedSpanID(rootNode, selectedSpanID); found {
+// 			for _, spanID := range path {
+// 				if spanID != selectedSpanID {
+// 					uncollapsedSpanMap[spanID] = struct{}{}
+// 				}
+// 			}
+// 			break
+// 		}
+// 	}
+// 	return uncollapsedSpanMap
+// }
 
 // windowAroundIndex returns start/end indices for a window of SpanLimitPerRequest spans.
 func windowAroundIndex(selectedIndex, total int) (start, end int) {
