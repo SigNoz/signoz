@@ -9,13 +9,13 @@ Env:
   CH_CLUSTER                                — cluster name for TRUNCATE ... ON CLUSTER
 """
 
-import logging
 import os
 from typing import Any, Dict, List
 
 import clickhouse_connect
 from fastapi import FastAPI, HTTPException, Response, status
 
+from fixtures.logger import setup_logger
 from fixtures.logs import (
     Logs,
     insert_logs_to_clickhouse,
@@ -32,8 +32,7 @@ from fixtures.traces import (
     truncate_traces_tables,
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("seeder")
+logger = setup_logger(__name__)
 
 CH_HOST = os.environ["CH_HOST"]
 CH_PORT = int(os.environ.get("CH_PORT", "8123"))
