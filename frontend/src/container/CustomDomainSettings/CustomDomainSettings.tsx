@@ -262,8 +262,7 @@ export default function CustomDomainSettings(): JSX.Element {
 
 				<Button
 					variant="solid"
-					size="sm"
-					className="custom-domain-edit-button"
+					color="secondary"
 					prefix={<FilePenLine size={12} />}
 					disabled={isFetchingHosts || isPollingEnabled}
 					onClick={(): void => setIsEditModalOpen(true)}

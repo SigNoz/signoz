@@ -10,11 +10,19 @@ jest.mock('@signozhq/ui', () => ({
 	...jest.requireActual('@signozhq/ui'),
 	DrawerWrapper: ({
 		children,
+		footer,
 		open,
 	}: {
 		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
-	}): JSX.Element | null => (open ? <div>{children}</div> : null),
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
