@@ -50,6 +50,7 @@
     "@sentry/vite-plugin": "2.22.6",
     "@signozhq/design-tokens": "2.1.4",
     "@signozhq/icons": "0.1.0",
+    "@signozhq/resizable": "0.0.2",
     "@signozhq/ui": "0.0.9",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
