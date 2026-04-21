@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { VIEWS } from 'components/HostMetricsDetail/constants';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { VIEWS } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -30,7 +30,7 @@ interface Props {
 	logFilters: IBuilderQuery['filters'];
 	selectedInterval: Time;
 	queryKey: string;
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 	queryKeyFilters: Array<string>;
 }
 
