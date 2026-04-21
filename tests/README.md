@@ -13,24 +13,22 @@ tests/
     tests/                 Backend integration tests (pytest)
     testdata/              Integration-specific JSON/YAML
   e2e/
-    bootstrap/setup.py     Brings backend up + seeds; writes .signoz-backend.json
+    bootstrap/setup.py     Brings backend up + seeder; writes .signoz-backend.json
     bootstrap/run.py       One-command entrypoint: subprocesses `yarn test`
-    conftest.py            e2e-scoped fixtures (seed_dashboards, seed_e2e_telemetry)
     tests/                 Playwright specs (TS)
-    testdata/              e2e-specific JSON (dashboards, alerts, channels)
     playwright.config.ts   baseURL reads from env injected by global.setup.ts
     global.setup.ts        Reads .signoz-backend.json, sets env vars
+  seeder/                  HTTP service providing per-test telemetry endpoints
 ```
 
 ## Fixture ownership
 
 - **Shared** (`tests/fixtures/`): anything that could be useful across trees —
   container bring-up, auth, direct telemetry inserts, API helpers.
-- **Per-tree** (`tests/<tree>/conftest.py`): fixtures whose payloads are
-  tree-specific (e.g. e2e dashboard JSONs live in `tests/e2e/testdata/`,
-  loaded by `seed_dashboards` declared in `tests/e2e/conftest.py`).
-
-Testdata follows the same rule — JSON/YAML lives next to the tests that own it.
+- **No global pre-seed**: e2e specs seed their own data. Telemetry goes
+  through the seeder's `/telemetry/{traces,logs,metrics}` endpoints;
+  dashboards / alert rules / org config go through the SigNoz REST API
+  directly from the spec.
 
 ## Common commands
 

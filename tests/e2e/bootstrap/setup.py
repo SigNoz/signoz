@@ -1,7 +1,6 @@
 import json
 import os
 from pathlib import Path
-from typing import List
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -18,15 +17,12 @@ def _endpoint_file() -> Path:
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    seed_dashboards: List[str],  # pylint: disable=unused-argument
-    seed_alert_rules: List[str],  # pylint: disable=unused-argument
-    seed_e2e_telemetry: None,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
 ) -> None:
     """
-    Bring the SigNoz backend up, register the admin, seed API fixtures and
-    telemetry, start the HTTP seeder container, and persist endpoint
-    coordinates for the Playwright side.
+    Bring the SigNoz backend up, register the admin, start the HTTP seeder
+    container, and persist endpoint coordinates for the Playwright side.
+    Each spec owns its own data via the seeder — no global pre-seed here.
     """
     host_cfg = signoz.self.host_configs["8080"]
     seeder_cfg = seeder.host_configs["8080"]

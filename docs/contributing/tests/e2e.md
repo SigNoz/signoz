@@ -12,23 +12,26 @@ Source lives at `tests/e2e/`.
 ```
 tests/e2e/
   bootstrap/
-    setup.py          Brings backend up + seeds; writes .signoz-backend.json
+    setup.py          Brings backend + seeder up; writes .signoz-backend.json
     run.py            One-command entrypoint: subprocesses `yarn test`
   tests/              Playwright .spec.ts files (per-feature dirs)
-  testdata/           JSON fixtures loaded by e2e/conftest.py seeders
   utils/login.util.ts ensureLoggedIn() shared auth helper
-  conftest.py         e2e-scoped pytest fixtures (seed_dashboards, seed_e2e_telemetry)
   global.setup.ts     Reads .signoz-backend.json, sets env vars for Playwright
   playwright.config.ts
 ```
+
+Each spec owns its own data. Telemetry goes through the seeder
+(`tests/seeder/`, exposing `/telemetry/{traces,logs,metrics}` POST+DELETE);
+dashboards, alert rules, and org config go through the SigNoz REST API
+directly from the spec. No global pre-seeding fixtures.
 
 ## Running
 
 ### One-command local run
 
-Pytest owns the lifecycle: provisions containers, registers the admin, seeds,
-writes backend coordinates to `.signoz-backend.json`, then shells out to
-`yarn test`:
+Pytest owns the lifecycle: provisions containers, registers the admin,
+starts the seeder, writes backend coordinates to `.signoz-backend.json`,
+then shells out to `yarn test`:
 
 ```bash
 cd signoz/tests
