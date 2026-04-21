@@ -1,3 +1,8 @@
+import getSessionStorageApi from 'api/browser/sessionstorage/get';
+import removeSessionStorageApi from 'api/browser/sessionstorage/remove';
+import setSessionStorageApi from 'api/browser/sessionstorage/set';
+import { getScopedKey } from 'utils/storage';
+
 const PREFIX = 'dashboard_row_widget_';
 
 function getKey(dashboardId: string): string {
@@ -8,21 +13,25 @@ export function setSelectedRowWidgetId(
 	dashboardId: string,
 	widgetId: string,
 ): void {
-	const key = getKey(dashboardId);
+	const unscopedKey = getKey(dashboardId);
+	const scopedPrefix = getScopedKey(PREFIX);
+	const scopedKey = getScopedKey(unscopedKey);
 
-	// remove all other selected widget ids for the dashboard before setting the new one
-	// to ensure only one widget is selected at a time. Helps out in weird navigate and refresh scenarios
+	// Object.keys returns the raw/already-scoped keys from the browser.
+	// Direct sessionStorage.removeItem is intentional here — k is already fully scoped.
+	// eslint-disable-next-line no-restricted-globals
 	Object.keys(sessionStorage)
-		.filter((k) => k.startsWith(PREFIX) && k !== key)
+		.filter((k) => k.startsWith(scopedPrefix) && k !== scopedKey)
+		// eslint-disable-next-line no-restricted-globals
 		.forEach((k) => sessionStorage.removeItem(k));
 
-	sessionStorage.setItem(key, widgetId);
+	setSessionStorageApi(unscopedKey, widgetId);
 }
 
 export function getSelectedRowWidgetId(dashboardId: string): string | null {
-	return sessionStorage.getItem(getKey(dashboardId));
+	return getSessionStorageApi(getKey(dashboardId));
 }
 
 export function clearSelectedRowWidgetId(dashboardId: string): void {
-	sessionStorage.removeItem(getKey(dashboardId));
+	removeSessionStorageApi(getKey(dashboardId));
 }
