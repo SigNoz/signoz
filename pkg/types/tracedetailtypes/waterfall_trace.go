@@ -90,7 +90,7 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 
 	for _, root := range traceRoots {
 		root.SortChildren()
-		root.ComputeSubTreeNodeCount()
+		root.GetSubtreeNodeCount()
 	}
 
 	sort.Slice(traceRoots, func(i, j int) bool {
@@ -168,6 +168,27 @@ func (wt *WaterfallTrace) CalculateUncollapsedSpanIDs(uncollapsedSpanIDs []strin
 	return uncollapsedSpanMap
 }
 
+func (wt *WaterfallTrace) Clone() cachetypes.Cacheable {
+	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
+	maps.Copy(copyOfServiceNameToTotalDurationMap, wt.ServiceNameToTotalDurationMap)
+
+	copyOfSpanIDToSpanNodeMap := make(map[string]*WaterfallSpan)
+	maps.Copy(copyOfSpanIDToSpanNodeMap, wt.SpanIDToSpanNodeMap)
+
+	copyOfTraceRoots := make([]*WaterfallSpan, len(wt.TraceRoots))
+	copy(copyOfTraceRoots, wt.TraceRoots)
+	return &WaterfallTrace{
+		StartTime:                     wt.StartTime,
+		EndTime:                       wt.EndTime,
+		TotalSpans:                    wt.TotalSpans,
+		TotalErrorSpans:               wt.TotalErrorSpans,
+		ServiceNameToTotalDurationMap: copyOfServiceNameToTotalDurationMap,
+		SpanIDToSpanNodeMap:           copyOfSpanIDToSpanNodeMap,
+		TraceRoots:                    copyOfTraceRoots,
+		HasMissingSpans:               wt.HasMissingSpans,
+	}
+}
+
 func (wt *WaterfallTrace) getPathFromRoot(selectedSpanID string) ([]string, bool) {
 	for _, root := range wt.TraceRoots {
 		if path, found := root.getPathToSelectedSpanID(selectedSpanID); found {
@@ -177,33 +198,12 @@ func (wt *WaterfallTrace) getPathFromRoot(selectedSpanID string) ([]string, bool
 	return nil, false
 }
 
-func (c *WaterfallTrace) Clone() cachetypes.Cacheable {
-	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
-	maps.Copy(copyOfServiceNameToTotalDurationMap, c.ServiceNameToTotalDurationMap)
-
-	copyOfSpanIDToSpanNodeMap := make(map[string]*WaterfallSpan)
-	maps.Copy(copyOfSpanIDToSpanNodeMap, c.SpanIDToSpanNodeMap)
-
-	copyOfTraceRoots := make([]*WaterfallSpan, len(c.TraceRoots))
-	copy(copyOfTraceRoots, c.TraceRoots)
-	return &WaterfallTrace{
-		StartTime:                     c.StartTime,
-		EndTime:                       c.EndTime,
-		TotalSpans:                    c.TotalSpans,
-		TotalErrorSpans:               c.TotalErrorSpans,
-		ServiceNameToTotalDurationMap: copyOfServiceNameToTotalDurationMap,
-		SpanIDToSpanNodeMap:           copyOfSpanIDToSpanNodeMap,
-		TraceRoots:                    copyOfTraceRoots,
-		HasMissingSpans:               c.HasMissingSpans,
-	}
+func (wt *WaterfallTrace) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(wt)
 }
 
-func (c *WaterfallTrace) MarshalBinary() (data []byte, err error) {
-	return json.Marshal(c)
-}
-
-func (c *WaterfallTrace) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
+func (wt *WaterfallTrace) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, wt)
 }
 
 // GettableWaterfallTrace is the response for the v3 waterfall API.

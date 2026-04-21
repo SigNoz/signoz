@@ -73,7 +73,7 @@ func buildSpanMap(roots ...*tracedetailtypes.WaterfallSpan) map[string]*tracedet
 	}
 	for _, r := range roots {
 		r.SortChildren()
-		r.ComputeSubTreeNodeCount()
+		r.GetSubtreeNodeCount()
 		walk(r)
 	}
 	return m

@@ -103,42 +103,42 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 }
 
 // SortChildren recursively sorts children of each span by TimeUnixNano then Name.
-func (s *WaterfallSpan) SortChildren() {
-	sort.Slice(s.Children, func(i, j int) bool {
-		if s.Children[i].TimeUnixNano == s.Children[j].TimeUnixNano {
-			return s.Children[i].Name < s.Children[j].Name
+func (ws *WaterfallSpan) SortChildren() {
+	sort.Slice(ws.Children, func(i, j int) bool {
+		if ws.Children[i].TimeUnixNano == ws.Children[j].TimeUnixNano {
+			return ws.Children[i].Name < ws.Children[j].Name
 		}
-		return s.Children[i].TimeUnixNano < s.Children[j].TimeUnixNano
+		return ws.Children[i].TimeUnixNano < ws.Children[j].TimeUnixNano
 	})
-	for _, child := range s.Children {
+	for _, child := range ws.Children {
 		child.SortChildren()
 	}
 }
 
-// CopyWithoutChildren creates a shallow copy and resets tree-structure fields.
+// GetWithoutChildren creates a shallow copy and resets tree-structure fields.
 // SubTreeNodeCount is preserved (must be pre-computed via computeSubTreeNodeCount).
-func (s *WaterfallSpan) CopyWithoutChildren(level uint64) *WaterfallSpan {
-	cp := *s
+func (ws *WaterfallSpan) GetWithoutChildren(level uint64) *WaterfallSpan {
+	cp := *ws
 	cp.Level = level
-	cp.HasChildren = len(s.Children) > 0
+	cp.HasChildren = len(ws.Children) > 0
 	cp.Children = make([]*WaterfallSpan, 0)
 	return &cp
 }
 
-// ComputeSubTreeNodeCount recursively sets SubTreeNodeCount on every span in the subtree.
+// GetSubtreeNodeCount recursively sets SubTreeNodeCount on every span in the subtree.
 // SubTreeNodeCount = 1 (self) + total number of descendants.
-func (s *WaterfallSpan) ComputeSubTreeNodeCount() uint64 {
+func (ws *WaterfallSpan) GetSubtreeNodeCount() uint64 {
 	count := uint64(1)
-	for _, child := range s.Children {
-		count += child.ComputeSubTreeNodeCount()
+	for _, child := range ws.Children {
+		count += child.GetSubtreeNodeCount()
 	}
-	s.SubTreeNodeCount = count
+	ws.SubTreeNodeCount = count
 	return count
 }
 
 // getPreOrderedSpans returns spans in pre-order, uncollapsedSpanIDs must be pre-computed.
 func (ws *WaterfallSpan) getPreOrderedSpans(uncollapsedSpanIDs map[string]struct{}, selectAll bool, level uint64) []*WaterfallSpan {
-	result := []*WaterfallSpan{ws.CopyWithoutChildren(level)}
+	result := []*WaterfallSpan{ws.GetWithoutChildren(level)}
 	_, isUncollapsed := uncollapsedSpanIDs[ws.SpanID]
 	if selectAll || isUncollapsed {
 		for _, child := range ws.Children {
