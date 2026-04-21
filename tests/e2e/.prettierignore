@@ -2,8 +2,7 @@
 node_modules/
 
 # Generated test outputs
-playwright-report/
-test-results/
+artifacts/
 playwright/.cache/
 
 # Build outputs

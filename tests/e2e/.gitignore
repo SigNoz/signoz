@@ -1,6 +1,7 @@
 node_modules/
-/test-results/
-/playwright-report/
+# All Playwright output — HTML report, JSON summary, per-test traces /
+# screenshots / videos. Set via outputDir + reporter paths in playwright.config.ts.
+/artifacts/
 /playwright/.cache/
 .env
 dist/

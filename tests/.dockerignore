@@ -10,11 +10,9 @@ tmp
 
 # e2e Playwright outputs and deps
 e2e/node_modules
-e2e/test-results
-e2e/playwright-report
+e2e/artifacts
 e2e/.auth
 e2e/.playwright-cli
-e2e/tests/alerts-downtime/run-spec-*
 
 # Integration-side outputs (if any stale dirs remain)
 integration/tmp

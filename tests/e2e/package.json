@@ -12,7 +12,7 @@
     "test:chromium": "playwright test --project=chromium",
     "test:firefox": "playwright test --project=firefox",
     "test:webkit": "playwright test --project=webkit",
-    "report": "playwright show-report",
+    "report": "playwright show-report artifacts/html-report",
     "codegen": "playwright codegen",
     "install:browsers": "playwright install",
     "install:cli": "npm install -g @playwright/cli@latest && playwright-cli install --skills",
