@@ -126,6 +126,6 @@ func NewModules(
 		ServiceAccount:   serviceAccount,
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
-		TraceDetail:      impltracedetail.NewModule(telemetryStore, cache, providerSettings),
+		TraceDetail:      impltracedetail.NewModule(telemetryStore, providerSettings),
 	}
 }

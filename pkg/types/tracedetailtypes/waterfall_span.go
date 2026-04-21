@@ -15,10 +15,6 @@ const (
 	TraceTable        = "distributed_signoz_index_v3"
 	TraceSummaryTable = "distributed_trace_summary"
 
-	// Cache and freshness thresholds.
-	WaterfallCacheTTL = 5 * time.Minute
-	FluxInterval      = 2 * time.Minute
-
 	// Windowing constants for span selection in waterfall.
 	SpanLimitPerRequest         float64 = 500
 	MaxDepthForSelectedChildren int     = 5
@@ -126,7 +122,6 @@ func (ws *WaterfallSpan) GetWithoutChildren(level uint64) *WaterfallSpan {
 }
 
 // GetSubtreeNodeCount recursively sets SubTreeNodeCount on every span in the subtree.
-// SubTreeNodeCount = 1 (self) + total number of descendants.
 func (ws *WaterfallSpan) GetSubtreeNodeCount() uint64 {
 	count := uint64(1)
 	for _, child := range ws.Children {
