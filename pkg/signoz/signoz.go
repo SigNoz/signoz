@@ -333,7 +333,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
+	authz, err := authzProviderFactory.New(ctx, providerSettings, config.Authz)
 	if err != nil {
 		return nil, err
 	}

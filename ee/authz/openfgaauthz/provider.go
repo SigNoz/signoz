@@ -2,7 +2,6 @@ package openfgaauthz
 
 import (
 	"context"
-	"log/slog"
 	"slices"
 
 	"github.com/SigNoz/signoz/ee/authz/openfgaserver"
@@ -299,11 +298,7 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	if err := provider.cleanupTuples(ctx, role.Name, orgID); err != nil {
-		provider.settings.Logger().WarnContext(ctx, "failed to cleanup permission tuples for deleted role, orphaned tuples are harmless",
-			slog.String("role_name", role.Name),
-			slog.String("org_id", orgID.StringValue()),
-			errors.Attr(err),
-		)
+		return errors.WithAdditionalf(err, "failed to delete transactions for the role: %s", role.Name)
 	}
 
 	err = provider.store.Delete(ctx, orgID, id)
