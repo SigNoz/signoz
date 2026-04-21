@@ -114,11 +114,11 @@ type AlertCompositeQuery struct {
 
 type RuleCondition struct {
 	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery" required:"true"`
-	CompareOperator   CompareOperator      `json:"op" required:"true"`
+	CompareOperator   CompareOperator      `json:"op,omitzero"`
 	Target            *float64             `json:"target,omitempty"`
 	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
 	AbsentFor         uint64               `json:"absentFor,omitempty"`
-	MatchType         MatchType            `json:"matchType" required:"true"`
+	MatchType         MatchType            `json:"matchType,omitzero"`
 	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
 	Seasonality       Seasonality          `json:"seasonality,omitzero"`
