@@ -1,6 +1,27 @@
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
+	Switch: ({
+		value,
+		onChange,
+		disabled,
+	}: {
+		value: boolean;
+		onChange: (checked: boolean) => void;
+		disabled?: boolean;
+	}): JSX.Element => (
+		<button
+			type="button"
+			role="switch"
+			aria-checked={value}
+			disabled={disabled}
+			onClick={(): void => onChange(!value)}
+		/>
+	),
+}));
+
 import SSOEnforcementToggle from '../SSOEnforcementToggle';
 import {
 	AUTH_DOMAINS_UPDATE_ENDPOINT,

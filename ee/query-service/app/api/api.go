@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	rules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -23,7 +22,6 @@ import (
 
 type APIHandlerOptions struct {
 	DataConnector                 interfaces.Reader
-	RulesManager                  *rules.Manager
 	UsageManager                  *usage.Manager
 	IntegrationsController        *integrations.Controller
 	CloudIntegrationsController   *cloudintegrations.Controller
@@ -43,7 +41,6 @@ type APIHandler struct {
 func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.Config) (*APIHandler, error) {
 	baseHandler, err := baseapp.NewAPIHandler(baseapp.APIHandlerOpts{
 		Reader:                        opts.DataConnector,
-		RuleManager:                   opts.RulesManager,
 		IntegrationsController:        opts.IntegrationsController,
 		CloudIntegrationsController:   opts.CloudIntegrationsController,
 		LogsParsingPipelineController: opts.LogsParsingPipelineController,
@@ -62,10 +59,6 @@ func NewAPIHandler(opts APIHandlerOptions, signoz *signoz.SigNoz, config signoz.
 		APIHandler: *baseHandler,
 	}
 	return ah, nil
-}
-
-func (ah *APIHandler) RM() *rules.Manager {
-	return ah.opts.RulesManager
 }
 
 func (ah *APIHandler) UM() *usage.Manager {

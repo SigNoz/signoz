@@ -16,38 +16,38 @@ go.mod @therealpandey
 
 # Scaffold Owners
 
-/pkg/config/ @vikrantgupta25
-/pkg/errors/ @vikrantgupta25
-/pkg/factory/ @vikrantgupta25
-/pkg/types/ @vikrantgupta25
-/pkg/valuer/ @vikrantgupta25
-/cmd/ @vikrantgupta25
-.golangci.yml @vikrantgupta25
+/pkg/config/ @therealpandey
+/pkg/errors/ @therealpandey
+/pkg/factory/ @therealpandey
+/pkg/types/ @therealpandey
+/pkg/valuer/ @therealpandey
+/cmd/ @therealpandey
+.golangci.yml @therealpandey
 
 # Zeus Owners
 
-/pkg/zeus/ @vikrantgupta25
-/ee/zeus/ @vikrantgupta25
-/pkg/licensing/ @vikrantgupta25
-/ee/licensing/ @vikrantgupta25
+/pkg/zeus/ @therealpandey
+/ee/zeus/ @therealpandey
+/pkg/licensing/ @therealpandey
+/ee/licensing/ @therealpandey
 
 # SQL Owners
 
-/pkg/sqlmigration/ @vikrantgupta25
-/ee/sqlmigration/ @vikrantgupta25
-/pkg/sqlschema/ @vikrantgupta25
-/ee/sqlschema/ @vikrantgupta25
+/pkg/sqlmigration/ @therealpandey
+/ee/sqlmigration/ @therealpandey
+/pkg/sqlschema/ @therealpandey
+/ee/sqlschema/ @therealpandey
 
 # Analytics Owners
 
-/pkg/analytics/ @vikrantgupta25
-/pkg/statsreporter/ @vikrantgupta25
+/pkg/analytics/ @therealpandey
+/pkg/statsreporter/ @therealpandey
 
 # Emailing Owners
 
-/pkg/emailing/ @vikrantgupta25
-/pkg/types/emailtypes/ @vikrantgupta25
-/templates/email/ @vikrantgupta25
+/pkg/emailing/ @therealpandey
+/pkg/types/emailtypes/ @therealpandey
+/templates/email/ @therealpandey
 
 # Querier Owners
 
@@ -97,23 +97,23 @@ go.mod @therealpandey
 
 # AuthN / AuthZ Owners
 
-/pkg/authz/ @vikrantgupta25
-/ee/authz/ @vikrantgupta25
-/pkg/authn/ @vikrantgupta25
-/ee/authn/ @vikrantgupta25
-/pkg/modules/user/ @vikrantgupta25
-/pkg/modules/session/ @vikrantgupta25
-/pkg/modules/organization/ @vikrantgupta25
-/pkg/modules/authdomain/ @vikrantgupta25
-/pkg/modules/role/ @vikrantgupta25
+/pkg/authz/ @therealpandey
+/ee/authz/ @therealpandey
+/pkg/authn/ @therealpandey
+/ee/authn/ @therealpandey
+/pkg/modules/user/ @therealpandey
+/pkg/modules/session/ @therealpandey
+/pkg/modules/organization/ @therealpandey
+/pkg/modules/authdomain/ @therealpandey
+/pkg/modules/role/ @therealpandey
 
 # IdentN Owners
-/pkg/identn/ @vikrantgupta25
-/pkg/http/middleware/identn.go @vikrantgupta25
+/pkg/identn/ @therealpandey
+/pkg/http/middleware/identn.go @therealpandey
 
 # Integration tests
 
-/tests/integration/ @vikrantgupta25
+/tests/integration/ @therealpandey
 
 # OpenAPI types generator
 

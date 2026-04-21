@@ -48,7 +48,7 @@
 	}
 
 	&__right {
-		border-left: 1px solid var(--l3-border);
+		border-left: 1px solid var(--l1-border);
 		padding-left: 24px;
 		display: flex;
 		flex-direction: column;
@@ -83,7 +83,7 @@
 	textarea {
 		height: 32px;
 		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		border-radius: 2px;
 		color: var(--l1-foreground) !important;
 
@@ -93,7 +93,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&:focus,
@@ -112,7 +112,7 @@
 		max-height: 200px;
 		resize: vertical;
 		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		border-radius: 2px;
 		color: var(--l1-foreground) !important;
 		font-family: 'SF Mono', monospace;
@@ -125,7 +125,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&:focus,

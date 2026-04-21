@@ -45,6 +45,10 @@ func (provider *provider) PutMeters(_ context.Context, _ string, _ []byte) error
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters is not supported")
 }
 
+func (provider *provider) PutMetersV2(_ context.Context, _ string, _ []byte) error {
+	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v2 is not supported")
+}
+
 func (provider *provider) PutProfile(_ context.Context, _ string, _ *zeustypes.PostableProfile) error {
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting profile is not supported")
 }

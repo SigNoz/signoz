@@ -1,4 +1,3 @@
-import { VIEWS } from 'components/HostMetricsDetail/constants';
 import {
 	Options,
 	parseAsInteger,
@@ -14,10 +13,10 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
+import { VIEWS } from './constants';
 import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategories } from './constants';
 import { orderBySchema, OrderBySchemaType } from './schemas';
 
-const defaultFilters: IBuilderQuery['filters'] = { items: [], op: 'and' };
 const defaultNuqsOptions: Options = {
 	history: 'push',
 };
@@ -38,20 +37,6 @@ export const useInfraMonitoringOrderBy = (): UseQueryStateReturn<
 	useQueryState(
 		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
 		parseAsJson(orderBySchema).withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringOrderByHosts = (): UseQueryStateReturn<
-	OrderBySchemaType,
-	OrderBySchemaType
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
-		parseAsJson(orderBySchema)
-			.withDefault({
-				columnName: 'cpu',
-				order: 'desc',
-			})
-			.withOptions(defaultNuqsOptions),
 	);
 
 export const useInfraMonitoringGroupBy = (): UseQueryStateReturn<
@@ -114,15 +99,6 @@ export const useInfraMonitoringCategory = (): UseQueryStateReturn<
 	);
 
 export const useInfraMonitoringFilters = (): UseQueryStateReturn<
-	string,
-	string
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 	TagFilter,
 	undefined
 > =>
@@ -131,94 +107,12 @@ export const useInfraMonitoringFiltersK8s = (): UseQueryStateReturn<
 		parseAsJsonNoValidate<TagFilter>().withOptions(defaultNuqsOptions),
 	);
 
-export const useInfraMonitoringFiltersHosts = (): UseQueryStateReturn<
-	TagFilter,
-	TagFilter | undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		parseAsJsonNoValidate<IBuilderQuery['filters']>()
-			.withDefault(defaultFilters)
-			.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringClusterName = (): UseQueryStateReturn<
+export const useInfraMonitoringSelectedItem = (): UseQueryStateReturn<
 	string,
-	string
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME,
-		parseAsString.withDefault('').withOptions(defaultNuqsOptions),
+	string | undefined
+> => {
+	return useQueryState(
+		INFRA_MONITORING_K8S_PARAMS_KEYS.SELECTED_ITEM,
+		parseAsString,
 	);
-
-export const useInfraMonitoringDaemonSetUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringDeploymentUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.DEPLOYMENT_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringJobUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.JOB_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringNamespaceUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringNodeUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringPodUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringStatefulSetUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.STATEFULSET_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
-
-export const useInfraMonitoringVolumeUID = (): UseQueryStateReturn<
-	string,
-	undefined
-> =>
-	useQueryState(
-		INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
-		parseAsString.withOptions(defaultNuqsOptions),
-	);
+};

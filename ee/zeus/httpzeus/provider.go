@@ -136,6 +136,18 @@ func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte
 	return err
 }
 
+func (provider *Provider) PutMetersV2(ctx context.Context, key string, data []byte) error {
+	_, err := provider.do(
+		ctx,
+		provider.config.URL.JoinPath("/v1/meters"),
+		http.MethodPost,
+		key,
+		data,
+	)
+
+	return err
+}
+
 func (provider *Provider) PutProfile(ctx context.Context, key string, profile *zeustypes.PostableProfile) error {
 	body, err := json.Marshal(profile)
 	if err != nil {

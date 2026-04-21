@@ -4,7 +4,7 @@
 		margin-bottom: 0px;
 
 		&::before {
-			border-bottom: 1px solid var(--bg-slate-400) !important;
+			border-bottom: 1px solid var(--l1-border) !important;
 		}
 	}
 
@@ -16,15 +16,5 @@
 	}
 	.funnel-icon {
 		transform: rotate(180deg);
-	}
-}
-
-.lightMode {
-	.traces-module-container {
-		.ant-tabs-nav {
-			&::before {
-				border-bottom: 1px solid var(--bg-vanilla-300) !important;
-			}
-		}
 	}
 }

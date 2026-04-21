@@ -3,9 +3,6 @@
 	justify-content: space-between;
 	align-items: flex-end;
 
-	border-top: 1px solid var(--bg-slate-400);
-	border-bottom: 1px solid var(--bg-slate-400);
-
 	padding: 0px 8px;
 	gap: 8px;
 
@@ -42,12 +39,5 @@
 			display: flex;
 			justify-content: flex-end;
 		}
-	}
-}
-
-.lightMode {
-	.toolbar {
-		border-top: 1px solid var(--bg-vanilla-300);
-		border-bottom: 1px solid var(--bg-vanilla-300);
 	}
 }

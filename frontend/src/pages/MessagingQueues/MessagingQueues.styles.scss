@@ -10,7 +10,7 @@
 		justify-content: space-between;
 		align-items: center;
 
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 14px;
 		font-style: normal;
@@ -18,7 +18,7 @@
 		line-height: 20px;
 		letter-spacing: 0.25px;
 
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 
 		.header-config {
 			display: flex;
@@ -34,8 +34,8 @@
 					gap: 4px;
 
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 			}
 		}
@@ -61,8 +61,8 @@
 					min-width: 164px;
 
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 			}
 		}
@@ -72,7 +72,7 @@
 			padding: 24px 24px 0 24px;
 		}
 
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	.messaging-queue-details {
@@ -84,16 +84,16 @@
 			cursor: pointer;
 
 			.ant-radio-button-wrapper {
-				border-color: var(--bg-slate-400);
-				color: var(--bg-vanilla-400);
+				border-color: var(--l1-border);
+				color: var(--l2-foreground);
 			}
 			.ant-radio-button-wrapper-checked {
-				background: var(--bg-slate-400);
-				color: var(--bg-vanilla-100);
+				background: var(--l1-border);
+				color: var(--l1-foreground);
 			}
 			.ant-radio-button-wrapper-disabled {
-				background: var(--bg-ink-400);
-				color: var(--bg-slate-200);
+				background: var(--l2-background);
+				color: var(--l3-foreground);
 			}
 			.ant-radio-button-wrapper::before {
 				width: 0px;
@@ -116,7 +116,7 @@
 	padding: 24px 16px 10px 16px;
 
 	.overview-text {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 16px;
 		font-style: normal;
@@ -127,7 +127,7 @@
 	}
 
 	.overview-subtext {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -154,11 +154,11 @@
 			padding: 18px 20px 20px 20px;
 			flex-direction: column;
 			justify-content: space-between;
-			border: 1px solid var(--bg-slate-500);
+			border: 1px solid var(--l1-border);
 			border-radius: 2px;
 
 			.card-title {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -170,7 +170,7 @@
 			}
 
 			.card-info-text {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -190,7 +190,7 @@
 				}
 
 				.ant-btn-default {
-					background-color: var(--bg-slate-400);
+					background-color: var(--l1-border);
 					border: none;
 					box-shadow: none;
 				}
@@ -208,7 +208,7 @@
 				min-height: 144px;
 
 				.card-title {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -229,8 +229,8 @@
 			padding: 12px;
 			flex-direction: column;
 			align-items: flex-start;
-			border: 1px solid var(--bg-slate-500);
-			background: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			width: 337px;
 			height: 283px;
 			border-radius: 2px;
@@ -243,7 +243,7 @@
 				height: 24px;
 
 				> p {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -259,7 +259,7 @@
 					align-items: center;
 
 					> p {
-						color: var(--bg-slate-200);
+						color: var(--l3-foreground);
 						font-family: Inter;
 						font-size: 12px;
 						font-style: normal;
@@ -282,20 +282,20 @@
 	}
 
 	.coming-soon-card {
-		background: var(--bg-ink-500) !important;
+		background: var(--l1-background) !important;
 		border-left: none !important;
 	}
 }
 
 .overview-confirm-modal {
-	background-color: var(--bg-ink-500);
+	background-color: var(--l1-background);
 	padding: 0;
 	border-radius: 4px;
 
 	.ant-modal-content {
-		background-color: var(--bg-ink-300);
+		background-color: var(--l3-background);
 		.ant-modal-confirm-content {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 
 		.ant-modal-confirm-body-wrapper {
@@ -303,118 +303,6 @@
 			flex-direction: column;
 			height: 150px;
 			justify-content: space-between;
-		}
-	}
-}
-
-.lightMode {
-	.messaging-queue-container {
-		.messaging-header {
-			color: var(--bg-ink-400);
-			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.header-config {
-				.messaging-queue-options {
-					.ant-select-selector {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
-					}
-				}
-			}
-		}
-
-		.messaging-queue-main-graph {
-			.config-options {
-				.config-select-option {
-					.ant-select-selector {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
-					}
-				}
-			}
-
-			border-bottom: 1px solid var(--bg-vanilla-300);
-		}
-
-		.messaging-queue-details {
-			.mq-details-options {
-				.ant-radio-button-wrapper {
-					border-color: var(--bg-vanilla-300);
-					color: var(--bg-slate-200);
-				}
-				.ant-radio-button-wrapper-checked {
-					color: var(--bg-slate-200);
-					background: var(--bg-vanilla-300);
-				}
-				.ant-radio-button-wrapper-disabled {
-					background: var(--bg-vanilla-100);
-					color: var(--bg-vanilla-400);
-				}
-			}
-		}
-	}
-
-	.messaging-overview {
-		.overview-text {
-			color: var(--bg-slate-200);
-		}
-
-		.overview-subtext {
-			color: var(--bg-slate-300);
-		}
-
-		.overview-doc-area {
-			.overview-info-card {
-				border: 1px solid var(--bg-vanilla-300);
-
-				.card-title {
-					color: var(--bg-slate-200);
-				}
-
-				.card-info-text {
-					color: var(--bg-slate-300);
-				}
-
-				.button-grp {
-					.ant-btn-default {
-						background-color: var(--bg-vanilla-100);
-					}
-				}
-			}
-		}
-
-		.summary-section {
-			.summary-card {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-
-				.summary-title {
-					> p {
-						color: var(--bg-slate-200);
-					}
-
-					.time-value {
-						> p {
-							color: var(--bg-slate-200);
-						}
-					}
-				}
-			}
-		}
-
-		.coming-soon-card {
-			background: var(--bg-vanilla-200) !important;
-		}
-	}
-
-	.overview-confirm-modal {
-		background-color: var(--bg-vanilla-100);
-
-		.ant-modal-content {
-			background-color: var(--bg-vanilla-100);
-			.ant-modal-confirm-content {
-				color: var(--bg-slate-200);
-			}
 		}
 	}
 }

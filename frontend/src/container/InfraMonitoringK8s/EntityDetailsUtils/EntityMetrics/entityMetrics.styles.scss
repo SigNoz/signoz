@@ -11,7 +11,7 @@
 	gap: 8px;
 	padding: 12px;
 	border-radius: 3px;
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 }
 
 .entity-metrics-card {
@@ -19,7 +19,7 @@
 	height: 300px;
 	padding: 10px;
 
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 
 	.ant-card-body {
 		padding: 0;

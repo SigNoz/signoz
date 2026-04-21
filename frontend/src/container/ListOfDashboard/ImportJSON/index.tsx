@@ -120,7 +120,9 @@ function ImportJSON({
 	const getErrorNode = (error: string): JSX.Element => (
 		<Space>
 			<ExclamationCircleTwoTone twoToneColor={[red[7], '#1f1f1f']} />
-			<Typography style={{ color: '#D89614' }}>{error}</Typography>
+			<Typography style={{ color: 'var(--warning-background)' }}>
+				{error}
+			</Typography>
 		</Space>
 	);
 

@@ -17,7 +17,7 @@
 		.ant-table-wrapper .ant-table-tbody > tr > td {
 			border: none;
 			background-color: transparent;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 400;
@@ -29,10 +29,10 @@
 
 		.ant-table-wrapper .ant-table-thead > tr > th {
 			font-family: Inter;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			background-color: transparent;
 			border: none;
-			border-bottom: 0.5px solid var(--bg-slate-400);
+			border-bottom: 0.5px solid var(--l1-border);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 600;
@@ -53,22 +53,5 @@
 		justify-content: end;
 		padding: 0 8px;
 		margin: 12px 0 2px;
-	}
-}
-
-.lightMode {
-	.traces-table {
-		.resize-table {
-			.ant-table-wrapper .ant-table-tbody > tr > td {
-				background-color: var(--bg-vanilla-100);
-				color: var(--bg-ink-500);
-				border-color: rgba(0, 0, 0, 0.06);
-			}
-			.ant-table-wrapper .ant-table-thead > tr > th {
-				background-color: var(--bg-vanilla-300);
-				color: var(--bg-ink-500);
-				border-color: rgba(0, 0, 0, 0.06);
-			}
-		}
 	}
 }

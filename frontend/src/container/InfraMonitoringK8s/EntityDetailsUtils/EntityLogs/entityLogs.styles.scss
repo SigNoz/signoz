@@ -6,8 +6,8 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400) !important;
-			background-color: var(--bg-ink-300) !important;
+			border: 1px solid var(--l1-border) !important;
+			background-color: var(--l3-background) !important;
 
 			input {
 				font-size: 12px;
@@ -26,7 +26,7 @@
 
 		padding: 12px;
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 	}
 
 	.entity-logs {
@@ -45,11 +45,11 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-slate-300);
+				background: var(--l3-background);
 			}
 
 			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-slate-200);
+				background: var(--l3-background);
 			}
 
 			.ant-row {
@@ -116,18 +116,5 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-	}
-}
-
-.lightMode {
-	.filter-section {
-		border-top: 1px solid var(--bg-vanilla-300);
-		border-bottom: 1px solid var(--bg-vanilla-300);
-
-		.ant-select-selector {
-			border-color: var(--bg-vanilla-300) !important;
-			background-color: var(--bg-vanilla-100) !important;
-			color: var(--bg-ink-200);
-		}
 	}
 }

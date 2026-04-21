@@ -5,18 +5,10 @@
 	margin: 0 16px;
 
 	&__title {
-		color: var(--text-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: 14px;
 		font-weight: 500;
 		line-height: 20px;
 		letter-spacing: -0.07px;
-	}
-}
-
-.lightMode {
-	.timeline {
-		&__title {
-			color: var(--text-ink-400);
-		}
 	}
 }

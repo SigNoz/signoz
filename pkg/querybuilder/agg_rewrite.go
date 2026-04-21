@@ -218,6 +218,10 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		if err != nil {
 			return err
 		}
+		// not possible for whereClause to be nil here but still adding a check.
+		if whereClause == nil {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid predicate argument for %q: %q", name, origPred)
+		}
 
 		newPred, chArgs := whereClause.WhereClause.BuildWithFlavor(sqlbuilder.ClickHouse)
 		newPred = strings.TrimPrefix(newPred, "WHERE")
