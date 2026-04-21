@@ -2,7 +2,7 @@ import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
 import { AxiosError, AxiosResponse } from 'axios';
 import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
@@ -12,7 +12,7 @@ import {
 
 export const getHostAttributeKeys = async (
 	searchText = '',
-	entity: K8sCategory,
+	entity: InfraMonitoringEntity,
 ): Promise<SuccessResponse<IQueryAutocompleteResponse> | ErrorResponse> => {
 	try {
 		const response: AxiosResponse<{

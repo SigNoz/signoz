@@ -48,5 +48,5 @@ export interface IGlobalTimeStoreActions {
 	 * For durations, computes fresh values based on Date.now().
 	 * For custom ranges, extracts the stored values.
 	 */
-	getMinMaxTime: () => ParsedTimeRange;
+	getMinMaxTime: (selectedItem?: GlobalTimeSelectedTime) => ParsedTimeRange;
 }

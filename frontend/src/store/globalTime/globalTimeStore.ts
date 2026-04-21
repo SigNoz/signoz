@@ -26,8 +26,7 @@ export const useGlobalTimeStore = create<IGlobalTimeStore>((set, get) => ({
 			};
 		});
 	},
-	getMinMaxTime: (): ParsedTimeRange => {
-		const { selectedTime } = get();
-		return parseSelectedTime(selectedTime);
+	getMinMaxTime: (selectedTime): ParsedTimeRange => {
+		return parseSelectedTime(selectedTime || get().selectedTime);
 	},
 }));
