@@ -11,7 +11,7 @@ from ksuid import KsuidMs
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
-from fixtures.utils import parse_timestamp
+from fixtures.time import parse_timestamp
 
 
 class LogsResource(ABC):

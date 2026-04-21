@@ -10,11 +10,11 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
 from fixtures.logs import Logs
 from fixtures.metrics import Metrics
 from fixtures.traces import Traces
-from fixtures.utils import get_testdata_file_path
 
 logger = setup_logger(__name__)
 

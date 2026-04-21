@@ -13,7 +13,7 @@ import pytest
 
 from fixtures import types
 from fixtures.fingerprint import LogsOrTracesFingerprint
-from fixtures.utils import parse_duration, parse_timestamp
+from fixtures.time import parse_duration, parse_timestamp
 
 
 class TracesKind(Enum):
