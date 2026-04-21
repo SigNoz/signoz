@@ -296,7 +296,7 @@ def test_primitive_path_operations(
             "expression": 'body.user.name = "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and json.loads(_get_rows(r)[0]["data"]["body"])["user"]["name"] == "alice",
+            and _get_bodies(r)[0]["user"]["name"] == "alice",
         },
         # log1,log3,log4 have status=200 — log4 is flat with no user object
         {
@@ -314,16 +314,16 @@ def test_primitive_path_operations(
             "expression": "body.user.height > 5.8",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and json.loads(_get_rows(r)[0]["data"]["body"])["user"]["height"] == 6.1,
+            and _get_bodies(r)[0]["user"]["height"] == 6.1,
         },
-        # user.age: Int64 in log1, String "28" in log5, Int64 0 in log6 — type ambiguity
-        # log6 (age=0) is now also < 30, so count increases from 2 to 3
+        # user.age: Int64 in log1, String "28" in log5, Int64 0 in log6 — type ambiguity.
+        # Matches: log1 (25 < 30), log5 ("28" via type ambiguity), log6 (0 < 30) → 3 results.
         {
             "name": "prim.int_lt_with_type_ambiguity",
             "requestType": "raw",
             "expression": "body.user.age < 30",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3
+            "validate": lambda r: len(_get_rows(r)) == 3,
         },
         # Bool has distinct handling (not IndexSupported); log4 has no active field
         {
@@ -446,8 +446,7 @@ def test_primitive_path_operations(
             "validate": lambda r: len(_get_rows(r)) >= 2
             and all("email" not in b.get("user", {}) for b in _get_bodies(r)),
         },
-        # ── missing negative operators ─────────────────────────────────────
-        # NOT IN — operator present in applyOperator but not tested until now
+        # NOT IN — complement of prim.string_in
         {
             "name": "prim.string_not_in",
             "requestType": "raw",
@@ -1015,9 +1014,7 @@ def test_array_path_operations(
             "expression": 'body.education[].type = "engineering"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and any(
-                e.get("type") == "engineering" for e in _get_bodies(r)[0]["education"]
-            ),
+            and any(e.get("type") == "engineering" for e in _get_bodies(r)[0]["education"]),
         },
         # Terminal Array(Float64) + Array(Dynamic) dual branch traversal
         {
@@ -1065,7 +1062,9 @@ def test_array_path_operations(
             "validate": lambda r: len(_get_rows(r)) == 1
             and all("education" not in b for b in _get_bodies(r)),
         },
-        # Negative on dual-branch terminal (Array(Float64) + Array(Dynamic))
+        # NOT CONTAINS 1.65: log1 (has 1.65 → excluded), log2 (has 1.65 → excluded).
+        # Matches: log3 (params [7.0, 8.0]), log4 (no education — passes NOT CONTAINS).
+        # Exercises negation on dual-branch terminal (Array(Float64) + Array(Dynamic)).
         {
             "name": "arr.terminal_not_contains_float",
             "requestType": "raw",
@@ -1570,14 +1569,18 @@ def test_polluted_data(
             and _get_bodies(r)[0]["user"]["name"] == "alice",
         },
         # EXISTS only fires the body path.
-        # alice (log_clean), bob (log_body_attr_clash), charlie (log_flat_attr) match.
+        # alice (log_clean), shadow (log_body_attr_clash body), charlie (log_flat_attr) match.
         # log_ghost has no user object in body → excluded.
         {
             "name": "polluted.exists_scoped_to_body_paths_only",
             "requestType": "raw",
             "expression": "body.user.name EXISTS",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 3 and _get_bodies(r)[0]["user"]["name"] in ["alice", "charlie", "bob"],
+            "validate": lambda r: len(_get_rows(r)) == 3
+            and all(
+                b.get("user", {}).get("name") in ("alice", "shadow", "charlie")
+                for b in _get_bodies(r)
+            ),
         },
     ]
 
@@ -1606,7 +1609,7 @@ def test_polluted_data(
 # ============================================================================
 
 
-def test_groupby_timeseries(
+def test_groupby_scalar(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -1651,10 +1654,13 @@ def test_groupby_timeseries(
             "groupBy": [{"name": "body.user.age"}],
             "limit": 100,
             "aggregation": "count()",
-            # Each row: [age_value, count]
-            # Verify the three distinct ages appear as group keys (str or int).
-            "validate": lambda r: {str(row[0]) for row in _get_scalar_rows(r) if row}
-            >= {"25", "30", "35"},
+            # Each row: [age_value, count]. alice×3→count=3, bob×1→count=1, charlie×1→count=1.
+            "validate": lambda r: len(
+                rows := {str(row[0]): row[-1] for row in _get_scalar_rows(r) if row}
+            ) >= 3
+            and rows.get("25") == 3
+            and rows.get("30") == 1
+            and rows.get("35") == 1,
         },
         # Multi-field GroupBy — distinct SQL (multiple group-by columns)
         {
@@ -1667,11 +1673,17 @@ def test_groupby_timeseries(
             ],
             "limit": 100,
             "aggregation": "count()",
-            # Each row: [name, age, count]
-            # Verify the three (name, age) pairs all appear as group keys.
-            "validate": lambda r: {
-                (str(row[0]), str(row[1])) for row in _get_scalar_rows(r) if len(row) >= 2
-            }.issuperset({("alice", "25"), ("bob", "30"), ("charlie", "35")}),
+            # Each row: [name, age, count]. Verify (alice,25)→3, (bob,30)→1, (charlie,35)→1.
+            "validate": lambda r: len(
+                pairs := {
+                    (str(row[0]), str(row[1])): row[-1]
+                    for row in _get_scalar_rows(r)
+                    if len(row) >= 3
+                }
+            ) >= 3
+            and pairs.get(("alice", "25")) == 3
+            and pairs.get(("bob", "30")) == 1
+            and pairs.get(("charlie", "35")) == 1,
         },
     ]
 
