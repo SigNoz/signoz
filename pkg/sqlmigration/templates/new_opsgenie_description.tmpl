@@ -1,0 +1,22 @@
+{{ if gt (len .Alerts.Firing) 0 -}}
+	Alerts Firing:
+	{{ range .Alerts.Firing }}
+	 - Message: {{ .Annotations.description }}
+	Labels:
+	{{ range .Labels.SortedPairs }}{{- if or (eq .Name "ruleId") (eq .Name "ruleSource") }}{{ continue }}{{ end -}}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Annotations:
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Source: {{ .GeneratorURL }}
+	{{ end }}
+	{{- end }}
+	{{ if gt (len .Alerts.Resolved) 0 -}}
+	Alerts Resolved:
+	{{ range .Alerts.Resolved }}
+	 - Message: {{ .Annotations.description }}
+	Labels:
+	{{ range .Labels.SortedPairs }}{{- if or (eq .Name "ruleId") (eq .Name "ruleSource") }}{{ continue }}{{ end -}}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Annotations:
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Source: {{ .GeneratorURL }}
+	{{ end }}
+	{{- end }}

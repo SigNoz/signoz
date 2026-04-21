@@ -1,0 +1,12 @@
+{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
+
+     *Summary:* {{ .Annotations.summary }}
+     *Description:* {{ .Annotations.description }}
+     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
+
+     *Details:*
+       {{ range .Labels.SortedPairs }}{{- if or (eq .Name "ruleId") (eq .Name "ruleSource") }}{{ continue }}{{ end -}} • *{{ .Name }}:* {{ .Value }}
+       {{ end }}
+     {{ end }}
