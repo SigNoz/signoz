@@ -17,7 +17,7 @@ pytest_plugins = [
     "fixtures.traces",
     "fixtures.metrics",
     "fixtures.meter",
-    "fixtures.driver",
+    "fixtures.browser",
     "fixtures.keycloak",
     "fixtures.idp",
     "fixtures.notification_channel",
