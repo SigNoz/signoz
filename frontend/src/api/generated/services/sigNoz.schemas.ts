@@ -5248,12 +5248,12 @@ export interface SpanattributemappingtypesConditionDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	attributes?: string[] | null;
+	attributes: string[] | null;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	resource?: string[] | null;
+	resource: string[] | null;
 }
 
 export enum SpanattributemappingtypesFieldContextDTO {
@@ -5362,7 +5362,7 @@ export interface SpanattributemappingtypesMapperConfigDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	sources?: SpanattributemappingtypesMapperSourceDTO[] | null;
+	sources: SpanattributemappingtypesMapperSourceDTO[] | null;
 }
 
 export enum SpanattributemappingtypesMapperOperationDTO {
@@ -5370,16 +5370,16 @@ export enum SpanattributemappingtypesMapperOperationDTO {
 	copy = 'copy',
 }
 export interface SpanattributemappingtypesMapperSourceDTO {
-	context?: SpanattributemappingtypesFieldContextDTO;
+	context: SpanattributemappingtypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
-	key?: string;
-	operation?: SpanattributemappingtypesMapperOperationDTO;
+	key: string;
+	operation: SpanattributemappingtypesMapperOperationDTO;
 	/**
 	 * @type integer
 	 */
-	priority?: number;
+	priority: number;
 }
 
 export interface SpanattributemappingtypesPostableGroupDTO {

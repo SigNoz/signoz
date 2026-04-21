@@ -19,8 +19,8 @@ type GroupCategory valuer.String
 
 // A group runs when any of the listed attribute/resource key patterns match.
 type Condition struct {
-	Attributes []string `json:"attributes"`
-	Resource   []string `json:"resource"`
+	Attributes []string `json:"attributes" required:"true" nullable:"true"`
+	Resource   []string `json:"resource" required:"true" nullable:"true"`
 }
 
 // Group is the domain model for a span attribute mapping group.

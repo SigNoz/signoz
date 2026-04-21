@@ -4280,6 +4280,9 @@ components:
             type: string
           nullable: true
           type: array
+      required:
+      - attributes
+      - resource
       type: object
     SpanattributemappingtypesFieldContext:
       enum:
@@ -4378,6 +4381,8 @@ components:
             $ref: '#/components/schemas/SpanattributemappingtypesMapperSource'
           nullable: true
           type: array
+      required:
+      - sources
       type: object
     SpanattributemappingtypesMapperOperation:
       enum:
@@ -4394,6 +4399,11 @@ components:
           $ref: '#/components/schemas/SpanattributemappingtypesMapperOperation'
         priority:
           type: integer
+      required:
+      - key
+      - context
+      - operation
+      - priority
       type: object
     SpanattributemappingtypesPostableGroup:
       properties:

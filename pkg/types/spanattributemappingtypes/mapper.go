@@ -37,16 +37,16 @@ var (
 
 // MapperSource describes one candidate source for a target attribute.
 type MapperSource struct {
-	Key       string          `json:"key"`
-	Context   FieldContext    `json:"context"`
-	Operation MapperOperation `json:"operation"`
-	Priority  int             `json:"priority"`
+	Key       string          `json:"key" required:"true"`
+	Context   FieldContext    `json:"context" required:"true"`
+	Operation MapperOperation `json:"operation" required:"true"`
+	Priority  int             `json:"priority" required:"true"`
 }
 
 // MapperConfig holds the mapping logic for a single target attribute.
 // It implements driver.Valuer and sql.Scanner for JSON text column storage.
 type MapperConfig struct {
-	Sources []MapperSource `json:"sources"`
+	Sources []MapperSource `json:"sources" required:"true" nullable:"true"`
 }
 
 // Mapper is the domain model for a span attribute mapper.
