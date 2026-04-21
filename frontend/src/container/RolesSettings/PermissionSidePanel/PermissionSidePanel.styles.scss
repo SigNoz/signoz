@@ -15,7 +15,7 @@
 	display: flex;
 	flex-direction: column;
 	background: var(--l2-background);
-	border-left: 1px solid var(--l2-border);
+	border-left: 1px solid var(--l1-border);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 	&__header {
@@ -26,7 +26,7 @@
 		height: 48px;
 		padding: 0 16px;
 		background: var(--l2-background);
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	&__close {
@@ -37,7 +37,7 @@
 		flex-shrink: 0;
 
 		&:hover {
-			color: var(--text-base-white);
+			color: var(--l1-foreground);
 		}
 	}
 
@@ -45,7 +45,7 @@
 		display: block;
 		width: 1px;
 		height: 16px;
-		background: var(--l2-border);
+		background: var(--l1-border);
 		flex-shrink: 0;
 	}
 
@@ -67,7 +67,7 @@
 	&__resource-list {
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		overflow: hidden;
 	}
@@ -81,7 +81,7 @@
 		padding: 0 16px;
 		gap: 12px;
 		background: var(--l2-background);
-		border-top: 1px solid var(--l2-border);
+		border-top: 1px solid var(--l1-border);
 	}
 
 	&__unsaved {
@@ -97,7 +97,8 @@
 		height: 6px;
 		border-radius: 50px;
 		background: var(--primary);
-		box-shadow: 0px 0px 6px 0px rgba(78, 116, 248, 0.4);
+		box-shadow: 0px 0px 6px 0px
+			color-mix(in srgb, var(--primary-background) 40%, transparent);
 		flex-shrink: 0;
 	}
 
@@ -120,7 +121,7 @@
 .psp-resource {
 	display: flex;
 	flex-direction: column;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 
 	&:last-child {
 		border-bottom: none;
@@ -135,11 +136,11 @@
 		transition: background 0.15s ease;
 
 		&--expanded {
-			background: rgba(171, 189, 255, 0.04);
+			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 		}
 
 		&:hover {
-			background: rgba(171, 189, 255, 0.03);
+			background: color-mix(in srgb, var(--bg-robin-200) 3%, transparent);
 		}
 	}
 
@@ -165,7 +166,7 @@
 		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: -0.07px;
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		text-transform: capitalize;
 	}
 
@@ -174,7 +175,7 @@
 		flex-direction: column;
 		gap: 2px;
 		padding: 8px 0 8px 44px;
-		background: rgba(171, 189, 255, 0.04);
+		background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 	}
 
 	&__radio-group {
@@ -195,7 +196,7 @@
 			font-weight: 400;
 			line-height: 20px;
 			letter-spacing: -0.07px;
-			color: var(--text-base-white);
+			color: var(--l1-foreground);
 			cursor: pointer;
 		}
 	}
@@ -240,7 +241,7 @@
 			font-size: 14px;
 			font-weight: 400;
 			line-height: 20px;
-			color: var(--text-base-white) !important;
+			color: var(--l1-foreground) !important;
 			height: auto !important;
 		}
 
@@ -265,7 +266,7 @@
 
 			&-option-selected {
 				background: var(--border) !important;
-				color: var(--text-base-white) !important;
+				color: var(--l1-foreground) !important;
 			}
 
 			&-option-active {
@@ -275,41 +276,9 @@
 
 		.ant-select-dropdown {
 			background: var(--l2-background);
-			border: 1px solid var(--border);
+			border: 1px solid var(--l1-border);
 			border-radius: 2px;
 			padding: 4px 0;
-		}
-	}
-}
-
-.lightMode {
-	.permission-side-panel {
-		&__close {
-			&:hover {
-				color: var(--text-base-black);
-			}
-		}
-	}
-
-	.psp-resource {
-		&__label {
-			color: var(--text-base-black);
-		}
-
-		&__radio-item label {
-			color: var(--text-base-black);
-		}
-
-		&__select .ant-select-selection-item {
-			color: var(--text-base-black) !important;
-		}
-	}
-
-	.psp-resource__select-popup {
-		.ant-select-item {
-			&-option-selected {
-				color: var(--text-base-black) !important;
-			}
 		}
 	}
 }

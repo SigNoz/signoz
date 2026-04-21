@@ -12,7 +12,6 @@ import (
 )
 
 func TestNewWithEnvProvider(t *testing.T) {
-	t.Setenv("SIGNOZ_WEB_PREFIX", "/web")
 	t.Setenv("SIGNOZ_WEB_ENABLED", "false")
 
 	conf, err := config.New(
@@ -37,7 +36,7 @@ func TestNewWithEnvProvider(t *testing.T) {
 
 	expected := &Config{
 		Enabled:   false,
-		Prefix:    "/web",
+		Index:     def.Index,
 		Directory: def.Directory,
 	}
 

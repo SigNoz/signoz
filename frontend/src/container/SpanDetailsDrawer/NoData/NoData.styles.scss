@@ -9,7 +9,7 @@
 	}
 
 	.no-data-text {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -22,7 +22,7 @@
 .lightMode {
 	.no-data {
 		.no-data-text {
-			color: var(--bg-ink-400);
+			color: var(--l2-background);
 		}
 	}
 }

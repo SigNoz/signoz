@@ -3,7 +3,7 @@
 	justify-content: center;
 	align-items: center;
 	height: 100vh;
-	background-color: var(--bg-ink-400, #121317); // Dark theme background
+	background-color: var(--l2-background); // Background
 
 	.app-loading-content {
 		display: flex;
@@ -28,7 +28,7 @@
 			.brand-title {
 				font-size: 20px;
 				font-weight: 600;
-				color: var(--bg-vanilla-100, #ffffff); // White text for dark theme
+				color: var(--l1-foreground); // Primary text
 				margin: 0;
 			}
 		}
@@ -37,7 +37,7 @@
 			margin-bottom: 24px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400, #c0c1c3); // Light gray text for dark theme
+				color: var(--l2-foreground); // Secondary text
 			}
 		}
 
@@ -46,7 +46,7 @@
 			width: 150px;
 			height: 12px;
 			border-radius: 2px;
-			color: var(--bg-robin-500, #4e74f8); // Primary blue color
+			color: var(--primary-background); // Primary blue color
 			border: 2px solid;
 			position: relative;
 		}
@@ -67,38 +67,6 @@
 	}
 }
 
-// Light theme styles - more specific selector
-.app-loading-container.lightMode {
-	background-color: var(
-		--bg-vanilla-100,
-		#ffffff
-	) !important; // White background for light theme
-
-	.app-loading-content {
-		.brand {
-			.brand-title {
-				color: var(--bg-ink-400, #121317) !important; // Dark text for light theme
-			}
-		}
-
-		.brand-tagline {
-			.ant-typography {
-				color: var(
-					--bg-ink-300,
-					#6b7280
-				) !important; // Dark gray text for light theme
-			}
-		}
-
-		.loader {
-			color: var(
-				--bg-robin-500,
-				#4e74f8
-			) !important; // Keep primary blue color for consistency
-		}
-	}
-}
-
 .perilin-bg {
 	position: absolute;
 	top: 0;
@@ -112,41 +80,12 @@
 
 	mask-image: radial-gradient(
 		circle at 50% 0,
-		rgba(11, 12, 14, 0.1) 0,
-		rgba(11, 12, 14, 0) 100%
+		color-mix(in srgb, var(--background) 10%, transparent) 0,
+		transparent 100%
 	);
 	-webkit-mask-image: radial-gradient(
 		circle at 50% 0,
-		rgba(11, 12, 14, 0.1) 0,
-		rgba(11, 12, 14, 0) 100%
+		color-mix(in srgb, var(--background) 10%, transparent) 0,
+		transparent 100%
 	);
-}
-
-// Dark theme styles - ensure dark theme is properly applied
-.app-loading-container.dark {
-	background-color: var(--bg-ink-400, #121317) !important; // Dark background
-
-	.app-loading-content {
-		.brand {
-			.brand-title {
-				color: var(
-					--bg-vanilla-100,
-					#ffffff
-				) !important; // White text for dark theme
-			}
-		}
-
-		.brand-tagline {
-			.ant-typography {
-				color: var(
-					--bg-vanilla-400,
-					#c0c1c3
-				) !important; // Light gray text for dark theme
-			}
-		}
-
-		.loader {
-			color: var(--bg-robin-500, #4e74f8) !important; // Primary blue color
-		}
-	}
 }

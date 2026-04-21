@@ -41,7 +41,6 @@ type jsonAccessTestNode struct {
 	MaxDynamicTypes int                            `yaml:"maxDynamicTypes,omitempty"`
 	MaxDynamicPaths int                            `yaml:"maxDynamicPaths,omitempty"`
 	ElemType        string                         `yaml:"elemType,omitempty"`
-	AvailableTypes  []string                       `yaml:"availableTypes,omitempty"`
 	Branches        map[string]*jsonAccessTestNode `yaml:"branches,omitempty"`
 }
 
@@ -238,8 +237,6 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: user.name
   column: %s
-  availableTypes:
-    - string
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
@@ -251,15 +248,11 @@ func TestPlanJSON_BasicStructure(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: user.name
   column: %s
-  availableTypes:
-    - string
   maxDynamicTypes: 16
   isTerminal: true
   elemType: String
 - name: user.name
   column: %s
-  availableTypes:
-    - string
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   isTerminal: true
@@ -306,14 +299,10 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: name
-      availableTypes:
-        - string
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -325,28 +314,19 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - "[]dynamic"
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -359,43 +339,29 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: interests
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
-      availableTypes:
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
-          availableTypes:
-            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
-                  availableTypes:
-                    - "[]json"
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
-                      availableTypes:
-                        - "[]json"
                       branches:
                         json:
                           name: name
-                          availableTypes:
-                            - string
                           isTerminal: true
                           elemType: String
 `, bodyV2Column),
@@ -406,14 +372,10 @@ func TestPlanJSON_ArrayPaths(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: name
-      availableTypes:
-        - string
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -453,28 +415,19 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 		expectedYAML := fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - "[]dynamic"
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -496,59 +449,41 @@ func TestPlanJSON_PromotedVsNonPromoted(t *testing.T) {
 		expectedYAML := fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - "[]dynamic"
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 4
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
           elemType: String
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   maxDynamicPaths: 256
   branches:
     json:
       name: awards
-      availableTypes:
-        - "[]dynamic"
-        - "[]json"
       maxDynamicTypes: 8
       maxDynamicPaths: 64
       branches:
         json:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 4
           maxDynamicPaths: 16
           isTerminal: true
           elemType: String
         dynamic:
           name: type
-          availableTypes:
-            - string
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           isTerminal: true
@@ -570,7 +505,7 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 	}{
 		{
 			name:      "Path with no available types",
-			path:      "unknown.path",
+			path:      "unknown[].path",
 			expectErr: true,
 		},
 		{
@@ -579,43 +514,29 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: interests
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: entities
-      availableTypes:
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: reviews
-          availableTypes:
-            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: entries
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: metadata
-                  availableTypes:
-                    - "[]json"
                   maxDynamicTypes: 1
                   branches:
                     json:
                       name: positions
-                      availableTypes:
-                        - "[]json"
                       branches:
                         json:
                           name: name
-                          availableTypes:
-                            - string
                           isTerminal: true
                           elemType: String
 `, bodyV2Column),
@@ -626,15 +547,10 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: type
-      availableTypes:
-        - string
-        - int64
       maxDynamicTypes: 8
       isTerminal: true
       elemType: String
@@ -646,8 +562,6 @@ func TestPlanJSON_EdgeCases(t *testing.T) {
 			expectedYAML: fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   isTerminal: true
   elemType: Array(JSON)
@@ -695,86 +609,59 @@ func TestPlanJSON_TreeStructure(t *testing.T) {
 	expectedYAML := fmt.Sprintf(`
 - name: education
   column: %s
-  availableTypes:
-    - "[]json"
   maxDynamicTypes: 16
   branches:
     json:
       name: awards
-      availableTypes:
-        - "[]dynamic"
-        - "[]json"
       maxDynamicTypes: 8
       branches:
         json:
           name: participated
-          availableTypes:
-            - "[]dynamic"
-            - "[]json"
           maxDynamicTypes: 4
           branches:
             json:
               name: team
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 2
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - string
                   maxDynamicTypes: 1
                   isTerminal: true
                   elemType: String
             dynamic:
               name: team
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - string
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true
                   elemType: String
         dynamic:
           name: participated
-          availableTypes:
-            - "[]dynamic"
-            - "[]json"
           maxDynamicTypes: 16
           maxDynamicPaths: 256
           branches:
             json:
               name: team
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 8
               maxDynamicPaths: 64
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - string
                   maxDynamicTypes: 4
                   maxDynamicPaths: 16
                   isTerminal: true
                   elemType: String
             dynamic:
               name: team
-              availableTypes:
-                - "[]json"
               maxDynamicTypes: 16
               maxDynamicPaths: 256
               branches:
                 json:
                   name: branch
-                  availableTypes:
-                    - string
                   maxDynamicTypes: 8
                   maxDynamicPaths: 64
                   isTerminal: true

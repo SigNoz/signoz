@@ -51,6 +51,7 @@ func TestJSONTypeSet() (map[string][]FieldDataType, MetadataStore) {
 		// ── interests[] ───────────────────────────────────────────────────
 		"interests":                                                                 {FieldDataTypeArrayJSON},
 		"interests[].entities":                                                      {FieldDataTypeArrayJSON},
+		"interests[].entities[].product_codes":                            {FieldDataTypeArrayDynamic},
 		"interests[].entities[].reviews":                                            {FieldDataTypeArrayJSON},
 		"interests[].entities[].reviews[].entries":                                  {FieldDataTypeArrayJSON},
 		"interests[].entities[].reviews[].entries[].metadata":                       {FieldDataTypeArrayJSON},
@@ -59,7 +60,6 @@ func TestJSONTypeSet() (map[string][]FieldDataType, MetadataStore) {
 		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings": {FieldDataTypeArrayInt64, FieldDataTypeArrayString},
 		"http-events":                     {FieldDataTypeArrayJSON},
 		"http-events[].request-info.host": {FieldDataTypeString},
-		"ids":                             {FieldDataTypeArrayDynamic},
 
 		// ── top-level primitives ──────────────────────────────────────────
 		"message":     {FieldDataTypeString},

@@ -1,6 +1,8 @@
 import { Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import './Error.styles.scss';
 
 interface IErrorProps {
@@ -13,7 +15,7 @@ function Error(props: IErrorProps): JSX.Element {
 	return (
 		<div className="error-flamegraph">
 			<img
-				src="/Icons/no-data.svg"
+				src={noDataUrl}
 				alt="error-flamegraph"
 				className="error-flamegraph-img"
 			/>

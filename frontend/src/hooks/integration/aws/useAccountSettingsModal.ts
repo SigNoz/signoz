@@ -6,11 +6,13 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Form, FormInstance } from 'antd';
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
-import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
+import { toast } from '@signozhq/ui';
+import { Form } from 'antd';
+import { FormInstance } from 'antd/lib';
+import { useUpdateAccount } from 'api/generated/services/cloudintegration';
+import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { isEqual } from 'lodash-es';
-import { AccountConfigPayload } from 'types/api/integrations/aws';
 import { regions } from 'utils/regions';
 
 import logEvent from '../../../api/common/logEvent';
@@ -26,12 +28,9 @@ interface UseAccountSettingsModal {
 	isLoading: boolean;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
-	isRegionSelectOpen: boolean;
 	isSaveDisabled: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
-	setIsRegionSelectOpen: Dispatch<SetStateAction<boolean>>;
-	handleIncludeAllRegionsChange: (checked: boolean) => void;
 	handleSubmit: () => Promise<void>;
 	handleClose: () => void;
 }
@@ -39,23 +38,13 @@ interface UseAccountSettingsModal {
 const allRegions = (): string[] =>
 	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
 
-const getRegionPreviewText = (regions: string[] | undefined): string[] => {
-	if (!regions) {
-		return [];
-	}
-	if (regions.includes('all')) {
-		return allRegions();
-	}
-	return regions;
-};
-
 export function useAccountSettingsModal({
 	onClose,
 	account,
 	setActiveAccount,
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
-	const { mutate: updateConfig, isLoading } = useUpdateAccountConfig();
+	const { mutate: updateAccount, isLoading } = useUpdateAccount();
 	const accountRegions = useMemo(() => account?.config?.regions || [], [
 		account?.config?.regions,
 	]);
@@ -63,37 +52,64 @@ export function useAccountSettingsModal({
 
 	const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 	const [includeAllRegions, setIncludeAllRegions] = useState(false);
-	const [isRegionSelectOpen, setIsRegionSelectOpen] = useState(false);
 
 	// Initialize regions from account when modal opens
 	useEffect(() => {
 		if (accountRegions.length > 0 && !isInitialRegionsSet) {
-			setSelectedRegions(accountRegions);
+			setSelectedRegions(
+				accountRegions.includes('all') ? allRegions() : accountRegions,
+			);
 			setIsInitialRegionsSet(true);
-			setIncludeAllRegions(accountRegions.includes('all'));
+			setIncludeAllRegions(
+				accountRegions.includes('all') ||
+					accountRegions.length === allRegions().length,
+			);
 		}
 	}, [accountRegions, isInitialRegionsSet]);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
 			await form.validateFields();
-			const payload: AccountConfigPayload = {
+			const payload = {
 				config: {
-					regions: selectedRegions,
+					aws: {
+						regions: selectedRegions,
+					},
 				},
 			};
 
-			updateConfig(
-				{ accountId: account?.id, payload },
+			updateAccount(
 				{
-					onSuccess: (response) => {
-						const newActiveAccount = response?.data;
+					pathParams: {
+						cloudProvider: INTEGRATION_TYPES.AWS,
+						id: account?.id || '',
+					},
+					data: payload,
+				},
+				{
+					onSuccess: () => {
+						const newActiveAccount = {
+							...account,
+							config: {
+								...account.config,
+								regions: selectedRegions,
+							},
+						};
 						setActiveAccount(newActiveAccount);
 						onClose();
+						toast.success('Account settings updated successfully', {
+							position: 'bottom-right',
+						});
 
 						logEvent('AWS Integration: Account settings Updated', {
-							cloudAccountId: newActiveAccount?.cloud_account_id,
-							enabledRegions: newActiveAccount?.config?.regions,
+							cloudAccountId: newActiveAccount.cloud_account_id,
+							enabledRegions: newActiveAccount.config.regions,
+						});
+					},
+					onError: (error) => {
+						toast.error('Failed to update account settings', {
+							description: error?.message,
+							position: 'bottom-right',
 						});
 					},
 				},
@@ -101,31 +117,16 @@ export function useAccountSettingsModal({
 		} catch (error) {
 			console.error('Form submission failed:', error);
 		}
-	}, [
-		form,
-		selectedRegions,
-		updateConfig,
-		account?.id,
-		setActiveAccount,
-		onClose,
-	]);
+	}, [form, selectedRegions, updateAccount, account, setActiveAccount, onClose]);
 
 	const isSaveDisabled = useMemo(
-		() => isEqual(selectedRegions.sort(), accountRegions.sort()),
+		() =>
+			isEqual([...selectedRegions].sort(), [...accountRegions].sort()) ||
+			selectedRegions.length === 0,
 		[selectedRegions, accountRegions],
 	);
 
-	const handleIncludeAllRegionsChange = useCallback((checked: boolean): void => {
-		setIncludeAllRegions(checked);
-		if (checked) {
-			setSelectedRegions(['all']);
-		} else {
-			setSelectedRegions([]);
-		}
-	}, []);
-
 	const handleClose = useCallback(() => {
-		setIsRegionSelectOpen(false);
 		onClose();
 	}, [onClose]);
 
@@ -134,15 +135,10 @@ export function useAccountSettingsModal({
 		isLoading,
 		selectedRegions,
 		includeAllRegions,
-		isRegionSelectOpen,
 		isSaveDisabled,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		setIsRegionSelectOpen,
-		handleIncludeAllRegionsChange,
 		handleSubmit,
 		handleClose,
 	};
 }
-
-export { getRegionPreviewText };

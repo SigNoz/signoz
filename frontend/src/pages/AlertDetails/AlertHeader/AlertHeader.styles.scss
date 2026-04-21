@@ -26,7 +26,7 @@
 				.alert-title {
 					font-size: 16px;
 					font-weight: 500;
-					color: var(--text-vanilla-100);
+					color: var(--l1-foreground);
 					line-height: 24px;
 					letter-spacing: -0.08px;
 				}
@@ -36,20 +36,6 @@
 			display: flex;
 			align-items: center;
 			gap: 24px;
-		}
-	}
-}
-
-.lightMode {
-	.alert-info {
-		&__info-wrapper {
-			.top-section {
-				.alert-title-wrapper {
-					.alert-title {
-						color: var(--text-ink-100);
-					}
-				}
-			}
 		}
 	}
 }

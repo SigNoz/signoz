@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as appContextHooks from 'providers/App/App';
@@ -112,7 +112,7 @@ const mockTracesFilters: IBuilderQuery['filters'] = {
 const isModalTimeSelection = false;
 const mockHandleTimeChange = jest.fn();
 const selectedInterval: Time = '5m';
-const category = K8sCategory.PODS;
+const category = InfraMonitoringEntity.PODS;
 const queryKey = 'pod-traces';
 const queryKeyFilters = ['service.name'];
 

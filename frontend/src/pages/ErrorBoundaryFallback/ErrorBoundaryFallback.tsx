@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Home, LifeBuoy } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
+
+import cloudUrl from '@/assets/Images/cloud.svg';
 
 import './ErrorBoundaryFallback.styles.scss';
 
@@ -23,7 +25,7 @@ function ErrorBoundaryFallback(): JSX.Element {
 		<div className="error-boundary-fallback-container">
 			<div className="error-boundary-fallback-content">
 				<div className="error-icon">
-					<img src="/Images/cloud.svg" alt="error-cloud-icon" />
+					<img src={cloudUrl} alt="error-cloud-icon" />
 				</div>
 				<div className="title">Something went wrong :/</div>
 

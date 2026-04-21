@@ -472,7 +472,7 @@ export default function BillingContainer(): JSX.Element {
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
 					<Typography.Text
 						ellipsis
-						style={{ fontWeight: '300', color: '#49aa19', fontSize: 12 }}
+						style={{ fontWeight: '300', color: 'var(--bg-forest-500)', fontSize: 12 }}
 					>
 						{t('card_details_recieved_and_billing_info')}
 					</Typography.Text>
@@ -562,7 +562,7 @@ export default function BillingContainer(): JSX.Element {
 									<a
 										href="https://signoz.io/pricing/"
 										style={{
-											color: '#f99781',
+											color: 'var(--bg-cherry-300)',
 										}}
 										target="_blank"
 										rel="noreferrer"

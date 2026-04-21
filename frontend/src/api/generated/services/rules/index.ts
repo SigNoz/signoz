@@ -6,17 +6,24 @@
  */
 import type {
 	InvalidateOptions,
+	MutationFunction,
 	QueryClient,
 	QueryFunction,
 	QueryKey,
+	UseMutationOptions,
+	UseMutationResult,
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
-import type { ErrorType } from '../../../generatedAPIInstance';
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
+	CreateRule201,
+	DeleteRuleByIDPathParameters,
+	GetRuleByID200,
+	GetRuleByIDPathParameters,
 	GetRuleHistoryFilterKeys200,
 	GetRuleHistoryFilterKeysParams,
 	GetRuleHistoryFilterKeysPathParameters,
@@ -35,9 +42,548 @@ import type {
 	GetRuleHistoryTopContributors200,
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
+	ListRules200,
+	PatchRuleByID200,
+	PatchRuleByIDPathParameters,
 	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
+	TestRule200,
+	UpdateRuleByIDPathParameters,
 } from '../sigNoz.schemas';
 
+/**
+ * This endpoint lists all alert rules with their current evaluation state
+ * @summary List alert rules
+ */
+export const listRules = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListRules200>({
+		url: `/api/v2/rules`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListRulesQueryKey = () => {
+	return [`/api/v2/rules`] as const;
+};
+
+export const getListRulesQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRules>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListRulesQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRules>>> = ({
+		signal,
+	}) => listRules(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listRules>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListRulesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listRules>>
+>;
+export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List alert rules
+ */
+
+export function useListRules<
+	TData = Awaited<ReturnType<typeof listRules>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListRulesQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary List alert rules
+ */
+export const invalidateListRules = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListRulesQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint creates a new alert rule
+ * @summary Create alert rule
+ */
+export const createRule = (
+	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateRule201>({
+		url: `/api/v2/rules`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleDTO,
+		signal,
+	});
+};
+
+export const getCreateRuleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationKey = ['createRule'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createRule>>,
+		{ data: BodyType<RuletypesPostableRuleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return createRule(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateRuleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createRule>>
+>;
+export type CreateRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type CreateRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create alert rule
+ */
+export const useCreateRule = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationOptions = getCreateRuleMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint deletes an alert rule by ID
+ * @summary Delete alert rule
+ */
+export const deleteRuleByID = ({ id }: DeleteRuleByIDPathParameters) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/rules/${id}`,
+		method: 'DELETE',
+	});
+};
+
+export const getDeleteRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRuleByID>>,
+		TError,
+		{ pathParams: DeleteRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof deleteRuleByID>>,
+	TError,
+	{ pathParams: DeleteRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['deleteRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof deleteRuleByID>>,
+		{ pathParams: DeleteRuleByIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteRuleByID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof deleteRuleByID>>
+>;
+
+export type DeleteRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Delete alert rule
+ */
+export const useDeleteRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof deleteRuleByID>>,
+		TError,
+		{ pathParams: DeleteRuleByIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof deleteRuleByID>>,
+	TError,
+	{ pathParams: DeleteRuleByIDPathParameters },
+	TContext
+> => {
+	const mutationOptions = getDeleteRuleByIDMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint returns an alert rule by ID
+ * @summary Get alert rule by ID
+ */
+export const getRuleByID = (
+	{ id }: GetRuleByIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetRuleByID200>({
+		url: `/api/v2/rules/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetRuleByIDQueryKey = ({ id }: GetRuleByIDPathParameters) => {
+	return [`/api/v2/rules/${id}`] as const;
+};
+
+export const getGetRuleByIDQueryOptions = <
+	TData = Awaited<ReturnType<typeof getRuleByID>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetRuleByIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRuleByID>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetRuleByIDQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getRuleByID>>> = ({
+		signal,
+	}) => getRuleByID({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getRuleByID>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetRuleByIDQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getRuleByID>>
+>;
+export type GetRuleByIDQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get alert rule by ID
+ */
+
+export function useGetRuleByID<
+	TData = Awaited<ReturnType<typeof getRuleByID>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetRuleByIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getRuleByID>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetRuleByIDQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get alert rule by ID
+ */
+export const invalidateGetRuleByID = async (
+	queryClient: QueryClient,
+	{ id }: GetRuleByIDPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetRuleByIDQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint applies a partial update to an alert rule by ID
+ * @summary Patch alert rule
+ */
+export const patchRuleByID = (
+	{ id }: PatchRuleByIDPathParameters,
+	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+) => {
+	return GeneratedAPIInstance<PatchRuleByID200>({
+		url: `/api/v2/rules/${id}`,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleDTO,
+	});
+};
+
+export const getPatchRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchRuleByID>>,
+		TError,
+		{
+			pathParams: PatchRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof patchRuleByID>>,
+	TError,
+	{
+		pathParams: PatchRuleByIDPathParameters;
+		data: BodyType<RuletypesPostableRuleDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['patchRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof patchRuleByID>>,
+		{
+			pathParams: PatchRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return patchRuleByID(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type PatchRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof patchRuleByID>>
+>;
+export type PatchRuleByIDMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type PatchRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Patch alert rule
+ */
+export const usePatchRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof patchRuleByID>>,
+		TError,
+		{
+			pathParams: PatchRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof patchRuleByID>>,
+	TError,
+	{
+		pathParams: PatchRuleByIDPathParameters;
+		data: BodyType<RuletypesPostableRuleDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getPatchRuleByIDMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint updates an alert rule by ID
+ * @summary Update alert rule
+ */
+export const updateRuleByID = (
+	{ id }: UpdateRuleByIDPathParameters,
+	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/rules/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleDTO,
+	});
+};
+
+export const getUpdateRuleByIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRuleByID>>,
+		TError,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateRuleByID>>,
+	TError,
+	{
+		pathParams: UpdateRuleByIDPathParameters;
+		data: BodyType<RuletypesPostableRuleDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateRuleByID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateRuleByID>>,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateRuleByID(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateRuleByIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateRuleByID>>
+>;
+export type UpdateRuleByIDMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type UpdateRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update alert rule
+ */
+export const useUpdateRuleByID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateRuleByID>>,
+		TError,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateRuleByID>>,
+	TError,
+	{
+		pathParams: UpdateRuleByIDPathParameters;
+		data: BodyType<RuletypesPostableRuleDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getUpdateRuleByIDMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
 /**
  * Returns distinct label keys from rule history entries for the selected range.
  * @summary Get rule history filter keys
@@ -741,4 +1287,88 @@ export const invalidateGetRuleHistoryTopContributors = async (
 	);
 
 	return queryClient;
+};
+
+/**
+ * This endpoint fires a test notification for the given rule definition
+ * @summary Test alert rule
+ */
+export const testRule = (
+	ruletypesPostableRuleDTO: BodyType<RuletypesPostableRuleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<TestRule200>({
+		url: `/api/v2/rules/test`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: ruletypesPostableRuleDTO,
+		signal,
+	});
+};
+
+export const getTestRuleMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof testRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationKey = ['testRule'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof testRule>>,
+		{ data: BodyType<RuletypesPostableRuleDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return testRule(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type TestRuleMutationResult = NonNullable<
+	Awaited<ReturnType<typeof testRule>>
+>;
+export type TestRuleMutationBody = BodyType<RuletypesPostableRuleDTO>;
+export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Test alert rule
+ */
+export const useTestRule = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof testRule>>,
+		TError,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof testRule>>,
+	TError,
+	{ data: BodyType<RuletypesPostableRuleDTO> },
+	TContext
+> => {
+	const mutationOptions = getTestRuleMutationOptions(options);
+
+	return useMutation(mutationOptions);
 };

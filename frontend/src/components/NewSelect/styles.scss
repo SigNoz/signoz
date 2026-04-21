@@ -9,24 +9,25 @@ $custom-border-color: #2c3044;
 
 	&.ant-select-focused {
 		.ant-select-selector {
-			border-color: var(--bg-robin-500);
-			box-shadow: 0 0 0 2px rgba(78, 116, 248, 0.2);
+			border-color: var(--primary-background);
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 	}
 
 	.ant-select-selection-placeholder {
-		color: rgba(192, 193, 195, 0.45);
+		color: color-mix(in srgb, var(--border) 45%, transparent);
 	}
 
 	// Base styles are for dark mode
 	.ant-select-selector {
-		background-color: var(--bg-ink-400);
-		border-color: var(--bg-slate-400);
+		background-color: var(--l2-background);
+		border-color: var(--l1-border);
 	}
 
 	.ant-select-clear {
-		background-color: var(--bg-ink-400);
-		color: rgba(192, 193, 195, 0.7);
+		background-color: var(--l2-background);
+		color: color-mix(in srgb, var(--border) 70%, transparent);
 	}
 }
 
@@ -42,7 +43,7 @@ $custom-border-color: #2c3044;
 
 		.ant-select-selection-placeholder {
 			opacity: 1 !important;
-			color: var(--bg-vanilla-400) !important;
+			color: var(--l2-foreground) !important;
 			font-weight: 500;
 			visibility: visible !important;
 			pointer-events: none;
@@ -63,7 +64,7 @@ $custom-border-color: #2c3044;
 		left: 12px;
 		top: 50%;
 		transform: translateY(-50%);
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		z-index: 1;
 		pointer-events: none;
 
@@ -76,8 +77,8 @@ $custom-border-color: #2c3044;
 		max-height: 200px;
 		overflow: auto;
 		scrollbar-width: thin;
-		background-color: var(--bg-ink-400);
-		border-color: var(--bg-slate-400);
+		background-color: var(--l2-background);
+		border-color: var(--l1-border);
 		cursor: text;
 
 		&::-webkit-scrollbar {
@@ -90,7 +91,7 @@ $custom-border-color: #2c3044;
 		}
 
 		&::-webkit-scrollbar-track {
-			background-color: var(--bg-slate-400);
+			background-color: var(--l1-border);
 		}
 	}
 
@@ -106,46 +107,57 @@ $custom-border-color: #2c3044;
 
 	&.ant-select-focused {
 		.ant-select-selector {
-			border-color: var(--bg-robin-500);
-			box-shadow: 0 0 0 2px rgba(78, 116, 248, 0.2);
+			border-color: var(--primary-background);
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 	}
 
 	.ant-select-selection-placeholder {
-		color: rgba(192, 193, 195, 0.45);
+		color: color-mix(in srgb, var(--border) 45%, transparent);
 	}
 
 	// Customize tags in multiselect (dark mode by default)
 	.ant-select-selection-item {
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 		border-radius: 4px;
 		border: 1px solid $custom-border-color;
 		margin-right: 4px;
 		transition: all 0.2s;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 
 		// Style for active tag (keyboard navigation)
 		&-active {
-			border-color: var(--bg-robin-500) !important;
-			background-color: rgba(78, 116, 248, 0.15) !important;
-			outline: 2px solid rgba(78, 116, 248, 0.2);
+			border-color: var(--primary-background) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			) !important;
+			outline: 2px solid
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		// Style for selected tags (via keyboard or mouse selection)
 		&-selected {
-			border-color: var(--bg-robin-500) !important;
-			background-color: rgba(78, 116, 248, 0.15) !important;
-			box-shadow: 0 0 0 2px rgba(78, 116, 248, 0.2);
+			border-color: var(--primary-background) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			) !important;
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		.ant-select-selection-item-content {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 		}
 
 		.ant-select-selection-item-remove {
-			color: rgba(192, 193, 195, 0.7);
+			color: color-mix(in srgb, var(--border) 70%, transparent);
 			&:hover {
-				color: rgba(192, 193, 195, 1);
+				color: var(--l1-border);
 			}
 		}
 	}
@@ -170,20 +182,24 @@ $custom-border-color: #2c3044;
 	padding: 0;
 	box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.5), 0 6px 16px 0 rgba(0, 0, 0, 0.4),
 		0 9px 28px 8px rgba(0, 0, 0, 0.3);
-	background-color: var(--bg-ink-400);
-	border: 1px solid var(--bg-slate-400);
+	background-color: var(--l2-background);
+	border: 1px solid var(--l1-border);
 
 	.ant-select-item {
 		padding: 8px 12px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 
 		// Make keyboard navigation visible
 		&-option-active {
-			background-color: var(--bg-slate-400) !important;
+			background-color: var(--l1-border) !important;
 		}
 
 		&-option-selected {
-			background-color: rgba(78, 116, 248, 0.15) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			) !important;
 		}
 	}
 }
@@ -199,7 +215,7 @@ $custom-border-color: #2c3044;
 	.empty-message {
 		padding: 12px;
 		text-align: center;
-		color: rgba(192, 193, 195, 0.45);
+		color: color-mix(in srgb, var(--border) 45%, transparent);
 	}
 }
 
@@ -211,9 +227,9 @@ $custom-border-color: #2c3044;
 	overflow-x: hidden;
 	scrollbar-width: thin;
 	border-radius: 4px;
-	border: 1px solid var(--bg-slate-400);
+	border: 1px solid var(--l1-border);
 	width: 100%;
-	background-color: var(--bg-ink-400);
+	background-color: var(--l2-background);
 
 	&::-webkit-scrollbar {
 		width: 6px;
@@ -225,7 +241,7 @@ $custom-border-color: #2c3044;
 	}
 
 	&::-webkit-scrollbar-track {
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 	}
 
 	.no-section-options {
@@ -241,8 +257,8 @@ $custom-border-color: #2c3044;
 			font-weight: 500;
 			padding: 4px 12px;
 			font-size: 13px;
-			color: var(--bg-vanilla-400);
-			background-color: var(--bg-slate-400);
+			color: var(--l2-foreground);
+			background-color: var(--l1-border);
 			border-bottom: 1px solid $custom-border-color;
 			border-top: 1px solid $custom-border-color;
 			position: relative;
@@ -259,20 +275,28 @@ $custom-border-color: #2c3044;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 
 		&:hover {
-			background-color: var(--bg-slate-400);
+			background-color: var(--l1-border);
 		}
 
 		&.selected {
-			background-color: rgba(78, 116, 248, 0.15);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
 			font-weight: 500;
 		}
 
 		&.active {
-			background-color: rgba(78, 116, 248, 0.15);
-			border-color: var(--bg-robin-500);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
+			border-color: var(--primary-background);
 		}
 
 		.option-content {
@@ -290,7 +314,7 @@ $custom-border-color: #2c3044;
 				padding: 2px 6px;
 				border-radius: 4px;
 				background-color: $custom-border-color;
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				margin-left: 8px;
 			}
 		}
@@ -307,20 +331,20 @@ $custom-border-color: #2c3044;
 	display: flex;
 	align-items: center;
 	padding: 8px 12px;
-	border-top: 1px solid var(--bg-slate-400);
+	border-top: 1px solid var(--l1-border);
 	position: sticky;
 	bottom: 0;
-	background-color: var(--bg-ink-400);
+	background-color: var(--l2-background);
 	z-index: 1;
 
 	.navigation-icons {
 		display: flex;
 		margin-right: 8px;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 	}
 
 	.navigation-text {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 12px;
 	}
 
@@ -362,11 +386,11 @@ $custom-border-color: #2c3044;
 			height: 14px;
 			flex-shrink: 0;
 			border-radius: 2.286px;
-			border-top: 1.143px solid var(--bg-ink-200);
-			border-right: 1.143px solid var(--bg-ink-200);
-			border-bottom: 2.286px solid var(--bg-ink-200);
-			border-left: 1.143px solid var(--bg-ink-200);
-			background: var(--Ink-400, var(--bg-ink-400));
+			border-top: 1.143px solid var(--l1-border);
+			border-right: 1.143px solid var(--l1-border);
+			border-bottom: 2.286px solid var(--l1-border);
+			border-left: 1.143px solid var(--l1-border);
+			background: var(--l2-background);
 		}
 	}
 }
@@ -379,16 +403,16 @@ $custom-border-color: #2c3044;
 	overflow-x: hidden;
 	scrollbar-width: thin;
 	border-radius: 4px;
-	border: 1px solid var(--bg-slate-400);
+	border: 1px solid var(--l1-border);
 	width: 100%;
-	background-color: var(--bg-ink-400);
+	background-color: var(--l2-background);
 
 	.select-all-option,
 	.custom-value-option {
 		padding: 8px 12px;
 		border-bottom: 1px solid $custom-border-color;
 		margin-bottom: 8px;
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 		position: sticky;
 		top: 0;
 		z-index: 1;
@@ -417,8 +441,8 @@ $custom-border-color: #2c3044;
 			font-weight: 500;
 			padding: 4px 12px;
 			font-size: 13px;
-			color: var(--bg-vanilla-400);
-			background-color: var(--bg-slate-400);
+			color: var(--l2-foreground);
+			background-color: var(--l1-border);
 			border-bottom: 1px solid $custom-border-color;
 			border-top: 1px solid $custom-border-color;
 			position: relative;
@@ -432,19 +456,27 @@ $custom-border-color: #2c3044;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 
 		&.active {
-			background-color: rgba(78, 116, 248, 0.15);
-			border-color: var(--bg-robin-500);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
+			border-color: var(--primary-background);
 		}
 
 		&:hover {
-			background-color: var(--bg-slate-400);
+			background-color: var(--l1-border);
 		}
 
 		&.selected {
-			background-color: rgba(78, 116, 248, 0.15);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
 			font-weight: 500;
 		}
 
@@ -483,7 +515,7 @@ $custom-border-color: #2c3044;
 					padding: 2px 6px;
 					border-radius: 4px;
 					background-color: $custom-border-color;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					margin-left: 8px;
 				}
 			}
@@ -541,21 +573,25 @@ $custom-border-color: #2c3044;
 	.empty-message {
 		padding: 12px;
 		text-align: center;
-		color: rgba(192, 193, 195, 0.45);
+		color: color-mix(in srgb, var(--border) 45%, transparent);
 	}
 
 	.status-message {
 		padding: 8px 12px;
 		text-align: center;
 		font-style: italic;
-		color: rgba(192, 193, 195, 0.65);
+		color: color-mix(in srgb, var(--border) 65%, transparent);
 		border-top: 1px dashed $custom-border-color;
 	}
 }
 
 // Custom styles for highlight text
 .highlight-text {
-	background-color: rgba(78, 116, 248, 0.2);
+	background-color: color-mix(
+		in srgb,
+		var(--primary-background) 20%,
+		transparent
+	);
 	padding: 0 1px;
 	border-radius: 2px;
 	font-weight: 500;
@@ -565,7 +601,7 @@ $custom-border-color: #2c3044;
 .custom-option {
 	&.focused,
 	&.ant-select-item-option-active {
-		background-color: var(--bg-slate-400) !important;
+		background-color: var(--l1-border) !important;
 	}
 }
 
@@ -576,7 +612,7 @@ $custom-border-color: #2c3044;
 		position: sticky;
 		top: 0;
 		z-index: 2;
-		background-color: var(--bg-slate-400);
+		background-color: var(--l1-border);
 		border-bottom: 1px solid $custom-border-color;
 		padding: 4px 12px;
 		margin: 0;
@@ -594,7 +630,8 @@ $custom-border-color: #2c3044;
 // Custom scrollbar styling (shared between components)
 @mixin custom-scrollbar {
 	scrollbar-width: thin;
-	scrollbar-color: rgba(192, 193, 195, 0.3) rgba(29, 33, 45, 0.6);
+	scrollbar-color: color-mix(in srgb, var(--border) 30%, transparent)
+		color-mix(in srgb, var(--border) 60%, transparent);
 
 	&::-webkit-scrollbar {
 		width: 6px;
@@ -602,17 +639,17 @@ $custom-border-color: #2c3044;
 	}
 
 	&::-webkit-scrollbar-track {
-		background-color: rgba(29, 33, 45, 0.6);
+		background-color: color-mix(in srgb, var(--border) 60%, transparent);
 		border-radius: 10px;
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background-color: rgba(192, 193, 195, 0.3);
+		background-color: color-mix(in srgb, var(--border) 30%, transparent);
 		border-radius: 10px;
 		transition: background-color 0.2s ease;
 
 		&:hover {
-			background-color: rgba(192, 193, 195, 0.5);
+			background-color: color-mix(in srgb, var(--border) 50%, transparent);
 		}
 	}
 }
@@ -620,7 +657,8 @@ $custom-border-color: #2c3044;
 // Subtle nested scrollbar styling
 @mixin nested-scrollbar {
 	scrollbar-width: thin;
-	scrollbar-color: rgba(192, 193, 195, 0.2) rgba(29, 33, 45, 0.6);
+	scrollbar-color: color-mix(in srgb, var(--border) 20%, transparent)
+		color-mix(in srgb, var(--border) 60%, transparent);
 
 	&::-webkit-scrollbar {
 		width: 4px;
@@ -628,16 +666,16 @@ $custom-border-color: #2c3044;
 	}
 
 	&::-webkit-scrollbar-track {
-		background-color: rgba(29, 33, 45, 0.6);
+		background-color: color-mix(in srgb, var(--border) 60%, transparent);
 		border-radius: 10px;
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background-color: rgba(192, 193, 195, 0.2);
+		background-color: color-mix(in srgb, var(--border) 20%, transparent);
 		border-radius: 10px;
 
 		&:hover {
-			background-color: rgba(192, 193, 195, 0.3);
+			background-color: color-mix(in srgb, var(--border) 30%, transparent);
 		}
 	}
 }
@@ -676,7 +714,7 @@ $custom-border-color: #2c3044;
 .lightMode {
 	.custom-select {
 		.ant-select-selector {
-			background-color: var(--bg-vanilla-100);
+			background-color: var(--l1-background);
 			border-color: #e9e9e9;
 		}
 
@@ -685,7 +723,7 @@ $custom-border-color: #2c3044;
 		}
 
 		.ant-select-clear {
-			background-color: var(--bg-vanilla-100);
+			background-color: var(--l1-background);
 			color: rgba(0, 0, 0, 0.45);
 		}
 
@@ -699,7 +737,7 @@ $custom-border-color: #2c3044;
 
 	.custom-multiselect {
 		.ant-select-selector {
-			background-color: var(--bg-vanilla-100);
+			background-color: var(--l1-background);
 			border-color: #e9e9e9;
 			cursor: text; // Make entire selector clickable for input focus
 
@@ -751,37 +789,37 @@ $custom-border-color: #2c3044;
 			}
 
 			&-active {
-				border-color: var(--bg-robin-500) !important;
-				background-color: var(--bg-vanilla-300) !important;
+				border-color: var(--primary-background) !important;
+				background-color: var(--l3-background) !important;
 			}
 
 			&-selected {
-				border-color: #1890ff !important;
-				background-color: var(--bg-vanilla-300) !important;
+				border-color: var(--primary-background) !important;
+				background-color: var(--l3-background) !important;
 			}
 		}
 	}
 
 	.custom-select-dropdown-container,
 	.custom-multiselect-dropdown-container {
-		background-color: var(--bg-vanilla-100);
-		border: 1px solid #f0f0f0;
+		background-color: var(--l1-background);
+		border: 1px solid var(--l1-border);
 		box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
 			0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 
 		.empty-message {
-			color: rgba(0, 0, 0, 0.45);
+			color: var(--l2-foreground);
 		}
 
 		.ant-select-item {
-			color: rgba(0, 0, 0, 0.85);
+			color: var(--l1-foreground);
 
 			&-option-active {
-				background-color: #f5f5f5 !important;
+				background-color: var(--l3-background) !important;
 			}
 
 			&-option-selected {
-				background-color: var(--bg-vanilla-300) !important;
+				background-color: var(--l2-background) !important;
 			}
 		}
 	}
@@ -789,7 +827,7 @@ $custom-border-color: #2c3044;
 	.custom-select-dropdown,
 	.custom-multiselect-dropdown {
 		border: 1px solid #f0f0f0;
-		background-color: var(--bg-vanilla-100);
+		background-color: var(--l1-background);
 
 		&::-webkit-scrollbar-thumb {
 			background-color: #ccc;
@@ -820,11 +858,11 @@ $custom-border-color: #2c3044;
 			}
 
 			&.selected {
-				background-color: var(--bg-vanilla-300);
+				background-color: var(--l3-background);
 			}
 
 			&.active {
-				background-color: var(--bg-vanilla-300);
+				background-color: var(--l3-background);
 				border-color: #91d5ff;
 			}
 
@@ -839,7 +877,7 @@ $custom-border-color: #2c3044;
 
 	.navigation-footer {
 		border-top: 1px solid #f0f0f0;
-		background-color: var(--bg-vanilla-100);
+		background-color: var(--l1-background);
 
 		.navigation-icons {
 			color: rgba(0, 0, 0, 0.45);
@@ -851,11 +889,11 @@ $custom-border-color: #2c3044;
 
 		.navigate {
 			.icons {
-				border-top: 1.143px solid var(--bg-ink-200);
-				border-right: 1.143px solid var(--bg-ink-200);
-				border-bottom: 2.286px solid var(--bg-ink-200);
-				border-left: 1.143px solid var(--bg-ink-200);
-				background: var(--bg-vanilla-300);
+				border-top: 1.143px solid var(--l2-foreground);
+				border-right: 1.143px solid var(--l2-foreground);
+				border-bottom: 2.286px solid var(--l2-foreground);
+				border-left: 1.143px solid var(--l2-foreground);
+				background: var(--l3-background);
 			}
 		}
 	}
@@ -934,7 +972,7 @@ $custom-border-color: #2c3044;
 			left: 12px;
 			top: 50%;
 			transform: translateY(-50%);
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-weight: 500;
 			z-index: 2;
 			pointer-events: none;

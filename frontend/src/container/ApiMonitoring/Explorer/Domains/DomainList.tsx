@@ -23,6 +23,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
@@ -132,7 +134,7 @@ function DomainList(): JSX.Element {
 				<div className="no-filtered-domains-message-container">
 					<div className="no-filtered-domains-message-content">
 						<img
-							src="/Icons/emptyState.svg"
+							src={emptyStateUrl}
 							alt="thinking-emoji"
 							className="empty-state-svg"
 						/>

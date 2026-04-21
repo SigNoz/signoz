@@ -4,7 +4,7 @@ import { generatePath, useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { X } from '@signozhq/icons';
 import { Input, inputVariants } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Form, Modal } from 'antd';
 import {
 	invalidateGetRole,

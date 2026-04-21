@@ -12,8 +12,8 @@
 		display: inline-flex;
 		padding: 4px 8px;
 		border-radius: 20px;
-		border: 1px solid rgba(173, 127, 88, 0.2);
-		background: rgba(173, 127, 88, 0.1);
+		border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+		background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 		justify-content: center;
 		align-items: center;
 		gap: 5px;

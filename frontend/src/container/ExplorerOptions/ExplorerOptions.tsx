@@ -648,7 +648,7 @@ function ExplorerOptions({
 				? `1px solid ${Color.BG_SLATE_400}`
 				: `1px solid ${Color.BG_VANILLA_300}`,
 			background: isDarkMode
-				? 'linear-gradient(139deg, rgba(18, 19, 23, 0.80) 0%, rgba(18, 19, 23, 0.90) 98.68%)'
+				? 'var(--bg-gradient-dark-shadow)'
 				: 'linear-gradient(139deg, rgba(241, 241, 241, 0.8) 0%, rgba(241, 241, 241, 0.9) 98.68%)',
 			boxShadow: '4px 10px 16px 2px rgba(0, 0, 0, 0.20)',
 			backdropFilter: 'blur(20px)',

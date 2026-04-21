@@ -3,12 +3,12 @@
 	overflow: hidden;
 
 	.version-page-header {
-		border-bottom: 1px solid var(--Slate-500, #161922);
-		background: rgba(11, 12, 14, 0.7);
+		border-bottom: 1px solid var(--l1-border);
+		background: color-mix(in srgb, var(--background) 70%, transparent);
 		backdrop-filter: blur(20px);
 
 		.version-page-header-title {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 			text-align: center;
 			font-family: Inter;
 			font-size: 13px;
@@ -36,8 +36,8 @@
 
 			padding: 16px;
 			border-radius: 4px 4px 0px 0px;
-			border: 1px solid var(--Slate-500, #161922);
-			background: var(--Ink-400, #121317);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			border-radius: 3px;
 		}
 
@@ -47,7 +47,11 @@
 
 		.version-page-stale-version-container {
 			padding: 16px;
-			background-color: rgba(78, 116, 248, 0.1);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 10%,
+				transparent
+			);
 			border-radius: 4px;
 
 			.version-page-stale-version-container-title {
@@ -55,7 +59,7 @@
 				align-items: center;
 				gap: 8px;
 
-				color: var(--text-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -71,7 +75,7 @@
 				align-items: center;
 				gap: 8px;
 
-				color: var(--Vanilla-100, #fff);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -85,38 +89,6 @@
 			display: flex;
 			justify-content: flex-start;
 			margin-top: 16px;
-		}
-	}
-}
-
-.lightMode {
-	.version-container {
-		.version-page-header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-			background: #fff;
-
-			.version-page-header-title {
-				color: var(--bg-ink-400);
-			}
-		}
-
-		.version-page-container {
-			.version-card {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-			}
-
-			.version-page-stale-version-container {
-				.version-page-stale-version-container-title {
-					color: var(--text-ink-400);
-				}
-			}
-
-			.version-page-latest-version-container {
-				.version-page-latest-version-container-title {
-					color: var(--text-ink-400);
-				}
-			}
 		}
 	}
 }

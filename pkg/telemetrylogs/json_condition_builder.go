@@ -172,8 +172,13 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 	if strings.Contains(fieldPath, telemetrytypes.ArraySepSuffix) {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "can not build index condition for array field %s", fieldPath)
 	}
+	if !node.IsTerminal {
+		return "", errors.NewInternalf(errors.CodeInvalidInput, "can not build index condition for non-terminal node %s", fieldPath)
+	}
 
-	indexedExpr := assumeNotNull(fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.TerminalConfig.ElemType.StringValue()))
+	indexedExpr := schemamigrator.JSONSubColumnIndexExpr(node.Parent.Name, node.Name, node.TerminalConfig.ElemType.StringValue())
+	// TODO(Piyush): indexedExpr should not be formatted here instead value should be formatted
+	// else ClickHouse may not utilize index
 	indexedExpr, formattedValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)
 	return c.applyOperator(sb, indexedExpr, operator, formattedValue)
 }

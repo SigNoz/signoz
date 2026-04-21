@@ -18,21 +18,8 @@
 				min-width: 164px;
 
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.celery-task-filters {
-		.celery-filters {
-			.config-select-option {
-				.ant-select-selector {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 			}
 		}
 	}

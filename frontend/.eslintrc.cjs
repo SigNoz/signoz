@@ -1,3 +1,10 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const path = require('path');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const rulesDirPlugin = require('eslint-plugin-rulesdir');
+// eslint-rules/ always points to frontend/eslint-rules/ regardless of workspace root.
+rulesDirPlugin.RULES_DIR = path.join(__dirname, 'eslint-rules');
+
 /**
  * ESLint Configuration for SigNoz Frontend
  */
@@ -32,6 +39,7 @@ module.exports = {
 		sourceType: 'module',
 	},
 	plugins: [
+		'rulesdir', // Local custom rules
 		'react', // React-specific rules
 		'@typescript-eslint', // TypeScript linting
 		'simple-import-sort', // Auto-sort imports
@@ -56,6 +64,9 @@ module.exports = {
 		},
 	},
 	rules: {
+		// Asset migration — base-path safety
+		'rulesdir/no-unsupported-asset-pattern': 'error',
+
 		// Code quality rules
 		'prefer-const': 'error', // Enforces const for variables never reassigned
 		'no-var': 'error', // Disallows var, enforces let/const

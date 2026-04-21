@@ -68,14 +68,14 @@
 		}
 
 		.title {
-			color: var(--bg-vanilla-100) !important;
+			color: var(--l1-foreground) !important;
 			font-size: 24px !important;
 			line-height: 32px !important;
 			margin-bottom: 8px !important;
 		}
 
 		.sub-title {
-			color: var(--bg-vanilla-400) !important;
+			color: var(--l2-foreground) !important;
 			font-size: 14px !important;
 			font-style: normal;
 			font-weight: 400 !important;
@@ -99,7 +99,7 @@
 			align-items: stretch;
 			gap: 24px;
 			border-radius: 4px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--bg-neutral-dark-950);
 
 			.ant-form-item {
@@ -107,7 +107,7 @@
 
 				.ant-form-item-label {
 					label {
-						color: var(--bg-vanilla-100) !important;
+						color: var(--l1-foreground) !important;
 						font-size: 13px !important;
 						font-weight: 500;
 						line-height: 20px;
@@ -119,7 +119,7 @@
 				width: 100%;
 				height: 80px;
 				resize: none;
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				color: var(--l1-foreground);
 				border-radius: 2px;
@@ -164,19 +164,19 @@
 					font-size: 12px;
 
 					height: 32px;
-					background: var(--bg-ink-300);
-					border: 1px solid var(--bg-slate-400);
-					color: var(--bg-vanilla-400);
+					background: var(--l3-background);
+					border: 1px solid var(--l1-border);
+					color: var(--l2-foreground);
 				}
 
 				.ant-input-group-addon {
 					font-size: 11px;
 					height: 32px;
 					min-width: 80px;
-					background: var(--bg-ink-300);
-					border: 1px solid var(--bg-slate-400);
+					background: var(--l3-background);
+					border: 1px solid var(--l1-border);
 					border-left: 0px;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -208,7 +208,7 @@
 			gap: 8px;
 			border-radius: 2px;
 			background: transparent;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l2-foreground);
 			font-family: Inter, sans-serif;
 			font-size: 11px;
@@ -236,7 +236,7 @@
 			justify-content: center;
 			gap: 8px;
 			border-radius: 2px;
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			border: none;
 			color: var(--bg-neutral-dark-50);
 			font-family: Inter, sans-serif;
@@ -381,7 +381,7 @@
 			line-height: 1;
 			letter-spacing: -0.065px;
 			height: 32px;
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			color: var(--l1-foreground);
 			box-sizing: border-box;
@@ -411,10 +411,10 @@
 		.grid-button,
 		.tool-button {
 			border-radius: 4px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 			padding: 12px;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 14px;
 			font-style: normal;
 			text-align: left;
@@ -431,8 +431,9 @@
 		.radio-button:hover,
 		.grid-button:hover,
 		.tool-button:hover {
-			border: 1px solid rgba(78, 116, 248, 0.4);
-			background: rgba(78, 116, 248, 0.2);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 40%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		.two-column-grid {
@@ -499,7 +500,7 @@
 
 				button[role='radio'] {
 					&[data-state='unchecked'] {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 						border-width: 1px !important;
 					}
 				}
@@ -536,7 +537,7 @@
 
 				button[role='radio'] {
 					&[data-state='unchecked'] {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 						border-width: 1px !important;
 					}
 				}
@@ -573,7 +574,7 @@
 					padding: 6px 8px;
 					gap: 4px;
 					border-radius: 2px;
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 					color: var(--l1-foreground);
 					font-family: Inter, sans-serif;
@@ -618,8 +619,8 @@
 					}
 
 					&.ant-checkbox-checked .ant-checkbox-inner {
-						background-color: var(--bg-robin-500);
-						border-color: var(--bg-robin-500);
+						background-color: var(--primary-background);
+						border-color: var(--primary-background);
 					}
 				}
 
@@ -636,9 +637,9 @@
 			align-items: center;
 			justify-content: space-between;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
-			color: var(--bg-vanilla-400);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
+			color: var(--l2-foreground);
 			box-shadow: none;
 			font-size: 14px;
 			font-style: normal;
@@ -650,8 +651,9 @@
 			box-sizing: border-box;
 
 			&:hover {
-				border: 1px solid rgba(78, 116, 248, 0.4);
-				background: rgba(78, 116, 248, 0.2);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 40%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 			}
 
 			&:focus-visible {
@@ -659,8 +661,9 @@
 			}
 
 			&.active {
-				border: 1px solid rgba(78, 116, 248, 0.4);
-				background: rgba(78, 116, 248, 0.2);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 40%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 			}
 		}
 
@@ -681,10 +684,10 @@
 			align-items: center;
 			justify-content: center;
 
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			border-top-left-radius: 0px;
 			border-bottom-left-radius: 0px;
-			background-color: var(--bg-ink-300);
+			background-color: var(--l3-background);
 
 			border-left: 0px;
 			border-top-left-radius: 0px;
@@ -707,9 +710,9 @@
 		.input-field {
 			flex: 0;
 			padding: 12px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
-			color: var(--bg-vanilla-100);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
+			color: var(--l1-foreground);
 			border-radius: 4px;
 			font-size: 14px;
 			min-width: 258px;
@@ -717,7 +720,7 @@
 
 		.arrow {
 			font-size: 18px;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 	}
 
@@ -745,266 +748,4 @@
 	justify-content: center;
 	align-items: center;
 	margin: 0 auto;
-}
-
-.lightMode {
-	.onboarding-questionaire-container {
-		.onboarding-questionaire-content {
-			.questions-container {
-				color: var(--bg-slate-300);
-			}
-
-			.onboarding-header-title {
-				color: var(--l1-foreground) !important;
-			}
-
-			.onboarding-header-subtitle {
-				color: var(--l3-foreground) !important;
-			}
-
-			.questions-form {
-				width: 100%;
-				display: flex;
-				padding: 24px;
-				flex-direction: column;
-				align-items: stretch;
-				gap: 24px;
-				border-radius: 4px;
-				border: 1px solid var(--text-vanilla-300);
-				background: var(--text-base-white);
-
-				.ant-form-item {
-					margin-bottom: 0px !important;
-
-					.ant-form-item-label {
-						label {
-							color: var(--bg-slate-300) !important;
-							font-size: 13px;
-							font-weight: 500;
-							line-height: 20px;
-						}
-					}
-				}
-
-				.discover-signoz-input {
-					border: 1px solid var(--l3-border);
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-					font-weight: 400;
-
-					&::placeholder {
-						color: var(--l3-foreground);
-						opacity: 1;
-					}
-
-					&:focus-visible {
-						border-color: var(--bg-robin-500);
-					}
-				}
-			}
-
-			.invite-team-members-container {
-				.ant-input-group {
-					.ant-input {
-						background: var(--bg-vanilla-100);
-						border: 1px solid var(--bg-vanilla-300);
-						color: var(--bg-slate-300);
-					}
-
-					.ant-input-group-addon {
-						font-size: 11px;
-						height: 32px;
-						min-width: 80px;
-						background: var(--bg-vanilla-100);
-						border: 1px solid var(--bg-vanilla-300);
-						border-left: 0px;
-						color: var(--bg-slate-300);
-					}
-				}
-			}
-
-			.question-label {
-				color: var(--bg-slate-300);
-			}
-
-			.question {
-				color: var(--l1-foreground);
-			}
-
-			.question-slider {
-				color: var(--l1-foreground);
-			}
-
-			.checkbox-item {
-				label {
-					color: var(--l1-foreground) !important;
-				}
-
-				.ant-checkbox-wrapper {
-					color: var(--l1-foreground);
-
-					.ant-checkbox {
-						.ant-checkbox-inner {
-							border-color: var(--l3-background);
-							background-color: transparent;
-						}
-
-						&.ant-checkbox-checked .ant-checkbox-inner {
-							background-color: var(--bg-robin-500);
-							border-color: var(--bg-robin-500);
-						}
-					}
-
-					span {
-						color: var(--l1-foreground) !important;
-					}
-				}
-
-				&.checkbox-item-others {
-					.onboarding-questionaire-other-input {
-						border: 1px solid var(--l3-border);
-						background: var(--l3-background);
-						color: var(--l1-foreground);
-
-						&::placeholder {
-							color: var(--l3-foreground);
-						}
-
-						&:focus {
-							border-color: var(--bg-robin-500);
-							color: var(--l1-foreground);
-						}
-					}
-				}
-			}
-
-			.observability-tool-others-item {
-				.onboarding-questionaire-other-input {
-					border: 1px solid var(--l3-border);
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-
-					&::placeholder {
-						color: var(--l3-foreground);
-					}
-
-					&:focus {
-						border-color: var(--bg-robin-500);
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			input[type='text'] {
-				border: 1px solid var(--l3-border);
-				background: var(--l3-background);
-				color: var(--l1-foreground);
-
-				&::placeholder {
-					color: var(--l3-foreground);
-				}
-
-				&:focus-visible {
-					border-color: var(--bg-robin-500);
-				}
-			}
-
-			.radio-button,
-			.grid-button,
-			.tool-button {
-				border-radius: 4px;
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				padding: 12px;
-				color: var(--bg-slate-300);
-				font-size: 14px;
-				font-style: normal;
-				text-align: left;
-				font-weight: 400;
-				transition: background-color 0.3s ease;
-				min-width: 258px;
-				cursor: pointer;
-				box-sizing: border-box;
-			}
-
-			.radio-button.active,
-			.grid-button.active,
-			.tool-button.active,
-			.radio-button:hover,
-			.grid-button:hover,
-			.tool-button:hover {
-				border: 1px solid rgba(78, 116, 248, 0.4);
-				background: rgba(78, 116, 248, 0.2);
-			}
-
-			.onboarding-questionaire-button,
-			.add-another-member-button,
-			.remove-team-member-button {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				border-radius: 2px;
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-300);
-				box-shadow: none;
-				font-size: 14px;
-				font-style: normal;
-				text-align: left;
-				font-weight: 400;
-				transition: background-color 0.3s ease;
-				cursor: pointer;
-				height: 40px;
-				box-sizing: border-box;
-
-				&:hover {
-					border: 1px solid rgba(78, 116, 248, 0.4);
-					background: rgba(78, 116, 248, 0.2);
-				}
-
-				&:focus-visible {
-					outline: none;
-				}
-
-				&.active {
-					border: 1px solid rgba(78, 116, 248, 0.4);
-					background: rgba(78, 116, 248, 0.2);
-				}
-			}
-
-			.remove-team-member-button {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-
-				border: 1px solid var(--bg-vanilla-300);
-				border-top-left-radius: 0px;
-				border-bottom-left-radius: 0px;
-				background-color: var(--bg-vanilla-100);
-
-				border-left: 0px;
-				border-top-left-radius: 0px;
-				border-bottom-left-radius: 0px;
-			}
-
-			.input-field {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.arrow {
-				color: var(--bg-slate-300);
-			}
-
-			.onboarding-back-button {
-				border-color: var(--text-vanilla-300);
-				color: var(--l3-foreground);
-
-				&:hover {
-					border-color: var(--bg-robin-500);
-				}
-			}
-		}
-	}
 }

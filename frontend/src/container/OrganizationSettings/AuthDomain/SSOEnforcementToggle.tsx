@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Switch } from '@signozhq/switch';
+import { Switch } from '@signozhq/ui';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
 import {
@@ -66,11 +66,7 @@ function SSOEnforcementToggle({
 	};
 
 	return (
-		<Switch
-			disabled={isLoading}
-			checked={isChecked}
-			onCheckedChange={onChangeHandler}
-		/>
+		<Switch disabled={isLoading} value={isChecked} onChange={onChangeHandler} />
 	);
 }
 
