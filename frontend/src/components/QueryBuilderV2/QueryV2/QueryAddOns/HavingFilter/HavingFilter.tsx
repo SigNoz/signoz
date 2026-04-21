@@ -50,8 +50,8 @@ const havingOperators = [
 		value: 'IN',
 	},
 	{
-		label: 'NOT_IN',
-		value: 'NOT_IN',
+		label: 'NOT IN',
+		value: 'NOT IN',
 	},
 ];
 
@@ -129,7 +129,7 @@ function HavingFilter({
 				const operator = havingOperators[j];
 				newOptions.push({
 					label: `${opt.func}(${opt.arg}) ${operator.label}`,
-					value: `${opt.func}(${opt.arg}) ${operator.label} `,
+					value: `${opt.func}(${opt.arg}) ${operator.value} `,
 					apply: (
 						view: EditorView,
 						completion: { label: string; value: string },
@@ -212,9 +212,12 @@ function HavingFilter({
 			from: number,
 			to: number,
 		): void => {
-			const insertValue =
-				typeof completion.apply === 'string' ? completion.apply : completion.label;
-			const insertWithSpace = `${insertValue} `;
+			const optionValue = (completion as { value?: string }).value;
+			const insertWithSpace =
+				optionValue ??
+				`${
+					typeof completion.apply === 'string' ? completion.apply : completion.label
+				} `;
 			view.dispatch({
 				changes: { from, to, insert: insertWithSpace },
 				selection: { anchor: from + insertWithSpace.length },
