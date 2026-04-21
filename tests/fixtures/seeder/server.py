@@ -14,7 +14,7 @@ import os
 from typing import Any, Dict, List
 
 import clickhouse_connect
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response, status
 
 from fixtures.logs import (
     Logs,
@@ -71,7 +71,7 @@ def _tag(item: Dict[str, Any]) -> Dict[str, Any]:
     return {**item, "resources": resources}
 
 
-@app.post("/telemetry/traces")
+@app.post("/telemetry/traces", status_code=status.HTTP_201_CREATED)
 def post_traces(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
     try:
         traces = [Traces.from_dict(_tag(item)) for item in payload]
@@ -85,18 +85,18 @@ def post_traces(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.delete("/telemetry/traces")
-def delete_traces() -> Dict[str, bool]:
+@app.delete("/telemetry/traces", status_code=status.HTTP_204_NO_CONTENT)
+def delete_traces() -> Response:
     try:
         truncate_traces_tables(get_conn(), CH_CLUSTER)
         logger.info("truncated traces tables")
-        return {"truncated": True}
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.post("/telemetry/logs")
+@app.post("/telemetry/logs", status_code=status.HTTP_201_CREATED)
 def post_logs(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
     try:
         logs = [Logs.from_dict(_tag(item)) for item in payload]
@@ -110,18 +110,18 @@ def post_logs(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.delete("/telemetry/logs")
-def delete_logs() -> Dict[str, bool]:
+@app.delete("/telemetry/logs", status_code=status.HTTP_204_NO_CONTENT)
+def delete_logs() -> Response:
     try:
         truncate_logs_tables(get_conn(), CH_CLUSTER)
         logger.info("truncated logs tables")
-        return {"truncated": True}
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.post("/telemetry/metrics")
+@app.post("/telemetry/metrics", status_code=status.HTTP_201_CREATED)
 def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
     try:
         # Metrics data has label dicts at the top level (no `resources` key
@@ -138,12 +138,12 @@ def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@app.delete("/telemetry/metrics")
-def delete_metrics() -> Dict[str, bool]:
+@app.delete("/telemetry/metrics", status_code=status.HTTP_204_NO_CONTENT)
+def delete_metrics() -> Response:
     try:
         truncate_metrics_tables(get_conn(), CH_CLUSTER)
         logger.info("truncated metrics tables")
-        return {"truncated": True}
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
