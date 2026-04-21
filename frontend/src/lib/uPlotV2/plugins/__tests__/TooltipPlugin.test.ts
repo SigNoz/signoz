@@ -6,10 +6,11 @@ import type uPlot from 'uplot';
 
 import { TooltipRenderArgs } from '../../components/types';
 import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
-import TooltipPlugin, {
+import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
+import {
+	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
-} from '../TooltipPlugin/TooltipPlugin';
-import { DashboardCursorSync } from '../TooltipPlugin/types';
+} from '../TooltipPlugin/types';
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
 // We only care that pinning logic runs without throwing, not which series is focused.
@@ -821,7 +822,7 @@ describe('TooltipPlugin', () => {
 			);
 
 			expect(setCursorSpy).toHaveBeenCalledWith({
-				sync: { key: 'dashboard-sync', scales: ['x', null] },
+				sync: { key: 'dashboard-sync', scales: ['x', 'y'] },
 			});
 		});
 

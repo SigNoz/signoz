@@ -15,6 +15,7 @@ export default function Tooltip({
 	content,
 	showTooltipHeader = true,
 	isPinned,
+	canPinTooltip,
 	dismiss,
 }: TooltipProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -54,7 +55,7 @@ export default function Tooltip({
 
 			{showList && <TooltipList content={tooltipContent} />}
 
-			<TooltipFooter isPinned={isPinned} dismiss={dismiss} />
+			{canPinTooltip && <TooltipFooter isPinned={isPinned} dismiss={dismiss} />}
 		</div>
 	);
 }

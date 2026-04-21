@@ -113,9 +113,9 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
 					canPinTooltip
+					timezone={timezone}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
-					timezone={timezone}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}

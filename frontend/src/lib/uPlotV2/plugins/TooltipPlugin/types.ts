@@ -11,6 +11,9 @@ import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 
 export const TOOLTIP_OFFSET = 10;
 
+// Default key that pins the tooltip while hovering over the chart.
+export const DEFAULT_PIN_TOOLTIP_KEY = 'p';
+
 export enum DashboardCursorSync {
 	Crosshair,
 	None,
@@ -34,6 +37,10 @@ export interface TooltipLayoutInfo {
 	height: number;
 }
 
+export interface TooltipSyncMetadata {
+	yAxisUnit?: string;
+}
+
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
@@ -43,6 +50,7 @@ export interface TooltipPluginProps {
 	onClick?: (clickData: TooltipClickData) => void;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
+	syncMetadata?: TooltipSyncMetadata;
 	render: (args: TooltipRenderArgs) => ReactNode;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;
