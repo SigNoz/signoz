@@ -123,10 +123,7 @@ describe('AddKeyModal', () => {
 
 		await waitFor(() => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('snz_abc123xyz456secret');
-			expect(mockToast.success).toHaveBeenCalledWith(
-				'Key copied to clipboard',
-				expect.anything(),
-			);
+			expect(mockToast.success).toHaveBeenCalledWith('Key copied to clipboard');
 		});
 	});
 

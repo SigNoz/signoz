@@ -75,7 +75,6 @@ describe('CreateServiceAccountModal', () => {
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				'Service account created successfully',
-				expect.anything(),
 			);
 		});
 

@@ -87,10 +87,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await user.click(screen.getByRole('button', { name: /Save Changes/i }));
 
 		await waitFor(() => {
-			expect(mockToast.success).toHaveBeenCalledWith(
-				'Key updated successfully',
-				expect.anything(),
-			);
+			expect(mockToast.success).toHaveBeenCalledWith('Key updated successfully');
 		});
 
 		await waitFor(() => {
@@ -158,10 +155,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await user.click(confirmBtn);
 
 		await waitFor(() => {
-			expect(mockToast.success).toHaveBeenCalledWith(
-				'Key revoked successfully',
-				expect.anything(),
-			);
+			expect(mockToast.success).toHaveBeenCalledWith('Key revoked successfully');
 		});
 
 		await waitFor(() => {

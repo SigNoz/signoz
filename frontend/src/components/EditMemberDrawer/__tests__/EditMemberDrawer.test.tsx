@@ -162,6 +162,8 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockCopyState.value = undefined;
+		mockCopyState.error = undefined;
 		showErrorModal.mockClear();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -728,16 +730,16 @@ describe('EditMemberDrawer', () => {
 			await user.click(screen.getByRole('button', { name: /^copy$/i }));
 
 			await waitFor(() => {
+				expect(mockCopyToClipboard).toHaveBeenCalledWith(
+					expect.stringContaining('reset-tok-abc'),
+				);
+				expect(
+					screen.getByRole('button', { name: /copied!/i }),
+				).toBeInTheDocument();
 				expect(mockToast.success).toHaveBeenCalledWith(
 					'Reset link copied to clipboard',
-					expect.anything(),
 				);
 			});
-
-			expect(mockCopyToClipboard).toHaveBeenCalledWith(
-				expect.stringContaining('reset-tok-abc'),
-			);
-			expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument();
 		});
 	});
 });
