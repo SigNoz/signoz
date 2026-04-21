@@ -70,7 +70,7 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		if err := json.Unmarshal([]byte(account.Config), &cfg); err != nil {
 			continue
 		}
-		if containsAllRegion(cfg.Regions) {
+		if slices.Contains(cfg.Regions, "all") {
 			idsToUpdate = append(idsToUpdate, account.ID)
 		}
 	}
@@ -79,15 +79,14 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 		return tx.Commit()
 	}
 
-	cfg := awsConfig{Regions: allValidAWSRegions()}
-	newBytes, err := json.Marshal(cfg)
+	configBytes, err := migration.getAllRegionsConfig()
 	if err != nil {
 		return err
 	}
 
 	_, err = tx.NewUpdate().
 		TableExpr("cloud_integration").
-		Set("config = ?", string(newBytes)).
+		Set("config = ?", string(configBytes)).
 		Where("id IN (?)", bun.In(idsToUpdate)).
 		Exec(ctx)
 	if err != nil {
@@ -101,16 +100,19 @@ func (migration *migrateAWSAllRegions) Down(context.Context, *bun.DB) error {
 	return nil
 }
 
-func containsAllRegion(regions []string) bool {
-	return slices.Contains(regions, "all")
-}
-
-func allValidAWSRegions() []string {
+func (migration *migrateAWSAllRegions) getAllRegionsConfig() ([]byte, error) {
 	awsRegions := cloudintegrationtypes.SupportedRegions[cloudintegrationtypes.CloudProviderTypeAWS]
 	out := make([]string, 0, len(awsRegions))
 	for _, r := range awsRegions {
 		out = append(out, r.StringValue())
 	}
 	sort.Strings(out)
-	return out
+
+	cfg := awsConfig{Regions: out}
+	newBytes, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return newBytes, nil
 }
