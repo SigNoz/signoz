@@ -112,6 +112,7 @@ export const getUPlotChartData = (
 const processAnomalyDetectionData = (
 	anomalyDetectionData: any,
 	isDarkMode: boolean,
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Record<string, { data: number[][]; color: string }> => {
 	if (!anomalyDetectionData) {
 		return {};
@@ -137,7 +138,22 @@ const processAnomalyDetectionData = (
 			legend,
 		} = queryData;
 
+		// Skip if required anomaly detection fields are missing
+		if (!series || !predictedSeries || !upperBoundSeries || !lowerBoundSeries) {
+			continue;
+		}
+
 		for (let index = 0; index < series?.length; index++) {
+			// Skip if any series at this index is missing
+			if (
+				!series[index] ||
+				!predictedSeries[index] ||
+				!upperBoundSeries[index] ||
+				!lowerBoundSeries[index]
+			) {
+				continue;
+			}
+
 			const label = getLabelName(
 				series[index].labels,
 				queryName || '', // query
