@@ -2,10 +2,9 @@ import {
   test as base,
   expect,
   type Browser,
+  type BrowserContext,
   type Page,
 } from '@playwright/test';
-import fs from 'node:fs';
-import path from 'node:path';
 
 export type User = { email: string; password: string };
 
@@ -16,10 +15,12 @@ export const ADMIN: User = {
 };
 
 // Per-worker storageState cache. One login per unique user per worker.
-// Promise-valued so parallel fixture resolutions share the same in-flight work.
-const storageByUser = new Map<string, Promise<string>>();
+// Promise-valued so concurrent requests share the same in-flight work.
+// Held in memory only — no .auth/ dir, no JSON on disk.
+type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;
+const storageByUser = new Map<string, Promise<StorageState>>();
 
-async function storageFor(browser: Browser, user: User): Promise<string> {
+async function storageFor(browser: Browser, user: User): Promise<StorageState> {
   const cached = storageByUser.get(user.email);
   if (cached) return cached;
 
@@ -27,16 +28,9 @@ async function storageFor(browser: Browser, user: User): Promise<string> {
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await login(page, user);
-    const file = path.join(
-      __dirname,
-      '..',
-      '.auth',
-      `${safeName(user.email)}.json`,
-    );
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    await ctx.storageState({ path: file });
+    const state = await ctx.storageState();
     await ctx.close();
-    return file;
+    return state;
   })();
 
   storageByUser.set(user.email, task);
@@ -60,8 +54,6 @@ async function login(page: Page, user: User): Promise<void> {
     .waitFor({ state: 'visible' });
 }
 
-const safeName = (s: string) => s.replace(/[^a-z0-9._-]/gi, '_');
-
 export const test = base.extend<{
   /**
    * User identity for this test. Override with `test.use({ user: ... })` at
@@ -73,7 +65,7 @@ export const test = base.extend<{
   /**
    * A Page whose context is already authenticated as `user`. First request
    * for a given user triggers one login per worker; the resulting
-   * storageState is cached and reused for all later requests.
+   * storageState is held in memory and reused for all later requests.
    */
   authedPage: Page;
 }>({
