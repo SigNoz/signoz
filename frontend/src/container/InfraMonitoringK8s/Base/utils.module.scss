@@ -1,0 +1,18 @@
+.itemDataGroup {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-wrap: wrap;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.itemDataGroupTagItem {
+	display: block !important;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

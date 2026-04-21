@@ -1,16 +1,10 @@
-import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
-
-export interface ConnectionParams {
-	ingestion_url?: string;
-	ingestion_key?: string;
-	signoz_api_url?: string;
-	signoz_api_key?: string;
-}
+import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 
 export interface GenerateConnectionUrlPayload {
 	agent_config: {
 		region: string;
-	} & ConnectionParams;
+	} & CloudintegrationtypesCredentialsDTO;
 	account_config: {
 		regions: string[];
 	};
@@ -22,20 +16,7 @@ export interface ConnectionUrlResponse {
 	account_id: string;
 }
 
-export interface AccountStatusResponse {
-	status: 'success';
-	data: {
-		id: string;
-		cloud_account_id: string;
-		status: {
-			integration: {
-				last_heartbeat_ts_ms: number | null;
-			};
-		};
-	};
-}
-
-export interface AccountConfigPayload {
+export interface AWSAccountConfigPayload {
 	config: {
 		regions: string[];
 	};

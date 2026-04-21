@@ -1,0 +1,73 @@
+.entityGroupHeader {
+	padding-left: var(--spacing-5);
+	gap: var(--spacing-5);
+	display: flex;
+	align-items: center;
+}
+
+.hostnameColumnHeader {
+	display: block;
+}
+
+.statusHeader {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	width: 100%;
+}
+
+.columnHeaderRight {
+	text-align: right;
+}
+
+.memoryUsageHeader {
+	display: inline-flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-2);
+	width: 100%;
+}
+
+.statusTag {
+	width: fit-content;
+	font-family: Inter, sans-serif;
+	font-size: 11px;
+	font-style: normal;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: 0.44px;
+	text-transform: uppercase;
+	border-radius: 50px;
+	padding: 2px 8px;
+}
+
+.statusTagActive {
+	color: var(--Forest-500, #25e192);
+	border: 1px solid rgba(37, 225, 146, 0.2);
+	background: rgba(37, 225, 146, 0.1);
+}
+
+.statusTagInactive {
+	color: var(--Slate-50, #62687c);
+	border: 1px solid rgba(98, 104, 124, 0.2);
+	background: rgba(98, 104, 124, 0.1);
+}
+
+.progressContainer {
+	display: flex;
+	align-items: center;
+
+	& > div {
+		width: 100%;
+	}
+
+	:global(.ant-progress-bg) {
+		height: 8px !important;
+		border-radius: 4px;
+	}
+}
+
+.progressBar {
+	flex: 1;
+	margin-right: 8px;
+}

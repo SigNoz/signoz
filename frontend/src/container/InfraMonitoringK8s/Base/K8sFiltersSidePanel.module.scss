@@ -1,0 +1,36 @@
+.drawer {
+	--dialog-description-padding: 0px 0px var(--spacing-8) 0px;
+}
+
+.columnItem {
+	display: flex;
+	align-items: center;
+}
+
+.columnsTitle {
+	color: var(--l2-foreground);
+	font-size: var(--periscope-font-size-small, 11px);
+	font-weight: var(--periscope-font-weight-medium, 500);
+	text-transform: uppercase;
+
+	padding: var(--spacing-4) var(--spacing-8);
+	border-bottom: 1px solid var(--l2-border);
+
+	&:not(:first-of-type) {
+		border-top: 1px solid var(--l2-border);
+	}
+}
+
+.columnsList {
+	display: flex;
+	flex-direction: column;
+}
+
+.columnItem {
+	justify-content: flex-start !important;
+	width: 100%;
+}
+
+.horizontalDivider {
+	border-top: 1px solid var(--l1-border);
+}
