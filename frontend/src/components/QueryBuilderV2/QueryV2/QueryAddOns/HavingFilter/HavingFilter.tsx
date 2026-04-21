@@ -212,12 +212,9 @@ function HavingFilter({
 			from: number,
 			to: number,
 		): void => {
-			const optionValue = (completion as { value?: string }).value;
-			const insertWithSpace =
-				optionValue ??
-				`${
-					typeof completion.apply === 'string' ? completion.apply : completion.label
-				} `;
+			const insertValue =
+				typeof completion.apply === 'string' ? completion.apply : completion.label;
+			const insertWithSpace = `${insertValue} `;
 			view.dispatch({
 				changes: { from, to, insert: insertWithSpace },
 				selection: { anchor: from + insertWithSpace.length },
