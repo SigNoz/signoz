@@ -66,17 +66,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]*aio11ypricingruletypes.GettablePricingRule, len(rules))
-	for i, r := range rules {
-		items[i] = aio11ypricingruletypes.NewGettablePricingRule(r)
-	}
-
-	render.Success(rw, http.StatusOK, &aio11ypricingruletypes.ListPricingRulesResponse{
-		Items:  items,
-		Total:  total,
-		Offset: q.Offset,
-		Limit:  q.Limit,
-	})
+	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRules(rules, total, q.Offset, q.Limit))
 }
 
 // Get handles GET /api/v1/ai-o11y/pricing_rules/{id}.
@@ -134,7 +124,7 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rule, err := h.module.Create(ctx, orgID, claims.Email, req)
+	rule, err := h.module.Create(ctx, orgID, claims.Email, aio11ypricingruletypes.NewPricingRuleFromPostable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -172,7 +162,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rule, err := h.module.Update(ctx, orgID, id, claims.Email, req)
+	rule, err := h.module.Update(ctx, orgID, id, claims.Email, aio11ypricingruletypes.NewPricingRuleFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -238,21 +228,18 @@ func (h *handler) Sync(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.module.Sync(ctx, orgID, req)
+	err = h.module.Sync(ctx, orgID, req.Rules)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, resp)
+	render.Success(rw, http.StatusAccepted, nil)
 }
 
 // ruleIDFromPath extracts and validates the {id} path variable.
 func ruleIDFromPath(r *http.Request) (valuer.UUID, error) {
 	raw := mux.Vars(r)["id"]
-	if raw == "" {
-		return valuer.UUID{}, errors.Newf(errors.TypeInvalidInput, aio11ypricingruletypes.ErrCodePricingRuleInvalidInput, "id is missing from the path")
-	}
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
 		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, aio11ypricingruletypes.ErrCodePricingRuleInvalidInput, "id is not a valid uuid")

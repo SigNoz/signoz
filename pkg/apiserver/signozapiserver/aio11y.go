@@ -20,7 +20,7 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 			Request:             nil,
 			RequestContentType:  "",
 			RequestQuery:        new(aio11ypricingruletypes.ListPricingRulesQuery),
-			Response:            new(aio11ypricingruletypes.ListPricingRulesResponse),
+			Response:            new(aio11ypricingruletypes.GettablePricingRules),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
@@ -54,18 +54,16 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/sync", handler.New(
 		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Sync),
 		handler.OpenAPIDef{
-			ID:                  "SyncPricingRules",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Bulk sync pricing rules",
-			Description:         "Zeus bulk-upserts upstream pricing. Non-override rules get costs updated; override rules get only SourceConfig refreshed.",
-			Request:             new(aio11ypricingruletypes.SyncPricingRulesRequest),
-			RequestContentType:  "application/json",
-			Response:            new(aio11ypricingruletypes.SyncPricingRulesResponse),
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest},
-			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin), // not sure of this
+			ID:                 "SyncPricingRules",
+			Tags:               []string{"ai-o11y"},
+			Summary:            "Bulk sync pricing rules",
+			Description:        "Zeus bulk-upserts upstream pricing. Non-override rules get costs updated; override rules get only SourceConfig refreshed.",
+			Request:            new(aio11ypricingruletypes.SyncPricingRulesRequest),
+			RequestContentType: "application/json",
+			SuccessStatusCode:  http.StatusAccepted,
+			ErrorStatusCodes:   []int{http.StatusBadRequest},
+			Deprecated:         false,
+			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin), // not sure of this
 		},
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err

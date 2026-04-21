@@ -30,7 +30,6 @@ import type {
 	ListPricingRules200,
 	ListPricingRulesParams,
 	RenderErrorResponseDTO,
-	SyncPricingRules200,
 	UpdatePricingRule200,
 	UpdatePricingRulePathParameters,
 } from '../sigNoz.schemas';
@@ -501,7 +500,7 @@ export const useUpdatePricingRule = <
 export const syncPricingRules = (
 	aio11YpricingruletypesSyncPricingRulesRequestDTO: BodyType<Aio11YpricingruletypesSyncPricingRulesRequestDTO>,
 ) => {
-	return GeneratedAPIInstance<SyncPricingRules200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/ai-o11y/pricing_rules/sync`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },

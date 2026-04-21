@@ -9,65 +9,7 @@ export enum Aio11YpricingruletypesCacheModeDTO {
 	additive = 'additive',
 	unknown = 'unknown',
 }
-export interface Aio11YpricingruletypesListPricingRulesResponseDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	items: Aio11YpricingruletypesPricingRuleDTO[] | null;
-	/**
-	 * @type integer
-	 */
-	limit: number;
-	/**
-	 * @type integer
-	 */
-	offset: number;
-	/**
-	 * @type integer
-	 */
-	total: number;
-}
-
-export interface Aio11YpricingruletypesPostablePricingRuleDTO {
-	cacheMode: Aio11YpricingruletypesCacheModeDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheRead: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheWrite: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costInput: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costOutput: number;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	/**
-	 * @type string
-	 */
-	modelName: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	modelPattern: string[] | null;
-	unit: Aio11YpricingruletypesUnitDTO;
-}
-
-export interface Aio11YpricingruletypesPricingRuleDTO {
+export interface Aio11YpricingruletypesGettablePricingRuleDTO {
 	cacheMode: Aio11YpricingruletypesCacheModeDTO;
 	/**
 	 * @type number
@@ -141,26 +83,27 @@ export interface Aio11YpricingruletypesPricingRuleDTO {
 	updatedBy?: string;
 }
 
-export interface Aio11YpricingruletypesSyncPricingRulesRequestDTO {
+export interface Aio11YpricingruletypesGettablePricingRulesDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	rules: Aio11YpricingruletypesSyncablePricingRuleDTO[] | null;
-}
-
-export interface Aio11YpricingruletypesSyncPricingRulesResponseDTO {
+	items: Aio11YpricingruletypesGettablePricingRuleDTO[] | null;
 	/**
 	 * @type integer
 	 */
-	refreshed: number;
+	limit: number;
 	/**
 	 * @type integer
 	 */
-	synced: number;
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
 }
 
-export interface Aio11YpricingruletypesSyncablePricingRuleDTO {
+export interface Aio11YpricingruletypesPostablePricingRuleDTO {
 	cacheMode: Aio11YpricingruletypesCacheModeDTO;
 	/**
 	 * @type number
@@ -195,11 +138,36 @@ export interface Aio11YpricingruletypesSyncablePricingRuleDTO {
 	 * @nullable true
 	 */
 	modelPattern: string[] | null;
+	unit: Aio11YpricingruletypesUnitDTO;
+}
+
+export interface Aio11YpricingruletypesPricingRuleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
 	/**
 	 * @type string
 	 */
-	sourceId: string;
-	unit: Aio11YpricingruletypesUnitDTO;
+	createdBy?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface Aio11YpricingruletypesSyncPricingRulesRequestDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	rules: Aio11YpricingruletypesPricingRuleDTO[] | null;
 }
 
 export enum Aio11YpricingruletypesUnitDTO {
@@ -5950,7 +5918,7 @@ export type ListPricingRulesParams = {
 };
 
 export type ListPricingRules200 = {
-	data: Aio11YpricingruletypesListPricingRulesResponseDTO;
+	data: Aio11YpricingruletypesGettablePricingRulesDTO;
 	/**
 	 * @type string
 	 */
@@ -5958,7 +5926,7 @@ export type ListPricingRules200 = {
 };
 
 export type CreatePricingRule201 = {
-	data: Aio11YpricingruletypesPricingRuleDTO;
+	data: Aio11YpricingruletypesGettablePricingRuleDTO;
 	/**
 	 * @type string
 	 */
@@ -5972,7 +5940,7 @@ export type GetPricingRulePathParameters = {
 	id: string;
 };
 export type GetPricingRule200 = {
-	data: Aio11YpricingruletypesPricingRuleDTO;
+	data: Aio11YpricingruletypesGettablePricingRuleDTO;
 	/**
 	 * @type string
 	 */
@@ -5983,15 +5951,7 @@ export type UpdatePricingRulePathParameters = {
 	id: string;
 };
 export type UpdatePricingRule200 = {
-	data: Aio11YpricingruletypesPricingRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type SyncPricingRules200 = {
-	data: Aio11YpricingruletypesSyncPricingRulesResponseDTO;
+	data: Aio11YpricingruletypesGettablePricingRuleDTO;
 	/**
 	 * @type string
 	 */
