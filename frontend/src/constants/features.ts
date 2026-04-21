@@ -9,4 +9,5 @@ export enum FeatureKeys {
 	ANOMALY_DETECTION = 'anomaly_detection',
 	ONBOARDING_V3 = 'onboarding_v3',
 	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
+	ENABLE_BODY_JSON_QUERY = 'enable_body_json_query',
 }
