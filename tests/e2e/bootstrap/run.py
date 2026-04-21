@@ -20,7 +20,7 @@ def test_e2e(
     then shells out to `yarn test` so Playwright runs against the provisioned
     instance. Intended as the primary CI entrypoint.
     """
-    e2e_dir = Path(__file__).resolve().parents[2]  # bootstrap/ -> src/ -> e2e/
+    e2e_dir = Path(__file__).resolve().parents[1]  # bootstrap/ -> e2e/
     host_cfg = signoz.self.host_configs["8080"]
     seeder_cfg = seeder.host_configs["8080"]
     env = {
