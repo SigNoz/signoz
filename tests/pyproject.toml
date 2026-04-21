@@ -16,6 +16,9 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "selenium>=4.40.0",
     "isodate>=0.7.2",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "py>=1.11",
 ]
 
 [dependency-groups]

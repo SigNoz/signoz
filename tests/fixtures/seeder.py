@@ -37,11 +37,11 @@ def seeder(
         # docker-py wants `dockerfile` RELATIVE to `path`. The fixture file
         # lives at tests/fixtures/seeder.py so the build context root is
         # tests/ (one parent up), and the Dockerfile path inside that
-        # context is seeder/Dockerfile.
+        # context is Dockerfile.seeder.
         docker_client = docker.from_env()
         docker_client.images.build(
             path=str(_TESTS_ROOT),
-            dockerfile="seeder/Dockerfile",
+            dockerfile="Dockerfile.seeder",
             tag="signoz-tests-seeder:latest",
             rm=True,
         )

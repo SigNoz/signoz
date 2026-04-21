@@ -1,5 +1,6 @@
-# Build context for tests/seeder/Dockerfile. Keep the context lean —
-# the seeder image only needs fixtures/ to be importable alongside seeder/.
+# Build context for tests/Dockerfile.seeder. Keep the context lean — the
+# seeder image only needs fixtures/ to be importable alongside seeder/,
+# plus pyproject.toml + uv.lock for dep install.
 
 .venv
 .pytest_cache
