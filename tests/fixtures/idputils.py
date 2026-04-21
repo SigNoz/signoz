@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from fixtures import types
-from fixtures.idp import IDP_ROOT_PASSWORD, IDP_ROOT_USERNAME
+from fixtures.keycloak import IDP_ROOT_PASSWORD, IDP_ROOT_USERNAME
 
 
 @pytest.fixture(name="create_saml_client", scope="function")
