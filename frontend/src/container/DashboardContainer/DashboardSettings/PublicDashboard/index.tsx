@@ -60,7 +60,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [defaultTimeRange, setDefaultTimeRange] = useState(DEFAULT_TIME_RANGE);
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -85,8 +85,8 @@ function PublicDashboardSetting(): JSX.Element {
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-		!!selectedDashboard?.id && isPublicDashboardEnabled,
+		dashboardData?.id || '',
+		!!dashboardData?.id && isPublicDashboardEnabled,
 	);
 
 	const isPublicDashboard = !!publicDashboardData?.publicPath;
@@ -155,36 +155,36 @@ function PublicDashboardSetting(): JSX.Element {
 	});
 
 	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		createPublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleUpdatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		updatePublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleRevokePublicDashboardAccess = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		revokePublicDashboardAccess({
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 		});
 	};
 

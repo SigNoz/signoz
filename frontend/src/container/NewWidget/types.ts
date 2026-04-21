@@ -10,7 +10,7 @@ import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
 	dashboardId: string;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;
 }
@@ -34,7 +34,7 @@ export interface WidgetGraphProps {
 		>
 	>;
 	enableDrillDown?: boolean;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	isNewPanel?: boolean;
 }
 
