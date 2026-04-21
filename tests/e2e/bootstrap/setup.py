@@ -11,8 +11,8 @@ def _endpoint_file() -> Path:
     override = os.environ.get("SIGNOZ_E2E_ENDPOINT_FILE")
     if override:
         return Path(override)
-    # tests/e2e/src/bootstrap/setup.py -> tests/e2e/.signoz-backend.json
-    return Path(__file__).resolve().parents[2] / ".signoz-backend.json"
+    # tests/e2e/bootstrap/setup.py -> tests/e2e/.signoz-backend.json
+    return Path(__file__).resolve().parents[1] / ".signoz-backend.json"
 
 
 def test_setup(
