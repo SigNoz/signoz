@@ -204,7 +204,7 @@ function EditMemberDrawer({
 			onSuccess: (): void => {
 				toast.success(
 					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-					{ richColors: true, position: 'top-right' },
+					{ position: 'top-right' },
 				);
 				setShowDeleteConfirm(false);
 				onComplete();
@@ -339,10 +339,7 @@ function EditMemberDrawer({
 			if (errors.length > 0) {
 				setSaveErrors(errors);
 			} else {
-				toast.success('Member details updated successfully', {
-					richColors: true,
-					position: 'top-right',
-				});
+				toast.success('Member details updated successfully');
 				onComplete();
 			}
 
@@ -400,7 +397,6 @@ function EditMemberDrawer({
 				onClose();
 			} else {
 				toast.error('Failed to generate password reset link', {
-					richColors: true,
 					position: 'top-right',
 				});
 			}
@@ -424,15 +420,12 @@ function EditMemberDrawer({
 			linkType === 'invite'
 				? 'Invite link copied to clipboard'
 				: 'Reset link copied to clipboard';
-		toast.success(message, { richColors: true, position: 'top-right' });
+		toast.success(message);
 	}, [resetLink, copyToClipboard, linkType]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link', {
-				richColors: true,
-				position: 'top-right',
-			});
+			toast.error('Failed to copy link');
 		}
 	}, [copyState.error]);
 

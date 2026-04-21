@@ -243,10 +243,10 @@ export default function CustomDomainSettings(): JSX.Element {
 							)}
 						>
 							<Button
-								type="button"
-								size="sm"
 								className="workspace-url-trigger"
 								disabled={isFetchingHosts}
+								variant="link"
+								color="none"
 							>
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>

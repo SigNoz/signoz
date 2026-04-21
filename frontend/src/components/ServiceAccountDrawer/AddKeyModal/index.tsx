@@ -117,12 +117,12 @@ function AddKeyModal(): JSX.Element {
 		copyToClipboard(createdKey.key);
 		setHasCopied(true);
 		setTimeout(() => setHasCopied(false), 2000);
-		toast.success('Key copied to clipboard', { richColors: true });
+		toast.success('Key copied to clipboard');
 	}, [copyToClipboard, createdKey?.key]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy key', { richColors: true });
+			toast.error('Failed to copy key');
 		}
 	}, [copyState.error]);
 

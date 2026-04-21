@@ -51,8 +51,8 @@
 
 .login-form-card {
 	width: 100%;
-	background: var(--bg-neutral-dark-950);
-	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	padding: 24px;
 	display: flex;
@@ -235,8 +235,8 @@
 
 .login-form-input {
 	height: 32px;
-	background: var(--l3-background);
-	border: 1px solid var(--l1-border);
+	background: var(--l2-background) !important;
+	border: 1px solid var(--l2-border) !important;
 	border-radius: 2px;
 	padding: 6px 8px;
 	font-family: Inter, sans-serif;
@@ -250,7 +250,7 @@
 		color: var(--l3-foreground);
 	}
 
-	&:hover {
+	&:hover:not(:disabled) {
 		border-color: var(--l1-border);
 	}
 
@@ -276,8 +276,8 @@
 			font-weight: 400 !important;
 			line-height: 1 !important;
 			letter-spacing: -0.065px !important;
-			background: var(--l3-background) !important;
-			border: 1px solid var(--l1-border) !important;
+			background: var(--l2-background) !important;
+			border: 1px solid var(--l2-border) !important;
 			display: flex !important;
 			align-items: center !important;
 		}
@@ -301,7 +301,7 @@
 		}
 
 		.ant-select-selection-placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 		}
 
 		.ant-select-selection-item {

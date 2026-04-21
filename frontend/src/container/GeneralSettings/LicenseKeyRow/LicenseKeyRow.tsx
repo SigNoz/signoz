@@ -16,7 +16,7 @@ function LicenseKeyRow(): JSX.Element | null {
 
 	const handleCopyLicenseKey = (text: string): void => {
 		copyToClipboard(text);
-		toast.success('License key copied to clipboard.', { richColors: true });
+		toast.success('License key copied to clipboard.');
 	};
 
 	return (

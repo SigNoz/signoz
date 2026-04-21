@@ -77,7 +77,7 @@ function RevokeKeyModal(): JSX.Element {
 	} = useRevokeServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Key revoked successfully', { richColors: true });
+				toast.success('Key revoked successfully');
 				await setRevokeKeyId(null);
 				if (accountId) {
 					await invalidateListServiceAccountKeys(queryClient, { id: accountId });

@@ -40,7 +40,7 @@ function DeleteAccountModal(): JSX.Element {
 	} = useDeleteServiceAccount({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Service account deleted', { richColors: true });
+				toast.success('Service account deleted');
 				await setIsDeleteOpen(null);
 				await setAccountId(null);
 				await invalidateListServiceAccounts(queryClient);

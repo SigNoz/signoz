@@ -53,9 +53,7 @@ function CreateServiceAccountModal(): JSX.Element {
 	} = useCreateServiceAccount({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Service account created successfully', {
-					richColors: true,
-				});
+				toast.success('Service account created successfully');
 				reset();
 				await setIsOpen(null);
 				await invalidateListServiceAccounts(queryClient);

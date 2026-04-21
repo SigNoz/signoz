@@ -211,10 +211,6 @@
 		color: var(--l1-foreground);
 	}
 
-	[data-slot='dialog-description'] {
-		width: 510px;
-	}
-
 	&__content {
 		display: flex;
 		flex-direction: column;

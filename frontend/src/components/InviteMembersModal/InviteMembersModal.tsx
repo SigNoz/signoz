@@ -203,10 +203,7 @@ function InviteMembersModal({
 					})),
 				});
 			}
-			toast.success('Invites sent successfully', {
-				richColors: true,
-				position: 'top-right',
-			});
+			toast.success('Invites sent successfully', { position: 'top-right' });
 			resetAndClose();
 			onComplete?.();
 		} catch (err) {
