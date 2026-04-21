@@ -199,9 +199,6 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 			continue
 		}
 
-		// Key by the field path (e.g. "user.name"), not by the ClickHouse index name.
-		// columnExpr is the full column reference like "body_v2.user.name"; strip the
-		// column prefix and any backticks added for special-character path segments.
 		baseColumn := ""
 		fieldName := ""
 		switch {
