@@ -10,8 +10,8 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
+    change_user_role,
 )
-from fixtures.authutils import change_user_role
 from fixtures.types import Operation, SigNoz
 
 

@@ -4,7 +4,7 @@ from typing import Callable
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.cloudintegrations import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)

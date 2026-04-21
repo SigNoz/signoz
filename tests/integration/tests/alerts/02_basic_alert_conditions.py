@@ -7,12 +7,12 @@ import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
 
 from fixtures import types
-from fixtures.alertutils import (
+from fixtures.alerts import (
     update_rule_channel_name,
     verify_webhook_alert_expectation,
 )
+from fixtures.fs import get_testdata_file_path
 from fixtures.logger import setup_logger
-from fixtures.utils import get_testdata_file_path
 
 # Alert test cases use a 30-second wait time to verify expected alert firing.
 # Alert data is set up to trigger on the first rule manager evaluation.

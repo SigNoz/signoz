@@ -5,8 +5,7 @@ import requests
 from sqlalchemy import sql
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.authutils import find_user_by_email
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, find_user_by_email
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)

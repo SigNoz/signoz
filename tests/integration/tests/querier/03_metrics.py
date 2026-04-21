@@ -7,6 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     assert_minutely_bucket_values,
@@ -17,7 +18,6 @@ from fixtures.querier import (
     index_series_by_label,
     make_query_request,
 )
-from fixtures.utils import get_testdata_file_path
 
 FILL_GAPS = "fillGaps"
 FILL_ZERO = "fillZero"

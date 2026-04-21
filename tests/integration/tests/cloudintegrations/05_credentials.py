@@ -11,7 +11,7 @@ from wiremock.client import (
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.cloudintegrationsutils import setup_create_account_mocks
+from fixtures.cloudintegrations import setup_create_account_mocks
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)

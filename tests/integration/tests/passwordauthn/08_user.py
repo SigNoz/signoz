@@ -9,8 +9,6 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
-)
-from fixtures.authutils import (
     assert_user_has_role,
     find_user_by_email,
     find_user_with_roles_by_email,

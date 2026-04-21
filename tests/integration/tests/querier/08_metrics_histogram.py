@@ -10,6 +10,7 @@ import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     build_builder_query,
@@ -17,7 +18,6 @@ from fixtures.querier import (
     get_series_values,
     make_query_request,
 )
-from fixtures.utils import get_testdata_file_path
 
 FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 

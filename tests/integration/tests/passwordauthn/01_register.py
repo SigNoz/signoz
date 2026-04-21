@@ -11,8 +11,6 @@ from fixtures.auth import (
     USER_EDITOR_NAME,
     USER_EDITOR_PASSWORD,
     USER_VIEWER_EMAIL,
-)
-from fixtures.authutils import (
     assert_user_has_role,
     find_user_with_roles_by_email,
 )

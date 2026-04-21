@@ -11,7 +11,7 @@ from wiremock.client import (
 
 from fixtures import types
 from fixtures.auth import add_license
-from fixtures.gatewayutils import (
+from fixtures.gateway import (
     TEST_KEY_ID,
     TEST_LIMIT_ID,
     common_gateway_headers,

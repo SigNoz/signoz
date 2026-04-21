@@ -3,8 +3,7 @@ from typing import Callable
 
 import requests
 
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.authutils import create_active_user
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, create_active_user
 from fixtures.types import SigNoz
 
 

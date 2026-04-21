@@ -9,8 +9,6 @@ from fixtures.auth import (
     USER_ADMIN_PASSWORD,
     USER_EDITOR_EMAIL,
     USER_EDITOR_PASSWORD,
-)
-from fixtures.authutils import (
     change_user_role,
     create_active_user,
 )

@@ -11,6 +11,7 @@ import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.fs import get_testdata_file_path
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     build_builder_query,
@@ -18,7 +19,6 @@ from fixtures.querier import (
     get_series_values,
     make_query_request,
 )
-from fixtures.utils import get_testdata_file_path
 
 MULTI_TEMPORALITY_FILE = get_testdata_file_path("multi_temporality_counters_1h.jsonl")
 MULTI_TEMPORALITY_FILE_10h = get_testdata_file_path(

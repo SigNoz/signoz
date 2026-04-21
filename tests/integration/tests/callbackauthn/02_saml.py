@@ -11,12 +11,10 @@ from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
     add_license,
-)
-from fixtures.authutils import (
     assert_user_has_role,
     find_user_with_roles_by_email,
 )
-from fixtures.idputils import (
+from fixtures.idp import (
     get_saml_domain,
     perform_saml_login,
 )

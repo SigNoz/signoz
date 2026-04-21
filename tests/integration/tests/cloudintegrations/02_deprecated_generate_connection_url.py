@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import deprecated_simulate_agent_checkin
+from fixtures.cloudintegrations import deprecated_simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)

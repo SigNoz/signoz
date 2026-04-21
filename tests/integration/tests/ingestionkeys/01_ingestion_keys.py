@@ -11,7 +11,7 @@ from wiremock.client import (
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.gatewayutils import (
+from fixtures.gateway import (
     TEST_KEY_ID,
     common_gateway_headers,
     get_gateway_requests,

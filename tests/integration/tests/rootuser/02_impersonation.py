@@ -3,7 +3,7 @@ from http import HTTPStatus
 import requests
 
 from fixtures import types
-from fixtures.authutils import assert_user_has_role
+from fixtures.auth import assert_user_has_role
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
