@@ -3,6 +3,7 @@ package impltracedetail
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache"
@@ -99,4 +100,8 @@ func (m *module) getFromCache(ctx context.Context, orgID valuer.UUID, traceID st
 
 	m.logger.InfoContext(ctx, "cache hit for v3 waterfall", slog.String("trace_id", traceID))
 	return cachedData, nil
+}
+
+func waterfallCacheKey(traceID string) string {
+	return strings.Join([]string{"v3_waterfall", traceID}, "-")
 }
