@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 )
 
-// TraceSummary is the ClickHouse scan struct for the trace_summary query.
 type TraceSummary struct {
 	TraceID  string    `ch:"trace_id"`
 	Start    time.Time `ch:"start"`
@@ -18,7 +17,7 @@ type TraceSummary struct {
 	NumSpans uint64    `ch:"num_spans"`
 }
 
-// WaterfallTrace holds pre-processed trace data
+// WaterfallTrace holds processed trace data with childern populated in spans
 type WaterfallTrace struct {
 	StartTime                     uint64                    `json:"startTime"`
 	EndTime                       uint64                    `json:"endTime"`
@@ -59,7 +58,7 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	)
 
 	for _, item := range spans {
-		span := item.ToSpan()
+		span := item.ToWaterfallSpan()
 		startTimeUnixNano := uint64(item.StartTime.UnixNano())
 		if startTime == 0 || startTimeUnixNano < startTime {
 			startTime = startTimeUnixNano
@@ -91,7 +90,7 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 
 	for _, root := range traceRoots {
 		root.SortChildren()
-		root.computeSubTreeNodeCount()
+		root.ComputeSubTreeNodeCount()
 	}
 
 	sort.Slice(traceRoots, func(i, j int) bool {

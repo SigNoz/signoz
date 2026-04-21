@@ -125,20 +125,18 @@ func (s *WaterfallSpan) CopyWithoutChildren(level uint64) *WaterfallSpan {
 	return &cp
 }
 
-// computeSubTreeNodeCount recursively sets SubTreeNodeCount on every span in the subtree.
+// ComputeSubTreeNodeCount recursively sets SubTreeNodeCount on every span in the subtree.
 // SubTreeNodeCount = 1 (self) + total number of descendants.
-func (s *WaterfallSpan) computeSubTreeNodeCount() uint64 {
+func (s *WaterfallSpan) ComputeSubTreeNodeCount() uint64 {
 	count := uint64(1)
 	for _, child := range s.Children {
-		count += child.computeSubTreeNodeCount()
+		count += child.ComputeSubTreeNodeCount()
 	}
 	s.SubTreeNodeCount = count
 	return count
 }
 
-// getPreOrderedSpans returns spans in pre-order, including a span's children only when
-// the span is in uncollapsedSpanIDs (or selectAll is true).
-// Auto-expansion must be pre-computed into uncollapsedSpanIDs via CalculateUncollapsedSpanIDs.
+// getPreOrderedSpans returns spans in pre-order, uncollapsedSpanIDs must be pre-computed.
 func (ws *WaterfallSpan) getPreOrderedSpans(uncollapsedSpanIDs map[string]struct{}, selectAll bool, level uint64) []*WaterfallSpan {
 	result := []*WaterfallSpan{ws.CopyWithoutChildren(level)}
 	_, isUncollapsed := uncollapsedSpanIDs[ws.SpanID]
@@ -151,14 +149,13 @@ func (ws *WaterfallSpan) getPreOrderedSpans(uncollapsedSpanIDs map[string]struct
 }
 
 // autoExpandDescendants marks spans within depth levels below span as uncollapsed.
-// Only non-leaf spans are added (leaves have nothing to expand).
-func (ws *WaterfallSpan) autoExpandDescendants(depth int, uncollapsedMap map[string]struct{}) {
-	if depth <= 0 || len(ws.Children) == 0 {
+func (ws *WaterfallSpan) autoExpandDescendants(remainingDepth int, uncollapsedMap map[string]struct{}) {
+	if remainingDepth <= 0 || len(ws.Children) == 0 { // leaves have nothing to expand
 		return
 	}
 	uncollapsedMap[ws.SpanID] = struct{}{}
 	for _, child := range ws.Children {
-		child.autoExpandDescendants(depth-1, uncollapsedMap)
+		child.autoExpandDescendants(remainingDepth-1, uncollapsedMap)
 	}
 }
 
@@ -238,8 +235,7 @@ func (item *StorableSpan) UnmarshalledEvents() []Event {
 	return events
 }
 
-// ToSpan converts a SpanModel (ClickHouse scan result) into a Span for the waterfall response.
-func (item *StorableSpan) ToSpan() *WaterfallSpan {
+func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 	resources := make(map[string]string)
 	maps.Copy(resources, item.ResourcesString)
 
