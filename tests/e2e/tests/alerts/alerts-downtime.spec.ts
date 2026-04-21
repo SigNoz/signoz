@@ -7,7 +7,7 @@
 // shared tenant state, so run them serially regardless of config-level
 // fullyParallel.
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../fixtures/auth';
 
 const E2E_TAG = `e2e-2095-${Math.floor(Date.now() / 1000)}`;
 
@@ -16,7 +16,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 	// another flow's list; toasts from test A block clicks in test B).
 	test.describe.configure({ mode: 'serial' });
 
-	test('Flow 1 — alerts list, toggle, delete (depends on Flow 2 create)', async ({ page }) => {
+	test('Flow 1 — alerts list, toggle, delete (depends on Flow 2 create)', async ({ authedPage: page }) => {
 		// Seed: create a rule via the list's 'New Alert Rule' flow.
 		await page.goto(`/alerts?tab=AlertRules`);
 
@@ -86,7 +86,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		await expect(page.locator('tbody tr', { hasText: `${E2E_TAG}-create` })).toHaveCount(0);
 	});
 
-	test('Flow 2 — create, edit, clone, labels round-trip', async ({ page }) => {
+	test('Flow 2 — create, edit, clone, labels round-trip', async ({ authedPage: page }) => {
 		// Navigate to establish the origin for localStorage/cookies before direct-fetch.
 		await page.goto(`/alerts?tab=AlertRules`);
 
@@ -189,7 +189,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		}, { id: labeledId });
 	});
 
-	test('Flow 2 — Test Notification (2.11 success, 2.12 empty-result, 2.13 disabled-while-invalid)', async ({ page }) => {
+	test('Flow 2 — Test Notification (2.11 success, 2.12 empty-result, 2.13 disabled-while-invalid)', async ({ authedPage: page }) => {
 		await page.goto(`/alerts/new`);
 
 		// 2.13 disabled pre-state — fresh form, no name, no metric
@@ -256,7 +256,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		expect(body212.body.data).toHaveProperty('alertCount');
 	});
 
-	test('Flow 3 — alert details and AlertNotFound', async ({ page }) => {
+	test('Flow 3 — alert details and AlertNotFound', async ({ authedPage: page }) => {
 		// Seed via direct fetch (same reasoning as Flow 1/2-main).
 		await page.goto(`/alerts?tab=AlertRules`);
 		const ruleId = await page.evaluate(async ({ name }) => {
@@ -321,7 +321,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		await expect(page).toHaveTitle('Alert Not Found');
 	});
 
-	test('Flow 4 — planned downtime CRUD', async ({ page }) => {
+	test('Flow 4 — planned downtime CRUD', async ({ authedPage: page }) => {
 		// 4.1a — direct URL.
 		// The "no data" copy is tenant-state-dependent; assert the list renders (header row) instead.
 		await page.goto(`/alerts?tab=Configuration&subTab=planned-downtime`);
@@ -415,7 +415,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		await expect(page.getByText(`${E2E_TAG}-downtime-edited`)).toHaveCount(0);
 	});
 
-	test('Flow 6 — anomaly alerts (6.1 type-selection, 6.2 classic-form entry, 6.4 create, 6.5 edit z-score, 6.6 toggle, 6.7 delete, 6.8 AlertNotFound)', async ({ page }) => {
+	test('Flow 6 — anomaly alerts (6.1 type-selection, 6.2 classic-form entry, 6.4 create, 6.5 edit z-score, 6.6 toggle, 6.7 delete, 6.8 AlertNotFound)', async ({ authedPage: page }) => {
 		// 6.1 — type-selection page
 		await page.goto(`/alerts/type-selection`);
 		const anomalyCard = page.getByTestId('alert-type-card-ANOMALY_BASED_ALERT');
@@ -589,7 +589,7 @@ test.describe('SUITE.md — platform-pod/issues/2095 regression', () => {
 		expect(test69.body.data).toHaveProperty('alertCount');
 	});
 
-	test('Flow 5 — classic experience + cascade-delete error paths', async ({ page }) => {
+	test('Flow 5 — classic experience + cascade-delete error paths', async ({ authedPage: page }) => {
 		// 5.1 — switch to classic
 		await page.goto(`/alerts/new?showClassicCreateAlertsPage=true&ruleType=threshold_rule`);
 		await expect(page.getByText(/metrics based alert/i)).toBeVisible();

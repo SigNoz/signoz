@@ -1,11 +1,9 @@
-import { expect, test } from '@playwright/test';
-import { ensureLoggedIn } from '../../fixtures/auth';
+import { test, expect } from '../../fixtures/auth';
 
 test.describe('Roles Listing - Navigation and Access Control', () => {
   test(
     'Admin User Can Access Roles Page',
-    async ({ page }) => {
-      await ensureLoggedIn(page);
+    async ({ authedPage: page }) => {
 
       await page.goto('/settings/roles', {
         waitUntil: 'domcontentloaded',
@@ -45,8 +43,7 @@ test.describe('Roles Listing - Navigation and Access Control', () => {
 });
 
 test.describe('Roles Listing - Page Layout and UI Components', () => {
-  test.beforeEach(async ({ page }) => {
-    await ensureLoggedIn(page);
+  test.beforeEach(async ({ authedPage: page }) => {
     await page.goto('/settings/roles');
 
     await Promise.race([
@@ -61,7 +58,7 @@ test.describe('Roles Listing - Page Layout and UI Components', () => {
 
   test(
     'Verify Roles Listing Page Layout',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await expect(
         page.getByRole('heading', {
           name: 'Roles',
@@ -87,7 +84,7 @@ test.describe('Roles Listing - Page Layout and UI Components', () => {
 
   test(
     'Verify Table Structure',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await expect(page.getByRole('searchbox')).toBeVisible();
 
       const roleNames = [
@@ -109,8 +106,7 @@ test.describe('Roles Listing - Page Layout and UI Components', () => {
 });
 
 test.describe('Roles Listing - Roles Display and Data Verification', () => {
-  test.beforeEach(async ({ page }) => {
-    await ensureLoggedIn(page);
+  test.beforeEach(async ({ authedPage: page }) => {
     await page.goto('/settings/roles');
 
     // Wait for page to load
@@ -121,7 +117,7 @@ test.describe('Roles Listing - Roles Display and Data Verification', () => {
 
   test(
     'Verify API Response Matches UI Display',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       let apiResponse: any = null;
 
       page.on('response', async (response) => {
@@ -158,7 +154,7 @@ test.describe('Roles Listing - Roles Display and Data Verification', () => {
 
   test(
     'Verify Role Categorization (Managed vs Custom)',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await expect(page.getByRole('searchbox')).toBeVisible();
 
       const managedRolesHeader = page.getByRole('heading', {
@@ -183,8 +179,7 @@ test.describe('Roles Listing - Roles Display and Data Verification', () => {
 });
 
 test.describe('Roles Listing - Search Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await ensureLoggedIn(page);
+  test.beforeEach(async ({ authedPage: page }) => {
     await page.goto('/settings/roles');
 
     // Wait for roles to load
@@ -196,7 +191,7 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Roles by Name',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await expect(page.getByText('signoz-admin')).toBeVisible();
       await expect(page.getByText('signoz-editor')).toBeVisible();
       await expect(page.getByText('signoz-viewer')).toBeVisible();
@@ -222,7 +217,7 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Roles by Description',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       const searchInput = page.getByRole('searchbox', {
         name: 'Search for roles...',
       });
@@ -239,7 +234,7 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search with No Results',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await expect(page.getByText('signoz-admin')).toBeVisible({
         timeout: 10000,
       });
@@ -280,7 +275,7 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Case Sensitivity',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       const searchInput = page.getByRole('searchbox', {
         name: 'Search for roles...',
       });
@@ -305,8 +300,7 @@ test.describe('Roles Listing - Search Functionality', () => {
 });
 
 test.describe('Roles Listing - Pagination Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await ensureLoggedIn(page);
+  test.beforeEach(async ({ authedPage: page }) => {
     await page.goto('/settings/roles');
     await expect(
       page.getByRole('heading', { name: 'Roles', exact: true }),
@@ -318,7 +312,7 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Navigate Between Pages',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
 
@@ -370,7 +364,7 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Pagination with Search Results',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
 
@@ -407,7 +401,7 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Pagination State Persistence',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
 
@@ -439,13 +433,12 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 test.describe('Roles Listing - Loading and Error States', () => {
   test(
     'Verify Loading State',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         route.continue();
       });
 
-      await ensureLoggedIn(page);
       await page.goto('/settings/roles');
 
       const loadingIndicators = [
@@ -473,7 +466,7 @@ test.describe('Roles Listing - Loading and Error States', () => {
 
   test(
     'Handle API Error State',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         route.fulfill({
           status: 500,
@@ -485,7 +478,6 @@ test.describe('Roles Listing - Loading and Error States', () => {
         });
       });
 
-      await ensureLoggedIn(page);
       await page.goto('/settings/roles');
 
       await page.waitForTimeout(2000);
@@ -508,12 +500,11 @@ test.describe('Roles Listing - Loading and Error States', () => {
 
   test(
     'Handle Network Failure',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         route.abort('failed');
       });
 
-      await ensureLoggedIn(page);
       await page.goto('/settings/roles');
 
       await page.waitForTimeout(2000);

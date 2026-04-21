@@ -1,10 +1,8 @@
-import { expect, test } from '@playwright/test';
-import { ensureLoggedIn } from '../../fixtures/auth';
+import { test, expect } from '../../fixtures/auth';
 
 test.describe('Routing Policies', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ authedPage: page }) => {
     // Login to the application
-    await ensureLoggedIn(page);
 
     // Navigate to Routing Policies through sidebar navigation
     await page.locator('svg.lucide-bell-dot').click();
@@ -18,7 +16,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Navigate to Routing Policies and verify page layout',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Verify header contains "Routing Policies" title
       await expect(
         page.getByRole('heading', { name: 'Routing Policies' }),
@@ -46,7 +44,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Create Routing Policies with Basic and Complex Expressions',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Navigate to Routing Policies page (done in beforeEach)
 
       // 2. Click "New routing policy" button
@@ -124,7 +122,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Create Policy with Empty Required Fields',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Click "New routing policy" button
       await page
         .getByRole('button', { name: 'plus New routing policy' })
@@ -188,7 +186,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Cancel Policy Creation',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Click "New routing policy" button
       await page
         .getByRole('button', { name: 'plus New routing policy' })
@@ -215,7 +213,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Search Policies by Name',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Create a test policy first
       await page
         .getByRole('button', { name: 'plus New routing policy' })
@@ -260,7 +258,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Search with No Results',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Enter a search term that matches no policies
       await page
         .getByRole('textbox', { name: 'Search for a routing policy...' })
@@ -278,7 +276,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'View Policy Details',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Create a policy with unique name
       const uniquePolicyName = `Test Policy ${Date.now()}`;
 
@@ -340,7 +338,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Edit Existing Policy',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Create a policy to edit first
       const uniquePolicyName = `Policy to Edit ${Date.now()}`;
 
@@ -421,7 +419,7 @@ test.describe('Routing Policies', () => {
 
   test(
     'Delete Routing Policy',
-    async ({ page }) => {
+    async ({ authedPage: page }) => {
       // 1. Create a policy to delete first
       const uniquePolicyName = `Policy to Delete ${Date.now()}`;
 

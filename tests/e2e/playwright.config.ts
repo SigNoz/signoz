@@ -2,8 +2,6 @@ import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
 
-const authFile = path.join(__dirname, '.auth/user.json');
-
 // .env holds user-provided defaults (staging creds).
 // .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
 // lifecycle brings the backend up locally; override=true so local-backend
@@ -52,28 +50,12 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
   },
 
-  // Configure projects for multiple browsers
+  // Browser projects. No project-level auth — specs opt in via the
+  // authedPage fixture in tests/e2e/fixtures/auth.ts, which logs a user
+  // in on first use and caches the resulting storageState per worker.
   projects: [
-    // Login once and save session — all browser projects depend on this.
-    {
-      name: 'setup',
-      testMatch: /auth\.setup\.ts/,
-    },
-
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], storageState: authFile },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'], storageState: authFile },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'], storageState: authFile },
-      dependencies: ['setup'],
-    },
+    { name: 'chromium', use: devices['Desktop Chrome'] },
+    { name: 'firefox', use: devices['Desktop Firefox'] },
+    { name: 'webkit', use: devices['Desktop Safari'] },
   ],
 });
