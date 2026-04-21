@@ -9,12 +9,12 @@ tests/
   fixtures/                Shared Python fixtures: container bring-up, auth,
                            telemetry inserts, API-seeding helpers
   integration/
-    src/                   Backend integration tests (pytest)
+    bootstrap/setup.py     Brings backend up (stack lifecycle for iterative dev)
+    tests/                 Backend integration tests (pytest)
     testdata/              Integration-specific JSON/YAML
   e2e/
-    src/
-      bootstrap/setup.py   Brings backend up + seeds; writes .signoz-backend.json
-      bootstrap/run.py     One-command entrypoint: subprocesses `yarn test`
+    bootstrap/setup.py     Brings backend up + seeds; writes .signoz-backend.json
+    bootstrap/run.py       One-command entrypoint: subprocesses `yarn test`
     conftest.py            e2e-scoped fixtures (seed_dashboards, seed_e2e_telemetry)
     tests/                 Playwright specs (TS)
     testdata/              e2e-specific JSON (dashboards, alerts, channels)
@@ -42,8 +42,8 @@ make py-test-teardown          # Free containers
 
 # From signoz/tests/:
 uv sync                                          # First-time Python deps
-uv run pytest integration/src/                   # Integration suite
-uv run pytest --with-web e2e/src/bootstrap/run.py::test_e2e   # Full e2e run
+uv run pytest integration/tests/                 # Integration suite
+uv run pytest --with-web e2e/bootstrap/run.py::test_e2e   # Full e2e run
 ```
 
 See `e2e/README.md` for the e2e-specific workflow.

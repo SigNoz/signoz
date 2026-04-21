@@ -212,15 +212,15 @@ py-lint: ## Run lint across the shared tests project
 
 .PHONY: py-test-setup
 py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests
-	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/src/bootstrap/setup.py::test_setup
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --reuse --capture=no integration/bootstrap/setup.py::test_setup
 
 .PHONY: py-test-teardown
 py-test-teardown: ## Tear down the shared SigNoz backend
-	@cd tests && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no  integration/src/bootstrap/setup.py::test_teardown
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --teardown --capture=no  integration/bootstrap/setup.py::test_teardown
 
 .PHONY: py-test
 py-test: ## Runs integration tests
-	@cd tests && uv run pytest --basetemp=./tmp/ -vv --capture=no integration/src/
+	@cd tests && uv run pytest --basetemp=./tmp/ -vv --capture=no integration/tests/
 
 .PHONY: py-clean
 py-clean: ## Clear all pycache and pytest cache from tests directory recursively

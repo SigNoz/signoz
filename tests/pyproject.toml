@@ -30,7 +30,9 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-python_files = "*/src/**/**.py"
+# Matched against basenames. Numeric-prefixed suite files (NN_name.py) plus
+# the bootstrap entrypoints (setup.py, run.py). Excludes seeder/server.py.
+python_files = ["[0-9][0-9]_*.py", "setup.py", "run.py"]
 # importlib mode: avoids sys.modules collisions between same-basename tests
 # (e.g. querier/01_logs.py vs rawexportdata/01_logs.py) now that all trees
 # share one rootdir at tests/. importlib also disables pytest's implicit
