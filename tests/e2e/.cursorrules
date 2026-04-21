@@ -550,7 +550,7 @@ await page.pause();  // Test will pause here
 yarn report
 
 # View JSON results
-cat artifacts/results.json
+cat artifacts/json/results.json
 ```
 
 ## Complete Workflow

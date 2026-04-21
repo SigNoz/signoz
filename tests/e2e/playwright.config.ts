@@ -38,9 +38,9 @@ function getRoleGrepPattern(): string | undefined {
 export default defineConfig({
   testDir: './tests',
 
-  // All Playwright output — HTML report, JSON summary, per-test artifacts
-  // (traces/screenshots/videos) — lands under artifacts/. CI can archive
-  // the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
+  // All Playwright output lands under artifacts/. One subdir per reporter
+  // plus test-results/ for per-test artifacts (traces/screenshots/videos).
+  // CI can archive the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
   outputDir: 'artifacts/test-results',
 
   // Filter tests based on user role
@@ -60,8 +60,8 @@ export default defineConfig({
 
   // Reporter
   reporter: [
-    ['html', { outputFolder: 'artifacts/html-report', open: 'never' }],
-    ['json', { outputFile: 'artifacts/results.json' }],
+    ['html', { outputFolder: 'artifacts/html', open: 'never' }],
+    ['json', { outputFile: 'artifacts/json/results.json' }],
     ['list'],
   ],
 
