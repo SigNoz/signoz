@@ -5,7 +5,7 @@
 
 type StorageModule = typeof import('../storage');
 
-function loadModule(href?: string): StorageModule {
+function loadStorageModule(href?: string): StorageModule {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
@@ -26,12 +26,12 @@ afterEach(() => {
 
 describe('getScopedKey — root path "/"', () => {
 	it('returns the bare key unchanged', () => {
-		const { getScopedKey } = loadModule('/');
+		const { getScopedKey } = loadStorageModule('/');
 		expect(getScopedKey('AUTH_TOKEN')).toBe('AUTH_TOKEN');
 	});
 
 	it('backward compat: scoped key equals direct localStorage key', () => {
-		const { getScopedKey } = loadModule('/');
+		const { getScopedKey } = loadStorageModule('/');
 		localStorage.setItem('AUTH_TOKEN', 'tok');
 		expect(localStorage.getItem(getScopedKey('AUTH_TOKEN'))).toBe('tok');
 	});
@@ -39,12 +39,12 @@ describe('getScopedKey — root path "/"', () => {
 
 describe('getScopedKey — prefixed path "/signoz/"', () => {
 	it('prefixes the key with the base path', () => {
-		const { getScopedKey } = loadModule('/signoz/');
+		const { getScopedKey } = loadStorageModule('/signoz/');
 		expect(getScopedKey('AUTH_TOKEN')).toBe('/signoz/AUTH_TOKEN');
 	});
 
 	it('isolates from root namespace', () => {
-		const { getScopedKey } = loadModule('/signoz/');
+		const { getScopedKey } = loadStorageModule('/signoz/');
 		localStorage.setItem('AUTH_TOKEN', 'root-tok');
 		expect(localStorage.getItem(getScopedKey('AUTH_TOKEN'))).toBeNull();
 	});
@@ -52,21 +52,21 @@ describe('getScopedKey — prefixed path "/signoz/"', () => {
 
 describe('getScopedKey — prefixed path "/testing/"', () => {
 	it('prefixes the key with /testing/', () => {
-		const { getScopedKey } = loadModule('/testing/');
+		const { getScopedKey } = loadStorageModule('/testing/');
 		expect(getScopedKey('THEME')).toBe('/testing/THEME');
 	});
 });
 
 describe('getScopedKey — prefixed path "/playwright/"', () => {
 	it('prefixes the key with /playwright/', () => {
-		const { getScopedKey } = loadModule('/playwright/');
+		const { getScopedKey } = loadStorageModule('/playwright/');
 		expect(getScopedKey('THEME')).toBe('/playwright/THEME');
 	});
 });
 
 describe('getScopedKey — no <base> tag', () => {
 	it('falls back to bare key (basePath defaults to "/")', () => {
-		const { getScopedKey } = loadModule();
+		const { getScopedKey } = loadStorageModule();
 		expect(getScopedKey('THEME')).toBe('THEME');
 	});
 });
