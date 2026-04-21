@@ -1,4 +1,3 @@
-// spec: specs/alerts-downtime/SUITE.md
 // Playwright replay of platform-pod/issues/2095 alerts + planned-downtime
 // regression suite. Derived from run-3 selectors; per-run artifact history
 // lives outside git.

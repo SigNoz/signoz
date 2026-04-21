@@ -1,6 +1,3 @@
-// spec: specs/home/home-test-plan.md
-// seed: tests/seed.spec.ts
-
 import { expect, test } from '@playwright/test';
 
 // No ensureLoggedIn needed — session is restored from .auth/user.json via storageState

@@ -1,6 +1,3 @@
-// spec: specs/alerts/routing-policies-test-plan-updated.md
-// seed: tests/seed.spec.ts
-
 import { expect, test } from '@playwright/test';
 import { ensureLoggedIn } from '../../utils/login.util';
 

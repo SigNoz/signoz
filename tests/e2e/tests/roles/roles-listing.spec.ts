@@ -1,6 +1,3 @@
-// spec: specs/roles/roles-listing.md
-// seed: tests/seed.spec.ts
-
 import { expect, test } from '@playwright/test';
 import { ensureLoggedIn } from '../../utils/login.util';
 
