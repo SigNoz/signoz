@@ -368,20 +368,6 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	return materialisedKeys, nil
 }
 
-// logKeysUnionArm declares one arm of the UNION ALL in getLogsKeys.
-// All per-table variance is captured here so the loop body can stay uniform.
-type logKeysUnionArm struct {
-	shouldQuery        bool
-	fieldContext       telemetrytypes.FieldContext
-	table              string
-	nameColumn         string                                    // column holding the field/key name (e.g., "name" or "field_name")
-	dataTypeColumn     string                                    // column used in WHERE/GROUP BY
-	dataTypeSelectExpr string                                    // expression used in SELECT (may wrap with lower())
-	addBaseFilters     func(sb *sqlbuilder.SelectBuilder)        // mandatory WHERE filters (e.g., signal, field_context)
-	encodeDataType     func(telemetrytypes.FieldDataType) string // how to render a FieldDataType in WHERE values
-	extraOrBranch      func(sb *sqlbuilder.SelectBuilder) string // optional extra OR branch (e.g., body parent-types)
-}
-
 // getLogsKeys returns the keys from the spans that match the field selection criteria.
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{

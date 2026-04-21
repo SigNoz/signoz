@@ -181,7 +181,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 
 		fdt, found := telemetrytypes.MappingJSONDataTypeToFieldDataType[columnType]
 		if !found {
-			t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", slog.String("column_type", columnType), slog.String("column_expr", columnExpr))
+			t.logger.ErrorContext(ctx, "failed to map JSON data type to field data type", slog.String("column_type", columnType), slog.String("column_expr", columnExpr))
 			continue
 		}
 
