@@ -43,7 +43,7 @@ CH_CLUSTER = os.environ["CH_CLUSTER"]
 
 SEEDER_MARKER = {"seeder": "true"}
 
-_conn = None
+_conn = None  # pylint: disable=invalid-name
 
 
 def get_conn():
@@ -79,7 +79,9 @@ def post_traces(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         logger.info("inserted %d traces", len(traces))
         return {"inserted": len(traces)}
     except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
+        raise HTTPException(
+            status_code=400, detail=f"missing required field: {e}"
+        ) from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -104,7 +106,9 @@ def post_logs(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         logger.info("inserted %d logs", len(logs))
         return {"inserted": len(logs)}
     except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
+        raise HTTPException(
+            status_code=400, detail=f"missing required field: {e}"
+        ) from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -132,7 +136,9 @@ def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
         logger.info("inserted %d metrics", len(metrics))
         return {"inserted": len(metrics)}
     except KeyError as e:
-        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
+        raise HTTPException(
+            status_code=400, detail=f"missing required field: {e}"
+        ) from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e

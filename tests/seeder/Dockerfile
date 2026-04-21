@@ -13,13 +13,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY fixtures/seeder/requirements.txt /app/requirements.txt
+COPY seeder/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Ship the whole fixtures/ package so server.py can `from fixtures.traces
 # import ...` with the same module path the pytest side uses.
 COPY fixtures /app/fixtures
+COPY seeder /app/seeder
 
 EXPOSE 8080
 
-CMD ["uvicorn", "fixtures.seeder.server:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "seeder.server:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -14,9 +14,9 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 # Build context is tests/ so `fixtures/` is importable inside the container
-# under /app/fixtures. This file sits at tests/fixtures/seeder/__init__.py,
-# hence parents[2] = tests/.
-_TESTS_ROOT = Path(__file__).resolve().parents[2]
+# under /app/fixtures. This file sits at tests/fixtures/seeder.py, hence
+# parents[1] = tests/.
+_TESTS_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(name="seeder", scope="package")
@@ -35,20 +35,24 @@ def seeder(
 
     def create() -> types.TestContainerDocker:
         # docker-py wants `dockerfile` RELATIVE to `path`. The fixture file
-        # lives at tests/fixtures/seeder/__init__.py so the build context
-        # root is tests/ (two parents up), and the Dockerfile path inside
-        # that context is fixtures/seeder/Dockerfile.
+        # lives at tests/fixtures/seeder.py so the build context root is
+        # tests/ (one parent up), and the Dockerfile path inside that
+        # context is seeder/Dockerfile.
         docker_client = docker.from_env()
         docker_client.images.build(
             path=str(_TESTS_ROOT),
-            dockerfile="fixtures/seeder/Dockerfile",
+            dockerfile="seeder/Dockerfile",
             tag="signoz-tests-seeder:latest",
             rm=True,
         )
 
         container = DockerContainer("signoz-tests-seeder:latest")
-        container.with_env("CH_HOST", clickhouse.container.container_configs["8123"].address)
-        container.with_env("CH_PORT", str(clickhouse.container.container_configs["8123"].port))
+        container.with_env(
+            "CH_HOST", clickhouse.container.container_configs["8123"].address
+        )
+        container.with_env(
+            "CH_PORT", str(clickhouse.container.container_configs["8123"].port)
+        )
         container.with_env(
             "CH_USER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME"]
         )
@@ -103,7 +107,9 @@ def seeder(
         request,
         pytestconfig,
         "seeder",
-        empty=lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
+        empty=lambda: types.TestContainerDocker(
+            id="", host_configs={}, container_configs={}
+        ),
         create=create,
         delete=delete,
         restore=restore,

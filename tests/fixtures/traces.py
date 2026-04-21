@@ -699,8 +699,8 @@ def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
     - distributed_span_attributes_keys (attribute keys)
     - distributed_signoz_error_index_v2 (error events)
 
-    Pure function so the seeder container (tests/fixtures/seeder/) can reuse
-    the exact insert path used by the pytest fixtures. `conn` is a
+    Pure function so the seeder container (tests/seeder/) can reuse the
+    exact insert path used by the pytest fixtures. `conn` is a
     clickhouse-connect Client.
     """
     resources: List[TracesResource] = []

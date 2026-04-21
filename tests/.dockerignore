@@ -1,5 +1,5 @@
-# Build context for tests/fixtures/seeder/Dockerfile. Keep the context lean —
-# the seeder image only needs fixtures/ to be importable.
+# Build context for tests/seeder/Dockerfile. Keep the context lean —
+# the seeder image only needs fixtures/ to be importable alongside seeder/.
 
 .venv
 .pytest_cache
