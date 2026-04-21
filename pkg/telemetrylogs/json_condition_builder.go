@@ -195,8 +195,8 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 	// the field genuinely holds the empty/zero value.
 	//
 	// Note: indexing is also skipped for Array Nested fields because they cannot be indexed.
-	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
-		return index.Type == node.TerminalConfig.ElemType
+	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.TelemetryFieldKeySkipIndex) bool {
+		return telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType] == node.TerminalConfig.ElemType
 	})
 	isExistsCheck := operator == qbtypes.FilterOperatorExists || operator == qbtypes.FilterOperatorNotExists
 	if node.TerminalConfig.ElemType.IndexSupported && indexed && !isExistsCheck {

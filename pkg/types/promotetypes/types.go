@@ -60,7 +60,7 @@ func (i *PromotePath) ValidateAndSetDefaults() error {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "index granularity must be greater than 0")
 		}
 
-		jsonDataType, ok := telemetrytypes.MappingStringToJSONDataType[index.ColumnType]
+		jsonDataType, ok := telemetrytypes.MappingFieldDataTypeToJSONDataType[telemetrytypes.MappingJSONDataTypeToFieldDataType[index.ColumnType]]
 		if !ok {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid column type: %s", index.ColumnType)
 		}

@@ -32,26 +32,16 @@ func NewModule(metadataStore telemetrytypes.MetadataStore, telemetrystore teleme
 }
 
 func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetypes.PromotePath, error) {
-	logsIndexes, err := m.metadataStore.ListLogsJSONIndexes(ctx)
+	indexes, err := m.metadataStore.ListLogsJSONIndexes(ctx)
 	if err != nil {
 		return nil, err
 	}
-	// Flatten the map values (which are slices) into a single slice
-	indexes := slices.Concat(slices.Collect(maps.Values(logsIndexes))...)
 
 	aggr := map[string][]promotetypes.WrappedIndex{}
 	for _, index := range indexes {
-		path, columnType, err := schemamigrator.UnfoldJSONSubColumnIndexExpr(index.Expression)
-		if err != nil {
-			return nil, err
-		}
-
-		// clean backticks from the path
-		path = strings.ReplaceAll(path, "`", "")
-
-		aggr[path] = append(aggr[path], promotetypes.WrappedIndex{
-			ColumnType:  columnType,
-			Type:        index.Type,
+		aggr[index.Name] = append(aggr[index.Name], promotetypes.WrappedIndex{
+			ColumnType:  telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType].StringValue(),
+			Type:        index.IndexType,
 			Granularity: index.Granularity,
 		})
 	}

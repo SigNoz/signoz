@@ -15,6 +15,35 @@ from fixtures.querier import (
 )
 
 
+def _check_query_log(
+    conn: Any,
+    after_ts: datetime,
+    case_name: str,
+    check_fn: Callable[[str], bool],
+) -> None:
+    """Flush query_log and assert that the most recent body_v2 SELECT passes check_fn."""
+    conn.command("SYSTEM FLUSH LOGS")
+    after_unix = int(after_ts.timestamp())
+    result = conn.query(
+        "SELECT query FROM system.query_log"
+        " WHERE type = 'QueryFinish' AND query_kind = 'Select'"
+        " AND position(query, 'body_v2') > 0"
+        " AND query NOT LIKE '%%system.query_log%%'"
+        " AND toUnixTimestamp(event_time) >= %(after)s"
+        " ORDER BY event_time DESC LIMIT 5",
+        parameters={"after": after_unix},
+    )
+    queries = [row[0] for row in result.result_rows]
+    assert queries, (
+        f"No recent body_v2 SELECT in system.query_log for case '{case_name}'"
+    )
+    assert any(check_fn(q) for q in queries), (
+        f"Index expression check failed for case '{case_name}'.\n"
+        + "Queries:\n"
+        + "\n---\n".join(queries)
+    )
+
+
 def _get_results(response: requests.Response) -> List[Dict[str, Any]]:
     assert response.json()["status"] == "success"
     results = response.json()["data"]["data"]["results"]
@@ -539,11 +568,22 @@ def test_indexed_paths(
     )
     insert_logs(logs_list)
 
+    # Debug: show which body_v2 data-skipping indexes ClickHouse has at this point.
+    idx_result = signoz.telemetrystore.conn.query(
+        "SELECT name, expr FROM system.data_skipping_indices"
+        " WHERE database = 'signoz_logs' AND table = 'logs_v2'"
+        " AND (position(expr, 'body_v2') > 0 OR position(expr, 'body_promoted') > 0)"
+    )
+    print(f"\n[DEBUG] body_v2 data-skipping indexes on logs_v2 ({len(idx_result.result_rows)} total):")
+    for row in idx_result.result_rows:
+        print(f"  name={row[0]}  expr={row[1]}")
+
     cases = [
         # ── EXISTS: !isExistsCheck guard → indexed path skipped → plain IS NOT NULL ──────
         # String ngrambf index on body.user.name: EXISTS skips the indexed path.
         # IS NOT NULL("") = true → log6 (name="") IS found.
         # log4 (no user) is the only exclusion → 5 results.
+        # query_log check: dynamicElement(...) IS NOT NULL — no assumeNotNull.
         {
             "name": "indexed.string_exists_skips_index_finds_empty",
             "requestType": "raw",
@@ -551,10 +591,12 @@ def test_indexed_paths(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
             and any(b.get("user", {}).get("name") == "" for b in _get_bodies(r)),
+            "check_query": lambda q: "IS NOT NULL" in q and "assumeNotNull" not in q,
         },
         # Int64 minmax index on body.user.age: EXISTS skips the indexed path.
         # IS NOT NULL(0) = true → log6 (age=0) IS found.
         # log4 (no user) is the only exclusion → 5 results.
+        # query_log check: dynamicElement(...) IS NOT NULL — no assumeNotNull.
         {
             "name": "indexed.int64_exists_skips_index_finds_zero",
             "requestType": "raw",
@@ -562,11 +604,14 @@ def test_indexed_paths(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
             and any(b.get("user", {}).get("age") == 0 for b in _get_bodies(r)),
+            "check_query": lambda q: "IS NOT NULL" in q and "assumeNotNull" not in q,
         },
         # body.user.name = "": `assumeNotNull(dynamicElement(..., 'String')) = ''
         #                       AND IS NOT NULL(dynamicElement(..., 'String'))`.
         # log6 (name=""):    assumeNotNull("")="" matches AND IS NOT NULL("")=true → FOUND.
         # log4 (no user):    IS NOT NULL(null)=false → NOT found.
+        # query_log check: both assumeNotNull (indexed condition) and IS NOT NULL
+        #                  (zero-value disambiguation) must appear.
         {
             "name": "indexed.string_empty_eq_disambiguates_absent_field",
             "requestType": "raw",
@@ -574,9 +619,11 @@ def test_indexed_paths(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "",
+            "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" in q,
         },
         # ── Non-EXISTS, non-zero value: indexed condition is self-contained ──────────────
         # body.user.age = 25: `assumeNotNull(dynamicElement(..., 'Int64')) = 25` → only log1.
+        # query_log check: assumeNotNull present, no IS NOT NULL (value is non-zero).
         {
             "name": "indexed.int64_nonzero_eq_uses_index",
             "requestType": "raw",
@@ -584,9 +631,11 @@ def test_indexed_paths(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["age"] == 25,
+            "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" not in q,
         },
         # body.user.name = "alice": `assumeNotNull(dynamicElement(..., 'String')) = 'alice'`
         # → only log1.
+        # query_log check: assumeNotNull present, no IS NOT NULL (value is non-empty).
         {
             "name": "indexed.string_nonempty_eq_uses_index",
             "requestType": "raw",
@@ -594,13 +643,22 @@ def test_indexed_paths(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "alice",
+            "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" not in q,
         },
     ]
 
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
+        before = datetime.now(tz=timezone.utc)
         _run_query_case(signoz, token, now, case)
+        if "check_query" in case:
+            _check_query_log(
+                signoz.telemetrystore.conn,
+                before,
+                case["name"],
+                case["check_query"],
+            )
 
 
 # ============================================================================

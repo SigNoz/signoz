@@ -204,7 +204,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 		// Downstream query builder should handle multiple matching keys with their own metadata
 		// and not rely on this function to do so.
 		materialized := true
-		indexes := []telemetrytypes.JSONDataTypeIndex{}
+		indexes := []telemetrytypes.TelemetryFieldKeySkipIndex{}
 		fieldContextsSeen := map[telemetrytypes.FieldContext]bool{}
 		dataTypesSeen := map[telemetrytypes.FieldDataType]bool{}
 		for _, matchingKey := range matchingKeys {
