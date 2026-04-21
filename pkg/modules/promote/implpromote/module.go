@@ -40,9 +40,9 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 	aggr := map[string][]promotetypes.WrappedIndex{}
 	for _, index := range indexes {
 		aggr[index.Name] = append(aggr[index.Name], promotetypes.WrappedIndex{
-			ColumnType:  telemetrytypes.MappingFieldDataTypeToJSONDataType[index.FieldDataType].StringValue(),
-			Type:        index.IndexType,
-			Granularity: index.Granularity,
+			FieldDataType: index.FieldDataType,
+			Type:          index.IndexType,
+			Granularity:   index.Granularity,
 		})
 	}
 	promotedPaths, err := m.listPromotedPaths(ctx)

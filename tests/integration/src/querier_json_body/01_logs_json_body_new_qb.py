@@ -486,12 +486,12 @@ def test_indexed_paths(
 ) -> None:
     now = datetime.now(tz=timezone.utc)
 
-    log1 = json.dumps({"user": {"name": "alice", "age": 25, "active": True}})
-    log2 = json.dumps({"user": {"name": "bob", "age": 30, "active": False}})
-    log3 = json.dumps({"user": {"name": "charlie", "age": 35, "active": True}})
+    log1 = json.dumps({"user": {"raw-data": {"name": "alice", "age": 25, "active": True}}})
+    log2 = json.dumps({"user": {"raw-data": {"name": "bob", "age": 30, "active": False}}})
+    log3 = json.dumps({"user": {"raw-data": {"name": "charlie", "age": 35, "active": True}}})
     log4 = json.dumps({"message": "health check passed"})
-    log5 = json.dumps({"user": {"name": "diana", "age": "28", "active": True}})
-    log6 = json.dumps({"user": {"name": "", "age": 0, "active": False}})
+    log5 = json.dumps({"user": {"raw-data": {"name": "diana", "age": "28", "active": True}}})
+    log6 = json.dumps({"user": {"raw-data": {"name": "", "age": 0, "active": False}}})
 
     logs_list = [
         Logs(
@@ -544,20 +544,20 @@ def test_indexed_paths(
         token,
         [
             {
-                "path": "body.user.name",
+                "path": "body.user.raw-data.name",
                 "indexes": [
                     {
-                        "column_type": "String",
+                        "field_data_type": "string",
                         "type": "ngrambf_v1(3, 256, 2, 0)",
                         "granularity": 1,
                     }
                 ],
             },
             {
-                "path": "body.user.age",
+                "path": "body.user.raw-data.age",
                 "indexes": [
                     {
-                        "column_type": "Int64",
+                        "field_data_type": "int64",
                         "type": "minmax",
                         "granularity": 1,
                     }
@@ -586,10 +586,10 @@ def test_indexed_paths(
         {
             "name": "indexed.string_exists_skips_index_finds_empty",
             "requestType": "raw",
-            "expression": "body.user.name EXISTS",
+            "expression": "body.user.raw-data.name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
-            and any(b.get("user", {}).get("name") == "" for b in _get_bodies(r)),
+            and any(b.get("user", {}).get("raw-data", {}).get("name") == "" for b in _get_bodies(r)),
             "check_query": lambda q: "IS NOT NULL" in q and "assumeNotNull" not in q,
         },
         # Int64 minmax index on body.user.age: EXISTS skips the indexed path.
@@ -599,10 +599,10 @@ def test_indexed_paths(
         {
             "name": "indexed.int64_exists_skips_index_finds_zero",
             "requestType": "raw",
-            "expression": "body.user.age EXISTS",
+            "expression": "body.user.raw-data.age EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
-            and any(b.get("user", {}).get("age") == 0 for b in _get_bodies(r)),
+            and any(b.get("user", {}).get("raw-data", {}).get("age") == 0 for b in _get_bodies(r)),
             "check_query": lambda q: "IS NOT NULL" in q and "assumeNotNull" not in q,
         },
         # body.user.name = "": `assumeNotNull(dynamicElement(..., 'String')) = ''
@@ -614,10 +614,10 @@ def test_indexed_paths(
         {
             "name": "indexed.string_empty_eq_disambiguates_absent_field",
             "requestType": "raw",
-            "expression": 'body.user.name = ""',
+            "expression": 'body.user.raw-data.name = ""',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["name"] == "",
+            and _get_bodies(r)[0]["user"]["raw-data"]["name"] == "",
             "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" in q,
         },
         # ── Non-EXISTS, non-zero value: indexed condition is self-contained ──────────────
@@ -626,10 +626,10 @@ def test_indexed_paths(
         {
             "name": "indexed.int64_nonzero_eq_uses_index",
             "requestType": "raw",
-            "expression": "body.user.age = 25",
+            "expression": "body.user.raw-data.age = 25",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["age"] == 25,
+            and _get_bodies(r)[0]["user"]["raw-data"]["age"] == 25,
             "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" not in q,
         },
         # body.user.name = "alice": `assumeNotNull(dynamicElement(..., 'String')) = 'alice'`
@@ -638,10 +638,10 @@ def test_indexed_paths(
         {
             "name": "indexed.string_nonempty_eq_uses_index",
             "requestType": "raw",
-            "expression": 'body.user.name = "alice"',
+            "expression": 'body.user.raw-data.name = "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
-            and _get_bodies(r)[0]["user"]["name"] == "alice",
+            and _get_bodies(r)[0]["user"]["raw-data"]["name"] == "alice",
             "check_query": lambda q: "assumeNotNull" in q and "IS NOT NULL" not in q,
         },
     ]
