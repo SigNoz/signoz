@@ -108,8 +108,7 @@ function DynamicColumnTable({
 		// Update URL with new page number while preserving other params
 		urlQuery.set('page', page.toString());
 
-		const newUrl = `${window.location.pathname}?${urlQuery.toString()}`;
-		safeNavigate(newUrl);
+		safeNavigate({ search: `?${urlQuery.toString()}` });
 
 		// Call original pagination handler if provided
 		if (pagination?.onChange && !!pageSize) {
