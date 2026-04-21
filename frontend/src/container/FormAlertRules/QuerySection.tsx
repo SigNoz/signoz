@@ -129,13 +129,11 @@ function QuerySection({
 	];
 
 	useEffect(() => {
-		if (
-			alertType === 'ANOMALY_BASED_ALERT' &&
-			queryCategory !== EQueryType.QUERY_BUILDER
-		) {
+		if (isAnomalyDetection && queryCategory !== EQueryType.QUERY_BUILDER) {
 			setQueryCategory(EQueryType.QUERY_BUILDER);
+			setCurrentTab(EQueryType.QUERY_BUILDER);
 		}
-	}, [alertType, queryCategory, setQueryCategory]);
+	}, [isAnomalyDetection, queryCategory, setQueryCategory]);
 
 	const items = useMemo(
 		() => [
