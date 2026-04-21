@@ -53,16 +53,19 @@ jest.mock('@signozhq/ui', () => ({
 		) : null,
 	DialogWrapper: ({
 		children,
+		footer,
 		open,
 		title,
 	}: {
 		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
 		title?: string;
 	}): JSX.Element | null =>
 		open ? (
 			<div role="dialog" aria-label={title}>
 				{children}
+				{footer}
 			</div>
 		) : null,
 	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
