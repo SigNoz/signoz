@@ -11,11 +11,11 @@ Playwright-based E2E suite for the SigNoz frontend, wired into the shared pytest
 ```bash
 # One-command local run (pytest owns lifecycle; shells out to Playwright):
 cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --with-web \
-  e2e/src/bootstrap/run.py::test_e2e
+  e2e/bootstrap/run.py::test_e2e
 
 # Warm the backend for iterative dev (keeps containers under --reuse):
 cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
-  e2e/src/bootstrap/setup.py::test_setup
+  e2e/bootstrap/setup.py::test_setup
 # Then, from signoz/tests/e2e:
 yarn install && yarn install:browsers    # first time only
 yarn test                 # headless
@@ -29,7 +29,7 @@ yarn test:staging
 
 # Teardown the warm backend:
 cd signoz/tests && uv run pytest --basetemp=./tmp/ -vv --teardown \
-  e2e/src/bootstrap/setup.py::test_teardown
+  e2e/bootstrap/setup.py::test_teardown
 
 # Role-filtered runs (auto-set by global.setup.ts when backend is up):
 SIGNOZ_USER_ROLE=Admin yarn test

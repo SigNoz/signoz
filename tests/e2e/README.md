@@ -12,7 +12,7 @@ Pytest owns the lifecycle. It provisions containers, registers the admin, seeds 
 cd signoz/tests
 uv sync                                               # first time only
 uv run pytest --basetemp=./tmp/ -vv --with-web \
-  e2e/src/bootstrap/run.py::test_e2e
+  e2e/bootstrap/run.py::test_e2e
 ```
 
 For iterative Playwright dev, bring the backend up once (`--reuse` keeps containers warm) and drive Playwright directly:
@@ -20,7 +20,7 @@ For iterative Playwright dev, bring the backend up once (`--reuse` keeps contain
 ```bash
 cd signoz/tests
 uv run pytest --basetemp=./tmp/ -vv --reuse --with-web \
-  e2e/src/bootstrap/setup.py::test_setup
+  e2e/bootstrap/setup.py::test_setup
 cd e2e && yarn install && yarn install:browsers       # first time
 yarn test:ui                                          # iterate
 ```
@@ -30,7 +30,7 @@ Teardown when done:
 ```bash
 cd signoz/tests
 uv run pytest --basetemp=./tmp/ -vv --teardown \
-  e2e/src/bootstrap/setup.py::test_teardown
+  e2e/bootstrap/setup.py::test_teardown
 ```
 
 ### 2. Staging fallback
