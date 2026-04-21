@@ -20,9 +20,6 @@ yarn-error.log
 # loaded by playwright.config.ts via dotenv override.
 .env.local
 
-# per-run artifacts from the alerts-downtime regression suite
-tests/alerts-downtime/run-spec-*/
-
 # AI test-planner scratch (playwright-test-planner writes markdown plans
 # here before the generator turns them into .spec.ts files; the tests are
 # the source of truth, plans are regenerable).
