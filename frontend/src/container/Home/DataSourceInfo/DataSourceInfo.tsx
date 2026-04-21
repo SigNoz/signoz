@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
@@ -81,15 +81,9 @@ function DataSourceInfo({
 								color="primary"
 								size="sm"
 								className="periscope-btn primary"
-								prefixIcon={<img src={containerPlusUrl} alt="plus" />}
+								prefix={<img src={containerPlusUrl} alt="plus" />}
 								onClick={handleConnect}
-								role="button"
-								tabIndex={0}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter') {
-										handleConnect();
-									}
-								}}
+								// TODO - Support tabindex, keyboard events - @H4ad
 							>
 								Connect Data Source
 							</Button>

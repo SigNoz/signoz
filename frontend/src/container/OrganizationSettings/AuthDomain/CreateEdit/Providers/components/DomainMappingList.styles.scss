@@ -67,7 +67,7 @@
 		&:hover {
 			background: color-mix(
 				in srgb,
-				var(--bg-cherry-500) 10%,
+				var(--danger-background) 10%,
 				transparent
 			) !important;
 			opacity: 0.9 !important;
@@ -82,7 +82,7 @@
 			opacity: 0.7 !important;
 			background: color-mix(
 				in srgb,
-				var(--bg-cherry-500) 15%,
+				var(--danger-background) 15%,
 				transparent
 			) !important;
 		}
