@@ -12,12 +12,11 @@ Source lives at `tests/e2e/`.
 ```
 tests/e2e/
   bootstrap/
-    setup.py          Brings backend + seeder up; writes .signoz-backend.json
+    setup.py          Brings backend + seeder up; writes .env.local
     run.py            One-command entrypoint: subprocesses `yarn test`
   tests/              Playwright .spec.ts files (per-feature dirs)
-  utils/login.util.ts ensureLoggedIn() shared auth helper
-  global.setup.ts     Reads .signoz-backend.json, sets env vars for Playwright
-  playwright.config.ts
+  fixtures/auth.ts    authedPage Playwright fixture + ensureLoggedIn helper
+  playwright.config.ts  Loads .env (user) + .env.local (generated) via dotenv
 ```
 
 Each spec owns its own data. Telemetry goes through the seeder
@@ -30,8 +29,9 @@ directly from the spec. No global pre-seeding fixtures.
 ### One-command local run
 
 Pytest owns the lifecycle: provisions containers, registers the admin,
-starts the seeder, writes backend coordinates to `.signoz-backend.json`,
-then shells out to `yarn test`:
+starts the seeder, writes backend coordinates to `tests/e2e/.env.local`
+(loaded by `playwright.config.ts` via dotenv), then shells out to
+`yarn test`:
 
 ```bash
 cd signoz/tests
@@ -69,8 +69,9 @@ uv run pytest --basetemp=./tmp/ -vv --teardown \
 
 ### Staging fallback
 
-Point `SIGNOZ_E2E_BASE_URL` at a remote env — `global.setup.ts` becomes a
-no-op and Playwright hits the URL directly:
+Point `SIGNOZ_E2E_BASE_URL` at a remote env via `.env` — no local
+backend bring-up, no `.env.local` generated, Playwright hits the URL
+directly:
 
 ```bash
 cp .env.example .env              # fill SIGNOZ_E2E_USERNAME / PASSWORD

@@ -13,11 +13,10 @@ tests/
     tests/                 Backend integration tests (pytest)
     testdata/              Integration-specific JSON/YAML
   e2e/
-    bootstrap/setup.py     Brings backend up + seeder; writes .signoz-backend.json
+    bootstrap/setup.py     Brings backend up + seeder; writes .env.local
     bootstrap/run.py       One-command entrypoint: subprocesses `yarn test`
     tests/                 Playwright specs (TS)
-    playwright.config.ts   baseURL reads from env injected by global.setup.ts
-    global.setup.ts        Reads .signoz-backend.json, sets env vars
+    playwright.config.ts   Loads .env (user) + .env.local (generated) via dotenv
   seeder/                  HTTP service providing per-test telemetry endpoints
 ```
 

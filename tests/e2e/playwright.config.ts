@@ -4,8 +4,14 @@ import path from 'path';
 
 const authFile = path.join(__dirname, '.auth/user.json');
 
-// Load environment variables
+// .env holds user-provided defaults (staging creds, role override).
+// .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
+// lifecycle brings the backend up locally; override=true so local-backend
+// coordinates win over any stale .env values. Subprocess-injected env
+// (e.g. when pytest shells out to `yarn test`) still takes priority —
+// dotenv doesn't touch vars that are already set in process.env.
 dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 
 // Function to get grep pattern based on user role
 function getRoleGrepPattern(): string | undefined {
@@ -31,12 +37,6 @@ function getRoleGrepPattern(): string | undefined {
 
 export default defineConfig({
   testDir: './tests',
-
-  // Pulls backend coordinates from .signoz-backend.json (written by the pytest
-  // bootstrap) and sets SIGNOZ_E2E_BASE_URL/USERNAME/PASSWORD before the suite
-  // runs. A no-op when SIGNOZ_E2E_BASE_URL is already set (staging mode, or
-  // when pytest shelled out to `yarn test` with env pre-injected).
-  globalSetup: require.resolve('./global.setup.ts'),
 
   // Filter tests based on user role
   grep: getRoleGrepPattern() ? new RegExp(getRoleGrepPattern()!) : undefined,
