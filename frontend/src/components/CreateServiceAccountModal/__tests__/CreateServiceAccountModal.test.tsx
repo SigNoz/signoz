@@ -1,7 +1,13 @@
 import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	waitForElementToBeRemoved,
+} from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
@@ -69,7 +75,6 @@ describe('CreateServiceAccountModal', () => {
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				'Service account created successfully',
-				expect.anything(),
 			);
 		});
 
@@ -121,12 +126,12 @@ describe('CreateServiceAccountModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await screen.findByRole('dialog', { name: /New Service Account/i });
+		const dialog = await screen.findByRole('dialog', {
+			name: /New Service Account/i,
+		});
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(
-			screen.queryByRole('dialog', { name: /New Service Account/i }),
-		).not.toBeInTheDocument();
+		await waitForElementToBeRemoved(dialog);
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {

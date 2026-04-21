@@ -33,7 +33,7 @@
 
 		svg {
 			margin-top: 2px;
-			color: var(--l3-foreground);
+			color: var(--l2-foreground);
 			flex-shrink: 0;
 		}
 	}
@@ -104,18 +104,18 @@
 	// todo: https://github.com/SigNoz/components/issues/116
 	input {
 		height: 32px;
-		background: var(--l3-background) !important;
-		border: 1px solid var(--l1-border) !important;
+		background: var(--l2-background) !important;
+		border: 1px solid var(--l2-border) !important;
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
+		color: var(--l2-foreground) !important;
 
 		&::placeholder {
-			color: var(--l3-foreground) !important;
+			color: var(--l2-foreground) !important;
 			opacity: 1;
 		}
 
 		&:hover {
-			border-color: var(--l1-border) !important;
+			border-color: var(--l2-border) !important;
 		}
 
 		&:focus,

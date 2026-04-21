@@ -50,7 +50,7 @@
 
 	&__error {
 		font-size: 0.75rem;
-		color: var(--bg-cherry-500);
+		color: var(--danger-background);
 		font-weight: 500;
 	}
 
@@ -94,7 +94,7 @@
 			height: 20px;
 			flex-shrink: 0;
 			border-radius: 2px;
-			background: var(--bg-cherry-500);
+			background: var(--danger-background);
 		}
 	}
 

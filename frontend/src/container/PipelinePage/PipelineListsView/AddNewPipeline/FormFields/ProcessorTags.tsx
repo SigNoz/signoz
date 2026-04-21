@@ -3,7 +3,6 @@ import { Form } from 'antd';
 import TagInput from 'container/PipelinePage/components/TagInput';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
-import { FormLabelStyle } from '../styles';
 
 function ProcessorTags({
 	fieldData,
@@ -15,7 +14,7 @@ function ProcessorTags({
 	return (
 		<Form.Item
 			required={false}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 			name={fieldData.name}
 		>

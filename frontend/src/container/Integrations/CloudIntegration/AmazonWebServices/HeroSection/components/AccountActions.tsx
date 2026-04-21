@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
-import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
+import { Button } from '@signozhq/ui';
 import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
@@ -70,7 +70,7 @@ function AccountActionsRenderer({
 						variant="link"
 						size="sm"
 						color="secondary"
-						prefixIcon={<PencilLine size={14} />}
+						prefix={<PencilLine size={14} />}
 						onClick={onAccountSettingsModalOpen}
 					>
 						Edit Account
@@ -81,7 +81,7 @@ function AccountActionsRenderer({
 						size="sm"
 						color="secondary"
 						onClick={onIntegrationModalOpen}
-						prefixIcon={<Plus size={14} />}
+						prefix={<Plus size={14} />}
 					>
 						Add New Account
 					</Button>
@@ -93,7 +93,7 @@ function AccountActionsRenderer({
 		<Button
 			variant="solid"
 			color="primary"
-			prefixIcon={<Plug size={14} />}
+			prefix={<Plug size={14} />}
 			onClick={onIntegrationModalOpen}
 			size="sm"
 		>

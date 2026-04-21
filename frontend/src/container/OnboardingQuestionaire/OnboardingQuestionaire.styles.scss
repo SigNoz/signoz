@@ -99,8 +99,8 @@
 			align-items: stretch;
 			gap: 24px;
 			border-radius: 4px;
-			border: 1px solid var(--l1-border);
-			background: var(--bg-neutral-dark-950);
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
 
 			.ant-form-item {
 				margin-bottom: 0px !important;
@@ -498,13 +498,6 @@
 					cursor: pointer;
 				}
 
-				button[role='radio'] {
-					&[data-state='unchecked'] {
-						border-color: var(--l1-border) !important;
-						border-width: 1px !important;
-					}
-				}
-
 				&.observability-tool-others-item {
 					.onboarding-questionaire-other-input {
 						flex: 1;
@@ -533,13 +526,6 @@
 					color: var(--l1-foreground);
 					font-size: 13px;
 					cursor: pointer;
-				}
-
-				button[role='radio'] {
-					&[data-state='unchecked'] {
-						border-color: var(--l1-border) !important;
-						border-width: 1px !important;
-					}
 				}
 			}
 		}

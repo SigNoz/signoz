@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper } from '@signozhq/dialog';
-import { toast } from '@signozhq/ui';
+import { DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -118,12 +117,12 @@ function AddKeyModal(): JSX.Element {
 		copyToClipboard(createdKey.key);
 		setHasCopied(true);
 		setTimeout(() => setHasCopied(false), 2000);
-		toast.success('Key copied to clipboard', { richColors: true });
+		toast.success('Key copied to clipboard');
 	}, [copyToClipboard, createdKey?.key]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy key', { richColors: true });
+			toast.error('Failed to copy key');
 		}
 	}, [copyState.error]);
 

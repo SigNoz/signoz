@@ -1,15 +1,8 @@
 import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Collapse,
-	Divider,
-	Input,
-	Switch,
-	Tag,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui';
+import { Collapse, Divider, Input, Switch, Tag, Typography } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
@@ -178,13 +171,17 @@ function Overview({
 
 								{isAttributesExpanded && (
 									<Button
+										variant="link"
+										color="none"
 										className="action-btn"
-										icon={<Search size={12} />}
+										prefix={<Search size={12} />}
 										onClick={(e): void => {
 											e.stopPropagation();
 											handleSearchVisible();
 										}}
-									/>
+									>
+										Search
+									</Button>
 								)}
 							</div>
 						),

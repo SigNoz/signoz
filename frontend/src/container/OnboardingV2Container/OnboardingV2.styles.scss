@@ -3,7 +3,7 @@
 	z-index: 1;
 
 	&__header {
-		background: color-mix(in srgb, var(--background) 70%, transparent);
+		background: var(--l1-background);
 		border-bottom: 1px solid var(--l1-border);
 		backdrop-filter: blur(20px);
 		padding: 12px 0px;
@@ -14,7 +14,7 @@
 			padding: 0px 1rem;
 			margin-top: 12px;
 
-			background: color-mix(in srgb, var(--background) 70%, transparent);
+			background: var(--l1-background);
 			backdrop-filter: blur(20px);
 			z-index: 2 !important;
 		}
@@ -25,7 +25,7 @@
 		padding-left: 64px;
 		margin-bottom: 40px;
 		color: var(--l2-foreground);
-		background-color: var(--background);
+		background-color: var(--l1-background);
 
 		&:before {
 			content: '';
@@ -737,7 +737,7 @@
 			opacity: 1;
 			-webkit-mask-image: radial-gradient(
 				circle at 50% 0,
-				color-mix(in srgb, var(--background) 10%, transparent) 0,
+				color-mix(in srgb, var(--l1-background) 10%, transparent) 0,
 				transparent 56.77%
 			);
 
@@ -1042,7 +1042,7 @@
 				border: none !important;
 
 				.ingestion-endpoint-section-error-text {
-					color: var(--bg-cherry-500);
+					color: var(--danger-background);
 
 					display: flex;
 					align-items: center;

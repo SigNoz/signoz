@@ -33,7 +33,7 @@
 
 		svg {
 			margin-top: 2px;
-			color: var(--l3-foreground);
+			color: var(--l2-foreground);
 			flex-shrink: 0;
 		}
 	}
@@ -51,7 +51,7 @@
 
 	&__section-description {
 		margin: 0;
-		color: var(--l3-foreground);
+		color: var(--l2-foreground);
 	}
 
 	&__content {
@@ -72,7 +72,7 @@
 		}
 
 		&::-webkit-scrollbar-thumb {
-			background: var(--l3-foreground);
+			background: var(--l2-foreground);
 			border-radius: 4px;
 
 			&:hover {
@@ -81,7 +81,7 @@
 		}
 
 		scrollbar-width: thin;
-		scrollbar-color: var(--l3-foreground) transparent;
+		scrollbar-color: var(--l2-foreground) transparent;
 	}
 
 	&__field-group {
@@ -104,10 +104,10 @@
 	// todo: https://github.com/SigNoz/components/issues/116
 	input {
 		height: 32px;
-		background: var(--l3-background) !important;
-		border: 1px solid var(--l1-border) !important;
+		background: var(--l2-background) !important;
+		border: 1px solid var(--l2-border) !important;
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
+		color: var(--l2-foreground) !important;
 
 		&::placeholder {
 			color: var(--l3-foreground) !important;
@@ -115,7 +115,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l1-border) !important;
+			border-color: var(--l2-border) !important;
 		}
 
 		&:focus,

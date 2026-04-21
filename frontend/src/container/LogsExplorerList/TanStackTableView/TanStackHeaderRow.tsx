@@ -6,7 +6,7 @@ import type {
 import { useMemo } from 'react';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import { useSortable } from '@dnd-kit/sortable';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import { GripVertical } from 'lucide-react';
 

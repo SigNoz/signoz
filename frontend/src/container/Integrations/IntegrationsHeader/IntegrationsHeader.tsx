@@ -1,9 +1,6 @@
-import { useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button } from '@signozhq/button';
-import { DialogWrapper } from '@signozhq/dialog';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/ui';
+import { Button, DialogWrapper, Input, toast } from '@signozhq/ui';
 import { Flex, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -89,14 +86,15 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				<Input
 					placeholder="Search for an integration..."
 					value={searchQuery}
-					onChange={(e): void => onSearchChange(e.target.value)}
+					onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+						onSearchChange(e.target.value)
+					}
 				/>
 				<Button
 					variant="solid"
 					color="secondary"
 					className="request-integration-btn"
-					prefixIcon={<Cable size={14} />}
-					size="sm"
+					prefix={<Cable size={14} />}
 					onClick={(): void => setIsRequestIntegrationDialogOpen(true)}
 				>
 					Request Integration
@@ -113,13 +111,12 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 							Which integration are you looking for?
 						</div>
 						<Input
-							className="request-integration-input"
 							placeholder="Enter integration name..."
 							value={requestedIntegrationName}
-							onChange={(e): void => {
+							onChange={(e: ChangeEvent<HTMLInputElement>): void => {
 								setRequestedIntegrationName(e.target.value);
 							}}
-							onKeyDown={(e): void => {
+							onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
 								if (e.key === 'Enter' && requestedIntegrationName?.trim().length > 0) {
 									handleRequestIntegrationSubmit();
 								}
@@ -132,8 +129,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 						<Button
 							variant="solid"
 							color="primary"
-							size="sm"
-							prefixIcon={<Check size={14} />}
+							prefix={<Check size={14} />}
 							onClick={handleRequestIntegrationSubmit}
 							loading={isSubmittingRequestForIntegration}
 							disabled={
@@ -150,8 +146,7 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 				{isGetStartedWithCloudAllowed && (
 					<Button
 						variant="solid"
-						color="secondary"
-						className="view-data-sources-btn"
+						color="primary"
 						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
 					>
 						<span>View 150+ Data Sources</span>

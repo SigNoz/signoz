@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
 import { ChevronDown, ChevronRight, X } from '@signozhq/icons';
 import {
+	Button,
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
-} from '@signozhq/radio-group';
+} from '@signozhq/ui';
 import { Select, Skeleton } from 'antd';
 
 import {
@@ -69,17 +69,12 @@ function ResourceRow({
 				<div className="psp-resource__body">
 					<RadioGroup
 						value={config.scope}
-						onValueChange={(val): void =>
-							onScopeChange(resource.id, val as ScopeType)
-						}
+						onChange={(val): void => onScopeChange(resource.id, val as ScopeType)}
+						color="robin"
 						className="psp-resource__radio-group"
 					>
 						<div className="psp-resource__radio-item">
-							<RadioGroupItem
-								value={PermissionScope.ALL}
-								id={`${resource.id}-all`}
-								color="robin"
-							/>
+							<RadioGroupItem value={PermissionScope.ALL} id={`${resource.id}-all`} />
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
@@ -87,7 +82,6 @@ function ResourceRow({
 							<RadioGroupItem
 								value={PermissionScope.ONLY_SELECTED}
 								id={`${resource.id}-only-selected`}
-								color="robin"
 							/>
 							<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
 								Only selected
@@ -267,7 +261,7 @@ function PermissionSidePanel({
 						<Button
 							variant="solid"
 							color="secondary"
-							prefixIcon={<X size={14} />}
+							prefix={<X size={14} />}
 							onClick={unsavedCount > 0 ? handleDiscard : onClose}
 							size="sm"
 							disabled={isSaving}

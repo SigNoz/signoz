@@ -20,36 +20,6 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
-	DrawerWrapper: ({
-		content,
-		open,
-	}: {
-		content?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
-}));
-
-jest.mock('@signozhq/dialog', () => ({
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
 	useGetUser: jest.fn(),
@@ -66,6 +36,41 @@ jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 
 jest.mock('@signozhq/ui', () => ({
 	...jest.requireActual('@signozhq/ui'),
+	DrawerWrapper: ({
+		children,
+		footer,
+		open,
+	}: {
+		children?: ReactNode;
+		footer?: ReactNode;
+		open: boolean;
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
+	DialogWrapper: ({
+		children,
+		footer,
+		open,
+		title,
+	}: {
+		children?: ReactNode;
+		footer?: ReactNode;
+		open: boolean;
+		title?: string;
+	}): JSX.Element | null =>
+		open ? (
+			<div role="dialog" aria-label={title}>
+				{children}
+				{footer}
+			</div>
+		) : null,
+	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -160,6 +165,8 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockCopyState.value = undefined;
+		mockCopyState.error = undefined;
 		showErrorModal.mockClear();
 		server.use(
 			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
@@ -726,16 +733,16 @@ describe('EditMemberDrawer', () => {
 			await user.click(screen.getByRole('button', { name: /^copy$/i }));
 
 			await waitFor(() => {
+				expect(mockCopyToClipboard).toHaveBeenCalledWith(
+					expect.stringContaining('reset-tok-abc'),
+				);
+				expect(
+					screen.getByRole('button', { name: /copied!/i }),
+				).toBeInTheDocument();
 				expect(mockToast.success).toHaveBeenCalledWith(
 					'Reset link copied to clipboard',
-					expect.anything(),
 				);
 			});
-
-			expect(mockCopyToClipboard).toHaveBeenCalledWith(
-				expect.stringContaining('reset-tok-abc'),
-			);
-			expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument();
 		});
 	});
 });

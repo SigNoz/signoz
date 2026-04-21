@@ -12,8 +12,6 @@
 		flex-direction: column;
 		gap: 17px;
 		border-radius: 3px;
-		border: 1px solid var(--l1-border);
-		padding: 14px;
 
 		&-account-info {
 			&-connected-account-details {
@@ -84,11 +82,11 @@
 	}
 
 	&__footer {
-		padding: 16px;
 		display: flex;
 		flex-direction: row;
 		gap: 10px;
 		justify-content: space-between;
+		width: 100%;
 
 		&-close-button,
 		&-save-button {

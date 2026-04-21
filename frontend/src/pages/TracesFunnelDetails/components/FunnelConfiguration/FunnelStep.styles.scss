@@ -112,6 +112,7 @@
 		gap: 6px;
 		padding: 16px;
 		padding-left: 12px;
+
 		.ant-form-item {
 			margin: 0;
 			width: 100%;
@@ -121,6 +122,8 @@
 			display: flex;
 			flex-direction: column;
 			gap: 10px;
+			width: 100%;
+
 			.ant-select-selector {
 				background: var(--l3-background);
 				border: 1px solid var(--l1-border);
@@ -129,15 +132,23 @@
 					line-height: 16px;
 				}
 			}
+
 			&__service-and-span {
 				display: flex;
 				align-items: center;
 				gap: 12px;
+
+				.service,
+				.span {
+					flex: 1;
+				}
+
 				.ant-select-selection-placeholder {
 					color: var(--l2-foreground);
 				}
+
 				.ant-select {
-					width: 239px;
+					width: 100%;
 				}
 			}
 			&__where-filter {
