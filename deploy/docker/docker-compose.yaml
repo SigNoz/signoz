@@ -112,7 +112,10 @@ services:
     image: signoz/signoz:${VERSION:-v0.119.0}
     container_name: signoz
     ports:
-      - "8080:8080" # signoz port
+      - "8000:8080"
+    networks:           
+      - signoz-net
+      - traefik_proxy
     volumes:
       - sqlite:/var/lib/signoz/
     environment:
@@ -120,6 +123,13 @@ services:
       - SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN=tcp://clickhouse:9000
       - SIGNOZ_SQLSTORE_SQLITE_PATH=/var/lib/signoz/signoz.db
       - SIGNOZ_TOKENIZER_JWT_SECRET=secret
+    labels:                   
+      - "traefik.enable=true"
+      - "traefik.http.routers.signoz.rule=Host(`monitoring.tensorplanet.com`)"
+      - "traefik.http.routers.signoz.entrypoints=websecure"
+      - "traefik.http.routers.signoz.tls=true"
+      - "traefik.http.routers.signoz.tls.certresolver=le"
+      - "traefik.http.services.signoz.loadbalancer.server.port=8080"
     healthcheck:
       test:
         - CMD
@@ -179,6 +189,9 @@ services:
 networks:
   signoz-net:
     name: signoz-net
+  traefik_proxy:
+    name: traefik_proxy  
+    external: true
 volumes:
   clickhouse:
     name: signoz-clickhouse
