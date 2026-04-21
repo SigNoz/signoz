@@ -4,14 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"slices"
-	"sort"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
 )
+
+var awsRegions = []string{
+	"af-south-1", "ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-south-2", "ap-southeast-1", "ap-southeast-2", "ap-southeast-3",
+	"ap-southeast-4", "ca-central-1", "ca-west-1", "eu-central-1", "eu-central-2", "eu-north-1", "eu-south-1", "eu-south-2", "eu-west-1", "eu-west-2", "eu-west-3",
+	"il-central-1", "me-central-1", "me-south-1", "sa-east-1", "us-east-1", "us-east-2", "us-west-1", "us-west-2",
+}
+
+var awsCloudProvider = valuer.NewString("aws")
 
 type migrateAWSAllRegions struct {
 	sqlstore sqlstore.SQLStore
@@ -57,7 +64,7 @@ func (migration *migrateAWSAllRegions) Up(ctx context.Context, db *bun.DB) error
 	accounts := make([]*cloudIntegrationAWSMigrationRow, 0)
 	err = tx.NewSelect().
 		Model(&accounts).
-		Where("provider = ?", cloudintegrationtypes.CloudProviderTypeAWS).
+		Where("provider = ?", awsCloudProvider.StringValue()).
 		Where("removed_at IS NULL").
 		Scan(ctx)
 	if err != nil {
@@ -101,14 +108,7 @@ func (migration *migrateAWSAllRegions) Down(context.Context, *bun.DB) error {
 }
 
 func (migration *migrateAWSAllRegions) getAllRegionsConfig() ([]byte, error) {
-	awsRegions := cloudintegrationtypes.SupportedRegions[cloudintegrationtypes.CloudProviderTypeAWS]
-	out := make([]string, 0, len(awsRegions))
-	for _, r := range awsRegions {
-		out = append(out, r.StringValue())
-	}
-	sort.Strings(out)
-
-	cfg := awsConfig{Regions: out}
+	cfg := awsConfig{Regions: awsRegions}
 	newBytes, err := json.Marshal(cfg)
 	if err != nil {
 		return nil, err
