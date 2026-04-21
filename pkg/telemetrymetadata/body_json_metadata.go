@@ -21,183 +21,89 @@ import (
 )
 
 var (
-	defaultPathLimit = 100 // Default limit to prevent full table scans
-
-	CodeUnknownJSONDataType     = errors.MustNewCode("unknown_json_data_type")
 	CodeFailLoadPromotedPaths   = errors.MustNewCode("fail_load_promoted_paths")
 	CodeFailCheckPathPromoted   = errors.MustNewCode("fail_check_path_promoted")
-	CodeFailIterateBodyJSONKeys = errors.MustNewCode("fail_iterate_body_json_keys")
-	CodeFailExtractBodyJSONKeys = errors.MustNewCode("fail_extract_body_json_keys")
 	CodeFailLoadLogsJSONIndexes = errors.MustNewCode("fail_load_logs_json_indexes")
 	CodeFailListJSONValues      = errors.MustNewCode("fail_list_json_values")
 	CodeFailScanJSONValue       = errors.MustNewCode("fail_scan_json_value")
 	CodeFailScanVariant         = errors.MustNewCode("fail_scan_variant")
-	CodeFailBuildJSONPathsQuery = errors.MustNewCode("fail_build_json_paths_query")
-	CodeNoPathsToQueryIndexes   = errors.MustNewCode("no_paths_to_query_indexes_provided")
 
 	CodeFailedToPrepareBatch = errors.MustNewCode("failed_to_prepare_batch_promoted_paths")
 	CodeFailedToSendBatch    = errors.MustNewCode("failed_to_send_batch_promoted_paths")
 	CodeFailedToAppendPath   = errors.MustNewCode("failed_to_append_path_promoted_paths")
 )
 
-// fetchBodyJSONPaths extracts body JSON paths from the path_types table
-// This function can be used by both JSONQueryBuilder and metadata extraction
-// uniquePathLimit: 0 for no limit, >0 for maximum number of unique paths to return
-//   - For startup load: set to 10000 to get top 10k unique paths
-//   - For lookup: set to 0 (no limit needed for single path)
-//   - For metadata API: set to desired pagination limit
+// enrichJSONKeys enriches body-context keys with promoted path info, indexes,
+// and JSON access plans. parentTypeCache contains parent array types (ArrayJSON/ArrayDynamic)
+// pre-fetched in the main UNION query.
 //
-// searchOperator: LIKE for pattern matching, EQUAL for exact match.
-func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
-	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, []string, bool, error) {
-	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
-		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
-		instrumentationtypes.CodeNamespace:    "metadata",
-		instrumentationtypes.CodeFunctionName: "fetchBodyJSONPaths",
-	})
-
-	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
-	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
-	if err != nil {
-		return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to extract body JSON keys")
-	}
-	defer rows.Close()
-
-	fieldKeys := []*telemetrytypes.TelemetryFieldKey{}
-	paths := []string{}
-	rowCount := 0
-	for rows.Next() {
-		var path string
-		var typesArray []string // ClickHouse returns array as []string
-		var lastSeen uint64
-
-		err = rows.Scan(&path, &typesArray, &lastSeen)
-		if err != nil {
-			return nil, nil, false, errors.WrapInternalf(err, CodeFailExtractBodyJSONKeys, "failed to scan body JSON key row")
+// NOTE: enrichment can not work with FuzzySelectors; QB requests exact matches for query building so
+// parentTypeCache will actually have proper matches and
+// FuzzyMatching is for Suggestions API so enrichment is not needed.
+func (t *telemetryMetaStore) enrichJSONKeys(ctx context.Context, selectors []*telemetrytypes.FieldKeySelector, keys []*telemetrytypes.TelemetryFieldKey, parentTypeCache map[string][]telemetrytypes.FieldDataType) error {
+	mapOfExactSelectors := make(map[string]*telemetrytypes.FieldKeySelector)
+	for _, selector := range selectors {
+		if selector.SelectorMatchType != telemetrytypes.FieldSelectorMatchTypeExact {
+			continue
 		}
 
-		for _, typ := range typesArray {
-			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
-			if !found {
-				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", slog.String("type", typ), slog.String("path", path))
-				continue
-			}
-			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
-				Name:          path,
-				Signal:        telemetrytypes.SignalLogs,
-				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[mapping],
-				JSONDataType:  &mapping,
-			})
-		}
-
-		paths = append(paths, path)
-		rowCount++
-	}
-	if rows.Err() != nil {
-		return nil, nil, false, errors.WrapInternalf(rows.Err(), CodeFailIterateBodyJSONKeys, "error iterating body JSON keys")
+		mapOfExactSelectors[selector.Name] = selector
 	}
 
-	return fieldKeys, paths, rowCount <= limit, nil
-}
-
-func (t *telemetryMetaStore) buildBodyJSONPaths(ctx context.Context,
-	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
-
-	fieldKeys, paths, finished, err := t.fetchBodyJSONPaths(ctx, fieldKeySelectors)
-	if err != nil {
-		return nil, false, err
-	}
-
-	promoted, err := t.GetPromotedPaths(ctx, paths...)
-	if err != nil {
-		return nil, false, err
-	}
-
-	indexes, err := t.getJSONPathIndexes(ctx, paths...)
-	if err != nil {
-		return nil, false, err
-	}
-
-	for _, fieldKey := range fieldKeys {
-		promotedKey := strings.Split(fieldKey.Name, telemetrytypes.ArraySep)[0]
-		fieldKey.Materialized = promoted[promotedKey]
-		fieldKey.Indexes = indexes[fieldKey.Name]
-	}
-
-	return fieldKeys, finished, t.buildJSONPlans(ctx, fieldKeys)
-}
-
-func (t *telemetryMetaStore) buildJSONPlans(ctx context.Context, keys []*telemetrytypes.TelemetryFieldKey) error {
-	parentSelectors := make([]*telemetrytypes.FieldKeySelector, 0, len(keys))
+	var filteredKeys []*telemetrytypes.TelemetryFieldKey
 	for _, key := range keys {
-		parentSelectors = append(parentSelectors, key.ArrayParentSelectors()...)
+		if key.FieldContext == telemetrytypes.FieldContextBody && mapOfExactSelectors[key.Name] != nil {
+			filteredKeys = append(filteredKeys, key)
+		}
 	}
 
-	parentKeys, _, _, err := t.fetchBodyJSONPaths(ctx, parentSelectors)
+	if len(filteredKeys) == 0 {
+		return nil
+	}
+
+	paths := make([]string, 0, len(filteredKeys))
+	for _, key := range filteredKeys {
+		paths = append(paths, key.Name)
+	}
+
+	// fetch promoted paths
+	promoted, err := t.GetPromotedPaths(ctx, paths...)
 	if err != nil {
 		return err
 	}
 
-	typeCache := make(map[string][]telemetrytypes.JSONDataType)
-	for _, key := range parentKeys {
-		typeCache[key.Name] = append(typeCache[key.Name], *key.JSONDataType)
+	// fetch JSON path indexes
+	indexes, err := t.getJSONPathIndexes(ctx, paths...)
+	if err != nil {
+		return err
 	}
 
-	// build plans for keys now
+	// apply promoted/index metadata to keys
+	for _, key := range filteredKeys {
+		promotedKey := strings.Split(key.Name, telemetrytypes.ArraySep)[0]
+		key.Materialized = promoted[promotedKey]
+		key.Indexes = indexes[key.Name]
+	}
+
+	// build JSON access plans using the pre-fetched parent type cache
+	return t.buildJSONPlans(filteredKeys, parentTypeCache)
+}
+
+// buildJSONPlans builds JSON access plans for the given keys
+// using the provided parent type cache (pre-fetched in the main UNION query).
+func (t *telemetryMetaStore) buildJSONPlans(keys []*telemetrytypes.TelemetryFieldKey, typeCache map[string][]telemetrytypes.FieldDataType) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	columnMeta := t.jsonColumnMetadata[telemetrytypes.SignalLogs][telemetrytypes.FieldContextBody]
 	for _, key := range keys {
-		err = key.SetJSONAccessPlan(t.jsonColumnMetadata[telemetrytypes.SignalLogs][telemetrytypes.FieldContextBody], typeCache)
-		if err != nil {
+		if err := key.SetJSONAccessPlan(columnMeta, typeCache); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySelector) (string, []any, int) {
-	if len(fieldKeySelectors) == 0 {
-		return "", nil, defaultPathLimit
-	}
-	from := fmt.Sprintf("%s.%s", DBName, PathTypesTableName)
-
-	// Build a better query using GROUP BY to deduplicate at database level
-	// This aggregates all types per path and gets the max last_seen, then applies LIMIT
-	sb := sqlbuilder.Select(
-		"path",
-		"groupArray(DISTINCT type) AS types",
-		"max(last_seen) AS last_seen",
-	).From(from)
-
-	limit := 0
-	// Add search filter if provided
-	orClauses := []string{}
-	for _, fieldKeySelector := range fieldKeySelectors {
-		// replace [*] with []
-		fieldKeySelector.Name = strings.ReplaceAll(fieldKeySelector.Name, telemetrytypes.ArrayAnyIndex, telemetrytypes.ArraySep)
-		// Extract search text for body JSON keys
-		keyName := CleanPathPrefixes(fieldKeySelector.Name)
-		if fieldKeySelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
-			orClauses = append(orClauses, sb.Equal("path", keyName))
-		} else {
-			// Pattern matching for metadata API (defaults to LIKE behavior for other operators)
-			orClauses = append(orClauses, sb.ILike("path", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(keyName))))
-		}
-		limit += fieldKeySelector.Limit
-	}
-	sb.Where(sb.Or(orClauses...))
-	// Group by path to get unique paths with aggregated types
-	sb.GroupBy("path")
-
-	// Order by max last_seen to get most recent paths first
-	sb.OrderBy("last_seen DESC")
-	if limit == 0 {
-		limit = defaultPathLimit
-	}
-	sb.Limit(limit)
-
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return query, args, limit
 }
 
 func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...string) (map[string][]telemetrytypes.JSONDataTypeIndex, error) {

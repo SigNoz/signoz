@@ -37,6 +37,10 @@ jest.mock('utils/navigation', () => ({
 
 const openInNewTabMock = openInNewTab as jest.Mock;
 
+// Mock Date.now to prevent flaky tests due to time-dependent values
+const MOCK_NOW = 1700000000000; // Fixed timestamp
+jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
+
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
 jest.mock('@signozhq/ui', () => ({
@@ -188,6 +192,7 @@ describe('K8sBaseList', () => {
 			await waitFor(() => {
 				const selectedItem = onUrlUpdateMock.mock.calls
 					.map((call) => call[0].searchParams.get('selectedItem'))
+					.filter(Boolean)
 					.pop();
 				expect(selectedItem).toBe(`PodId:${itemId}`);
 			});
