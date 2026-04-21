@@ -10,7 +10,7 @@ import pytest
 from testcontainers.clickhouse import ClickHouseContainer
 from testcontainers.core.container import Network
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -256,7 +256,7 @@ def clickhouse(
             env=env,
         )
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "clickhouse",

@@ -2,7 +2,7 @@ import docker
 import pytest
 from testcontainers.core.container import Network
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -67,7 +67,7 @@ def migrator(
     def restore(cache: dict) -> types.Operation:
         return types.Operation(name=cache["name"])
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "migrator",

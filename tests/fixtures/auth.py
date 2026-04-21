@@ -11,7 +11,7 @@ from wiremock.resources.mappings import (
     WireMockMatchers,
 )
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -57,7 +57,7 @@ def create_user_admin(
     def restore(cache: dict) -> types.Operation:
         return types.Operation(name=cache["name"])
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "create_user_admin",

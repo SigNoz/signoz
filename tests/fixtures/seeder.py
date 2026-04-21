@@ -8,7 +8,7 @@ import pytest
 import requests
 from testcontainers.core.container import DockerContainer, Network
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -103,7 +103,7 @@ def seeder(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "seeder",

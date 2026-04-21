@@ -8,7 +8,7 @@ import requests
 from testcontainers.core.container import Network
 from wiremock.testing.testcontainer import WireMockContainer
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logger import setup_logger
 
@@ -60,7 +60,7 @@ def notification_channel(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "notification_channel",

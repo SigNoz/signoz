@@ -12,7 +12,7 @@ import requests
 from testcontainers.core.container import DockerContainer, Network
 from testcontainers.core.image import DockerImage
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -187,7 +187,7 @@ def create_signoz(
             gateway=gateway,
         )
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         cache_key,

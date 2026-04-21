@@ -4,7 +4,7 @@ import pytest
 from testcontainers.core.container import Network
 from testcontainers.keycloak import KeycloakContainer
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -80,7 +80,7 @@ def idp(
             container=container,
         )
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "idp",

@@ -4,7 +4,7 @@ from typing import Any, Generator
 import pytest
 from sqlalchemy import create_engine, sql
 
-from fixtures import dev, types
+from fixtures import reuse, types
 
 ConnectionTuple = namedtuple("ConnectionTuple", "connection config")
 
@@ -64,7 +64,7 @@ def sqlite(
             env=cache["env"],
         )
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "sqlite",

@@ -12,7 +12,7 @@ from wiremock.client import (
 from wiremock.constants import Config
 from wiremock.testing.testcontainer import WireMockContainer
 
-from fixtures import dev, types
+from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -63,7 +63,7 @@ def zeus(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "zeus",
@@ -120,7 +120,7 @@ def gateway(
     def restore(cache: dict) -> types.TestContainerDocker:
         return types.TestContainerDocker.from_cache(cache)
 
-    return dev.wrap(
+    return reuse.wrap(
         request,
         pytestconfig,
         "gateway",
