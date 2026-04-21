@@ -28,6 +28,8 @@ import {
 	Typography,
 } from 'antd';
 import type { TableProps } from 'antd/lib';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
@@ -147,7 +149,7 @@ function DashboardsList(): JSX.Element {
 	);
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
-		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
+		const dashboardDynamicColumnsString = getLocalStorageKey('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
 			createdAt: true,
 			createdBy: true,
@@ -161,7 +163,7 @@ function DashboardsList(): JSX.Element {
 				);
 
 				if (isEmpty(tempDashboardDynamicColumns)) {
-					localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+					setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 				} else {
 					dashboardDynamicColumns = { ...tempDashboardDynamicColumns };
 				}
@@ -169,7 +171,7 @@ function DashboardsList(): JSX.Element {
 				console.error(error);
 			}
 		} else {
-			localStorage.setItem('dashboard', JSON.stringify(dashboardDynamicColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(dashboardDynamicColumns));
 		}
 
 		return dashboardDynamicColumns;
@@ -183,7 +185,7 @@ function DashboardsList(): JSX.Element {
 		visibleColumns: DashboardDynamicColumns,
 	): void {
 		try {
-			localStorage.setItem('dashboard', JSON.stringify(visibleColumns));
+			setLocalStorageKey('dashboard', JSON.stringify(visibleColumns));
 		} catch (error) {
 			console.error(error);
 		}
