@@ -37,7 +37,8 @@ function LicenseSection(): JSX.Element | null {
 						<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 							<Typography.Text code>{getMaskedKey(activeLicense.key)}</Typography.Text>
 							<Button
-								variant="ghost"
+								variant="link"
+								color="none"
 								aria-label="Copy license key"
 								data-testid="license-key-copy-btn"
 								onClick={(): void => handleCopyKey(activeLicense.key)}

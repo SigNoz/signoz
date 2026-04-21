@@ -80,6 +80,7 @@ function EditKeyForm({
 										field.onChange(val);
 									}
 								}}
+								size="sm"
 								className="edit-key-modal__expiry-toggle"
 							>
 								<ToggleGroupItem

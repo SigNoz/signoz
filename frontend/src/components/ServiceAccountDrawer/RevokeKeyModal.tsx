@@ -1,6 +1,6 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
-import { Button, DialogFooter, DialogWrapper, toast } from '@signozhq/ui';
+import { Button, DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -34,7 +34,7 @@ export function RevokeKeyContent({
 				Revoking this key will permanently invalidate it. Any systems using this key
 				will lose access immediately.
 			</p>
-			<DialogFooter className="delete-dialog__footer">
+			<div className="delete-dialog__footer">
 				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
 					<X size={12} />
 					Cancel
@@ -49,7 +49,7 @@ export function RevokeKeyContent({
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
-			</DialogFooter>
+			</div>
 		</>
 	);
 }

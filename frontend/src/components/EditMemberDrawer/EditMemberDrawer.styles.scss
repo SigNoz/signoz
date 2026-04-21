@@ -1,4 +1,10 @@
 .edit-member-drawer {
+	&__layout {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+
 	&__body {
 		flex: 1;
 		overflow-y: auto;

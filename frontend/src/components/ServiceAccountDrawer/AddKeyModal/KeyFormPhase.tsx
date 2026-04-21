@@ -59,6 +59,7 @@ function KeyFormPhase({
 										field.onChange(val);
 									}
 								}}
+								size="sm"
 								className="add-key-modal__expiry-toggle"
 							>
 								<ToggleGroupItem
