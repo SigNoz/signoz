@@ -172,6 +172,7 @@ export function useIntegrationModal({
 								id: accountId,
 							},
 						);
+						// eslint-disable-next-line rulesdir/no-raw-absolute-path -- connectionUrl is an external AWS console URL, not an internal path
 						window.open(connectionUrl, '_blank');
 						setModalState(ModalStateEnum.WAITING);
 						setAccountId(accountId);
