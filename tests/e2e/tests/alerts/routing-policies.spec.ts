@@ -18,9 +18,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Navigate to Routing Policies and verify page layout',
-    {
-      tag: '@viewer',
-    },
     async ({ page }) => {
       // 1. Verify header contains "Routing Policies" title
       await expect(
@@ -49,9 +46,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Create Routing Policies with Basic and Complex Expressions',
-    {
-      tag: '@editor',
-    },
     async ({ page }) => {
       // 1. Navigate to Routing Policies page (done in beforeEach)
 
@@ -130,9 +124,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Create Policy with Empty Required Fields',
-    {
-      tag: '@editor',
-    },
     async ({ page }) => {
       // 1. Click "New routing policy" button
       await page
@@ -197,9 +188,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Cancel Policy Creation',
-    {
-      tag: '@editor',
-    },
     async ({ page }) => {
       // 1. Click "New routing policy" button
       await page
@@ -227,9 +215,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Search Policies by Name',
-    {
-      tag: '@viewer',
-    },
     async ({ page }) => {
       // 1. Create a test policy first
       await page
@@ -275,9 +260,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Search with No Results',
-    {
-      tag: '@viewer',
-    },
     async ({ page }) => {
       // 1. Enter a search term that matches no policies
       await page
@@ -296,9 +278,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'View Policy Details',
-    {
-      tag: '@viewer',
-    },
     async ({ page }) => {
       // 1. Create a policy with unique name
       const uniquePolicyName = `Test Policy ${Date.now()}`;
@@ -361,9 +340,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Edit Existing Policy',
-    {
-      tag: '@editor',
-    },
     async ({ page }) => {
       // 1. Create a policy to edit first
       const uniquePolicyName = `Policy to Edit ${Date.now()}`;
@@ -445,9 +421,6 @@ test.describe('Routing Policies', () => {
 
   test(
     'Delete Routing Policy',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       // 1. Create a policy to delete first
       const uniquePolicyName = `Policy to Delete ${Date.now()}`;

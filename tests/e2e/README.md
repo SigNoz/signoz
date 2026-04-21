@@ -41,8 +41,6 @@ yarn typecheck
 
 yarn report                 # open HTML report
 yarn codegen                # record a flow interactively
-
-SIGNOZ_USER_ROLE=Admin yarn test    # Admin | Editor | Viewer
 ```
 
 ## Staging fallback

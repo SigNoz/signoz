@@ -85,13 +85,12 @@ yarn test:staging
 | `SIGNOZ_E2E_BASE_URL` | Base URL (staging mode) |
 | `SIGNOZ_E2E_USERNAME` | Test user email (staging mode) |
 | `SIGNOZ_E2E_PASSWORD` | Test user password (staging mode) |
-| `SIGNOZ_USER_ROLE` | `Admin` (default) \| `Editor` \| `Viewer` — filters by tag |
 
 ## Writing tests
 
 ```typescript
 import { expect, test } from '@playwright/test';
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../fixtures/auth';
 
 test.describe('Feature name', () => {
   test.beforeEach(async ({ page }) => {
@@ -99,19 +98,11 @@ test.describe('Feature name', () => {
     await page.goto('/feature');
   });
 
-  test('Test name', { tag: '@viewer' }, async ({ page }) => {
+  test('Test name', async ({ page }) => {
     // steps
   });
 });
 ```
-
-### Role hierarchy
-
-- `@viewer` — read-only; runs for all roles
-- `@editor` — create/edit; runs for Editor + Admin
-- `@admin` — delete/admin; runs for Admin only
-
-`playwright.config.ts` sets the grep filter based on `SIGNOZ_USER_ROLE`.
 
 ### Locator priority
 

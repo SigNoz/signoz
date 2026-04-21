@@ -9,9 +9,7 @@ import { ensureLoggedIn } from '../fixtures/auth';
  * 2. An example of test structure and patterns
  * 3. Initial setup for authentication
  */
-test('seed', {
-  tag: '@viewer',
-}, async ({ page }) => {
+test('seed', async ({ page }) => {
   // Login to the application
   await ensureLoggedIn(page);
 

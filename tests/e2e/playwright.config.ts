@@ -4,7 +4,7 @@ import path from 'path';
 
 const authFile = path.join(__dirname, '.auth/user.json');
 
-// .env holds user-provided defaults (staging creds, role override).
+// .env holds user-provided defaults (staging creds).
 // .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
 // lifecycle brings the backend up locally; override=true so local-backend
 // coordinates win over any stale .env values. Subprocess-injected env
@@ -13,28 +13,6 @@ const authFile = path.join(__dirname, '.auth/user.json');
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 
-// Function to get grep pattern based on user role
-function getRoleGrepPattern(): string | undefined {
-  const userRole = process.env.SIGNOZ_USER_ROLE;
-
-  if (!userRole) {
-    console.log('SIGNOZ_USER_ROLE not set, running all tests');
-    return undefined;
-  }
-
-  switch (userRole.toLowerCase()) {
-    case 'admin':
-      return '@admin|@editor|@viewer'; // Admin can run all tests
-    case 'editor':
-      return '@editor|@viewer'; // Editor can run editor and viewer tests
-    case 'viewer':
-      return '@viewer'; // Viewer can only run viewer tests
-    default:
-      console.warn(`Unknown role: ${userRole}, running all tests`);
-      return undefined;
-  }
-}
-
 export default defineConfig({
   testDir: './tests',
 
@@ -42,9 +20,6 @@ export default defineConfig({
   // plus test-results/ for per-test artifacts (traces/screenshots/videos).
   // CI can archive the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
   outputDir: 'artifacts/test-results',
-
-  // Filter tests based on user role
-  grep: getRoleGrepPattern() ? new RegExp(getRoleGrepPattern()!) : undefined,
 
   // Run tests in parallel
   fullyParallel: true,
@@ -80,11 +55,9 @@ export default defineConfig({
   // Configure projects for multiple browsers
   projects: [
     // Login once and save session — all browser projects depend on this.
-    // grep is overridden so it always runs regardless of SIGNOZ_USER_ROLE.
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
-      grep: /.*/,
     },
 
     {

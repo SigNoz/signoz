@@ -13,7 +13,7 @@ test.describe('Dashboards List Page', () => {
   // Feedback / Share header buttons. These run as @viewer because they cover
   // elements visible to every role.
 
-  test('1.1 Dashboard list page loads correctly', { tag: '@viewer' }, async ({ page }) => {
+  test('1.1 Dashboard list page loads correctly', async ({ page }) => {
     await page.goto('/dashboard');
     // Wait for the list label as the reliable "page is ready" signal — it
     // appears only after the dashboard data has loaded.
@@ -43,7 +43,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
   });
 
-  test('1.2 Dashboard list shows correct data fields per row', { tag: '@viewer' }, async ({ page }) => {
+  test('1.2 Dashboard list shows correct data fields per row', async ({ page }) => {
     await page.goto('/dashboard');
     // Wait until thumbnails are rendered — this confirms row data has arrived
     await page.getByAltText('dashboard-image').first().waitFor({ state: 'visible' });
@@ -60,7 +60,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByText(/@/).first()).toBeVisible();
   });
 
-  test('1.3 Pagination bar shows correct item count', { tag: '@viewer' }, async ({ page }) => {
+  test('1.3 Pagination bar shows correct item count', async ({ page }) => {
     // Pre-condition: staging workspace has more than 20 dashboards so the
     // pagination bar is rendered and Previous is disabled on the first page.
     await page.goto('/dashboard');
@@ -80,7 +80,7 @@ test.describe('Dashboards List Page', () => {
   // as ?search=<term>. All visibility tests run as @viewer; the description
   // search requires @editor to set up a dashboard with a known description.
 
-  test('2.1 Search by title returns matching dashboards', { tag: '@viewer' }, async ({ page }) => {
+  test('2.1 Search by title returns matching dashboards', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -96,7 +96,7 @@ test.describe('Dashboards List Page', () => {
     expect(pageText?.toUpperCase()).toContain('APM METRICS');
   });
 
-  test('2.2 Search by tag returns dashboards that carry that tag', { tag: '@viewer' }, async ({ page }) => {
+  test('2.2 Search by tag returns dashboards that carry that tag', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -111,7 +111,7 @@ test.describe('Dashboards List Page', () => {
     expect(pageText?.toUpperCase()).toContain('APM METRICS');
   });
 
-  test('2.3 Search by description returns matching dashboards', { tag: '@editor' }, async ({ page }) => {
+  test('2.3 Search by description returns matching dashboards', async ({ page }) => {
     // Create a dashboard with a known, unique description so we have a
     // reliable target for the description search without relying on pre-existing data
     const uniqueDesc = `desc-search-${Date.now()}`;
@@ -140,7 +140,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
   });
 
-  test('2.4 Dashboard with no tags is found by title search', { tag: '@viewer' }, async ({ page }) => {
+  test('2.4 Dashboard with no tags is found by title search', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -154,7 +154,7 @@ test.describe('Dashboards List Page', () => {
     expect(pageText?.toUpperCase()).toContain('PROMQL AND CLICKHOUSE SQL');
   });
 
-  test('2.5 Dashboard with no description is found by title search', { tag: '@viewer' }, async ({ page }) => {
+  test('2.5 Dashboard with no description is found by title search', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -168,7 +168,7 @@ test.describe('Dashboards List Page', () => {
     expect(pageText?.toUpperCase()).toContain('APM METRICS');
   });
 
-  test('2.6 Search state is reflected in URL and pre-fills on direct navigation', { tag: '@viewer' }, async ({ page }) => {
+  test('2.6 Search state is reflected in URL and pre-fills on direct navigation', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -183,7 +183,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByText('PromQL and Clickhouse SQL').first()).toBeVisible();
   });
 
-  test('2.7 Clearing search restores the full list', { tag: '@viewer' }, async ({ page }) => {
+  test('2.7 Clearing search restores the full list', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -198,7 +198,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
   });
 
-  test('2.8 Search with no matching results shows empty state', { tag: '@viewer' }, async ({ page }) => {
+  test('2.8 Search with no matching results shows empty state', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -213,7 +213,7 @@ test.describe('Dashboards List Page', () => {
     await expect(searchInput).toHaveValue('xyznonexistent999');
   });
 
-  test('2.9 Search is case-insensitive', { tag: '@viewer' }, async ({ page }) => {
+  test('2.9 Search is case-insensitive', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -236,7 +236,7 @@ test.describe('Dashboards List Page', () => {
   // Tests document the current state. The ascending limitation is explicitly
   // noted so it is visible during review and easy to fix when implemented.
 
-  test('3.1 Default load has no sort params and shows most recently updated dashboard first', { tag: '@viewer' }, async ({ page }) => {
+  test('3.1 Default load has no sort params and shows most recently updated dashboard first', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -253,7 +253,7 @@ test.describe('Dashboards List Page', () => {
     await expect(rows.first()).toBeVisible();
   });
 
-  test('3.2 First click on sort button adds columnKey=updatedAt&order=descend to URL', { tag: '@viewer' }, async ({ page }) => {
+  test('3.2 First click on sort button adds columnKey=updatedAt&order=descend to URL', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -270,7 +270,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
   });
 
-  test('3.3 Subsequent sort clicks keep order=descend (ascending not yet implemented)', { tag: '@viewer' }, async ({ page }) => {
+  test('3.3 Subsequent sort clicks keep order=descend (ascending not yet implemented)', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -298,7 +298,7 @@ test.describe('Dashboards List Page', () => {
   //   @editor — View, Open in New Tab, Copy Link, Export JSON  (no Delete)
   //   @viewer — action icon is hidden entirely
 
-  test('4.1 Admin sees all five options in the action menu', { tag: '@admin' }, async ({ page }) => {
+  test('4.1 Admin sees all five options in the action menu', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -315,7 +315,7 @@ test.describe('Dashboards List Page', () => {
     await expect(tooltip.getByText('Delete dashboard')).toBeVisible();
   });
 
-  test('4.2 Editor sees four options — Delete dashboard is not present', { tag: '@editor' }, async ({ page }) => {
+  test('4.2 Editor sees four options — Delete dashboard is not present', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -332,7 +332,7 @@ test.describe('Dashboards List Page', () => {
     await expect(tooltip.getByText('Delete dashboard')).not.toBeVisible();
   });
 
-  test('4.3 Viewer has no action icon on dashboard rows', { tag: '@viewer' }, async ({ page }) => {
+  test('4.3 Viewer has no action icon on dashboard rows', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -340,7 +340,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByTestId('dashboard-action-icon')).toHaveCount(0);
   });
 
-  test('4.4 View action navigates to the dashboard detail page', { tag: '@editor' }, async ({ page }) => {
+  test('4.4 View action navigates to the dashboard detail page', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -351,7 +351,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
   });
 
-  test('4.5 Open in New Tab opens the dashboard in a new browser tab', { tag: '@editor' }, async ({ page, context }) => {
+  test('4.5 Open in New Tab opens the dashboard in a new browser tab', async ({ page, context }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -368,7 +368,7 @@ test.describe('Dashboards List Page', () => {
     await newPage.close();
   });
 
-  test('4.6 Copy Link copies the dashboard URL to the clipboard', { tag: '@editor' }, async ({ page, context }) => {
+  test('4.6 Copy Link copies the dashboard URL to the clipboard', async ({ page, context }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -390,7 +390,7 @@ test.describe('Dashboards List Page', () => {
     expect(clipboardText).toMatch(/\/dashboard\/[0-9a-f-]+/);
   });
 
-  test('4.7 Export JSON downloads the dashboard as a JSON file', { tag: '@editor' }, async ({ page }) => {
+  test('4.7 Export JSON downloads the dashboard as a JSON file', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -405,7 +405,7 @@ test.describe('Dashboards List Page', () => {
     expect(download.suggestedFilename()).toMatch(/\.json$/);
   });
 
-  test('4.8 Action menu closes when clicking outside the popover', { tag: '@editor' }, async ({ page }) => {
+  test('4.8 Action menu closes when clicking outside the popover', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -427,7 +427,7 @@ test.describe('Dashboards List Page', () => {
   // Create controls (name input, Submit, New dashboard button) are visible
   // to Editor and Admin only — hidden from Viewer entirely.
 
-  test('5.1 Create controls are hidden from Viewer', { tag: '@viewer' }, async ({ page }) => {
+  test('5.1 Create controls are hidden from Viewer', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -437,7 +437,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByRole('button', { name: 'New dashboard' })).not.toBeVisible();
   });
 
-  test('5.2 Submit button is disabled when the name input is empty', { tag: '@editor' }, async ({ page }) => {
+  test('5.2 Submit button is disabled when the name input is empty', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -445,7 +445,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByRole('button', { name: 'Submit' })).toBeDisabled();
   });
 
-  test('5.3 Inline name field creates a named dashboard and navigates to it', { tag: '@editor' }, async ({ page }) => {
+  test('5.3 Inline name field creates a named dashboard and navigates to it', async ({ page }) => {
     const name = `Test Dashboard ${Date.now()}`;
 
     await page.goto('/dashboard');
@@ -470,7 +470,7 @@ test.describe('Dashboards List Page', () => {
     await page.getByRole('button', { name: 'Delete' }).click();
   });
 
-  test('5.4 New dashboard dropdown shows exactly three options', { tag: '@editor' }, async ({ page }) => {
+  test('5.4 New dashboard dropdown shows exactly three options', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -484,7 +484,7 @@ test.describe('Dashboards List Page', () => {
     await expect(menu.getByRole('menuitem', { name: 'View templates' })).toBeVisible();
   });
 
-  test('5.5 Create dashboard navigates to new dashboard with default name', { tag: '@editor' }, async ({ page }) => {
+  test('5.5 Create dashboard navigates to new dashboard with default name', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -508,7 +508,7 @@ test.describe('Dashboards List Page', () => {
     await page.getByRole('button', { name: 'Delete' }).click();
   });
 
-  test('5.6 Import JSON dialog opens with code editor and upload button', { tag: '@editor' }, async ({ page }) => {
+  test('5.6 Import JSON dialog opens with code editor and upload button', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -525,7 +525,7 @@ test.describe('Dashboards List Page', () => {
     await expect(dialog.getByRole('button', { name: 'Import and Next' })).toBeVisible();
   });
 
-  test('5.7 Import JSON dialog closes on Escape without creating a dashboard', { tag: '@editor' }, async ({ page }) => {
+  test('5.7 Import JSON dialog closes on Escape without creating a dashboard', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -539,7 +539,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page).toHaveURL(/\/dashboard($|\?)/);
   });
 
-  test('5.8 Import JSON dialog closes on clicking the × button', { tag: '@editor' }, async ({ page }) => {
+  test('5.8 Import JSON dialog closes on clicking the × button', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -565,7 +565,7 @@ test.describe('Dashboards List Page', () => {
   // the dashboard detail page rather than staying on the list — tests account
   // for this rather than asserting we stay on /dashboard.
 
-  test('6.1 Delete confirmation dialog shows dashboard name with Cancel and Delete buttons', { tag: '@admin' }, async ({ page }) => {
+  test('6.1 Delete confirmation dialog shows dashboard name with Cancel and Delete buttons', async ({ page }) => {
     // Create a disposable dashboard to delete
     const name = `Delete Test ${Date.now()}`;
     await page.goto('/dashboard');
@@ -596,7 +596,7 @@ test.describe('Dashboards List Page', () => {
     await dialog.getByRole('button', { name: 'Delete' }).click();
   });
 
-  test('6.2 Cancelling delete navigates to the dashboard detail page (known behaviour)', { tag: '@admin' }, async ({ page }) => {
+  test('6.2 Cancelling delete navigates to the dashboard detail page (known behaviour)', async ({ page }) => {
     // Create a disposable dashboard
     const name = `Cancel Delete Test ${Date.now()}`;
     await page.goto('/dashboard');
@@ -625,7 +625,7 @@ test.describe('Dashboards List Page', () => {
     await page.getByRole('button', { name: 'Delete' }).click();
   });
 
-  test('6.3 Confirming delete removes the dashboard from the list', { tag: '@admin' }, async ({ page }) => {
+  test('6.3 Confirming delete removes the dashboard from the list', async ({ page }) => {
     // Create a disposable dashboard
     const name = `Confirm Delete Test ${Date.now()}`;
     await page.goto('/dashboard');
@@ -656,7 +656,7 @@ test.describe('Dashboards List Page', () => {
   // Clicking anywhere on a dashboard row (except the action icon) navigates
   // to the detail page. Runs as @viewer since all roles can navigate.
 
-  test('7.1 Clicking a dashboard row navigates to the detail page', { tag: '@viewer' }, async ({ page }) => {
+  test('7.1 Clicking a dashboard row navigates to the detail page', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -668,7 +668,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
   });
 
-  test('7.2 Dashboard detail page shows the breadcrumb after row click', { tag: '@viewer' }, async ({ page }) => {
+  test('7.2 Dashboard detail page shows the breadcrumb after row click', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -679,7 +679,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByRole('button', { name: /Dashboard \// })).toBeVisible();
   });
 
-  test('7.3 Sidebar Dashboards link navigates to the list page', { tag: '@viewer' }, async ({ page }) => {
+  test('7.3 Sidebar Dashboards link navigates to the list page', async ({ page }) => {
     // Start on a different page so the navigation is meaningful
     await page.goto('/home');
     await page.getByText('All Dashboards').first().waitFor({ state: 'hidden' });
@@ -697,7 +697,7 @@ test.describe('Dashboards List Page', () => {
   // navigation. Sort params (columnKey + order) appear only after the user
   // clicks the sort button — not on fresh load.
 
-  test('8.1 Direct navigation with ?search= pre-fills the input and filters results', { tag: '@viewer' }, async ({ page }) => {
+  test('8.1 Direct navigation with ?search= pre-fills the input and filters results', async ({ page }) => {
     // Navigate directly with the search param — simulates opening a shared link
     await page.goto('/dashboard?search=PromQL');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
@@ -709,7 +709,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByText('PromQL and Clickhouse SQL').first()).toBeVisible();
   });
 
-  test('8.2 Search term updates the URL in real time', { tag: '@viewer' }, async ({ page }) => {
+  test('8.2 Search term updates the URL in real time', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -719,7 +719,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page).toHaveURL(/search=APM/);
   });
 
-  test('8.3 Browser Back after navigating to a dashboard restores search state', { tag: '@viewer' }, async ({ page }) => {
+  test('8.3 Browser Back after navigating to a dashboard restores search state', async ({ page }) => {
     await page.goto('/dashboard?search=APM');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -733,7 +733,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByRole('textbox', { name: 'Search by name, description, or tags...' })).toHaveValue('APM');
   });
 
-  test('8.4 Sort params appear in URL only after interacting with the sort button', { tag: '@viewer' }, async ({ page }) => {
+  test('8.4 Sort params appear in URL only after interacting with the sort button', async ({ page }) => {
     // Fresh load — no sort params
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
@@ -757,7 +757,7 @@ test.describe('Dashboards List Page', () => {
   // and are visible to all roles. This section was absent from the originally
   // generated spec and is written from scratch based on live app observation.
 
-  test('9.1 Feedback button is visible and opens a feedback mechanism', { tag: '@viewer' }, async ({ page }) => {
+  test('9.1 Feedback button is visible and opens a feedback mechanism', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -770,7 +770,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page).toHaveURL(/\/dashboard/); // no unintended navigation
   });
 
-  test('9.2 Share button is visible and triggers a share action', { tag: '@viewer' }, async ({ page }) => {
+  test('9.2 Share button is visible and triggers a share action', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -789,7 +789,7 @@ test.describe('Dashboards List Page', () => {
   // Boundary conditions: tag overflow rendering, tagless rows, pagination
   // reset on search, and role-based visibility for Viewer.
 
-  test('10.1 Dashboards with many tags show a +N overflow indicator', { tag: '@viewer' }, async ({ page }) => {
+  test('10.1 Dashboards with many tags show a +N overflow indicator', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -803,7 +803,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByText(/^\+\s*\d+$/).first()).toBeVisible();
   });
 
-  test('10.2 Dashboards with no tags show a clean row with no empty tag containers', { tag: '@viewer' }, async ({ page }) => {
+  test('10.2 Dashboards with no tags show a clean row with no empty tag containers', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 
@@ -816,7 +816,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByText('PromQL and Clickhouse SQL').first()).toBeVisible();
   });
 
-  test('10.3 Searching while on page 2 resets pagination to page 1', { tag: '@viewer' }, async ({ page }) => {
+  test('10.3 Searching while on page 2 resets pagination to page 1', async ({ page }) => {
     // Pre-condition: staging workspace has more than 20 dashboards
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
@@ -831,7 +831,7 @@ test.describe('Dashboards List Page', () => {
     await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
   });
 
-  test('10.4 Viewer cannot see create controls or row action icons', { tag: '@viewer' }, async ({ page }) => {
+  test('10.4 Viewer cannot see create controls or row action icons', async ({ page }) => {
     await page.goto('/dashboard');
     await page.getByText('All Dashboards').first().waitFor({ state: 'visible' });
 

@@ -35,18 +35,13 @@ Test plans MUST follow this structure (see `examples/example-test-plan.md`):
 ## Application Overview
 [Describe the feature/module being tested with key functionality and user flows]
 
-## User Role Permissions (Optional)
-- **@admin**: [Admin capabilities]
-- **@editor**: [Editor capabilities]
-- **@viewer**: [Viewer capabilities]
-
 ## Test Scenarios
 
-### 1. [Main Scenario Category] **[Role Tag]**
+### 1. [Main Scenario Category]
 
 **Seed:** `tests/seed.spec.ts`
 
-#### 1.1 [Specific Test Case] **[Role Tag]**
+#### 1.1 [Specific Test Case]
 
 **Pre-conditions:**
 - [List any setup needed]
@@ -79,12 +74,11 @@ Test plans MUST follow this structure (see `examples/example-test-plan.md`):
 ### Test Plan Best Practices
 
 1. **Be Specific**: Include exact UI element names, button labels, and navigation paths
-2. **Role-Based**: Tag scenarios with appropriate role tags (@admin, @editor, @viewer)
-3. **Seed Reference**: Always reference `tests/seed.spec.ts` as the seed test
-4. **Data-Driven**: Include specific test data values in the plan
-5. **Comprehensive**: Cover happy paths, edge cases, and error scenarios
-6. **Actionable Steps**: Write steps that can be directly translated to Playwright code
-7. **Expected Results**: Be explicit about what should happen after each action
+2. **Seed Reference**: Always reference `tests/seed.spec.ts` as the seed test
+3. **Data-Driven**: Include specific test data values in the plan
+4. **Comprehensive**: Cover happy paths, edge cases, and error scenarios
+5. **Actionable Steps**: Write steps that can be directly translated to Playwright code
+6. **Expected Results**: Be explicit about what should happen after each action
 
 ### Creating Test Plans Manually
 
@@ -136,18 +130,12 @@ test.describe('[Feature Name]', () => {
     // Example navigation steps here
   });
 
-  test(
-    '[Test Name]',
-    {
-      tag: '@viewer', // or @editor, @admin
-    },
-    async ({ page }) => {
-      // Test implementation with numbered comments
-      // 1. [Step description]
-      // 2. [Step description]
-      ...
-    },
-  );
+  test('[Test Name]', async ({ page }) => {
+    // Test implementation with numbered comments
+    // 1. [Step description]
+    // 2. [Step description]
+    ...
+  });
 });
 ```
 
@@ -160,16 +148,7 @@ test.describe('[Feature Name]', () => {
    await ensureLoggedIn(page);
    ```
 
-3. **Role-Based Tags**: Tag every test with appropriate role
-   ```typescript
-   test(
-     'Test Name',
-     { tag: '@admin' },  // @admin, @editor, or @viewer
-     async ({ page }) => { ... }
-   );
-   ```
-
-4. **Semantic Locators**: Prefer Playwright's built-in locators (in order of preference):
+3. **Semantic Locators**: Prefer Playwright's built-in locators (in order of preference):
    ```typescript
    // ✅ GOOD
    page.getByRole('button', { name: 'Submit' })
@@ -310,42 +289,6 @@ page.getByRole('heading', { name: 'Dashboard' })
 page.getByRole('link', { name: 'Learn more' })
 ```
 
-## Role-Based Testing
-
-### Role Hierarchy
-
-- **@viewer**: Read-only access (view, search, filter)
-- **@editor**: Create and edit access (all @viewer tests + create/edit)
-- **@admin**: Full access (all @viewer + @editor tests + delete/admin operations)
-
-### Tagging Guidelines
-
-```typescript
-// Viewer tests - read-only operations
-test('View dashboard', { tag: '@viewer' }, async ({ page }) => { ... });
-test('Search policies', { tag: '@viewer' }, async ({ page }) => { ... });
-
-// Editor tests - create/edit operations
-test('Create policy', { tag: '@editor' }, async ({ page }) => { ... });
-test('Edit policy', { tag: '@editor' }, async ({ page }) => { ... });
-
-// Admin tests - delete/admin operations
-test('Delete policy', { tag: '@admin' }, async ({ page }) => { ... });
-test('Manage users', { tag: '@admin' }, async ({ page }) => { ... });
-```
-
-### Running Tests by Role
-
-```bash
-# Set role in .env file
-SIGNOZ_USER_ROLE=Admin    # Runs all tests
-SIGNOZ_USER_ROLE=Editor   # Runs @editor and @viewer tests
-SIGNOZ_USER_ROLE=Viewer   # Runs @viewer tests only
-
-# Or pass directly
-SIGNOZ_USER_ROLE=Admin yarn test
-```
-
 ## Environment Configuration
 
 ### Required Environment Variables
@@ -356,7 +299,6 @@ Create `.env` file with:
 SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud
 SIGNOZ_E2E_USERNAME=your-email@example.com
 SIGNOZ_E2E_PASSWORD=your-password
-SIGNOZ_USER_ROLE=Admin  # or Editor, Viewer
 ```
 
 ### Using Environment Variables in Tests
@@ -531,9 +473,6 @@ yarn test:headed
 
 # Run specific test
 yarn test tests/[feature]/[test].spec.ts
-
-# Run with specific role
-SIGNOZ_USER_ROLE=Admin yarn test:ui
 ```
 
 ### Using Playwright Inspector
@@ -670,10 +609,7 @@ await expect(page.getByText('Success')).toBeVisible();
 await page.goto('/dashboard');  // Uses baseURL from config
 
 // Remove test.only before committing
-test('Create item', { tag: '@editor' }, async ({ page }) => { ... });
-
-// Always tag tests with roles
-test('Create item', { tag: '@editor' }, async ({ page }) => { ... });
+test('Create item', async ({ page }) => { ... });
 ```
 
 ## Playwright Agents Quick Reference
@@ -725,7 +661,6 @@ When writing tests:
 - [ ] Reference test plan and seed in comments
 - [ ] Import and use `ensureLoggedIn` utility
 - [ ] Add `beforeEach` with navigation
-- [ ] Tag every test with role (@admin, @editor, @viewer)
 - [ ] Use semantic locators (getByRole, getByLabel, etc.)
 - [ ] Add numbered comments matching test plan steps
 - [ ] Include explicit assertions

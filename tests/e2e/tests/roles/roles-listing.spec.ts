@@ -4,9 +4,6 @@ import { ensureLoggedIn } from '../../fixtures/auth';
 test.describe('Roles Listing - Navigation and Access Control', () => {
   test(
     'Admin User Can Access Roles Page',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await ensureLoggedIn(page);
 
@@ -64,9 +61,6 @@ test.describe('Roles Listing - Page Layout and UI Components', () => {
 
   test(
     'Verify Roles Listing Page Layout',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await expect(
         page.getByRole('heading', {
@@ -93,9 +87,6 @@ test.describe('Roles Listing - Page Layout and UI Components', () => {
 
   test(
     'Verify Table Structure',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await expect(page.getByRole('searchbox')).toBeVisible();
 
@@ -130,9 +121,6 @@ test.describe('Roles Listing - Roles Display and Data Verification', () => {
 
   test(
     'Verify API Response Matches UI Display',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       let apiResponse: any = null;
 
@@ -170,9 +158,6 @@ test.describe('Roles Listing - Roles Display and Data Verification', () => {
 
   test(
     'Verify Role Categorization (Managed vs Custom)',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await expect(page.getByRole('searchbox')).toBeVisible();
 
@@ -211,9 +196,6 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Roles by Name',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await expect(page.getByText('signoz-admin')).toBeVisible();
       await expect(page.getByText('signoz-editor')).toBeVisible();
@@ -240,9 +222,6 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Roles by Description',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       const searchInput = page.getByRole('searchbox', {
         name: 'Search for roles...',
@@ -260,9 +239,6 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search with No Results',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await expect(page.getByText('signoz-admin')).toBeVisible({
         timeout: 10000,
@@ -304,9 +280,6 @@ test.describe('Roles Listing - Search Functionality', () => {
 
   test(
     'Search Case Sensitivity',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       const searchInput = page.getByRole('searchbox', {
         name: 'Search for roles...',
@@ -345,9 +318,6 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Navigate Between Pages',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
@@ -400,9 +370,6 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Pagination with Search Results',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
@@ -440,9 +407,6 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 
   test(
     'Pagination State Persistence',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       const paginationList = page.getByRole('list').filter({ hasText: /\d/ });
       const hasPagination = await paginationList.isVisible().catch(() => false);
@@ -475,9 +439,6 @@ test.describe('Roles Listing - Pagination Functionality', () => {
 test.describe('Roles Listing - Loading and Error States', () => {
   test(
     'Verify Loading State',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -512,9 +473,6 @@ test.describe('Roles Listing - Loading and Error States', () => {
 
   test(
     'Handle API Error State',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         route.fulfill({
@@ -550,9 +508,6 @@ test.describe('Roles Listing - Loading and Error States', () => {
 
   test(
     'Handle Network Failure',
-    {
-      tag: '@admin',
-    },
     async ({ page }) => {
       await page.route('**/api/v1/roles', async (route) => {
         route.abort('failed');
