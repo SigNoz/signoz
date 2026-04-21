@@ -10,6 +10,7 @@ import {
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	mcpServerSettings,
 	membersSettings,
 	multiIngestionSettings,
 	mySettings,
@@ -79,6 +80,10 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		// Route is registered for everyone so direct-URL visitors see the
+		// in-page fallback. Sidebar visibility is still Cloud-only, gated in
+		// Settings.tsx.
+		...mcpServerSettings(t),
 	);
 
 	return settings;

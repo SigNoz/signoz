@@ -1,0 +1,52 @@
+{
+	"page_title": "SigNoz MCP Server",
+	"page_subtitle": "Connect AI assistants like Claude, Cursor, VS Code, and Codex to your SigNoz data via the Model Context Protocol. Authenticate from your MCP client with a service-account API key.",
+
+	"fallback_title": "MCP Server is available on SigNoz Cloud",
+	"fallback_body": "This in-product setup guide is for SigNoz Cloud. Self-hosted users can follow the docs to run the MCP server against their instance.",
+	"fallback_docs_link": "View MCP Server docs",
+
+	"region_warning_prefix": "We couldn't detect your Cloud region from this URL. Find it at ",
+	"region_warning_link": "Settings → Ingestion",
+	"region_warning_suffix": " (the label between your workspace name and signoz.cloud in the ingestion URL), then enter it here.",
+	"region_input_label": "SigNoz Cloud region",
+	"region_input_placeholder": "Your SigNoz Cloud region",
+
+	"step1_title": "Configure your client",
+	"step1_description": "Add SigNoz to your MCP client. Use a one-click install where available, or copy the config for manual setup. On first connect, the client will open a SigNoz authorization page — use the instance URL and API key from step 2.",
+	"step1_manual_fallback": "Or copy the config below for manual setup.",
+	"step1_client_docs_suffix": " setup docs",
+	"step1_add_to_client_prefix": "Add to ",
+
+	"client_cursor_install_label": "Add to Cursor",
+	"client_vscode_install_label": "Add to VS Code",
+	"client_claude_desktop_instructions": "Open Claude Desktop, go to Settings → Connectors → Add custom connector, and paste the endpoint URL above. Claude Desktop does not read remote MCP servers from claude_desktop_config.json — the connector UI is the only supported path.",
+	"client_other_instructions": "Most MCP clients that support remote HTTP servers will accept the endpoint URL above. Add it as a new MCP server in your client and paste your SigNoz API key when the client prompts for authentication. See the docs for client-specific instructions.",
+
+	"step2_title": "Authenticate from your client",
+	"step2_description": "On first connect, your client opens a SigNoz authorization page asking for two values:",
+	"step2_instance_url_label": "SigNoz Instance URL",
+	"step2_api_key_label": "API Key",
+	"step2_admin_cta": "Create service account",
+	"step2_admin_helper": "Create a service account, then add a new key inside it — paste that key into the API Key field.",
+	"step2_viewer_helper": "Only admins can create API keys. Ask your workspace admin for a key with read access, then paste it into the API Key field.",
+
+	"use_cases_title": "What you can do with it",
+	"use_cases_item_1": "Ask your AI assistant to investigate a spiking error rate.",
+	"use_cases_item_2": "Debug a slow service by walking through recent traces.",
+	"use_cases_item_3": "Summarize an alert and suggest likely root causes.",
+	"use_cases_item_4": "Generate dashboards or queries from a natural-language description.",
+	"use_cases_docs_link": "See more use cases",
+
+	"copy_tooltip_enabled": "Copy to clipboard",
+	"copy_tooltip_disabled": "Enter your Cloud region first",
+	"copy_aria_endpoint": "Copy MCP endpoint",
+	"copy_aria_instance_url": "Copy SigNoz instance URL",
+	"copy_aria_snippet_prefix": "Copy ",
+	"copy_aria_snippet_suffix": " config",
+
+	"toast_endpoint_copied": "Endpoint copied to clipboard",
+	"toast_snippet_copied": "Snippet copied to clipboard",
+	"toast_instance_url_copied": "Instance URL copied to clipboard",
+	"toast_region_required": "Enter your Cloud region before copying"
+}

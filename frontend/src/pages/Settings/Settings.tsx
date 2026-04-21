@@ -71,6 +71,11 @@ function SettingsPage(): JSX.Element {
 			}
 
 			if (isCloudUser) {
+				updatedItems = updatedItems.map((item) => ({
+					...item,
+					isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
+				}));
+
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
