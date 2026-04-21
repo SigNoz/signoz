@@ -46,28 +46,28 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, trace *t
 }
 
 // getUncollapsedSpanMap creates a map from uncollapsed spans ids and root to selected span path.
-// func getUncollapsedSpanMap(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) map[string]struct{} {
-// 	uncollapsedSpanMap := make(map[string]struct{}, len(uncollapsedSpans))
-// 	for _, spanID := range uncollapsedSpans {
-// 		uncollapsedSpanMap[spanID] = struct{}{}
-// 	}
+func getUncollapsedSpanMap(uncollapsedSpans []string, selectedSpanID string, traceRoots []*tracedetailtypes.WaterfallSpan, spanIDToSpanNodeMap map[string]*tracedetailtypes.WaterfallSpan) map[string]struct{} {
+	uncollapsedSpanMap := make(map[string]struct{}, len(uncollapsedSpans))
+	for _, spanID := range uncollapsedSpans {
+		uncollapsedSpanMap[spanID] = struct{}{}
+	}
 
-// 	for _, root := range traceRoots {
-// 		rootNode, exists := spanIDToSpanNodeMap[root.SpanID]
-// 		if !exists {
-// 			continue
-// 		}
-// 		if found, path := getPathFromRootToSelectedSpanID(rootNode, selectedSpanID); found {
-// 			for _, spanID := range path {
-// 				if spanID != selectedSpanID {
-// 					uncollapsedSpanMap[spanID] = struct{}{}
-// 				}
-// 			}
-// 			break
-// 		}
-// 	}
-// 	return uncollapsedSpanMap
-// }
+	for _, root := range traceRoots {
+		rootNode, exists := spanIDToSpanNodeMap[root.SpanID]
+		if !exists {
+			continue
+		}
+		if found, path := getPathFromRootToSelectedSpanID(rootNode, selectedSpanID); found {
+			for _, spanID := range path {
+				if spanID != selectedSpanID {
+					uncollapsedSpanMap[spanID] = struct{}{}
+				}
+			}
+			break
+		}
+	}
+	return uncollapsedSpanMap
+}
 
 // windowAroundIndex returns start/end indices for a window of SpanLimitPerRequest spans.
 func windowAroundIndex(selectedIndex, total int) (start, end int) {

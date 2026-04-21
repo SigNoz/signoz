@@ -48,21 +48,21 @@ type Event struct {
 // keys can be directly used to query spans and client need to know the actual fields.
 // This pattern should not be copied elsewhere.
 type WaterfallSpan struct {
-	Attributes    map[string]any    `json:"attributes"`
-	DurationNano  uint64            `json:"duration_nano"`
-	Events        []Event           `json:"events"`
-	Flags         uint32            `json:"flags"`
-	HasError      bool              `json:"has_error"`
-	IsRemote      string            `json:"is_remote"`
-	Kind          int32             `json:"-"`
-	KindString    string            `json:"kind_string"`
-	Name          string            `json:"name"`
-	ParentSpanID  string            `json:"parent_span_id"`
-	Resource      map[string]string `json:"resource"`
-	SpanID        string            `json:"span_id"`
-	TimeUnixMilli uint64            `json:"timestamp"`
-	TraceID       string            `json:"trace_id"`
-	TraceState    string            `json:"trace_state"`
+	Attributes   map[string]any    `json:"attributes"`
+	DurationNano uint64            `json:"duration_nano"`
+	Events       []Event           `json:"events"`
+	Flags        uint32            `json:"flags"`
+	HasError     bool              `json:"has_error"`
+	IsRemote     string            `json:"is_remote"`
+	Kind         int32             `json:"-"`
+	KindString   string            `json:"kind_string"`
+	Name         string            `json:"name"`
+	ParentSpanID string            `json:"parent_span_id"`
+	Resource     map[string]string `json:"resource"`
+	SpanID       string            `json:"span_id"`
+	TimeUnixNano uint64            `json:"-"`
+	TraceID      string            `json:"trace_id"`
+	TraceState   string            `json:"trace_state"`
 
 	// Calculated fields https://signoz.io/docs/traces-management/guides/derived-fields-spans
 	DBName             string `json:"db_name,omitempty"`
@@ -88,17 +88,17 @@ type WaterfallSpan struct {
 }
 
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
-func NewMissingWaterfallSpan(spanID, traceID string, timeUnixMilli, durationNano uint64) *WaterfallSpan {
+func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{
-		SpanID:        spanID,
-		TraceID:       traceID,
-		Name:          "Missing Span",
-		TimeUnixMilli: timeUnixMilli,
-		DurationNano:  durationNano,
-		Events:        make([]Event, 0),
-		Children:      make([]*WaterfallSpan, 0),
-		Attributes:    make(map[string]any),
-		Resource:      make(map[string]string),
+		SpanID:       spanID,
+		TraceID:      traceID,
+		Name:         "Missing Span",
+		TimeUnixNano: timeUnixNano,
+		DurationNano: durationNano,
+		Events:       make([]Event, 0),
+		Children:     make([]*WaterfallSpan, 0),
+		Attributes:   make(map[string]any),
+		Resource:     make(map[string]string),
 	}
 }
 
@@ -126,10 +126,10 @@ func (s *WaterfallSpan) computeSubTreeNodeCount() uint64 {
 // SortChildren recursively sorts children of each span by TimeUnixNano then Name.
 func (s *WaterfallSpan) SortChildren() {
 	sort.Slice(s.Children, func(i, j int) bool {
-		if s.Children[i].TimeUnixMilli == s.Children[j].TimeUnixMilli {
+		if s.Children[i].TimeUnixNano == s.Children[j].TimeUnixNano {
 			return s.Children[i].Name < s.Children[j].Name
 		}
-		return s.Children[i].TimeUnixMilli < s.Children[j].TimeUnixMilli
+		return s.Children[i].TimeUnixNano < s.Children[j].TimeUnixNano
 	})
 	for _, child := range s.Children {
 		child.SortChildren()
@@ -270,7 +270,7 @@ func (item *StorableSpan) ToSpan() *WaterfallSpan {
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
-		TimeUnixMilli:      uint64(item.StartTime.UnixMilli()),
+		TimeUnixNano:       uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
 	}
 }

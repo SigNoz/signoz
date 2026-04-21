@@ -78,7 +78,7 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 			if parentNode, exists := spanIDToSpanNodeMap[spanNode.ParentSpanID]; exists {
 				parentNode.Children = append(parentNode.Children, spanNode)
 			} else {
-				missingSpan := NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnixMilli, spanNode.DurationNano)
+				missingSpan := NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnixNano, spanNode.DurationNano)
 				missingSpan.Children = append(missingSpan.Children, spanNode)
 				spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
 				traceRoots = append(traceRoots, missingSpan)
@@ -95,10 +95,10 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	}
 
 	sort.Slice(traceRoots, func(i, j int) bool {
-		if traceRoots[i].TimeUnixMilli == traceRoots[j].TimeUnixMilli {
+		if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
 			return traceRoots[i].Name < traceRoots[j].Name
 		}
-		return traceRoots[i].TimeUnixMilli < traceRoots[j].TimeUnixMilli
+		return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
 	})
 
 	return NewWaterfallTrace(
@@ -240,6 +240,11 @@ func NewWaterfallResponseFromWaterfallTrace(
 		serviceDurationsMillis[svc] = dur / 1_000_000
 	}
 
+	// convert start timestamp to millis because client is expecting it in millis
+	for _, span := range selectedSpans {
+		span.TimeUnixNano = span.TimeUnixNano / 1_000_000
+	}
+
 	return &WaterfallResponse{
 		Spans:                         selectedSpans,
 		UncollapsedSpans:              uncollapsedSpans,
@@ -285,15 +290,15 @@ func calculateServiceTime(spanIDToSpanNodeMap map[string]*WaterfallSpan) map[str
 	totalTimes := make(map[string]uint64)
 	for service, spans := range serviceSpans {
 		sort.Slice(spans, func(i, j int) bool {
-			return spans[i].TimeUnixMilli < spans[j].TimeUnixMilli
+			return spans[i].TimeUnixNano < spans[j].TimeUnixNano
 		})
 
-		currentStart := spans[0].TimeUnixMilli * 1_000_000
+		currentStart := spans[0].TimeUnixNano
 		currentEnd := currentStart + spans[0].DurationNano
 		total := uint64(0)
 
 		for _, span := range spans[1:] {
-			startNano := span.TimeUnixMilli * 1_000_000
+			startNano := span.TimeUnixNano
 			endNano := startNano + span.DurationNano
 			if currentEnd >= startNano {
 				if endNano > currentEnd {
