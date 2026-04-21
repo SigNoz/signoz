@@ -34,11 +34,16 @@ export interface TooltipLayoutInfo {
 	height: number;
 }
 
+export interface TooltipSyncMetadata {
+	yAxisUnit?: string;
+}
+
 export interface TooltipPluginProps {
 	config: UPlotConfigBuilder;
 	canPinTooltip?: boolean;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
+	syncMetadata?: TooltipSyncMetadata;
 	render: (args: TooltipRenderArgs) => ReactNode;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;
