@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../fixtures/auth';
 
 test.describe('Dashboards List Page', () => {
   test.beforeEach(async ({ page }) => {

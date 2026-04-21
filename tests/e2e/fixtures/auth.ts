@@ -1,15 +1,34 @@
-import { Page } from '@playwright/test';
+import { test as base, expect, type Page } from '@playwright/test';
 
 // Read credentials from environment variables
 const username = process.env.SIGNOZ_E2E_USERNAME;
 const password = process.env.SIGNOZ_E2E_PASSWORD;
 
+export type AuthFixtures = {
+  /**
+   * A Page that is already logged in. Declare as a test param to skip the
+   * login boilerplate in beforeEach:
+   *
+   *   test('x', async ({ authedPage: page }) => { ... });
+   */
+  authedPage: Page;
+};
+
+export const test = base.extend<AuthFixtures>({
+  authedPage: async ({ page }, use) => {
+    await ensureLoggedIn(page);
+    await use(page);
+  },
+});
+
+export { expect };
+
 /**
  * Ensures the user is logged in.
  *
  * When storageState is configured in playwright.config.ts (the default), this
- * simply navigates to /home — the session is already restored from .auth/user.json
- * and no login form interaction is needed.
+ * simply navigates to /home — the session is already restored from
+ * .auth/user.json and no login form interaction is needed.
  *
  * Falls back to a full login flow if the session is missing or expired.
  */

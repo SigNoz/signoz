@@ -125,7 +125,7 @@ Every test file MUST follow this structure:
 // seed: tests/seed.spec.ts
 
 import { expect, test } from '@playwright/test';
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../fixtures/auth';
 
 test.describe('[Feature Name]', () => {
   test.beforeEach(async ({ page }) => {
@@ -372,7 +372,7 @@ SIGNOZ_USER_ROLE=Admin  # or Editor, Viewer
 ### Login Pattern
 
 ```typescript
-import { ensureLoggedIn } from '../../utils/login.util';
+import { ensureLoggedIn } from '../../fixtures/auth';
 
 test.beforeEach(async ({ page }) => {
   await ensureLoggedIn(page);

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ensureLoggedIn } from '../utils/login.util';
+import { ensureLoggedIn } from '../fixtures/auth';
 
 /**
  * Seed test for Playwright Agents
