@@ -16,6 +16,16 @@ from typing import Any, Dict, List
 import clickhouse_connect
 from fastapi import FastAPI, HTTPException
 
+from fixtures.logs import (
+    Logs,
+    insert_logs_to_clickhouse,
+    truncate_logs_tables,
+)
+from fixtures.metrics import (
+    Metrics,
+    insert_metrics_to_clickhouse,
+    truncate_metrics_tables,
+)
 from fixtures.traces import (
     Traces,
     insert_traces_to_clickhouse,
@@ -84,3 +94,61 @@ def delete_traces() -> Dict[str, bool]:
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/telemetry/logs")
+def post_logs(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
+    try:
+        logs = [Logs.from_dict(_tag(item)) for item in payload]
+        insert_logs_to_clickhouse(get_conn(), logs)
+        logger.info("inserted %d logs", len(logs))
+        return {"inserted": len(logs)}
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
+    except Exception as e:
+        logger.exception("insert failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.delete("/telemetry/logs")
+def delete_logs() -> Dict[str, bool]:
+    try:
+        truncate_logs_tables(get_conn(), CH_CLUSTER)
+        logger.info("truncated logs tables")
+        return {"truncated": True}
+    except Exception as e:
+        logger.exception("truncate failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.post("/telemetry/metrics")
+def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
+    try:
+        # Metrics data has label dicts at the top level (no `resources` key
+        # like traces/logs); tagging is on the resource_attrs inside the
+        # labels wrapper that Metrics.from_dict unpacks.
+        metrics = [Metrics.from_dict(_tag_metrics(item)) for item in payload]
+        insert_metrics_to_clickhouse(get_conn(), metrics)
+        logger.info("inserted %d metrics", len(metrics))
+        return {"inserted": len(metrics)}
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
+    except Exception as e:
+        logger.exception("insert failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.delete("/telemetry/metrics")
+def delete_metrics() -> Dict[str, bool]:
+    try:
+        truncate_metrics_tables(get_conn(), CH_CLUSTER)
+        logger.info("truncated metrics tables")
+        return {"truncated": True}
+    except Exception as e:
+        logger.exception("truncate failed")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+def _tag_metrics(item: Dict[str, Any]) -> Dict[str, Any]:
+    resource_attrs = {**(item.get("resource_attrs") or {}), **SEEDER_MARKER}
+    return {**item, "resource_attrs": resource_attrs}
