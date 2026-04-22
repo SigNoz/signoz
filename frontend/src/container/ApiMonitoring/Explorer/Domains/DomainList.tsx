@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
+import emptyStateUrl from 'assets/Icons/emptyState.svg';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
@@ -23,8 +26,6 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
-import emptyStateUrl from '@/assets/Icons/emptyState.svg';
-
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
@@ -40,6 +41,7 @@ function DomainList(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const queryClient = useQueryClient();
 	const { currentQuery, handleRunQuery } = useQueryBuilder();
 	const query = useMemo(() => currentQuery?.builder?.queryData[0] || null, [
 		currentQuery,
@@ -52,6 +54,15 @@ function DomainList(): JSX.Element {
 	});
 
 	const compositeData = useGetCompositeQueryParam();
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
+	}, [queryClient]);
+
+	const handleStageAndRunQuery = useCallback(() => {
+		queryClient.invalidateQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
+		handleRunQuery();
+	}, [queryClient, handleRunQuery]);
 
 	const { data, isLoading, isFetching } = useListOverview({
 		start: minTime,
@@ -119,7 +130,13 @@ function DomainList(): JSX.Element {
 		<section className={cx('api-module-right-section')}>
 			<Toolbar
 				showAutoRefresh={false}
-				rightActions={<RightToolbarActions onStageRunQuery={handleRunQuery} />}
+				rightActions={
+					<RightToolbarActions
+						onStageRunQuery={handleStageAndRunQuery}
+						isLoadingQueries={isFetching}
+						handleCancelQuery={handleCancelQuery}
+					/>
+				}
 			/>
 			<div className={cx('api-monitoring-list-header')}>
 				<QuerySearch
