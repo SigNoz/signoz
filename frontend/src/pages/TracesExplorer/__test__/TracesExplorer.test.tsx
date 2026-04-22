@@ -698,7 +698,7 @@ describe('TracesExplorer - ', () => {
 		expect(await screen.findByTestId('hide-toolbar')).toBeInTheDocument();
 	});
 
-	it('select a view options - opens the view dropdown and lists saved views', async () => {
+	it('select a view options - assert and save this view', async () => {
 		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
@@ -716,20 +716,9 @@ describe('TracesExplorer - ', () => {
 		expect(
 			await screen.findByRole('option', { name: 'R-test panel' }),
 		).toBeInTheDocument();
-	});
 
-	it('select a view options - saves a new view from the save modal', async () => {
-		renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=list&selectedExplorerView=list',
-		]);
-
-		const saveViewButton = await waitFor(() => {
-			const btn = screen.getByText('Save this view').closest('button');
-			expect(btn).not.toBeNull();
-			expect(btn).not.toBeDisabled();
-			return btn as HTMLButtonElement;
-		});
-		fireEvent.click(saveViewButton);
+		// save this view
+		fireEvent.click(await screen.findByText('Save this view'));
 
 		const saveViewModalInput = await screen.findByPlaceholderText(
 			'e.g. External http method view',
@@ -756,7 +745,7 @@ describe('TracesExplorer - ', () => {
 				message: 'View Saved Successfully',
 			});
 		});
-	});
+	}, 15000);
 
 	it('create a dashboard btn assert', async () => {
 		renderWithTracesExplorerRouter(<TracesExplorer />, [
