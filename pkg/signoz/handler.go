@@ -12,8 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/modules/aio11ypricingrule"
-	"github.com/SigNoz/signoz/pkg/modules/aio11ypricingrule/implaio11ypricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -69,7 +69,7 @@ type Handlers struct {
 	CloudIntegrationHandler  cloudintegration.Handler
 	RuleStateHistory         rulestatehistory.Handler
 	AlertmanagerHandler      alertmanager.Handler
-	AIO11yPricingRuleHandler aio11ypricingrule.Handler
+	LLMPricingRuleHandler    llmpricingrule.Handler
 	RulerHandler             ruler.Handler
 }
 
@@ -111,7 +111,7 @@ func NewHandlers(
 		RuleStateHistory:         implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler:  implcloudintegration.NewHandler(modules.CloudIntegration),
 		AlertmanagerHandler:      signozalertmanager.NewHandler(alertmanagerService),
-		AIO11yPricingRuleHandler: implaio11ypricingrule.NewHandler(nil, providerSettings),
+		LLMPricingRuleHandler:    impllmpricingrule.NewHandler(nil, providerSettings),
 		RulerHandler:             signozruler.NewHandler(rulerService),
 	}
 }

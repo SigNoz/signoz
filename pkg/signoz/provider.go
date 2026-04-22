@@ -280,7 +280,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.CloudIntegrationHandler,
 			handlers.RuleStateHistory,
 			handlers.AlertmanagerHandler,
-			handlers.AIO11yPricingRuleHandler,
+			handlers.LLMPricingRuleHandler,
 			handlers.RulerHandler,
 		),
 	)

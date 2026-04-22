@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/aio11ypricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -61,7 +61,7 @@ type provider struct {
 	cloudIntegrationHandler  cloudintegration.Handler
 	ruleStateHistoryHandler  rulestatehistory.Handler
 	alertmanagerHandler      alertmanager.Handler
-	aiO11yPricingRuleHandler aio11ypricingrule.Handler
+	llmPricingRuleHandler    llmpricingrule.Handler
 	rulerHandler             ruler.Handler
 }
 
@@ -90,7 +90,7 @@ func NewFactory(
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
-	aiO11yPricingRuleHandler aio11ypricingrule.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -122,7 +122,7 @@ func NewFactory(
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
 			alertmanagerHandler,
-			aiO11yPricingRuleHandler,
+			llmPricingRuleHandler,
 			rulerHandler,
 		)
 	})
@@ -156,7 +156,7 @@ func newProvider(
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
-	aiO11yPricingRuleHandler aio11ypricingrule.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
@@ -189,7 +189,7 @@ func newProvider(
 		cloudIntegrationHandler:  cloudIntegrationHandler,
 		ruleStateHistoryHandler:  ruleStateHistoryHandler,
 		alertmanagerHandler:      alertmanagerHandler,
-		aiO11yPricingRuleHandler: aiO11yPricingRuleHandler,
+		llmPricingRuleHandler:    llmPricingRuleHandler,
 		rulerHandler:             rulerHandler,
 	}
 
@@ -295,8 +295,8 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
-	if err := provider.addAIO11yRoutes(router); err != nil {
-		return nil
+	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
+		return err
 	}
 
 	if err := provider.addRulerRoutes(router); err != nil {

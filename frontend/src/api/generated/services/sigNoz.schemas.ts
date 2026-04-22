@@ -4,219 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-export enum Aio11YpricingruletypesCacheModeDTO {
-	subtract = 'subtract',
-	additive = 'additive',
-	unknown = 'unknown',
-}
-export interface Aio11YpricingruletypesGettablePricingRuleDTO {
-	cacheMode: Aio11YpricingruletypesCacheModeDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheRead: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheWrite: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costInput: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costOutput: number;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isOverride: boolean;
-	/**
-	 * @type string
-	 */
-	model: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	modelPattern: string[] | null;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
-	 */
-	syncedAt?: Date | null;
-	unit: Aio11YpricingruletypesUnitDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface Aio11YpricingruletypesGettablePricingRulesDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	items: Aio11YpricingruletypesGettablePricingRuleDTO[] | null;
-	/**
-	 * @type integer
-	 */
-	limit: number;
-	/**
-	 * @type integer
-	 */
-	offset: number;
-	/**
-	 * @type integer
-	 */
-	total: number;
-}
-
-export interface Aio11YpricingruletypesPostablePricingRuleDTO {
-	cacheMode: Aio11YpricingruletypesCacheModeDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheRead: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheWrite: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costInput: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costOutput: number;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	/**
-	 * @type string
-	 */
-	modelName: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	modelPattern: string[] | null;
-	unit: Aio11YpricingruletypesUnitDTO;
-}
-
-export interface Aio11YpricingruletypesPricingRuleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface Aio11YpricingruletypesSyncPricingRulesRequestDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	rules: Aio11YpricingruletypesPricingRuleDTO[] | null;
-}
-
-export enum Aio11YpricingruletypesUnitDTO {
-	per_million_tokens = 'per_million_tokens',
-}
-export interface Aio11YpricingruletypesUpdatablePricingRuleDTO {
-	cacheMode?: Aio11YpricingruletypesCacheModeDTO;
-	/**
-	 * @type number
-	 * @nullable true
-	 */
-	costCacheRead?: number | null;
-	/**
-	 * @type number
-	 * @nullable true
-	 */
-	costCacheWrite?: number | null;
-	/**
-	 * @type number
-	 * @nullable true
-	 */
-	costInput?: number | null;
-	/**
-	 * @type number
-	 * @nullable true
-	 */
-	costOutput?: number | null;
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	enabled?: boolean | null;
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	isOverride?: boolean | null;
-	/**
-	 * @type string
-	 * @nullable true
-	 */
-	modelName?: string | null;
-	/**
-	 * @type array
-	 */
-	modelPattern?: string[];
-	unit?: Aio11YpricingruletypesUnitDTO;
-}
-
 export interface AlertmanagertypesChannelDTO {
 	/**
 	 * @type string
@@ -3264,6 +3051,188 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export enum LlmpricingruletypesCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export interface LlmpricingruletypesGettablePricingRulesDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: LlmpricingruletypesPricingRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface LlmpricingruletypesPricingRuleDTO {
+	cacheMode: LlmpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheRead: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheWrite: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costInput: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costOutput: number;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isOverride: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	sourceId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	syncedAt?: Date | null;
+	unit: LlmpricingruletypesUnitDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export enum LlmpricingruletypesUnitDTO {
+	per_million_tokens = 'per_million_tokens',
+}
+export interface LlmpricingruletypesUpdatablePricingRuleDTO {
+	cacheMode: LlmpricingruletypesCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheRead: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costCacheWrite: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costInput: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	costOutput: number;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	id?: string | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	isOverride?: boolean | null;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	sourceId?: string | null;
+	unit: LlmpricingruletypesUnitDTO;
+}
+
+export interface LlmpricingruletypesUpsertPricingRulesRequestDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	rules: LlmpricingruletypesUpdatablePricingRuleDTO[] | null;
+}
+
+export interface LlmpricingruletypesUpsertPricingRulesResponseDTO {
+	/**
+	 * @type integer
+	 */
+	inserted: number;
+	/**
+	 * @type integer
+	 */
+	preserved: number;
+	/**
+	 * @type integer
+	 */
+	updated: number;
+}
+
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -5904,52 +5873,6 @@ export interface ZeustypesPostableProfileDTO {
 	where_did_you_discover_signoz: string;
 }
 
-export type ListPricingRulesParams = {
-	/**
-	 * @type integer
-	 * @description undefined
-	 */
-	offset?: number;
-	/**
-	 * @type integer
-	 * @description undefined
-	 */
-	limit?: number;
-};
-
-export type ListPricingRules200 = {
-	data: Aio11YpricingruletypesGettablePricingRulesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreatePricingRule201 = {
-	data: Aio11YpricingruletypesGettablePricingRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeletePricingRulePathParameters = {
-	id: string;
-};
-export type GetPricingRulePathParameters = {
-	id: string;
-};
-export type GetPricingRule200 = {
-	data: Aio11YpricingruletypesGettablePricingRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type UpdatePricingRulePathParameters = {
-	id: string;
-};
 export type GetAlerts200 = {
 	/**
 	 * @type array
@@ -6449,6 +6372,49 @@ export type GetGlobalConfig200 = {
 
 export type CreateInvite201 = {
 	data: TypesInviteDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListLLMPricingRulesParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListLLMPricingRules200 = {
+	data: LlmpricingruletypesGettablePricingRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpsertLLMPricingRules200 = {
+	data: LlmpricingruletypesUpsertPricingRulesResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRule200 = {
+	data: LlmpricingruletypesPricingRuleDTO;
 	/**
 	 * @type string
 	 */
