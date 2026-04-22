@@ -234,6 +234,16 @@ func NewAccountConfigFromUpdatable(provider CloudProviderType, config *Updatable
 		}
 
 		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Config.AWS.Regions}}, nil
+	case CloudProviderTypeAzure:
+		if config.Config.Azure == nil {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "Azure config can not be nil for Azure provider")
+		}
+
+		if len(config.Config.Azure.ResourceGroups) == 0 {
+			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one resource group is required for Azure provider")
+		}
+
+		return &AccountConfig{Azure: &AzureAccountConfig{ResourceGroups: config.Config.Azure.ResourceGroups}}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -255,8 +265,14 @@ func GetSigNozAPIURLFromDeployment(deployment *zeustypes.GettableDeployment) (st
 }
 
 func (account *Account) Update(provider CloudProviderType, config *AccountConfig) error {
+	// deployment region can not be updated once set for Azure
+	if provider == CloudProviderTypeAzure {
+		config.Azure.DeploymentRegion = account.Config.Azure.DeploymentRegion
+	}
+
 	account.Config = config
 	account.UpdatedAt = time.Now()
+
 	return nil
 }
 
