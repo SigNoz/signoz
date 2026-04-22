@@ -769,9 +769,12 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesAzureLogsCollectionStrategy'
         metrics:
           $ref: '#/components/schemas/CloudintegrationtypesAzureMetricsCollectionStrategy'
+        resourceProvider:
+          type: string
         resourceType:
           type: string
       required:
+      - resourceProvider
       - resourceType
       type: object
     CloudintegrationtypesCloudIntegrationService:
@@ -1071,8 +1074,8 @@ components:
       - s3sync
       - sns
       - sqs
-      - blobstorage
-      - frontdoor
+      - storageaccountsblob
+      - cdnprofile
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:

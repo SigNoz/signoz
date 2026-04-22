@@ -26,7 +26,7 @@ var (
 
 	// Azure services.
 	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
-	AzureServiceFrontDoor           = ServiceID{valuer.NewString("frontdoor")}
+	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
 )
 
 func (ServiceID) Enum() []any {
@@ -45,7 +45,7 @@ func (ServiceID) Enum() []any {
 		AWSServiceSNS,
 		AWSServiceSQS,
 		AzureServiceStorageAccountsBlob,
-		AzureServiceFrontDoor,
+		AzureServiceCDNProfile,
 	}
 }
 
@@ -68,7 +68,7 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 	},
 	CloudProviderTypeAzure: {
 		AzureServiceStorageAccountsBlob,
-		AzureServiceFrontDoor,
+		AzureServiceCDNProfile,
 	},
 }
 
