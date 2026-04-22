@@ -34,6 +34,7 @@ export const createMockAlertContextState = (
 	isUpdatingAlertRule: false,
 	updateAlertRule: jest.fn(),
 	isEditMode: false,
+	ruleId: '',
 	...overrides,
 });
 
