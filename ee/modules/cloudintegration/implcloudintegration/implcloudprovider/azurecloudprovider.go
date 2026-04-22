@@ -80,7 +80,8 @@ func (provider *azurecloudprovider) BuildIntegrationConfig(
 		}
 
 		entry := &cloudintegrationtypes.AzureTelemetryCollectionStrategy{
-			ResourceType: strategy.ResourceType,
+			ResourceProvider: strategy.ResourceProvider,
+			ResourceType:     strategy.ResourceType,
 		}
 
 		if metricsEnabled && strategy.Metrics != nil {

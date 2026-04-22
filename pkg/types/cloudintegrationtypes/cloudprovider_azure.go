@@ -75,10 +75,10 @@ func NewAzureIntegrationConfig(
 	}
 }
 
-func NewAzureConnectionArtifact(cliCommand, cloudShellCommand string) *AzureConnectionArtifact {
+func NewAzureConnectionArtifact(cliCommand, cloudPowerShellCommand string) *AzureConnectionArtifact {
 	return &AzureConnectionArtifact{
-		CLICommand:        cliCommand,
-		CloudShellCommand: cloudShellCommand,
+		CLICommand:             cliCommand,
+		CloudPowerShellCommand: cloudPowerShellCommand,
 	}
 }
 
