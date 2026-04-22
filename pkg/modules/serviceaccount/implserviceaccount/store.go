@@ -131,7 +131,7 @@ func (store *store) GetServiceAccountsByOrgIDAndRoleID(ctx context.Context, orgI
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&serviceAccounts).
-		Join(`JOIN service_account_role ON service_account_role.service_account.id = service_account.id`).
+		Join(`JOIN service_account_role ON service_account_role.service_account_id = service_account.id`).
 		Where(`service_account.org_id = ?`, orgID).
 		Where("service_account_role.role_id = ?", roleID).
 		Scan(ctx)
