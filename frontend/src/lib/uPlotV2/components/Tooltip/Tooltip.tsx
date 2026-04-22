@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { TooltipProps } from '../types';
 import TooltipFooter from './components/TooltipFooter/TooltipFooter';
