@@ -16,6 +16,7 @@ def _env_file() -> Path:
 def test_setup(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
 ) -> None:
     """
@@ -41,6 +42,7 @@ def test_setup(
 def test_teardown(
     signoz: types.SigNoz,  # pylint: disable=unused-argument
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
 ) -> None:
     """Companion to test_setup — invoked with --teardown to free containers."""

@@ -3,6 +3,8 @@ from typing import Callable, Dict, List, Tuple
 
 import pytest
 import requests
+from wiremock.client import Mappings
+from wiremock.constants import Config
 from wiremock.resources.mappings import (
     HttpMethods,
     Mapping,
@@ -148,6 +150,119 @@ def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], Tuple[str, str]]:
         return access_token, refresh_token
 
     return _get_tokens
+
+
+@pytest.fixture(name="apply_license", scope="package")
+def apply_license(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument,redefined-outer-name
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.Operation:
+    """Stub Zeus license-lookup, then POST /api/v3/licenses so the BE flips
+    to ENTERPRISE. Package-scoped so an e2e bootstrap can pull it in and
+    every spec inherits the licensed state."""
+
+    def create() -> types.Operation:
+        Config.base_url = signoz.zeus.host_configs["8080"].get("/__admin")
+        Mappings.create_mapping(
+            mapping=Mapping(
+                request=MappingRequest(
+                    method=HttpMethods.GET,
+                    url="/v2/licenses/me",
+                    headers={
+                        "X-Signoz-Cloud-Api-Key": {
+                            WireMockMatchers.EQUAL_TO: "secret-key"
+                        }
+                    },
+                ),
+                response=MappingResponse(
+                    status=200,
+                    json_body={
+                        "status": "success",
+                        "data": {
+                            "id": "0196360e-90cd-7a74-8313-1aa815ce2a67",
+                            "key": "secret-key",
+                            "valid_from": 1732146923,
+                            "valid_until": -1,
+                            "status": "VALID",
+                            "state": "EVALUATING",
+                            "plan": {"name": "ENTERPRISE"},
+                            "platform": "CLOUD",
+                            "features": [],
+                            "event_queue": {},
+                        },
+                    },
+                ),
+                persistent=False,
+            )
+        )
+
+        ctx_resp = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
+            params={
+                "email": USER_ADMIN_EMAIL,
+                "ref": f"{signoz.self.host_configs['8080'].base()}",
+            },
+            timeout=5,
+        )
+        assert ctx_resp.status_code == HTTPStatus.OK
+        org_id = ctx_resp.json()["data"]["orgs"][0]["id"]
+
+        login_resp = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
+            json={
+                "email": USER_ADMIN_EMAIL,
+                "password": USER_ADMIN_PASSWORD,
+                "orgId": org_id,
+            },
+            timeout=5,
+        )
+        assert login_resp.status_code == HTTPStatus.OK
+        access_token = login_resp.json()["data"]["accessToken"]
+
+        resp = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v3/licenses"),
+            json={"key": "secret-key"},
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=5,
+        )
+        # 202 = applied, 409 = already applied. Either is a success.
+        assert resp.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT)
+
+        # The ENTERPRISE license flips on the `onboarding` feature which
+        # redirects first-time admins to the onboarding questionnaire on
+        # every navigation. Mark the org's onboarding preference complete
+        # so specs can navigate directly to the feature under test.
+        pref_resp = requests.put(
+            signoz.self.host_configs["8080"].get(
+                "/api/v1/org/preferences/org_onboarding"
+            ),
+            json={"value": True},
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=5,
+        )
+        assert pref_resp.status_code in (
+            HTTPStatus.OK,
+            HTTPStatus.NO_CONTENT,
+        )
+        return types.Operation(name="apply_license")
+
+    def delete(_: types.Operation) -> None:
+        pass
+
+    def restore(cache: dict) -> types.Operation:
+        return types.Operation(name=cache["name"])
+
+    return reuse.wrap(
+        request,
+        pytestconfig,
+        "apply_license",
+        lambda: types.Operation(name=""),
+        create,
+        delete,
+        restore,
+    )
 
 
 # This is not a fixture purposefully, we just want to add a license to the signoz instance.

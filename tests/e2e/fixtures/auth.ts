@@ -49,9 +49,11 @@ async function login(page: Page, user: User): Promise<void> {
   await page.getByTestId('initiate_login').click();
   await page.getByTestId('password').fill(user.password);
   await page.getByRole('button', { name: 'Sign in with Password' }).click();
-  await page
-    .getByText('Hello there, Welcome to your')
-    .waitFor({ state: 'visible' });
+  // Post-login lands somewhere different depending on whether the org is
+  // licensed (onboarding flow on ENTERPRISE) or not (legacy "Hello there"
+  // welcome). Wait for URL to move off /login — whichever page follows
+  // is fine, each spec navigates to the feature under test anyway.
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'));
 }
 
 export const test = base.extend<{
