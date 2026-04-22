@@ -494,9 +494,7 @@ def truncate_logs_tables(conn, cluster: str) -> None:
     """Truncate all logs tables. Used by the pytest fixture teardown and by
     the seeder's DELETE /telemetry/logs endpoint."""
     for table in _LOGS_TABLES_TO_TRUNCATE:
-        conn.query(
-            f"TRUNCATE TABLE signoz_logs.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+        conn.query(f"TRUNCATE TABLE signoz_logs.{table} ON CLUSTER '{cluster}' SYNC")
 
 
 @pytest.fixture(name="insert_logs", scope="function")

@@ -561,9 +561,7 @@ def truncate_metrics_tables(conn, cluster: str) -> None:
     """Truncate all metrics tables. Used by the pytest fixture teardown and by
     the seeder's DELETE /telemetry/metrics endpoint."""
     for table in _METRICS_TABLES_TO_TRUNCATE:
-        conn.query(
-            f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+        conn.query(f"TRUNCATE TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' SYNC")
 
 
 @pytest.fixture(name="insert_metrics", scope="function")

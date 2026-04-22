@@ -810,9 +810,7 @@ def truncate_traces_tables(conn, cluster: str) -> None:
     """Truncate all traces tables. Used by the pytest fixture teardown and by
     the seeder's DELETE /telemetry/traces endpoint."""
     for table in _TRACES_TABLES_TO_TRUNCATE:
-        conn.query(
-            f"TRUNCATE TABLE signoz_traces.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+        conn.query(f"TRUNCATE TABLE signoz_traces.{table} ON CLUSTER '{cluster}' SYNC")
 
 
 @pytest.fixture(name="insert_traces", scope="function")
