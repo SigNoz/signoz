@@ -87,6 +87,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	render.Success(rw, http.StatusCreated, group)
 }
 
 // UpdateGroup handles PUT /api/v1/span_attribute_mapping_groups/{id}.
