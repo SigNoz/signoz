@@ -1,5 +1,5 @@
 [project]
-name = "signoz-tests"
+name = "tests"
 version = "0.1.0"
 description = ""
 authors = [{ name = "therealpandey", email = "vibhupandey28@gmail.com" }]

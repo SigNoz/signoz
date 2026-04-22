@@ -57,7 +57,7 @@ def get_conn():
     return _conn
 
 
-app = FastAPI(title="signoz-tests seeder", version="0.1.0")
+app = FastAPI(title="seeder", version="dev")
 
 
 @app.get("/healthz")
