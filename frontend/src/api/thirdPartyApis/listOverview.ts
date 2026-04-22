@@ -6,15 +6,20 @@ import { PayloadProps, Props } from 'types/api/thirdPartyApis/listOverview';
 
 const listOverview = async (
 	props: Props,
+	signal?: AbortSignal,
 ): Promise<SuccessResponseV2<PayloadProps>> => {
 	const { start, end, show_ip: showIp, filter } = props;
 	try {
-		const response = await axios.post(`/third-party-apis/overview/list`, {
-			start,
-			end,
-			show_ip: showIp,
-			filter,
-		});
+		const response = await axios.post(
+			`/third-party-apis/overview/list`,
+			{
+				start,
+				end,
+				show_ip: showIp,
+				filter,
+			},
+			{ signal },
+		);
 
 		return {
 			httpStatusCode: response.status,
