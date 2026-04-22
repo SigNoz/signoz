@@ -1,5 +1,17 @@
 package cloudintegrationtypes
 
+import (
+	"fmt"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var (
+	AgentArmTemplateS3Path   = valuer.NewString("https://signoz-integrations.s3.us-east-1.amazonaws.com/azure-arm-template-%s.json")
+	AgentDeploymentStackName = valuer.NewString("signoz-integration")
+)
+
 type AzureAccountConfig struct {
 	DeploymentRegion string   `json:"deploymentRegion" required:"true"`
 	ResourceGroups   []string `json:"resourceGroups" required:"true" nullable:"false"`
@@ -59,4 +71,74 @@ func NewAzureIntegrationConfig(
 		ResourceGroups:              resourceGroups,
 		TelemetryCollectionStrategy: strategies,
 	}
+}
+
+func NewAzureConnectionArtifact(cliCommand, cloudShellCommand string) *AzureConnectionArtifact {
+	return &AzureConnectionArtifact{
+		CLICommand:        cliCommand,
+		CloudShellCommand: cloudShellCommand,
+	}
+}
+
+func NewAzureConnectionCLICommand(
+	accountID valuer.UUID,
+	agentVersion string,
+	creds *Credentials,
+	cfg *AzurePostableAccountConfig,
+) string {
+	templateURL := fmt.Sprintf(AgentArmTemplateS3Path.StringValue(), agentVersion)
+	lines := []string{
+		"az stack sub create",
+		fmt.Sprintf("  --name %s", AgentDeploymentStackName.StringValue()),
+		fmt.Sprintf("  --location %s", cfg.DeploymentRegion),
+		fmt.Sprintf("  --template-uri %s", templateURL),
+		"  --parameters",
+		fmt.Sprintf("    location='%s'", cfg.DeploymentRegion),
+		fmt.Sprintf("    signozApiKey='%s'", creds.SigNozAPIKey),
+		fmt.Sprintf("    signozApiUrl='%s'", creds.SigNozAPIURL),
+		fmt.Sprintf("    signozIngestionUrl='%s'", creds.IngestionURL),
+		fmt.Sprintf("    signozIngestionKey='%s'", creds.IngestionKey),
+		fmt.Sprintf("    signozCloudIntegrationAccountId='%s'", accountID.StringValue()),
+		"  --action-on-unmanage deleteAll",
+		"  --deny-settings-mode none",
+	}
+	return strings.Join(lines, " \\\n")
+}
+
+func NewAzureConnectionPowerShellCommand(
+	accountID valuer.UUID,
+	agentVersion string,
+	creds *Credentials,
+	cfg *AzurePostableAccountConfig,
+) string {
+	params := []struct{ k, v string }{
+		{"location", cfg.DeploymentRegion},
+		{"signozApiKey", creds.SigNozAPIKey},
+		{"signozApiUrl", creds.SigNozAPIURL},
+		{"signozIngestionUrl", creds.IngestionURL},
+		{"signozIngestionKey", creds.IngestionKey},
+		{"signozCloudIntegrationAccountId", accountID.StringValue()},
+		{"rgName", "signoz-integration-rg"},
+		{"containerEnvName", "signoz-integration-agent-env"},
+		{"deploymentEnv", "production"},
+	}
+
+	const keyWidth = 36
+	var paramLines []string
+	for _, p := range params {
+		paramLines = append(paramLines, fmt.Sprintf("    %-*s= \"%s\"", keyWidth, p.k, p.v))
+	}
+
+	templateURL := fmt.Sprintf(AgentArmTemplateS3Path.StringValue(), agentVersion)
+	return strings.Join([]string{
+		"New-AzSubscriptionDeploymentStack `",
+		fmt.Sprintf("  -Name \"%s\" `", AgentDeploymentStackName.StringValue()),
+		fmt.Sprintf("  -Location \"%s\" `", cfg.DeploymentRegion),
+		fmt.Sprintf("  -TemplateUri \"%s\" `", templateURL),
+		"  -TemplateParameterObject @{",
+		strings.Join(paramLines, "\n"),
+		"  } `",
+		"  -ActionOnUnmanage \"deleteAll\" `",
+		"  -DenySettingsMode \"none\"",
+	}, "\n")
 }
