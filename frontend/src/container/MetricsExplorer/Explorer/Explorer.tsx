@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Switch, Tooltip } from 'antd';
@@ -6,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -53,6 +55,12 @@ function Explorer(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
+
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+	}, [queryClient]);
 
 	const metricNames = useMemo(() => {
 		const currentMetricNames: string[] = [];
@@ -307,7 +315,11 @@ function Explorer(): JSX.Element {
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery()}
+							isLoadingQueries={isLoadingQueries}
+							handleCancelQuery={handleCancelQuery}
+						/>
 					</div>
 				</div>
 				<QueryBuilderV2
@@ -319,6 +331,7 @@ function Explorer(): JSX.Element {
 				/>
 				<div className="explore-content">
 					<TimeSeries
+						onFetchingStateChange={setIsLoadingQueries}
 						showOneChartPerQuery={showOneChartPerQuery}
 						setWarning={setWarning}
 						areAllMetricUnitsSame={areAllMetricUnitsSame}

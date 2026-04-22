@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -74,6 +75,16 @@ function LogsExplorer(): JSX.Element {
 	const chartQueryKeyRef = useRef<any>();
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+
+	const queryClient = useQueryClient();
+	const handleCancelQuery = useCallback(() => {
+		if (listQueryKeyRef.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+		if (chartQueryKeyRef.current) {
+			queryClient.cancelQueries(chartQueryKeyRef.current);
+		}
+	}, [queryClient]);
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
 
@@ -297,9 +308,8 @@ function LogsExplorer(): JSX.Element {
 							rightActions={
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery()}
-									listQueryKeyRef={listQueryKeyRef}
-									chartQueryKeyRef={chartQueryKeyRef}
 									isLoadingQueries={isLoadingQueries}
+									handleCancelQuery={handleCancelQuery}
 									showLiveLogs={showLiveLogs}
 								/>
 							}
