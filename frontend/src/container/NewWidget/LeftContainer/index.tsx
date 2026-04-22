@@ -1,5 +1,5 @@
-import { memo, useEffect } from 'react';
-import { useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -34,6 +34,7 @@ function LeftContainer({
 	isNewPanel = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
 
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
@@ -49,6 +50,10 @@ function LeftContainer({
 		],
 		[globalSelectedInterval, requestData, minTime, maxTime],
 	);
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(queryRangeKey);
+	}, [queryClient, queryRangeKey]);
+
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
 		enabled: !!stagedQuery,
 		queryKey: queryRangeKey,
@@ -75,8 +80,8 @@ function LeftContainer({
 			<QueryContainer className="query-section-left-container">
 				<QuerySection
 					selectedGraph={selectedGraph}
-					queryRangeKey={queryRangeKey}
 					isLoadingQueries={queryResponse.isFetching}
+					handleCancelQuery={handleCancelQuery}
 					selectedWidget={selectedWidget}
 					dashboardVersion={ENTITY_VERSION_V5}
 					dashboardId={selectedDashboard?.id}

@@ -127,6 +127,13 @@ function FormAlertRules({
 
 	// use query client
 	const ruleCache = useQueryClient();
+	const [isChartQueryCancelled, setIsChartQueryCancelled] = useState(false);
+	const [isLoadingAlertQuery, setIsLoadingAlertQuery] = useState(false);
+
+	const handleCancelAlertQuery = useCallback(() => {
+		ruleCache.cancelQueries(REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW);
+		setIsChartQueryCancelled(true);
+	}, [ruleCache]);
 
 	const isNewRule = !ruleId || isEmpty(ruleId);
 
@@ -713,6 +720,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -731,6 +740,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -913,7 +924,15 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={(): void => handleRunQuery()}
+							runQuery={(): void => {
+								setIsChartQueryCancelled(false);
+								ruleCache.invalidateQueries([
+									REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
+								]);
+								handleRunQuery();
+							}}
+							isLoadingQueries={isLoadingAlertQuery}
+							handleCancelQuery={handleCancelAlertQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}
