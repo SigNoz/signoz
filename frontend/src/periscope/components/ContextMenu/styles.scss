@@ -21,12 +21,12 @@
 	text-overflow: ellipsis;
 
 	&:hover {
-		background-color: var(--background);
+		background-color: var(--l1-background);
 	}
 
 	&:focus {
 		outline: none;
-		background-color: var(--background);
+		background-color: var(--l1-background);
 	}
 
 	&.disabled {
@@ -104,7 +104,7 @@
 			}
 
 			&:hover {
-				background-color: var(--bg-cherry-500);
+				background-color: var(--danger-background);
 				color: var(--l1-foreground);
 			}
 		}
@@ -121,7 +121,7 @@
 
 	// Set the menu popover background
 	.context-menu .ant-popover-inner {
-		background: var(--background) !important;
+		background: var(--l1-background) !important;
 		border: 1px solid var(--border) !important;
 	}
 }

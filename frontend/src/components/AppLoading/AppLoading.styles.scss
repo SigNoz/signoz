@@ -80,12 +80,12 @@
 
 	mask-image: radial-gradient(
 		circle at 50% 0,
-		color-mix(in srgb, var(--background) 10%, transparent) 0,
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0,
 		transparent 100%
 	);
 	-webkit-mask-image: radial-gradient(
 		circle at 50% 0,
-		color-mix(in srgb, var(--background) 10%, transparent) 0,
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0,
 		transparent 100%
 	);
 }

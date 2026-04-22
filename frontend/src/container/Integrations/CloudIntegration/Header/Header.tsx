@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { IntegrationType } from 'container/Integrations/types';
@@ -41,7 +41,7 @@ function Header({ title }: { title: IntegrationType }): JSX.Element {
 							'_blank',
 						);
 					}}
-					prefixIcon={<LifeBuoy size={12} />}
+					prefix={<LifeBuoy size={12} />}
 				>
 					Get Help
 				</Button>

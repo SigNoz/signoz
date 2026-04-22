@@ -35,7 +35,7 @@
 					}
 
 					.text {
-						color: var(--muted-foreground);
+						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 11px;
 						font-style: normal;
@@ -93,7 +93,7 @@
 				gap: 12px;
 
 				.title {
-					color: var(--muted-foreground);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -139,7 +139,8 @@
 					line-height: 18px;
 					letter-spacing: 0.08em;
 					text-align: left;
-					color: var(--muted-foreground);
+
+					color: var(--l1-foreground);
 				}
 
 				.menu-items {
@@ -177,7 +178,7 @@
 				padding: 12px;
 
 				.title {
-					color: var(--muted-foreground);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -330,7 +331,7 @@
 				}
 
 				.title {
-					color: var(--muted-foreground);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -480,172 +481,6 @@
 
 					.column-format {
 						margin-top: 0px;
-					}
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.format-options-popover {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: linear-gradient(
-				139deg,
-				rgba(255, 255, 255, 0.8) 0%,
-				rgba(255, 255, 255, 0.9) 98.68%
-			);
-			box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
-
-			.nested-menu-container {
-				.font-size-dropdown {
-					.back-btn {
-						.text {
-							color: var(--l2-background);
-						}
-					}
-
-					.content {
-						.option-btn {
-							.text {
-								color: var(--l2-background);
-							}
-
-							.text:hover {
-								color: var(--l3-background);
-							}
-						}
-					}
-				}
-
-				.add-new-column-container {
-					.add-new-column-header {
-						.title {
-							color: var(--l2-foreground);
-						}
-					}
-
-					.add-new-column-content {
-						.column-format-new-options {
-							.column-name {
-								color: var(--l2-background);
-
-								&.selected {
-									background-color: var(--l3-background);
-								}
-							}
-						}
-
-						.loading-container {
-							color: var(--l2-background);
-						}
-					}
-				}
-
-				.font-size-container {
-					.title {
-						color: var(--l2-foreground);
-					}
-
-					.value {
-						.font-value {
-							color: var(--l2-background);
-						}
-					}
-				}
-
-				.horizontal-line {
-					background: var(--l3-background);
-				}
-
-				.item-content {
-					.column-divider {
-						border-top: 2px solid var(--l1-border);
-					}
-				}
-
-				.max-lines-per-row {
-					.title {
-						color: var(--l2-foreground);
-
-						.lucide {
-							color: var(--l1-foreground);
-						}
-					}
-
-					.max-lines-per-row-input {
-						border: 1px solid var(--l1-border);
-
-						.periscope-btn {
-							background: var(--l3-background);
-						}
-					}
-				}
-
-				.menu-container {
-					.title {
-						color: var(--l2-foreground);
-					}
-
-					.item {
-						.item-label {
-							color: var(--l2-background);
-						}
-					}
-				}
-
-				.selected-item-content-container {
-					.title {
-						color: var(--l2-foreground);
-
-						.lucide {
-							color: var(--l1-foreground);
-						}
-					}
-
-					.horizontal-line {
-						background: var(--l3-background);
-					}
-
-					.item-content {
-						.max-lines-per-row-input {
-							border: 1px solid var(--l1-border);
-
-							.periscope-btn {
-								background: var(--l3-background);
-							}
-						}
-
-						.column-format,
-						.column-format-new-options {
-							.column-name {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-				}
-
-				&.active {
-					.nested-menu-container {
-						backdrop-filter: blur(18px);
-
-						.item {
-							.item-label {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-
-					.selected-item-content-container {
-						border: 1px solid var(--l1-border);
-						background: linear-gradient(
-							139deg,
-							rgba(255, 255, 255, 0.8) 0%,
-							rgba(255, 255, 255, 0.9) 98.68%
-						);
-
-						box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
 					}
 				}
 			}

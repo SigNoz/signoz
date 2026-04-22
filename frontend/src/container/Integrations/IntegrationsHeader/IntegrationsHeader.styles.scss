@@ -28,15 +28,6 @@
 		display: block;
 	}
 
-	.view-data-sources-btn {
-		gap: 8px;
-		padding: 6px 14px;
-		height: 32px;
-		font-size: 12px;
-		font-weight: 500;
-		white-space: nowrap;
-	}
-
 	.integrations-search-request-container {
 		display: flex;
 		align-items: center;
@@ -56,7 +47,6 @@
 		gap: 16px;
 
 		.request-integration-input {
-			width: 100%;
 			color: var(--l1-foreground);
 		}
 	}

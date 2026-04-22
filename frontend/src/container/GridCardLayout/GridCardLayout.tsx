@@ -70,16 +70,16 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		useIsFetching([REACT_QUERY_KEY.DASHBOARD_BY_ID]) > 0;
 
 	const {
-		selectedDashboard,
+		dashboardData,
 		layouts,
 		setLayouts,
 		panelMap,
 		setPanelMap,
-		setSelectedDashboard,
+		setDashboardData,
 		columnWidths,
 	} = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
-	const { data } = selectedDashboard || {};
+	const { data } = dashboardData || {};
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
 
@@ -124,7 +124,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -146,27 +146,27 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
 			logEvent('Dashboard Detail: Opened', {
-				dashboardId: selectedDashboard?.id,
+				dashboardId: dashboardData?.id,
 				dashboardName: data.title,
 				numberOfPanels: data.widgets?.length,
 				numberOfVariables: Object.keys(dashboardVariables).length || 0,
 			});
 			logEventCalledRef.current = true;
 		}
-	}, [dashboardVariables, data, selectedDashboard?.id]);
+	}, [dashboardVariables, data, dashboardData?.id]);
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		const updatedDashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				panelMap: { ...currentPanelMap },
 				layout: dashboardLayout.filter((e) => e.i !== PANEL_TYPES.EMPTY_WIDGET),
-				widgets: selectedDashboard?.data?.widgets?.map((widget) => {
+				widgets: dashboardData?.data?.widgets?.map((widget) => {
 					if (columnWidths?.[widget.id]) {
 						return {
 							...widget,
@@ -184,7 +184,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
 					}
-					setSelectedDashboard(updatedDashboard.data);
+					setDashboardData(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
 			},
@@ -243,7 +243,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			dashboardLayout &&
 			Array.isArray(dashboardLayout) &&
 			dashboardLayout.length > 0 &&
-			hasColumnWidthsChanged(columnWidths, selectedDashboard);
+			hasColumnWidthsChanged(columnWidths, dashboardData);
 
 		if (shouldSaveLayout || shouldSaveColumnWidths) {
 			onSaveHandler();
@@ -253,7 +253,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const onSettingsModalSubmit = (): void => {
 		const newTitle = form.getFieldValue('title');
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
@@ -261,7 +261,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			return;
 		}
 
-		const currentWidget = selectedDashboard?.data?.widgets?.find(
+		const currentWidget = dashboardData?.data?.widgets?.find(
 			(e) => e.id === currentSelectRowId,
 		);
 
@@ -269,25 +269,25 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			return;
 		}
 
-		const updatedWidgets = selectedDashboard?.data?.widgets?.map((e) =>
+		const updatedWidgets = dashboardData?.data?.widgets?.map((e) =>
 			e.id === currentSelectRowId ? { ...e, title: newTitle } : e,
 		);
 
-		const updatedSelectedDashboard: Props = {
-			id: selectedDashboard.id,
+		const updatedDashboardData: Props = {
+			id: dashboardData.id,
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				widgets: updatedWidgets,
 			},
 		};
 
-		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+		updateDashboardMutation.mutateAsync(updatedDashboardData, {
 			onSuccess: (updatedDashboard) => {
 				if (setLayouts) {
 					setLayouts(updatedDashboard.data?.data?.layout || []);
 				}
-				if (setSelectedDashboard && updatedDashboard.data) {
-					setSelectedDashboard(updatedDashboard.data);
+				if (setDashboardData && updatedDashboard.data) {
+					setDashboardData(updatedDashboard.data);
 				}
 				if (setPanelMap) {
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
@@ -311,7 +311,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	}, [currentSelectRowId, form, widgets]);
 
 	const handleRowCollapse = (id: string): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 		const { updatedLayout, updatedPanelMap } = applyRowCollapse(
@@ -343,7 +343,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 
 	const handleRowDelete = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
@@ -351,34 +351,33 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			return;
 		}
 
-		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
+		const updatedWidgets = dashboardData?.data?.widgets?.filter(
 			(e) => e.id !== currentSelectRowId,
 		);
 
 		const updatedLayout =
-			selectedDashboard.data.layout?.filter((e) => e.i !== currentSelectRowId) ||
-			[];
+			dashboardData.data.layout?.filter((e) => e.i !== currentSelectRowId) || [];
 
 		const updatedPanelMap = { ...currentPanelMap };
 		delete updatedPanelMap[currentSelectRowId];
 
-		const updatedSelectedDashboard: Props = {
-			id: selectedDashboard.id,
+		const updatedDashboardData: Props = {
+			id: dashboardData.id,
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				widgets: updatedWidgets,
 				layout: updatedLayout,
 				panelMap: updatedPanelMap,
 			},
 		};
 
-		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+		updateDashboardMutation.mutateAsync(updatedDashboardData, {
 			onSuccess: (updatedDashboard) => {
 				if (setLayouts) {
 					setLayouts(updatedDashboard.data?.data?.layout || []);
 				}
-				if (setSelectedDashboard && updatedDashboard.data) {
-					setSelectedDashboard(updatedDashboard.data);
+				if (setDashboardData && updatedDashboard.data) {
+					setDashboardData(updatedDashboard.data);
 				}
 				if (setPanelMap) {
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
@@ -390,10 +389,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	};
 	const isDashboardEmpty = useMemo(
 		() =>
-			selectedDashboard?.data.layout
-				? selectedDashboard?.data.layout?.length === 0
-				: true,
-		[selectedDashboard],
+			dashboardData?.data.layout ? dashboardData?.data.layout?.length === 0 : true,
+		[dashboardData],
 	);
 
 	let isDataAvailableInAnyWidget = false;
@@ -512,7 +509,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									widget={(currentWidget as Widgets) || ({ id, query: {} } as Widgets)}
 									headerMenuList={widgetActions}
 									variables={dashboardVariables}
-									// version={selectedDashboard?.data?.version}
+									// version={dashboardData?.data?.version}
 									version={ENTITY_VERSION_V5}
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}

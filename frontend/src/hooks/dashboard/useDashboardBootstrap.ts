@@ -48,7 +48,7 @@ export function useDashboardBootstrap(
 	);
 
 	const {
-		setSelectedDashboard,
+		setDashboardData,
 		setLayouts,
 		setPanelMap,
 		resetDashboardStore,
@@ -65,7 +65,7 @@ export function useDashboardBootstrap(
 		transformDashboardVariables,
 	} = useTransformDashboardVariables(dashboardId);
 
-	// Keep the external variables store in sync with selectedDashboard
+	// Keep the external variables store in sync with dashboardData
 	useDashboardVariablesSync(dashboardId);
 
 	const dashboardQuery = useDashboardQuery(dashboardId);
@@ -88,7 +88,7 @@ export function useDashboardBootstrap(
 			if (variables) {
 				initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 			}
-			setSelectedDashboard(updatedDashboardData);
+			setDashboardData(updatedDashboardData);
 			dashboardRef.current = updatedDashboardData;
 			setLayouts(sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)));
 			setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
@@ -107,7 +107,7 @@ export function useDashboardBootstrap(
 				title: t('dashboard_has_been_updated'),
 				content: t('do_you_want_to_refresh_the_dashboard'),
 				onOk() {
-					setSelectedDashboard(updatedDashboardData);
+					setDashboardData(updatedDashboardData);
 
 					const { maxTime, minTime } = getMinMaxForSelectedTime(
 						globalTime.selectedTime,

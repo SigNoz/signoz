@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';

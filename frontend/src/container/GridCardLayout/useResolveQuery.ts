@@ -20,7 +20,7 @@ interface UseUpdatedQueryOptions {
 		panelTypes: PANEL_TYPES;
 		timePreferance: timePreferenceType;
 	};
-	selectedDashboard?: any;
+	dashboardData?: any;
 }
 
 interface UseUpdatedQueryResult {
@@ -44,7 +44,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 	const getUpdatedQuery = useCallback(
 		async ({
 			widgetConfig,
-			selectedDashboard,
+			dashboardData,
 		}: UseUpdatedQueryOptions): Promise<Query> => {
 			// Prepare query payload with resolved variables
 			const { queryPayload } = prepareQueryRangePayloadV5({
@@ -52,7 +52,7 @@ function useUpdatedQuery(): UseUpdatedQueryResult {
 				graphType: getGraphType(widgetConfig.panelTypes),
 				selectedTime: widgetConfig.timePreferance,
 				globalSelectedInterval,
-				variables: getDashboardVariables(selectedDashboard?.data?.variables),
+				variables: getDashboardVariables(dashboardData?.data?.variables),
 				originalGraphType: widgetConfig.panelTypes,
 				dynamicVariables: dashboardDynamicVariables,
 			});

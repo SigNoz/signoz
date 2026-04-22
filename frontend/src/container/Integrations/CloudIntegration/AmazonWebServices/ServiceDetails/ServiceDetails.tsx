@@ -1,10 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import Tabs from '@signozhq/tabs';
-import { toast } from '@signozhq/ui';
-import { Switch } from '@signozhq/ui';
+import { Button, Switch, Tabs, toast } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
@@ -356,8 +353,8 @@ function ServiceDetails(): JSX.Element | null {
 									color="secondary"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
-									size="xs"
-									prefixIcon={<X size={14} />}
+									size="sm"
+									prefix={<X size={14} />}
 									className="discard-btn"
 									type="button"
 								>
@@ -366,9 +363,9 @@ function ServiceDetails(): JSX.Element | null {
 								<Button
 									variant="solid"
 									color="primary"
-									size="xs"
+									size="sm"
 									className="save-btn"
-									prefixIcon={<Save size={14} />}
+									prefix={<Save size={14} />}
 									type="submit"
 									loading={isUpdatingServiceConfig}
 									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}

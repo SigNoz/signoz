@@ -52,29 +52,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.steps-footer {
-		border-top: 1px solid var(--l1-border);
-		background: var(--l2-background);
-
-		&__left {
-			color: var(--l2-background);
-		}
-
-		&__valid-traces {
-			&--none {
-				color: var(--text-amber-600);
-			}
-		}
-
-		&__button {
-			&--save {
-				background: var(--l3-background);
-			}
-			&--run {
-				background-color: var(--bg-robin-400);
-			}
-		}
-	}
-}

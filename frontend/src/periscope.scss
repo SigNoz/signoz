@@ -79,7 +79,7 @@
 	}
 
 	&.success {
-		color: var(--success-foreground) !important;
+		color: var(--l1-foreground) !important;
 		border-radius: 2px;
 		border: 1px solid
 			color-mix(in srgb, var(--success-background) 10%, transparent);
@@ -92,7 +92,7 @@
 	}
 
 	&.warning {
-		color: var(--warning-foreground) !important;
+		color: var(--l1-foreground) !important;
 		border-radius: 2px;
 		border: 1px solid
 			color-mix(in srgb, var(--warning-background) 10%, transparent);
@@ -106,7 +106,7 @@
 
 	&.danger {
 		border-radius: 2px;
-		color: var(--danger-foreground) !important;
+		color: var(--l1-foreground) !important;
 		background: var(--danger-background) !important;
 		text-align: center;
 		font-variant-numeric: slashed-zero;
@@ -153,8 +153,9 @@
 		text-overflow: ellipsis;
 		padding: 0px 8px;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		border: 1px solid var(--l2-border);
+		background: var(--l2-background);
+		color: var(--l1-foreground);
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
@@ -172,7 +173,7 @@
 		border-top-left-radius: 0px;
 		border-bottom-left-radius: 0px;
 
-		background: var(--l3-background);
+		background: var(--l1-background);
 
 		min-width: 0;
 
@@ -189,6 +190,7 @@
 
 		.ant-select-selector {
 			border: none;
+			background: var(--l2-background);
 		}
 
 		.ant-select-selection-placeholder {
@@ -198,8 +200,8 @@
 
 	.close-btn {
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		border: 1px solid var(--l2-border);
+		background: var(--l2-background);
 		height: 38px;
 		width: 38px;
 	}
