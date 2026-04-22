@@ -1,0 +1,615 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": [
+    "./plugins/signoz.mjs",
+    "eslint-plugin-sonarjs"
+  ],
+  "plugins": [
+    "eslint",
+    "react",
+    "react-perf",
+    "typescript",
+    "unicorn",
+    "jsx-a11y",
+    "import",
+    "jest",
+    "promise",
+    "jsdoc"
+  ],
+  "categories": {
+    "correctness": "warn"
+    // TODO: Eventually turn this to error, and enable other categories
+  },
+  "env": {
+    "builtin": true,
+    "es2021": true,
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
+  "options": {
+    "typeAware": true,
+    "typeCheck": false
+  },
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    }
+  },
+  "rules": {
+    "constructor-super": "error",
+    "for-direction": "error",
+    "getter-return": "error",
+    "no-async-promise-executor": "error",
+    "no-case-declarations": "error",
+    "no-class-assign": "error",
+    "no-compare-neg-zero": "error",
+    "no-cond-assign": "error",
+    // Prevents accidental assignment in conditions (if (x = 1) instead of if (x === 1))
+    "no-const-assign": "error",
+    "no-constant-binary-expression": "error",
+    "no-constant-condition": "error",
+    "no-control-regex": "error",
+    "no-debugger": "error",
+    // Disallows debugger statements in production code
+    "no-delete-var": "error",
+    "no-dupe-class-members": "error",
+    "no-dupe-else-if": "error",
+    "no-dupe-keys": "error",
+    "no-duplicate-case": "error",
+    "no-empty": "error",
+    "no-empty-character-class": "error",
+    "no-empty-pattern": "error",
+    "no-empty-static-block": "error",
+    "no-ex-assign": "error",
+    "no-extra-boolean-cast": "error",
+    "no-fallthrough": "error",
+    "no-func-assign": "error",
+    "no-global-assign": "error",
+    "no-import-assign": "error",
+    "no-invalid-regexp": "error",
+    "no-irregular-whitespace": "error",
+    "no-loss-of-precision": "error",
+    "no-misleading-character-class": "error",
+    "no-new-native-nonconstructor": "error",
+    "no-nonoctal-decimal-escape": "error",
+    "no-obj-calls": "error",
+    "no-prototype-builtins": "error",
+    "no-redeclare": "error",
+    "no-regex-spaces": "error",
+    "no-self-assign": "error",
+    "no-setter-return": "error",
+    "no-shadow-restricted-names": "warn",
+    // TODO: Change to error after migration to oxlint
+    "no-sparse-arrays": "error",
+    "no-this-before-super": "error",
+    "no-undef": "warn",
+    // TODO: Change to error after migration to oxlint
+    "no-unreachable": "warn",
+    // TODO: Change to error after the migration to oxlint
+    "no-unsafe-finally": "error",
+    "no-unsafe-negation": "error",
+    "no-unsafe-optional-chaining": "warn",
+    // TODO: Change to error after migration to oxlint
+    "no-unused-labels": "error",
+    "no-unused-private-class-members": "error",
+    "no-useless-backreference": "error",
+    "no-useless-catch": "error",
+    "no-useless-escape": "error",
+    "no-with": "error",
+    "require-yield": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "no-inner-declarations": "error",
+    // "no-octal": "error", // Not supported by oxlint
+    "react/display-name": "error",
+    "react/jsx-key": "warn",
+    // TODO: Change to error after migration to oxlint
+    "react/jsx-no-comment-textnodes": "error",
+    "react/jsx-no-duplicate-props": "error",
+    "react/jsx-no-target-blank": "warn",
+    // TODO: Change to error after migration to oxlint
+    "react/jsx-no-undef": "warn",
+    "react/no-children-prop": "error",
+    "react/no-danger-with-children": "error",
+    "react/no-direct-mutation-state": "error",
+    "react/no-find-dom-node": "error",
+    "react/no-is-mounted": "error",
+    "react/no-render-return-value": "error",
+    "react/no-string-refs": "error",
+    "react/no-unescaped-entities": "error",
+    "react/no-unknown-property": "error",
+    "react/require-render-return": "error",
+    "react/no-unsafe": "off",
+    "no-array-constructor": "error",
+    "@typescript-eslint/no-duplicate-enum-values": "warn",
+    // TODO: Change to error after migration to oxlint
+    "@typescript-eslint/no-empty-object-type": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
+    // Warns when using 'any' type (consider upgrading to error)
+    "@typescript-eslint/no-empty-function": "off",
+    // TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
+    "@typescript-eslint/ban-ts-comment": "warn",
+    // Warns when using @ts-ignore comments (sometimes needed for third-party libs)
+    "no-empty-function": "off",
+    // Disabled in favor of TypeScript version above
+    "@typescript-eslint/no-extra-non-null-assertion": "error",
+    "@typescript-eslint/no-misused-new": "error",
+    "@typescript-eslint/no-namespace": "error",
+    "@typescript-eslint/no-non-null-asserted-optional-chain": "error",
+    "@typescript-eslint/no-require-imports": "error",
+    "@typescript-eslint/no-this-alias": "error",
+    "@typescript-eslint/no-unnecessary-type-constraint": "warn",
+    // TODO: Change to error after migration to oxlint
+    "@typescript-eslint/no-unsafe-declaration-merging": "error",
+    "@typescript-eslint/no-unsafe-function-type": "error",
+    "no-unused-expressions": "warn",
+    // TODO: Change to error after migration to oxlint
+    "@typescript-eslint/no-wrapper-object-types": "error",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/prefer-namespace-keyword": "error",
+    "@typescript-eslint/triple-slash-reference": "error",
+    "@typescript-eslint/adjacent-overload-signatures": "error",
+    "@typescript-eslint/ban-types": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "warn",
+    "@typescript-eslint/no-empty-interface": "error",
+    "@typescript-eslint/no-inferrable-types": "error",
+    "@typescript-eslint/no-non-null-assertion": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      // TypeScript-specific unused vars checking
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrors": "none"
+      }
+    ],
+    "curly": "error",
+    // Requires curly braces for all control statements
+    // TODO: Change to error after migration to oxlint
+    "prefer-const": "warn",
+    // Enforces const for variables never reassigned
+    "no-var": "error",
+    // Disallows var, enforces let/const
+    "no-else-return": [
+      // Reduces nesting by disallowing else after return
+      "error",
+      {
+        "allowElseIf": false
+      }
+    ],
+    "eqeqeq": [
+      // Enforces === and !== (allows == null for null/undefined check)
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "no-console": [
+      // Warns on console.log, allows console.warn/error
+      "error",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ],
+    "max-params": [
+      "warn",
+      3
+    ],
+    // Warns when functions have more than 3 parameters
+    "@typescript-eslint/explicit-function-return-type": "error",
+    // Requires explicit return types on functions
+    "@typescript-eslint/no-var-requires": "error",
+    // Disallows require() in TypeScript (use import instead)
+    // Disabled - using TypeScript instead
+    "react/jsx-props-no-spreading": "off",
+    // Allows {...props} spreading (common in HOCs, forms, wrappers)
+    "react/jsx-filename-extension": [
+      // Warns if JSX is used in non-.jsx/.tsx files
+      "error",
+      {
+        "extensions": [
+          ".tsx",
+          ".jsx"
+        ]
+      }
+    ],
+    "react/no-array-index-key": "error",
+    // Prevents using array index as key (causes bugs when list changes)
+    "jsx-a11y/label-has-associated-control": [
+      // Accessibility rules - Labels must either wrap inputs or use htmlFor/id
+      "error",
+      {
+        "required": {
+          "some": [
+            "nesting",
+            "id"
+          ]
+        }
+      }
+    ],
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        // Import/export rules - Disallows .js/.jsx/.ts/.tsx extension in imports
+        "js": "never",
+        "jsx": "never",
+        "ts": "never",
+        "tsx": "never"
+      }
+    ],
+    "import/no-cycle": "warn",
+    // Warns about circular dependencies
+    "import/first": "error",
+    "import/no-duplicates": "warn",
+    // TODO: Changed to warn during oxlint migration, should be changed to error
+    "arrow-body-style": "off",
+    "jest/no-disabled-tests": "warn",
+    // Jest test rules
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "warn",
+    "jest/prefer-to-have-length": "warn",
+    "jest/valid-expect": "warn",
+    // TODO: Change to error after migration to oxlint
+    // TODO: Change to error after migration to oxlint
+    "react-hooks/rules-of-hooks": "warn",
+    // React Hooks rules - Enforces Rules of Hooks (only call at top level)
+    "react-hooks/exhaustive-deps": "warn",
+    // Warns about missing dependencies in useEffect/useMemo/useCallback
+    // NOTE: The following react-hooks rules are not supported right know, follow the progress at https://github.com/oxc-project/oxc/issues/1022
+    // Most of them are for React Compiler, which we don't have enabled right know
+    // "react-hooks/config": "error",
+    // "react-hooks/error-boundaries": "error",
+    // "react-hooks/component-hook-factories": "error",
+    // "react-hooks/gating": "error",
+    // "react-hooks/globals": "error",
+    // "react-hooks/immutability": "error",
+    // "react-hooks/preserve-manual-memoization": "error",
+    // "react-hooks/purity": "error",
+    // "react-hooks/refs": "error",
+    // "react-hooks/set-state-in-effect": "error",
+    // "react-hooks/set-state-in-render": "error",
+    // "react-hooks/static-components": "error",
+    // "react-hooks/unsupported-syntax": "warn",
+    // "react-hooks/use-memo": "error",
+    // "react-hooks/incompatible-library": "warn",
+    "signoz/no-unsupported-asset-pattern": "error",
+    // Prevents the wrong usage of assets to break custom base path installations
+    "signoz/no-zustand-getstate-in-hooks": "error",
+    // Prevents useStore.getState() - export standalone actions instead
+    "signoz/no-navigator-clipboard": "error",
+    // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "redux",
+            "message": "[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query."
+          },
+          {
+            "name": "react-redux",
+            "message": "[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query."
+          },
+          {
+            "name": "xstate",
+            "message": "[State mgmt] xstate is deprecated. Migrate to Zustand or react-query."
+          },
+          {
+            "name": "@xstate/react",
+            "message": "[State mgmt] @xstate/react is deprecated. Migrate to Zustand or react-query."
+          },
+          {
+            "name": "react",
+            "importNames": [
+              "createContext",
+              "useContext"
+            ],
+            "message": "[State mgmt] React Context is deprecated. Migrate shared state to Zustand."
+          },
+          {
+            "name": "immer",
+            "message": "[State mgmt] Direct immer usage is deprecated. Use Zustand (which integrates immer via the immer middleware) instead."
+          }
+        ]
+      }
+    ],
+    "react/no-array-index-key": "warn",
+    // TODO: Changed to warn during oxlint migration, should be changed to error,
+
+    "unicorn/error-message": "warn",
+    "unicorn/escape-case": "warn",
+    "unicorn/new-for-builtins": "warn",
+    "unicorn/no-abusive-eslint-disable": "warn",
+    "unicorn/no-console-spaces": "warn",
+    "unicorn/no-instanceof-array": "warn",
+    "unicorn/no-invalid-remove-event-listener": "warn",
+    "unicorn/no-new-array": "warn",
+    "unicorn/no-new-buffer": "warn",
+    "unicorn/no-thenable": "warn",
+    "unicorn/no-unreadable-array-destructuring": "warn",
+    "unicorn/no-useless-fallback-in-spread": "warn",
+    "unicorn/no-useless-length-check": "warn",
+    "unicorn/no-useless-promise-resolve-reject": "warn",
+    "unicorn/no-useless-spread": "warn",
+    "unicorn/no-zero-fractions": "warn",
+    "unicorn/number-literal-case": "warn",
+    "unicorn/prefer-array-find": "warn",
+    "unicorn/prefer-array-flat": "warn",
+    "unicorn/prefer-array-flat-map": "warn",
+    "unicorn/prefer-array-index-of": "warn",
+    "unicorn/prefer-array-some": "warn",
+    "unicorn/prefer-at": "warn",
+    "unicorn/prefer-code-point": "warn",
+    "unicorn/prefer-date-now": "warn",
+    "unicorn/prefer-default-parameters": "warn",
+    "unicorn/prefer-includes": "warn",
+    "unicorn/prefer-modern-math-apis": "warn",
+    "unicorn/prefer-native-coercion-functions": "warn",
+    "unicorn/prefer-node-protocol": "off",
+    "unicorn/prefer-number-properties": "warn",
+    "unicorn/prefer-optional-catch-binding": "warn",
+    "unicorn/prefer-regexp-test": "warn",
+    "unicorn/prefer-set-has": "warn",
+    "unicorn/prefer-string-replace-all": "warn",
+    "unicorn/prefer-string-slice": "warn",
+    "unicorn/prefer-string-starts-ends-with": "warn",
+    "unicorn/prefer-string-trim-start-end": "warn",
+    "unicorn/prefer-type-error": "warn",
+    "unicorn/require-array-join-separator": "warn",
+    "unicorn/require-number-to-fixed-digits-argument": "warn",
+    "unicorn/throw-new-error": "warn",
+    "unicorn/consistent-function-scoping": "warn",
+    "unicorn/explicit-length-check": "warn",
+    "unicorn/filename-case": [
+      "warn",
+      {
+        "case": "kebabCase"
+      }
+    ],
+    "unicorn/no-array-for-each": "warn",
+    "unicorn/no-lonely-if": "warn",
+    "unicorn/no-negated-condition": "warn",
+    "unicorn/no-null": "warn",
+    "unicorn/no-object-as-default-parameter": "warn",
+    "unicorn/no-static-only-class": "warn",
+    "unicorn/no-this-assignment": "warn",
+    "unicorn/no-unreadable-iife": "warn",
+    "unicorn/no-useless-switch-case": "warn",
+    "unicorn/no-useless-undefined": "warn",
+    "unicorn/prefer-add-event-listener": "warn",
+    "unicorn/prefer-dom-node-append": "warn",
+    "unicorn/prefer-dom-node-dataset": "warn",
+    "unicorn/prefer-dom-node-remove": "warn",
+    "unicorn/prefer-dom-node-text-content": "warn",
+    "unicorn/prefer-keyboard-event-key": "warn",
+    "unicorn/prefer-math-trunc": "warn",
+    "unicorn/prefer-modern-dom-apis": "warn",
+    "unicorn/prefer-negative-index": "warn",
+    "unicorn/prefer-prototype-methods": "warn",
+    "unicorn/prefer-query-selector": "warn",
+    "unicorn/prefer-reflect-apply": "warn",
+    "unicorn/prefer-set-size": "warn",
+    "unicorn/prefer-spread": "warn",
+    "unicorn/prefer-ternary": "warn",
+    "unicorn/require-post-message-target-origin": "warn",
+    "oxc/bad-array-method-on-arguments": "error",
+    "oxc/bad-bitwise-operator": "error",
+    "oxc/bad-comparison-sequence": "error",
+    "oxc/bad-object-literal-comparison": "error",
+    "oxc/bad-replace-all-arg": "error",
+    "oxc/double-comparisons": "error",
+    "oxc/erasing-op": "error",
+    "oxc/misrefactored-assign-op": "error",
+    "oxc/missing-throw": "error",
+    "oxc/no-accumulating-spread": "error",
+    "oxc/no-async-endpoint-handlers": "error",
+    "oxc/no-const-enum": "error",
+    "oxc/number-arg-out-of-range": "error",
+    "oxc/only-used-in-recursion": "warn",
+    "oxc/uninvoked-array-callback": "error",
+    "jest/consistent-test-it": [
+      "warn",
+      {
+        "fn": "it"
+      }
+    ],
+    "jest/expect-expect": "warn",
+    "jest/no-alias-methods": "warn",
+    "jest/no-commented-out-tests": "warn",
+    "jest/no-conditional-expect": "warn",
+    "jest/no-deprecated-functions": "warn",
+    "jest/no-done-callback": "warn",
+    "jest/no-duplicate-hooks": "warn",
+    "jest/no-export": "warn",
+    "jest/no-jasmine-globals": "warn",
+    "jest/no-mocks-import": "warn",
+    "jest/no-standalone-expect": "warn",
+    "jest/no-test-prefixes": "warn",
+    "jest/no-test-return-statement": "warn",
+    "jest/prefer-called-with": "off", // The auto-fix for this can break the tests when the function has args
+    "jest/prefer-comparison-matcher": "warn",
+    "jest/prefer-equality-matcher": "warn",
+    "jest/prefer-expect-resolves": "warn",
+    "jest/prefer-hooks-on-top": "warn",
+    "jest/prefer-spy-on": "warn",
+    "jest/prefer-strict-equal": "warn",
+    "jest/prefer-to-be": "warn",
+    "jest/prefer-to-contain": "warn",
+    "jest/prefer-todo": "warn",
+    "jest/valid-describe-callback": "warn",
+    "jest/valid-title": "warn",
+    "promise/catch-or-return": "warn",
+    "promise/no-return-wrap": "error",
+    "promise/param-names": "warn",
+    "promise/always-return": "warn",
+    "promise/no-nesting": "warn",
+    "promise/no-promise-in-callback": "warn",
+    "promise/no-callback-in-promise": "warn",
+    "promise/avoid-new": "off",
+    "promise/no-new-statics": "error",
+    "promise/no-return-in-finally": "error",
+    "promise/valid-params": "error",
+    "import/no-default-export": "off",
+    "import/no-named-as-default": "warn",
+    "import/no-named-as-default-member": "warn",
+    "import/no-self-import": "error",
+    "import/no-webpack-loader-syntax": "error",
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/anchor-has-content": "warn",
+    "jsx-a11y/anchor-is-valid": "warn",
+    "jsx-a11y/aria-activedescendant-has-tabindex": "error",
+    "jsx-a11y/aria-props": "error",
+    "jsx-a11y/aria-role": "error",
+    "jsx-a11y/aria-unsupported-elements": "error",
+    "jsx-a11y/autocomplete-valid": "error",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/heading-has-content": "error",
+    "jsx-a11y/html-has-lang": "error",
+    "jsx-a11y/iframe-has-title": "error",
+    "jsx-a11y/img-redundant-alt": "warn",
+    "jsx-a11y/media-has-caption": "warn",
+    "jsx-a11y/mouse-events-have-key-events": "warn",
+    "jsx-a11y/no-access-key": "error",
+    "jsx-a11y/no-autofocus": "warn",
+    "jsx-a11y/no-distracting-elements": "error",
+    "jsx-a11y/no-redundant-roles": "warn",
+    "jsx-a11y/role-has-required-aria-props": "warn",
+    "jsx-a11y/role-supports-aria-props": "error",
+    "jsx-a11y/scope": "error",
+    "jsx-a11y/tabindex-no-positive": "warn",
+
+    // SonarJS rules - migrated from ESLint
+    "sonarjs/cognitive-complexity": "warn", // TODO: Change to error after migration
+    // Prevents overly complex functions (use SonarQube/SonarCloud for detailed analysis)
+    "sonarjs/max-switch-cases": "error",
+    // Limits switch statement cases
+    "sonarjs/no-all-duplicated-branches": "error",
+    // Prevents identical if/else branches
+    "sonarjs/no-collapsible-if": "error",
+    // Suggests merging nested ifs
+    "sonarjs/no-collection-size-mischeck": "error",
+    // Validates collection size checks
+    "sonarjs/no-duplicated-branches": "error",
+    // Detects duplicate conditional branches
+    "sonarjs/no-duplicate-string": "off",
+    // Warns on repeated string literals (was disabled)
+    "sonarjs/no-element-overwrite": "error",
+    // Prevents array element overwrites
+    "sonarjs/no-empty-collection": "error",
+    // Detects empty collections
+    "sonarjs/no-extra-arguments": "off",
+    // Detects extra function arguments (TypeScript handles this)
+    "sonarjs/no-gratuitous-expressions": "error",
+    // Removes unnecessary expressions
+    "sonarjs/no-identical-conditions": "error",
+    // Prevents duplicate conditions
+    "sonarjs/no-identical-expressions": "error",
+    // Detects duplicate expressions
+    "sonarjs/no-identical-functions": "error",
+    // Finds duplicated function implementations
+    "sonarjs/no-ignored-return": "error",
+    // Ensures return values are used
+    "sonarjs/no-inverted-boolean-check": "off",
+    // Simplifies boolean checks (was disabled)
+    "sonarjs/no-nested-switch": "error",
+    // Prevents nested switch statements
+    "sonarjs/no-nested-template-literals": "error",
+    // Avoids nested template literals
+    "sonarjs/no-redundant-boolean": "warn", // TODO: Change to error after migration
+    // Removes redundant boolean literals
+    "sonarjs/no-redundant-jump": "error",
+    // Removes unnecessary returns/continues
+    "sonarjs/no-same-line-conditional": "error",
+    // Prevents same-line conditionals
+    "sonarjs/no-small-switch": "error",
+    // Discourages tiny switch statements
+    "sonarjs/no-unused-collection": "error",
+    // Finds unused collections
+    "sonarjs/no-use-of-empty-return-value": "error",
+    // Prevents using void returns
+    "sonarjs/non-existent-operator": "error",
+    // Catches typos like =+ instead of +=
+    "sonarjs/prefer-immediate-return": "error",
+    // Returns directly instead of assigning
+    "sonarjs/prefer-object-literal": "error",
+    // Prefers object literals
+    "sonarjs/prefer-single-boolean-return": "error",
+    // Simplifies boolean returns
+    "sonarjs/prefer-while": "error",
+    // Suggests while loops over for loops
+    "sonarjs/elseif-without-else": "off"
+    // Requires final else in if-else-if chains (was disabled)
+  },
+  "ignorePatterns": [
+    "src/parser/*.ts",
+    "scripts/update-registry.cjs",
+    "scripts/generate-permissions-type.cjs",
+    "**/node_modules",
+    "**/build",
+    "**/*.typegen.ts",
+    "**/i18-generate-hash.cjs",
+    "src/parser/TraceOperatorParser/**/*",
+    "**/orval.config.ts"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "src/api/generated/**/*.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "no-nested-ternary": "off",
+        "no-unused-vars": [
+          "warn",
+          {
+            "argsIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "caughtErrors": "none"
+          }
+        ]
+      }
+    },
+    {
+      // Test files: disable clipboard rule and import/first
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "**/*.spec.js",
+        "**/*.spec.jsx",
+        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.tsx",
+        "**/__tests__/**/*.js",
+        "**/__tests__/**/*.jsx"
+      ],
+      "rules": {
+        "import/first": "off",
+        // Should ignore due to mocks
+        "signoz/no-navigator-clipboard": "off"
+        // Tests can use navigator.clipboard directly
+      }
+    },
+    {
+      // Store files are allowed to use .getState() as they export standalone actions
+      "files": [
+        "**/*Store.ts",
+        "**/*Store.tsx"
+      ],
+      "rules": {
+        "signoz/no-zustand-getstate-in-hooks": "off"
+      }
+    }
+  ]
+}
