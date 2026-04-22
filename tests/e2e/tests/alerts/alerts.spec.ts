@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/auth';
+import { test, expect } from '../../fixtures/auth';
 
 // Alert-rule regression. Flows within the file are serial: they share the
 // /alerts list page and the tenant's rule table.

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/auth';
+import { test, expect } from '../../fixtures/auth';
 
 // Junction behavior: a rule linked to a downtime can't be deleted, and
 // a downtime that references a rule can't be deleted either. Both surface
