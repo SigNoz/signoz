@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { FilterOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
@@ -19,12 +20,20 @@ import history from 'lib/history';
 import { isNull } from 'lodash-es';
 
 import { routes } from './config';
+import { useAllErrorsQueryState } from './QueryStateContext';
 
 import './AllErrors.styles.scss';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
 	const { handleRunQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
+
+	const isLoadingQueries = useAllErrorsQueryState((s) => s.isFetching);
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(['getAllErrors']);
+		queryClient.cancelQueries(['getErrorCounts']);
+	}, [queryClient]);
 
 	const [showFilters, setShowFilters] = useState<boolean>(() => {
 		const localStorageValue = getLocalStorageKey(
@@ -77,7 +86,11 @@ function AllErrors(): JSX.Element {
 							}
 							rightActions={
 								<div className="right-toolbar-actions-container">
-									<RightToolbarActions onStageRunQuery={handleRunQuery} />
+									<RightToolbarActions
+										onStageRunQuery={handleRunQuery}
+										isLoadingQueries={isLoadingQueries}
+										handleCancelQuery={handleCancelQuery}
+									/>
 									<HeaderRightSection
 										enableAnnouncements={false}
 										enableShare

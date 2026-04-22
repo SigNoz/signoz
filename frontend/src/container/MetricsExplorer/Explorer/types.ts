@@ -3,6 +3,7 @@ import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/si
 import { Warning } from 'types/api';
 
 export interface TimeSeriesProps {
+	onFetchingStateChange?: (isFetching: boolean) => void;
 	showOneChartPerQuery: boolean;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	areAllMetricUnitsSame: boolean;
