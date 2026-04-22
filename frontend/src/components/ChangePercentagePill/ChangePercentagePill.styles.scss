@@ -26,14 +26,14 @@
 		}
 	}
 	&--negative {
-		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 
 		.change-percentage-pill {
 			&__icon {
-				color: var(--bg-cherry-500);
+				color: var(--danger-background);
 			}
 			&__label {
-				color: var(--bg-cherry-500);
+				color: var(--danger-background);
 			}
 		}
 	}

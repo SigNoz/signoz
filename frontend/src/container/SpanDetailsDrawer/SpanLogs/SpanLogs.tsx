@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Typography } from 'antd';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
@@ -245,7 +245,7 @@ function SpanLogs({
 				<Button
 					className="action-btn"
 					variant="action"
-					prefixIcon={<Compass size={14} />}
+					prefix={<Compass size={14} />}
 					onClick={handleExplorerPageRedirect}
 					size="md"
 				>

@@ -98,27 +98,6 @@
 		align-items: center;
 		gap: 8px;
 
-		button {
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			border: none;
-
-			border: 1px solid var(--l1-border);
-
-			box-shadow: none !important;
-
-			&.ant-btn-round {
-				padding: 8px 12px 8px 10px;
-				font-weight: 500;
-			}
-
-			&.ant-btn-round:disabled {
-				background-color: rgba(209, 209, 209, 0.074);
-				color: var(--muted-foreground);
-			}
-		}
-
 		.ant-select-focused {
 			border-color: transparent !important;
 
@@ -139,6 +118,12 @@
 	}
 	.hidden {
 		display: none;
+	}
+
+	button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 }
 
@@ -233,19 +218,6 @@
 			justify-content: flex-end;
 			padding: 16px 16px;
 			margin: 0;
-
-			> button {
-				display: flex;
-				align-items: center;
-				border-radius: 2px;
-				background-color: var(--primary-background) !important;
-				color: var(--l1-foreground) !important;
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 24px;
-			}
 		}
 	}
 	.title {
@@ -255,99 +227,5 @@
 		font-style: normal;
 		font-weight: 400;
 		line-height: 20px;
-	}
-}
-
-.lightMode {
-	.explorer-options-container {
-		background: var(--l1-background);
-	}
-
-	.explorer-options {
-		background: transparent;
-		box-shadow: none;
-		border: 1px solid var(--l1-border);
-		backdrop-filter: blur(20px);
-
-		hr {
-			border-color: var(--l1-border);
-		}
-
-		.view-options,
-		.actions {
-			button {
-				border: 1px solid var(--l1-border);
-				color: var(--l2-foreground);
-				background-color: var(--l3-background);
-			}
-
-			.info-icon {
-				color: var(--l2-foreground);
-			}
-		}
-	}
-
-	.render-options {
-		color: var(--l2-foreground);
-	}
-
-	.explorer-update {
-		border: 1px solid var(--l1-border);
-		background: transparent;
-		box-shadow: 4px 4px 16px 4px rgba(255, 255, 255, 0.55);
-		backdrop-filter: blur(20px);
-
-		.action-icon {
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-		}
-
-		.ant-divider {
-			border-color: var(--l1-border);
-		}
-	}
-
-	.ant-tooltip-arrow {
-		border-top-color: var(--l1-border) !important;
-	}
-
-	.ant-tooltip-inner {
-		background-color: var(--l3-background);
-		color: var(--l2-foreground);
-	}
-
-	.save-view-modal {
-		.ant-modal-content {
-			background: var(--l2-background);
-			border-color: var(--l1-border);
-
-			.ant-modal-header {
-				background: var(--l2-background);
-				border-bottom: 1px solid var(--l1-border);
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l2-foreground);
-				}
-
-				.ant-color-picker-trigger {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-
-					.ant-color-picker-color-block {
-						.ant-color-picker-color-block-inner {
-							svg {
-								fill: var(--l2-foreground);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		.title {
-			color: var(--l2-foreground);
-		}
 	}
 }

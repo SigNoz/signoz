@@ -76,6 +76,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
+				if (widget.query.queryType) {
+					updatedQuery.queryType = widget.query.queryType;
+				}
 				// If widget has a y-axis unit, set it to the updated query if it is not already set
 				if (widget.yAxisUnit && !isEmpty(widget.yAxisUnit)) {
 					updatedQuery.unit = widget.yAxisUnit;

@@ -5,12 +5,12 @@
 		align-items: center;
 		gap: 4px;
 		border-radius: 20px;
-		background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 20%, transparent);
 		padding-left: 3px;
 		padding-right: 8px;
 		cursor: pointer;
 		span {
-			color: var(--bg-cherry-500);
+			color: var(--danger-background);
 			font-size: 10px;
 			font-weight: 500;
 			line-height: 20px; /* 200% */
@@ -21,7 +21,7 @@
 	&__wrap {
 		background: linear-gradient(
 			180deg,
-			color-mix(in srgb, var(--background) 12%, transparent) 0.07%,
+			color-mix(in srgb, var(--l1-background) 12%, transparent) 0.07%,
 			color-mix(in srgb, var(--bg-sakura-950) 24%, transparent) 50.04%,
 			color-mix(in srgb, var(--bg-sakura-800) 36%, transparent) 75.02%,
 			color-mix(in srgb, var(--bg-sakura-600) 48%, transparent) 87.51%,
@@ -40,15 +40,17 @@
 			margin: auto;
 		}
 	}
+
 	&__body {
 		padding: 0;
-		background: var(--l2-background);
 		overflow: hidden;
 		border-top-left-radius: 4px;
 		border-top-right-radius: 4px;
 	}
+
 	&__header {
 		background: none !important;
+
 		.ant-modal-title {
 			display: flex;
 			justify-content: space-between;
@@ -80,6 +82,7 @@
 				pointer-events: none;
 			}
 		}
+
 		.close-button {
 			padding: 3px 7px;
 			background: var(--l2-background);
@@ -90,15 +93,15 @@
 			box-shadow: none;
 		}
 	}
+
 	&__footer {
 		margin: 0 !important;
 		height: 6px;
-		background: var(--bg-sakura-500);
 	}
+
 	&__content {
 		padding: 0 !important;
 		border-radius: 4px;
 		overflow: hidden;
-		background: none !important;
 	}
 }

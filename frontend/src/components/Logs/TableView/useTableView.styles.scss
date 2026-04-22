@@ -33,8 +33,9 @@
 	display: flex;
 	align-items: center;
 
-	p {
-		margin-bottom: 0;
+	.timestamp-text {
+		color: var(--l1-foreground);
+		margin: 0 !important;
 	}
 }
 

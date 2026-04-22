@@ -849,7 +849,7 @@ export interface CloudintegrationtypesAzureConnectionArtifactDTO {
 	/**
 	 * @type string
 	 */
-	cloudShellCommand: string;
+	cloudPowerShellCommand: string;
 }
 
 export interface CloudintegrationtypesAzureIntegrationConfigDTO {

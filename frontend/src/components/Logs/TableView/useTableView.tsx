@@ -123,7 +123,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								return {
 									children: (
 										<div className="table-timestamp">
-											<p className={cx('text', fontSize)}>{date}</p>
+											<p className={cx('timestamp-text text', fontSize)}>{date}</p>
 										</div>
 									),
 								};

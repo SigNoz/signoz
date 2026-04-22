@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { Checkbox } from '@signozhq/checkbox';
-import { toast } from '@signozhq/ui';
+import { Checkbox, toast } from '@signozhq/ui';
 import { Button, Select, Typography } from 'antd';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
@@ -247,10 +246,11 @@ function PublicDashboardSetting(): JSX.Element {
 				<div className="timerange-enabled-checkbox">
 					<Checkbox
 						id="enable-time-range"
-						checked={timeRangeEnabled}
-						onCheckedChange={handleTimeRangeEnabled}
-						labelName="Enable time range"
-					/>
+						value={timeRangeEnabled}
+						onChange={handleTimeRangeEnabled}
+					>
+						Enable time range
+					</Checkbox>
 				</div>
 
 				<div className="default-time-range-select">

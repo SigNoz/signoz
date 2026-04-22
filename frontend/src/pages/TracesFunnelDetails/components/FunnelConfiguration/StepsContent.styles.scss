@@ -1,4 +1,6 @@
 .steps-content {
+	padding: 0 16px;
+
 	.ant-btn {
 		box-shadow: none;
 		&-icon {
@@ -107,32 +109,6 @@
 			background-color: var(--l2-background);
 			border-radius: 50%;
 			z-index: 1;
-		}
-	}
-}
-
-// Light mode styles
-.lightMode {
-	.steps-content {
-		.ant-steps-item-process .ant-steps-item-icon,
-		.ant-steps-item-icon {
-			background-color: var(--l3-background) !important;
-
-			& > .ant-steps-icon {
-				color: var(--l1-foreground);
-			}
-		}
-
-		.ant-steps-item-tail {
-			&::after {
-				background-color: var(--l1-border) !important;
-			}
-		}
-
-		.latency-step-marker {
-			&::before {
-				background-color: var(--l3-background);
-			}
 		}
 	}
 }

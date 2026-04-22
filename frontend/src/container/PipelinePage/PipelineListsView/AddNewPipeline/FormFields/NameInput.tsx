@@ -3,7 +3,6 @@ import { Form, Input } from 'antd';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
 import { formValidationRules } from '../../config';
-import { FormLabelStyle } from '../styles';
 
 function NameInput({ fieldData }: NameInputProps): JSX.Element {
 	const { t } = useTranslation('pipeline');
@@ -11,7 +10,7 @@ function NameInput({ fieldData }: NameInputProps): JSX.Element {
 	return (
 		<Form.Item
 			required={false}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 			rules={formValidationRules}
 			name={fieldData.name}
