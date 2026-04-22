@@ -87,10 +87,13 @@ function applyReceiverSync({
 		return;
 	}
 
-	const cursorLeft = uPlotInstance.cursor.left ?? -1;
-	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
+	if ((uPlotInstance.cursor.left ?? -1) < 0) {
+		uPlotInstance.setSeries(null, { focus: false });
+		return;
+	}
 
-	if (cursorLeft < 0 || sourceSeriesMetric == null) {
+	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
+	if (sourceSeriesMetric == null) {
 		uPlotInstance.setSeries(null, { focus: false });
 		return;
 	}
