@@ -6,7 +6,7 @@ import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -31,7 +31,7 @@ interface Props {
 	};
 	filters: IBuilderQuery['filters'];
 	queryKey: string;
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 	queryKeyFilters: Array<string>;
 }
 

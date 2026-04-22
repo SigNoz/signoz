@@ -709,11 +709,11 @@ components:
       properties:
         cliCommand:
           type: string
-        cloudShellCommand:
+        cloudPowerShellCommand:
           type: string
       required:
       - cliCommand
-      - cloudShellCommand
+      - cloudPowerShellCommand
       type: object
     CloudintegrationtypesAzureIntegrationConfig:
       properties:

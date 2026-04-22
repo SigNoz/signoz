@@ -7,6 +7,14 @@
 [data-slot='dialog-content'] {
 	position: fixed;
 	z-index: 60;
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+
+	/* Override the background and color of the dialog content from the theme */
+	> div {
+		background: var(--l1-background);
+		color: var(--l1-foreground);
+	}
 }
 
 .cmdk-section-heading [cmdk-group-heading] {
@@ -33,7 +41,7 @@
 
 .cmdk-item-light:hover {
 	cursor: pointer;
-	background-color: var(--background) !important;
+	background-color: var(--l1-background) !important;
 }
 
 .cmdk-item-light[data-selected='true'] {
@@ -43,6 +51,22 @@
 
 .cmdk-item {
 	cursor: pointer;
+	color: var(--l1-foreground);
+
+	font-family: Inter;
+	font-size: 13px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+
+	&:hover {
+		background: var(--l1-background-hover);
+	}
+
+	&[data-selected='true'] {
+		background: var(--l3-background);
+		color: var(--l1-foreground);
+	}
 }
 
 [cmdk-item] svg {

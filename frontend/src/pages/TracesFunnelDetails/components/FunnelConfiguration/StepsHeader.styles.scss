@@ -1,10 +1,14 @@
 .steps-header {
 	display: flex;
-	align-items: center;
-	justify-content: center;
+	align-items: flex-start;
 	gap: 6px;
+	padding: 16px;
+	margin-bottom: 16px;
+	margin-top: 16px;
+	flex-wrap: wrap;
+
 	&__label {
-		color: var(--muted-foreground);
+		color: var(--l1-foreground);
 		font-size: 12px;
 		font-weight: 600;
 		line-height: 18px;
@@ -12,6 +16,7 @@
 		text-transform: uppercase;
 		flex-shrink: 0;
 	}
+
 	&__divider {
 		width: 100%;
 		.ant-divider {
@@ -19,8 +24,9 @@
 			border-color: var(--l1-border);
 		}
 	}
+
 	&__time-range {
-		min-width: 192px;
+		width: 100%;
 		height: 32px;
 		flex-shrink: 0;
 		.timeSelection-input {
@@ -29,22 +35,8 @@
 			}
 			&,
 			input {
-				background: var(--l3-background);
+				background: var(--l2-background);
 				font-size: 12px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.steps-header {
-		&__label {
-			color: var(--l2-foreground);
-		}
-		.timeSelection-input {
-			&,
-			input {
-				background: unset;
 			}
 		}
 	}

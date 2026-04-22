@@ -146,7 +146,8 @@
   },
   "telemetryCollectionStrategy": {
     "azure": {
-      "resourceType": "Microsoft.Cdn/profiles",
+      "resourceProvider": "Microsoft.Cdn",
+      "resourceType": "profiles",
       "metrics": {},
       "logs": {
         "categoryGroups": ["allLogs"]

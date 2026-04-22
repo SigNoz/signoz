@@ -9,7 +9,7 @@ import {
 	getMetricsTableData,
 	MetricsTable,
 } from 'container/InfraMonitoringK8s/commonUtils';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
 	CustomTimeType,
@@ -57,7 +57,7 @@ interface EntityMetricsProps<T> {
 		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKey: string;
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 }
 
 function EntityMetrics<T>({

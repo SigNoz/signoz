@@ -1,6 +1,6 @@
 {
-  "id": "blobstorage",
-  "title": "Blob Storage",
+  "id": "storageaccountsblob",
+  "title": "Storage Accounts Blob Storage",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supportedSignals": {
@@ -86,7 +86,8 @@
   },
   "telemetryCollectionStrategy": {
     "azure": {
-      "resourceType": "Microsoft.Storage/storageAccounts/blobServices",
+      "resourceProvider": "Microsoft.Storage",
+      "resourceType": "storageAccounts/blobServices",
       "metrics": {},
       "logs": {
         "categoryGroups": ["allLogs"]

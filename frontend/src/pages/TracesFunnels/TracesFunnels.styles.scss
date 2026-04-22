@@ -2,10 +2,11 @@
 @use 'components/SearchBar/SearchBar.styles.scss';
 
 .traces-funnels {
-	margin-top: 113px;
+	padding: 64px 0;
 	display: flex;
 	justify-content: center;
 	width: 100%;
+
 	.ant-btn-icon {
 		margin: 0 !important;
 	}

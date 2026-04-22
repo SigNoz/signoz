@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper } from '@signozhq/dialog';
-import { toast } from '@signozhq/ui';
+import { DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -72,7 +71,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Key updated successfully', { richColors: true });
+				toast.success('Key updated successfully');
 				await setEditKeyId(null);
 				if (selectedAccountId) {
 					await invalidateListServiceAccountKeys(queryClient, {
@@ -96,7 +95,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	} = useRevokeServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Key revoked successfully', { richColors: true });
+				toast.success('Key revoked successfully');
 				setIsRevokeConfirmOpen(false);
 				await setEditKeyId(null);
 				if (selectedAccountId) {

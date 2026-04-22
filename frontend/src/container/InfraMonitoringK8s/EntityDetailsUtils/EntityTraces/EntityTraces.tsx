@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import logEvent from 'api/common/logEvent';
-import { VIEWS } from 'components/HostMetricsDetail/constants';
-import { getListColumns } from 'components/HostMetricsDetail/HostMetricTraces/utils';
 import { ResizeTable } from 'components/ResizeTable';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
+import { VIEWS } from 'container/InfraMonitoringK8s/constants';
 import NoLogs from 'container/NoLogs/NoLogs';
 import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
 import { ErrorText } from 'container/TimeSeriesView/styles';
@@ -31,6 +30,7 @@ import {
 	getEntityTracesQueryPayload,
 	selectedEntityTracesColumns,
 } from '../utils';
+import { getTraceListColumns } from './traceListColumns';
 
 import './entityTraces.styles.scss';
 
@@ -134,7 +134,7 @@ function EntityTraces({
 		enabled: !!queryPayload,
 	});
 
-	const traceListColumns = getListColumns(selectedEntityTracesColumns);
+	const traceListColumns = getTraceListColumns(selectedEntityTracesColumns);
 
 	useEffect(() => {
 		if (data?.payload?.data?.newResult?.data?.result) {

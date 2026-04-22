@@ -24,13 +24,12 @@ export default function Histogram(props: HistogramChartProps): JSX.Element {
 			}
 			const tooltipProps: HistogramTooltipProps = {
 				...props,
-				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
 			};
 			return <HistogramTooltip {...tooltipProps} />;
 		},
-		[customTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
+		[customTooltip, rest.yAxisUnit, rest.decimalPrecision],
 	);
 
 	return (
