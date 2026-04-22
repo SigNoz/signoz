@@ -12,7 +12,9 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getInvalidValueTooltipText, K8sCategory } from './constants';
+import { getInvalidValueTooltipText, InfraMonitoringEntity } from './constants';
+
+import styles from './commonUtils.module.scss';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
@@ -40,7 +42,7 @@ export function ValidateColumnValueWrapper({
 }: {
 	children: React.ReactNode;
 	value: number;
-	entity?: K8sCategory;
+	entity?: InfraMonitoringEntity;
 	attribute?: string;
 }): JSX.Element {
 	if (value === -1) {
@@ -101,9 +103,6 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 	return Color.BG_SAKURA_500;
 }
 
-export const getProgressBarText = (percent: number): React.ReactNode =>
-	`${percent}%`;
-
 export function EntityProgressBar({
 	value,
 	type,
@@ -114,7 +113,7 @@ export function EntityProgressBar({
 	const percentage = Number((value * 100).toFixed(1));
 
 	return (
-		<div className="entity-progress-bar">
+		<div className={styles.entityProgressBar}>
 			<Progress
 				percent={percentage}
 				strokeLinecap="butt"
@@ -125,7 +124,7 @@ export function EntityProgressBar({
 						? getStrokeColorForLimitUtilization(value)
 						: getStrokeColorForRequestUtilization(value)
 				}
-				className="progress-bar"
+				className={styles.progressBar}
 				showInfo={false}
 			/>
 			<Typography.Text style={{ fontSize: '10px' }}>{percentage}%</Typography.Text>
@@ -173,7 +172,7 @@ export function EventContents({
 			dataSource={tableData}
 			pagination={false}
 			showHeader={false}
-			className="event-content-container"
+			className={styles.eventContentContainer}
 		/>
 	);
 }

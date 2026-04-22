@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
 import { Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, Input } from '@signozhq/ui';
 
 import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from './config';
 import CreateRoleModal from './RolesComponents/CreateRoleModal';

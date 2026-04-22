@@ -78,7 +78,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-10);
-		padding-left: 26px;
 	}
 
 	.custom-domain-card-meta-row.workspace-name-hidden {
@@ -272,7 +271,6 @@
 		display: flex;
 		align-items: center;
 		gap: var(--spacing-3);
-		height: 44px;
 		padding: 6px var(--padding-3);
 		background: var(--l1-background);
 		border: 1px solid var(--l1-border);

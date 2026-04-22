@@ -109,11 +109,14 @@
 	border: 1px solid var(--l3-background);
 	background: var(--l1-background);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
 	.ant-select-selector {
 		border-color: var(--l1-border) !important;
 		background: var(--l1-background) !important;
 		padding: 6px 8px !important;
+		min-width: 140px !important;
 	}
+
 	.ant-select-item-option-active {
 		background: var(--l3-background) !important;
 	}

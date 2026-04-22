@@ -1,6 +1,6 @@
 import { KeyboardEvent, useCallback, useState } from 'react';
 import { OPERATORS } from 'constants/queryBuilder';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
 	getTagToken,
@@ -31,7 +31,7 @@ export const useAutoComplete = (
 	whereClauseConfig?: WhereClauseConfig,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
-	entity?: K8sCategory | null,
+	entity?: InfraMonitoringEntity | null,
 	isMetricsExplorer?: boolean,
 ): IAutoComplete => {
 	const [searchValue, setSearchValue] = useState<string>('');

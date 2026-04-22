@@ -41,7 +41,7 @@ const DASHBOARD_VARIABLES_WARNING =
 // Use wildcard pattern to match both relative and absolute URLs in MSW
 const publicDashboardURL = `*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`;
 
-const mockSelectedDashboard = {
+const mockDashboardData = {
 	id: MOCK_DASHBOARD_ID,
 	data: {
 		title: 'Test Dashboard',
@@ -70,7 +70,7 @@ beforeEach(() => {
 
 	// Mock useDashboardStore
 	mockUseDashboard.mockReturnValue(({
-		selectedDashboard: mockSelectedDashboard,
+		dashboardData: mockDashboardData,
 	} as unknown) as ReturnType<typeof useDashboardStore>);
 
 	// Mock useCopyToClipboard

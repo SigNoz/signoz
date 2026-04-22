@@ -1,12 +1,15 @@
 import { Dispatch } from 'react';
 import { UseMutateFunction } from 'react-query';
-import { CreateAlertRuleResponse } from 'api/alerts/createAlertRule';
-import { TestAlertRuleResponse } from 'api/alerts/testAlertRule';
-import { UpdateAlertRuleResponse } from 'api/alerts/updateAlertRule';
+import type {
+	CreateRule201,
+	RenderErrorResponseDTO,
+	RuletypesPostableRuleDTO,
+	TestRule200,
+	UpdateRuleByIDPathParameters,
+} from 'api/generated/services/sigNoz.schemas';
+import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
 import { Dayjs } from 'dayjs';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
 import { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
@@ -24,27 +27,33 @@ export interface ICreateAlertContextProps {
 	setNotificationSettings: Dispatch<NotificationSettingsAction>;
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
-		SuccessResponse<CreateAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		CreateRule201,
+		ErrorType<unknown>,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
-		SuccessResponse<TestAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		TestRule200,
+		ErrorType<unknown>,
+		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	discardAlertRule: () => void;
 	isUpdatingAlertRule: boolean;
 	updateAlertRule: UseMutateFunction<
-		SuccessResponse<UpdateAlertRuleResponse, unknown> | ErrorResponse,
-		Error,
-		PostableAlertRuleV2,
+		Awaited<
+			ReturnType<typeof import('api/generated/services/rules').updateRuleByID>
+		>,
+		ErrorType<RenderErrorResponseDTO>,
+		{
+			pathParams: UpdateRuleByIDPathParameters;
+			data: BodyType<RuletypesPostableRuleDTO>;
+		},
 		unknown
 	>;
 	isEditMode: boolean;
+	ruleId: string;
 }
 
 export interface ICreateAlertProviderProps {
@@ -86,25 +95,28 @@ export interface Threshold {
 }
 
 export enum AlertThresholdOperator {
-	IS_ABOVE = '1',
-	IS_BELOW = '2',
-	IS_EQUAL_TO = '3',
-	IS_NOT_EQUAL_TO = '4',
-	ABOVE_BELOW = '7',
+	IS_ABOVE = 'above',
+	IS_BELOW = 'below',
+	IS_EQUAL_TO = 'equal',
+	IS_NOT_EQUAL_TO = 'not_equal',
+	ABOVE_BELOW = 'outside_bounds',
 }
 
 export enum AlertThresholdMatchType {
-	AT_LEAST_ONCE = '1',
-	ALL_THE_TIME = '2',
-	ON_AVERAGE = '3',
-	IN_TOTAL = '4',
-	LAST = '5',
+	AT_LEAST_ONCE = 'at_least_once',
+	ALL_THE_TIME = 'all_the_times',
+	ON_AVERAGE = 'on_average',
+	IN_TOTAL = 'in_total',
+	LAST = 'last',
 }
 
 export interface AlertThresholdState {
 	selectedQuery: string;
-	operator: AlertThresholdOperator;
-	matchType: AlertThresholdMatchType;
+	// Stored as a raw string so backend aliases ("1", ">", "above_or_eq", ...)
+	// survive a load/save round-trip. User edits from the UI write the
+	// canonical enum value.
+	operator: AlertThresholdOperator | string;
+	matchType: AlertThresholdMatchType | string;
 	evaluationWindow: string;
 	algorithm: string;
 	seasonality: string;

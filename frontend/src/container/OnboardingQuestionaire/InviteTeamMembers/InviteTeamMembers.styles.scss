@@ -52,8 +52,8 @@
 }
 
 .invite-team-members-error-callout {
-	background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-	border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+	background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+	border: 1px solid color-mix(in srgb, var(--danger-background) 20%, transparent);
 	border-radius: 4px;
 	animation: horizontal-shaking 300ms ease-out;
 }
@@ -186,7 +186,7 @@
 	border: none !important;
 	border-radius: 2px !important;
 	background: transparent !important;
-	color: var(--bg-cherry-500) !important;
+	color: var(--danger-background) !important;
 	opacity: 0.6 !important;
 	cursor: pointer;
 	padding: 0 !important;
@@ -194,7 +194,7 @@
 	box-shadow: none !important;
 
 	svg {
-		color: var(--bg-cherry-500) !important;
+		color: var(--danger-background) !important;
 		width: 12px !important;
 		height: 12px !important;
 	}
@@ -202,14 +202,14 @@
 	&:hover {
 		background: color-mix(
 			in srgb,
-			var(--bg-cherry-500) 10%,
+			var(--danger-background) 10%,
 			transparent
 		) !important;
 		opacity: 0.9 !important;
-		color: var(--bg-cherry-500) !important;
+		color: var(--danger-background) !important;
 
 		svg {
-			color: var(--bg-cherry-500) !important;
+			color: var(--danger-background) !important;
 		}
 	}
 
@@ -217,7 +217,7 @@
 		opacity: 0.7 !important;
 		background: color-mix(
 			in srgb,
-			var(--bg-cherry-500) 15%,
+			var(--danger-background) 15%,
 			transparent
 		) !important;
 	}
@@ -236,7 +236,7 @@
 	margin-top: 4px;
 	width: 100%;
 	display: block;
-	color: var(--bg-cherry-500);
+	color: var(--danger-background);
 }
 
 .invite-team-members-add-another-member-container {
@@ -441,10 +441,10 @@
 	.remove-team-member-button {
 		border: none !important;
 		background: transparent !important;
-		color: var(--bg-cherry-500) !important;
+		color: var(--danger-background) !important;
 
 		svg {
-			color: var(--bg-cherry-500) !important;
+			color: var(--danger-background) !important;
 		}
 
 		&:hover {
@@ -453,10 +453,10 @@
 				var(--bg-cherry-400) 10%,
 				transparent
 			) !important;
-			color: var(--bg-cherry-500) !important;
+			color: var(--danger-background) !important;
 
 			svg {
-				color: var(--bg-cherry-500) !important;
+				color: var(--danger-background) !important;
 			}
 		}
 	}

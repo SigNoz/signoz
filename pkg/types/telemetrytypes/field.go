@@ -37,7 +37,6 @@ type TelemetryFieldKey struct {
 	FieldContext  FieldContext  `json:"fieldContext,omitzero"`
 	FieldDataType FieldDataType `json:"fieldDataType,omitzero"`
 
-	JSONDataType *JSONDataType       `json:"-"`
 	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
@@ -80,6 +79,11 @@ func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {
 	return selectors
 }
 
+// GetJSONDataType derives the JSONDataType from FieldDataType.
+func (f *TelemetryFieldKey) GetJSONDataType() JSONDataType {
+	return MappingFieldDataTypeToJSONDataType[f.FieldDataType]
+}
+
 func (f TelemetryFieldKey) String() string {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "name=%s", f.Name)
@@ -91,9 +95,6 @@ func (f TelemetryFieldKey) String() string {
 	}
 	if f.Materialized {
 		sb.WriteString(",materialized=true")
-	}
-	if f.JSONDataType != nil {
-		fmt.Fprintf(&sb, ",jsondatatype=%s", f.JSONDataType.StringValue())
 	}
 	if len(f.Indexes) > 0 {
 		sb.WriteString(",indexes=[")
@@ -117,7 +118,6 @@ func (f TelemetryFieldKey) Text() string {
 func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.FieldContext = src.FieldContext
 	f.FieldDataType = src.FieldDataType
-	f.JSONDataType = src.JSONDataType
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan

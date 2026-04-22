@@ -66,7 +66,7 @@ const useBaseAggregateOptions = ({
 		getUpdatedQuery,
 		isLoading: isResolveQueryLoading,
 	} = useUpdatedQuery();
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	useEffect(() => {
 		if (!aggregateData) {
@@ -79,7 +79,7 @@ const useBaseAggregateOptions = ({
 					panelTypes: panelType || PANEL_TYPES.TIME_SERIES,
 					timePreferance: 'GLOBAL_TIME',
 				},
-				selectedDashboard,
+				dashboardData,
 			});
 			setResolvedQuery(updatedQuery);
 		};

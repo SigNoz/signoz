@@ -23,11 +23,6 @@
 		}
 	}
 
-	&__footer {
-		padding: 16px;
-		margin-bottom: 16px;
-	}
-
 	.account-setup-modal-footer {
 		&__confirm-button {
 			background: var(--primary-background);
@@ -55,17 +50,17 @@
 	}
 
 	.cloud-account-setup-form {
-		padding: 16px;
-
 		.disabled {
 			opacity: 0.4;
 		}
+
 		&,
 		&__content {
 			display: flex;
 			flex-direction: column;
-			gap: 38px;
+			gap: 24px;
 		}
+
 		&__alert {
 			&.ant-alert {
 				padding: 12px;

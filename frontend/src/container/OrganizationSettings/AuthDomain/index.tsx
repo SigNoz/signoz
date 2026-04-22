@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button } from '@signozhq/button';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/ui';
+import { Button, toast } from '@signozhq/ui';
 import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -182,7 +181,7 @@ function AuthDomain(): JSX.Element {
 			<section className="auth-domain-header">
 				<h3 className="auth-domain-title">Authenticated Domains</h3>
 				<Button
-					prefixIcon={<PlusOutlined />}
+					prefix={<PlusOutlined />}
 					onClick={(): void => {
 						setAddDomain(true);
 					}}
@@ -230,13 +229,13 @@ function AuthDomain(): JSX.Element {
 						key="cancel"
 						onClick={hideDeleteModal}
 						className="cancel-btn"
-						prefixIcon={<X size={16} />}
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						prefixIcon={<Trash2 size={16} />}
+						prefix={<Trash2 size={16} />}
 						onClick={handleDeleteDomain}
 						className="delete-btn"
 						loading={isLoading}

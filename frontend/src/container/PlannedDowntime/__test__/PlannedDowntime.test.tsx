@@ -1,7 +1,10 @@
 import { UseQueryResult } from 'react-query';
 import { fireEvent, screen } from '@testing-library/react';
-import { PayloadProps } from 'api/plannedDowntime/getAllDowntimeSchedules';
-import { AxiosError, AxiosResponse } from 'axios';
+import type {
+	ListDowntimeSchedules200,
+	RenderErrorResponseDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import {
 	mockLocation,
 	mockQueryParams,
@@ -22,45 +25,53 @@ const MOCK_DATE_2 = '2024-01-02';
 const MOCK_DATE_3 = '2024-01-03';
 
 const MOCK_DOWNTIME_1 = createMockDowntime({
-	id: 1,
+	id: '1',
 	name: MOCK_DOWNTIME_1_NAME,
-	createdAt: MOCK_DATE_1,
-	updatedAt: MOCK_DATE_1,
-	schedule: buildSchedule({ startTime: MOCK_DATE_1, timezone: 'UTC' }),
+	createdAt: new Date(MOCK_DATE_1),
+	updatedAt: new Date(MOCK_DATE_1),
+	schedule: buildSchedule({
+		startTime: new Date(MOCK_DATE_1),
+		timezone: 'UTC',
+	}),
 	alertIds: [],
 });
 
 const MOCK_DOWNTIME_2 = createMockDowntime({
-	id: 2,
+	id: '2',
 	name: MOCK_DOWNTIME_2_NAME,
-	createdAt: MOCK_DATE_2,
-	updatedAt: MOCK_DATE_2,
-	schedule: buildSchedule({ startTime: MOCK_DATE_2, timezone: 'UTC' }),
+	createdAt: new Date(MOCK_DATE_2),
+	updatedAt: new Date(MOCK_DATE_2),
+	schedule: buildSchedule({
+		startTime: new Date(MOCK_DATE_2),
+		timezone: 'UTC',
+	}),
 	alertIds: [],
 });
 
 const MOCK_DOWNTIME_3 = createMockDowntime({
-	id: 3,
+	id: '3',
 	name: MOCK_DOWNTIME_3_NAME,
-	createdAt: MOCK_DATE_3,
-	updatedAt: MOCK_DATE_3,
-	schedule: buildSchedule({ startTime: MOCK_DATE_3, timezone: 'UTC' }),
+	createdAt: new Date(MOCK_DATE_3),
+	updatedAt: new Date(MOCK_DATE_3),
+	schedule: buildSchedule({
+		startTime: new Date(MOCK_DATE_3),
+		timezone: 'UTC',
+	}),
 	alertIds: [],
 });
 
-const MOCK_DOWNTIME_RESPONSE: Partial<AxiosResponse<PayloadProps>> = {
-	data: {
-		data: [MOCK_DOWNTIME_1, MOCK_DOWNTIME_2, MOCK_DOWNTIME_3],
-	},
+const MOCK_DOWNTIME_RESPONSE: ListDowntimeSchedules200 = {
+	data: [MOCK_DOWNTIME_1, MOCK_DOWNTIME_2, MOCK_DOWNTIME_3],
+	status: 'success',
 };
 
 type DowntimeQueryResult = UseQueryResult<
-	AxiosResponse<PayloadProps>,
-	AxiosError
+	ListDowntimeSchedules200,
+	ErrorType<RenderErrorResponseDTO>
 >;
 
 const mockDowntimeQueryResult: Partial<DowntimeQueryResult> = {
-	data: MOCK_DOWNTIME_RESPONSE as AxiosResponse<PayloadProps>,
+	data: MOCK_DOWNTIME_RESPONSE,
 	isLoading: false,
 	isFetching: false,
 	isError: false,
@@ -89,13 +100,27 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
-jest.mock('api/plannedDowntime/getAllDowntimeSchedules', () => ({
-	useGetAllDowntimeSchedules: (): DowntimeQueryResult =>
+jest.mock('api/generated/services/downtimeschedules', () => ({
+	useListDowntimeSchedules: (): DowntimeQueryResult =>
 		mockDowntimeQueryResult as DowntimeQueryResult,
+	useDeleteDowntimeScheduleByID: (): {
+		mutateAsync: jest.Mock;
+		isLoading: false;
+	} => ({
+		mutateAsync: jest.fn(),
+		isLoading: false,
+	}),
 }));
-jest.mock('api/alerts/getAll', () => ({
-	__esModule: true,
-	default: (): Promise<{ payload: [] }> => Promise.resolve({ payload: [] }),
+jest.mock('api/generated/services/rules', () => ({
+	useListRules: (): {
+		data: { data: [] };
+		isError: false;
+		isLoading: false;
+	} => ({
+		data: { data: [] },
+		isError: false,
+		isLoading: false,
+	}),
 }));
 
 describe('PlannedDowntime Component', () => {

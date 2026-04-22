@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-builder-v2 {
 	display: flex;
 	flex-direction: row;
@@ -274,7 +276,7 @@
 					.ant-input-group-addon {
 						border-top-left-radius: 0px !important;
 						border-top-right-radius: 0px !important;
-						background: var(--l3-background);
+						background: var(--l2-background);
 						color: var(--l2-foreground);
 						font-size: 12px;
 						font-weight: 300;
