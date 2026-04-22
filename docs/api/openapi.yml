@@ -2705,8 +2705,8 @@ components:
       type: object
     PromotetypesWrappedIndex:
       properties:
-        column_type:
-          type: string
+        field_data_type:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
         granularity:
           type: integer
         type:
