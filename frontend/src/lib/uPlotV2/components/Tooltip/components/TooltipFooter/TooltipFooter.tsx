@@ -1,6 +1,5 @@
 import { Button } from '@signozhq/ui';
 import { Kbd } from '@signozhq/ui';
-import cx from 'classnames';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { X } from 'lucide-react';
 
@@ -19,7 +18,7 @@ export default function TooltipFooter({
 }: TooltipFooterProps): JSX.Element {
 	return (
 		<div
-			className={cx(Styles.footer, isPinned && Styles.footerPinned)}
+			className={Styles.footer}
 			role="status"
 			data-testid="uplot-tooltip-footer"
 		>
