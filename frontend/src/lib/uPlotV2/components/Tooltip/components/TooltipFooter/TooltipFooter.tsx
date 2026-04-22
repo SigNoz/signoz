@@ -1,7 +1,6 @@
 import { Button } from '@signozhq/ui';
 import { Kbd } from '@signozhq/ui';
 import cx from 'classnames';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { X } from 'lucide-react';
 
@@ -18,19 +17,13 @@ export default function TooltipFooter({
 	isPinned,
 	dismiss,
 }: TooltipFooterProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	return (
 		<div
-			className={cx(
-				Styles.footer,
-				!isDarkMode && Styles.footerLightMode,
-				isPinned && Styles.footerPinned,
-			)}
+			className={cx(Styles.footer, isPinned && Styles.footerPinned)}
 			role="status"
 			data-testid="uplot-tooltip-footer"
 		>
-			<div className={cx(Styles.hint, !isDarkMode && Styles.hintLightMode)}>
+			<div className={Styles.hint}>
 				{isPinned ? (
 					<>
 						<span>Press</span>

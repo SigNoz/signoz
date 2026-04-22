@@ -4,14 +4,9 @@
 	justify-content: space-between;
 	gap: 10px;
 	padding: 7px 12px;
-	border-top: 1px solid var(--bg-slate-400);
+	border-top: 1px solid var(--l2-border);
 	background: var(--l2-background);
 	border-radius: 0 0 6px 6px;
-}
-
-.footerLightMode {
-	background: rgba(0, 0, 0, 0.04);
-	border-top-color: var(--bg-vanilla-300);
 }
 
 .footerPinned {
@@ -23,9 +18,5 @@
 	align-items: center;
 	gap: 5px;
 	font-size: 11px;
-	color: var(--bg-vanilla-400);
-}
-
-.hintLightMode {
-	color: var(--bg-ink-400);
+	color: var(--l2-foreground);
 }
