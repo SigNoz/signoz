@@ -7,31 +7,31 @@
 	border-top: 1px solid var(--bg-slate-400);
 	background: var(--l3-background);
 	border-radius: 0 0 6px 6px;
+}
 
-	.kbdPinned {
-		background: var(--callout-primary-background);
-		border-color: var(--bg-robin-500);
-		color: var(--bg-robin-500);
-	}
+.footerLightMode {
+	background: rgba(0, 0, 0, 0.04);
+	border-top-color: var(--bg-vanilla-300);
+}
 
-	&.lightMode {
-		background: rgba(0, 0, 0, 0.04);
-		border-top-color: var(--bg-vanilla-300);
+.footerPinned {
+	border-top-color: var(--bg-robin-800);
+}
 
-		.hint {
-			color: var(--bg-ink-400);
-		}
-	}
+.hint {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	color: var(--bg-vanilla-400);
+}
 
-	&.footer-pinned {
-		border-top-color: var(--bg-robin-800);
-	}
+.hintLightMode {
+	color: var(--bg-ink-400);
+}
 
-	.hint {
-		display: flex;
-		align-items: center;
-		gap: 5px;
-		font-size: 11px;
-		color: var(--bg-vanilla-400);
-	}
+.kbdPinned {
+	background: var(--callout-primary-background);
+	border-color: var(--bg-robin-500);
+	color: var(--bg-robin-500);
 }

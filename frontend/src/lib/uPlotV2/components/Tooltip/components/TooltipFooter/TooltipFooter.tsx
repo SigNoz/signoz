@@ -25,13 +25,13 @@ export default function TooltipFooter({
 		<div
 			className={cx(
 				Styles.footer,
-				!isDarkMode && Styles.lightMode,
+				!isDarkMode && Styles.footerLightMode,
 				isPinned && Styles.footerPinned,
 			)}
 			role="status"
 			data-testid="uplot-tooltip-footer"
 		>
-			<div className={Styles.hint}>
+			<div className={cx(Styles.hint, !isDarkMode && Styles.hintLightMode)}>
 				{isPinned ? (
 					<>
 						<span>Press</span>

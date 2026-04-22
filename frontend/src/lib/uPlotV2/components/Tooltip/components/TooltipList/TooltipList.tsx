@@ -35,7 +35,7 @@ export default function TooltipList({
 
 	return (
 		<Virtuoso
-			className={cx(Styles.list, !isDarkMode && Styles.lightMode)}
+			className={cx(Styles.list, !isDarkMode && Styles.listLightMode)}
 			data-testid="uplot-tooltip-list"
 			data={content}
 			style={{ height, width: '100%' }}
