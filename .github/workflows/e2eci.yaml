@@ -61,17 +61,10 @@ jobs:
             --basetemp=./tmp/ \
             -vv --teardown \
             e2e/bootstrap/setup.py::test_teardown
-      - name: upload-html-report
+      - name: upload-artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-html-${{ matrix.project }}
-          path: tests/e2e/artifacts/html/
-          retention-days: 30
-      - name: upload-traces
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-traces-${{ matrix.project }}
-          path: tests/e2e/artifacts/results/
-          retention-days: 30
+          name: playwright-artifacts-${{ matrix.project }}
+          path: tests/e2e/artifacts/
+          retention-days: 5
