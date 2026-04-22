@@ -239,8 +239,8 @@ describe('InviteTeamMembers', () => {
 	});
 
 	describe('Validation callout on Complete', () => {
-		it('shows the correct callout message for each combination of email/role validity', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('shows the combined callout when email is invalid and role is missing', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 			renderComponent();
 
 			const removeButtons = screen.getAllByRole('button', {
@@ -270,7 +270,25 @@ describe('InviteTeamMembers', () => {
 					screen.queryByText(/please select roles for team members/i),
 				).not.toBeInTheDocument();
 			});
+		});
 
+		it('shows the email-only callout when role is selected but email is invalid', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+			renderComponent();
+
+			const removeButtons = screen.getAllByRole('button', {
+				name: /remove team member/i,
+			});
+			await user.click(removeButtons[0]);
+			await user.click(
+				screen.getAllByRole('button', { name: /remove team member/i })[0],
+			);
+
+			const [firstInput] = screen.getAllByPlaceholderText(
+				/e\.g\. john@signoz\.io/i,
+			);
+
+			await user.type(firstInput, 'bad-email');
 			await selectRole(user, 0, 'Viewer');
 			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
@@ -284,9 +302,26 @@ describe('InviteTeamMembers', () => {
 					screen.queryByText(/please enter valid emails and select roles/i),
 				).not.toBeInTheDocument();
 			});
+		});
 
-			await user.clear(firstInput);
+		it('shows the role-only callout when email is valid but a role is missing', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+			renderComponent();
+
+			const removeButtons = screen.getAllByRole('button', {
+				name: /remove team member/i,
+			});
+			await user.click(removeButtons[0]);
+			await user.click(
+				screen.getAllByRole('button', { name: /remove team member/i })[0],
+			);
+
+			const [firstInput] = screen.getAllByPlaceholderText(
+				/e\.g\. john@signoz\.io/i,
+			);
+
 			await user.type(firstInput, 'valid@example.com');
+			await selectRole(user, 0, 'Admin');
 			await user.click(screen.getByRole('button', { name: /add another/i }));
 			const allInputs = screen.getAllByPlaceholderText(/e\.g\. john@signoz\.io/i);
 			await user.type(allInputs[1], 'norole@example.com');
@@ -304,8 +339,8 @@ describe('InviteTeamMembers', () => {
 			});
 		});
 
-		it('treats whitespace as untouched, clears the callout on fix-and-resubmit, and clears role error on role select', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+		it('treats whitespace-only input as untouched and shows no callout', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
 			renderComponent();
 
 			const removeButtons = screen.getAllByRole('button', {
@@ -328,8 +363,24 @@ describe('InviteTeamMembers', () => {
 				).not.toBeInTheDocument();
 				expect(screen.queryByText(/please select roles/i)).not.toBeInTheDocument();
 			});
+		});
 
-			await user.clear(firstInput);
+		it('clears the callout and calls onNext on fix-and-resubmit with valid email and role', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+			renderComponent();
+
+			const removeButtons = screen.getAllByRole('button', {
+				name: /remove team member/i,
+			});
+			await user.click(removeButtons[0]);
+			await user.click(
+				screen.getAllByRole('button', { name: /remove team member/i })[0],
+			);
+
+			const [firstInput] = screen.getAllByPlaceholderText(
+				/e\.g\. john@signoz\.io/i,
+			);
+
 			await user.type(firstInput, 'bad-email');
 			await user.click(screen.getByRole('button', { name: /send invites/i }));
 			await waitFor(() => {
@@ -338,12 +389,6 @@ describe('InviteTeamMembers', () => {
 						/please enter valid emails and select roles for team members/i,
 					),
 				).toBeInTheDocument();
-				expect(
-					screen.queryByText(/please enter valid emails for team members/i),
-				).not.toBeInTheDocument();
-				expect(
-					screen.queryByText(/please select roles for team members/i),
-				).not.toBeInTheDocument();
 			});
 
 			await user.clear(firstInput);
