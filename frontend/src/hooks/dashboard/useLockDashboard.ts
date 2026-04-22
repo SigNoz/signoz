@@ -1,7 +1,7 @@
 import { useMutation } from 'react-query';
 import locked from 'api/v1/dashboards/id/lock';
 import {
-	getSelectedDashboard,
+	getDashboardData,
 	useDashboardStore,
 } from 'providers/Dashboard/store/useDashboardStore';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -13,13 +13,11 @@ import APIError from 'types/api/error';
  */
 export function useLockDashboard(): (value: boolean) => Promise<void> {
 	const { showErrorModal } = useErrorModal();
-	const { setSelectedDashboard } = useDashboardStore();
+	const { setDashboardData } = useDashboardStore();
 
 	const { mutate: lockDashboard } = useMutation(locked, {
 		onSuccess: (_, props) => {
-			setSelectedDashboard((prev) =>
-				prev ? { ...prev, locked: props.lock } : prev,
-			);
+			setDashboardData((prev) => (prev ? { ...prev, locked: props.lock } : prev));
 		},
 		onError: (error) => {
 			showErrorModal(error as APIError);
@@ -27,11 +25,11 @@ export function useLockDashboard(): (value: boolean) => Promise<void> {
 	});
 
 	return async (value: boolean): Promise<void> => {
-		const selectedDashboard = getSelectedDashboard();
-		if (selectedDashboard) {
+		const dashboardData = getDashboardData();
+		if (dashboardData) {
 			try {
 				await lockDashboard({
-					id: selectedDashboard.id,
+					id: dashboardData.id,
 					lock: value,
 				});
 			} catch (error) {

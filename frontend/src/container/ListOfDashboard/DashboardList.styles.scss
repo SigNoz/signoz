@@ -7,8 +7,7 @@
 
 	// overridding the request integration style to fix the spacing for dashboard list
 	.request-entity-container {
-		margin-bottom: 16px !important;
-		margin-top: 0 !important;
+		margin: 16px 0 !important;
 	}
 
 	.integrations-content {
@@ -692,7 +691,7 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
+				background: var(--danger-background);
 				margin-left: 12px;
 			}
 

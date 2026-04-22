@@ -12,6 +12,11 @@ import Footer from '../Footer';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
+jest.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: jest.fn(),
+	}),
+}));
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: jest.fn(),

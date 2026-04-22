@@ -78,12 +78,12 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 	const {
-		selectedDashboard,
+		dashboardData,
 		panelMap,
 		setPanelMap,
 		layouts,
 		setLayouts,
-		setSelectedDashboard,
+		setDashboardData,
 	} = useDashboardStore();
 
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
@@ -98,10 +98,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const isPublicDashboardEnabled = isCloudUser || isEnterpriseSelfHostedUser;
 
-	const selectedData = selectedDashboard
+	const selectedData = dashboardData
 		? {
-				...selectedDashboard.data,
-				uuid: selectedDashboard.id,
+				...dashboardData.data,
+				uuid: dashboardData.id,
 		  }
 		: ({} as DashboardData);
 	const { dashboardVariables } = useDashboardVariables();
@@ -133,8 +133,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	let isAuthor = false;
 
-	if (selectedDashboard && user && user.email) {
-		isAuthor = selectedDashboard?.createdBy === user?.email;
+	if (dashboardData && user && user.email) {
+		isAuthor = dashboardData?.createdBy === user?.email;
 	}
 
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -146,7 +146,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { notifications } = useNotifications();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -155,9 +155,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const onEmptyWidgetHandler = useCallback(() => {
 		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: selectedDashboard?.data.widgets?.length,
+			dashboardId: dashboardData?.id,
+			dashboardName: dashboardData?.data.title,
+			numberOfPanels: dashboardData?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setIsPanelTypeSelectionModalOpen]);
@@ -168,14 +168,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	};
 
 	const onNameChangeHandler = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 		const updatedDashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				title: updatedTitle,
 			},
 		};
@@ -186,7 +186,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				});
 				setIsRenameDashboardOpen(false);
 				if (updatedDashboard.data) {
-					setSelectedDashboard(updatedDashboard.data);
+					setDashboardData(updatedDashboard.data);
 				}
 			},
 			onError: () => {
@@ -203,10 +203,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	// the context value is sometimes not available during the initial render
 	// due to which the updatedTitle is set to some previous value
 	useEffect(() => {
-		if (selectedDashboard) {
-			setUpdatedTitle(selectedDashboard.data.title);
+		if (dashboardData) {
+			setUpdatedTitle(dashboardData.data.title);
 		}
-	}, [selectedDashboard]);
+	}, [dashboardData]);
 
 	useEffect(() => {
 		if (state.error) {
@@ -227,7 +227,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	}, [state.error, state.value, t, notifications]);
 
 	function handleAddRow(): void {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 		const id = uuid();
@@ -246,10 +246,10 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		}
 
 		const updatedDashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				layout: [
 					{
 						i: id,
@@ -265,7 +265,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				],
 				panelMap: { ...panelMap, [id]: newRowWidgetMap },
 				widgets: [
-					...(selectedDashboard.data.widgets || []),
+					...(dashboardData.data.widgets || []),
 					{
 						id,
 						title: sectionName,
@@ -282,7 +282,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));
 					}
-					setSelectedDashboard(updatedDashboard.data);
+					setDashboardData(updatedDashboard.data);
 					setPanelMap(updatedDashboard.data?.data?.panelMap || {});
 				}
 
@@ -299,8 +299,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		error: errorPublicDashboardData,
 		isError: isErrorPublicDashboardData,
 	} = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-		!!selectedDashboard?.id && isPublicDashboardEnabled,
+		dashboardData?.id || '',
+		!!dashboardData?.id && isPublicDashboardEnabled,
 	);
 
 	useEffect(() => {
@@ -378,14 +378,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 									{(isAuthor || user.role === USER_ROLES.ADMIN) && (
 										<Tooltip
 											title={
-												selectedDashboard?.createdBy === 'integration' &&
+												dashboardData?.createdBy === 'integration' &&
 												'Dashboards created by integrations cannot be unlocked'
 											}
 										>
 											<Button
 												type="text"
 												icon={<LockKeyhole size={14} />}
-												disabled={selectedDashboard?.createdBy === 'integration'}
+												disabled={dashboardData?.createdBy === 'integration'}
 												onClick={handleLockDashboardToggle}
 												data-testid="lock-unlock-dashboard"
 											>
@@ -457,9 +457,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 								</section>
 								<section className="delete-dashboard">
 									<DeleteButton
-										createdBy={selectedDashboard?.createdBy || ''}
-										name={selectedDashboard?.data.title || ''}
-										id={String(selectedDashboard?.id) || ''}
+										createdBy={dashboardData?.createdBy || ''}
+										name={dashboardData?.data.title || ''}
+										id={String(dashboardData?.id) || ''}
 										isLocked={isDashboardLocked}
 										routeToListPage
 									/>

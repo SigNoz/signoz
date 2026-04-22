@@ -23,6 +23,8 @@ import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
+import { verifyFiltersAndOrderBy } from './verifyFiltersAndOrderBy';
+
 // State to track when UpdateTimeInterval has been called and what the updated times should be
 let mockGlobalTimeState: {
 	minTime: number;
@@ -198,26 +200,6 @@ export const verifyPayload = ({
 	}
 
 	return queryData;
-};
-
-export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
-	// Verify that the 'id' filter is not present in the pagination query
-	const thirdIdFilter = queryData.filters?.items?.find(
-		(item) => item?.key?.key === 'id',
-	);
-	expect(thirdIdFilter).toBeUndefined();
-
-	// Verify the sorting order includes 'id' if 'timestamp' is present
-	const OrderByTimestamp = queryData.orderBy?.find(
-		(item) => item.columnName === 'timestamp',
-	);
-	const orderById = queryData.orderBy?.find((item) => item.columnName === 'id');
-
-	if (OrderByTimestamp) {
-		expect(orderById).toBeDefined();
-		// Ensure the 'id' sorting order matches the 'timestamp' sorting order
-		expect(orderById?.order).toBe(OrderByTimestamp.order);
-	}
 };
 
 let capturedPayloads: QueryRangePayloadV5[];

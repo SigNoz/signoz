@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Typography } from 'antd';
 import { LineStyle } from 'lib/uPlotV2/config/types';
 
@@ -19,15 +19,14 @@ export default function LineStyleSelector({
 			<ToggleGroup
 				type="single"
 				value={value}
-				variant="outline"
 				size="lg"
-				onValueChange={(newValue): void => {
+				onChange={(newValue): void => {
 					if (newValue) {
 						onChange(newValue as LineStyle);
 					}
 				}}
 			>
-				<ToggleGroupItem value={LineStyle.Solid} aria-label="Solid" title="Solid">
+				<ToggleGroupItem value={LineStyle.Solid} aria-label="Solid">
 					<svg
 						className="line-style-icon"
 						viewBox="0 0 48 48"
@@ -41,11 +40,7 @@ export default function LineStyleSelector({
 					</svg>
 					<Typography.Text className="section-heading-small">Solid</Typography.Text>
 				</ToggleGroupItem>
-				<ToggleGroupItem
-					value={LineStyle.Dashed}
-					aria-label="Dashed"
-					title="Dashed"
-				>
+				<ToggleGroupItem value={LineStyle.Dashed} aria-label="Dashed">
 					<svg
 						className="line-style-icon"
 						viewBox="0 0 48 48"

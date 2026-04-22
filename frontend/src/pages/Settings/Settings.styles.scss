@@ -4,7 +4,7 @@
 
 	.settings-page-header {
 		border-bottom: 1px solid var(--l1-border);
-		background: color-mix(in srgb, var(--background) 70%, transparent);
+		background: var(--l1-background);
 		backdrop-filter: blur(20px);
 
 		.settings-page-header-title {
@@ -75,7 +75,7 @@
 		.settings-page-content {
 			flex: 1;
 			height: calc(100vh - 48px);
-			background: var(--background);
+			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
 

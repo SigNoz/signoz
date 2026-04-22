@@ -1,7 +1,7 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
-import { verifyFiltersAndOrderBy } from 'container/LogsExplorerViews/tests/LogsExplorerPagination.test';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
+import { verifyFiltersAndOrderBy } from 'container/LogsExplorerViews/tests/verifyFiltersAndOrderBy';
 import { logsPaginationQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -94,7 +94,7 @@ describe('EntityLogs', () => {
 						timeRange={{ startTime: 1, endTime: 2 }}
 						filters={{ items: [], op: 'AND' }}
 						queryKey="test"
-						category={K8sCategory.PODS}
+						category={InfraMonitoringEntity.PODS}
 						queryKeyFilters={[]}
 					/>
 				</VirtuosoMockContext.Provider>,

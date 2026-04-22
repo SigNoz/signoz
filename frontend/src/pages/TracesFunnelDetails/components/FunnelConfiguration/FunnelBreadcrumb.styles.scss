@@ -6,7 +6,7 @@
 	}
 	li:first-of-type {
 		.funnel-breadcrumb__title {
-			color: var(--l2-foreground);
+			color: var(--l1-foreground);
 		}
 	}
 	.ant-breadcrumb-separator {
@@ -22,17 +22,5 @@
 		font-style: normal;
 		font-weight: 400;
 		line-height: 20px; /* 142.857% */
-	}
-}
-
-.lightMode {
-	.funnel-breadcrumb__title,
-	.ant-breadcrumb-separator {
-		color: var(--l2-foreground);
-	}
-	li:first-of-type {
-		.funnel-breadcrumb__title {
-			color: var(--l2-foreground);
-		}
 	}
 }

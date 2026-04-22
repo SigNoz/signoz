@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, Input } from '@signozhq/ui';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListUsers } from 'api/generated/services/users';
@@ -179,7 +178,6 @@ function MembersSettings(): JSX.Element {
 					>
 						<Button
 							variant="solid"
-							size="sm"
 							color="secondary"
 							className="members-filter-trigger"
 						>
@@ -198,14 +196,12 @@ function MembersSettings(): JSX.Element {
 								setPage(1);
 							}}
 							className="members-search-input"
-							color="secondary"
 							name="members-search"
 						/>
 					</div>
 
 					<Button
 						variant="solid"
-						size="sm"
 						color="primary"
 						onClick={(): void => setIsInviteModalOpen(true)}
 					>
