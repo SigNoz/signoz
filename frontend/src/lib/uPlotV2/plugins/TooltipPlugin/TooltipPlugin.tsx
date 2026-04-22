@@ -164,7 +164,7 @@ export default function TooltipPlugin({
 		// Attach / detach global listeners when pin state changes so
 		// we can detect when the user interacts outside the tooltip.
 		// Keyboard unpinning is handled exclusively in handleKeyDown so
-		// that only L (toggle) and Escape (release) can dismiss — not
+		// that only P (toggle) and Escape (release) can dismiss — not
 		// arbitrary keystrokes like arrow keys or Tab.
 		function toggleOutsideListeners(enable: boolean): void {
 			if (enable) {
@@ -305,13 +305,13 @@ export default function TooltipPlugin({
 				return;
 			}
 
-			// Toggle off: L pressed while already pinned.
+			// Toggle off: P pressed while already pinned.
 			if (controller.pinned) {
 				dismissTooltip();
 				return;
 			}
 
-			// Toggle on: L pressed while hovering.
+			// Toggle on: P pressed while hovering.
 			const plot = getPlot(controller);
 			if (
 				!plot ||

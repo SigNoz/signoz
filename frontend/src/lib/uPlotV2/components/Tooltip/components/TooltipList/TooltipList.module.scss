@@ -1,4 +1,5 @@
 .list {
+	width: 100%;
 	:global(div[data-viewport-type='element']) {
 		left: 0;
 		box-sizing: border-box;

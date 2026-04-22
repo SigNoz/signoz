@@ -38,7 +38,7 @@ export default function TooltipList({
 			className={cx(Styles.list, !isDarkMode && Styles.listLightMode)}
 			data-testid="uplot-tooltip-list"
 			data={content}
-			style={{ height, width: '100%' }}
+			style={{ height }}
 			totalListHeightChanged={setTotalListHeight}
 			itemContent={(_, item): JSX.Element => (
 				<TooltipItem item={item} isItemActive={false} />
