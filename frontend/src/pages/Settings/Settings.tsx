@@ -26,12 +26,8 @@ import './Settings.styles.scss';
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
-	const {
-		user,
-		featureFlags,
-		trialInfo,
-		isFetchingActiveLicense,
-	} = useAppContext();
+	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
+		useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -286,7 +282,7 @@ function SettingsPage(): JSX.Element {
 												menuLabel: item.label,
 												menuRoute: item.key,
 											});
-											handleMenuItemClick((event as unknown) as MouseEvent, item);
+											handleMenuItemClick(event as unknown as MouseEvent, item);
 										}}
 										dataTestId={item.itemKey}
 									/>

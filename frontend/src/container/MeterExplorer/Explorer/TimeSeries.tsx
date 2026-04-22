@@ -25,10 +25,11 @@ function TimeSeries(): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];

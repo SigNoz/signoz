@@ -45,9 +45,8 @@ const initialState: IVariableFetchStoreState = {
 	cycleIds: {},
 };
 
-export const variableFetchStore = createStore<IVariableFetchStoreState>(
-	initialState,
-);
+export const variableFetchStore =
+	createStore<IVariableFetchStoreState>(initialState);
 
 // ============== Actions ==============
 
@@ -128,11 +127,8 @@ export function enqueueFetchOfAllVariables(): void {
  * If all query variables are now settled, unlocks any waiting dynamic variables.
  */
 export function onVariableFetchComplete(name: string): void {
-	const {
-		dependencyData,
-		variableTypes,
-		dynamicVariableOrder,
-	} = getVariableDependencyContext();
+	const { dependencyData, variableTypes, dynamicVariableOrder } =
+		getVariableDependencyContext();
 
 	variableFetchStore.update((draft) => {
 		draft.states[name] = 'idle';
@@ -168,11 +164,8 @@ export function onVariableFetchComplete(name: string): void {
  * If all query variables are now settled, unlocks any waiting dynamic variables.
  */
 export function onVariableFetchFailure(name: string): void {
-	const {
-		dependencyData,
-		variableTypes,
-		dynamicVariableOrder,
-	} = getVariableDependencyContext();
+	const { dependencyData, variableTypes, dynamicVariableOrder } =
+		getVariableDependencyContext();
 
 	variableFetchStore.update((draft) => {
 		draft.states[name] = 'error';
@@ -208,11 +201,8 @@ export function onVariableFetchFailure(name: string): void {
  * ensures parents are set before children within a single update).
  */
 export function enqueueDescendantsOfVariable(name: string): void {
-	const {
-		dependencyData,
-		variableTypes,
-		dynamicVariableOrder,
-	} = getVariableDependencyContext();
+	const { dependencyData, variableTypes, dynamicVariableOrder } =
+		getVariableDependencyContext();
 	if (!dependencyData) {
 		return;
 	}

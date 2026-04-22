@@ -40,9 +40,8 @@ function Overview({
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
-		true,
-	);
+	const [isAttributesExpanded, setIsAttributesExpanded] =
+		useState<boolean>(true);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
 
 	const isDarkMode = useIsDarkMode();

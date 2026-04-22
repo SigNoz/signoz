@@ -16,13 +16,8 @@ function StatusCodeTable({
 }: {
 	endPointStatusCodeDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		refetch,
-	} = endPointStatusCodeDataQuery;
+	const { isLoading, isRefetching, isError, data, refetch } =
+		endPointStatusCodeDataQuery;
 
 	const statusCodeData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {

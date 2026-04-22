@@ -106,10 +106,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	const [
-		showPaymentFailedWarning,
-		setShowPaymentFailedWarning,
-	] = useState<boolean>(false);
+	const [showPaymentFailedWarning, setShowPaymentFailedWarning] =
+		useState<boolean>(false);
 
 	const errorBoundaryRef = useRef<Sentry.ErrorBoundary>(null);
 
@@ -167,15 +165,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		});
 	};
 
-	const {
-		mutate: manageCreditCard,
-		isLoading: isLoadingManageBilling,
-	} = useMutation(manageCreditCardApi, {
-		onSuccess: (data) => {
-			handleBillingOnSuccess(data);
-		},
-		onError: handleBillingOnError,
-	});
+	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
+		useMutation(manageCreditCardApi, {
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		});
 
 	const isDarkMode = useIsDarkMode();
 

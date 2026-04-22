@@ -19,7 +19,7 @@ const createMockDataset = (
 		max: 90,
 		stroke: '#ff0000',
 		...overrides,
-	} as ExtendedChartDataset);
+	}) as ExtendedChartDataset;
 
 describe('getChartManagerColumns', () => {
 	const tableDataSet: ExtendedChartDataset[] = [

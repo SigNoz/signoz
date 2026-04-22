@@ -13,9 +13,8 @@ import APIError from 'types/api/error';
 export default function ChatSupportGateway(): JSX.Element {
 	const { notifications } = useNotifications();
 
-	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
-		false,
-	);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
+		useState(false);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,

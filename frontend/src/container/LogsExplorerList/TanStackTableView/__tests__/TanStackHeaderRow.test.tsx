@@ -37,13 +37,13 @@ jest.mock('@tanstack/react-table', () => ({
 }));
 
 const column = (key: string): OrderedColumn =>
-	({ key, title: key } as OrderedColumn);
+	({ key, title: key }) as OrderedColumn;
 
 const mockHeader = (
 	id: string,
 	canResize = true,
 ): Header<TanStackTableRowData, unknown> =>
-	(({
+	({
 		id,
 		column: {
 			getCanResize: (): boolean => canResize,
@@ -53,7 +53,7 @@ const mockHeader = (
 		getContext: (): unknown => ({}),
 		getResizeHandler: (): (() => void) => jest.fn(),
 		flexRender: undefined,
-	} as unknown) as Header<TanStackTableRowData, unknown>);
+	}) as unknown as Header<TanStackTableRowData, unknown>;
 
 describe('TanStackHeaderRow', () => {
 	beforeEach(() => {

@@ -57,10 +57,8 @@ function SaveView(): JSX.Element {
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [activeViewName, setActiveViewName] = useState<string>('');
-	const [
-		activeCompositeQuery,
-		setActiveCompositeQuery,
-	] = useState<ICompositeMetricQuery | null>(null);
+	const [activeCompositeQuery, setActiveCompositeQuery] =
+		useState<ICompositeMetricQuery | null>(null);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<ViewProps[]>([]);
 	const { t } = useTranslation(['explorer']);
@@ -118,10 +116,8 @@ function SaveView(): JSX.Element {
 		setSearchValue('');
 	};
 
-	const {
-		mutateAsync: deleteViewAsync,
-		isLoading: isDeleteLoading,
-	} = useDeleteView(activeViewKey);
+	const { mutateAsync: deleteViewAsync, isLoading: isDeleteLoading } =
+		useDeleteView(activeViewKey);
 
 	const onDeleteHandler = (): void => {
 		deleteViewHandler({
@@ -134,16 +130,14 @@ function SaveView(): JSX.Element {
 		});
 	};
 
-	const {
-		mutateAsync: updateViewAsync,
-		isLoading: isViewUpdating,
-	} = useUpdateView({
-		compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
-		viewKey: activeViewKey,
-		extraData: JSON.stringify({ color }),
-		sourcePage: sourcepage || DataSource.LOGS,
-		viewName: newViewName,
-	});
+	const { mutateAsync: updateViewAsync, isLoading: isViewUpdating } =
+		useUpdateView({
+			compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
+			viewKey: activeViewKey,
+			extraData: JSON.stringify({ color }),
+			sourcePage: sourcepage || DataSource.LOGS,
+			viewName: newViewName,
+		});
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {

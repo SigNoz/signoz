@@ -43,7 +43,10 @@
 	max-height: 0;
 	overflow: hidden;
 	opacity: 0;
-	transition: max-height 0.1s ease, opacity 0.1s ease, padding 0.1s ease;
+	transition:
+		max-height 0.1s ease,
+		opacity 0.1s ease,
+		padding 0.1s ease;
 
 	&.open {
 		padding-bottom: 24px;

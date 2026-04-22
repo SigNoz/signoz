@@ -111,7 +111,7 @@ describe('ExplorerOptionWrapper', () => {
 		jest.clearAllMocks();
 		mockGetExplorerToolBarVisibility.mockReturnValue(true);
 		// Mock useUpdateDashboard to return a mutation object
-		mockUseUpdateDashboard.mockReturnValue(({
+		mockUseUpdateDashboard.mockReturnValue({
 			mutate: jest.fn(),
 			mutateAsync: jest.fn(),
 			isLoading: false,
@@ -120,15 +120,15 @@ describe('ExplorerOptionWrapper', () => {
 			data: undefined,
 			error: null,
 			reset: jest.fn(),
-		} as unknown) as ReturnType<typeof useUpdateDashboard>);
+		} as unknown as ReturnType<typeof useUpdateDashboard>);
 	});
 
 	it('should navigate to alert creation page when "Create an Alert" is clicked in logs-explorer', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockPush = jest.fn();
-		mockUseHistory.mockReturnValue(({
+		mockUseHistory.mockReturnValue({
 			push: mockPush,
-		} as unknown) as ReturnType<typeof useHistory>);
+		} as unknown as ReturnType<typeof useHistory>);
 
 		renderExplorerOptionWrapper({ sourcepage: DataSource.LOGS });
 

@@ -11,7 +11,7 @@ jest.mock('hooks/useDragColumns/utils', () => ({
 }));
 
 const col = (key: string, title?: string): OrderedColumn =>
-	({ key, title: title ?? key } as OrderedColumn);
+	({ key, title: title ?? key }) as OrderedColumn;
 
 describe('useOrderedColumns', () => {
 	beforeEach(() => {

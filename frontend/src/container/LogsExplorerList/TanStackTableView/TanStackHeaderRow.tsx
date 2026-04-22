@@ -44,9 +44,9 @@ function TanStackHeaderRow({
 	const isResizableColumn = Boolean(header?.column.getCanResize());
 	const isColumnRemovable = Boolean(
 		canRemoveColumn &&
-			onRemoveColumn &&
-			column.key !== 'expand' &&
-			column.key !== 'state-indicator',
+		onRemoveColumn &&
+		column.key !== 'expand' &&
+		column.key !== 'state-indicator',
 	);
 	const isResizing = Boolean(header?.column.getIsResizing());
 	const resizeHandler = header?.getResizeHandler();
@@ -80,7 +80,7 @@ function TanStackHeaderRow({
 				'--tanstack-header-translate-x': `${Math.round(transform?.x ?? 0)}px`,
 				'--tanstack-header-translate-y': `${Math.round(transform?.y ?? 0)}px`,
 				'--tanstack-header-transition': isResizing ? 'none' : transition || 'none',
-			} as CSSProperties),
+			}) as CSSProperties,
 		[isResizing, transform?.x, transform?.y, transition],
 	);
 	const headerCellClassName = [

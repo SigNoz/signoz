@@ -27,9 +27,10 @@ export function useMemberRoleManager(
 		{ query: { enabled: !!userId && enabled } },
 	);
 
-	const currentUserRoles = useMemo(() => fetchedUser?.data?.userRoles ?? [], [
-		fetchedUser,
-	]);
+	const currentUserRoles = useMemo(
+		() => fetchedUser?.data?.userRoles ?? [],
+		[fetchedUser],
+	);
 
 	const fetchedRoleIds = useMemo(
 		() =>

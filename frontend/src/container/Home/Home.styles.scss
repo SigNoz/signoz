@@ -227,7 +227,9 @@
 		.ant-typography {
 			color: var(--l2-foreground);
 			font-variant-numeric: lining-nums tabular-nums slashed-zero;
-			font-feature-settings: 'dlig' on, 'salt' on;
+			font-feature-settings:
+				'dlig' on,
+				'salt' on;
 			font-family: Inter;
 			font-size: 11px !important;
 			font-style: normal;

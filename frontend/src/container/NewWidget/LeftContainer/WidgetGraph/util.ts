@@ -66,19 +66,17 @@ export function populateMultipleResults(
 	}
 
 	// Create a copy instead of mutating the original
-	const updatedResponseData: SuccessResponse<
-		MetricRangePayloadProps,
-		unknown
-	> = {
-		...responseData,
-		payload: {
-			...responseData.payload,
-			data: {
-				...responseData.payload.data,
-				result: allFormattedResults,
+	const updatedResponseData: SuccessResponse<MetricRangePayloadProps, unknown> =
+		{
+			...responseData,
+			payload: {
+				...responseData.payload,
+				data: {
+					...responseData.payload.data,
+					result: allFormattedResults,
+				},
 			},
-		},
-	};
+		};
 
 	return updatedResponseData;
 }

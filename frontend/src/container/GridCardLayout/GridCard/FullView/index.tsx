@@ -78,10 +78,11 @@ function FullView({
 	enableDrillDown = false,
 }: FullViewProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedTime: globalSelectedTime, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const urlQuery = useUrlQuery();
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
@@ -157,18 +158,14 @@ function FullView({
 		};
 	});
 
-	const {
-		drilldownQuery,
-		dashboardEditView,
-		handleResetQuery,
-		showResetQuery,
-	} = useDrilldown({
-		enableDrillDown,
-		widget,
-		setRequestData,
-		dashboardData,
-		selectedPanelType,
-	});
+	const { drilldownQuery, dashboardEditView, handleResetQuery, showResetQuery } =
+		useDrilldown({
+			enableDrillDown,
+			widget,
+			setRequestData,
+			dashboardData,
+			selectedPanelType,
+		});
 
 	useEffect(() => {
 		const timeRange =
@@ -237,12 +234,11 @@ function FullView({
 	>(Array(response.data?.payload?.data?.result?.length).fill(true));
 
 	useEffect(() => {
-		const {
-			graphVisibilityStates: localStoredVisibilityState,
-		} = getLocalStorageGraphVisibilityState({
-			apiResponse: response.data?.payload.data.result || [],
-			name: originalName,
-		});
+		const { graphVisibilityStates: localStoredVisibilityState } =
+			getLocalStorageGraphVisibilityState({
+				apiResponse: response.data?.payload.data.result || [],
+				name: originalName,
+			});
 		setGraphsVisibilityStates(localStoredVisibilityState);
 	}, [originalName, response.data?.payload.data.result]);
 

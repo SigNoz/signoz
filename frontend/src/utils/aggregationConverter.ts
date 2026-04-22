@@ -66,10 +66,8 @@ export function convertAggregationsToBaseAutocompleteData(
 			};
 		}
 		// MetricAggregation
-		const {
-			metricName: aggMetricName,
-			spaceAggregation: aggSpaceAggregation,
-		} = agg;
+		const { metricName: aggMetricName, spaceAggregation: aggSpaceAggregation } =
+			agg;
 		const displayKey = `${aggSpaceAggregation}(${aggMetricName})`;
 
 		return {
@@ -91,12 +89,8 @@ export function getAggregationOptionsForOrderBy(query: {
 	aggregateAttribute?: { key: string };
 	spaceAggregation?: string;
 }): BaseAutocompleteData[] {
-	const {
-		aggregations,
-		dataSource,
-		aggregateAttribute,
-		spaceAggregation,
-	} = query;
+	const { aggregations, dataSource, aggregateAttribute, spaceAggregation } =
+		query;
 
 	return convertAggregationsToBaseAutocompleteData(
 		aggregations,

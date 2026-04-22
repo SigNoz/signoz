@@ -33,14 +33,14 @@ function StatusMessage({
 		s3_retention && s3_retention !== -1
 			? t('status_message.s3_part', {
 					s3_retention: convertHoursValueToRelevantUnitString(s3_retention),
-			  })
+				})
 			: '';
 	const statusMessage =
 		total_retention && total_retention !== -1
 			? t(`status_message.${status}`, {
 					total_retention: convertHoursValueToRelevantUnitString(total_retention),
 					s3_part: s3Part,
-			  })
+				})
 			: null;
 
 	return statusMessage ? (

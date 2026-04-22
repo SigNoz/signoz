@@ -144,7 +144,7 @@ function AnomalyAlertEvaluationView({
 		? [
 				seriesData[allSeries[0]].data[0], // Shared X-axis
 				...allSeries.map((key) => seriesData[key].data[1]), // Map through Y-axis data for all series
-		  ]
+			]
 		: [];
 
 	const { timezone } = useTimezone();
@@ -229,7 +229,7 @@ function AnomalyAlertEvaluationView({
 								size: 1,
 							},
 						},
-				  ]
+					]
 				: allSeries.map((seriesKey) => ({
 						label: seriesKey,
 						stroke: seriesData[seriesKey].color,
@@ -237,7 +237,7 @@ function AnomalyAlertEvaluationView({
 						show: true,
 						paths: _spline,
 						spanGaps: true,
-				  }))),
+					}))),
 		],
 		scales: {
 			x: {

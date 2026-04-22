@@ -46,9 +46,8 @@ function LaunchChatSupport({
 		featureFlagsFetchError,
 		isLoggedIn,
 	} = useAppContext();
-	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
-		false,
-	);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
+		useState(false);
 
 	const { pathname } = useLocation();
 

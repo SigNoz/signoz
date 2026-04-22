@@ -140,19 +140,17 @@ export function useIntegrationModal({
 	const { mutate: generateUrl, isLoading: isGeneratingUrl } = useCreateAccount();
 
 	const handleError = useAxiosError();
-	const {
-		data: connectionParams,
-		isLoading: isConnectionParamsLoading,
-	} = useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
-		{
-			cloudProvider: INTEGRATION_TYPES.AWS,
-		},
-		{
-			query: {
-				onError: handleError,
+	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
+		useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
+			{
+				cloudProvider: INTEGRATION_TYPES.AWS,
 			},
-		},
-	);
+			{
+				query: {
+					onError: handleError,
+				},
+			},
+		);
 
 	const handleGenerateUrl = useCallback(
 		(payload: CloudintegrationtypesPostableAccountDTO): void => {

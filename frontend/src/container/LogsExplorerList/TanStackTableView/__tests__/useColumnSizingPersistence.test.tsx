@@ -20,7 +20,7 @@ jest.mock('api/browser/localstorage/set', () => ({
 }));
 
 const col = (key: string): OrderedColumn =>
-	({ key, title: key } as OrderedColumn);
+	({ key, title: key }) as OrderedColumn;
 
 describe('useColumnSizingPersistence', () => {
 	beforeEach(() => {

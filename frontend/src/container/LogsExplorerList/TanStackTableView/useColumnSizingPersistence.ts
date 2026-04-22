@@ -34,9 +34,9 @@ const readPersistedColumnSizing = (): ColumnSizingState => {
 		const parsed = JSON.parse(rawSizing) as
 			| PersistedColumnSizing
 			| ColumnSizingState;
-		const sizing = ('sizing' in parsed
-			? parsed.sizing
-			: parsed) as ColumnSizingState;
+		const sizing = (
+			'sizing' in parsed ? parsed.sizing : parsed
+		) as ColumnSizingState;
 		return sanitizeSizing(sizing);
 	} catch (error) {
 		console.error('Failed to parse persisted log column sizing', error);

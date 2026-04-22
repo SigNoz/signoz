@@ -19,7 +19,7 @@ describe('navigation utilities', () => {
 				ctrlKey: false,
 				button: 0,
 				...overrides,
-			} as MouseEvent);
+			}) as MouseEvent;
 
 		it('returns true when metaKey is pressed (Cmd on Mac)', () => {
 			const event = createMouseEvent({ metaKey: true });

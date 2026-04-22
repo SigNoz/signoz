@@ -109,9 +109,8 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		});
 
 		// Column sizing (persisted). stored to localStorage.
-		const { columnSizing, setColumnSizing } = useColumnSizingPersistence(
-			orderedColumns,
-		);
+		const { columnSizing, setColumnSizing } =
+			useColumnSizingPersistence(orderedColumns);
 
 		// don't allow "remove column" when only state-indicator + one data col remain
 		const isAtMinimumRemovableColumns = useMemo(

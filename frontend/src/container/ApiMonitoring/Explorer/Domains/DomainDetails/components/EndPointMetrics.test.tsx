@@ -96,7 +96,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			refetch: jest.fn(),
 			remove: jest.fn(),
 			...overrides,
-		} as UseQueryResult<SuccessResponse<any>, unknown>);
+		}) as UseQueryResult<SuccessResponse<any>, unknown>;
 
 	const renderComponent = (
 		endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>,

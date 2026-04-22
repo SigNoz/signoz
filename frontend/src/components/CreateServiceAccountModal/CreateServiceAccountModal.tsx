@@ -47,25 +47,23 @@ function CreateServiceAccountModal(): JSX.Element {
 		},
 	});
 
-	const {
-		mutate: createServiceAccount,
-		isLoading: isSubmitting,
-	} = useCreateServiceAccount({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Service account created successfully');
-				reset();
-				await setIsOpen(null);
-				await invalidateListServiceAccounts(queryClient);
+	const { mutate: createServiceAccount, isLoading: isSubmitting } =
+		useCreateServiceAccount({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Service account created successfully');
+					reset();
+					await setIsOpen(null);
+					await invalidateListServiceAccounts(queryClient);
+				},
+				onError: (err) => {
+					const errMessage = convertToApiError(
+						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					);
+					showErrorModal(errMessage as APIError);
+				},
 			},
-			onError: (err) => {
-				const errMessage = convertToApiError(
-					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				);
-				showErrorModal(errMessage as APIError);
-			},
-		},
-	});
+		});
 
 	function handleClose(): void {
 		reset();

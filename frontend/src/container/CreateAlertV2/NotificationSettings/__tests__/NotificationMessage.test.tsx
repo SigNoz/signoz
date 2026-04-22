@@ -20,8 +20,8 @@ jest.mock('uplot', () => {
 });
 
 const mockSetNotificationSettings = jest.fn();
-const initialNotificationSettingsState = createMockAlertContextState()
-	.notificationSettings;
+const initialNotificationSettingsState =
+	createMockAlertContextState().notificationSettings;
 jest.spyOn(createAlertContext, 'useCreateAlertState').mockReturnValue(
 	createMockAlertContextState({
 		notificationSettings: {
@@ -63,7 +63,7 @@ describe('NotificationMessage', () => {
 						description: 'Existing message',
 					},
 					setNotificationSettings: mockSetNotificationSettings,
-				} as any),
+				}) as any,
 		);
 
 		render(<NotificationMessage />);

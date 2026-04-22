@@ -74,10 +74,8 @@ export default function CustomDomainSettings(): JSX.Element {
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
 	const [hosts, setHosts] = useState<ZeustypesHostDTO[] | null>(null);
 
-	const [
-		updateDomainError,
-		setUpdateDomainError,
-	] = useState<AxiosError<RenderErrorResponseDTO> | null>(null);
+	const [updateDomainError, setUpdateDomainError] =
+		useState<AxiosError<RenderErrorResponseDTO> | null>(null);
 
 	const [customDomainSubdomain, setCustomDomainSubdomain] = useState<
 		string | undefined
@@ -90,10 +88,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		refetch: refetchHosts,
 	} = useGetHosts();
 
-	const {
-		mutate: updateSubDomain,
-		isLoading: isLoadingUpdateCustomDomain,
-	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateSubDomain, isLoading: isLoadingUpdateCustomDomain } =
+		usePutHost<AxiosError<RenderErrorResponseDTO>>();
 
 	const stripProtocol = (url: string): string => url?.split('://')[1] ?? url;
 

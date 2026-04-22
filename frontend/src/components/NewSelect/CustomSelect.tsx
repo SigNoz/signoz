@@ -112,23 +112,28 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	/**
 	 * Separates section and non-section options
 	 */
-	const splitOptions = useCallback((options: OptionData[]): {
-		sectionOptions: OptionData[];
-		nonSectionOptions: OptionData[];
-	} => {
-		const sectionOptions: OptionData[] = [];
-		const nonSectionOptions: OptionData[] = [];
+	const splitOptions = useCallback(
+		(
+			options: OptionData[],
+		): {
+			sectionOptions: OptionData[];
+			nonSectionOptions: OptionData[];
+		} => {
+			const sectionOptions: OptionData[] = [];
+			const nonSectionOptions: OptionData[] = [];
 
-		options.forEach((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				sectionOptions.push(option);
-			} else {
-				nonSectionOptions.push(option);
-			}
-		});
+			options.forEach((option) => {
+				if ('options' in option && Array.isArray(option.options)) {
+					sectionOptions.push(option);
+				} else {
+					nonSectionOptions.push(option);
+				}
+			});
 
-		return { sectionOptions, nonSectionOptions };
-	}, []);
+			return { sectionOptions, nonSectionOptions };
+		},
+		[],
+	);
 
 	/**
 	 * Apply search filtering to options
@@ -322,9 +327,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						processedOptions = filterOptionsBySearch(processedOptions, searchText);
 					}
 
-					const { sectionOptions, nonSectionOptions } = splitOptions(
-						processedOptions,
-					);
+					const { sectionOptions, nonSectionOptions } =
+						splitOptions(processedOptions);
 
 					// Add custom option if needed
 					if (

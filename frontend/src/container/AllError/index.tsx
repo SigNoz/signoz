@@ -194,33 +194,34 @@ function AllErrors(): JSX.Element {
 			confirm: (param?: FilterConfirmProps) => void,
 			filterValue: string,
 			filterKey: string,
-		): VoidFunction => (): void => {
-			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
-				getUpdatedServiceName || '',
-				getUpdatedExceptionType || '',
-				filterKey,
-				filterValue || '',
-			);
+		): VoidFunction =>
+			(): void => {
+				const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
+					getUpdatedServiceName || '',
+					getUpdatedExceptionType || '',
+					filterKey,
+					filterValue || '',
+				);
 
-			const queryParams: QueryParams = {
-				order: updatedOrder,
-				offset: getUpdatedOffset,
-				orderParam: getUpdatedParams,
-				pageSize: getUpdatedPageSize,
-				compositeQuery: getUpdatedCompositeQuery,
-			};
+				const queryParams: QueryParams = {
+					order: updatedOrder,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
+					pageSize: getUpdatedPageSize,
+					compositeQuery: getUpdatedCompositeQuery,
+				};
 
-			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
-				queryParams.exceptionType = exceptionFilterValue;
-			}
+				if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
+					queryParams.exceptionType = exceptionFilterValue;
+				}
 
-			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
-				queryParams.serviceName = serviceFilterValue;
-			}
+				if (serviceFilterValue && serviceFilterValue !== 'undefined') {
+					queryParams.serviceName = serviceFilterValue;
+				}
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
-			confirm();
-		},
+				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				confirm();
+			},
 		[
 			getUpdatedExceptionType,
 			getUpdatedOffset,

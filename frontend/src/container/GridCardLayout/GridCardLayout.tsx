@@ -197,9 +197,8 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 	const handleLayoutChange = (layout: Layout[]): void => {
 		const filterLayout = removeUndefinedValuesFromLayout(layout);
-		const filterDashboardLayout = removeUndefinedValuesFromLayout(
-			dashboardLayout,
-		);
+		const filterDashboardLayout =
+			removeUndefinedValuesFromLayout(dashboardLayout);
 		if (!isEqual(filterLayout, filterDashboardLayout)) {
 			const updatedLayout = sortLayout(layout);
 			setDashboardLayout(updatedLayout);

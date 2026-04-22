@@ -39,8 +39,8 @@ jest.mock('axios', () => {
 describe('interceptorRejected', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		((axios as unknown) as jest.Mock).mockResolvedValue({ data: 'success' });
-		((axios.isAxiosError as unknown) as jest.Mock).mockReturnValue(true);
+		(axios as unknown as jest.Mock).mockResolvedValue({ data: 'success' });
+		(axios.isAxiosError as unknown as jest.Mock).mockReturnValue(true);
 	});
 
 	it('should preserve array payload structure when retrying a 401 request', async () => {
@@ -49,7 +49,7 @@ describe('interceptorRejected', () => {
 			{ relation: 'assignee', object: { resource: { name: 'editor' } } },
 		];
 
-		const error = ({
+		const error = {
 			response: {
 				status: 401,
 				config: {
@@ -67,7 +67,7 @@ describe('interceptorRejected', () => {
 				headers: new AxiosHeaders(),
 				data: JSON.stringify(arrayPayload),
 			},
-		} as unknown) as AxiosResponse;
+		} as unknown as AxiosResponse;
 
 		try {
 			await interceptorRejected(error);
@@ -75,7 +75,7 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = (axios as unknown) as jest.Mock;
+		const mockAxiosFn = axios as unknown as jest.Mock;
 		expect(mockAxiosFn.mock.calls.length).toBe(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(Array.isArray(JSON.parse(retryCallConfig.data))).toBe(true);
@@ -85,7 +85,7 @@ describe('interceptorRejected', () => {
 	it('should preserve object payload structure when retrying a 401 request', async () => {
 		const objectPayload = { key: 'value', nested: { data: 123 } };
 
-		const error = ({
+		const error = {
 			response: {
 				status: 401,
 				config: {
@@ -103,7 +103,7 @@ describe('interceptorRejected', () => {
 				headers: new AxiosHeaders(),
 				data: JSON.stringify(objectPayload),
 			},
-		} as unknown) as AxiosResponse;
+		} as unknown as AxiosResponse;
 
 		try {
 			await interceptorRejected(error);
@@ -111,14 +111,14 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = (axios as unknown) as jest.Mock;
+		const mockAxiosFn = axios as unknown as jest.Mock;
 		expect(mockAxiosFn.mock.calls.length).toBe(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(JSON.parse(retryCallConfig.data)).toEqual(objectPayload);
 	});
 
 	it('should handle undefined data gracefully when retrying', async () => {
-		const error = ({
+		const error = {
 			response: {
 				status: 401,
 				config: {
@@ -136,7 +136,7 @@ describe('interceptorRejected', () => {
 				headers: new AxiosHeaders(),
 				data: undefined,
 			},
-		} as unknown) as AxiosResponse;
+		} as unknown as AxiosResponse;
 
 		try {
 			await interceptorRejected(error);
@@ -144,7 +144,7 @@ describe('interceptorRejected', () => {
 			// Expected to reject after retry
 		}
 
-		const mockAxiosFn = (axios as unknown) as jest.Mock;
+		const mockAxiosFn = axios as unknown as jest.Mock;
 		expect(mockAxiosFn.mock.calls.length).toBe(1);
 		const retryCallConfig = mockAxiosFn.mock.calls[0][0];
 		expect(retryCallConfig.data).toBeUndefined();

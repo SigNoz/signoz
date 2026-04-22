@@ -105,7 +105,7 @@ export const getK8sDeploymentsList = async (
 							[] as typeof props.filters.items,
 						),
 					},
-			  }
+				}
 			: props;
 
 		const response = await axios.post('/deployments/list', requestProps, {

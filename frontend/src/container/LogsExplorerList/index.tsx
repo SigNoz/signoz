@@ -68,11 +68,8 @@ function LogsExplorerList({
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
 
-	const {
-		currentQuery,
-		lastUsedQuery,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, lastUsedQuery, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -150,7 +147,7 @@ function LogsExplorerList({
 		const components = isLoading
 			? {
 					Footer,
-			  }
+				}
 			: {};
 
 		if (options.format === 'table') {

@@ -288,8 +288,9 @@ function ExplorerOptions({
 	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
 	const viewKey = useGetSearchQueryParam(QueryParams.viewKey) || '';
 
-	const extraData = viewsData?.data?.data?.find((view) => view.id === viewKey)
-		?.extraData;
+	const extraData = viewsData?.data?.data?.find(
+		(view) => view.id === viewKey,
+	)?.extraData;
 
 	const extraDataColor = extraData ? JSON.parse(extraData).color : '';
 	const rgbaColor = generateRGBAFromHex(
@@ -343,20 +344,18 @@ function ExplorerOptions({
 					format: options?.format,
 					maxLines: options?.maxLines,
 					fontSize: options?.fontSize,
-			  }
+				}
 			: undefined,
 	);
 
-	const {
-		mutateAsync: updateViewAsync,
-		isLoading: isViewUpdating,
-	} = useUpdateView({
-		compositeQuery,
-		viewKey,
-		extraData: updatedExtraData,
-		sourcePage: isMeterExplorer ? 'meter' : sourcepage,
-		viewName,
-	});
+	const { mutateAsync: updateViewAsync, isLoading: isViewUpdating } =
+		useUpdateView({
+			compositeQuery,
+			viewKey,
+			extraData: updatedExtraData,
+			sourcePage: isMeterExplorer ? 'meter' : sourcepage,
+			viewName,
+		});
 
 	const showErrorNotification = (err: Error): void => {
 		notifications.error({
@@ -583,18 +582,16 @@ function ExplorerOptions({
 		options,
 	);
 
-	const {
-		isLoading: isSaveViewLoading,
-		mutateAsync: saveViewAsync,
-	} = useSaveView({
-		viewName: newViewName || '',
-		compositeQuery,
-		sourcePage: sourcepage,
-		extraData: JSON.stringify({
-			color,
-			selectColumns: options.selectColumns,
-		}),
-	});
+	const { isLoading: isSaveViewLoading, mutateAsync: saveViewAsync } =
+		useSaveView({
+			viewName: newViewName || '',
+			compositeQuery,
+			sourcePage: sourcepage,
+			extraData: JSON.stringify({
+				color,
+				selectColumns: options.selectColumns,
+			}),
+		});
 
 	const onSaveHandler = (): void => {
 		saveNewViewHandler({
@@ -610,7 +607,7 @@ function ExplorerOptions({
 							format: options?.format,
 							maxLines: options?.maxLines,
 							fontSize: options?.fontSize,
-					  }
+						}
 					: {}),
 			}),
 			notifications,
@@ -660,10 +657,8 @@ function ExplorerOptions({
 
 	const isEditDeleteSupported = allowedRoles.includes(user.role as string);
 
-	const [
-		isRecentlyUsedSavedViewSelected,
-		setIsRecentlyUsedSavedViewSelected,
-	] = useState(false);
+	const [isRecentlyUsedSavedViewSelected, setIsRecentlyUsedSavedViewSelected] =
+		useState(false);
 
 	useEffect(() => {
 		// If the query is not the default query, don't set the recently used saved view
@@ -756,7 +751,7 @@ function ExplorerOptions({
 					suffixIcon={null}
 					onSelect={(e): void => {
 						const selectedQuery = splitedQueries.find(
-							(query) => query.id === ((e as unknown) as string),
+							(query) => query.id === (e as unknown as string),
 						);
 						if (selectedQuery) {
 							onCreateAlertsHandler(selectedQuery);
@@ -811,7 +806,7 @@ function ExplorerOptions({
 					suffixIcon={null}
 					onSelect={(e): void => {
 						const selectedQuery = splitedQueries.find(
-							(query) => query.id === ((e as unknown) as string),
+							(query) => query.id === (e as unknown as string),
 						);
 						if (selectedQuery) {
 							setQueryToExport(() => {
