@@ -60,7 +60,6 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		mutation: {
 			onSuccess: (_, { data }) => {
 				toast.success(t('success', { ns: 'common' }), {
-					richColors: true,
 					position: 'top-right',
 				});
 				updateOrg(orgId, data.displayName ?? '');

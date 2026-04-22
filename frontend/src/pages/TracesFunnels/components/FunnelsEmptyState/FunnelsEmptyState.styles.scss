@@ -60,23 +60,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.funnels-empty {
-		&__content {
-			border: 1px dashed var(--l2-foreground);
-		}
-
-		&__icon {
-			color: var(--l1-background);
-		}
-
-		&__title {
-			color: var(--l1-background);
-		}
-
-		&__subtitle {
-			color: var(--l2-background);
-		}
-	}
-}

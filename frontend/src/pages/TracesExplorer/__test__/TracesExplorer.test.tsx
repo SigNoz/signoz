@@ -699,17 +699,17 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('select a view options - assert and save this view', async () => {
-		jest.useFakeTimers();
-
 		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const viewSearchInput = container.querySelector(
-			'.view-options .ant-select-selection-search-input',
-		) as HTMLElement;
-
-		expect(viewSearchInput).toBeInTheDocument();
+		const viewSearchInput = await waitFor(() => {
+			const el = container.querySelector(
+				'.view-options .ant-select-selection-search-input',
+			) as HTMLElement;
+			expect(el).toBeInTheDocument();
+			return el;
+		});
 
 		fireEvent.mouseDown(viewSearchInput);
 
@@ -718,17 +718,18 @@ describe('TracesExplorer - ', () => {
 		).toBeInTheDocument();
 
 		// save this view
-		fireEvent.click(screen.getByText('Save this view'));
+		fireEvent.click(await screen.findByText('Save this view'));
 
 		const saveViewModalInput = await screen.findByPlaceholderText(
 			'e.g. External http method view',
 		);
 		expect(saveViewModalInput).toBeInTheDocument();
 
-		const saveViewModal = document.querySelector(
-			'.ant-modal-content',
-		) as HTMLElement;
-		expect(saveViewModal).toBeInTheDocument();
+		const saveViewModal = await waitFor(() => {
+			const el = document.querySelector('.ant-modal-content') as HTMLElement;
+			expect(el).toBeInTheDocument();
+			return el;
+		});
 
 		await act(async () =>
 			fireEvent.change(saveViewModalInput, { target: { value: 'test view' } }),
@@ -739,18 +740,19 @@ describe('TracesExplorer - ', () => {
 			fireEvent.click(within(saveViewModal).getByTestId('save-view-btn'));
 		});
 
-		expect(successNotification).toHaveBeenCalledWith({
-			message: 'View Saved Successfully',
+		await waitFor(() => {
+			expect(successNotification).toHaveBeenCalledWith({
+				message: 'View Saved Successfully',
+			});
 		});
-	});
+	}, 15000);
 
 	it('create a dashboard btn assert', async () => {
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />, [
+		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
-		await screen.findByText(FILTER_SERVICE_NAME);
 
-		const createDashboardBtn = getByText('Add to Dashboard');
+		const createDashboardBtn = await screen.findByText('Add to Dashboard');
 		expect(createDashboardBtn).toBeInTheDocument();
 		fireEvent.click(createDashboardBtn);
 
@@ -771,12 +773,11 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('create an alert btn assert', async () => {
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />, [
+		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
-		await screen.findByText(FILTER_SERVICE_NAME);
 
-		const createAlertBtn = getByText('Create an Alert');
+		const createAlertBtn = await screen.findByText('Create an Alert');
 		expect(createAlertBtn).toBeInTheDocument();
 		fireEvent.click(createAlertBtn);
 

@@ -53,9 +53,6 @@ describe('LicenseKeyRow', () => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('test-key');
 			expect(mockToastSuccess).toHaveBeenCalledWith(
 				'License key copied to clipboard.',
-				{
-					richColors: true,
-				},
 			);
 		});
 	});

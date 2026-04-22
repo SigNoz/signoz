@@ -11,17 +11,23 @@ const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
-jest.mock('@signozhq/drawer', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	DrawerWrapper: ({
-		content,
+		children,
+		footer,
 		open,
 	}: {
-		content?: ReactNode;
+		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
-}));
-
-jest.mock('@signozhq/dialog', () => ({
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
 	DialogWrapper: ({
 		children,
 		open,

@@ -161,10 +161,11 @@ describe('CmdKPalette', () => {
 	});
 
 	test('clicking a navigation item calls history.push with correct route', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		const homeItem = screen.getByText(HOME_LABEL);
-		await userEvent.click(homeItem);
+		await user.click(homeItem);
 
 		expect(history.push).toHaveBeenCalledWith(ROUTES.HOME);
 	});
@@ -194,10 +195,11 @@ describe('CmdKPalette', () => {
 	});
 
 	test('closing the palette via handleInvoke sets open to false', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		const dashItem = screen.getByText('Go to Dashboards');
-		await userEvent.click(dashItem);
+		await user.click(dashItem);
 
 		// last call from handleInvoke should set open to false
 		expect(mockSetOpen).toHaveBeenCalledWith(false);

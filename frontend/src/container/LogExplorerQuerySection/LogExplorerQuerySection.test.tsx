@@ -93,8 +93,8 @@ jest.mock('hooks/useDarkMode', () => ({
 }));
 
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): { selectedDashboard: undefined } => ({
-		selectedDashboard: undefined,
+	useDashboardStore: (): { dashboardData: undefined } => ({
+		dashboardData: undefined,
 	}),
 }));
 

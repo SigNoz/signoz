@@ -164,10 +164,7 @@ describe('KeysTab', () => {
 		await user.click(confirmBtn);
 
 		await waitFor(() => {
-			expect(mockToast.success).toHaveBeenCalledWith(
-				'Key revoked successfully',
-				expect.anything(),
-			);
+			expect(mockToast.success).toHaveBeenCalledWith('Key revoked successfully');
 		});
 	});
 

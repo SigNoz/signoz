@@ -150,7 +150,7 @@
 					align-items: flex-start;
 					gap: 5px;
 					width: 100%;
-					background-color: var(--background);
+					background-color: var(--l1-background);
 					height: 100%;
 					justify-content: center;
 					&:not(:first-child) {
@@ -225,7 +225,7 @@
 
 							.error {
 								border: 1px solid var(--danger-background);
-								background: var(--bg-cherry-500);
+								background: var(--danger-background);
 							}
 						}
 					}
@@ -295,7 +295,7 @@
 					z-index: 1;
 
 					&.error {
-						background-color: var(--bg-cherry-500);
+						background-color: var(--danger-background);
 						border-color: var(--bg-cherry-600);
 					}
 

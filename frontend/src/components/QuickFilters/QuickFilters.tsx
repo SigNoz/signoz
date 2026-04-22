@@ -11,7 +11,7 @@ import {
 	ComboboxItem,
 	ComboboxList,
 	ComboboxTrigger,
-} from '@signozhq/combobox';
+} from '@signozhq/ui';
 import { Skeleton, Switch, Tooltip, Typography } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -200,7 +200,6 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 												setOpen(false);
 											}}
 											isSelected={validQueryIndex === option.value}
-											showCheck={false}
 										>
 											{option.label}
 										</ComboboxItem>

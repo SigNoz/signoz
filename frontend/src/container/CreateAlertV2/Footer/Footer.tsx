@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { toast } from '@signozhq/ui';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, toast } from '@signozhq/ui';
+import { Tooltip, Typography } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -172,7 +172,8 @@ function Footer(): JSX.Element {
 	const saveAlertButton = useMemo(() => {
 		let button = (
 			<Button
-				type="primary"
+				variant="solid"
+				color="primary"
 				onClick={handleSaveAlert}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
@@ -181,7 +182,7 @@ function Footer(): JSX.Element {
 				) : (
 					<Check size={14} />
 				)}
-				<Typography.Text>Save Alert Rule</Typography.Text>
+				Save Alert Rule
 			</Button>
 		);
 		if (alertValidationMessage) {
@@ -199,12 +200,13 @@ function Footer(): JSX.Element {
 	const testAlertButton = useMemo(() => {
 		let button = (
 			<Button
-				type="default"
+				variant="solid"
+				color="secondary"
 				onClick={handleTestNotification}
 				disabled={disableButtons || Boolean(alertValidationMessage)}
 			>
 				{isTestingAlertRule ? <Loader size={14} /> : <Send size={14} />}
-				<Typography.Text>Test Notification</Typography.Text>
+				Test Notification
 			</Button>
 		);
 		if (alertValidationMessage) {
@@ -220,7 +222,12 @@ function Footer(): JSX.Element {
 
 	return (
 		<div className="create-alert-v2-footer">
-			<Button type="default" onClick={handleDiscard} disabled={disableButtons}>
+			<Button
+				variant="solid"
+				color="secondary"
+				onClick={handleDiscard}
+				disabled={disableButtons}
+			>
 				<X size={14} /> Discard
 			</Button>
 			<div className="button-group">

@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Input as SignozInput } from '@signozhq/input';
+import { Input as SignozInput } from '@signozhq/ui';
 import { Col, Row, Select } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';

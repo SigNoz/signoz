@@ -19,7 +19,7 @@ export interface DrilldownQueryProps {
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	enableDrillDown: boolean;
-	selectedDashboard: Dashboard | undefined;
+	dashboardData: Dashboard | undefined;
 	selectedPanelType: PANEL_TYPES;
 }
 
@@ -34,7 +34,7 @@ const useDrilldown = ({
 	enableDrillDown,
 	widget,
 	setRequestData,
-	selectedDashboard,
+	dashboardData,
 	selectedPanelType,
 }: DrilldownQueryProps): UseDrilldownReturn => {
 	const isMounted = useRef(false);
@@ -60,11 +60,11 @@ const useDrilldown = ({
 		isMounted.current = true;
 	}, [widget, enableDrillDown, compositeQuery, redirectWithQueryBuilderData]);
 
-	const dashboardEditView = selectedDashboard?.id
+	const dashboardEditView = dashboardData?.id
 		? generateExportToDashboardLink({
 				query: currentQuery,
 				panelType: selectedPanelType,
-				dashboardId: selectedDashboard?.id || '',
+				dashboardId: dashboardData?.id || '',
 				widgetId: widget.id,
 		  })
 		: '';

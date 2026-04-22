@@ -101,7 +101,7 @@
 		.query-function-value {
 			width: 70px;
 			border-left: 0;
-			background: var(--l3-background);
+			background: var(--l2-background);
 			border-radius: 0;
 			border: 1px solid transparent;
 
@@ -114,7 +114,7 @@
 			border-top-right-radius: 3px;
 			border-bottom-right-radius: 3px;
 
-			border: none !important;
+			border-left: 1px solid var(--l2-border);
 
 			border-top-left-radius: 0px !important;
 			border-bottom-left-radius: 0px !important;
