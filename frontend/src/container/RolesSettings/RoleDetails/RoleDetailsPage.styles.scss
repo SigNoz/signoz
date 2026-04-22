@@ -299,7 +299,7 @@
 	box-shadow: none;
 
 	&:hover {
-		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 		opacity: 0.9;
 	}
 }

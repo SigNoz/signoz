@@ -53,9 +53,9 @@ export const queryKOVPair = (): QueryFields[] => [
 ];
 
 export const initQueryKOVPair = (
-	name?: string = null,
-	op?: string = null,
-	value?: string | string[] = null,
+	name: string = null,
+	op: string = null,
+	value: string | string[] = null,
 ): QueryFields[] => [
 	{
 		type: QueryTypes.QUERY_KEY,
@@ -72,7 +72,7 @@ export const initQueryKOVPair = (
 ];
 
 export const prepareConditionOperator = (
-	op?: string = ConditionalOperators.AND,
+	op: string = ConditionalOperators.AND,
 ): QueryFields => {
 	return {
 		type: QueryTypes.CONDITIONAL_OPERATOR,
@@ -83,7 +83,7 @@ export const prepareConditionOperator = (
 export const createParsedQueryStructure = (
 	parsedQuery = [],
 ): QueryFields[][] => {
-	if (!parsedQuery.length) {
+	if (parsedQuery.length === 0) {
 		return parsedQuery;
 	}
 
@@ -98,7 +98,7 @@ export const createParsedQueryStructure = (
 			cond = null;
 			qCtr = -1;
 		}
-		const stagingArr = structuredArray[structuredArray.length - 1];
+		const stagingArr = structuredArray.at(-1);
 		const prevQuery =
 			Array.isArray(stagingArr) && qCtr >= 0 ? stagingArr[qCtr] : null;
 
@@ -129,8 +129,8 @@ export const hashCode = (s: string): string => {
 		return '0';
 	}
 	return `${Math.abs(
-		s.split('').reduce((a, b) => {
-			a = (a << 5) - a + b.charCodeAt(0);
+		[...s].reduce((a, b) => {
+			a = (a << 5) - a + b.codePointAt(0);
 			return a & a;
 		}, 0),
 	)}`;

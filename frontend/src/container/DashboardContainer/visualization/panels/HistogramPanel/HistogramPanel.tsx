@@ -3,7 +3,6 @@ import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import uPlot from 'uplot';
 
 import Histogram from '../../charts/Histogram/Histogram';
@@ -93,7 +92,6 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					isQueriesMerged={widget.mergeAllActiveQueries}
-					syncMode={DashboardCursorSync.Crosshair}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}

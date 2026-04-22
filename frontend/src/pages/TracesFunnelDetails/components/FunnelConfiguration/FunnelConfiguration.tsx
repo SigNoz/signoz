@@ -107,6 +107,7 @@ function FunnelConfiguration({
 						)}
 						<div className="funnel-configuration__steps">
 							{!isTraceDetailsPage && <StepsHeader />}
+
 							<StepsContent isTraceDetailsPage={isTraceDetailsPage} span={span} />
 						</div>
 					</>

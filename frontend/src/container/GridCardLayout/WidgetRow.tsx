@@ -42,14 +42,14 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
@@ -87,11 +87,11 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							icon={<Plus size={14} />}
 							onClick={(): void => {
 								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
-								if (!selectedDashboard?.id) {
+								if (!dashboardData?.id) {
 									return;
 								}
 
-								setSelectedRowWidgetId(selectedDashboard.id, id);
+								setSelectedRowWidgetId(dashboardData.id, id);
 								setIsPanelTypeSelectionModalOpen(true);
 							}}
 						>

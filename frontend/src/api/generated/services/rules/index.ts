@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreateRule201,
 	DeleteRuleByIDPathParameters,
@@ -51,6 +49,9 @@ import type {
 	UpdateRuleByIDPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
 /**
  * This endpoint lists all alert rules with their current evaluation state
  * @summary List alert rules
@@ -69,7 +70,7 @@ export const getListRulesQueryKey = () => {
 
 export const getListRulesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
 }) => {
@@ -99,7 +100,7 @@ export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListRules<
 	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -148,7 +149,7 @@ export const createRule = (
 
 export const getCreateRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
@@ -165,8 +166,8 @@ export const getCreateRuleMutationOptions = <
 	const mutationKey = ['createRule'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -194,7 +195,7 @@ export type CreateRuleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateRule = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
@@ -225,7 +226,7 @@ export const deleteRuleByID = ({ id }: DeleteRuleByIDPathParameters) => {
 
 export const getDeleteRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleByID>>,
@@ -242,8 +243,8 @@ export const getDeleteRuleByIDMutationOptions = <
 	const mutationKey = ['deleteRuleByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -271,7 +272,7 @@ export type DeleteRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteRuleByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleByID>>,
@@ -310,7 +311,7 @@ export const getGetRuleByIDQueryKey = ({ id }: GetRuleByIDPathParameters) => {
 
 export const getGetRuleByIDQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleByIDPathParameters,
 	options?: {
@@ -352,7 +353,7 @@ export type GetRuleByIDQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetRuleByID<
 	TData = Awaited<ReturnType<typeof getRuleByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleByIDPathParameters,
 	options?: {
@@ -408,7 +409,7 @@ export const patchRuleByID = (
 
 export const getPatchRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRuleByID>>,
@@ -431,8 +432,8 @@ export const getPatchRuleByIDMutationOptions = <
 	const mutationKey = ['patchRuleByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -463,7 +464,7 @@ export type PatchRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePatchRuleByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRuleByID>>,
@@ -505,7 +506,7 @@ export const updateRuleByID = (
 
 export const getUpdateRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleByID>>,
@@ -528,8 +529,8 @@ export const getUpdateRuleByIDMutationOptions = <
 	const mutationKey = ['updateRuleByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -560,7 +561,7 @@ export type UpdateRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateRuleByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleByID>>,
@@ -613,7 +614,7 @@ export const getGetRuleHistoryFilterKeysQueryKey = (
 
 export const getGetRuleHistoryFilterKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryFilterKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryFilterKeysPathParameters,
 	params?: GetRuleHistoryFilterKeysParams,
@@ -649,7 +650,8 @@ export const getGetRuleHistoryFilterKeysQueryOptions = <
 export type GetRuleHistoryFilterKeysQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getRuleHistoryFilterKeys>>
 >;
-export type GetRuleHistoryFilterKeysQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetRuleHistoryFilterKeysQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get rule history filter keys
@@ -657,7 +659,7 @@ export type GetRuleHistoryFilterKeysQueryError = ErrorType<RenderErrorResponseDT
 
 export function useGetRuleHistoryFilterKeys<
 	TData = Awaited<ReturnType<typeof getRuleHistoryFilterKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryFilterKeysPathParameters,
 	params?: GetRuleHistoryFilterKeysParams,
@@ -730,7 +732,7 @@ export const getGetRuleHistoryFilterValuesQueryKey = (
 
 export const getGetRuleHistoryFilterValuesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryFilterValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryFilterValuesPathParameters,
 	params?: GetRuleHistoryFilterValuesParams,
@@ -767,7 +769,8 @@ export const getGetRuleHistoryFilterValuesQueryOptions = <
 export type GetRuleHistoryFilterValuesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getRuleHistoryFilterValues>>
 >;
-export type GetRuleHistoryFilterValuesQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetRuleHistoryFilterValuesQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get rule history filter values
@@ -775,7 +778,7 @@ export type GetRuleHistoryFilterValuesQueryError = ErrorType<RenderErrorResponse
 
 export function useGetRuleHistoryFilterValues<
 	TData = Awaited<ReturnType<typeof getRuleHistoryFilterValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryFilterValuesPathParameters,
 	params?: GetRuleHistoryFilterValuesParams,
@@ -848,7 +851,7 @@ export const getGetRuleHistoryOverallStatusQueryKey = (
 
 export const getGetRuleHistoryOverallStatusQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryOverallStatus>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryOverallStatusPathParameters,
 	params: GetRuleHistoryOverallStatusParams,
@@ -885,7 +888,8 @@ export const getGetRuleHistoryOverallStatusQueryOptions = <
 export type GetRuleHistoryOverallStatusQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getRuleHistoryOverallStatus>>
 >;
-export type GetRuleHistoryOverallStatusQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetRuleHistoryOverallStatusQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get rule overall status timeline
@@ -893,7 +897,7 @@ export type GetRuleHistoryOverallStatusQueryError = ErrorType<RenderErrorRespons
 
 export function useGetRuleHistoryOverallStatus<
 	TData = Awaited<ReturnType<typeof getRuleHistoryOverallStatus>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryOverallStatusPathParameters,
 	params: GetRuleHistoryOverallStatusParams,
@@ -966,7 +970,7 @@ export const getGetRuleHistoryStatsQueryKey = (
 
 export const getGetRuleHistoryStatsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryStats>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryStatsPathParameters,
 	params: GetRuleHistoryStatsParams,
@@ -1010,7 +1014,7 @@ export type GetRuleHistoryStatsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetRuleHistoryStats<
 	TData = Awaited<ReturnType<typeof getRuleHistoryStats>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryStatsPathParameters,
 	params: GetRuleHistoryStatsParams,
@@ -1083,7 +1087,7 @@ export const getGetRuleHistoryTimelineQueryKey = (
 
 export const getGetRuleHistoryTimelineQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryTimeline>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryTimelinePathParameters,
 	params: GetRuleHistoryTimelineParams,
@@ -1119,7 +1123,8 @@ export const getGetRuleHistoryTimelineQueryOptions = <
 export type GetRuleHistoryTimelineQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getRuleHistoryTimeline>>
 >;
-export type GetRuleHistoryTimelineQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetRuleHistoryTimelineQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get rule history timeline
@@ -1127,7 +1132,7 @@ export type GetRuleHistoryTimelineQueryError = ErrorType<RenderErrorResponseDTO>
 
 export function useGetRuleHistoryTimeline<
 	TData = Awaited<ReturnType<typeof getRuleHistoryTimeline>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryTimelinePathParameters,
 	params: GetRuleHistoryTimelineParams,
@@ -1200,7 +1205,7 @@ export const getGetRuleHistoryTopContributorsQueryKey = (
 
 export const getGetRuleHistoryTopContributorsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRuleHistoryTopContributors>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryTopContributorsPathParameters,
 	params: GetRuleHistoryTopContributorsParams,
@@ -1237,7 +1242,8 @@ export const getGetRuleHistoryTopContributorsQueryOptions = <
 export type GetRuleHistoryTopContributorsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getRuleHistoryTopContributors>>
 >;
-export type GetRuleHistoryTopContributorsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetRuleHistoryTopContributorsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get top contributors to rule firing
@@ -1245,7 +1251,7 @@ export type GetRuleHistoryTopContributorsQueryError = ErrorType<RenderErrorRespo
 
 export function useGetRuleHistoryTopContributors<
 	TData = Awaited<ReturnType<typeof getRuleHistoryTopContributors>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRuleHistoryTopContributorsPathParameters,
 	params: GetRuleHistoryTopContributorsParams,
@@ -1308,7 +1314,7 @@ export const testRule = (
 
 export const getTestRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,
@@ -1325,8 +1331,8 @@ export const getTestRuleMutationOptions = <
 	const mutationKey = ['testRule'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1354,7 +1360,7 @@ export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useTestRule = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,

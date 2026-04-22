@@ -3,7 +3,6 @@ import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
@@ -12,7 +11,6 @@ import { getTimeRange } from 'utils/getTimeRange';
 import BarChart from '../../charts/BarChart/BarChart';
 import ChartManager from '../../components/ChartManager/ChartManager';
 import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
-import { PanelMode } from '../types';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
@@ -133,11 +131,6 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
-					syncMode={
-						panelMode === PanelMode.DASHBOARD_VIEW
-							? DashboardCursorSync.Crosshair
-							: DashboardCursorSync.None
-					}
 					groupBy={groupBy}
 					isStackedBarChart={widget.stackedBarChart ?? false}
 					yAxisUnit={widget.yAxisUnit}

@@ -1,9 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Callout } from '@signozhq/callout';
-import { Checkbox } from '@signozhq/checkbox';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Callout, Checkbox, Input } from '@signozhq/ui';
 import { Form, Input as AntdInput, Tooltip } from 'antd';
 
 import AttributeMappingSection from './components/AttributeMappingSection';
@@ -142,32 +140,31 @@ function ConfigureSAMLAuthnProvider({
 					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['samlConfig', 'insecureSkipAuthNRequestsSigned']}
-							valuePropName="checked"
+							valuePropName="value"
 							noStyle
 						>
 							<Checkbox
 								id="saml-skip-signing"
-								labelName="Skip Signing AuthN Requests"
-								onCheckedChange={(checked: boolean): void => {
+								onChange={(checked: boolean): void => {
 									form.setFieldValue(
 										['samlConfig', 'insecureSkipAuthNRequestsSigned'],
 										checked,
 									);
 								}}
-							/>
+							>
+								Skip Signing AuthN Requests
+							</Checkbox>
 						</Form.Item>
 						<Tooltip title="Whether to skip signing the SAML requests. For providers like JumpCloud, this should be enabled.">
 							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 						</Tooltip>
 					</div>
 
-					<Callout
-						type="warning"
-						size="small"
-						showIcon
-						description="SAML won't be enabled unless you enter all the attributes above"
-						className="callout"
-					/>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							SAML won&apos;t be enabled unless you enter all the attributes above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Advanced Settings */}

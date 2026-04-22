@@ -19,11 +19,11 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 }
 
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
+	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.AWS.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
 	q := u.Query()
-	q.Set("region", req.Config.Aws.DeploymentRegion)
+	q.Set("region", req.Config.AWS.DeploymentRegion)
 	u.Fragment = "/stacks/quickcreate"
 
 	u.RawQuery = q.Encode()
@@ -39,9 +39,7 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, acc
 	q.Set("param_IngestionKey", req.Credentials.IngestionKey)
 
 	return &cloudintegrationtypes.ConnectionArtifact{
-		Aws: &cloudintegrationtypes.AWSConnectionArtifact{
-			ConnectionURL: u.String() + "?&" + q.Encode(), // this format is required by AWS
-		},
+		AWS: cloudintegrationtypes.NewAWSConnectionArtifact(u.String() + "?&" + q.Encode()), // this format is required by AWS
 	}, nil
 }
 
@@ -124,9 +122,6 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 	}
 
 	return &cloudintegrationtypes.ProviderIntegrationConfig{
-		AWS: &cloudintegrationtypes.AWSIntegrationConfig{
-			EnabledRegions:              account.Config.AWS.Regions,
-			TelemetryCollectionStrategy: collectionStrategy,
-		},
+		AWS: cloudintegrationtypes.NewAWSIntegrationConfig(account.Config.AWS.Regions, collectionStrategy),
 	}, nil
 }

@@ -4,13 +4,16 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, waitFor } from '@testing-library/react';
 import * as getHostListsApi from 'api/infraMonitoring/getHostLists';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
+import * as useQueryBuilderOperations from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
 
-import HostsList from '../HostsList';
+import Hosts from '../Hosts';
 
 jest.mock('lib/getMinMax', () => ({
 	__esModule: true,
@@ -30,10 +33,6 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 		<div data-testid="date-time-selection">Date Time</div>
 	),
 }));
-jest.mock('components/HostMetricsDetail', () => ({
-	__esModule: true,
-	default: (): null => null,
-}));
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
 	default: ({ onSelect, selectedTime, selectedValue }: any): JSX.Element => (
@@ -52,20 +51,6 @@ const queryClient = new QueryClient({
 		},
 	},
 });
-
-jest.mock('react-redux', () => ({
-	...jest.requireActual('react-redux'),
-	useSelector: (): any => ({
-		globalTime: {
-			selectedTime: {
-				startTime: 1713734400000,
-				endTime: 1713738000000,
-			},
-			maxTime: 1713738000000,
-			minTime: 1713734400000,
-		},
-	}),
-}));
 
 jest.mock('react-router-dom', () => {
 	const ROUTES = jest.requireActual('constants/routes').default;
@@ -128,6 +113,7 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
 		role: 'admin',
 	},
+	featureFlags: [],
 	activeLicenseV3: {
 		event_queue: {
 			created_at: '0',
@@ -148,9 +134,22 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
+jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+	currentQuery: initialQueriesMap.metrics,
+	setSupersetQuery: jest.fn(),
+	setLastUsedQuery: jest.fn(),
+	handleSetConfig: jest.fn(),
+	resetQuery: jest.fn(),
+	updateAllQueriesOperators: jest.fn(),
+} as any);
+
+jest.spyOn(useQueryBuilderOperations, 'useQueryOperations').mockReturnValue({
+	handleChangeQueryData: jest.fn(),
+} as any);
+
 const Wrapper = withNuqsTestingAdapter({ searchParams: {} });
 
-describe('HostsList', () => {
+describe('Hosts', () => {
 	beforeEach(() => {
 		queryClient.clear();
 	});
@@ -161,14 +160,14 @@ describe('HostsList', () => {
 				<QueryClientProvider client={queryClient}>
 					<MemoryRouter>
 						<Provider store={store}>
-							<HostsList />
+							<Hosts />
 						</Provider>
 					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
 		await waitFor(() => {
-			expect(container.querySelector('.hosts-list-table')).toBeInTheDocument();
+			expect(container.querySelector('.ant-table')).toBeInTheDocument();
 		});
 	});
 
@@ -178,7 +177,7 @@ describe('HostsList', () => {
 				<QueryClientProvider client={queryClient}>
 					<MemoryRouter>
 						<Provider store={store}>
-							<HostsList />
+							<Hosts />
 						</Provider>
 					</MemoryRouter>
 				</QueryClientProvider>

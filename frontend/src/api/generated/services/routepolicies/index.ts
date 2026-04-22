@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AlertmanagertypesPostableRoutePolicyDTO,
 	CreateRoutePolicy201,
@@ -30,6 +28,9 @@ import type {
 	UpdateRoutePolicy200,
 	UpdateRoutePolicyPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all route policies for the organization
@@ -49,7 +50,7 @@ export const getGetAllRoutePoliciesQueryKey = () => {
 
 export const getGetAllRoutePoliciesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getAllRoutePolicies>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getAllRoutePolicies>>,
@@ -83,7 +84,7 @@ export type GetAllRoutePoliciesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetAllRoutePolicies<
 	TData = Awaited<ReturnType<typeof getAllRoutePolicies>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getAllRoutePolicies>>,
@@ -136,7 +137,7 @@ export const createRoutePolicy = (
 
 export const getCreateRoutePolicyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRoutePolicy>>,
@@ -153,8 +154,8 @@ export const getCreateRoutePolicyMutationOptions = <
 	const mutationKey = ['createRoutePolicy'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -174,7 +175,8 @@ export const getCreateRoutePolicyMutationOptions = <
 export type CreateRoutePolicyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createRoutePolicy>>
 >;
-export type CreateRoutePolicyMutationBody = BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
+export type CreateRoutePolicyMutationBody =
+	BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
 export type CreateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -182,7 +184,7 @@ export type CreateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateRoutePolicy = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRoutePolicy>>,
@@ -215,7 +217,7 @@ export const deleteRoutePolicyByID = ({
 
 export const getDeleteRoutePolicyByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
@@ -232,8 +234,8 @@ export const getDeleteRoutePolicyByIDMutationOptions = <
 	const mutationKey = ['deleteRoutePolicyByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -254,14 +256,15 @@ export type DeleteRoutePolicyByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteRoutePolicyByID>>
 >;
 
-export type DeleteRoutePolicyByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteRoutePolicyByIDMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete route policy
  */
 export const useDeleteRoutePolicyByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
@@ -302,7 +305,7 @@ export const getGetRoutePolicyByIDQueryKey = ({
 
 export const getGetRoutePolicyByIDQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRoutePolicyByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRoutePolicyByIDPathParameters,
 	options?: {
@@ -345,7 +348,7 @@ export type GetRoutePolicyByIDQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetRoutePolicyByID<
 	TData = Awaited<ReturnType<typeof getRoutePolicyByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRoutePolicyByIDPathParameters,
 	options?: {
@@ -401,7 +404,7 @@ export const updateRoutePolicy = (
 
 export const getUpdateRoutePolicyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRoutePolicy>>,
@@ -424,8 +427,8 @@ export const getUpdateRoutePolicyMutationOptions = <
 	const mutationKey = ['updateRoutePolicy'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -448,7 +451,8 @@ export const getUpdateRoutePolicyMutationOptions = <
 export type UpdateRoutePolicyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateRoutePolicy>>
 >;
-export type UpdateRoutePolicyMutationBody = BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
+export type UpdateRoutePolicyMutationBody =
+	BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
 export type UpdateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -456,7 +460,7 @@ export type UpdateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateRoutePolicy = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRoutePolicy>>,

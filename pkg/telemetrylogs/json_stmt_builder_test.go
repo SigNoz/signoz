@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	testJSONQueryPrefix = "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND"
+	testJSONQueryPrefix = "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE"
 	testJSONQuerySuffix = "AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?"
 )
 
@@ -65,8 +65,8 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __limit_cte AS (SELECT toString(multiIf((dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_v2.`user.age`, 'Int64')), (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.age`, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `user.age` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_v2.`user.age`, 'Int64')), (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.age`, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`user.age`) GLOBAL IN (SELECT `user.age` FROM __limit_cte) GROUP BY ts, `user.age`",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Query: "WITH __limit_cte AS (SELECT toString(multiIf((dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_v2.`user.age`, 'Int64')), (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.age`, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `user.age` ORDER BY __result_0 DESC LIMIT ?) SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 30 SECOND) AS ts, toString(multiIf((dynamicElement(body_v2.`user.age`, 'Int64') IS NOT NULL), toString(dynamicElement(body_v2.`user.age`, 'Int64')), (dynamicElement(body_v2.`user.age`, 'String') IS NOT NULL), dynamicElement(body_v2.`user.age`, 'String'), NULL)) AS `user.age`, count() AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND (`user.age`) GLOBAL IN (SELECT `user.age` FROM __limit_cte) GROUP BY ts, `user.age`",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
 			},
 		},
 	}
@@ -193,7 +193,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "message Exists",
 			expected: TestExpected{
 				WhereClause: "body_v2.message <> ?",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -201,7 +201,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "message Contains 'Iron Award'",
 			expected: TestExpected{
 				WhereClause: "LOWER(body_v2.message) LIKE LOWER(?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -211,7 +211,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name = 'x'",
 			expected: TestExpected{
 				WhereClause: "((dynamicElement(body_v2.`user.name`, 'String') = ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "x", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"x", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -219,8 +219,8 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.age Contains 25",
 			expected: TestExpected{
 				WhereClause: "(((LOWER(toString(dynamicElement(body_v2.`user.age`, 'Int64'))) LIKE LOWER(?)) AND has(JSONAllPaths(body_v2), 'user.age')) OR ((LOWER(dynamicElement(body_v2.`user.age`, 'String')) LIKE LOWER(?)) AND has(JSONAllPaths(body_v2), 'user.age')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%25%", "%25%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `user.age` is ambiguous, found 2 different combinations of field context / data type: [name=user.age,context=body,datatype=int64,jsondatatype=Int64 name=user.age,context=body,datatype=string,jsondatatype=String]."},
+				Args:        []any{"%25%", "%25%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `user.age` is ambiguous, found 2 different combinations of field context / data type: [name=user.age,context=body,datatype=int64 name=user.age,context=body,datatype=string]."},
 			},
 		},
 		{
@@ -228,7 +228,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.height Contains 5.8",
 			expected: TestExpected{
 				WhereClause: "((LOWER(toString(dynamicElement(body_v2.`user.height`, 'Float64'))) LIKE LOWER(?)) AND has(JSONAllPaths(body_v2), 'user.height'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%5.8%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%5.8%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -236,7 +236,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.height > 5.8",
 			expected: TestExpected{
 				WhereClause: "((toFloat64(dynamicElement(body_v2.`user.height`, 'Float64')) > ?) AND has(JSONAllPaths(body_v2), 'user.height'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), 5.8, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{5.8, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -244,7 +244,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name LIKE '%ali%'",
 			expected: TestExpected{
 				WhereClause: "((dynamicElement(body_v2.`user.name`, 'String') LIKE ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%ali%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%ali%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -252,7 +252,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name REGEXP 'al.*'",
 			expected: TestExpected{
 				WhereClause: "((match(dynamicElement(body_v2.`user.name`, 'String'), ?)) AND has(JSONAllPaths(body_v2), 'user.name'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "al.*", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"al.*", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -260,7 +260,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.active != true",
 			expected: TestExpected{
 				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.active`, 'Bool')) <> ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -268,7 +268,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.active NOT EXISTS",
 			expected: TestExpected{
 				WhereClause: "(dynamicElement(body_v2.`user.active`, 'Bool') IS NULL)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -276,7 +276,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name NOT CONTAINS 'IIT'",
 			expected: TestExpected{
 				WhereClause: "(LOWER(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String'))) NOT LIKE LOWER(?))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name NOT LIKE '%ali%'",
 			expected: TestExpected{
 				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) NOT LIKE ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%ali%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%ali%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -292,7 +292,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name NOT REGEXP 'al.*'",
 			expected: TestExpected{
 				WhereClause: "(NOT match(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')), ?))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "al.*", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"al.*", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -300,7 +300,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.name NOT IN ['alice', 'bob']",
 			expected: TestExpected{
 				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) NOT IN (?, ?))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "alice", "bob", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"alice", "bob", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -310,7 +310,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 			filter: "body.user.address.zip NOT BETWEEN 100000 AND 999999",
 			expected: TestExpected{
 				WhereClause: "(toFloat64(assumeNotNull(dynamicElement(body_v2.`user.address.zip`, 'Int64'))) NOT BETWEEN ? AND ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(100000), float64(999999), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(100000), float64(999999), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 	}
@@ -361,7 +361,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "production", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -374,7 +374,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -387,7 +387,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -400,7 +400,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "Iron Award", "Iron Award", "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -414,7 +414,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -427,7 +427,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "%IIT%", "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -441,7 +441,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%true%", true, "%true%", true, "%true%", true, "%true%", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -455,7 +455,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 			},
 			expected: TestExpected{
 				Args:     []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,materialized=true,jsondatatype=Array(Dynamic)]."},
+				Warnings: []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,materialized=true name=education[].parameters,context=body,datatype=[]dynamic,materialized=true]."},
 			},
 			expectedErr: nil,
 		},
@@ -468,7 +468,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "sports", "sports", "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -481,7 +481,7 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				Args:  []any{uint64(1747945619), uint64(1747983448), "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:  []any{ "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 			expectedErr: nil,
 		},
@@ -524,7 +524,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].name Exists",
 			expected: TestExpected{
 				WhereClause: "(arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`name`, 'String') IS NOT NULL, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -532,7 +532,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].name Contains 'IIT'",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> LOWER(dynamicElement(`body_v2.education`.`name`, 'String')) LIKE LOWER(?), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -540,7 +540,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].year Contains 2020",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> LOWER(toString(dynamicElement(`body_v2.education`.`year`, 'Int64'))) LIKE LOWER(?), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%2020%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%2020%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -548,8 +548,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].type != '10001'",
 			expected: TestExpected{
 				WhereClause: "((NOT arrayExists(`body_v2.education`-> toFloat64OrNull(dynamicElement(`body_v2.education`.`type`, 'String')) = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND (NOT arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`type`, 'Int64') = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), int64(10001), int64(10001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].type` is ambiguous, found 2 different combinations of field context / data type: [name=education[].type,context=body,datatype=string,jsondatatype=String name=education[].type,context=body,datatype=int64,jsondatatype=Int64]."},
+				Args:        []any{int64(10001), int64(10001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].type` is ambiguous, found 2 different combinations of field context / data type: [name=education[].type,context=body,datatype=string name=education[].type,context=body,datatype=int64]."},
 			},
 		},
 		{
@@ -557,7 +557,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].name NOT EXISTS",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`name`, 'String') IS NOT NULL, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -565,7 +565,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].name NOT CONTAINS 'IIT'",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> LOWER(dynamicElement(`body_v2.education`.`name`, 'String')) LIKE LOWER(?), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%IIT%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -575,8 +575,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].parameters Contains 1.65",
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Args:        []any{"%1.65%", 1.65, "%1.65%", 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -584,8 +584,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].parameters = 'passed'",
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Args:        []any{"passed", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -593,8 +593,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].parameters Contains 'passed'",
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> toString(x) = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Args:        []any{"%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -602,8 +602,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].parameters IN [1.65, 1.99]",
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) IN (?, ?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) IN (?, ?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), 1.65, 1.99, "1.65", "1.99", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Args:        []any{1.65, 1.99, "1.65", "1.99", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -611,8 +611,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].parameters NOT CONTAINS 1.65",
 			expected: TestExpected{
 				WhereClause: "((NOT arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND (NOT arrayExists(`body_v2.education`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%1.65%", float64(1.65), "%1.65%", float64(1.65), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+				Args:        []any{"%1.65%", float64(1.65), "%1.65%", float64(1.65), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic]."},
 			},
 		},
 		{
@@ -620,9 +620,9 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "has(body.education[].parameters, 1.65)",
 			expected: TestExpected{
 				WhereClause: "(has(arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))'), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?) OR has(arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)'), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), 1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{1.65, 1.65, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 				Warnings: []string{
-					"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)].",
+					"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64 name=education[].parameters,context=body,datatype=[]dynamic].",
 				},
 			},
 		},
@@ -631,7 +631,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "hasAll(body.user.permissions, ['read', 'write'])",
 			expected: TestExpected{
 				WhereClause: "hasAll(dynamicElement(body_v2.`user.permissions`, 'Array(Nullable(String))'), ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), []any{"read", "write"}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{[]any{"read", "write"}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -641,7 +641,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.http-events[].request-info.host != 'example.com'",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.http-events`-> dynamicElement(`body_v2.http-events`.`request-info.host`, 'String') = ?, dynamicElement(body_v2.`http-events`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "example.com", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"example.com", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -651,7 +651,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].awards[].name Exists",
 			expected: TestExpected{
 				WhereClause: "(arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -659,7 +659,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].awards[].name = 'Iron Award'",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') = ?, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"Iron Award", "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -667,7 +667,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "education[].awards[].semester BETWEEN 2 AND 4",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> toFloat64(dynamicElement(`body_v2.education[].awards`.`semester`, 'Int64')) BETWEEN ? AND ?, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> toFloat64(dynamicElement(`body_v2.education[].awards`.`semester`, 'Int64')) BETWEEN ? AND ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(2), float64(4), float64(2), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(2), float64(4), float64(2), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -675,7 +675,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "education[].awards[].semester IN [2, 4]",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> toFloat64(dynamicElement(`body_v2.education[].awards`.`semester`, 'Int64')) IN (?, ?), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> toFloat64(dynamicElement(`body_v2.education[].awards`.`semester`, 'Int64')) IN (?, ?), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(2), float64(4), float64(2), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(2), float64(4), float64(2), float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -683,7 +683,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].awards[].type != 'sports'",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`type`, 'String') = ?, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`type`, 'String') = ?, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"sports", "sports", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -691,7 +691,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].awards[].name NOT EXISTS",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> dynamicElement(`body_v2.education[].awards`.`name`, 'String') IS NOT NULL, arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -701,8 +701,8 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.interests[].entities[].reviews[].entries[].metadata[].positions[].ratings Contains 4",
 			expected: TestExpected{
 				WhereClause: "(((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(Int64))')) OR arrayExists(x -> toFloat64(x) = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(Int64))'))), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.`positions`, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.`metadata`, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.`entries`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.`reviews`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests')) OR ((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(`body_v2.interests[].entities[].reviews`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata`-> arrayExists(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`-> (arrayExists(x -> LOWER(x) LIKE LOWER(?), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(String))')) OR arrayExists(x -> toFloat64OrNull(x) = ?, dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata[].positions`.`ratings`, 'Array(Nullable(String))'))), dynamicElement(`body_v2.interests[].entities[].reviews[].entries[].metadata`.`positions`, 'Array(JSON(max_dynamic_types=0, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews[].entries`.`metadata`, 'Array(JSON(max_dynamic_types=1, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities[].reviews`.`entries`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests[].entities`.`reviews`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%4%", float64(4), "%4%", float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-				Warnings:    []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64,jsondatatype=Array(Nullable(Int64)) name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string,jsondatatype=Array(Nullable(String))]."},
+				Args:        []any{"%4%", float64(4), "%4%", float64(4), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `interests[].entities[].reviews[].entries[].metadata[].positions[].ratings` is ambiguous, found 2 different combinations of field context / data type: [name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]int64 name=interests[].entities[].reviews[].entries[].metadata[].positions[].ratings,context=body,datatype=[]string]."},
 			},
 		},
 		{
@@ -710,7 +710,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].awards[].participated[].team[].branch Contains 'Civil'",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> (arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=2, max_dynamic_paths=0))')), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')) OR arrayExists(`body_v2.education[].awards`-> (arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=64))')), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')) OR arrayExists(`body_v2.education[].awards[].participated`-> arrayExists(`body_v2.education[].awards[].participated[].team`-> LOWER(dynamicElement(`body_v2.education[].awards[].participated[].team`.`branch`, 'String')) LIKE LOWER(?), dynamicElement(`body_v2.education[].awards[].participated`.`team`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->dynamicElement(x, 'JSON'), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{"%Civil%", "%Civil%", "%Civil%", "%Civil%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -719,7 +719,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].scores IN [90, 95]",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) IN (?, ?), dynamicElement(`body_v2.education`.`scores`, 'Array(Nullable(Int64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(90), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(90), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -729,7 +729,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].scores NOT IN [90, 95]",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) IN (?, ?), dynamicElement(`body_v2.education`.`scores`, 'Array(Nullable(Int64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(90), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(90), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -739,7 +739,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].scores BETWEEN 80 AND 95",
 			expected: TestExpected{
 				WhereClause: "((arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) BETWEEN ? AND ?, dynamicElement(`body_v2.education`.`scores`, 'Array(Nullable(Int64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(80), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(80), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -749,7 +749,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "body.education[].scores NOT BETWEEN 80 AND 95",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(`body_v2.education`-> arrayExists(x -> toFloat64(x) BETWEEN ? AND ?, dynamicElement(`body_v2.education`.`scores`, 'Array(Nullable(Int64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(80), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{float64(80), float64(95), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -757,31 +757,39 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "hasAny(education[].awards[].participated[].members, ['Piyush', 'Tushar'])",
 			expected: TestExpected{
 				WhereClause: "hasAny(arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), []any{"Piyush", "Tushar"}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{[]any{"Piyush", "Tushar"}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
-			name:   "dynamic array element comparison",
-			filter: "ids Contains 1",
+			name:   "dynamic_array_element_compare_CONTAINS",
+			filter: "interests[].entities[].product_codes Contains 1",
 			expected: TestExpected{
-				WhereClause: "(((arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))) AND has(JSONAllPaths(body_v2), 'ids'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "%1%", float64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> (arrayExists(x -> LOWER(toString(x)) LIKE LOWER(?), arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'))) OR arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)')))), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'interests'))",
+				Args:        []any{"%1%", float64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
-			name:   "dynamic array element comparison",
-			filter: "ids != '1'",
+			name:   "dynamic_array_element_compare_HAS_STRING",
+			filter: "has(interests[].entities[].product_codes, '2002')",
 			expected: TestExpected{
-				WhereClause: "(NOT arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), int64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "has(arrayFlatten(arrayConcat(arrayMap(`body_v2.interests`->arrayMap(`body_v2.interests[].entities`->dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)",
+				Args:        []any{"2002", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
-			name:   "dynamic array element comparison boolean",
-			filter: "ids = true",
+			name:   "dynamic_array_element_compare_NOT_EQUAL",
+			filter: "interests[].entities[].product_codes != '1'",
 			expected: TestExpected{
-				WhereClause: "((arrayExists(x -> accurateCastOrNull(x, 'Bool') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)')))) AND has(JSONAllPaths(body_v2), 'ids'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(NOT arrayExists(`body_v2.interests`-> arrayExists(`body_v2.interests[].entities`-> arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'))), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
+				Args:        []any{int64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+		{
+			name:   "dynamic_array_element_compare_HAS_INT",
+			filter: "has(interests[].entities[].product_codes, 1001)",
+			expected: TestExpected{
+				WhereClause: "has(arrayFlatten(arrayConcat(arrayMap(`body_v2.interests`->arrayMap(`body_v2.interests[].entities`->dynamicElement(`body_v2.interests[].entities`.`product_codes`, 'Array(Dynamic)'), dynamicElement(`body_v2.interests`.`entities`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), dynamicElement(body_v2.`interests`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))), ?)",
+				Args:        []any{float64(1001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 	}
@@ -828,8 +836,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) = ?) AND has(JSONAllPaths(body_v2), 'user.name'))",
+				Args:        []any{"alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -840,11 +848,14 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.`user.address.zip`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'user.address.zip'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(110001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.user.address.zip, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'user.address.zip'))",
+				Args:        []any{float64(110001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
-		// ── indexed exists: emits assumeNotNull != nil AND dynamicElement IS NOT NULL ─
+		// ── indexed exists: index is skipped; emits plain IS NOT NULL ───────────
+		// EXISTS/NOT EXISTS bypass the index because indexed columns store a default
+		// empty value for absent fields, making != "" unreliable for existence checks
+		// (a field with value "" would be incorrectly excluded).
 		{
 			name: "Indexed String Exists",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
@@ -853,8 +864,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ? AND dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL)",
+				Args:        []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		// ── indexed not-equal: assumeNotNull wrapping + no path index ─────────
@@ -866,24 +877,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "(assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ?)",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-			},
-		},
-		// ── indexed not-exists: assumeNotNull = "" AND assumeNotNull IS NOT NULL ─
-		// FilterOperatorNotExists → Equal + emptyValue("") in the indexed branch,
-		// then a second condition flipped to Exists (IS NOT NULL) on the same
-		// assumeNotNull expr, producing AND(= "", IS NOT NULL).
-		{
-			name: "Indexed String NotExists",
-			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.user.name NOT EXISTS"},
-				Limit:  10,
-			},
-			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND dynamicElement(body_v2.`user.name`, 'String') IS NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(lower(assumeNotNull(dynamicElement(body_v2.user.name, 'String'))) <> ?)",
+				Args:        []any{"alice", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
@@ -896,8 +891,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "(((toFloat64(assumeNotNull(dynamicElement(body_v2.`http-status`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')) OR ((toFloat64OrNull(assumeNotNull(dynamicElement(body_v2.`http-status`, 'String'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(200), float64(200), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "(((toFloat64(assumeNotNull(dynamicElement(body_v2.`http-status`, 'Int64'))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')) OR ((toFloat64OrNull(lower(assumeNotNull(dynamicElement(body_v2.`http-status`, 'String')))) = ?) AND has(JSONAllPaths(body_v2), 'http-status')))",
+				Args:        []any{float64(200), float64(200), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{
@@ -908,8 +903,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.`response.time-taken`, 'Float64'))) > ?) AND has(JSONAllPaths(body_v2), 'response.time-taken'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(1.5), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((toFloat64(assumeNotNull(dynamicElement(body_v2.response.`time-taken`, 'Float64'))) > ?) AND has(JSONAllPaths(body_v2), 'response.time-taken'))",
+				Args:        []any{float64(1.5), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		// ── Bool is NOT IndexSupported — index branch must be skipped ─────────
@@ -923,7 +918,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 			},
 			expected: TestExpected{
 				WhereClause: "((dynamicElement(body_v2.`user.active`, 'Bool') = ?) AND has(JSONAllPaths(body_v2), 'user.active'))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 	}
@@ -942,20 +937,192 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 		})
 	}
 }
+
+func TestJSONStmtBuilder_SelectField(t *testing.T) {
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
+	statementBuilder := buildJSONTestStatementBuilder(t, false)
+
+	cases := []struct {
+		name                string
+		requestType         qbtypes.RequestType
+		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected            qbtypes.Statement
+		expectedErrContains string
+	}{
+		{
+			name:        "select_x_education[].awards[].participated[].members",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name: "education[].awards[].participated[].members",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "user.name exists",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `education[].awards[].participated[].members` FROM signoz_logs.distributed_logs_v2 WHERE (dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+		{
+			name:        "select_x_education[].awards[].type",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name: "education[].awards[].type",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "user.name exists",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.`type`, 'String'), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->dynamicElement(`body_v2.education[].awards`.`type`, 'String'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `education[].awards[].type` FROM signoz_logs.distributed_logs_v2 WHERE (dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+		{
+			name:        "select_x_user.name",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				SelectFields: []telemetrytypes.TelemetryFieldKey{
+					{
+						Name: "user.name",
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, dynamicElement(body_v2.`user.name`, 'String') AS `user.name` FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			if c.expectedErrContains != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErrContains)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
+func TestJSONStmtBuilder_OrderBy(t *testing.T) {
+	enable, disable := jsonQueryTestUtil(t)
+	enable()
+	defer disable()
+	statementBuilder := buildJSONTestStatementBuilder(t, false)
+
+	cases := []struct {
+		name                string
+		requestType         qbtypes.RequestType
+		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		expected            qbtypes.Statement
+		expectedErrContains string
+	}{
+		{
+			name:        "order_by_education[].awards[].participated[].members",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "education[].awards[].participated[].members",
+							},
+						},
+						Direction: qbtypes.OrderDirectionAsc,
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "user.name exists",
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE (dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY arrayFlatten(arrayConcat(arrayMap(`body_v2.education`->arrayConcat(arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=4, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), dynamicElement(`body_v2.education`.`awards`, 'Array(JSON(max_dynamic_types=8, max_dynamic_paths=0))')), arrayMap(`body_v2.education[].awards`->arrayConcat(arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=256))')), arrayMap(`body_v2.education[].awards[].participated`->dynamicElement(`body_v2.education[].awards[].participated`.`members`, 'Array(Nullable(String))'), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education[].awards`.`participated`, 'Array(Dynamic)'))))), arrayMap(x->assumeNotNull(dynamicElement(x, 'JSON')), arrayFilter(x->(dynamicType(x) = 'JSON'), dynamicElement(`body_v2.education`.`awards`, 'Array(Dynamic)'))))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))) AS `education[].awards[].participated[].members` asc LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+		{
+			name:        "order_by_user.name",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+				Limit:        10,
+				Order: []qbtypes.OrderBy{
+					{
+						Key: qbtypes.OrderByKey{
+							TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+								Name: "user.name",
+							},
+						},
+						Direction: qbtypes.OrderDirectionAsc,
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? ORDER BY dynamicElement(body_v2.`user.name`, 'String') AS `user.name` asc LIMIT ?",
+				Args:  []any{"1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+			if c.expectedErrContains != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErrContains)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+				require.Equal(t, c.expected.Warnings, q.Warnings)
+			}
+		})
+	}
+}
+
 func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
-	for path, jsonTypes := range types {
-		for _, jsonType := range jsonTypes {
+	for path, fieldDataTypes := range types {
+		for _, fdt := range fieldDataTypes {
 			key := &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
 				Signal:        telemetrytypes.SignalLogs,
 				FieldContext:  telemetrytypes.FieldContextBody,
-				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
-				JSONDataType:  &jsonType,
+				FieldDataType: fdt,
 			}
 			if addIndexes {
+				jsonType := telemetrytypes.MappingFieldDataTypeToJSONDataType[fdt]
 				idx := slices.IndexFunc(telemetrytypes.TestIndexedPaths, func(entry telemetrytypes.TestIndexedPathEntry) bool {
 					return entry.Path == path && entry.Type == jsonType
 				})
