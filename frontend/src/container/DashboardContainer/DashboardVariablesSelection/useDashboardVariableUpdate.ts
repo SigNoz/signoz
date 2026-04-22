@@ -38,15 +38,11 @@ interface UseDashboardVariableUpdateReturn {
 }
 
 export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn => {
-	const {
-		dashboardId,
-		selectedDashboard,
-		setSelectedDashboard,
-	} = useDashboardStore(
+	const { dashboardId, dashboardData, setDashboardData } = useDashboardStore(
 		useShallow((s) => ({
-			dashboardId: s.selectedDashboard?.id ?? '',
-			selectedDashboard: s.selectedDashboard,
-			setSelectedDashboard: s.setSelectedDashboard,
+			dashboardId: s.dashboardData?.id ?? '',
+			dashboardData: s.dashboardData,
+			setDashboardData: s.setDashboardData,
 		})),
 	);
 	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
@@ -74,8 +70,8 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 					isDynamic,
 				);
 
-				if (selectedDashboard) {
-					setSelectedDashboard((prev) => {
+				if (dashboardData) {
+					setDashboardData((prev) => {
 						if (prev) {
 							const oldVariables = prev?.data.variables;
 							// this is added to handle case where we have two different
@@ -110,7 +106,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				}
 			}
 		},
-		[dashboardId, selectedDashboard, setSelectedDashboard],
+		[dashboardId, dashboardData, setDashboardData],
 	);
 
 	const updateVariables = useCallback(
@@ -120,23 +116,23 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			widgetIds?: string[],
 			applyToAll?: boolean,
 		): void => {
-			if (!selectedDashboard) {
+			if (!dashboardData) {
 				return;
 			}
 
 			const newDashboard =
 				(currentRequestedId &&
 					addDynamicVariableToPanels(
-						selectedDashboard,
+						dashboardData,
 						updatedVariablesData[currentRequestedId || ''],
 						widgetIds,
 						applyToAll,
 					)) ||
-				selectedDashboard;
+				dashboardData;
 
 			updateMutation.mutateAsync(
 				{
-					id: selectedDashboard.id,
+					id: dashboardData.id,
 
 					data: {
 						...newDashboard.data,
@@ -146,7 +142,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				{
 					onSuccess: (updatedDashboard) => {
 						if (updatedDashboard.data) {
-							setSelectedDashboard(updatedDashboard.data);
+							setDashboardData(updatedDashboard.data);
 							// notifications.success({
 							// 	message: t('variable_updated_successfully'),
 							// });
@@ -155,12 +151,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				},
 			);
 		},
-		[
-			selectedDashboard,
-			addDynamicVariableToPanels,
-			updateMutation,
-			setSelectedDashboard,
-		],
+		[dashboardData, addDynamicVariableToPanels, updateMutation, setDashboardData],
 	);
 
 	const createVariable = useCallback(
@@ -172,13 +163,13 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			source: 'logs' | 'traces' | 'metrics' | 'all sources' = 'all sources',
 			// widgetId?: string,
 		): void => {
-			if (!selectedDashboard) {
+			if (!dashboardData) {
 				console.warn('No dashboard selected for variable creation');
 				return;
 			}
 
 			// Get current dashboard variables
-			const currentVariables = selectedDashboard.data.variables || {};
+			const currentVariables = dashboardData.data.variables || {};
 
 			// Create tableRowData like Dashboard Settings does
 			const tableRowData = [];
@@ -234,7 +225,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			const updatedVariables = convertVariablesToDbFormat(tableRowData);
 			updateVariables(updatedVariables, newVariable.id, [], false);
 		},
-		[selectedDashboard, updateVariables],
+		[dashboardData, updateVariables],
 	);
 
 	return {

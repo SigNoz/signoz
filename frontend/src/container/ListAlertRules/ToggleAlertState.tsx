@@ -1,9 +1,15 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import patchAlert from 'api/alerts/patch';
+import { patchRulePartial } from 'api/alerts/patchRulePartial';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import type {
+	RenderErrorResponseDTO,
+	RuletypesRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
-import { GettableAlert } from 'types/api/alerts/get';
-import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 import { ColumnButton } from './styles';
 
@@ -12,7 +18,7 @@ function ToggleAlertState({
 	disabled,
 	setData,
 }: ToggleAlertStateProps): JSX.Element {
-	const [apiStatus, setAPIStatus] = useState<State<PatchPayloadProps>>({
+	const [apiStatus, setAPIStatus] = useState<State<RuletypesRuleDTO>>({
 		error: false,
 		errorMessage: '',
 		loading: false,
@@ -21,8 +27,7 @@ function ToggleAlertState({
 	});
 
 	const { notifications } = useNotifications();
-
-	const defaultErrorMessage = 'Something went wrong';
+	const { showErrorModal } = useErrorModal();
 
 	const onToggleHandler = async (
 		id: string,
@@ -34,58 +39,40 @@ function ToggleAlertState({
 				loading: true,
 			}));
 
-			const response = await patchAlert({
-				id,
-				data: {
-					disabled,
-				},
+			const response = await patchRulePartial(id, { disabled });
+			const { data: updatedRule } = response;
+
+			setData((state) =>
+				state.map((alert) => {
+					if (alert.id === id) {
+						return {
+							...alert,
+							disabled: updatedRule.disabled,
+							state: updatedRule.state,
+						};
+					}
+					return alert;
+				}),
+			);
+
+			setAPIStatus((state) => ({
+				...state,
+				loading: false,
+				payload: updatedRule,
+			}));
+			notifications.success({
+				message: 'Success',
 			});
-
-			if (response.statusCode === 200) {
-				setData((state) =>
-					state.map((alert) => {
-						if (alert.id === id) {
-							return {
-								...alert,
-								disabled: response.payload.disabled,
-								state: response.payload.state,
-							};
-						}
-						return alert;
-					}),
-				);
-
-				setAPIStatus((state) => ({
-					...state,
-					loading: false,
-					payload: response.payload,
-				}));
-				notifications.success({
-					message: 'Success',
-				});
-			} else {
-				setAPIStatus((state) => ({
-					...state,
-					loading: false,
-					error: true,
-					errorMessage: response.error || defaultErrorMessage,
-				}));
-
-				notifications.error({
-					message: response.error || defaultErrorMessage,
-				});
-			}
 		} catch (error) {
 			setAPIStatus((state) => ({
 				...state,
 				loading: false,
 				error: true,
-				errorMessage: defaultErrorMessage,
 			}));
 
-			notifications.error({
-				message: defaultErrorMessage,
-			});
+			showErrorModal(
+				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			);
 		}
 	};
 
@@ -102,9 +89,9 @@ function ToggleAlertState({
 }
 
 interface ToggleAlertStateProps {
-	id: GettableAlert['id'];
+	id: string;
 	disabled: boolean;
-	setData: Dispatch<SetStateAction<GettableAlert[]>>;
+	setData: Dispatch<SetStateAction<RuletypesRuleDTO[]>>;
 }
 
 export default ToggleAlertState;

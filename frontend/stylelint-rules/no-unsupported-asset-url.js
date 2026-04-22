@@ -19,15 +19,12 @@
  * See: https://vitejs.dev/guide/assets  (Static Asset Handling)
  */
 import stylelint from 'stylelint';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const {
+import {
 	containsAssetExtension,
 	isAbsolutePath,
 	isPublicRelative,
 	isRelativePublicDir,
-} = require('../eslint-rules/shared/asset-patterns');
+} from '../plugins/rules/shared/asset-patterns.mjs';
 
 const ruleName = 'local/no-unsupported-asset-url';
 

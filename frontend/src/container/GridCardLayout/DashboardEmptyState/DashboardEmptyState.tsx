@@ -27,7 +27,7 @@ export default function DashboardEmptyState(): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
@@ -43,7 +43,7 @@ export default function DashboardEmptyState(): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -52,9 +52,9 @@ export default function DashboardEmptyState(): JSX.Element {
 	const onEmptyWidgetHandler = useCallback(() => {
 		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: selectedDashboard?.data.widgets?.length,
+			dashboardId: dashboardData?.id,
+			dashboardName: dashboardData?.data.title,
+			numberOfPanels: dashboardData?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setIsPanelTypeSelectionModalOpen]);
