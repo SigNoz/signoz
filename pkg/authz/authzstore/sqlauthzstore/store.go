@@ -156,36 +156,6 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 	return nil
 }
 
-func (store *store) HasUserAssignees(ctx context.Context, roleID valuer.UUID) (bool, error) {
-	exists, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		TableExpr("user_role").
-		Where("role_id = ?", roleID).
-		Exists(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	return exists, nil
-}
-
-func (store *store) HasServiceAccountAssignees(ctx context.Context, roleID valuer.UUID) (bool, error) {
-	exists, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		TableExpr("service_account_role").
-		Where("role_id = ?", roleID).
-		Exists(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	return exists, nil
-}
-
 func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		return cb(ctx)

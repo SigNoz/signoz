@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -100,7 +101,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
+	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, user.Getter, serviceaccount.Getter, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
@@ -328,8 +329,13 @@ func New(
 	// Initialize dashboard module (needed for authz registry)
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 
+	// Initialize service account getter
+	serviceAccountGetter := implserviceaccount.NewGetter(implserviceaccount.NewStore(sqlstore))
+	// Initialize user getter
+	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
+
 	// Initialize authz
-	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, dashboard)
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, userGetter, serviceAccountGetter, dashboard)
 	if err != nil {
 		return nil, err
 	}
@@ -337,9 +343,6 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
-	// Initialize user getter
-	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(

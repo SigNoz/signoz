@@ -11,6 +11,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type Getter interface {
+	GetServiceAccountsByOrgIDAndRoleID(context.Context, valuer.UUID, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
+}
+
 type Module interface {
 	// Creates a new service account for an organization.
 	Create(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error

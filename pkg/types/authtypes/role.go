@@ -241,7 +241,5 @@ type RoleStore interface {
 	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*Role, error)
 	Update(context.Context, valuer.UUID, *Role) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
-	HasUserAssignees(context.Context, valuer.UUID) (bool, error)
-	HasServiceAccountAssignees(context.Context, valuer.UUID) (bool, error)
 	RunInTx(context.Context, func(ctx context.Context) error) error
 }

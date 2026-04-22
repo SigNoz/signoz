@@ -45,6 +45,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -137,12 +138,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return authNs, nil
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, dashboardModule dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, userGetter user.Getter, serviceAccountGetter serviceaccount.Getter, dashboardModule dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
 			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
 			if err != nil {
 				return nil, err
 			}
-			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule), nil
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, userGetter, serviceAccountGetter, dashboardModule), nil
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)

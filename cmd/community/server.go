@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
@@ -92,7 +93,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			return signoz.NewAuthNs(ctx, providerSettings, store, licensing)
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, _ licensing.Licensing, _ dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, _ licensing.Licensing, _ user.Getter, _ serviceaccount.Getter, _ dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
 			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
 			if err != nil {
 				return nil, err
