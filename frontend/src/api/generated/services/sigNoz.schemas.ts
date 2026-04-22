@@ -903,6 +903,10 @@ export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
 	/**
 	 * @type string
 	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
 	resourceType: string;
 }
 
@@ -1233,8 +1237,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
-	blobstorage = 'blobstorage',
-	frontdoor = 'frontdoor',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**
