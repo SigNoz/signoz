@@ -1,10 +1,13 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/ui';
+import {
+	Button,
+	DialogFooter,
+	DialogWrapper,
+	Input,
+	toast,
+} from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,
@@ -50,9 +53,7 @@ function CreateServiceAccountModal(): JSX.Element {
 	} = useCreateServiceAccount({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Service account created successfully', {
-					richColors: true,
-				});
+				toast.success('Service account created successfully');
 				reset();
 				await setIsOpen(null);
 				await invalidateListServiceAccounts(queryClient);
@@ -128,7 +129,6 @@ function CreateServiceAccountModal(): JSX.Element {
 					type="button"
 					variant="solid"
 					color="secondary"
-					size="sm"
 					onClick={handleClose}
 				>
 					<X size={12} />
@@ -137,10 +137,10 @@ function CreateServiceAccountModal(): JSX.Element {
 
 				<Button
 					type="submit"
+					// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
 					form="create-sa-form"
 					variant="solid"
 					color="primary"
-					size="sm"
 					loading={isSubmitting}
 					disabled={!isValid}
 				>

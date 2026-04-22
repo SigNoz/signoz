@@ -4,6 +4,7 @@ import cx from 'classnames';
 import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
+import { syncCursorRegistry } from './syncCursorRegistry';
 import {
 	createInitialControllerState,
 	createSetCursorHandler,
@@ -40,6 +41,7 @@ export default function TooltipPlugin({
 	maxHeight = 600,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
+	syncMetadata,
 	pinnedTooltipElement,
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
@@ -100,7 +102,29 @@ export default function TooltipPlugin({
 		// crosshair / tooltip can follow the dashboard-wide cursor.
 		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
 			config.setCursor({
-				sync: { key: syncKey, scales: ['x', null] },
+				sync: { key: syncKey, scales: ['x', 'y'] },
+			});
+
+			// Show the horizontal crosshair only when the receiving panel shares
+			// the same y-axis unit as the source panel. When this panel is the
+			// source (cursor.event != null) the line is always shown and this
+			// panel's metadata is written to the registry so receivers can read it.
+			config.addHook('setCursor', (u: uPlot): void => {
+				const yCursorEl = u.root.querySelector<HTMLElement>('.u-cursor-y');
+				if (!yCursorEl) {
+					return;
+				}
+
+				if (u.cursor.event != null) {
+					// This panel is the source — publish metadata and always show line.
+					syncCursorRegistry.setMetadata(syncKey, syncMetadata);
+					yCursorEl.style.display = '';
+				} else {
+					// This panel is receiving sync — show only if units match.
+					const sourceMeta = syncCursorRegistry.getMetadata(syncKey);
+					yCursorEl.style.display =
+						sourceMeta?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
+				}
 			});
 		}
 

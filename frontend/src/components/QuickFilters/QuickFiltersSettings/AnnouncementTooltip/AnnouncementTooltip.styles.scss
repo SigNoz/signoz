@@ -11,6 +11,8 @@
 	&__title {
 		font-weight: 500;
 		font-size: 15px;
+		padding: 0;
+		margin: 0;
 	}
 
 	&__container {
@@ -19,7 +21,7 @@
 		background-color: var(--primary-background);
 		color: var(--primary-foreground);
 		border-radius: 8px;
-		padding: 16px;
+		padding: 12px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 		z-index: 1000;
 	}
@@ -43,14 +45,23 @@
 	&__footer {
 		display: flex;
 		justify-content: flex-end;
-	}
 
-	&__button {
-		background: var(--secondary-background);
-		color: var(--secondary-foreground);
-		border: none;
-		padding: 6px 12px;
-		border-radius: 4px;
-		cursor: pointer;
+		// TODO: Need to override the button styles for this component due to container styles.
+		// Fix - @aks07
+
+		&__button {
+			margin-top: 12px;
+			color: var(--base-black);
+			background-color: var(--base-white);
+			border: none;
+			padding: 6px 12px;
+			border-radius: 4px;
+			cursor: pointer;
+
+			&:hover {
+				background-color: var(--base-white);
+				color: var(--bg-robin-500);
+			}
+		}
 	}
 }

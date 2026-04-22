@@ -1,4 +1,4 @@
-import { Callout } from '@signozhq/callout';
+import { Callout } from '@signozhq/ui';
 
 import { PermissionType, TimestampBadge } from '../../utils';
 import PermissionItem from './PermissionItem';
@@ -26,7 +26,7 @@ function OverviewTab({
 				<Callout
 					type="warning"
 					showIcon
-					message="This is a managed role. Permissions and settings are view-only and cannot be modified."
+					title="This is a managed role. Permissions and settings are view-only and cannot be modified."
 				/>
 			)}
 

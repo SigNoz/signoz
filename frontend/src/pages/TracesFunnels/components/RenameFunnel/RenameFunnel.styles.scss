@@ -63,12 +63,12 @@
 		letter-spacing: -0.07px;
 
 		&--error {
-			border-color: var(--bg-cherry-500);
+			border-color: var(--danger-background);
 		}
 	}
 
 	&__error {
-		color: var(--bg-cherry-500);
+		color: var(--danger-background);
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 16px;

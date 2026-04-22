@@ -224,7 +224,7 @@ body {
 								left: 50%;
 								width: 12px;
 								height: 2px;
-								background: var(--bg-cherry-500);
+								background: var(--danger-background);
 								transform: translate(-50%, -50%) rotate(45deg);
 								border-radius: 1px;
 							}
@@ -333,7 +333,7 @@ body {
 							left: 50%;
 							width: 12px;
 							height: 2px;
-							background: var(--bg-cherry-500);
+							background: var(--danger-background);
 							transform: translate(-50%, -50%) rotate(45deg);
 							border-radius: 1px;
 						}
@@ -589,7 +589,7 @@ body {
 			background-color: var(--l3-background) !important;
 
 			&.ant-dropdown-menu-item-danger {
-				background-color: var(--bg-cherry-500) !important;
+				background-color: var(--danger-background) !important;
 			}
 		}
 	}
@@ -798,19 +798,7 @@ notifications	-  2050
 	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
 }
 
-[data-slot='drawer-content'] {
-	background: var(--l1-background) !important;
-	border: 1px solid var(--l1-border) !important;
-
-	[data-slot='drawer-title'] {
-		color: var(--l1-foreground) !important;
-	}
-
-	[data-slot='drawer-close'] {
-		color: var(--l1-foreground) !important;
-	}
-
-	[data-slot='drawer-body'] {
-		color: var(--l1-foreground) !important;
-	}
+// overrides
+:root {
+	--input-focus-outline-width: 0;
 }

@@ -12,10 +12,7 @@ interface BaseChartProps {
 	height: number;
 	showTooltip?: boolean;
 	showLegend?: boolean;
-	timezone?: Timezone;
 	canPinTooltip?: boolean;
-	yAxisUnit?: string;
-	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
@@ -32,18 +29,31 @@ interface UPlotBasedChartProps {
 	layoutChildren?: React.ReactNode;
 }
 
+interface UPlotChartDataProps {
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+}
+
 export interface TimeSeriesChartProps
 	extends BaseChartProps,
-		UPlotBasedChartProps {}
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
+	timezone?: Timezone;
+}
 
 export interface HistogramChartProps
 	extends BaseChartProps,
-		UPlotBasedChartProps {
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
 	isQueriesMerged?: boolean;
 }
 
-export interface BarChartProps extends BaseChartProps, UPlotBasedChartProps {
+export interface BarChartProps
+	extends BaseChartProps,
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
 	isStackedBarChart?: boolean;
+	timezone?: Timezone;
 }
 
 export type ChartProps =
