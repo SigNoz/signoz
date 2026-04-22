@@ -19,6 +19,7 @@ import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -223,8 +224,17 @@ function FullView({
 		keepPreviousData: true,
 	});
 
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (response.isFetching) {
+			setIsCancelled(false);
+		}
+	}, [response.isFetching]);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries(queryRangeKey);
+		setIsCancelled(true);
 	}, [queryClient, queryRangeKey]);
 
 	const onDragSelect = useCallback((start: number, end: number): void => {
@@ -399,23 +409,27 @@ function FullView({
 									}}
 								/>
 							)}
-							<PanelWrapper
-								panelMode={PanelMode.STANDALONE_VIEW}
-								queryResponse={response}
-								widget={widget}
-								setRequestData={setRequestData}
-								isFullViewMode
-								onToggleModelHandler={onToggleModelHandler}
-								setGraphVisibility={setGraphsVisibilityStates}
-								graphVisibility={graphsVisibilityStates}
-								onDragSelect={customOnDragSelect ?? onDragSelect}
-								tableProcessedDataRef={tableProcessedDataRef}
-								searchTerm={searchTerm}
-								onClickHandler={onClickHandler}
-								enableDrillDown={enableDrillDown}
-								selectedGraph={selectedPanelType}
-								onColumnWidthsChange={onColumnWidthsChange}
-							/>
+							{isCancelled ? (
+								<QueryCancelledPlaceholder subText='Click "Run Query" to reload the widget.' />
+							) : (
+								<PanelWrapper
+									panelMode={PanelMode.STANDALONE_VIEW}
+									queryResponse={response}
+									widget={widget}
+									setRequestData={setRequestData}
+									isFullViewMode
+									onToggleModelHandler={onToggleModelHandler}
+									setGraphVisibility={setGraphsVisibilityStates}
+									graphVisibility={graphsVisibilityStates}
+									onDragSelect={customOnDragSelect ?? onDragSelect}
+									tableProcessedDataRef={tableProcessedDataRef}
+									searchTerm={searchTerm}
+									onClickHandler={onClickHandler}
+									enableDrillDown={enableDrillDown}
+									selectedGraph={selectedPanelType}
+									onColumnWidthsChange={onColumnWidthsChange}
+								/>
+							)}
 						</GraphContainer>
 					</div>
 				</>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import classNames from 'classnames';
@@ -67,6 +67,13 @@ function QuerySection(): JSX.Element {
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
 		setIsCancelled(true);

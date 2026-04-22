@@ -6,6 +6,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -75,6 +76,13 @@ function LogsExplorer(): JSX.Element {
 	const chartQueryKeyRef = useRef<any>();
 
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
 
 	const queryClient = useQueryClient();
 	const handleCancelQuery = useCallback(() => {
@@ -84,6 +92,10 @@ function LogsExplorer(): JSX.Element {
 		if (chartQueryKeyRef.current) {
 			queryClient.cancelQueries(chartQueryKeyRef.current);
 		}
+		setIsCancelled(true);
+		// Reset loading state — the views container unmounts when cancelled, so
+		// no child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
 	}, [queryClient]);
 
 	const [warning, setWarning] = useState<Warning | undefined>(undefined);
@@ -307,7 +319,10 @@ function LogsExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
 									isLoadingQueries={isLoadingQueries}
 									handleCancelQuery={handleCancelQuery}
 									showLiveLogs={showLiveLogs}
@@ -325,14 +340,18 @@ function LogsExplorer(): JSX.Element {
 								</ExplorerCard>
 							</div>
 							<div className="logs-explorer-views">
-								<LogsExplorerViewsContainer
-									listQueryKeyRef={listQueryKeyRef}
-									chartQueryKeyRef={chartQueryKeyRef}
-									setIsLoadingQueries={setIsLoadingQueries}
-									setWarning={setWarning}
-									showLiveLogs={showLiveLogs}
-									handleChangeSelectedView={handleChangeSelectedView}
-								/>
+								{isCancelled ? (
+									<QueryCancelledPlaceholder subText='Click "Run Query" to load logs.' />
+								) : (
+									<LogsExplorerViewsContainer
+										listQueryKeyRef={listQueryKeyRef}
+										chartQueryKeyRef={chartQueryKeyRef}
+										setIsLoadingQueries={setIsLoadingQueries}
+										setWarning={setWarning}
+										showLiveLogs={showLiveLogs}
+										handleChangeSelectedView={handleChangeSelectedView}
+									/>
+								)}
 							</div>
 						</div>
 					</section>

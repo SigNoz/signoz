@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -344,11 +345,14 @@ function ChartPreview({
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
+	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
+
 	const isAnomalyDetectionAlert =
 		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
 
 	const chartDataAvailable =
 		chartData &&
+		hasResultData &&
 		!queryResponse.isLoading &&
 		(!queryResponse.isError || isCancelled);
 
@@ -373,6 +377,10 @@ function ChartPreview({
 					)}
 					{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
 						<ErrorInPlace error={queryResponse.error as APIError} />
+					)}
+
+					{isCancelled && !queryResponse.isLoading && !hasResultData && (
+						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (

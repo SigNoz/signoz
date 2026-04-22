@@ -8,6 +8,7 @@ import logEvent from 'api/common/logEvent';
 import emptyStateUrl from 'assets/Icons/emptyState.svg';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -55,11 +56,15 @@ function DomainList(): JSX.Element {
 
 	const compositeData = useGetCompositeQueryParam();
 
+	const [isCancelled, setIsCancelled] = useState(false);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
+		setIsCancelled(true);
 	}, [queryClient]);
 
 	const handleStageAndRunQuery = useCallback(() => {
+		setIsCancelled(false);
 		queryClient.invalidateQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
 		handleRunQuery();
 	}, [queryClient, handleRunQuery]);
@@ -116,6 +121,13 @@ function DomainList(): JSX.Element {
 		[data],
 	);
 
+	// Auto-reset cancelled state when a new fetch starts
+	useEffect(() => {
+		if (isFetching) {
+			setIsCancelled(false);
+		}
+	}, [isFetching]);
+
 	// Open drawer if selectedDomain is set in URL
 	useEffect(() => {
 		if (selectedDomain && formattedDataForTable?.length > 0) {
@@ -147,38 +159,44 @@ function DomainList(): JSX.Element {
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
 			</div>
-			{!isFetching && !isLoading && formattedDataForTable.length === 0 && (
-				<div className="no-filtered-domains-message-container">
-					<div className="no-filtered-domains-message-content">
-						<img
-							src={emptyStateUrl}
-							alt="thinking-emoji"
-							className="empty-state-svg"
-						/>
+			{isCancelled && formattedDataForTable.length === 0 && (
+				<QueryCancelledPlaceholder subText='Click "Run Query" to load API monitoring data.' />
+			)}
+			{!isCancelled &&
+				!isFetching &&
+				!isLoading &&
+				formattedDataForTable.length === 0 && (
+					<div className="no-filtered-domains-message-container">
+						<div className="no-filtered-domains-message-content">
+							<img
+								src={emptyStateUrl}
+								alt="thinking-emoji"
+								className="empty-state-svg"
+							/>
 
-						<div className="no-filtered-domains-message">
-							<div className="no-domain-title">
-								No External API calls detected with applied filters.
+							<div className="no-filtered-domains-message">
+								<div className="no-domain-title">
+									No External API calls detected with applied filters.
+								</div>
+								<div className="no-domain-subtitle">
+									Ensure all HTTP client spans are being sent with kind as{' '}
+									<span className="attribute">Client</span> and url set in{' '}
+									<span className="attribute">url.full</span> or{' '}
+									<span className="attribute">http.url</span> attribute.
+								</div>
+								<a
+									href={DOCLINKS.EXTERNAL_API_MONITORING}
+									target="_blank"
+									rel="noreferrer"
+									className="external-api-doc-link"
+								>
+									Learn how External API monitoring works in SigNoz{' '}
+									<MoveUpRight size={14} />
+								</a>
 							</div>
-							<div className="no-domain-subtitle">
-								Ensure all HTTP client spans are being sent with kind as{' '}
-								<span className="attribute">Client</span> and url set in{' '}
-								<span className="attribute">url.full</span> or{' '}
-								<span className="attribute">http.url</span> attribute.
-							</div>
-							<a
-								href={DOCLINKS.EXTERNAL_API_MONITORING}
-								target="_blank"
-								rel="noreferrer"
-								className="external-api-doc-link"
-							>
-								Learn how External API monitoring works in SigNoz{' '}
-								<MoveUpRight size={14} />
-							</a>
 						</div>
 					</div>
-				</div>
-			)}
+				)}
 			{(isFetching || isLoading || formattedDataForTable.length > 0) && (
 				<Table
 					className="api-monitoring-domain-list-table"

@@ -3,8 +3,10 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
@@ -23,9 +25,13 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 interface TimeSeriesProps {
 	onFetchingStateChange?: (isFetching: boolean) => void;
+	isCancelled?: boolean;
 }
 
-function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
+function TimeSeries({
+	onFetchingStateChange,
+	isCancelled = false,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -108,7 +114,7 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 					return false;
 				}
 
-				return failureCount < 3;
+				return failureCount < MAX_QUERY_RETRIES;
 			},
 			onError: (error: APIError): void => {
 				showErrorModal(error);
@@ -141,7 +147,11 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
 				{!hasMetricSelected && <EmptyMetricsSearch />}
-				{hasMetricSelected &&
+				{isCancelled && hasMetricSelected && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					hasMetricSelected &&
 					responseData.map((datapoint, index) => (
 						<div
 							className="time-series-view-panel"

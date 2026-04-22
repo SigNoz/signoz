@@ -58,8 +58,17 @@ function Explorer(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+		setIsCancelled(true);
 	}, [queryClient]);
 
 	const metricNames = useMemo(() => {
@@ -344,6 +353,7 @@ function Explorer(): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						setYAxisUnit={setYAxisUnit}
 						showYAxisUnitSelector={showYAxisUnitSelector}
+						isCancelled={isCancelled}
 					/>
 				</div>
 			</div>
