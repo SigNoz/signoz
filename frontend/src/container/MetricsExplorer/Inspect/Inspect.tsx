@@ -113,9 +113,16 @@ function Inspect({
 
 	const [isCancelled, setIsCancelled] = useState(false);
 
+	// Auto-reset isCancelled when a new query starts fetching
+	useEffect(() => {
+		if (isInspectMetricsRefetching) {
+			setIsCancelled(false);
+		}
+	}, [isInspectMetricsRefetching]);
+
 	const queryClient = useQueryClient();
 	const handleCancelInspectQuery = useCallback(() => {
-		queryClient.cancelQueries([REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS]);
+		queryClient.cancelQueries(REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS);
 		setIsCancelled(true);
 	}, [queryClient]);
 
@@ -252,7 +259,12 @@ function Inspect({
 						setCurrentQuery={setCurrentQueryData}
 						isLoadingQueries={isInspectMetricsLoading || isInspectMetricsRefetching}
 						handleCancelQuery={handleCancelInspectQuery}
-						onRunQuery={(): void => setIsCancelled(false)}
+						onRunQuery={(): void => {
+							setIsCancelled(false);
+							queryClient.invalidateQueries([
+								REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS,
+							]);
+						}}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
