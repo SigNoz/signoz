@@ -1,10 +1,9 @@
 import { Button } from '@signozhq/ui';
+import { Kbd } from '@signozhq/ui';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { X } from 'lucide-react';
-
-import Kbd from '../Kbd/Kbd';
 
 import Styles from './TooltipFooter.module.scss';
 
@@ -35,11 +34,9 @@ export default function TooltipFooter({
 				{isPinned ? (
 					<>
 						<span>Press</span>
-						<Kbd className={cx({ [Styles.kbdPinned]: isPinned })}>
-							{pinKey.toUpperCase()}
-						</Kbd>
+						<Kbd active>{pinKey.toUpperCase()}</Kbd>
 						<span>or</span>
-						<Kbd className={cx({ [Styles.kbdPinned]: isPinned })}>Esc</Kbd>
+						<Kbd active>Esc</Kbd>
 						<span>to unpin</span>
 					</>
 				) : (

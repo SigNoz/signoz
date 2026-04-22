@@ -5,7 +5,7 @@
 	gap: 10px;
 	padding: 7px 12px;
 	border-top: 1px solid var(--bg-slate-400);
-	background: var(--l3-background);
+	background: var(--l2-background);
 	border-radius: 0 0 6px 6px;
 }
 
@@ -28,10 +28,4 @@
 
 .hintLightMode {
 	color: var(--bg-ink-400);
-}
-
-.kbdPinned {
-	background: var(--callout-primary-background);
-	border-color: var(--bg-robin-500);
-	color: var(--bg-robin-500);
 }
