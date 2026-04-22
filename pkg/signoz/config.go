@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -131,6 +132,9 @@ type Config struct {
 
 	// CloudIntegration config
 	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
+
+	// TraceDetail config
+	TraceDetail tracedetail.Config `mapstructure:"tracedetail"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -163,6 +167,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		serviceaccount.NewConfigFactory(),
 		auditor.NewConfigFactory(),
 		cloudintegration.NewConfigFactory(),
+		tracedetail.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

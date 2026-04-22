@@ -127,9 +127,8 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	)
 }
 
-func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selectedSpanID string, limit uint) ([]*WaterfallSpan, []string, bool) {
+func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selectedSpanID string, limit uint, spanPageSize float64, maxDepthToAutoExpand int) ([]*WaterfallSpan, []string, bool) {
 	// Span selection decision: all spans or windowed
-	limit = min(limit, MaxLimitToSelectAllSpans)
 	selectAllSpans := wt.TotalSpans <= uint64(limit)
 
 	var (
@@ -140,7 +139,7 @@ func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selecte
 	if selectAllSpans {
 		selectedSpans = wt.GetAllSpans()
 	} else {
-		selectedSpans, uncollapsedSpans = wt.GetSelectedSpans(uncollapsedSpans, selectedSpanID)
+		selectedSpans, uncollapsedSpans = wt.GetSelectedSpans(uncollapsedSpanIDs, selectedSpanID, spanPageSize, maxDepthToAutoExpand)
 	}
 	return selectedSpans, uncollapsedSpans, selectAllSpans
 }
@@ -154,9 +153,9 @@ func (wt *WaterfallTrace) GetAllSpans() []*WaterfallSpan {
 	return preOrderedSpans
 }
 
-// GetSelectedSpans returns a window of spans around selectedSpanID with pre order traversal
-func (wt *WaterfallTrace) GetSelectedSpans(uncollapsedSpanIDs []string, selectedSpanID string) ([]*WaterfallSpan, []string) {
-	uncollapsedSpanIDsMap := wt.CalculateUncollapsedSpanIDs(uncollapsedSpanIDs, selectedSpanID)
+// GetSelectedSpans returns a window of spans around selectedSpanID with pre order traversal.
+func (wt *WaterfallTrace) GetSelectedSpans(uncollapsedSpanIDs []string, selectedSpanID string, spanLimitPerRequest float64, maxDepthForSelectedChildren int) ([]*WaterfallSpan, []string) {
+	uncollapsedSpanIDsMap := wt.CalculateUncollapsedSpanIDs(uncollapsedSpanIDs, selectedSpanID, maxDepthForSelectedChildren)
 
 	var (
 		preOrderedSpans   []*WaterfallSpan
@@ -169,7 +168,7 @@ func (wt *WaterfallTrace) GetSelectedSpans(uncollapsedSpanIDs []string, selected
 		}
 		preOrderedSpans = append(preOrderedSpans, preOrderedSpansForRoot...)
 	}
-	startIndex, endIndex := windowAroundIndex(selectedSpanIndex, len(preOrderedSpans))
+	startIndex, endIndex := windowAroundIndex(selectedSpanIndex, len(preOrderedSpans), spanLimitPerRequest)
 	return preOrderedSpans[startIndex:endIndex], slices.Collect(maps.Keys(uncollapsedSpanIDsMap))
 }
 
@@ -177,9 +176,9 @@ func (wt *WaterfallTrace) GetSelectedSpans(uncollapsedSpanIDs []string, selected
 // merging three sources:
 //  1. Caller-supplied uncollapsedSpanIDs (explicit user state)
 //  2. Every ancestor of selectedSpanID (so the selected span is always visible)
-//  3. Up to MaxDepthForSelectedChildren levels of descendants below selectedSpanID,
-//     when selectedSpanID is itself already uncollapsed (auto-expansion)
-func (wt *WaterfallTrace) CalculateUncollapsedSpanIDs(uncollapsedSpanIDs []string, selectedSpanID string) map[string]struct{} {
+//  3. Up to maxDepthForSelectedChildren levels of descendants below selectedSpanID,
+//     when selectedSpanID is itself already uncollapsed (auto-expansion).
+func (wt *WaterfallTrace) CalculateUncollapsedSpanIDs(uncollapsedSpanIDs []string, selectedSpanID string, maxDepthForSelectedChildren int) map[string]struct{} {
 	uncollapsedSpanMap := make(map[string]struct{}, len(uncollapsedSpanIDs))
 	for _, spanID := range uncollapsedSpanIDs {
 		uncollapsedSpanMap[spanID] = struct{}{}
@@ -196,7 +195,7 @@ func (wt *WaterfallTrace) CalculateUncollapsedSpanIDs(uncollapsedSpanIDs []strin
 	// Auto-expand children of the selected span when it is already uncollapsed.
 	if _, isUncollapsed := uncollapsedSpanMap[selectedSpanID]; isUncollapsed {
 		if selectedSpan, exists := wt.SpanIDToSpanNodeMap[selectedSpanID]; exists {
-			selectedSpan.autoExpandDescendants(MaxDepthForSelectedChildren, uncollapsedSpanMap)
+			selectedSpan.autoExpandDescendants(maxDepthForSelectedChildren, uncollapsedSpanMap)
 		}
 	}
 
@@ -279,12 +278,12 @@ func NewGettableWaterfallTrace(
 	}
 }
 
-// windowAroundIndex returns start/end indices for a window of SpanLimitPerRequest spans.
-func windowAroundIndex(selectedIndex, total int) (start, end int) {
+// windowAroundIndex returns start/end indices for a window of spanLimitPerRequest spans.
+func windowAroundIndex(selectedIndex, total int, spanLimitPerRequest float64) (start, end int) {
 	selectedIndex = max(selectedIndex, 0)
 
-	start = selectedIndex - int(SpanLimitPerRequest*0.4)
-	end = selectedIndex + int(SpanLimitPerRequest*0.6)
+	start = selectedIndex - int(spanLimitPerRequest*0.4)
+	end = selectedIndex + int(spanLimitPerRequest*0.6)
 
 	if start < 0 {
 		end = end - start

@@ -14,11 +14,6 @@ const (
 	TraceDB           = "signoz_traces"
 	TraceTable        = "distributed_signoz_index_v3"
 	TraceSummaryTable = "distributed_trace_summary"
-
-	// Windowing constants for span selection in waterfall.
-	SpanLimitPerRequest         float64 = 500
-	MaxDepthForSelectedChildren int     = 5
-	MaxLimitToSelectAllSpans    uint    = 10_000
 )
 
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.

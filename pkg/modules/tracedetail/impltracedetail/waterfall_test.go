@@ -237,7 +237,7 @@ func TestGetSelectedSpans_SpanOrdering(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			roots, spanMap := tc.buildRoots()
 			trace := getWaterfallTrace(roots, spanMap)
-			spans, _ := trace.GetSelectedSpans(tc.uncollapsedSpans, tc.selectedSpanID)
+			spans, _ := trace.GetSelectedSpans(tc.uncollapsedSpans, tc.selectedSpanID, 500, 5)
 			assert.Equal(t, tc.wantSpanIDs, spanIDs(spans))
 		})
 	}
@@ -258,7 +258,7 @@ func TestGetSelectedSpans_MultipleRoots(t *testing.T) {
 	spanMap := buildSpanMap(root1, root2)
 
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root1, root2}, spanMap)
-	spans, _ := trace.GetSelectedSpans([]string{"root1", "root2"}, "root1")
+	spans, _ := trace.GetSelectedSpans([]string{"root1", "root2"}, "root1", 500, 5)
 
 	traceRespnose := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, false)
 
@@ -385,7 +385,7 @@ func TestGetSelectedSpans_UncollapsedTracking(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, spanMap := tc.buildRoot()
 			trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, spanMap)
-			spans, uncollapsed := trace.GetSelectedSpans(tc.uncollapsedSpans, tc.selectedSpanID)
+			spans, uncollapsed := trace.GetSelectedSpans(tc.uncollapsedSpans, tc.selectedSpanID, 500, 5)
 			if tc.wantSpanIDs != nil {
 				assert.Equal(t, tc.wantSpanIDs, spanIDs(spans))
 			}
@@ -413,7 +413,7 @@ func TestGetSelectedSpans_SpanMetadata(t *testing.T) {
 	)
 	spanMap := buildSpanMap(root)
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, spanMap)
-	spans, _ := trace.GetSelectedSpans([]string{"root", "child1"}, "root")
+	spans, _ := trace.GetSelectedSpans([]string{"root", "child1"}, "root", 500, 5)
 
 	byID := map[string]*tracedetailtypes.WaterfallSpan{}
 	for _, s := range spans {
@@ -479,7 +479,7 @@ func TestGetSelectedSpans_Window(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root, spanMap, uncollapsed := makeChain(600)
 			trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, spanMap)
-			spans, _ := trace.GetSelectedSpans(uncollapsed, tc.selectedSpanID)
+			spans, _ := trace.GetSelectedSpans(uncollapsed, tc.selectedSpanID, 500, 5)
 
 			assert.Equal(t, tc.wantLen, len(spans), "window size")
 			assert.Equal(t, tc.wantFirst, spans[0].SpanID, "first span in window")
@@ -537,7 +537,7 @@ func TestGetSelectedSpans_DepthCountedFromSelectedSpan(t *testing.T) {
 
 	spanMap := buildSpanMap(root)
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, spanMap)
-	spans, _ := trace.GetSelectedSpans([]string{"selected"}, "selected")
+	spans, _ := trace.GetSelectedSpans([]string{"selected"}, "selected", 500, 5)
 	ids := spanIDs(spans)
 
 	assert.Contains(t, ids, "root", "ancestor shown via path-to-root")

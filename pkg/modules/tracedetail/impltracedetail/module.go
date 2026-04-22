@@ -4,17 +4,20 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
 type module struct {
 	store    tracedetailtypes.TraceStore
 	settings factory.ScopedProviderSettings
+	config   tracedetail.Config
 }
 
-func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.ProviderSettings) *module {
+func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 	return &module{
+		config:   cfg,
 		store:    traceStore,
 		settings: scopedProviderSettings,
 	}
@@ -29,7 +32,9 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedet
 	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
 		req.UncollapsedSpans,
 		req.SelectedSpanID,
-		req.Limit,
+		min(req.Limit, m.config.Waterfall.MaxLimitToSelectAllSpans),
+		m.config.Waterfall.SpanPageSize,
+		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
 
 	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans), nil
