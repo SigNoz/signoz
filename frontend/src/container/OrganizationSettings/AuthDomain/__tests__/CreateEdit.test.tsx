@@ -46,18 +46,16 @@ describe('CreateEdit Modal', () => {
 			// Tooltip mouseEnterDelay timers it triggers on the Configure button.
 			fireEvent.click(configureButtons[0]);
 
-			await waitFor(() => {
-				expect(screen.getByText(/edit google authentication/i)).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/edit google authentication/i),
+			).toBeInTheDocument();
 
 			const backButton = screen.getByRole('button', { name: /back/i });
 			fireEvent.click(backButton);
 
-			await waitFor(() => {
-				expect(
-					screen.getByText(/configure authentication method/i),
-				).toBeInTheDocument();
-			});
+			expect(
+				await screen.findByText(/configure authentication method/i),
+			).toBeInTheDocument();
 		});
 	});
 

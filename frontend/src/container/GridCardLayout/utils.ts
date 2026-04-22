@@ -149,16 +149,16 @@ export function extractQueryNamesFromExpression(expression: string): string[] {
 
 export const hasColumnWidthsChanged = (
 	columnWidths: Record<string, Record<string, number>>,
-	selectedDashboard?: Dashboard,
+	dashboardData?: Dashboard,
 ): boolean => {
 	// If no column widths stored, no changes
-	if (isEmpty(columnWidths) || !selectedDashboard) {
+	if (isEmpty(columnWidths) || !dashboardData) {
 		return false;
 	}
 
 	// Check each widget's column widths
 	return Object.keys(columnWidths).some((widgetId) => {
-		const dashboardWidget = selectedDashboard?.data?.widgets?.find(
+		const dashboardWidget = dashboardData?.data?.widgets?.find(
 			(widget) => widget.id === widgetId,
 		) as Widgets;
 

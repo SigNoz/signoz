@@ -21,9 +21,7 @@ function DashboardPage(): JSX.Element {
 		error,
 	} = useDashboardBootstrap(dashboardId, { confirm: onModal.confirm });
 
-	const dashboardTitle = useDashboardStore(
-		(s) => s.selectedDashboard?.data.title,
-	);
+	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
 
 	useEffect(() => {
 		document.title = dashboardTitle || document.title;
