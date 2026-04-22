@@ -144,12 +144,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		if (step === 'Idle') {
 			send('NEXT');
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [step]);
 
 	const handleBlur = useCallback((): void => {
 		send('onBlur');
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [step, staging, selectedQuery, queries, dispatchQueries]);
 
 	const handleChange = useCallback(
@@ -163,7 +161,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 			setSelectedQueries([...value]);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[optionsData.mode, step, staging, dotMetricsEnabled, pathname],
 	);
 

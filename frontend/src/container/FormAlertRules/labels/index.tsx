@@ -102,7 +102,6 @@ function LabelSelect({
 		if (staging.length === 1 && staging[0] !== undefined) {
 			send('onBlur');
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [staging]);
 
 	useEffect(() => {
