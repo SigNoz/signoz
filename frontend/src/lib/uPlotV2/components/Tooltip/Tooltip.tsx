@@ -18,8 +18,6 @@ export default function Tooltip({
 	canPinTooltip,
 	dismiss,
 }: TooltipProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-
 	const tooltipContent = useMemo(() => content ?? [], [content]);
 	const activeItem = useMemo(
 		() => tooltipContent.find((item) => item.isActive) ?? null,
@@ -34,11 +32,7 @@ export default function Tooltip({
 
 	return (
 		<div
-			className={cx(
-				Styles.container,
-				!isDarkMode && Styles.lightMode,
-				isPinned && Styles.pinned,
-			)}
+			className={cx(Styles.container, isPinned && Styles.pinned)}
 			data-testid="uplot-tooltip-container"
 		>
 			{showHeader && (

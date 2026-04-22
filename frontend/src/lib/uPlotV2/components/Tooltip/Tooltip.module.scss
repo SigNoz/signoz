@@ -1,11 +1,11 @@
 .container {
 	font-family: 'Inter';
 	font-size: 12px;
-	background: var(--bg-ink-300);
+	background: var(--l2-background);
 	-webkit-font-smoothing: antialiased;
-	color: var(--bg-vanilla-100);
+	color: var(--l2-foreground);
 	border-radius: 6px;
-	border: 1px solid var(--bg-ink-100);
+	border: 1px solid var(--l2-border);
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -14,23 +14,9 @@
 		border-color: var(--bg-robin-500);
 	}
 
-	&.lightMode {
-		background: var(--bg-vanilla-100);
-		color: var(--bg-ink-500);
-		border: 1px solid var(--bg-vanilla-300);
-
-		.divider {
-			background-color: var(--bg-vanilla-300);
-		}
-
-		&.pinned {
-			border-color: var(--bg-robin-500);
-		}
-	}
-
 	.divider {
 		width: 100%;
 		height: 1px;
-		background-color: var(--bg-ink-100);
+		background-color: var(--l2-border);
 	}
 }

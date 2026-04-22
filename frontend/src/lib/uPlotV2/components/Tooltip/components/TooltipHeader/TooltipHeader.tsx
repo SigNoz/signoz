@@ -3,7 +3,6 @@ import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Pin } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
@@ -28,7 +27,6 @@ export default function TooltipHeader({
 	isPinned,
 	activeItem,
 }: TooltipHeaderProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
 	const { timezone: userTimezone } = useTimezone();
 	const resolvedTimezone = timezone?.value ?? userTimezone.value;
 
@@ -62,21 +60,14 @@ export default function TooltipHeader({
 			{showTooltipHeader && headerTitle && (
 				<div className={Styles.headerRow}>
 					<span>{headerTitle}</span>
-					<div
-						className={cx(
-							Styles.status,
-							!isDarkMode && Styles.statusLightMode,
-							isPinned && Styles.statusPinned,
-						)}
-						data-testid="uplot-tooltip-status"
-					>
-						{isPinned && (
+					{isPinned && (
+						<div className={cx(Styles.status)} data-testid="uplot-tooltip-status">
 							<>
 								<Pin size={12} />
 								<span>Pinned</span>
 							</>
-						)}
-					</div>
+						</div>
+					)}
 				</div>
 			)}
 
