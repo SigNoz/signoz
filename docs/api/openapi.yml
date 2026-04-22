@@ -4412,7 +4412,7 @@ components:
           nullable: true
           type: array
       type: object
-    TracedetailtypesWaterfallRequest:
+    TracedetailtypesPostableWaterfall:
       properties:
         limit:
           minimum: 0
@@ -12722,7 +12722,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TracedetailtypesWaterfallRequest'
+              $ref: '#/components/schemas/TracedetailtypesPostableWaterfall'
       responses:
         "200":
           content:

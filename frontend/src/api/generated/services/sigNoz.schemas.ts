@@ -5415,7 +5415,7 @@ export interface TracedetailtypesGettableWaterfallTraceDTO {
 	uncollapsedSpans?: string[] | null;
 }
 
-export interface TracedetailtypesWaterfallRequestDTO {
+export interface TracedetailtypesPostableWaterfallDTO {
 	/**
 	 * @type integer
 	 * @minimum 0

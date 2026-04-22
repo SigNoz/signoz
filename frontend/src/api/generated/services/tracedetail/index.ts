@@ -17,7 +17,7 @@ import type {
 	GetWaterfall200,
 	GetWaterfallPathParameters,
 	RenderErrorResponseDTO,
-	TracedetailtypesWaterfallRequestDTO,
+	TracedetailtypesPostableWaterfallDTO,
 } from '../sigNoz.schemas';
 
 /**
@@ -26,14 +26,14 @@ import type {
  */
 export const getWaterfall = (
 	{ traceID }: GetWaterfallPathParameters,
-	tracedetailtypesWaterfallRequestDTO: BodyType<TracedetailtypesWaterfallRequestDTO>,
+	tracedetailtypesPostableWaterfallDTO: BodyType<TracedetailtypesPostableWaterfallDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetWaterfall200>({
 		url: `/api/v3/traces/${traceID}/waterfall`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: tracedetailtypesWaterfallRequestDTO,
+		data: tracedetailtypesPostableWaterfallDTO,
 		signal,
 	});
 };
@@ -47,7 +47,7 @@ export const getGetWaterfallMutationOptions = <
 		TError,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		},
 		TContext
 	>;
@@ -56,7 +56,7 @@ export const getGetWaterfallMutationOptions = <
 	TError,
 	{
 		pathParams: GetWaterfallPathParameters;
-		data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+		data: BodyType<TracedetailtypesPostableWaterfallDTO>;
 	},
 	TContext
 > => {
@@ -73,7 +73,7 @@ export const getGetWaterfallMutationOptions = <
 		Awaited<ReturnType<typeof getWaterfall>>,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -87,7 +87,7 @@ export const getGetWaterfallMutationOptions = <
 export type GetWaterfallMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getWaterfall>>
 >;
-export type GetWaterfallMutationBody = BodyType<TracedetailtypesWaterfallRequestDTO>;
+export type GetWaterfallMutationBody = BodyType<TracedetailtypesPostableWaterfallDTO>;
 export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -102,7 +102,7 @@ export const useGetWaterfall = <
 		TError,
 		{
 			pathParams: GetWaterfallPathParameters;
-			data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+			data: BodyType<TracedetailtypesPostableWaterfallDTO>;
 		},
 		TContext
 	>;
@@ -111,7 +111,7 @@ export const useGetWaterfall = <
 	TError,
 	{
 		pathParams: GetWaterfallPathParameters;
-		data: BodyType<TracedetailtypesWaterfallRequestDTO>;
+		data: BodyType<TracedetailtypesPostableWaterfallDTO>;
 	},
 	TContext
 > => {
