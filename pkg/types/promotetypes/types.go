@@ -11,7 +11,7 @@ import (
 
 type WrappedIndex struct {
 	JSONDataType  telemetrytypes.JSONDataType  `json:"-"`
-	FieldDataType telemetrytypes.FieldDataType `json:"field_data_type"`
+	FieldDataType telemetrytypes.FieldDataType `json:"fieldDataType"`
 	Type          string                       `json:"type"`
 	Granularity   int                          `json:"granularity"`
 }

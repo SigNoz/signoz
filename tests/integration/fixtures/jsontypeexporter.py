@@ -410,7 +410,7 @@ def create_json_index(
             "path": "body.user.name",          # must start with "body."
             "indexes": [
                 {
-                    "field_data_type": "string",   # string | int64 | float64
+                    "fieldDataType": "string",   # string | int64 | float64
                     "type": "ngrambf_v1(3, 256, 2, 0)",  # or "minmax", "tokenbf_v1(...)"
                     "granularity": 1,
                 }
@@ -427,9 +427,9 @@ def create_json_index(
             export_json_types(logs_list)
             create_json_body_index(token, [
                 {"path": "body.user.name",
-                 "indexes": [{"field_data_type": "string", "type": "ngrambf_v1(3, 256, 2, 0)", "granularity": 1}]},
+                 "indexes": [{"fieldDataType": "string", "type": "ngrambf_v1(3, 256, 2, 0)", "granularity": 1}]},
                 {"path": "body.user.age",
-                 "indexes": [{"field_data_type": "int64", "type": "minmax", "granularity": 1}]},
+                 "indexes": [{"fieldDataType": "int64", "type": "minmax", "granularity": 1}]},
             ])
             insert_logs(logs_list)   # data inserted after index exists — index is built automatically
     """

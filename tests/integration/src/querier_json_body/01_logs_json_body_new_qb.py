@@ -547,7 +547,7 @@ def test_indexed_paths(
                 "path": "body.user.raw-data.name",
                 "indexes": [
                     {
-                        "field_data_type": "string",
+                        "fieldDataType": "string",
                         "type": "ngrambf_v1(3, 256, 2, 0)",
                         "granularity": 1,
                     }
@@ -557,7 +557,7 @@ def test_indexed_paths(
                 "path": "body.user.raw-data.age",
                 "indexes": [
                     {
-                        "field_data_type": "int64",
+                        "fieldDataType": "int64",
                         "type": "minmax",
                         "granularity": 1,
                     }
