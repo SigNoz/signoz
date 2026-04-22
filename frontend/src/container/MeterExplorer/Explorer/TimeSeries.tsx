@@ -1,7 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
@@ -10,16 +8,17 @@ import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsS
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { AppState } from 'store/reducers';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 interface TimeSeriesProps {
 	onFetchingStateChange?: (isFetching: boolean) => void;
@@ -29,10 +28,7 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -62,15 +58,13 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
-			queryKey: [
+			queryKey: getAutoRefreshQueryKey(
+				selectedTime,
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
 				ENTITY_VERSION_V5,
-				globalSelectedTime,
-				maxTime,
-				minTime,
 				index,
-			],
+			),
 			queryFn: ({
 				signal,
 			}: {
@@ -81,7 +75,7 @@ function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 						query: payload,
 						graphType: PANEL_TYPES.BAR,
 						selectedTime: 'GLOBAL_TIME',
-						globalSelectedInterval: globalSelectedTime,
+						globalSelectedInterval: selectedTime as Time,
 						params: {
 							dataSource: DataSource.METRICS,
 						},

@@ -59,7 +59,7 @@ function Explorer(): JSX.Element {
 	const queryClient = useQueryClient();
 	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
 	const handleCancelQuery = useCallback(() => {
-		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+		queryClient.cancelQueries([REACT_QUERY_KEY.AUTO_REFRESH_QUERY]);
 	}, [queryClient]);
 
 	const metricNames = useMemo(() => {

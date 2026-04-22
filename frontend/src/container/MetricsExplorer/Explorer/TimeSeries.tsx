@@ -1,7 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/sonner';
 import { Button, Tooltip, Typography } from 'antd';
@@ -18,15 +16,16 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
+import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AlertTriangle } from 'lucide-react';
-import { AppState } from 'store/reducers';
+import { useGlobalTimeStore } from 'store/globalTime';
+import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
 import { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import EmptyMetricsSearch from './EmptyMetricsSearch';
 import { TimeSeriesProps } from './types';
@@ -50,10 +49,7 @@ function TimeSeries({
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const queryClient = useQueryClient();
 
 	const isValidToConvertToMs = useMemo(() => {
@@ -90,15 +86,13 @@ function TimeSeries({
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
-			queryKey: [
+			queryKey: getAutoRefreshQueryKey(
+				selectedTime,
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
 				ENTITY_VERSION_V5,
-				globalSelectedTime,
-				maxTime,
-				minTime,
 				index,
-			],
+			),
 			queryFn: ({
 				signal,
 			}: {
@@ -109,12 +103,11 @@ function TimeSeries({
 						query: payload,
 						graphType: PANEL_TYPES.TIME_SERIES,
 						selectedTime: 'GLOBAL_TIME',
-						globalSelectedInterval: globalSelectedTime,
+						globalSelectedInterval: selectedTime as Time,
 						params: {
 							dataSource: DataSource.METRICS,
 						},
 					},
-					// ENTITY_VERSION_V4,
 					ENTITY_VERSION_V5,
 					undefined,
 					signal,
