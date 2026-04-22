@@ -245,8 +245,8 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
-	isLoadingQueries?: boolean;
-	handleCancelQuery?: () => void;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;

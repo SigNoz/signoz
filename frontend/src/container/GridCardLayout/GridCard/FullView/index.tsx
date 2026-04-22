@@ -6,6 +6,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
+import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import {
@@ -86,6 +87,7 @@ function FullView({
 
 	const fullViewRef = useRef<HTMLDivElement>(null);
 	const { handleRunQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		setCurrentGraphRef(fullViewRef);
@@ -203,8 +205,8 @@ function FullView({
 		});
 	}, [selectedPanelType]);
 
-	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
-		queryKey: [
+	const queryRangeKey = useMemo(
+		() => [
 			widget?.query,
 			selectedPanelType,
 			requestData,
@@ -212,9 +214,18 @@ function FullView({
 			minTime,
 			maxTime,
 		],
+		[widget?.query, selectedPanelType, requestData, version, minTime, maxTime],
+	);
+
+	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+		queryKey: queryRangeKey,
 		enabled: !isDependedDataLoaded,
 		keepPreviousData: true,
 	});
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(queryRangeKey);
+	}, [queryClient, queryRangeKey]);
 
 	const onDragSelect = useCallback((start: number, end: number): void => {
 		const startTimestamp = Math.trunc(start);
@@ -354,6 +365,8 @@ function FullView({
 									onStageRunQuery={(): void => {
 										handleRunQuery();
 									}}
+									isLoadingQueries={response.isFetching}
+									handleCancelQuery={handleCancelQuery}
 								/>
 							</>
 						)}

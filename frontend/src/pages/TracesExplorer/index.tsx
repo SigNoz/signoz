@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
@@ -71,11 +72,18 @@ function TracesExplorer(): JSX.Element {
 	});
 
 	const [searchParams] = useSearchParams();
+	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+
+	const handleCancelQuery = useCallback(() => {
+		if (listQueryKeyRef.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+	}, [queryClient]);
 
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
@@ -212,7 +220,7 @@ function TracesExplorer(): JSX.Element {
 								<RightToolbarActions
 									onStageRunQuery={(): void => handleRunQuery()}
 									isLoadingQueries={isLoadingQueries}
-									listQueryKeyRef={listQueryKeyRef}
+									handleCancelQuery={handleCancelQuery}
 								/>
 							}
 						/>
