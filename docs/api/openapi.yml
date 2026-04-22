@@ -9254,20 +9254,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SpanattributemappingtypesUpdatableGroup'
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesGroup'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -9517,20 +9505,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SpanattributemappingtypesUpdatableMapper'
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesMapper'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:

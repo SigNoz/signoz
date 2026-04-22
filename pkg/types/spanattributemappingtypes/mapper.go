@@ -151,7 +151,7 @@ func NewMapperFromUpdatable(req *UpdatableMapper) *Mapper {
 	return m
 }
 
-func NewMappersFromStorable(ss []*StorableMapper) []*Mapper {
+func NewMappersFromStorableMappers(ss []*StorableMapper) []*Mapper {
 	mappers := make([]*Mapper, len(ss))
 	for i, s := range ss {
 		mappers[i] = NewMapperFromStorable(s)

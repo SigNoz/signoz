@@ -123,7 +123,7 @@ func NewGroupFromUpdatable(u *UpdatableGroup) *Group {
 	return g
 }
 
-func NewGroupsFromStorable(ss []*StorableGroup) []*Group {
+func NewGroupsFromStorableGroups(ss []*StorableGroup) []*Group {
 	groups := make([]*Group, len(ss))
 	for i, s := range ss {
 		groups[i] = NewGroupFromStorable(s)

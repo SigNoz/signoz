@@ -13,15 +13,15 @@ type Module interface {
 	// Group operations
 	ListGroups(ctx context.Context, orgID valuer.UUID, q *spanattributemappingtypes.ListGroupsQuery) ([]*spanattributemappingtypes.Group, error)
 	GetGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.Group, error)
-	CreateGroup(ctx context.Context, orgID valuer.UUID, createdBy string, group *spanattributemappingtypes.Group) (*spanattributemappingtypes.Group, error)
-	UpdateGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, group *spanattributemappingtypes.Group) (*spanattributemappingtypes.Group, error)
+	CreateGroup(ctx context.Context, orgID valuer.UUID, createdBy string, group *spanattributemappingtypes.Group) error
+	UpdateGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, group *spanattributemappingtypes.Group) error
 	DeleteGroup(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 
 	// Mapper operations
 	ListMappers(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID) ([]*spanattributemappingtypes.Mapper, error)
 	GetMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID) (*spanattributemappingtypes.Mapper, error)
-	CreateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, createdBy string, mapper *spanattributemappingtypes.Mapper) (*spanattributemappingtypes.Mapper, error)
-	UpdateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID, updatedBy string, mapper *spanattributemappingtypes.Mapper) (*spanattributemappingtypes.Mapper, error)
+	CreateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, createdBy string, mapper *spanattributemappingtypes.Mapper) error
+	UpdateMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID, updatedBy string, mapper *spanattributemappingtypes.Mapper) error
 	DeleteMapper(ctx context.Context, orgID valuer.UUID, groupID valuer.UUID, id valuer.UUID) error
 }
 

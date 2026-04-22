@@ -34,9 +34,7 @@ import type {
 	SpanattributemappingtypesPostableMapperDTO,
 	SpanattributemappingtypesUpdatableGroupDTO,
 	SpanattributemappingtypesUpdatableMapperDTO,
-	UpdateMapper200,
 	UpdateMapperPathParameters,
-	UpdateMappingGroup200,
 	UpdateMappingGroupPathParameters,
 } from '../sigNoz.schemas';
 
@@ -316,7 +314,7 @@ export const updateMappingGroup = (
 	{ groupId }: UpdateMappingGroupPathParameters,
 	spanattributemappingtypesUpdatableGroupDTO: BodyType<SpanattributemappingtypesUpdatableGroupDTO>,
 ) => {
-	return GeneratedAPIInstance<UpdateMappingGroup200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_attribute_mapping_groups/${groupId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
@@ -695,7 +693,7 @@ export const updateMapper = (
 	{ groupId, mapperId }: UpdateMapperPathParameters,
 	spanattributemappingtypesUpdatableMapperDTO: BodyType<SpanattributemappingtypesUpdatableMapperDTO>,
 ) => {
-	return GeneratedAPIInstance<UpdateMapper200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/span_attribute_mapping_groups/${groupId}/mappers/${mapperId}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },

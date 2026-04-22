@@ -6686,14 +6686,6 @@ export type DeleteMappingGroupPathParameters = {
 export type UpdateMappingGroupPathParameters = {
 	groupId: string;
 };
-export type UpdateMappingGroup200 = {
-	data: SpanattributemappingtypesGroupDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListMappersPathParameters = {
 	groupId: string;
 };
@@ -6724,14 +6716,6 @@ export type UpdateMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
-export type UpdateMapper200 = {
-	data: SpanattributemappingtypesMapperDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array

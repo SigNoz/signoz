@@ -80,13 +80,13 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.module.CreateGroup(ctx, orgID, claims.Email, spanattributemappingtypes.NewGroupFromPostable(req))
+	group := spanattributemappingtypes.NewGroupFromPostable(req)
+
+	err = h.module.CreateGroup(ctx, orgID, claims.Email, group)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
-
-	render.Success(rw, http.StatusCreated, group)
 }
 
 // UpdateGroup handles PUT /api/v1/span_attribute_mapping_groups/{id}.
@@ -118,13 +118,13 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.module.UpdateGroup(ctx, orgID, id, claims.Email, spanattributemappingtypes.NewGroupFromUpdatable(req))
+	err = h.module.UpdateGroup(ctx, orgID, id, claims.Email, spanattributemappingtypes.NewGroupFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, group)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 // DeleteGroup handles DELETE /api/v1/span_attribute_mapping_groups/{id}.
@@ -218,8 +218,9 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, err)
 		return
 	}
+	mapper := spanattributemappingtypes.NewMapperFromPostable(req)
 
-	mapper, err := h.module.CreateMapper(ctx, orgID, groupID, claims.Email, spanattributemappingtypes.NewMapperFromPostable(req))
+	err = h.module.CreateMapper(ctx, orgID, groupID, claims.Email, mapper)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -263,13 +264,13 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapper, err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spanattributemappingtypes.NewMapperFromUpdatable(req))
+	err = h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spanattributemappingtypes.NewMapperFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, mapper)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 // DeleteMapper handles DELETE /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}.
