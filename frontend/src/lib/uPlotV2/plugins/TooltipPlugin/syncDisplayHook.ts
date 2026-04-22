@@ -115,6 +115,13 @@ export function createSyncDisplayHook(
 			return;
 		}
 
+		/**
+		 * When the cursor moves, the source panel (where the mouse event occurs) writes
+		 * to the registry and all panels read from it. When the cursor leaves the plot,
+		 * the source clears its active series metric.
+		 *
+		 * only the source panel has access to the real mouse event
+		 */
 		if (u.cursor.event != null) {
 			applySourceSync({
 				uPlotInstance: u,
