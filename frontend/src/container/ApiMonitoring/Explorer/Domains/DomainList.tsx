@@ -59,6 +59,11 @@ function DomainList(): JSX.Element {
 		queryClient.cancelQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
 	}, [queryClient]);
 
+	const handleStageAndRunQuery = useCallback(() => {
+		queryClient.invalidateQueries([REACT_QUERY_KEY.GET_DOMAINS_LIST]);
+		handleRunQuery();
+	}, [queryClient, handleRunQuery]);
+
 	const { data, isLoading, isFetching } = useListOverview({
 		start: minTime,
 		end: maxTime,
@@ -127,7 +132,7 @@ function DomainList(): JSX.Element {
 				showAutoRefresh={false}
 				rightActions={
 					<RightToolbarActions
-						onStageRunQuery={handleRunQuery}
+						onStageRunQuery={handleStageAndRunQuery}
 						isLoadingQueries={isFetching}
 						handleCancelQuery={handleCancelQuery}
 					/>
