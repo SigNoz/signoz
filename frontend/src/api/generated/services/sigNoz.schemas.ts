@@ -5950,14 +5950,6 @@ export type GetPricingRule200 = {
 export type UpdatePricingRulePathParameters = {
 	id: string;
 };
-export type UpdatePricingRule200 = {
-	data: Aio11YpricingruletypesGettablePricingRuleDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type GetAlerts200 = {
 	/**
 	 * @type array

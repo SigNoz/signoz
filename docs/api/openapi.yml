@@ -5072,20 +5072,8 @@ paths:
             schema:
               $ref: '#/components/schemas/Aio11YpricingruletypesUpdatablePricingRule'
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Aio11YpricingruletypesGettablePricingRule'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -5136,8 +5124,8 @@ paths:
             schema:
               $ref: '#/components/schemas/Aio11YpricingruletypesSyncPricingRulesRequest'
       responses:
-        "202":
-          description: Accepted
+        "204":
+          description: No Content
         "400":
           content:
             application/json:

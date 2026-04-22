@@ -11,8 +11,8 @@ import (
 type Module interface {
 	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*aio11ypricingruletypes.PricingRule, int, error)
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*aio11ypricingruletypes.PricingRule, error)
-	Create(ctx context.Context, orgID valuer.UUID, createdBy string, rule *aio11ypricingruletypes.PricingRule) (*aio11ypricingruletypes.PricingRule, error)
-	Update(ctx context.Context, orgID, id valuer.UUID, updatedBy string, rule *aio11ypricingruletypes.PricingRule) (*aio11ypricingruletypes.PricingRule, error)
+	Create(ctx context.Context, orgID valuer.UUID, createdBy string, rule *aio11ypricingruletypes.PricingRule) error
+	Update(ctx context.Context, orgID, id valuer.UUID, updatedBy string, rule *aio11ypricingruletypes.PricingRule) error
 	Delete(ctx context.Context, orgID, id valuer.UUID) error
 	Sync(ctx context.Context, orgID valuer.UUID, rules []aio11ypricingruletypes.PricingRule) error
 }

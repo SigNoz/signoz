@@ -218,7 +218,7 @@ func NewPricingRuleFromUpdatable(u *UpdatablePricingRule) *PricingRule {
 	return r
 }
 
-func NewGettablePricingRules(items []*PricingRule, total, offset, limit int) *GettablePricingRules {
+func NewGettablePricingRulesFromPricingRules(items []*PricingRule, total, offset, limit int) *GettablePricingRules {
 	gettableItems := make([]*GettablePricingRule, len(items))
 	for i, r := range items {
 		gettableItems[i] = NewGettablePricingRule(r)

@@ -66,7 +66,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRules(rules, total, q.Offset, q.Limit))
+	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRulesFromPricingRules(rules, total, q.Offset, q.Limit))
 }
 
 // Get handles GET /api/v1/ai-o11y/pricing_rules/{id}.
@@ -124,7 +124,9 @@ func (h *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rule, err := h.module.Create(ctx, orgID, claims.Email, aio11ypricingruletypes.NewPricingRuleFromPostable(req))
+	rule := aio11ypricingruletypes.NewPricingRuleFromPostable(req)
+
+	err = h.module.Create(ctx, orgID, claims.Email, rule)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -162,13 +164,13 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rule, err := h.module.Update(ctx, orgID, id, claims.Email, aio11ypricingruletypes.NewPricingRuleFromUpdatable(req))
+	err = h.module.Update(ctx, orgID, id, claims.Email, aio11ypricingruletypes.NewPricingRuleFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, aio11ypricingruletypes.NewGettablePricingRule(rule))
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 // Delete handles DELETE /api/v1/ai-o11y/pricing_rules/{id}.
@@ -234,7 +236,7 @@ func (h *handler) Sync(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusAccepted, nil)
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 // ruleIDFromPath extracts and validates the {id} path variable.

@@ -60,7 +60,7 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 			Description:        "Zeus bulk-upserts upstream pricing. Non-override rules get costs updated; override rules get only SourceConfig refreshed.",
 			Request:            new(aio11ypricingruletypes.SyncPricingRulesRequest),
 			RequestContentType: "application/json",
-			SuccessStatusCode:  http.StatusAccepted,
+			SuccessStatusCode:  http.StatusNoContent,
 			ErrorStatusCodes:   []int{http.StatusBadRequest},
 			Deprecated:         false,
 			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin), // not sure of this
@@ -92,18 +92,16 @@ func (provider *provider) addAIO11yRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/ai-o11y/pricing_rules/{id}", handler.New(
 		provider.authZ.AdminAccess(provider.aiO11yPricingRuleHandler.Update),
 		handler.OpenAPIDef{
-			ID:                  "UpdatePricingRule",
-			Tags:                []string{"ai-o11y"},
-			Summary:             "Update a pricing rule",
-			Description:         "Partially updates an existing pricing rule. Changing any cost field sets is_override = true.",
-			Request:             new(aio11ypricingruletypes.UpdatablePricingRule),
-			RequestContentType:  "application/json",
-			Response:            new(aio11ypricingruletypes.GettablePricingRule),
-			ResponseContentType: "application/json",
-			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+			ID:                 "UpdatePricingRule",
+			Tags:               []string{"ai-o11y"},
+			Summary:            "Update a pricing rule",
+			Description:        "Partially updates an existing pricing rule. Changing any cost field sets is_override = true.",
+			Request:            new(aio11ypricingruletypes.UpdatablePricingRule),
+			RequestContentType: "application/json",
+			SuccessStatusCode:  http.StatusNoContent,
+			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:         false,
+			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
 		},
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err

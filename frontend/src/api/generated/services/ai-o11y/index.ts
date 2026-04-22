@@ -30,7 +30,6 @@ import type {
 	ListPricingRules200,
 	ListPricingRulesParams,
 	RenderErrorResponseDTO,
-	UpdatePricingRule200,
 	UpdatePricingRulePathParameters,
 } from '../sigNoz.schemas';
 
@@ -404,7 +403,7 @@ export const updatePricingRule = (
 	{ id }: UpdatePricingRulePathParameters,
 	aio11YpricingruletypesUpdatablePricingRuleDTO: BodyType<Aio11YpricingruletypesUpdatablePricingRuleDTO>,
 ) => {
-	return GeneratedAPIInstance<UpdatePricingRule200>({
+	return GeneratedAPIInstance<void>({
 		url: `/api/v1/ai-o11y/pricing_rules/${id}`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
