@@ -1,6 +1,7 @@
 import os
 import subprocess
-from pathlib import Path
+
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -9,7 +10,9 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 def test_e2e(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,
+    pytestconfig: pytest.Config,
 ) -> None:
     """
     One-command e2e: pytest brings up the backend and starts the seeder
@@ -17,7 +20,7 @@ def test_e2e(
     the provisioned instance. Each spec owns its own data via the seeder.
     Intended as the primary CI entrypoint.
     """
-    e2e_dir = Path(__file__).resolve().parents[1]  # bootstrap/ -> e2e/
+    e2e_dir = pytestconfig.rootpath / "e2e"
     host_cfg = signoz.self.host_configs["8080"]
     seeder_cfg = seeder.host_configs["8080"]
     env = {

@@ -1,6 +1,5 @@
 import time
 from http import HTTPStatus
-from pathlib import Path
 
 import docker
 import docker.errors
@@ -12,11 +11,6 @@ from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
-
-# Build context is tests/ so `fixtures/` is importable inside the container
-# under /app/fixtures. This file sits at tests/fixtures/seeder.py, hence
-# parents[1] = tests/.
-_TESTS_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(name="seeder", scope="package")
@@ -34,13 +28,12 @@ def seeder(
     """
 
     def create() -> types.TestContainerDocker:
-        # docker-py wants `dockerfile` RELATIVE to `path`. The fixture file
-        # lives at tests/fixtures/seeder.py so the build context root is
-        # tests/ (one parent up), and the Dockerfile path inside that
-        # context is Dockerfile.seeder.
+        # Build context is pytest's rootdir (tests/) so `fixtures/` is
+        # importable in the image under /app/fixtures and Dockerfile.seeder
+        # sits at the context root.
         docker_client = docker.from_env()
         docker_client.images.build(
-            path=str(_TESTS_ROOT),
+            path=str(pytestconfig.rootpath),
             dockerfile="Dockerfile.seeder",
             tag="signoz-tests-seeder:latest",
             rm=True,

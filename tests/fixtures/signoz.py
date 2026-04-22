@@ -2,7 +2,6 @@ import platform
 import time
 from http import HTTPStatus
 from os import path
-from pathlib import Path
 from typing import Optional
 
 import docker
@@ -16,11 +15,6 @@ from fixtures import reuse, types
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
-
-# Absolute path to the signoz repo root. Anchored to this file so the build
-# context resolves correctly regardless of pytest's cwd (tests/ vs
-# tests/integration/). fixtures/signoz.py -> fixtures/ -> tests/ -> repo root.
-_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def create_signoz(
@@ -55,8 +49,10 @@ def create_signoz(
         if with_web:
             dockerfile_path = "cmd/enterprise/Dockerfile.with-web.integration"
 
+        # Docker build context is the repo root — one up from pytest's
+        # rootdir (tests/).
         self = DockerImage(
-            path=str(_REPO_ROOT),
+            path=str(pytestconfig.rootpath.parent),
             dockerfile_path=dockerfile_path,
             tag="signoz:integration",
             buildargs={
