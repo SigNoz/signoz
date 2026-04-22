@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -36,6 +36,7 @@ import {
 } from './utils';
 
 function TimeSeries({
+	onFetchingStateChange,
 	showOneChartPerQuery,
 	setWarning,
 	isMetricUnitsLoading,
@@ -98,7 +99,11 @@ function TimeSeries({
 				minTime,
 				index,
 			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+			queryFn: ({
+				signal,
+			}: {
+				signal?: AbortSignal;
+			}): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(
 					{
 						query: payload,
@@ -111,9 +116,15 @@ function TimeSeries({
 					},
 					// ENTITY_VERSION_V4,
 					ENTITY_VERSION_V5,
+					undefined,
+					signal,
 				),
 			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
+			retry: (failureCount: number, error: unknown): boolean => {
+				if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+					return false;
+				}
+
 				let status: number | undefined;
 
 				if (error instanceof APIError) {
@@ -130,6 +141,11 @@ function TimeSeries({
 			},
 		})),
 	);
+
+	const isFetching = queries.some((q) => q.isFetching);
+	useEffect(() => {
+		onFetchingStateChange?.(isFetching);
+	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 

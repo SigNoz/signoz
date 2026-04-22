@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -21,7 +21,11 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-function TimeSeries(): JSX.Element {
+interface TimeSeriesProps {
+	onFetchingStateChange?: (isFetching: boolean) => void;
+}
+
+function TimeSeries({ onFetchingStateChange }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -67,7 +71,11 @@ function TimeSeries(): JSX.Element {
 				minTime,
 				index,
 			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+			queryFn: ({
+				signal,
+			}: {
+				signal?: AbortSignal;
+			}): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(
 					{
 						query: payload,
@@ -79,9 +87,15 @@ function TimeSeries(): JSX.Element {
 						},
 					},
 					ENTITY_VERSION_V5,
+					undefined,
+					signal,
 				),
 			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
+			retry: (failureCount: number, error: unknown): boolean => {
+				if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+					return false;
+				}
+
 				let status: number | undefined;
 
 				if (error instanceof APIError) {
@@ -101,6 +115,11 @@ function TimeSeries(): JSX.Element {
 			},
 		})),
 	);
+
+	const isFetching = queries.some((q) => q.isFetching);
+	useEffect(() => {
+		onFetchingStateChange?.(isFetching);
+	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 
