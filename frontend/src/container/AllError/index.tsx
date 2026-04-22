@@ -36,6 +36,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { isUndefined } from 'lodash-es';
+import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
 import { AppState } from 'store/reducers';
 import { ErrorResponse, SuccessResponse } from 'types/api';
@@ -121,7 +122,12 @@ function AllErrors(): JSX.Element {
 	const { queries } = useResourceAttribute();
 	const compositeData = useGetCompositeQueryParam();
 
-	const [{ isLoading, data }, errorCountResponse] = useQueries([
+	const setIsFetching = useAllErrorsQueryState((s) => s.setIsFetching);
+
+	const [
+		{ isLoading, isFetching: isErrorsFetching, data },
+		errorCountResponse,
+	] = useQueries([
 		{
 			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
 			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
@@ -162,6 +168,12 @@ function AllErrors(): JSX.Element {
 			enabled: !loading,
 		},
 	]);
+
+	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
+	useEffect(() => {
+		setIsFetching(isFetching);
+	}, [isFetching, setIsFetching]);
+
 	const { notifications } = useNotifications();
 
 	useEffect(() => {

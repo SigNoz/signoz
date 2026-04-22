@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -109,6 +111,21 @@ function Inspect({
 		reset,
 	} = useInspectMetrics(appliedMetricName);
 
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	// Auto-reset isCancelled when a new query starts fetching
+	useEffect(() => {
+		if (isInspectMetricsRefetching) {
+			setIsCancelled(false);
+		}
+	}, [isInspectMetricsRefetching]);
+
+	const queryClient = useQueryClient();
+	const handleCancelInspectQuery = useCallback(() => {
+		queryClient.cancelQueries(REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS);
+		setIsCancelled(true);
+	}, [queryClient]);
+
 	const handleDispatchMetricInspectionOptions = useCallback(
 		(action: MetricInspectionAction): void => {
 			dispatchMetricInspectionOptions(action);
@@ -179,7 +196,7 @@ function Inspect({
 			);
 		}
 
-		if (isInspectMetricsError) {
+		if (isInspectMetricsError && !isCancelled) {
 			const errorMessage = 'Error loading inspect metrics.';
 
 			return (
@@ -198,7 +215,13 @@ function Inspect({
 					data-testid="inspect-metrics-empty"
 					className="inspect-metrics-fallback"
 				>
-					<Empty description="No time series found for this metric to inspect." />
+					<Empty
+						description={
+							isCancelled
+								? 'Query was cancelled. Run the query to see results.'
+								: 'No time series found for this metric to inspect.'
+						}
+					/>
 				</div>
 			);
 		}
@@ -234,6 +257,14 @@ function Inspect({
 						inspectMetricsTimeSeries={inspectMetricsTimeSeries}
 						currentQuery={currentQueryData}
 						setCurrentQuery={setCurrentQueryData}
+						isLoadingQueries={isInspectMetricsLoading || isInspectMetricsRefetching}
+						handleCancelQuery={handleCancelInspectQuery}
+						onRunQuery={(): void => {
+							setIsCancelled(false);
+							queryClient.invalidateQueries([
+								REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS,
+							]);
+						}}
 					/>
 				</div>
 				<div className="inspect-metrics-content-second-col">
@@ -257,6 +288,7 @@ function Inspect({
 		isInspectMetricsLoading,
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
+		isCancelled,
 		inspectMetricsTimeSeries,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,
