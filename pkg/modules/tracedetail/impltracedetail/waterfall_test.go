@@ -566,7 +566,7 @@ func TestGetAllSpans(t *testing.T) {
 		),
 	)
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, nil)
-	spans := trace.GetPreOrderedSpans()
+	spans := trace.GetAllSpans()
 	traceResponse := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, true)
 	assert.ElementsMatch(t, spanIDs(spans), []string{"root", "childA", "grandchildA", "leafA", "childB", "grandchildB", "leafB"})
 	assert.Equal(t, "svc", traceResponse.RootServiceName)

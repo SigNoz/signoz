@@ -112,7 +112,26 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	)
 }
 
-func (wt *WaterfallTrace) GetPreOrderedSpans() []*WaterfallSpan {
+func (wt *WaterfallTrace) GetWaterfallSpans(uncollapsedSpanIDs []string, selectedSpanID string, limit uint) ([]*WaterfallSpan, []string, bool) {
+	// Span selection decision: all spans or windowed
+	limit = min(limit, MaxLimitToSelectAllSpans)
+	selectAllSpans := wt.TotalSpans <= uint64(limit)
+
+	var (
+		selectedSpans    []*WaterfallSpan
+		uncollapsedSpans []string
+	)
+
+	if selectAllSpans {
+		selectedSpans = wt.GetAllSpans()
+	} else {
+		selectedSpans, uncollapsedSpans = wt.GetSelectedSpans(uncollapsedSpans, selectedSpanID)
+	}
+	return selectedSpans, uncollapsedSpans, selectAllSpans
+}
+
+// GetAllSpans returns all spans with pre order traversal.
+func (wt *WaterfallTrace) GetAllSpans() []*WaterfallSpan {
 	var preOrderedSpans []*WaterfallSpan
 	for _, root := range wt.TraceRoots {
 		preOrderedSpans = append(preOrderedSpans, root.getPreOrderedSpans(nil, true, 0)...)
@@ -120,6 +139,7 @@ func (wt *WaterfallTrace) GetPreOrderedSpans() []*WaterfallSpan {
 	return preOrderedSpans
 }
 
+// GetSelectedSpans returns a window of spans around selectedSpanID with pre order traversal
 func (wt *WaterfallTrace) GetSelectedSpans(uncollapsedSpanIDs []string, selectedSpanID string) ([]*WaterfallSpan, []string) {
 	uncollapsedSpanIDsMap := wt.CalculateUncollapsedSpanIDs(uncollapsedSpanIDs, selectedSpanID)
 

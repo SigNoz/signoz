@@ -19,7 +19,7 @@ func NewHandler(module tracedetail.Module) tracedetail.Handler {
 }
 
 func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
-	req := new(tracedetailtypes.WaterfallRequest)
+	req := new(tracedetailtypes.PostableWaterfall)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return

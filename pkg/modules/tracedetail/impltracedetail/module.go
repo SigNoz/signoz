@@ -22,28 +22,19 @@ func NewModule(telemetryStore telemetrystore.TelemetryStore, providerSettings fa
 	}
 }
 
-func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedetailtypes.WaterfallRequest) (*tracedetailtypes.GettableWaterfallTrace, error) {
+func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedetailtypes.PostableWaterfall) (*tracedetailtypes.GettableWaterfallTrace, error) {
 	waterfallTrace, err := m.getTraceData(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Span selection: all spans or windowed
-	limit := min(req.Limit, tracedetailtypes.MaxLimitToSelectAllSpans)
-	selectAllSpans := waterfallTrace.TotalSpans <= uint64(limit)
-
-	var (
-		selectedSpans    []*tracedetailtypes.WaterfallSpan
-		uncollapsedSpans []string
+	selectedSpans, uncollapsedSpans, selectedAllSpans := waterfallTrace.GetWaterfallSpans(
+		req.UncollapsedSpans,
+		req.SelectedSpanID,
+		req.Limit,
 	)
 
-	if selectAllSpans {
-		selectedSpans = waterfallTrace.GetPreOrderedSpans()
-	} else {
-		selectedSpans, uncollapsedSpans = waterfallTrace.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID)
-	}
-
-	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectAllSpans), nil
+	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.

@@ -24,8 +24,8 @@ const (
 // ErrTraceNotFound is returned when a trace ID has no matching spans in ClickHouse.
 var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found")
 
-// WaterfallRequest is the request body for the v3 waterfall API.
-type WaterfallRequest struct {
+// PostableWaterfall is the request body for the v3 waterfall API.
+type PostableWaterfall struct {
 	SelectedSpanID   string   `json:"selectedSpanId"`
 	UncollapsedSpans []string `json:"uncollapsedSpans"`
 	Limit            uint     `json:"limit"`

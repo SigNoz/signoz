@@ -17,7 +17,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get waterfall view for a trace",
 			Description:         "Returns the waterfall view of spans for a given trace ID with tree structure, metadata, and windowed pagination",
-			Request:             new(tracedetailtypes.WaterfallRequest),
+			Request:             new(tracedetailtypes.PostableWaterfall),
 			RequestContentType:  "application/json",
 			Response:            new(tracedetailtypes.GettableWaterfallTrace),
 			ResponseContentType: "application/json",
