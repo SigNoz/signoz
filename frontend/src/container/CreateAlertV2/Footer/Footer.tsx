@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Button, toast } from '@signozhq/ui';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
