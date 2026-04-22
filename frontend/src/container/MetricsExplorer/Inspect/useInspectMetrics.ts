@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useQuery } from 'react-query';
 import { inspectMetrics } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -133,7 +134,7 @@ export function useInspectMetrics(
 			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
 				return false;
 			}
-			return failureCount < 3;
+			return failureCount < MAX_QUERY_RETRIES;
 		},
 	});
 
