@@ -293,7 +293,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_equal",
             "requestType": "raw",
-            "expression": 'body.user.name = "alice"',
+            "expression": 'user.name = "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "alice",
@@ -302,7 +302,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.int_equal_across_shapes",
             "requestType": "raw",
-            "expression": "body.status = 200",
+            "expression": "status = 200",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and all(b["status"] == 200 for b in _get_bodies(r)),
@@ -311,7 +311,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.float_gt_sparse_field",
             "requestType": "raw",
-            "expression": "body.user.height > 5.8",
+            "expression": "user.height > 5.8",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["height"] == 6.1,
@@ -321,7 +321,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.int_lt_with_type_ambiguity",
             "requestType": "raw",
-            "expression": "body.user.age < 30",
+            "expression": "user.age < 30",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3,
         },
@@ -329,7 +329,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.bool_equal_true",
             "requestType": "raw",
-            "expression": "body.user.active = true",
+            "expression": "user.active = true",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and {b["user"]["name"] for b in _get_bodies(r)}
@@ -339,7 +339,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_contains",
             "requestType": "raw",
-            "expression": 'body.user.name CONTAINS "ali"',
+            "expression": 'user.name CONTAINS "ali"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "alice",
@@ -348,7 +348,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.float_contains",
             "requestType": "raw",
-            "expression": "body.user.height Contains 5.4",
+            "expression": "user.height Contains 5.4",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["height"] == 5.4,
@@ -357,7 +357,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_like",
             "requestType": "raw",
-            "expression": "body.user.name LIKE '%li%'",
+            "expression": "user.name LIKE '%li%'",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and {b["user"]["name"] for b in _get_bodies(r)} == {"alice", "charlie"},
@@ -366,7 +366,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_regexp",
             "requestType": "raw",
-            "expression": "body.user.name REGEXP '^[a-b].*'",
+            "expression": "user.name REGEXP '^[a-b].*'",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and {b["user"]["name"] for b in _get_bodies(r)} == {"alice", "bob"},
@@ -375,7 +375,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_in",
             "requestType": "raw",
-            "expression": "body.user.name IN ['alice', 'diana']",
+            "expression": "user.name IN ['alice', 'diana']",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and {b["user"]["name"] for b in _get_bodies(r)} == {"alice", "diana"},
@@ -384,7 +384,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.int_between_with_type_ambiguity",
             "requestType": "raw",
-            "expression": "body.user.age BETWEEN 25 AND 30",
+            "expression": "user.age BETWEEN 25 AND 30",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and {b["user"]["age"] for b in _get_bodies(r)} == {25, 30, "28"},
@@ -393,7 +393,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.exists_sparse",
             "requestType": "raw",
-            "expression": "body.user.email EXISTS",
+            "expression": "user.email EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["email"] == "alice@test.com",
@@ -402,7 +402,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.deeply_nested_equal",
             "requestType": "raw",
-            "expression": "body.user.address.zip = 110001",
+            "expression": "user.address.zip = 110001",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["address"]["zip"] == 110001,
@@ -411,7 +411,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.hyphen_key_equal",
             "requestType": "raw",
-            "expression": "body.http-status = 200",
+            "expression": "http-status = 200",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(b["http-status"] == 200 for b in _get_bodies(r)),
@@ -421,7 +421,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.not_equal",
             "requestType": "raw",
-            "expression": 'body.user.name != "alice"',
+            "expression": 'user.name != "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) >= 3
             and all(b.get("user", {}).get("name") != "alice" for b in _get_bodies(r)),
@@ -430,7 +430,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.not_contains",
             "requestType": "raw",
-            "expression": 'body.user.name NOT CONTAINS "ali"',
+            "expression": 'user.name NOT CONTAINS "ali"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) >= 3
             and all(
@@ -441,7 +441,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.not_exists_sparse",
             "requestType": "raw",
-            "expression": "body.user.email NOT EXISTS",
+            "expression": "user.email NOT EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) >= 2
             and all("email" not in b.get("user", {}) for b in _get_bodies(r)),
@@ -450,7 +450,7 @@ def test_primitive_path_operations(
         {
             "name": "prim.string_not_in",
             "requestType": "raw",
-            "expression": "body.user.name NOT IN ['alice', 'charlie']",
+            "expression": "user.name NOT IN ['alice', 'charlie']",
             "aggregation": "count()",
             # log1(alice) and log3(charlie) are excluded
             # bob, diana, "" (log6), healthcheck (no user) are included
@@ -544,7 +544,7 @@ def test_indexed_paths(
         token,
         [
             {
-                "path": "body.user.raw-data.name",
+                "path": "user.raw-data.name",
                 "indexes": [
                     {
                         "field_data_type": "string",
@@ -554,7 +554,7 @@ def test_indexed_paths(
                 ],
             },
             {
-                "path": "body.user.raw-data.age",
+                "path": "user.raw-data.age",
                 "indexes": [
                     {
                         "field_data_type": "int64",
@@ -567,16 +567,6 @@ def test_indexed_paths(
     )
     insert_logs(logs_list)
 
-    # Debug: show which body_v2 data-skipping indexes ClickHouse has at this point.
-    idx_result = signoz.telemetrystore.conn.query(
-        "SELECT name, expr FROM system.data_skipping_indices"
-        " WHERE database = 'signoz_logs' AND table = 'logs_v2'"
-        " AND (position(expr, 'body_v2') > 0 OR position(expr, 'body_promoted') > 0)"
-    )
-    print(f"\n[DEBUG] body_v2 data-skipping indexes on logs_v2 ({len(idx_result.result_rows)} total):")
-    for row in idx_result.result_rows:
-        print(f"  name={row[0]}  expr={row[1]}")
-
     cases = [
         # ── EXISTS: !isExistsCheck guard → indexed path skipped → plain IS NOT NULL ──────
         # String ngrambf index on body.user.name: EXISTS skips the indexed path.
@@ -586,7 +576,7 @@ def test_indexed_paths(
         {
             "name": "indexed.string_exists_skips_index_finds_empty",
             "requestType": "raw",
-            "expression": "body.user.raw-data.name EXISTS",
+            "expression": "user.raw-data.name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
             and any(b.get("user", {}).get("raw-data", {}).get("name") == "" for b in _get_bodies(r)),
@@ -599,7 +589,7 @@ def test_indexed_paths(
         {
             "name": "indexed.int64_exists_skips_index_finds_zero",
             "requestType": "raw",
-            "expression": "body.user.raw-data.age EXISTS",
+            "expression": "user.raw-data.age EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 5
             and any(b.get("user", {}).get("raw-data", {}).get("age") == 0 for b in _get_bodies(r)),
@@ -614,7 +604,7 @@ def test_indexed_paths(
         {
             "name": "indexed.string_empty_eq_disambiguates_absent_field",
             "requestType": "raw",
-            "expression": 'body.user.raw-data.name = ""',
+            "expression": 'user.raw-data.name = ""',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["raw-data"]["name"] == "",
@@ -626,7 +616,7 @@ def test_indexed_paths(
         {
             "name": "indexed.int64_nonzero_eq_uses_index",
             "requestType": "raw",
-            "expression": "body.user.raw-data.age = 25",
+            "expression": "user.raw-data.age = 25",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["raw-data"]["age"] == 25,
@@ -638,7 +628,7 @@ def test_indexed_paths(
         {
             "name": "indexed.string_nonempty_eq_uses_index",
             "requestType": "raw",
-            "expression": 'body.user.raw-data.name = "alice"',
+            "expression": 'user.raw-data.name = "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["raw-data"]["name"] == "alice",
@@ -780,8 +770,8 @@ def test_select_order_by(
         # select array, order by scalar (status not selected — verify via timestamps)
         {
             "name": "sel_ord.select_items_order_by_status",
-            "selectFields": [{"name": "body.items"}],
-            "order": [build_order_by("body.status", "asc")],
+            "selectFields": [{"name": "items"}],
+            "order": [build_order_by("status", "asc")],
             "validate": lambda r: (
                 len(_get_rows(r)) == 4
                 # items field is present and is a list in every row
@@ -794,8 +784,8 @@ def test_select_order_by(
         # select array, order by array field (all arrays are [], order is non-deterministic)
         {
             "name": "sel_ord.select_items_order_by_items",
-            "selectFields": [{"name": "body.items"}],
-            "order": [build_order_by("body.items", "asc")],
+            "selectFields": [{"name": "items"}],
+            "order": [build_order_by("items", "asc")],
             "validate": lambda r: (
                 len(_get_rows(r)) == 4
                 and all(isinstance(x, list) for x in _get_row_field(r, "items"))
@@ -804,8 +794,8 @@ def test_select_order_by(
         # select scalar + array, order by scalar — verify exact status ordering
         {
             "name": "sel_ord.select_status_and_items_order_by_status",
-            "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
-            "order": [build_order_by("body.status", "asc")],
+            "selectFields": [{"name": "status"}, {"name": "items"}],
+            "order": [build_order_by("status", "asc")],
             "validate": lambda r: (
                 _get_row_field(r, "status") == [200, 201, 404, 500]
                 and all(isinstance(x, list) for x in _get_row_field(r, "items"))
@@ -814,8 +804,8 @@ def test_select_order_by(
         # select scalar + array, order by array field (all arrays are [], order is non-deterministic)
         {
             "name": "sel_ord.select_status_and_items_order_by_items",
-            "selectFields": [{"name": "body.status"}, {"name": "body.items"}],
-            "order": [build_order_by("body.items", "desc")],
+            "selectFields": [{"name": "status"}, {"name": "items"}],
+            "order": [build_order_by("items", "desc")],
             "validate": lambda r: (
                 len(_get_rows(r)) == 4
                 and set(_get_row_field(r, "status")) == {200, 201, 404, 500}
@@ -993,7 +983,7 @@ def test_array_path_operations(
         {
             "name": "arr.single_exists",
             "requestType": "raw",
-            "expression": "body.education[].name EXISTS",
+            "expression": "education[].name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and all(all("name" in e for e in b["education"]) for b in _get_bodies(r)),
@@ -1001,7 +991,7 @@ def test_array_path_operations(
         {
             "name": "arr.single_string_equal",
             "requestType": "raw",
-            "expression": 'body.education[].name = "IIT"',
+            "expression": 'education[].name = "IIT"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(e["name"] == "IIT" for e in _get_bodies(r)[0]["education"]),
@@ -1011,7 +1001,7 @@ def test_array_path_operations(
         {
             "name": "arr.single_type_ambiguity_string",
             "requestType": "raw",
-            "expression": 'body.education[].type = "engineering"',
+            "expression": 'education[].type = "engineering"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(e.get("type") == "engineering" for e in _get_bodies(r)[0]["education"]),
@@ -1020,7 +1010,7 @@ def test_array_path_operations(
         {
             "name": "arr.terminal_float_contains",
             "requestType": "raw",
-            "expression": "body.education[].parameters CONTAINS 1.65",
+            "expression": "education[].parameters CONTAINS 1.65",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1032,7 +1022,7 @@ def test_array_path_operations(
         {
             "name": "arr.terminal_int_in",
             "requestType": "raw",
-            "expression": "body.education[].scores IN [90, 95]",
+            "expression": "education[].scores IN [90, 95]",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1045,7 +1035,7 @@ def test_array_path_operations(
         {
             "name": "arr.single_not_equal",
             "requestType": "raw",
-            "expression": 'body.education[].name != "IIT"',
+            "expression": 'education[].name != "IIT"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and all(
@@ -1057,7 +1047,7 @@ def test_array_path_operations(
         {
             "name": "arr.single_not_exists",
             "requestType": "raw",
-            "expression": "body.education[].name NOT EXISTS",
+            "expression": "education[].name NOT EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and all("education" not in b for b in _get_bodies(r)),
@@ -1068,7 +1058,7 @@ def test_array_path_operations(
         {
             "name": "arr.terminal_not_contains_float",
             "requestType": "raw",
-            "expression": "body.education[].parameters NOT CONTAINS 1.65",
+            "expression": "education[].parameters NOT CONTAINS 1.65",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1081,7 +1071,7 @@ def test_array_path_operations(
         {
             "name": "arr.double_exists",
             "requestType": "raw",
-            "expression": "body.education[].awards[].name EXISTS",
+            "expression": "education[].awards[].name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1096,7 +1086,7 @@ def test_array_path_operations(
         {
             "name": "arr.double_string_equal",
             "requestType": "raw",
-            "expression": 'body.education[].awards[].name = "Iron Award"',
+            "expression": 'education[].awards[].name = "Iron Award"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(
@@ -1108,7 +1098,7 @@ def test_array_path_operations(
         {
             "name": "arr.multi_hop_branch_contains",
             "requestType": "raw",
-            "expression": 'body.education[].awards[].participated[].team[].branch Contains "Civil"',
+            "expression": 'education[].awards[].participated[].team[].branch Contains "Civil"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1132,7 +1122,7 @@ def test_array_path_operations(
         {
             "name": "arr.non_array_intermediate_equal",
             "requestType": "raw",
-            "expression": 'body.http-events[].request-info.host = "example.com"',
+            "expression": 'http-events[].request-info.host = "example.com"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(
@@ -1144,7 +1134,7 @@ def test_array_path_operations(
         {
             "name": "arr.super_deep_contains",
             "requestType": "raw",
-            "expression": "body.interests[].entities[].reviews[].entries[].metadata[].positions[].ratings Contains 4",
+            "expression": "interests[].entities[].reviews[].entries[].metadata[].positions[].ratings Contains 4",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(
@@ -1278,7 +1268,7 @@ def test_array_membership_operations(
         {
             "name": "membership.has_string",
             "requestType": "raw",
-            "expression": 'has(body.tags, "production")',
+            "expression": 'has(tags, "production")',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all("production" in b["tags"] for b in _get_bodies(r)),
@@ -1287,7 +1277,7 @@ def test_array_membership_operations(
         {
             "name": "membership.has_bool_sparse",
             "requestType": "raw",
-            "expression": "has(body.flags, true)",
+            "expression": "has(flags, true)",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and True in _get_bodies(r)[0]["flags"],
@@ -1296,7 +1286,7 @@ def test_array_membership_operations(
         {
             "name": "membership.has_nested_float",
             "requestType": "raw",
-            "expression": "has(body.education[].parameters, 1.65)",
+            "expression": "has(education[].parameters, 1.65)",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and any(
@@ -1306,7 +1296,7 @@ def test_array_membership_operations(
         {
             "name": "membership.hasall_permissions",
             "requestType": "raw",
-            "expression": "hasAll(body.user.permissions, ['read', 'write'])",
+            "expression": "hasAll(user.permissions, ['read', 'write'])",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1317,7 +1307,7 @@ def test_array_membership_operations(
         {
             "name": "membership.hasany_deep_members",
             "requestType": "raw",
-            "expression": "hasAny(body.education[].awards[].participated[].members, ['Piyush', 'Tushar'])",
+            "expression": "hasAny(education[].awards[].participated[].members, ['Piyush', 'Tushar'])",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2
             and all(
@@ -1418,7 +1408,7 @@ def test_message_searches(
         {
             "name": "msg.body_message_contains",
             "requestType": "raw",
-            "expression": 'body.message CONTAINS "Payment"',
+            "expression": 'message CONTAINS "Payment"',
             "aggregation": "count()",
             "validate": lambda r: (
                 len(_get_rows(r)) == 2 and set(_body_messages(r)) == payment_messages
@@ -1446,7 +1436,7 @@ def test_message_searches(
         {
             "name": "msg.body_message_exact",
             "requestType": "raw",
-            "expression": 'body.message = "Payment processed successfully"',
+            "expression": 'message = "Payment processed successfully"',
             "aggregation": "count()",
             "validate": lambda r: (
                 len(_get_rows(r)) == 1
@@ -1512,7 +1502,7 @@ def test_polluted_data(
         Logs(
             timestamp=now - timedelta(seconds=3),
             resources={"service.name": "polluted-svc"},
-            attributes={"body.user.name": "impostor"},
+            attributes={"user.name": "impostor"},
             body_v2=log_body_attr_clash,
             body_promoted="",
             severity_text="INFO",
@@ -1520,7 +1510,7 @@ def test_polluted_data(
         Logs(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "ghost-svc"},
-            attributes={"body.user.name": "ghost"},
+            attributes={"user.name": "ghost"},
             body_v2=log_ghost,
             body_promoted="",
             severity_text="WARN",
@@ -1547,7 +1537,7 @@ def test_polluted_data(
         {
             "name": "polluted.body_prefix_isolated_from_literal_attr_value",
             "requestType": "raw",
-            "expression": 'body.user.name = "impostor"',
+            "expression": 'user.name = "impostor"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 0,
         },
@@ -1555,7 +1545,7 @@ def test_polluted_data(
         {
             "name": "polluted.ghost_log_not_returned_for_body_query",
             "requestType": "raw",
-            "expression": 'body.user.name = "ghost"',
+            "expression": 'user.name = "ghost"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 0,
         },
@@ -1563,7 +1553,7 @@ def test_polluted_data(
         {
             "name": "polluted.clean_body_query_unaffected",
             "requestType": "raw",
-            "expression": 'body.user.name = "alice"',
+            "expression": 'user.name = "alice"',
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "alice",
@@ -1574,7 +1564,7 @@ def test_polluted_data(
         {
             "name": "polluted.exists_scoped_to_body_paths_only",
             "requestType": "raw",
-            "expression": "body.user.name EXISTS",
+            "expression": "user.name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
             and all(
@@ -1651,7 +1641,7 @@ def test_groupby_scalar(
             "name": "groupby.age",
             "requestType": "scalar",
             "expression": None,
-            "groupBy": [{"name": "body.user.age"}],
+            "groupBy": [{"name": "user.age"}],
             "limit": 100,
             "aggregation": "count()",
             # Each row: [age_value, count]. alice×3→count=3, bob×1→count=1, charlie×1→count=1.
@@ -1668,8 +1658,8 @@ def test_groupby_scalar(
             "requestType": "scalar",
             "expression": None,
             "groupBy": [
-                {"name": "body.user.name"},
-                {"name": "body.user.age"},
+                {"name": "user.name"},
+                {"name": "user.age"},
             ],
             "limit": 100,
             "aggregation": "count()",
