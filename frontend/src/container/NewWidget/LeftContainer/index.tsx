@@ -30,7 +30,7 @@ function LeftContainer({
 	setRequestData,
 	setQueryResponse,
 	enableDrillDown = false,
-	selectedDashboard,
+	dashboardData,
 	isNewPanel = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
@@ -79,8 +79,8 @@ function LeftContainer({
 					isLoadingQueries={queryResponse.isFetching}
 					selectedWidget={selectedWidget}
 					dashboardVersion={ENTITY_VERSION_V5}
-					dashboardId={selectedDashboard?.id}
-					dashboardName={selectedDashboard?.data.title}
+					dashboardId={dashboardData?.id}
+					dashboardName={dashboardData?.data.title}
 					isNewPanel={isNewPanel}
 				/>
 				{selectedGraph === PANEL_TYPES.LIST && (

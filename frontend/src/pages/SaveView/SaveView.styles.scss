@@ -218,30 +218,9 @@
 		.ant-modal-footer {
 			display: flex;
 			justify-content: flex-end;
+			gap: 8px;
 			padding: 16px 16px;
 			margin: 0;
-
-			.cancel-btn {
-				display: flex;
-				align-items: center;
-				border: none;
-				border-radius: 2px;
-				background: var(--l1-border);
-			}
-
-			.delete-btn {
-				display: flex;
-				align-items: center;
-				border: none;
-				border-radius: 2px;
-				background: var(--bg-cherry-500);
-				margin-left: 12px;
-			}
-
-			.delete-btn:hover {
-				color: var(--l1-foreground);
-				background: var(--bg-cherry-600);
-			}
 		}
 	}
 	.title {
@@ -250,100 +229,5 @@
 		font-style: normal;
 		font-weight: var(--font-weight-medium);
 		line-height: 20px; /* 142.857% */
-	}
-}
-
-.lightMode {
-	.save-view-container {
-		.save-view-content {
-			.title {
-				color: var(--l1-foreground);
-			}
-
-			.ant-table-row {
-				.ant-table-cell {
-					background: var(--l2-background);
-				}
-
-				&:hover {
-					.ant-table-cell {
-						background: var(--l2-background) !important;
-					}
-				}
-
-				.column-render {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-
-					.title-with-action {
-						.save-view-title {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.action-btn {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-
-					.view-details {
-						.view-tag {
-							background: var(--l2-background);
-							.tag-text {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.view-created-by {
-							color: var(--l1-foreground);
-						}
-
-						.view-created-at {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.delete-view-modal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.ant-modal-header {
-				background: var(--card);
-
-				.title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l1-foreground);
-				}
-
-				.save-view-input {
-					.ant-input {
-						background: var(--l1-background);
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--l3-background);
-					color: var(--l2-foreground);
-				}
-			}
-		}
 	}
 }

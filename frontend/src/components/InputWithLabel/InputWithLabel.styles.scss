@@ -5,7 +5,6 @@
 	border-radius: 2px 0px 0px 2px;
 
 	.label {
-		color: var(--l2-foreground);
 		font-size: 12px;
 		font-style: normal;
 		font-weight: 500;
@@ -21,8 +20,9 @@
 		padding: 0px 8px;
 
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		border: 1px solid var(--l2-border);
+		background: var(--l2-background);
+		color: var(--l2-foreground);
 
 		display: flex;
 		justify-content: flex-start;
@@ -37,6 +37,7 @@
 
 		border-radius: 2px 0px 0px 2px;
 		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 
 		border-right: none;
 		border-left: none;
@@ -46,6 +47,7 @@
 		border-bottom-left-radius: 0px;
 		font-size: 12px !important;
 		line-height: 27px;
+
 		&::placeholder {
 			color: var(--l2-foreground) !important;
 			font-size: 12px !important;
@@ -61,8 +63,8 @@
 
 	.close-btn {
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		border: 1px solid var(--l2-border);
+		background: var(--l2-background);
 		height: 38px;
 		width: 38px;
 	}
@@ -71,7 +73,7 @@
 		.input {
 			border-radius: 0px 2px 2px 0px;
 			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
+			background: var(--l2-background);
 			border-top-right-radius: 0px;
 			border-bottom-right-radius: 0px;
 		}

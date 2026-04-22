@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
+import { Button, DrawerWrapper } from '@signozhq/ui';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -105,24 +104,6 @@ function AccountSettingsModal({
 						/>
 					</div>
 				</div>
-
-				<div className="account-settings-modal__footer">
-					<RemoveIntegrationAccount
-						accountId={account?.id}
-						onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
-					/>
-
-					<Button
-						variant="solid"
-						color="secondary"
-						disabled={isSaveDisabled}
-						onClick={handleSubmit}
-						loading={isLoading}
-						prefixIcon={<Save size={14} />}
-					>
-						Update Changes
-					</Button>
-				</div>
 			</Form>
 		);
 	}, [
@@ -147,19 +128,39 @@ function AccountSettingsModal({
 		[handleClose],
 	);
 
+	const footer = (
+		<div className="account-settings-modal__footer">
+			<RemoveIntegrationAccount
+				accountId={account?.id}
+				onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+			/>
+
+			<Button
+				variant="solid"
+				color="secondary"
+				disabled={isSaveDisabled}
+				onClick={handleSubmit}
+				loading={isLoading}
+				prefix={<Save size={14} />}
+			>
+				Update Changes
+			</Button>
+		</div>
+	);
+
 	return (
 		<DrawerWrapper
 			open={true}
-			type="panel"
 			className="account-settings-modal"
-			header={{
-				title: 'Account Settings',
-			}}
+			title="Account Settings"
 			direction="right"
 			showCloseButton
-			content={renderAccountDetails()}
 			onOpenChange={handleDrawerOpenChange}
-		/>
+			width="wide"
+			footer={footer}
+		>
+			{renderAccountDetails()}
+		</DrawerWrapper>
 	);
 }
 

@@ -91,7 +91,7 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { selectedDashboard, setColumnWidths } = useDashboardStore();
+	const { dashboardData, setColumnWidths } = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const onColumnWidthsChange = useCallback(
@@ -166,7 +166,7 @@ function FullView({
 		enableDrillDown,
 		widget,
 		setRequestData,
-		selectedDashboard,
+		dashboardData,
 		selectedPanelType,
 	});
 
@@ -344,7 +344,7 @@ function FullView({
 							<>
 								<QueryBuilderV2
 									panelType={selectedPanelType}
-									version={selectedDashboard?.data?.version || 'v3'}
+									version={dashboardData?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
 									// filterConfigs={filterConfigs}
