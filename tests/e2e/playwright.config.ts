@@ -15,9 +15,9 @@ export default defineConfig({
   testDir: './tests',
 
   // All Playwright output lands under artifacts/. One subdir per reporter
-  // plus test-results/ for per-test artifacts (traces/screenshots/videos).
+  // plus results/ for per-test artifacts (traces/screenshots/videos).
   // CI can archive the whole dir with `tar czf artifacts.tgz tests/e2e/artifacts`.
-  outputDir: 'artifacts/test-results',
+  outputDir: 'artifacts/results',
 
   // Run tests in parallel
   fullyParallel: true,
