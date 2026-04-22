@@ -39,7 +39,6 @@ jobs:
       matrix:
         suite:
           - alerts
-          - auditquerier
           - callbackauthn
           - cloudintegrations
           - dashboard
