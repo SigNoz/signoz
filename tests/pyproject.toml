@@ -44,7 +44,12 @@ log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.pylint.main]
-ignore = [".venv"]
+ignore = [".venv", "node_modules"]
+# `py` (the legacy pytest path lib) uses dynamic attributes that pylint's
+# static analyzer can't resolve. Whitelist it so `py.path.local` stops
+# firing no-member.
+extension-pkg-whitelist = ["py"]
+ignored-modules = ["py"]
 
 [tool.pylint.format]
 max-line-length = "400"
