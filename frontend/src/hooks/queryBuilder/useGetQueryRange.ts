@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateBarStepInterval } from 'container/GridCardLayout/utils';
 import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariablesByType';
@@ -148,7 +149,7 @@ export const useGetQueryRange: UseGetQueryRange = (
 				return false;
 			}
 
-			return failureCount < 3;
+			return failureCount < MAX_QUERY_RETRIES;
 		};
 	}, [options?.retry]);
 

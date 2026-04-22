@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -50,8 +50,11 @@ function LeftContainer({
 		],
 		[globalSelectedInterval, requestData, minTime, maxTime],
 	);
+	const [isCancelled, setIsCancelled] = useState(false);
+
 	const handleCancelQuery = useCallback(() => {
 		queryClient.cancelQueries(queryRangeKey);
+		setIsCancelled(true);
 	}, [queryClient, queryRangeKey]);
 
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
@@ -59,6 +62,12 @@ function LeftContainer({
 		queryKey: queryRangeKey,
 		keepPreviousData: true,
 	});
+
+	useEffect(() => {
+		if (queryResponse.isFetching) {
+			setIsCancelled(false);
+		}
+	}, [queryResponse.isFetching]);
 
 	// Update parent component with query response for legend colors
 	useEffect(() => {
@@ -76,6 +85,7 @@ function LeftContainer({
 				selectedWidget={selectedWidget}
 				isLoadingPanelData={isLoadingPanelData}
 				enableDrillDown={enableDrillDown}
+				isCancelled={isCancelled}
 			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection

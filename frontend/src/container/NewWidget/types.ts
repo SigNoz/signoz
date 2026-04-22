@@ -50,4 +50,5 @@ export type WidgetGraphContainerProps = {
 	selectedWidget: Widgets;
 	isLoadingPanelData: boolean;
 	enableDrillDown?: boolean;
+	isCancelled?: boolean;
 };

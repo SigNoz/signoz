@@ -1,6 +1,7 @@
 import { useQuery, UseQueryResult } from 'react-query';
 import listOverview from 'api/thirdPartyApis/listOverview';
 import { isAxiosError } from 'axios';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
@@ -35,7 +36,7 @@ export const useListOverview = (
 			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
 				return false;
 			}
-			return failureCount < 3;
+			return failureCount < MAX_QUERY_RETRIES;
 		},
 	});
 };
