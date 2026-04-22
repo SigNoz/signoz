@@ -23,15 +23,21 @@ def _check_query_log(
 ) -> None:
     """Flush query_log and assert that the most recent body_v2 SELECT passes check_fn."""
     conn.command("SYSTEM FLUSH LOGS")
-    after_unix = int(after_ts.timestamp())
+    # Use millisecond precision to avoid timestamp collisions with queries from
+    # adjacent test cases (second-level precision causes bleed-through).
+    after_ms = int(after_ts.timestamp() * 1000)
     result = conn.query(
         "SELECT query FROM system.query_log"
         " WHERE type = 'QueryFinish' AND query_kind = 'Select'"
+        " AND position(query, 'distributed_logs_v2') > 0"
         " AND position(query, 'body_v2') > 0"
+        # Exclude system.data_skipping_indices metadata queries — they contain
+        # 'body_v2' in their WHERE clause but are not the actual data queries.
+        " AND position(query, 'data_skipping_indices') = 0"
         " AND query NOT LIKE '%%system.query_log%%'"
-        " AND toUnixTimestamp(event_time) >= %(after)s"
-        " ORDER BY event_time DESC LIMIT 5",
-        parameters={"after": after_unix},
+        " AND toUnixTimestamp64Milli(event_time_microseconds) >= %(after_ms)s"
+        " ORDER BY event_time_microseconds DESC LIMIT 10",
+        parameters={"after_ms": after_ms},
     )
     queries = [row[0] for row in result.result_rows]
     assert queries, (
@@ -1502,7 +1508,7 @@ def test_polluted_data(
         Logs(
             timestamp=now - timedelta(seconds=3),
             resources={"service.name": "polluted-svc"},
-            attributes={"user.name": "impostor"},
+            attributes={"body.user.name": "impostor"},
             body_v2=log_body_attr_clash,
             body_promoted="",
             severity_text="INFO",
@@ -1510,7 +1516,7 @@ def test_polluted_data(
         Logs(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "ghost-svc"},
-            attributes={"user.name": "ghost"},
+            attributes={"body.user.name": "ghost"},
             body_v2=log_ghost,
             body_promoted="",
             severity_text="WARN",
@@ -1530,18 +1536,27 @@ def test_polluted_data(
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     cases = [
-        # ── body-path isolation ───────────────────────────────────────────────
-        # "impostor" lives in attributes_string["body.user.name"], not in any body.
-        # QB only searches body_v2 (QueryStringToKeysSelectors does not create an
-        # extra selector for the attribute) → 0 results, proving isolation.
+        # ── body-path vs attribute isolation ─────────────────────────────────
+        # user.name IS ambiguous (flat-attr-svc has attribute key "user.name" and
+        # body.user.name="charlie") so the QB emits a warning and ORs both contexts.
+        # However, polluted-svc stores the value under the DIFFERENT key
+        # "body.user.name" (not "user.name"), so:
+        #   body search  → no match ("impostor" not in any body)
+        #   attr search  → no match ("impostor" under "body.user.name", not "user.name")
+        # → 0 rows despite the ambiguity warning.  Proves that the "body." prefix
+        # in an attribute key does NOT merge into the body-path lookup.
         {
             "name": "polluted.body_prefix_isolated_from_literal_attr_value",
             "requestType": "raw",
             "expression": 'user.name = "impostor"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 0,
+            "validate": lambda r: (
+                len(_get_rows(r)) == 0
+                and r.json().get("data", {}).get("warning") is not None
+            ),
         },
-        # log_ghost body has no user at all. QB only searches body_v2 → 0 results.
+        # ghost-svc stores the value under attribute key "body.user.name", not
+        # "user.name", and the body has no user object.  Same reasoning → 0 rows.
         {
             "name": "polluted.ghost_log_not_returned_for_body_query",
             "requestType": "raw",
@@ -1549,7 +1564,8 @@ def test_polluted_data(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 0,
         },
-        # Body queries still find real body values unaffected by attribute pollution.
+        # Body queries still find real body values when the value exists only in the
+        # body (alice only lives in body, not in any attribute) → 1 row.
         {
             "name": "polluted.clean_body_query_unaffected",
             "requestType": "raw",
@@ -1558,18 +1574,37 @@ def test_polluted_data(
             "validate": lambda r: len(_get_rows(r)) == 1
             and _get_bodies(r)[0]["user"]["name"] == "alice",
         },
-        # EXISTS only fires the body path.
-        # alice (log_clean), shadow (log_body_attr_clash body), charlie (log_flat_attr) match.
-        # log_ghost has no user object in body → excluded.
+        # EXISTS with an ambiguous key uses OR across contexts:
+        # body-EXISTS: log_clean(alice), log_body_attr_clash(shadow), log_flat_attr(charlie) → 3
+        # attr-EXISTS ("user.name" only): log_flat_attr(shadow) → 1 (already in body set)
+        # log_ghost is NOT included — its attr key is "body.user.name", not "user.name".
+        # Union: 3 unique logs (alice, shadow, charlie).
         {
             "name": "polluted.exists_scoped_to_body_paths_only",
             "requestType": "raw",
             "expression": "user.name EXISTS",
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 3
-            and all(
-                b.get("user", {}).get("name") in ("alice", "shadow", "charlie")
-                for b in _get_bodies(r)
+            and {b.get("user", {}).get("name") for b in _get_bodies(r)}
+            == {"alice", "shadow", "charlie"},
+        },
+        # ── new: OR match across body AND attribute in the same query ──────────
+        # "shadow" exists in body (log_body_attr_clash: body.user.name="shadow") AND
+        # in attribute (log_flat_attr: attributes_string["user.name"]="shadow").
+        # The ambiguous-OR returns both logs → 2 rows.
+        {
+            "name": "polluted.ambiguous_key_or_finds_both_body_and_attr_match",
+            "requestType": "raw",
+            "expression": 'user.name = "shadow"',
+            "aggregation": "count()",
+            "validate": lambda r: (
+                len(_get_rows(r)) == 2
+                and r.json().get("data", {}).get("warning") is not None
+                and {
+                    row["data"]["resources_string"].get("service.name")
+                    for row in _get_rows(r)
+                }
+                == {"polluted-svc", "flat-attr-svc"}
             ),
         },
     ]
