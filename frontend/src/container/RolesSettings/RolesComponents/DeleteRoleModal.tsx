@@ -1,5 +1,5 @@
-import { Button } from '@signozhq/button';
 import { Trash2, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 import { Modal } from 'antd';
 
 interface DeleteRoleModalProps {
@@ -27,7 +27,7 @@ function DeleteRoleModal({
 				<Button
 					key="cancel"
 					className="cancel-btn"
-					prefixIcon={<X size={16} />}
+					prefix={<X size={16} />}
 					onClick={onCancel}
 					size="sm"
 					variant="solid"
@@ -38,7 +38,7 @@ function DeleteRoleModal({
 				<Button
 					key="delete"
 					className="delete-btn"
-					prefixIcon={<Trash2 size={16} />}
+					prefix={<Trash2 size={16} />}
 					onClick={onConfirm}
 					loading={isDeleting}
 					size="sm"

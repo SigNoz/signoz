@@ -45,7 +45,7 @@ export const StyledSecondaryMenu = styled(Menu)`
 export const RedDot = styled.div`
 	width: 10px;
 	height: 10px;
-	background: var(--bg-cherry-500);
+	background: var(--danger-background);
 	border-radius: 50%;
 
 	margin-left: 0.5rem;
