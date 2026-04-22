@@ -29,6 +29,21 @@ type WaterfallTrace struct {
 	HasMissingSpans               bool                      `json:"hasMissingSpans"`
 }
 
+// GettableWaterfallTrace is the response for the v3 waterfall API.
+type GettableWaterfallTrace struct {
+	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
+	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
+	RootServiceName               string            `json:"rootServiceName"`
+	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
+	TotalSpansCount               uint64            `json:"totalSpansCount"`
+	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
+	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
+	Spans                         []*WaterfallSpan  `json:"spans"`
+	HasMissingSpans               bool              `json:"hasMissingSpans"`
+	UncollapsedSpans              []string          `json:"uncollapsedSpans"`
+	HasMore                       bool              `json:"hasMore"`
+}
+
 // NewWaterfallTrace constructs a WaterfallTrace from processed span data.
 func NewWaterfallTrace(
 	startTime, endTime, totalSpans, totalErrorSpans uint64,
@@ -224,21 +239,6 @@ func (wt *WaterfallTrace) MarshalBinary() (data []byte, err error) {
 
 func (wt *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, wt)
-}
-
-// GettableWaterfallTrace is the response for the v3 waterfall API.
-type GettableWaterfallTrace struct {
-	StartTimestampMillis          uint64            `json:"startTimestampMillis"`
-	EndTimestampMillis            uint64            `json:"endTimestampMillis"`
-	RootServiceName               string            `json:"rootServiceName"`
-	RootServiceEntryPoint         string            `json:"rootServiceEntryPoint"`
-	TotalSpansCount               uint64            `json:"totalSpansCount"`
-	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
-	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	Spans                         []*WaterfallSpan  `json:"spans"`
-	HasMissingSpans               bool              `json:"hasMissingSpans"`
-	UncollapsedSpans              []string          `json:"uncollapsedSpans"`
-	HasMore                       bool              `json:"hasMore"`
 }
 
 // NewGettableWaterfallTrace constructs a WaterfallResponse from processed trace data and selected spans.

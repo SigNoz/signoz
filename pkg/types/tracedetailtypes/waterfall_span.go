@@ -83,6 +83,40 @@ type WaterfallSpan struct {
 	ServiceName string `json:"-"`
 }
 
+// StorableSpan is the ClickHouse scan struct for the v3 waterfall query.
+type StorableSpan struct {
+	StartTime          time.Time          `ch:"timestamp"`
+	DurationNano       uint64             `ch:"duration_nano"`
+	SpanID             string             `ch:"span_id"`
+	TraceID            string             `ch:"trace_id"`
+	HasError           bool               `ch:"has_error"`
+	Kind               int8               `ch:"kind"`
+	ServiceName        string             `ch:"resource_string_service$$name"`
+	Name               string             `ch:"name"`
+	References         string             `ch:"references"`
+	AttributesString   map[string]string  `ch:"attributes_string"`
+	AttributesNumber   map[string]float64 `ch:"attributes_number"`
+	AttributesBool     map[string]bool    `ch:"attributes_bool"`
+	ResourcesString    map[string]string  `ch:"resources_string"`
+	Events             []string           `ch:"events"`
+	StatusMessage      string             `ch:"status_message"`
+	StatusCodeString   string             `ch:"status_code_string"`
+	SpanKind           string             `ch:"kind_string"`
+	ParentSpanID       string             `ch:"parent_span_id"`
+	Flags              uint32             `ch:"flags"`
+	IsRemote           string             `ch:"is_remote"`
+	TraceState         string             `ch:"trace_state"`
+	StatusCode         int16              `ch:"status_code"`
+	DBName             string             `ch:"db_name"`
+	DBOperation        string             `ch:"db_operation"`
+	HTTPMethod         string             `ch:"http_method"`
+	HTTPURL            string             `ch:"http_url"`
+	HTTPHost           string             `ch:"http_host"`
+	ExternalHTTPMethod string             `ch:"external_http_method"`
+	ExternalHTTPURL    string             `ch:"external_http_url"`
+	ResponseStatusCode string             `ch:"response_status_code"`
+}
+
 // NewMissingWaterfallSpan creates a synthetic placeholder span for a parent that has no recorded data.
 func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano uint64) *WaterfallSpan {
 	return &WaterfallSpan{
@@ -168,40 +202,6 @@ func (ws *WaterfallSpan) getPathToSelectedSpanID(selectedSpanID string) ([]strin
 		}
 	}
 	return nil, false
-}
-
-// StorableSpan is the ClickHouse scan struct for the v3 waterfall query.
-type StorableSpan struct {
-	StartTime          time.Time          `ch:"timestamp"`
-	DurationNano       uint64             `ch:"duration_nano"`
-	SpanID             string             `ch:"span_id"`
-	TraceID            string             `ch:"trace_id"`
-	HasError           bool               `ch:"has_error"`
-	Kind               int8               `ch:"kind"`
-	ServiceName        string             `ch:"resource_string_service$$name"`
-	Name               string             `ch:"name"`
-	References         string             `ch:"references"`
-	AttributesString   map[string]string  `ch:"attributes_string"`
-	AttributesNumber   map[string]float64 `ch:"attributes_number"`
-	AttributesBool     map[string]bool    `ch:"attributes_bool"`
-	ResourcesString    map[string]string  `ch:"resources_string"`
-	Events             []string           `ch:"events"`
-	StatusMessage      string             `ch:"status_message"`
-	StatusCodeString   string             `ch:"status_code_string"`
-	SpanKind           string             `ch:"kind_string"`
-	ParentSpanID       string             `ch:"parent_span_id"`
-	Flags              uint32             `ch:"flags"`
-	IsRemote           string             `ch:"is_remote"`
-	TraceState         string             `ch:"trace_state"`
-	StatusCode         int16              `ch:"status_code"`
-	DBName             string             `ch:"db_name"`
-	DBOperation        string             `ch:"db_operation"`
-	HTTPMethod         string             `ch:"http_method"`
-	HTTPURL            string             `ch:"http_url"`
-	HTTPHost           string             `ch:"http_host"`
-	ExternalHTTPMethod string             `ch:"external_http_method"`
-	ExternalHTTPURL    string             `ch:"external_http_url"`
-	ResponseStatusCode string             `ch:"response_status_code"`
 }
 
 func (item *StorableSpan) Attributes() map[string]any {
