@@ -11,7 +11,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz-otel-collector/pkg/keycheck"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -149,24 +148,12 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 
 	filterExprs := []string{}
 	for _, filter := range filters {
-		filterExprs = append(filterExprs, sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(escapedPathForLike(filter)))))
+		// Remove backticks from actual expr cuz paths from metadata doesn't have backticks
+		filterExprs = append(filterExprs, sb.ILike("replaceAll(expr, '`', '')", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(filter))))
 	}
 	sb.Where(sb.Or(filterExprs...))
 
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-}
-
-// escapedPathForLike wraps each dot-separated segment that requires backticks so
-// that the resulting LIKE pattern matches the actual index expression stored in
-// system.data_skipping_indices (e.g. "user.raw-data.name" → "user.`raw-data`.name").
-func escapedPathForLike(path string) string {
-	parts := strings.Split(path, ".")
-	for i, part := range parts {
-		if keycheck.IsBacktickRequired(part) {
-			parts[i] = "`" + part + "`"
-		}
-	}
-	return strings.Join(parts, ".")
 }
 
 func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
