@@ -103,7 +103,7 @@ func NewAzureConnectionCLICommand(
 		fmt.Sprintf("    signozIntegrationAccountId='%s'", accountID.StringValue()),
 		fmt.Sprintf("    signozIntegrationAgentVersion='%s'", agentVersion),
 		"  --action-on-unmanage deleteAll",
-		"  --deny-settings-mode none",
+		"  --deny-settings-mode denyDelete",
 	}
 	return strings.Join(lines, " \\\n")
 }
@@ -143,6 +143,6 @@ func NewAzureConnectionPowerShellCommand(
 		strings.Join(paramLines, "\n"),
 		"  } `",
 		"  -ActionOnUnmanage \"deleteAll\" `",
-		"  -DenySettingsMode \"none\"",
+		"  -DenySettingsMode \"denyDelete\"",
 	}, "\n")
 }
