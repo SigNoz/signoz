@@ -6,15 +6,12 @@ import {
 	useState,
 } from 'react';
 import { CloseCircleFilled } from '@ant-design/icons';
-// eslint-disable-next-line no-restricted-imports
-import { useMachine } from '@xstate/react';
 import { Button, RefSelectProps, Select } from 'antd';
 import history from 'lib/history';
 import { filter, map } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
 
-import { DashboardSearchAndFilter } from './Dashboard.machine';
 import QueryChip from './QueryChip';
 import { QueryChipItem, SearchContainer } from './styles';
 import { IOptionsData, IQueryStructure, TCategory, TOperator } from './types';
@@ -25,6 +22,9 @@ import {
 	OptionsSchemas,
 	OptionsValueResolution,
 } from './utils';
+
+type DashboardStep = 'Idle' | 'Category' | 'Operator' | 'Value';
+type DashboardEvent = 'NEXT' | 'onBlur';
 
 function SearchFilter({
 	searchData,
@@ -41,6 +41,7 @@ function SearchFilter({
 	const [selectedValues, setSelectedValues] = useState<string[]>([]);
 	const [staging, setStaging] = useState<string[] | string[][] | unknown[]>([]);
 	const [queries, setQueries] = useState<IQueryStructure[]>([]);
+	const [step, setStep] = useState<DashboardStep>('Idle');
 
 	useEffect(() => {
 		const searchQueryString = new URLSearchParams(history.location.search).get(
@@ -74,39 +75,52 @@ function SearchFilter({
 		}
 	}, [queries, updateURLWithQuery]);
 
-	const [state, send] = useMachine(DashboardSearchAndFilter, {
-		actions: {
-			onSelectCategory: () => {
+	const onBlurPurge = (): void => {
+		setSelectedValues([]);
+		setStaging([]);
+	};
+
+	const onValidateQuery = (): void => {
+		if (staging.length <= 2 && selectedValues.length === 0) {
+			return;
+		}
+		setQueries([
+			...queries,
+			{
+				id: uuidv4(),
+				category: staging[0] as string,
+				operator: staging[1] as TOperator,
+				value: selectedValues,
+			},
+		]);
+	};
+
+	const send = (event: DashboardEvent): void => {
+		if (event === 'NEXT') {
+			if (step === 'Idle') {
 				setOptionsData(OptionsSchemas.attribute);
-			},
-			onSelectOperator: () => {
+				setStep('Category');
+			} else if (step === 'Category') {
 				setOptionsData(OptionsSchemas.operator);
-			},
-			onSelectValue: () => {
+				setStep('Operator');
+			} else if (step === 'Operator') {
 				setOptionsData(
 					OptionsValueResolution(category as TCategory, searchData) as IOptionsData,
 				);
-			},
-			onBlurPurge: () => {
-				setSelectedValues([]);
-				setStaging([]);
-			},
-			onValidateQuery: () => {
-				if (staging.length <= 2 && selectedValues.length === 0) {
-					return;
-				}
-				setQueries([
-					...queries,
-					{
-						id: uuidv4(),
-						category: staging[0] as string,
-						operator: staging[1] as TOperator,
-						value: selectedValues,
-					},
-				]);
-			},
-		},
-	});
+				setStep('Value');
+			}
+			return;
+		}
+		if (event === 'onBlur') {
+			if (step === 'Value') {
+				onValidateQuery();
+			}
+			if (step === 'Category' || step === 'Operator' || step === 'Value') {
+				onBlurPurge();
+				setStep('Idle');
+			}
+		}
+	};
 
 	const nextState = (): void => {
 		send('NEXT');
@@ -130,14 +144,14 @@ function SearchFilter({
 		}
 		setStaging([...staging, value]);
 
-		if (state.value === 'Category') {
+		if (step === 'Category') {
 			setCategory(`${value}`.toLowerCase() as TCategory);
 		}
 		nextState();
 		setSelectedValues([]);
 	};
 	const handleFocus = (): void => {
-		if (state.value === 'Idle') {
+		if (step === 'Idle') {
 			send('NEXT');
 			selectRef.current?.focus();
 		}
@@ -171,9 +185,9 @@ function SearchFilter({
 			{optionsData && (
 				<Select
 					placeholder={
-						!queries.length &&
-						!staging.length &&
-						!selectedValues.length &&
+						queries.length === 0 &&
+						staging.length === 0 &&
+						selectedValues.length === 0 &&
 						'Search or Filter results'
 					}
 					size="small"

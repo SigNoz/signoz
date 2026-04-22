@@ -63,7 +63,6 @@
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
     "@vitejs/plugin-react": "5.1.4",
-    "@xstate/react": "^3.0.0",
     "ansi-to-html": "0.7.2",
     "antd": "5.11.0",
     "antd-table-saveas-excel": "2.2.1",
@@ -146,7 +145,6 @@
     "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-html": "3.2.2",
     "web-vitals": "^0.2.4",
-    "xstate": "^4.31.0",
     "zod": "4.3.6",
     "zustand": "5.0.11"
   },
