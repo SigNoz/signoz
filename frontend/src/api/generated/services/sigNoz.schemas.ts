@@ -5354,31 +5354,14 @@ export interface TracedetailtypesEventDTO {
 	timeUnixNano?: number;
 }
 
-export interface TracedetailtypesWaterfallRequestDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	limit?: number;
-	/**
-	 * @type string
-	 */
-	selectedSpanId?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	uncollapsedSpans?: string[] | null;
-}
-
 /**
  * @nullable
  */
-export type TracedetailtypesWaterfallResponseDTOServiceNameToTotalDurationMap = {
+export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap = {
 	[key: string]: number;
 } | null;
 
-export interface TracedetailtypesWaterfallResponseDTO {
+export interface TracedetailtypesGettableWaterfallTraceDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -5404,7 +5387,7 @@ export interface TracedetailtypesWaterfallResponseDTO {
 	 * @type object
 	 * @nullable true
 	 */
-	serviceNameToTotalDurationMap?: TracedetailtypesWaterfallResponseDTOServiceNameToTotalDurationMap;
+	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
 	/**
 	 * @type array
 	 * @nullable true
@@ -5425,6 +5408,23 @@ export interface TracedetailtypesWaterfallResponseDTO {
 	 * @minimum 0
 	 */
 	totalSpansCount?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface TracedetailtypesWaterfallRequestDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
 	/**
 	 * @type array
 	 * @nullable true
@@ -5508,11 +5508,6 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 */
 	is_remote?: string;
 	/**
-	 * @type integer
-	 * @format int32
-	 */
-	kind?: number;
-	/**
 	 * @type string
 	 */
 	kind_string?: string;
@@ -5559,11 +5554,6 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 * @minimum 0
 	 */
 	sub_tree_node_count?: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	timestamp?: number;
 	/**
 	 * @type string
 	 */
@@ -7504,7 +7494,7 @@ export type GetWaterfallPathParameters = {
 	traceID: string;
 };
 export type GetWaterfall200 = {
-	data: TracedetailtypesWaterfallResponseDTO;
+	data: TracedetailtypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */
