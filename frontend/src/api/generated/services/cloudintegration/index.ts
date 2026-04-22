@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AgentCheckIn200,
 	AgentCheckInDeprecated200,
@@ -48,6 +46,9 @@ import type {
 	UpdateServicePathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
 /**
  * [Deprecated] This endpoint is called by the deployed agent to check in
  * @deprecated
@@ -69,7 +70,7 @@ export const agentCheckInDeprecated = (
 
 export const getAgentCheckInDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof agentCheckInDeprecated>>,
@@ -92,8 +93,8 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 	const mutationKey = ['agentCheckInDeprecated'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -116,8 +117,10 @@ export const getAgentCheckInDeprecatedMutationOptions = <
 export type AgentCheckInDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckInDeprecated>>
 >;
-export type AgentCheckInDeprecatedMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
-export type AgentCheckInDeprecatedMutationError = ErrorType<RenderErrorResponseDTO>;
+export type AgentCheckInDeprecatedMutationBody =
+	BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+export type AgentCheckInDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @deprecated
@@ -125,7 +128,7 @@ export type AgentCheckInDeprecatedMutationError = ErrorType<RenderErrorResponseD
  */
 export const useAgentCheckInDeprecated = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof agentCheckInDeprecated>>,
@@ -172,7 +175,7 @@ export const getListAccountsQueryKey = ({
 
 export const getListAccountsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAccounts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListAccountsPathParameters,
 	options?: {
@@ -215,7 +218,7 @@ export type ListAccountsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListAccounts<
 	TData = Awaited<ReturnType<typeof listAccounts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListAccountsPathParameters,
 	options?: {
@@ -273,7 +276,7 @@ export const createAccount = (
 
 export const getCreateAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAccount>>,
@@ -296,8 +299,8 @@ export const getCreateAccountMutationOptions = <
 	const mutationKey = ['createAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -320,7 +323,8 @@ export const getCreateAccountMutationOptions = <
 export type CreateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAccount>>
 >;
-export type CreateAccountMutationBody = BodyType<CloudintegrationtypesPostableAccountDTO>;
+export type CreateAccountMutationBody =
+	BodyType<CloudintegrationtypesPostableAccountDTO>;
 export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -328,7 +332,7 @@ export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAccount>>,
@@ -368,7 +372,7 @@ export const disconnectAccount = ({
 
 export const getDisconnectAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof disconnectAccount>>,
@@ -385,8 +389,8 @@ export const getDisconnectAccountMutationOptions = <
 	const mutationKey = ['disconnectAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -414,7 +418,7 @@ export type DisconnectAccountMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDisconnectAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof disconnectAccount>>,
@@ -456,7 +460,7 @@ export const getGetAccountQueryKey = ({
 
 export const getGetAccountQueryOptions = <
 	TData = Awaited<ReturnType<typeof getAccount>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, id }: GetAccountPathParameters,
 	options?: {
@@ -497,7 +501,7 @@ export type GetAccountQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetAccount<
 	TData = Awaited<ReturnType<typeof getAccount>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, id }: GetAccountPathParameters,
 	options?: {
@@ -553,7 +557,7 @@ export const updateAccount = (
 
 export const getUpdateAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAccount>>,
@@ -576,8 +580,8 @@ export const getUpdateAccountMutationOptions = <
 	const mutationKey = ['updateAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -600,7 +604,8 @@ export const getUpdateAccountMutationOptions = <
 export type UpdateAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAccount>>
 >;
-export type UpdateAccountMutationBody = BodyType<CloudintegrationtypesUpdatableAccountDTO>;
+export type UpdateAccountMutationBody =
+	BodyType<CloudintegrationtypesUpdatableAccountDTO>;
 export type UpdateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -608,7 +613,7 @@ export type UpdateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAccount>>,
@@ -650,7 +655,7 @@ export const updateService = (
 
 export const getUpdateServiceMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateService>>,
@@ -673,8 +678,8 @@ export const getUpdateServiceMutationOptions = <
 	const mutationKey = ['updateService'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -697,7 +702,8 @@ export const getUpdateServiceMutationOptions = <
 export type UpdateServiceMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateService>>
 >;
-export type UpdateServiceMutationBody = BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+export type UpdateServiceMutationBody =
+	BodyType<CloudintegrationtypesUpdatableServiceDTO>;
 export type UpdateServiceMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -705,7 +711,7 @@ export type UpdateServiceMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateService = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateService>>,
@@ -749,7 +755,7 @@ export const agentCheckIn = (
 
 export const getAgentCheckInMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof agentCheckIn>>,
@@ -772,8 +778,8 @@ export const getAgentCheckInMutationOptions = <
 	const mutationKey = ['agentCheckIn'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -796,7 +802,8 @@ export const getAgentCheckInMutationOptions = <
 export type AgentCheckInMutationResult = NonNullable<
 	Awaited<ReturnType<typeof agentCheckIn>>
 >;
-export type AgentCheckInMutationBody = BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
+export type AgentCheckInMutationBody =
+	BodyType<CloudintegrationtypesPostableAgentCheckInDTO>;
 export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -804,7 +811,7 @@ export type AgentCheckInMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useAgentCheckIn = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof agentCheckIn>>,
@@ -851,7 +858,7 @@ export const getGetConnectionCredentialsQueryKey = ({
 
 export const getGetConnectionCredentialsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: GetConnectionCredentialsPathParameters,
 	options?: {
@@ -887,7 +894,8 @@ export const getGetConnectionCredentialsQueryOptions = <
 export type GetConnectionCredentialsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getConnectionCredentials>>
 >;
-export type GetConnectionCredentialsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetConnectionCredentialsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get connection credentials
@@ -895,7 +903,7 @@ export type GetConnectionCredentialsQueryError = ErrorType<RenderErrorResponseDT
 
 export function useGetConnectionCredentials<
 	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: GetConnectionCredentialsPathParameters,
 	options?: {
@@ -965,7 +973,7 @@ export const getListServicesMetadataQueryKey = (
 
 export const getListServicesMetadataQueryOptions = <
 	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
 	params?: ListServicesMetadataParams,
@@ -1010,7 +1018,7 @@ export type ListServicesMetadataQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListServicesMetadata<
 	TData = Awaited<ReturnType<typeof listServicesMetadata>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider }: ListServicesMetadataPathParameters,
 	params?: ListServicesMetadataParams,
@@ -1083,7 +1091,7 @@ export const getGetServiceQueryKey = (
 
 export const getGetServiceQueryOptions = <
 	TData = Awaited<ReturnType<typeof getService>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
 	params?: GetServiceParams,
@@ -1126,7 +1134,7 @@ export type GetServiceQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetService<
 	TData = Awaited<ReturnType<typeof getService>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ cloudProvider, serviceId }: GetServicePathParameters,
 	params?: GetServiceParams,

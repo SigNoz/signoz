@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -12,10 +13,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useQuery } from 'react-query';
 
-import type { ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	Healthz200,
 	Healthz503,
@@ -24,6 +22,9 @@ import type {
 	Readyz503,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * @summary Health check
@@ -42,7 +43,7 @@ export const getHealthzQueryKey = () => {
 
 export const getHealthzQueryOptions = <
 	TData = Awaited<ReturnType<typeof healthz>>,
-	TError = ErrorType<Healthz503>
+	TError = ErrorType<Healthz503>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof healthz>>, TError, TData>;
 }) => {
@@ -72,7 +73,7 @@ export type HealthzQueryError = ErrorType<Healthz503>;
 
 export function useHealthz<
 	TData = Awaited<ReturnType<typeof healthz>>,
-	TError = ErrorType<Healthz503>
+	TError = ErrorType<Healthz503>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof healthz>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -119,7 +120,7 @@ export const getLivezQueryKey = () => {
 
 export const getLivezQueryOptions = <
 	TData = Awaited<ReturnType<typeof livez>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof livez>>, TError, TData>;
 }) => {
@@ -147,7 +148,7 @@ export type LivezQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useLivez<
 	TData = Awaited<ReturnType<typeof livez>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof livez>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -191,7 +192,7 @@ export const getReadyzQueryKey = () => {
 
 export const getReadyzQueryOptions = <
 	TData = Awaited<ReturnType<typeof readyz>>,
-	TError = ErrorType<Readyz503>
+	TError = ErrorType<Readyz503>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof readyz>>, TError, TData>;
 }) => {
@@ -219,7 +220,7 @@ export type ReadyzQueryError = ErrorType<Readyz503>;
 
 export function useReadyz<
 	TData = Awaited<ReturnType<typeof readyz>>,
-	TError = ErrorType<Readyz503>
+	TError = ErrorType<Readyz503>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof readyz>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
