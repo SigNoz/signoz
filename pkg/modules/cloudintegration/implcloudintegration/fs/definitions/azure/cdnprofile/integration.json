@@ -1,6 +1,6 @@
 {
-  "id": "frontdoor",
-  "title": "Front Door",
+  "id": "cdnprofile",
+  "title": "CDN Profile",
   "icon": "file://icon.svg",
   "overview": "file://overview.md",
   "supportedSignals": {
@@ -158,8 +158,8 @@
     "dashboards": [
       {
         "id": "overview",
-        "title": "Front Door Overview",
-        "description": "Overview of Front Door metrics",
+        "title": "CDN Profile Overview",
+        "description": "Overview of CDN Profile metrics",
         "definition": "file://assets/dashboards/overview.json"
       }
     ]
