@@ -10,6 +10,7 @@
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
 # CI
+
 /deploy/ @therealpandey
 .github @therealpandey
 go.mod @therealpandey
@@ -108,12 +109,17 @@ go.mod @therealpandey
 /pkg/modules/role/ @therealpandey
 
 # IdentN Owners
+
 /pkg/identn/ @therealpandey
 /pkg/http/middleware/identn.go @therealpandey
 
 # Integration tests
 
 /tests/integration/ @therealpandey
+
+# Flagger Owners
+
+/pkg/flagger/ @therealpandey
 
 # OpenAPI types generator
 
@@ -134,6 +140,7 @@ go.mod @therealpandey
 /frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
 
 # Dashboard Widget Page
+
 /frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
 /frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
 
@@ -149,6 +156,7 @@ go.mod @therealpandey
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
 
 ## Dashboard Libs + Components
+
 /frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend
