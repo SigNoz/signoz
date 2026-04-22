@@ -20,17 +20,9 @@ def seeder(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerDocker:
-    """
-    HTTP seeder fixture — a Python container exposing POST/DELETE endpoints
-    that wrap the direct-ClickHouse-insert helpers (currently just traces;
-    logs + metrics to follow). Frontend tests call these endpoints to seed
-    telemetry with fine-grained per-test control.
-    """
+    """HTTP seeder container exposing POST/DELETE endpoints for per-test telemetry."""
 
     def create() -> types.TestContainerDocker:
-        # Build context is pytest's rootdir (tests/) so `fixtures/` is
-        # importable in the image under /app/fixtures and Dockerfile.seeder
-        # sits at the context root.
         docker_client = docker.from_env()
         docker_client.images.build(
             path=str(pytestconfig.rootpath),

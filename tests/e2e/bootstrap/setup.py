@@ -21,13 +21,7 @@ def test_setup(
     seeder: types.TestContainerDocker,
     pytestconfig: pytest.Config,
 ) -> None:
-    """
-    Bring the SigNoz backend up, register the admin, start the HTTP seeder
-    container, and persist endpoint coordinates for the Playwright side as
-    .env.local (loaded by playwright.config.ts via dotenv; overrides the
-    user-owned .env). Each spec owns its own data via the seeder — no
-    global pre-seed here.
-    """
+    """Bring the backend up and write e2e coordinates to .env.local."""
     host_cfg = signoz.self.host_configs["8080"]
     seeder_cfg = seeder.host_configs["8080"]
     out = _env_file(pytestconfig)
@@ -47,4 +41,4 @@ def test_teardown(
     apply_license: types.Operation,  # pylint: disable=unused-argument
     seeder: types.TestContainerDocker,  # pylint: disable=unused-argument
 ) -> None:
-    """Companion to test_setup — invoked with --teardown to free containers."""
+    """Fixture dependencies trigger container teardown via --teardown."""

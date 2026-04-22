@@ -1,3 +1,4 @@
+import time
 from http import HTTPStatus
 from typing import Callable, Dict, List, Tuple
 
@@ -31,6 +32,28 @@ USER_VIEWER_EMAIL = "viewer@integration.test"
 USER_VIEWER_PASSWORD = "password123Z$"
 
 USERS_BASE = "/api/v2/users"
+
+
+def _login(signoz: types.SigNoz, email: str, password: str) -> str:
+    """Complete GET /sessions/context + POST /sessions/email_password; return accessToken."""
+    ctx = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
+        params={
+            "email": email,
+            "ref": f"{signoz.self.host_configs['8080'].base()}",
+        },
+        timeout=5,
+    )
+    assert ctx.status_code == HTTPStatus.OK
+    org_id = ctx.json()["data"]["orgs"][0]["id"]
+
+    login = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
+        json={"email": email, "password": password, "orgId": org_id},
+        timeout=5,
+    )
+    assert login.status_code == HTTPStatus.OK
+    return login.json()["data"]["accessToken"]
 
 
 @pytest.fixture(name="create_user_admin", scope="package")
@@ -198,54 +221,38 @@ def apply_license(
             )
         )
 
-        ctx_resp = requests.get(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
-            params={
-                "email": USER_ADMIN_EMAIL,
-                "ref": f"{signoz.self.host_configs['8080'].base()}",
-            },
-            timeout=5,
-        )
-        assert ctx_resp.status_code == HTTPStatus.OK
-        org_id = ctx_resp.json()["data"]["orgs"][0]["id"]
+        access_token = _login(signoz, USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-        login_resp = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v2/sessions/email_password"),
-            json={
-                "email": USER_ADMIN_EMAIL,
-                "password": USER_ADMIN_PASSWORD,
-                "orgId": org_id,
-            },
-            timeout=5,
-        )
-        assert login_resp.status_code == HTTPStatus.OK
-        access_token = login_resp.json()["data"]["accessToken"]
-
-        resp = requests.post(
-            signoz.self.host_configs["8080"].get("/api/v3/licenses"),
-            json={"key": "secret-key"},
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=5,
-        )
-        # 202 = applied, 409 = already applied. Either is a success.
-        assert resp.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT)
+        # 202 = applied, 409 = already applied. Retry transient failures —
+        # the BE occasionally 5xxs right after startup before the license
+        # sync goroutine is ready.
+        license_url = signoz.self.host_configs["8080"].get("/api/v3/licenses")
+        auth_header = {"Authorization": f"Bearer {access_token}"}
+        for attempt in range(10):
+            resp = requests.post(
+                license_url,
+                json={"key": "secret-key"},
+                headers=auth_header,
+                timeout=5,
+            )
+            if resp.status_code in (HTTPStatus.ACCEPTED, HTTPStatus.CONFLICT):
+                break
+            if attempt == 9:
+                resp.raise_for_status()
+            time.sleep(1)
 
         # The ENTERPRISE license flips on the `onboarding` feature which
-        # redirects first-time admins to the onboarding questionnaire on
-        # every navigation. Mark the org's onboarding preference complete
-        # so specs can navigate directly to the feature under test.
+        # redirects first-time admins to a questionnaire. Mark the preference
+        # complete so specs can navigate directly to the feature under test.
         pref_resp = requests.put(
             signoz.self.host_configs["8080"].get(
                 "/api/v1/org/preferences/org_onboarding"
             ),
             json={"value": True},
-            headers={"Authorization": f"Bearer {access_token}"},
+            headers=auth_header,
             timeout=5,
         )
-        assert pref_resp.status_code in (
-            HTTPStatus.OK,
-            HTTPStatus.NO_CONTENT,
-        )
+        assert pref_resp.status_code in (HTTPStatus.OK, HTTPStatus.NO_CONTENT)
         return types.Operation(name="apply_license")
 
     def delete(_: types.Operation) -> None:

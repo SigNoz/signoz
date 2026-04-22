@@ -17,5 +17,9 @@ def tmpfs(
 
 
 def get_testdata_file_path(file: str) -> str:
-    testdata_dir = os.path.join(os.path.dirname(__file__), "..", "testdata")
+    # Integration testdata lives at tests/integration/testdata/. This helper
+    # resolves from tests/fixtures/fs.py, so walk up to tests/ and across.
+    testdata_dir = os.path.join(
+        os.path.dirname(__file__), "..", "integration", "testdata"
+    )
     return os.path.join(testdata_dir, file)

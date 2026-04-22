@@ -1,16 +1,9 @@
-"""
-HTTP seeder wrapping the direct-ClickHouse-insert helpers in
-fixtures/traces.py. Each POST endpoint accepts the same JSON shape as the
-corresponding pytest fixture input and tags every inserted row with
-resource `seeder=true`. DELETE truncates the underlying tables.
-
-Env:
-  CH_HOST, CH_PORT, CH_USER, CH_PASSWORD    — ClickHouse connection
-  CH_CLUSTER                                — cluster name for TRUNCATE ... ON CLUSTER
-"""
+"""HTTP seeder — wraps fixtures.{traces,logs,metrics} so Playwright specs
+can POST per-test telemetry (tagged `seeder=true`) and DELETE to clear."""
 
 import os
-from typing import Any, Dict, List
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator, Dict, List
 
 import clickhouse_connect
 from fastapi import FastAPI, HTTPException, Response, status
@@ -42,22 +35,24 @@ CH_CLUSTER = os.environ["CH_CLUSTER"]
 
 SEEDER_MARKER = {"seeder": "true"}
 
-_conn = None  # pylint: disable=invalid-name
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    conn = clickhouse_connect.get_client(
+        host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD
+    )
+    app.state.ch = conn
+    try:
+        yield
+    finally:
+        conn.close()
 
 
 def get_conn():
-    global _conn  # pylint: disable=global-statement
-    if _conn is None:
-        _conn = clickhouse_connect.get_client(
-            host=CH_HOST,
-            port=CH_PORT,
-            username=CH_USER,
-            password=CH_PASSWORD,
-        )
-    return _conn
+    return app.state.ch
 
 
-app = FastAPI(title="seeder", version="dev")
+app = FastAPI(title="seeder", version="dev", lifespan=lifespan)
 
 
 @app.get("/healthz")
@@ -68,6 +63,14 @@ def healthz() -> Dict[str, str]:
 def _tag(item: Dict[str, Any]) -> Dict[str, Any]:
     resources = {**(item.get("resources") or {}), **SEEDER_MARKER}
     return {**item, "resources": resources}
+
+
+# Metrics payload carries label dicts at the top level, not a `resources`
+# key — tagging goes on the `resource_attrs` wrapper that Metrics.from_dict
+# unpacks. Same effect, different key.
+def _tag_metrics(item: Dict[str, Any]) -> Dict[str, Any]:
+    resource_attrs = {**(item.get("resource_attrs") or {}), **SEEDER_MARKER}
+    return {**item, "resource_attrs": resource_attrs}
 
 
 @app.post("/telemetry/traces", status_code=status.HTTP_201_CREATED)
@@ -127,9 +130,6 @@ def delete_logs() -> Response:
 @app.post("/telemetry/metrics", status_code=status.HTTP_201_CREATED)
 def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
     try:
-        # Metrics data has label dicts at the top level (no `resources` key
-        # like traces/logs); tagging is on the resource_attrs inside the
-        # labels wrapper that Metrics.from_dict unpacks.
         metrics = [Metrics.from_dict(_tag_metrics(item)) for item in payload]
         insert_metrics_to_clickhouse(get_conn(), metrics)
         logger.info("inserted %d metrics", len(metrics))
@@ -152,8 +152,3 @@ def delete_metrics() -> Response:
     except Exception as e:
         logger.exception("truncate failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
-
-
-def _tag_metrics(item: Dict[str, Any]) -> Dict[str, Any]:
-    resource_attrs = {**(item.get("resource_attrs") or {}), **SEEDER_MARKER}
-    return {**item, "resource_attrs": resource_attrs}
