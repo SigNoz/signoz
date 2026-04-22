@@ -12,15 +12,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
-type clickhouseTraceStore struct {
+type traceStore struct {
 	telemetryStore telemetrystore.TelemetryStore
 }
 
-func newClickhouseTraceStore(ts telemetrystore.TelemetryStore) tracedetailtypes.TraceStore {
-	return &clickhouseTraceStore{telemetryStore: ts}
+func NewTraceStore(ts telemetrystore.TelemetryStore) *traceStore {
+	return &traceStore{telemetryStore: ts}
 }
 
-func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID string) (*tracedetailtypes.TraceSummary, error) {
+func (s *traceStore) GetTraceSummary(ctx context.Context, traceID string) (*tracedetailtypes.TraceSummary, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("trace_id", "min(start) AS start", "max(end) AS end", "sum(num_spans) AS num_spans")
 	sb.From(fmt.Sprintf("%s.%s", tracedetailtypes.TraceDB, tracedetailtypes.TraceSummaryTable))
@@ -41,7 +41,7 @@ func (s *clickhouseTraceStore) GetTraceSummary(ctx context.Context, traceID stri
 	return &summary, nil
 }
 
-func (s *clickhouseTraceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.StorableSpan, error) {
+func (s *traceStore) GetTraceSpans(ctx context.Context, traceID string, summary *tracedetailtypes.TraceSummary) ([]tracedetailtypes.StorableSpan, error) {
 	// DISTINCT ON (span_id) is ClickHouse-specific syntax not supported by sqlbuilder
 	query := fmt.Sprintf(`
 		SELECT DISTINCT ON (span_id)

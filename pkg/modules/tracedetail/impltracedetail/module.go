@@ -2,23 +2,21 @@ package impltracedetail
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/tracedetailtypes"
 )
 
 type module struct {
-	store  tracedetailtypes.TraceStore
-	logger *slog.Logger
+	store    tracedetailtypes.TraceStore
+	settings factory.ScopedProviderSettings
 }
 
-func NewModule(telemetryStore telemetrystore.TelemetryStore, providerSettings factory.ProviderSettings) *module {
+func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.ProviderSettings) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 	return &module{
-		store:  newClickhouseTraceStore(telemetryStore),
-		logger: scopedProviderSettings.Logger(),
+		store:    traceStore,
+		settings: scopedProviderSettings,
 	}
 }
 
