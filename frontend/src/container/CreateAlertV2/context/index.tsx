@@ -10,11 +10,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+	useCreateRule,
+	useTestRule,
+	useUpdateRuleByID,
+} from 'api/generated/services/rules';
 import { QueryParams } from 'constants/query';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
-import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
-import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -215,17 +217,14 @@ export function CreateAlertProvider(
 	const {
 		mutate: createAlertRule,
 		isLoading: isCreatingAlertRule,
-	} = useCreateAlertRule();
+	} = useCreateRule();
 
-	const {
-		mutate: testAlertRule,
-		isLoading: isTestingAlertRule,
-	} = useTestAlertRule();
+	const { mutate: testAlertRule, isLoading: isTestingAlertRule } = useTestRule();
 
 	const {
 		mutate: updateAlertRule,
 		isLoading: isUpdatingAlertRule,
-	} = useUpdateAlertRule(ruleId || '');
+	} = useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
@@ -249,6 +248,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
+			ruleId: ruleId || '',
 		}),
 		[
 			createAlertState,
@@ -267,6 +267,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode,
+			ruleId,
 		],
 	);
 

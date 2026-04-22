@@ -53,7 +53,8 @@
 		// horizontal offset when the scroller has padding or transform applied.
 		div[data-viewport-type='element'] {
 			left: 0;
-			padding: 4px 8px 4px 16px;
+			box-sizing: border-box;
+			padding: 4px 12px 4px 16px;
 		}
 
 		&::-webkit-scrollbar {

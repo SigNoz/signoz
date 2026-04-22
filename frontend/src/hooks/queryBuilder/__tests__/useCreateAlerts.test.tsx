@@ -56,7 +56,7 @@ jest.mock('lib/dashboardVariables/getDashboardVariables', () => ({
 }));
 
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): unknown => ({ selectedDashboard: undefined }),
+	useDashboardStore: (): unknown => ({ dashboardData: undefined }),
 }));
 
 jest.mock('utils/getGraphType', () => ({

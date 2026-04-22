@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreateIngestionKey201,
 	CreateIngestionKeyLimit201,
@@ -36,6 +34,9 @@ import type {
 	UpdateIngestionKeyLimitPathParameters,
 	UpdateIngestionKeyPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns the ingestion keys for a workspace
@@ -64,7 +65,7 @@ export const getGetIngestionKeysQueryKey = (
 
 export const getGetIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getIngestionKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetIngestionKeysParams,
 	options?: {
@@ -101,7 +102,7 @@ export type GetIngestionKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetIngestionKeys<
 	TData = Awaited<ReturnType<typeof getIngestionKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetIngestionKeysParams,
 	options?: {
@@ -158,7 +159,7 @@ export const createIngestionKey = (
 
 export const getCreateIngestionKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createIngestionKey>>,
@@ -175,8 +176,8 @@ export const getCreateIngestionKeyMutationOptions = <
 	const mutationKey = ['createIngestionKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -196,7 +197,8 @@ export const getCreateIngestionKeyMutationOptions = <
 export type CreateIngestionKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createIngestionKey>>
 >;
-export type CreateIngestionKeyMutationBody = BodyType<GatewaytypesPostableIngestionKeyDTO>;
+export type CreateIngestionKeyMutationBody =
+	BodyType<GatewaytypesPostableIngestionKeyDTO>;
 export type CreateIngestionKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -204,7 +206,7 @@ export type CreateIngestionKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateIngestionKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createIngestionKey>>,
@@ -237,7 +239,7 @@ export const deleteIngestionKey = ({
 
 export const getDeleteIngestionKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteIngestionKey>>,
@@ -254,8 +256,8 @@ export const getDeleteIngestionKeyMutationOptions = <
 	const mutationKey = ['deleteIngestionKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -283,7 +285,7 @@ export type DeleteIngestionKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteIngestionKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteIngestionKey>>,
@@ -319,7 +321,7 @@ export const updateIngestionKey = (
 
 export const getUpdateIngestionKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateIngestionKey>>,
@@ -342,8 +344,8 @@ export const getUpdateIngestionKeyMutationOptions = <
 	const mutationKey = ['updateIngestionKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -366,7 +368,8 @@ export const getUpdateIngestionKeyMutationOptions = <
 export type UpdateIngestionKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateIngestionKey>>
 >;
-export type UpdateIngestionKeyMutationBody = BodyType<GatewaytypesPostableIngestionKeyDTO>;
+export type UpdateIngestionKeyMutationBody =
+	BodyType<GatewaytypesPostableIngestionKeyDTO>;
 export type UpdateIngestionKeyMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -374,7 +377,7 @@ export type UpdateIngestionKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateIngestionKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateIngestionKey>>,
@@ -418,7 +421,7 @@ export const createIngestionKeyLimit = (
 
 export const getCreateIngestionKeyLimitMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createIngestionKeyLimit>>,
@@ -441,8 +444,8 @@ export const getCreateIngestionKeyLimitMutationOptions = <
 	const mutationKey = ['createIngestionKeyLimit'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -465,15 +468,17 @@ export const getCreateIngestionKeyLimitMutationOptions = <
 export type CreateIngestionKeyLimitMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createIngestionKeyLimit>>
 >;
-export type CreateIngestionKeyLimitMutationBody = BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
-export type CreateIngestionKeyLimitMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateIngestionKeyLimitMutationBody =
+	BodyType<GatewaytypesPostableIngestionKeyLimitDTO>;
+export type CreateIngestionKeyLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create limit for the ingestion key
  */
 export const useCreateIngestionKeyLimit = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createIngestionKeyLimit>>,
@@ -512,7 +517,7 @@ export const deleteIngestionKeyLimit = ({
 
 export const getDeleteIngestionKeyLimitMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteIngestionKeyLimit>>,
@@ -529,8 +534,8 @@ export const getDeleteIngestionKeyLimitMutationOptions = <
 	const mutationKey = ['deleteIngestionKeyLimit'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -551,14 +556,15 @@ export type DeleteIngestionKeyLimitMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteIngestionKeyLimit>>
 >;
 
-export type DeleteIngestionKeyLimitMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteIngestionKeyLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete limit for the ingestion key
  */
 export const useDeleteIngestionKeyLimit = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteIngestionKeyLimit>>,
@@ -594,7 +600,7 @@ export const updateIngestionKeyLimit = (
 
 export const getUpdateIngestionKeyLimitMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateIngestionKeyLimit>>,
@@ -617,8 +623,8 @@ export const getUpdateIngestionKeyLimitMutationOptions = <
 	const mutationKey = ['updateIngestionKeyLimit'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -641,15 +647,17 @@ export const getUpdateIngestionKeyLimitMutationOptions = <
 export type UpdateIngestionKeyLimitMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateIngestionKeyLimit>>
 >;
-export type UpdateIngestionKeyLimitMutationBody = BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
-export type UpdateIngestionKeyLimitMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateIngestionKeyLimitMutationBody =
+	BodyType<GatewaytypesUpdatableIngestionKeyLimitDTO>;
+export type UpdateIngestionKeyLimitMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update limit for the ingestion key
  */
 export const useUpdateIngestionKeyLimit = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateIngestionKeyLimit>>,
@@ -700,7 +708,7 @@ export const getSearchIngestionKeysQueryKey = (
 
 export const getSearchIngestionKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params: SearchIngestionKeysParams,
 	options?: {
@@ -738,7 +746,7 @@ export type SearchIngestionKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useSearchIngestionKeys<
 	TData = Awaited<ReturnType<typeof searchIngestionKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params: SearchIngestionKeysParams,
 	options?: {
