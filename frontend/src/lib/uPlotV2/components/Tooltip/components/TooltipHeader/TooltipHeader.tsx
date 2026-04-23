@@ -72,13 +72,15 @@ export default function TooltipHeader({
 			)}
 
 			{activeItem && (
-				<TooltipItem
-					item={activeItem}
-					isItemActive={true}
-					containerTestId="uplot-tooltip-pinned"
-					markerTestId="uplot-tooltip-pinned-marker"
-					contentTestId="uplot-tooltip-pinned-content"
-				/>
+				<div className={Styles.pinnedItem} data-testid="uplot-tooltip-pinned-item">
+					<TooltipItem
+						item={activeItem}
+						isItemActive={true}
+						containerTestId="uplot-tooltip-pinned"
+						markerTestId="uplot-tooltip-pinned-marker"
+						contentTestId="uplot-tooltip-pinned-content"
+					/>
+				</div>
 			)}
 		</div>
 	);

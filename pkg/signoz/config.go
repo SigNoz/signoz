@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -135,6 +136,9 @@ type Config struct {
 
 	// CloudIntegration config
 	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
+
+	// Authz config
+	Authz authz.Config `mapstructure:"authz"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -168,6 +172,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		serviceaccount.NewConfigFactory(),
 		auditor.NewConfigFactory(),
 		cloudintegration.NewConfigFactory(),
+		authz.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

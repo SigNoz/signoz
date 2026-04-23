@@ -7807,7 +7807,7 @@ paths:
       summary: Patch role
       tags:
       - role
-  /api/v1/roles/{id}/relation/{relation}/objects:
+  /api/v1/roles/{id}/relations/{relation}/objects:
     get:
       deprecated: false
       description: Gets all objects connected to the specified role via a given relation

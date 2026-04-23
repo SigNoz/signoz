@@ -5,14 +5,14 @@ description = ""
 authors = [{ name = "therealpandey", email = "vibhupandey28@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
-    "pytest>=8.3.5",
+    "pytest>=9.0.3",
     "psycopg2>=2.9.10",
     "testcontainers[clickhouse,keycloak,postgres]>=4.13.1",
     "wiremock>=2.6.1",
     "numpy>=2.3.2",
     "clickhouse-connect>=0.8.18",
     "svix-ksuid>=0.6.2",
-    "requests>=2.32.4",
+    "requests>=2.33.0",
     "sqlalchemy>=2.0.43",
     "selenium>=4.40.0",
     "isodate>=0.7.2",
