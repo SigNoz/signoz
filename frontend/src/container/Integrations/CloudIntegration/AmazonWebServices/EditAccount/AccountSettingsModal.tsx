@@ -9,10 +9,10 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Save } from 'lucide-react';
 
-import logEvent from '../../../../../../api/common/logEvent';
-import { CloudAccount } from '../../types';
-import { RegionSelector } from './RegionSelector';
-import RemoveIntegrationAccount from './RemoveIntegrationAccount';
+import logEvent from '../../../../../api/common/logEvent';
+import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
+import { RegionSelector } from '../RegionForm/RegionSelector';
+import { CloudAccount } from '../types';
 
 import './AccountSettingsModal.style.scss';
 

@@ -1,7 +1,7 @@
 import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-import HeroSection from '../AmazonWebServices/HeroSection/HeroSection';
+import HeroSection from '../../HeroSection/HeroSection';
 import ServiceDetails from '../AmazonWebServices/ServiceDetails/ServiceDetails';
 import ServicesList from '../ServicesList';
 

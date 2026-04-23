@@ -14,10 +14,10 @@ import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
-} from '../../../mapCloudAccountFromDto';
-import { CloudAccount } from '../../types';
-import AccountSettingsModal from './AccountSettingsModal';
-import CloudAccountSetupModal from './CloudAccountSetupModal';
+} from '../../mapCloudAccountFromDto';
+import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
+import AccountSettingsModal from '../EditAccount/AccountSettingsModal';
+import { CloudAccount } from '../types';
 
 import './AccountActions.style.scss';
 

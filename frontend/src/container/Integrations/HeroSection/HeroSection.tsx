@@ -1,7 +1,7 @@
 import { IntegrationType } from 'container/Integrations/types';
 
-import { getIntegrationMetadata } from '../../utils';
-import AccountActions from './components/AccountActions';
+import AccountActions from '../CloudIntegration/AmazonWebServices/AccountActions/AccountActions';
+import { getIntegrationMetadata } from '../CloudIntegration/utils';
 
 import './HeroSection.style.scss';
 

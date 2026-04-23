@@ -3,15 +3,18 @@ import { Form } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
 import cx from 'classnames';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+import {
+	ModalStateEnum,
+	RegionFormProps,
+} from 'container/Integrations/HeroSection/types';
 import { regions } from 'utils/regions';
 
-import { ModalStateEnum, RegionFormProps } from '../types';
-import AlertMessage from './AlertMessage';
+import AlertMessage from '../../AlertMessage';
 import {
 	ComplianceNote,
 	MonitoringRegionsSection,
 	RegionDeploymentSection,
-} from './IntegrateNowFormSections';
+} from '../IntegrateNowFormSections';
 import RenderConnectionFields from './RenderConnectionParams';
 
 export function RegionForm({

@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { Region } from 'utils/regions';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { RegionSelector } from './RegionSelector';
+import { RegionSelector } from './RegionForm/RegionSelector';
 
 // Form section components
 function RegionDeploymentSection({
