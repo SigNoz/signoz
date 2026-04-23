@@ -38,11 +38,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var q llmpricingruletypes.ListPricingRulesQuery
 	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
@@ -80,11 +76,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, err := ruleIDFromPath(r)
 	if err != nil {
@@ -111,11 +103,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	req := new(llmpricingruletypes.UpdatableLLMPricingRules)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
@@ -143,11 +131,7 @@ func (h *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, err := ruleIDFromPath(r)
 	if err != nil {
