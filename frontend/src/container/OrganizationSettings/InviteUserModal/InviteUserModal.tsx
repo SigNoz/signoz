@@ -4,6 +4,7 @@ import { Button, Form, FormInstance, Modal } from 'antd';
 import sendInvite from 'api/v1/invite/create';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 
 import InviteTeamMembers from '../InviteTeamMembers';
 import { InviteMemberFormValues } from '../utils';
@@ -40,7 +41,7 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 								email: member.email,
 								name: member?.name,
 								role: member.role,
-								frontendBaseUrl: window.location.origin,
+								frontendBaseUrl: getBaseUrl(),
 							});
 
 							notifications.success({

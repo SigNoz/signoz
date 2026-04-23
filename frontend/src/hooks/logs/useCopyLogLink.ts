@@ -17,6 +17,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { HIGHLIGHTED_DELAY } from './configs';
 import { UseCopyLogLink } from './types';
@@ -60,7 +61,7 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			urlQuery.set(QueryParams.startTime, minTime?.toString() || '');
 			urlQuery.set(QueryParams.endTime, maxTime?.toString() || '');
 
-			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+			const link = getAbsoluteUrl(`${pathname}?${urlQuery.toString()}`);
 
 			setCopy(link);
 

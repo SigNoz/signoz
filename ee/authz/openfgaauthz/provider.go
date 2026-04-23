@@ -86,6 +86,28 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*o
 	return provider.openfgaServer.BatchCheck(ctx, tupleReq)
 }
 
+func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error) {
+	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	batchResults, err := provider.openfgaServer.BatchCheck(ctx, tuples)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*authtypes.TransactionWithAuthorization, len(transactions))
+	for i, txn := range transactions {
+		result := batchResults[txn.ID.StringValue()]
+		results[i] = &authtypes.TransactionWithAuthorization{
+			Transaction: txn,
+			Authorized:  result.Authorized,
+		}
+	}
+	return results, nil
+}
+
 func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType authtypes.Type) ([]*authtypes.Object, error) {
 	return provider.openfgaServer.ListObjects(ctx, subject, relation, objectType)
 }

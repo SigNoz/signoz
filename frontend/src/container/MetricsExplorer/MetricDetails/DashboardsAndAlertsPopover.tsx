@@ -9,6 +9,7 @@ import {
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { Bell, Grid } from 'lucide-react';
+import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
@@ -67,9 +68,8 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={alert.alertId}
 						onClick={(): void => {
-							window.open(
+							openInNewTab(
 								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
-								'_blank',
 							);
 						}}
 						className="dashboards-popover-content-item"
@@ -90,11 +90,10 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={dashboard.dashboardId}
 						onClick={(): void => {
-							window.open(
+							openInNewTab(
 								generatePath(ROUTES.DASHBOARD, {
 									dashboardId: dashboard.dashboardId,
 								}),
-								'_blank',
 							);
 						}}
 						className="dashboards-popover-content-item"

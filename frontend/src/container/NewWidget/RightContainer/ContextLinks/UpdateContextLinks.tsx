@@ -18,6 +18,7 @@ import {
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { Plus, Trash2 } from 'lucide-react';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
+import { getBaseUrl } from 'utils/basePath';
 
 import VariablesDropdown from './VariablesDropdown';
 
@@ -84,7 +85,7 @@ function UpdateContextLinks({
 	);
 
 	// Function to get current domain
-	const getCurrentDomain = (): string => window.location.origin;
+	const getCurrentDomain = (): string => getBaseUrl();
 
 	// Function to handle variable selection from dropdown
 	const handleVariableSelect = (

@@ -818,7 +818,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		);
 
 		if (item && !('type' in item) && item.isExternal && item.url) {
-			window.open(item.url, '_blank');
+			openInNewTab(item.url);
 		}
 
 		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
