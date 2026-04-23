@@ -6,17 +6,18 @@
 
 
 .headerRow {
-	padding: 12px 12px 0 12px;
+	padding: var(--spacing-4) var(--spacing-4) 0 var(--spacing-4);
 	font-size: var(--font-size-sm);
 	font-weight: 500;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-2);
 }
 
 .pinnedItem {
-	padding: 8px 8px 0 8px;
+	padding: var(--spacing-2) var(--spacing-2) 0 var(--spacing-2);
 }
 
 .status {

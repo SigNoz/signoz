@@ -3,10 +3,10 @@
 	:global(div[data-viewport-type='element']) {
 		left: 0;
 		box-sizing: border-box;
-		padding: 0px 4px 0 8px;
+		padding: 0px var(--spacing-1) 0 var(--spacing-2);
 
 		[data-test-id='virtuoso-item-list'] > * + * {
-			margin-top: 4px;
+			margin-top: var(--spacing-1);
 		}
 	}
 
