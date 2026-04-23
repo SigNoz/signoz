@@ -6,7 +6,7 @@
 
 
 .headerRow {
-	padding: var(--spacing-4) var(--spacing-4) 0 var(--spacing-4);
+	padding: var(--spacing-8) var(--spacing-8) 0 var(--spacing-8);
 	font-size: var(--font-size-sm);
 	font-weight: 500;
 	display: flex;
@@ -17,7 +17,7 @@
 }
 
 .pinnedItem {
-	padding: var(--spacing-2) var(--spacing-2) 0 var(--spacing-2);
+	padding: var(--spacing-4) var(--spacing-4) 0 var(--spacing-4);
 }
 
 .status {
