@@ -4,21 +4,22 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation } from 'react-query';
 import type {
 	MutationFunction,
 	UseMutationOptions,
 	UseMutationResult,
 } from 'react-query';
-import { useMutation } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetWaterfall200,
 	GetWaterfallPathParameters,
 	RenderErrorResponseDTO,
 	TracedetailtypesPostableWaterfallDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * Returns the waterfall view of spans for a given trace ID with tree structure, metadata, and windowed pagination
@@ -40,7 +41,7 @@ export const getWaterfall = (
 
 export const getGetWaterfallMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getWaterfall>>,
@@ -63,8 +64,8 @@ export const getGetWaterfallMutationOptions = <
 	const mutationKey = ['getWaterfall'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -87,7 +88,8 @@ export const getGetWaterfallMutationOptions = <
 export type GetWaterfallMutationResult = NonNullable<
 	Awaited<ReturnType<typeof getWaterfall>>
 >;
-export type GetWaterfallMutationBody = BodyType<TracedetailtypesPostableWaterfallDTO>;
+export type GetWaterfallMutationBody =
+	BodyType<TracedetailtypesPostableWaterfallDTO>;
 export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -95,7 +97,7 @@ export type GetWaterfallMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useGetWaterfall = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getWaterfall>>,

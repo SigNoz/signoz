@@ -5584,9 +5584,8 @@ export interface TracedetailtypesEventDTO {
 /**
  * @nullable
  */
-export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap = {
-	[key: string]: number;
-} | null;
+export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
+	{ [key: string]: number } | null;
 
 export interface TracedetailtypesGettableWaterfallTraceDTO {
 	/**
