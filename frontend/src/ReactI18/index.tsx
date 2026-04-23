@@ -2,6 +2,7 @@ import { initReactI18next } from 'react-i18next';
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
+import { getBasePath } from 'utils/basePath';
 
 import cacheBursting from '../../i18n-translations-hash.json';
 
@@ -24,7 +25,7 @@ i18n
 				const ns = namespace[0];
 				const pathkey = `/${language}/${ns}`;
 				const hash = cacheBursting[pathkey as keyof typeof cacheBursting] || '';
-				return `/locales/${language}/${namespace}.json?h=${hash}`;
+				return `${getBasePath()}locales/${language}/${namespace}.json?h=${hash}`;
 			},
 		},
 		react: {
