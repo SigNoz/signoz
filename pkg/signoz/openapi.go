@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -61,6 +62,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ dashboard.Module }{},
 		struct{ dashboard.Handler }{},
 		struct{ metricsexplorer.Handler }{},
+		struct{ inframonitoring.Handler }{},
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
 		struct{ authz.Handler }{},

@@ -54,7 +54,7 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	managedRoles := []*authtypes.StorableRole{}
+	managedRoles := []*authtypes.Role{}
 	for _, orgIDStr := range orgIDs {
 		orgID, err := valuer.NewUUID(orgIDStr)
 		if err != nil {
@@ -63,19 +63,19 @@ func (migration *addManagedRoles) Up(ctx context.Context, db *bun.DB) error {
 
 		// signoz admin
 		signozAdminRole := authtypes.NewRole(authtypes.SigNozAdminRoleName, authtypes.SigNozAdminRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozAdminRole))
+		managedRoles = append(managedRoles, signozAdminRole)
 
 		// signoz editor
 		signozEditorRole := authtypes.NewRole(authtypes.SigNozEditorRoleName, authtypes.SigNozEditorRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozEditorRole))
+		managedRoles = append(managedRoles, signozEditorRole)
 
 		// signoz viewer
 		signozViewerRole := authtypes.NewRole(authtypes.SigNozViewerRoleName, authtypes.SigNozViewerRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozViewerRole))
+		managedRoles = append(managedRoles, signozViewerRole)
 
 		// signoz anonymous
 		signozAnonymousRole := authtypes.NewRole(authtypes.SigNozAnonymousRoleName, authtypes.SigNozAnonymousRoleDescription, authtypes.RoleTypeManaged, orgID)
-		managedRoles = append(managedRoles, authtypes.NewStorableRoleFromRole(signozAnonymousRole))
+		managedRoles = append(managedRoles, signozAnonymousRole)
 	}
 
 	if len(managedRoles) > 0 {

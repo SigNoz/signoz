@@ -1106,16 +1106,17 @@ export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
 	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
 }
 
-export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem = {
-	/**
-	 * @type string
-	 */
-	filter_pattern?: string;
-	/**
-	 * @type string
-	 */
-	log_group_name_prefix?: string;
-};
+export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem =
+	{
+		/**
+		 * @type string
+		 */
+		filter_pattern?: string;
+		/**
+		 * @type string
+		 */
+		log_group_name_prefix?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 	/**
@@ -1127,16 +1128,17 @@ export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 		| null;
 }
 
-export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem = {
-	/**
-	 * @type array
-	 */
-	MetricNames?: string[];
-	/**
-	 * @type string
-	 */
-	Namespace?: string;
-};
+export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem =
+	{
+		/**
+		 * @type array
+		 */
+		MetricNames?: string[];
+		/**
+		 * @type string
+		 */
+		Namespace?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
 	/**
@@ -3151,6 +3153,131 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface InframonitoringtypesHostFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesHostRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesHostRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activeHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	diskUsage: number;
+	/**
+	 * @type string
+	 */
+	hostName: string;
+	/**
+	 * @type integer
+	 */
+	inactiveHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	load15: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesHostRecordDTOMeta;
+	status: InframonitoringtypesHostStatusDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	wait: number;
+}
+
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
+export interface InframonitoringtypesHostsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingMetrics: string[] | null;
+}
+
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -4874,7 +5001,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4999,7 +5126,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -5084,8 +5211,8 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	algorithm?: string;
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType: RuletypesMatchTypeDTO;
-	op: RuletypesCompareOperatorDTO;
+	matchType?: RuletypesMatchTypeDTO;
+	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
@@ -6730,6 +6857,14 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListHosts200 = {
+	data: InframonitoringtypesHostsDTO;
 	/**
 	 * @type string
 	 */

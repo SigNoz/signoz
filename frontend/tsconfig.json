@@ -23,16 +23,15 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
-		"baseUrl": "./src",
 		"paths": {
 			"*": [
-				"./*"
+				"./src/*"
 			],
 			"@constants/*": [
-				"./container/OnboardingContainer/constants/*"
+				"./src/container/OnboardingContainer/constants/*"
 			],
 			"@/*": [
-				"./*"
+				"./src/*"
 			]
 		},
 		"downlevelIteration": true,
@@ -60,7 +59,6 @@
 		"src/**/*.d.ts",
 		"babel.config.cjs",
 		"./jest.config.ts",
-		"./.eslintrc.cjs",
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
@@ -68,8 +66,6 @@
 		"./vite.config.ts",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts",
-		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./**/*.d.ts"
 	]
 }

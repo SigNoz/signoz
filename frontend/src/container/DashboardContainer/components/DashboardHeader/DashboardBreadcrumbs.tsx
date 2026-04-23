@@ -13,13 +13,13 @@ import './DashboardBreadcrumbs.styles.scss';
 
 function DashboardBreadcrumbs(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedDashboard } = useDashboardStore();
-	const updatedAtRef = useRef(selectedDashboard?.updatedAt);
+	const { dashboardData } = useDashboardStore();
+	const updatedAtRef = useRef(dashboardData?.updatedAt);
 
-	const selectedData = selectedDashboard
+	const selectedData = dashboardData
 		? {
-				...selectedDashboard.data,
-				uuid: selectedDashboard.id,
+				...dashboardData.data,
+				uuid: dashboardData.id,
 		  }
 		: ({} as DashboardData);
 
@@ -31,7 +31,7 @@ function DashboardBreadcrumbs(): JSX.Element {
 		);
 
 		const hasDashboardBeenUpdated =
-			selectedDashboard?.updatedAt !== updatedAtRef.current;
+			dashboardData?.updatedAt !== updatedAtRef.current;
 		if (!hasDashboardBeenUpdated && dashboardsListQueryParamsString) {
 			safeNavigate({
 				pathname: ROUTES.ALL_DASHBOARD,
@@ -40,7 +40,7 @@ function DashboardBreadcrumbs(): JSX.Element {
 		} else {
 			safeNavigate(ROUTES.ALL_DASHBOARD);
 		}
-	}, [safeNavigate, selectedDashboard?.updatedAt]);
+	}, [safeNavigate, dashboardData?.updatedAt]);
 
 	return (
 		<div className="dashboard-breadcrumbs">

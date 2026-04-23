@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	ConfigReceiverDTO,
 	CreateChannel201,
@@ -29,6 +27,9 @@ import type {
 	RenderErrorResponseDTO,
 	UpdateChannelByIDPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all notification channels for the organization
@@ -48,7 +49,7 @@ export const getListChannelsQueryKey = () => {
 
 export const getListChannelsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listChannels>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listChannels>>,
@@ -82,7 +83,7 @@ export type ListChannelsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListChannels<
 	TData = Awaited<ReturnType<typeof listChannels>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listChannels>>,
@@ -135,7 +136,7 @@ export const createChannel = (
 
 export const getCreateChannelMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createChannel>>,
@@ -152,8 +153,8 @@ export const getCreateChannelMutationOptions = <
 	const mutationKey = ['createChannel'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -181,7 +182,7 @@ export type CreateChannelMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateChannel = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createChannel>>,
@@ -212,7 +213,7 @@ export const deleteChannelByID = ({ id }: DeleteChannelByIDPathParameters) => {
 
 export const getDeleteChannelByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteChannelByID>>,
@@ -229,8 +230,8 @@ export const getDeleteChannelByIDMutationOptions = <
 	const mutationKey = ['deleteChannelByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -258,7 +259,7 @@ export type DeleteChannelByIDMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteChannelByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteChannelByID>>,
@@ -299,7 +300,7 @@ export const getGetChannelByIDQueryKey = ({
 
 export const getGetChannelByIDQueryOptions = <
 	TData = Awaited<ReturnType<typeof getChannelByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetChannelByIDPathParameters,
 	options?: {
@@ -341,7 +342,7 @@ export type GetChannelByIDQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetChannelByID<
 	TData = Awaited<ReturnType<typeof getChannelByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetChannelByIDPathParameters,
 	options?: {
@@ -397,7 +398,7 @@ export const updateChannelByID = (
 
 export const getUpdateChannelByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateChannelByID>>,
@@ -420,8 +421,8 @@ export const getUpdateChannelByIDMutationOptions = <
 	const mutationKey = ['updateChannelByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -452,7 +453,7 @@ export type UpdateChannelByIDMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateChannelByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateChannelByID>>,
@@ -495,7 +496,7 @@ export const testChannel = (
 
 export const getTestChannelMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannel>>,
@@ -512,8 +513,8 @@ export const getTestChannelMutationOptions = <
 	const mutationKey = ['testChannel'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -541,7 +542,7 @@ export type TestChannelMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useTestChannel = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannel>>,
@@ -579,7 +580,7 @@ export const testChannelDeprecated = (
 
 export const getTestChannelDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannelDeprecated>>,
@@ -596,8 +597,8 @@ export const getTestChannelDeprecatedMutationOptions = <
 	const mutationKey = ['testChannelDeprecated'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -618,7 +619,8 @@ export type TestChannelDeprecatedMutationResult = NonNullable<
 	Awaited<ReturnType<typeof testChannelDeprecated>>
 >;
 export type TestChannelDeprecatedMutationBody = BodyType<ConfigReceiverDTO>;
-export type TestChannelDeprecatedMutationError = ErrorType<RenderErrorResponseDTO>;
+export type TestChannelDeprecatedMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @deprecated
@@ -626,7 +628,7 @@ export type TestChannelDeprecatedMutationError = ErrorType<RenderErrorResponseDT
  */
 export const useTestChannelDeprecated = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testChannelDeprecated>>,

@@ -26,10 +26,11 @@ export default function Histogram(props: HistogramChartProps): JSX.Element {
 				...props,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
+				canPinTooltip: rest.canPinTooltip,
 			};
 			return <HistogramTooltip {...tooltipProps} />;
 		},
-		[customTooltip, rest.yAxisUnit, rest.decimalPrecision],
+		[customTooltip, rest.yAxisUnit, rest.decimalPrecision, rest.canPinTooltip],
 	);
 
 	return (

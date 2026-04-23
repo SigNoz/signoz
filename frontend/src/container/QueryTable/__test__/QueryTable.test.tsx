@@ -14,7 +14,7 @@ jest.mock('react-router-dom', () => ({
 // Mock useDashabord hook
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
-		selectedDashboard: {
+		dashboardData: {
 			data: {
 				variables: [],
 			},
