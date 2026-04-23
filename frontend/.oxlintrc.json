@@ -286,7 +286,7 @@
     // Prevents useStore.getState() - export standalone actions instead
     "signoz/no-navigator-clipboard": "error",
     // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
-    "signoz/no-raw-absolute-path": "warn",
+    "signoz/no-raw-absolute-path": "error",
     // Prevents window.open(path), window.location.origin + path, window.location.href = path
     "no-restricted-imports": [
       "error",

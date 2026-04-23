@@ -17,6 +17,7 @@ import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import CreateEdit from './CreateEdit/CreateEdit';
 import SSOEnforcementToggle from './SSOEnforcementToggle';
@@ -144,7 +145,7 @@ function AuthDomain(): JSX.Element {
 						return <span className="auth-domain-list-na">N/A</span>;
 					}
 
-					const href = `${window.location.origin}/${relayPath}`;
+					const href = getAbsoluteUrl(`/${relayPath}`);
 					return <CopyToClipboard textToCopy={href} />;
 				},
 			},

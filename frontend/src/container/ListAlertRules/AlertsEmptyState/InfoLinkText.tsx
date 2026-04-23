@@ -1,5 +1,6 @@
 import { ArrowRightOutlined, PlayCircleFilled } from '@ant-design/icons';
 import { Flex, Typography } from 'antd';
+import { openInNewTab } from 'utils/navigation';
 
 interface InfoLinkTextProps {
 	infoText: string;
@@ -20,7 +21,7 @@ function InfoLinkText({
 		<Flex
 			onClick={(): void => {
 				onClick();
-				window.open(link, '_blank');
+				openInNewTab(link);
 			}}
 			className="info-link-container"
 		>

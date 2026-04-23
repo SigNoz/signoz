@@ -4,6 +4,7 @@ import {
 	CloudintegrationtypesServiceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { withBasePath } from 'utils/basePath';
 
 import './ServiceDashboards.styles.scss';
 
@@ -44,7 +45,11 @@ function ServiceDashboards({
 									return;
 								}
 								if (event.metaKey || event.ctrlKey) {
-									window.open(dashboardUrl, '_blank', 'noopener,noreferrer');
+									window.open(
+										withBasePath(dashboardUrl),
+										'_blank',
+										'noopener,noreferrer',
+									);
 									return;
 								}
 								safeNavigate(dashboardUrl);
@@ -54,7 +59,11 @@ function ServiceDashboards({
 									return;
 								}
 								if (event.button === 1) {
-									window.open(dashboardUrl, '_blank', 'noopener,noreferrer');
+									window.open(
+										withBasePath(dashboardUrl),
+										'_blank',
+										'noopener,noreferrer',
+									);
 								}
 							}}
 							onKeyDown={(event): void => {
