@@ -20,6 +20,7 @@ import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import { openInNewTab } from 'utils/navigation';
 import { v4 as uuid } from 'uuid';
 
 import './MessagingQueueHealthCheck.styles.scss';
@@ -76,7 +77,7 @@ function ErrorTitleAndKey({
 		if (isCloudUserVal && !!link) {
 			history.push(link);
 		} else {
-			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
+			openInNewTab(KAFKA_SETUP_DOC_LINK);
 		}
 	};
 	return {
