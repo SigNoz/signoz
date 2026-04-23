@@ -103,7 +103,7 @@ function TanStackHeaderRow<TData>({
 				'--tanstack-header-translate-x': `${Math.round(transform?.x ?? 0)}px`,
 				'--tanstack-header-translate-y': `${Math.round(transform?.y ?? 0)}px`,
 				'--tanstack-header-transition': isResizing ? 'none' : transition || 'none',
-			} as CSSProperties),
+			}) as CSSProperties,
 		[isResizing, transform?.x, transform?.y, transition],
 	);
 	const headerCellClassName = cx(
@@ -162,20 +162,13 @@ function TanStackHeaderRow<TData>({
 						)}
 						title={headerTitleAttr}
 						onClick={handleSortClick}
-						aria-sort={
-							currentSortDirection === 'asc'
-								? 'ascending'
-								: currentSortDirection === 'desc'
-								? 'descending'
-								: 'none'
-						}
 					>
 						<span className={headerStyles.tanstackSortLabel}>
 							{header?.column?.columnDef
 								? flexRender(header.column.columnDef.header, header.getContext())
 								: typeof column.header === 'function'
-								? column.header()
-								: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
+									? column.header()
+									: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
 						</span>
 						<span className={headerStyles.tanstackSortIndicator}>
 							{currentSortDirection === 'asc' ? (
@@ -193,8 +186,8 @@ function TanStackHeaderRow<TData>({
 						{header?.column?.columnDef
 							? flexRender(header.column.columnDef.header, header.getContext())
 							: typeof column.header === 'function'
-							? column.header()
-							: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
+								? column.header()
+								: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
 					</span>
 				)}
 				{isColumnRemovable && (

@@ -597,8 +597,9 @@
       "rules": {
         "import/first": "off",
         // Should ignore due to mocks
-        "signoz/no-navigator-clipboard": "off"
+        "signoz/no-navigator-clipboard": "off",
         // Tests can use navigator.clipboard directly
+        "signoz/no-zustand-getstate-in-hooks": "off"
       }
     },
     {
