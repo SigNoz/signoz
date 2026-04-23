@@ -66,8 +66,6 @@
 		"./vite.config.ts",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts",
-		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./**/*.d.ts"
 	]
 }

@@ -164,7 +164,8 @@ export function useIntegrationModal({
 				{
 					onSuccess: (response: CreateAccountMutationResult) => {
 						const accountId = response.data.id;
-						const connectionUrl = response.data.connectionArtifact.aws.connectionUrl;
+						const connectionUrl =
+							response.data.connectionArtifact.aws?.connectionUrl ?? '';
 
 						logEvent(
 							'AWS Integration: Account connection attempt redirected to AWS',

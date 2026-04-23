@@ -35,6 +35,8 @@ function QuerySection({
 	setQueryCategory,
 	alertType,
 	runQuery,
+	isLoadingQueries,
+	handleCancelQuery,
 	alertDef,
 	panelType,
 	ruleId,
@@ -226,6 +228,8 @@ function QuerySection({
 												queryType: queryCategory,
 											});
 										}}
+										handleCancelQuery={handleCancelQuery}
+										isLoadingQueries={isLoadingQueries}
 									/>
 								</span>
 							}
@@ -245,7 +249,11 @@ function QuerySection({
 							onChange={handleQueryCategoryChange}
 							tabBarExtraContent={
 								<span style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-									<RunQueryBtn onStageRunQuery={runQuery} />
+									<RunQueryBtn
+										onStageRunQuery={runQuery}
+										handleCancelQuery={handleCancelQuery}
+										isLoadingQueries={isLoadingQueries}
+									/>
 								</span>
 							}
 							items={items}
@@ -287,6 +295,8 @@ interface QuerySectionProps {
 	setQueryCategory: (n: EQueryType) => void;
 	alertType: AlertTypes;
 	runQuery: VoidFunction;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
