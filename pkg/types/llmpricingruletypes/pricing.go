@@ -102,7 +102,7 @@ type ListPricingRulesQuery struct {
 }
 
 type GettablePricingRules struct {
-	Items  []*GettablePricingRule `json:"items"  required:"true" nullable:"true"`
+	Items  []*GettablePricingRule `json:"items"  required:"true"`
 	Total  int                    `json:"total"  required:"true"`
 	Offset int                    `json:"offset" required:"true"`
 	Limit  int                    `json:"limit"  required:"true"`
