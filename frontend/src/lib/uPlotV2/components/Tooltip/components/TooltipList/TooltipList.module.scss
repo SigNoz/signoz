@@ -3,7 +3,11 @@
 	:global(div[data-viewport-type='element']) {
 		left: 0;
 		box-sizing: border-box;
-		padding: 4px 12px 4px 16px;
+		padding: 0px 4px 0 8px;
+
+		[data-test-id='virtuoso-item-list'] > * + * {
+			margin-top: 4px;
+		}
 	}
 
 	&::-webkit-scrollbar {
