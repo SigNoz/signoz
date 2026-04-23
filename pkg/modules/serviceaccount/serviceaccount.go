@@ -12,7 +12,8 @@ import (
 )
 
 type Getter interface {
-	GetServiceAccountsByOrgIDAndRoleID(context.Context, valuer.UUID, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
+	// OnBeforeRoleDelete checks if any service accounts are assigned to the role and rejects deletion if so.
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
 }
 
 type Module interface {

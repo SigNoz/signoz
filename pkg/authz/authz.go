@@ -83,6 +83,9 @@ type AuthZ interface {
 	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
 }
 
+// OnBeforeRoleDelete is a callback invoked before a role is deleted.
+type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
+
 type RegisterTypeable interface {
 	MustGetTypeables() []authtypes.Typeable
 

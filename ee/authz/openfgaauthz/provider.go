@@ -11,8 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -22,24 +20,23 @@ import (
 )
 
 type provider struct {
-	config               authz.Config
-	pkgAuthzService      authz.AuthZ
-	openfgaServer        *openfgaserver.Server
-	licensing            licensing.Licensing
-	store                authtypes.RoleStore
-	registry             []authz.RegisterTypeable
-	settings             factory.ScopedProviderSettings
-	userGetter           user.Getter
-	serviceAccountGetter serviceaccount.Getter
+	config             authz.Config
+	pkgAuthzService    authz.AuthZ
+	openfgaServer      *openfgaserver.Server
+	licensing          licensing.Licensing
+	store              authtypes.RoleStore
+	registry           []authz.RegisterTypeable
+	settings           factory.ScopedProviderSettings
+	onBeforeRoleDelete []authz.OnBeforeRoleDelete
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, userGetter user.Getter, serviceAccountGetter serviceaccount.Getter, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, licensing, userGetter, serviceAccountGetter, registry)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, licensing, onBeforeRoleDelete, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, userGetter user.Getter, serviceAccountGetter serviceaccount.Getter, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
 	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, openfgaDataStore)
 	pkgAuthzService, err := pkgOpenfgaAuthzProvider.New(ctx, settings, config)
 	if err != nil {
@@ -54,15 +51,14 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 	scopedSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/ee/authz/openfgaauthz")
 
 	return &provider{
-		config:               config,
-		pkgAuthzService:      pkgAuthzService,
-		openfgaServer:        openfgaServer,
-		licensing:            licensing,
-		store:                sqlauthzstore.NewSqlAuthzStore(sqlstore),
-		registry:             registry,
-		settings:             scopedSettings,
-		userGetter:           userGetter,
-		serviceAccountGetter: serviceAccountGetter,
+		config:             config,
+		pkgAuthzService:    pkgAuthzService,
+		openfgaServer:      openfgaServer,
+		licensing:          licensing,
+		store:              sqlauthzstore.NewSqlAuthzStore(sqlstore),
+		registry:           registry,
+		settings:           scopedSettings,
+		onBeforeRoleDelete: onBeforeRoleDelete,
 	}, nil
 }
 
@@ -287,33 +283,17 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	users, err := provider.userGetter.GetUsersByOrgIDAndRoleID(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-	// cannot move these checks in type layer until the coretypes are sorted
-	if len(users) > 0 {
-		return errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleHasUserAssignees, "role has active user assignments, remove them before deleting")
-	}
-
-	serviceAccounts, err := provider.serviceAccountGetter.GetServiceAccountsByOrgIDAndRoleID(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-	if len(serviceAccounts) > 0 {
-		return errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleHasServiceAccountAssignees, "role has active service account assignments, remove them before deleting")
+	for _, cb := range provider.onBeforeRoleDelete {
+		if err := cb(ctx, orgID, id); err != nil {
+			return err
+		}
 	}
 
 	if err := provider.deleteTuples(ctx, role.Name, orgID); err != nil {
-		return errors.WithAdditionalf(err, "failed to delete transactions for the role: %s", role.Name)
+		return errors.WithAdditionalf(err, "failed to delete tuples for the role: %s", role.Name)
 	}
 
-	err = provider.store.Delete(ctx, orgID, id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return provider.store.Delete(ctx, orgID, id)
 }
 
 func (provider *provider) MustGetTypeables() []authtypes.Typeable {

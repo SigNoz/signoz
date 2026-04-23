@@ -3,7 +3,9 @@ package implserviceaccount
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -16,6 +18,13 @@ func NewGetter(store serviceaccounttypes.Store) serviceaccount.Getter {
 	return &getter{store: store}
 }
 
-func (getter *getter) GetServiceAccountsByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
-	return getter.store.GetServiceAccountsByOrgIDAndRoleID(ctx, orgID, roleID)
+func (getter *getter) OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error {
+	serviceAccounts, err := getter.store.GetServiceAccountsByOrgIDAndRoleID(ctx, orgID, roleID)
+	if err != nil {
+		return err
+	}
+	if len(serviceAccounts) > 0 {
+		return errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleHasServiceAccountAssignees, "role has active service account assignments, remove them before deleting")
+	}
+	return nil
 }
