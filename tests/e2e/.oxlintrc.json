@@ -1,5 +1,6 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"jsPlugins": ["eslint-plugin-playwright"],
 	"plugins": ["eslint", "typescript", "unicorn", "import", "promise"],
 	"categories": {
 		"correctness": "warn"
@@ -18,7 +19,12 @@
 		"no-var": "error",
 		"no-console": ["warn", { "allow": ["warn", "error"] }],
 		"typescript/no-unused-vars": "error",
-		"typescript/no-explicit-any": "warn"
+		"typescript/no-explicit-any": "warn",
+		"playwright/expect-expect": "error",
+		"playwright/no-conditional-in-test": "error",
+		"playwright/no-page-pause": "error",
+		"playwright/no-wait-for-timeout": "warn",
+		"playwright/prefer-web-first-assertions": "error"
 	},
 	"overrides": [
 		{

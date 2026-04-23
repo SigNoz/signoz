@@ -34,6 +34,7 @@
     "@playwright/test": "^1.57.0-alpha-2025-10-09",
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
+    "eslint-plugin-playwright": "^2.10.2",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.59.0",
     "oxlint-tsgolint": "^0.20.0",
