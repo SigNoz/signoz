@@ -4,7 +4,7 @@
 
 	.support-page-header {
 		border-bottom: 1px solid var(--l1-border);
-		background: color-mix(in srgb, var(--background) 70%, transparent);
+		background: var(--l1-background);
 		backdrop-filter: blur(20px);
 
 		.support-page-header-title {

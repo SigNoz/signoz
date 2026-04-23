@@ -7,12 +7,12 @@
 
 	::-webkit-scrollbar-track {
 		box-shadow: inset 0 0 6px
-			color-mix(in srgb, var(--background) 30%, transparent);
+			color-mix(in srgb, var(--l1-background) 30%, transparent);
 	}
 
 	&.dark {
 		.ant-layout-sider-trigger {
-			background-color: var(--background) !important;
+			background-color: var(--l1-background) !important;
 		}
 	}
 

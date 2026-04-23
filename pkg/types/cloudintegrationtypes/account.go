@@ -33,10 +33,6 @@ type AccountConfig struct {
 	AWS *AWSAccountConfig `json:"aws" required:"true" nullable:"false"`
 }
 
-type AWSAccountConfig struct {
-	Regions []string `json:"regions" required:"true" nullable:"false"`
-}
-
 type PostableAccount struct {
 	Config      *PostableAccountConfig `json:"config" required:"true"`
 	Credentials *Credentials           `json:"credentials" required:"true"`
@@ -45,7 +41,7 @@ type PostableAccount struct {
 type PostableAccountConfig struct {
 	// as agent version is common for all providers, we can keep it at top level of this struct
 	AgentVersion string
-	Aws          *AWSPostableAccountConfig `json:"aws" required:"true" nullable:"false"`
+	AWS          *AWSPostableAccountConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 type Credentials struct {
@@ -55,11 +51,6 @@ type Credentials struct {
 	IngestionKey string `json:"ingestionKey" required:"true"`
 }
 
-type AWSPostableAccountConfig struct {
-	DeploymentRegion string   `json:"deploymentRegion" required:"true"`
-	Regions          []string `json:"regions" required:"true" nullable:"false"`
-}
-
 type GettableAccountWithConnectionArtifact struct {
 	ID                 valuer.UUID         `json:"id" required:"true"`
 	ConnectionArtifact *ConnectionArtifact `json:"connectionArtifact" required:"true"`
@@ -67,11 +58,7 @@ type GettableAccountWithConnectionArtifact struct {
 
 type ConnectionArtifact struct {
 	// required till new providers are added
-	Aws *AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSConnectionArtifact struct {
-	ConnectionURL string `json:"connectionUrl" required:"true"`
+	AWS *AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
 }
 
 type GetConnectionArtifactRequest = PostableAccount
@@ -173,25 +160,25 @@ func NewGettableAccounts(accounts []*Account) *GettableAccounts {
 func NewAccountConfigFromPostable(provider CloudProviderType, config *PostableAccountConfig) (*AccountConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
-		if config.Aws == nil {
+		if config.AWS == nil {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "AWS config can not be nil for AWS provider")
 		}
 
-		if err := validateAWSRegion(config.Aws.DeploymentRegion); err != nil {
+		if err := validateAWSRegion(config.AWS.DeploymentRegion); err != nil {
 			return nil, err
 		}
 
-		if len(config.Aws.Regions) == 0 {
+		if len(config.AWS.Regions) == 0 {
 			return nil, errors.NewInvalidInputf(ErrCodeInvalidInput, "at least one region is required")
 		}
 
-		for _, region := range config.Aws.Regions {
+		for _, region := range config.AWS.Regions {
 			if err := validateAWSRegion(region); err != nil {
 				return nil, err
 			}
 		}
 
-		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.Aws.Regions}}, nil
+		return &AccountConfig{AWS: &AWSAccountConfig{Regions: config.AWS.Regions}}, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
@@ -302,4 +289,8 @@ func (config *AccountConfig) ToJSON() ([]byte, error) {
 	}
 
 	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
+}
+
+func NewIngestionKeyName(provider CloudProviderType) string {
+	return fmt.Sprintf("%s-integration", provider.StringValue())
 }

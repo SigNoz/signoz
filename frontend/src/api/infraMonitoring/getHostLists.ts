@@ -33,6 +33,8 @@ export interface HostData {
 	hostName: string;
 	active: boolean;
 	os: string;
+	/** Present when the list API returns grouped rows or extra resource attributes. */
+	meta?: Record<string, string>;
 	cpu: number;
 	cpuTimeSeries: TimeSeries;
 	memory: number;

@@ -1,9 +1,7 @@
 import { useCallback, useState } from 'react';
-import { Callout } from '@signozhq/callout';
-import { Checkbox } from '@signozhq/checkbox';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Callout, Checkbox, Input } from '@signozhq/ui';
 import { Form, Tooltip } from 'antd';
 
 import ClaimMappingSection from './components/ClaimMappingSection';
@@ -145,19 +143,20 @@ function ConfigureOIDCAuthnProvider({
 					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['oidcConfig', 'insecureSkipEmailVerified']}
-							valuePropName="checked"
+							valuePropName="value"
 							noStyle
 						>
 							<Checkbox
 								id="oidc-skip-email-verification"
-								labelName="Skip Email Verification"
-								onCheckedChange={(checked: boolean): void => {
+								onChange={(checked: boolean): void => {
 									form.setFieldValue(
 										['oidcConfig', 'insecureSkipEmailVerified'],
 										checked,
 									);
 								}}
-							/>
+							>
+								Skip Email Verification
+							</Checkbox>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
 							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
@@ -167,29 +166,27 @@ function ConfigureOIDCAuthnProvider({
 					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['oidcConfig', 'getUserInfo']}
-							valuePropName="checked"
+							valuePropName="value"
 							noStyle
 						>
 							<Checkbox
 								id="oidc-get-user-info"
-								labelName="Get User Info"
-								onCheckedChange={(checked: boolean): void => {
+								onChange={(checked: boolean): void => {
 									form.setFieldValue(['oidcConfig', 'getUserInfo'], checked);
 								}}
-							/>
+							>
+								Get User Info
+							</Checkbox>
 						</Form.Item>
 						<Tooltip title="Use the userinfo endpoint to get additional claims. Useful when providers return thin ID tokens.">
 							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 						</Tooltip>
 					</div>
-
-					<Callout
-						type="warning"
-						size="small"
-						showIcon
-						description="OIDC won't be enabled unless you enter all the attributes above"
-						className="callout"
-					/>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							OIDC won&apos;t be enabled unless you enter all the attributes above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Advanced Settings */}

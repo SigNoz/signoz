@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import ChartLayout from 'container/DashboardContainer/visualization/layout/ChartLayout/ChartLayout';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
@@ -25,11 +25,14 @@ export default function ChartWrapper({
 	showTooltip = true,
 	showLegend = true,
 	canPinTooltip = false,
+	pinKey,
+	onClick,
 	syncMode,
 	syncKey,
 	onDestroy = noop,
 	children,
 	layoutChildren,
+	yAxisUnit,
 	customTooltip,
 	pinnedTooltipElement,
 	'data-testid': testId,
@@ -60,6 +63,13 @@ export default function ChartWrapper({
 			return null;
 		},
 		[customTooltip],
+	);
+
+	const syncMetadata = useMemo(
+		() => ({
+			yAxisUnit,
+		}),
+		[yAxisUnit],
 	);
 
 	return (
@@ -93,12 +103,15 @@ export default function ChartWrapper({
 							<TooltipPlugin
 								config={config}
 								canPinTooltip={canPinTooltip}
+								pinKey={pinKey}
+								onClick={onClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,
 									averageLegendWidth + TOOLTIP_WIDTH_PADDING,
 								)}
 								syncKey={syncKey}
+								syncMetadata={syncMetadata}
 								render={renderTooltipCallback}
 								pinnedTooltipElement={pinnedTooltipElement}
 							/>

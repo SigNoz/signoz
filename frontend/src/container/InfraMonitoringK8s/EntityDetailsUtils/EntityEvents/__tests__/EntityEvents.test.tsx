@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import * as appContextHooks from 'providers/App/App';
@@ -106,7 +106,7 @@ const mockFilters: IBuilderQuery['filters'] = {
 const isModalTimeSelection = false;
 const mockHandleTimeChange = jest.fn();
 const selectedInterval: Time = '1m';
-const category = K8sCategory.PODS;
+const category = InfraMonitoringEntity.PODS;
 const queryKey = 'pod-events';
 
 const mockEventsData = {

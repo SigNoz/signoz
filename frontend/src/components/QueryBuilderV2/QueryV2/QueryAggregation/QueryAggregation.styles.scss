@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-aggregation-container {
 	display: block;
 
@@ -26,7 +28,7 @@
 				&.error {
 					.cm-editor {
 						.cm-content {
-							border-color: var(--bg-cherry-500) !important;
+							border-color: var(--danger-background) !important;
 						}
 					}
 				}
@@ -140,7 +142,7 @@
 					.cm-line {
 						line-height: 36px !important;
 						font-family: 'Space Mono', monospace !important;
-						background-color: var(--l1-background) !important;
+						background-color: var(--l2-background) !important;
 
 						::-moz-selection {
 							background: var(--l3-background) !important;
@@ -184,7 +186,7 @@
 					max-width: 300px;
 
 					.query-aggregation-error-message {
-						color: var(--bg-cherry-500);
+						color: var(--danger-background);
 						font-size: 12px;
 						line-height: 16px;
 					}
@@ -196,6 +198,7 @@
 					min-width: auto;
 				}
 			}
+
 			.close-btn {
 				border-radius: 0px 2px 2px 0px;
 				border: 1px solid var(--l1-border);
@@ -270,7 +273,7 @@
 
 						.cm-line {
 							::-moz-selection {
-								background: var(--l1-background) !important;
+								background: var(--l2-background) !important;
 								opacity: 0.5 !important;
 							}
 

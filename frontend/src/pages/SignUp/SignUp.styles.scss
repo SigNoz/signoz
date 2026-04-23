@@ -81,9 +81,9 @@
 				&.ant-input-affix-wrapper {
 					height: 32px;
 					border-radius: 2px;
-					background: var(--l3-background);
-					border-color: var(--l1-border);
-					color: var(--l1-foreground);
+					background: var(--l2-background);
+					border-color: var(--l2-border);
+					color: var(--l2-foreground);
 				}
 
 				&.ant-input-affix-wrapper {
@@ -94,7 +94,7 @@
 				}
 
 				&::placeholder {
-					color: var(--l3-foreground);
+					color: var(--l2-foreground);
 				}
 
 				&:focus {
@@ -104,7 +104,7 @@
 
 			.signup-form-input {
 				height: 32px;
-				background: var(--l3-background);
+				background: var(--l2-background);
 				border: 1px solid var(--l1-border);
 				border-radius: 2px;
 				padding: 6px 8px;
@@ -116,7 +116,7 @@
 				color: var(--l1-foreground);
 
 				&::placeholder {
-					color: var(--l3-foreground);
+					color: var(--l2-foreground);
 				}
 
 				&:hover {
@@ -136,8 +136,9 @@
 		}
 
 		.signup-error-callout {
-			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
-			border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
 			border-radius: 4px;
 			animation: horizontal-shaking 300ms ease-out;
 		}

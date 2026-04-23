@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreateMapper201,
 	CreateMapperPathParameters,
@@ -37,6 +35,9 @@ import type {
 	UpdateMapperPathParameters,
 	UpdateMappingGroupPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * Returns all span attribute mapping groups for the authenticated org.
@@ -65,7 +66,7 @@ export const getListSpanAttributeMappingGroupsQueryKey = (
 
 export const getListSpanAttributeMappingGroupsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listSpanAttributeMappingGroups>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListSpanAttributeMappingGroupsParams,
 	options?: {
@@ -95,7 +96,8 @@ export const getListSpanAttributeMappingGroupsQueryOptions = <
 export type ListSpanAttributeMappingGroupsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listSpanAttributeMappingGroups>>
 >;
-export type ListSpanAttributeMappingGroupsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListSpanAttributeMappingGroupsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List span attribute mapping groups
@@ -103,7 +105,7 @@ export type ListSpanAttributeMappingGroupsQueryError = ErrorType<RenderErrorResp
 
 export function useListSpanAttributeMappingGroups<
 	TData = Awaited<ReturnType<typeof listSpanAttributeMappingGroups>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListSpanAttributeMappingGroupsParams,
 	options?: {
@@ -163,7 +165,7 @@ export const createMappingGroup = (
 
 export const getCreateMappingGroupMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMappingGroup>>,
@@ -180,8 +182,8 @@ export const getCreateMappingGroupMutationOptions = <
 	const mutationKey = ['createMappingGroup'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -201,7 +203,8 @@ export const getCreateMappingGroupMutationOptions = <
 export type CreateMappingGroupMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createMappingGroup>>
 >;
-export type CreateMappingGroupMutationBody = BodyType<SpanattributemappingtypesPostableGroupDTO>;
+export type CreateMappingGroupMutationBody =
+	BodyType<SpanattributemappingtypesPostableGroupDTO>;
 export type CreateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -209,7 +212,7 @@ export type CreateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateMappingGroup = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMappingGroup>>,
@@ -242,7 +245,7 @@ export const deleteMappingGroup = ({
 
 export const getDeleteMappingGroupMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMappingGroup>>,
@@ -259,8 +262,8 @@ export const getDeleteMappingGroupMutationOptions = <
 	const mutationKey = ['deleteMappingGroup'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -288,7 +291,7 @@ export type DeleteMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteMappingGroup = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMappingGroup>>,
@@ -324,7 +327,7 @@ export const updateMappingGroup = (
 
 export const getUpdateMappingGroupMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMappingGroup>>,
@@ -347,8 +350,8 @@ export const getUpdateMappingGroupMutationOptions = <
 	const mutationKey = ['updateMappingGroup'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -371,7 +374,8 @@ export const getUpdateMappingGroupMutationOptions = <
 export type UpdateMappingGroupMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMappingGroup>>
 >;
-export type UpdateMappingGroupMutationBody = BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
+export type UpdateMappingGroupMutationBody =
+	BodyType<SpanattributemappingtypesUpdatableGroupDTO>;
 export type UpdateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -379,7 +383,7 @@ export type UpdateMappingGroupMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateMappingGroup = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMappingGroup>>,
@@ -426,7 +430,7 @@ export const getListMappersQueryKey = ({
 
 export const getListMappersQueryOptions = <
 	TData = Awaited<ReturnType<typeof listMappers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ groupId }: ListMappersPathParameters,
 	options?: {
@@ -468,7 +472,7 @@ export type ListMappersQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListMappers<
 	TData = Awaited<ReturnType<typeof listMappers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ groupId }: ListMappersPathParameters,
 	options?: {
@@ -526,7 +530,7 @@ export const createMapper = (
 
 export const getCreateMapperMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMapper>>,
@@ -549,8 +553,8 @@ export const getCreateMapperMutationOptions = <
 	const mutationKey = ['createMapper'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -573,7 +577,8 @@ export const getCreateMapperMutationOptions = <
 export type CreateMapperMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createMapper>>
 >;
-export type CreateMapperMutationBody = BodyType<SpanattributemappingtypesPostableMapperDTO>;
+export type CreateMapperMutationBody =
+	BodyType<SpanattributemappingtypesPostableMapperDTO>;
 export type CreateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -581,7 +586,7 @@ export type CreateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateMapper = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMapper>>,
@@ -621,7 +626,7 @@ export const deleteMapper = ({
 
 export const getDeleteMapperMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMapper>>,
@@ -638,8 +643,8 @@ export const getDeleteMapperMutationOptions = <
 	const mutationKey = ['deleteMapper'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -667,7 +672,7 @@ export type DeleteMapperMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteMapper = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMapper>>,
@@ -703,7 +708,7 @@ export const updateMapper = (
 
 export const getUpdateMapperMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMapper>>,
@@ -726,8 +731,8 @@ export const getUpdateMapperMutationOptions = <
 	const mutationKey = ['updateMapper'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -750,7 +755,8 @@ export const getUpdateMapperMutationOptions = <
 export type UpdateMapperMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMapper>>
 >;
-export type UpdateMapperMutationBody = BodyType<SpanattributemappingtypesUpdatableMapperDTO>;
+export type UpdateMapperMutationBody =
+	BodyType<SpanattributemappingtypesUpdatableMapperDTO>;
 export type UpdateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -758,7 +764,7 @@ export type UpdateMapperMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateMapper = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMapper>>,

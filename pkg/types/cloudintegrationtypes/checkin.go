@@ -51,11 +51,6 @@ type ProviderIntegrationConfig struct {
 	AWS *AWSIntegrationConfig `json:"aws" required:"true" nullable:"false"`
 }
 
-type AWSIntegrationConfig struct {
-	EnabledRegions              []string                        `json:"enabledRegions" required:"true" nullable:"false"`
-	TelemetryCollectionStrategy *AWSTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
-}
-
 // NewGettableAgentCheckIn constructs a backward-compatible response from an AgentCheckInResponse.
 // It populates the old snake_case fields (account_id, cloud_account_id, integration_config, removed_at)
 // from the new camelCase fields so older agents continue to work unchanged.

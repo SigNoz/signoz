@@ -65,6 +65,9 @@ export interface QueryBuilderProps {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
 	currentQuery: IBuilderQuery;
 	setCurrentQuery: (query: IBuilderQuery) => void;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
+	onRunQuery?: () => void;
 }
 
 export interface MetricNameSearchProps {

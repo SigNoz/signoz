@@ -2,6 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
+
 	&__steps-selector {
 		display: flex;
 		justify-content: center;
@@ -11,28 +12,5 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-	}
-}
-
-.lightMode {
-	.steps-transition-results {
-		&__steps-selector {
-			.views-tabs {
-				.tab {
-					background: var(--l1-foreground);
-				}
-
-				.selected_view {
-					background: var(--l3-background);
-					border: 1px solid var(--l1-border);
-					color: var(--l2-foreground);
-				}
-
-				.selected_view::before {
-					background: var(--l3-background);
-					border-left: 1px solid var(--l1-border);
-				}
-			}
-		}
 	}
 }
