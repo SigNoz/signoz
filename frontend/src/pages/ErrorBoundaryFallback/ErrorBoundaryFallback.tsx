@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Home, LifeBuoy } from 'lucide-react';
+import { withBasePath } from 'utils/basePath';
 
 import cloudUrl from '@/assets/Images/cloud.svg';
 
@@ -11,8 +12,8 @@ import './ErrorBoundaryFallback.styles.scss';
 
 function ErrorBoundaryFallback(): JSX.Element {
 	const handleReload = (): void => {
-		// Go to home page
-		window.location.href = ROUTES.HOME;
+		// Hard reload resets Sentry.ErrorBoundary state; withBasePath preserves any /signoz/ prefix.
+		window.location.href = withBasePath(ROUTES.HOME);
 	};
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();

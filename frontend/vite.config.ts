@@ -10,6 +10,19 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+// In dev the Go backend is not involved, so replace the [[.BaseHref]] placeholder
+// with the configured base path so relative assets resolve correctly from the Vite dev server.
+// Set VITE_BASE_PATH env var to test with a custom base path (e.g., /signoz/).
+function devBasePathPlugin(basePath: string): Plugin {
+	return {
+		name: 'dev-base-path',
+		apply: 'serve',
+		transformIndexHtml(html): string {
+			return html.replaceAll('[[.BaseHref]]', basePath);
+		},
+	};
+}
+
 function rawMarkdownPlugin(): Plugin {
 	return {
 		name: 'raw-markdown',
@@ -28,10 +41,13 @@ function rawMarkdownPlugin(): Plugin {
 export default defineConfig(
 	({ mode }): UserConfig => {
 		const env = loadEnv(mode, process.cwd(), '');
+		// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
+		const basePath = env.VITE_BASE_PATH || '/';
 
 		const plugins = [
 			tsconfigPaths(),
 			rawMarkdownPlugin(),
+			devBasePathPlugin(basePath),
 			react(),
 			createHtmlPlugin({
 				inject: {
@@ -124,6 +140,9 @@ export default defineConfig(
 				'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
 				'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			},
+			// In production, use relative paths so assets work with any base path injected by the backend.
+		// In dev, use the configured base path for proper HMR and routing.
+		base: mode === 'production' ? './' : basePath,
 			build: {
 				sourcemap: true,
 				outDir: 'build',

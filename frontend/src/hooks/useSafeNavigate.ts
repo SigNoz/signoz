@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { cloneDeep, isEqual } from 'lodash-es';
+import { withBasePath } from 'utils/basePath';
 
 interface NavigateOptions {
 	replace?: boolean;
@@ -130,7 +131,7 @@ export const useSafeNavigate = (
 					typeof to === 'string'
 						? to
 						: `${to.pathname || location.pathname}${to.search || ''}`;
-				window.open(targetPath, '_blank');
+				window.open(withBasePath(targetPath), '_blank');
 				return;
 			}
 

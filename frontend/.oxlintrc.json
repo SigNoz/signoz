@@ -286,6 +286,8 @@
     // Prevents useStore.getState() - export standalone actions instead
     "signoz/no-navigator-clipboard": "error",
     // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
+    "signoz/no-raw-absolute-path": "warn",
+    // Prevents window.open(path), window.location.origin + path, window.location.href = path
     "no-restricted-imports": [
       "error",
       {
@@ -597,8 +599,9 @@
       "rules": {
         "import/first": "off",
         // Should ignore due to mocks
-        "signoz/no-navigator-clipboard": "off"
-        // Tests can use navigator.clipboard directly
+        "signoz/no-navigator-clipboard": "off",
+        // Tests can use navigator.clipboard directly,
+        "signoz/no-raw-absolute-path":"off"
       }
     },
     {
