@@ -23,7 +23,7 @@ import type {
 	GetLLMPricingRulePathParameters,
 	ListLLMPricingRules200,
 	ListLLMPricingRulesParams,
-	LlmpricingruletypesUpdatablePricingRulesRequestDTO,
+	LlmpricingruletypesUpdatablePricingRulesDTO,
 	RenderErrorResponseDTO,
 	UpdateLLMPricingRules200,
 } from '../sigNoz.schemas';
@@ -136,13 +136,13 @@ export const invalidateListLLMPricingRules = async (
  * @summary Bulk update pricing rules
  */
 export const updateLLMPricingRules = (
-	llmpricingruletypesUpdatablePricingRulesRequestDTO: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO>,
+	llmpricingruletypesUpdatablePricingRulesDTO: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO>,
 ) => {
 	return GeneratedAPIInstance<UpdateLLMPricingRules200>({
 		url: `/api/v1/llm_pricing_rules`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: llmpricingruletypesUpdatablePricingRulesRequestDTO,
+		data: llmpricingruletypesUpdatablePricingRulesDTO,
 	});
 };
 
@@ -153,13 +153,13 @@ export const getUpdateLLMPricingRulesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
+	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO> },
 	TContext
 > => {
 	const mutationKey = ['updateLLMPricingRules'];
@@ -173,7 +173,7 @@ export const getUpdateLLMPricingRulesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateLLMPricingRules>>,
-		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> }
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -187,7 +187,7 @@ export type UpdateLLMPricingRulesMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateLLMPricingRules>>
 >;
 export type UpdateLLMPricingRulesMutationBody =
-	BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO>;
+	BodyType<LlmpricingruletypesUpdatablePricingRulesDTO>;
 export type UpdateLLMPricingRulesMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
@@ -201,13 +201,13 @@ export const useUpdateLLMPricingRules = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
+	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesDTO> },
 	TContext
 > => {
 	const mutationOptions = getUpdateLLMPricingRulesMutationOptions(options);

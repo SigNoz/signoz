@@ -3183,6 +3183,21 @@ export enum LlmpricingruletypesCacheModeDTO {
 	additive = 'additive',
 	unknown = 'unknown',
 }
+export interface LlmpricingruletypesGettableBulkUpdateMetaDTO {
+	/**
+	 * @type integer
+	 */
+	inserted: number;
+	/**
+	 * @type integer
+	 */
+	preserved: number;
+	/**
+	 * @type integer
+	 */
+	updated: number;
+}
+
 export interface LlmpricingruletypesGettablePricingRulesDTO {
 	/**
 	 * @type array
@@ -3337,27 +3352,12 @@ export interface LlmpricingruletypesUpdatablePricingRuleDTO {
 	unit: LlmpricingruletypesUnitDTO;
 }
 
-export interface LlmpricingruletypesUpdatablePricingRulesRequestDTO {
+export interface LlmpricingruletypesUpdatablePricingRulesDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
 	rules: LlmpricingruletypesUpdatablePricingRuleDTO[] | null;
-}
-
-export interface LlmpricingruletypesUpdatablePricingRulesResponseDTO {
-	/**
-	 * @type integer
-	 */
-	inserted: number;
-	/**
-	 * @type integer
-	 */
-	preserved: number;
-	/**
-	 * @type integer
-	 */
-	updated: number;
 }
 
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
@@ -6527,7 +6527,7 @@ export type ListLLMPricingRules200 = {
 };
 
 export type UpdateLLMPricingRules200 = {
-	data: LlmpricingruletypesUpdatablePricingRulesResponseDTO;
+	data: LlmpricingruletypesGettableBulkUpdateMetaDTO;
 	/**
 	 * @type string
 	 */

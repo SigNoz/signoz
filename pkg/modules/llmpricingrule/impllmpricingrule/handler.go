@@ -117,7 +117,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(llmpricingruletypes.UpdatablePricingRulesRequest)
+	req := new(llmpricingruletypes.UpdatablePricingRules)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return

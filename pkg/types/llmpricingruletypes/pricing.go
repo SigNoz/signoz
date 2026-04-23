@@ -86,11 +86,11 @@ type UpdatablePricingRule struct {
 	Enabled        bool         `json:"enabled" required:"true"`
 }
 
-type UpdatablePricingRulesRequest struct {
+type UpdatablePricingRules struct {
 	Rules []UpdatablePricingRule `json:"rules" required:"true"`
 }
 
-type UpdatablePricingRulesResponse struct {
+type GettableBulkUpdateMeta struct {
 	Inserted  int `json:"inserted" required:"true"`
 	Updated   int `json:"updated" required:"true"`
 	Preserved int `json:"preserved" required:"true"`
@@ -149,8 +149,8 @@ func NewGettablePricingRulesFromPricingRules(items []*PricingRule, total, offset
 	}
 }
 
-func NewUpdatablePricingRulesResponse(inserted, updated, preserved int) *UpdatablePricingRulesResponse {
-	return &UpdatablePricingRulesResponse{
+func NewUpdatablePricingRulesResponse(inserted, updated, preserved int) *GettableBulkUpdateMeta {
+	return &GettableBulkUpdateMeta{
 		Inserted:  inserted,
 		Updated:   updated,
 		Preserved: preserved,

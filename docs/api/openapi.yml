@@ -2412,6 +2412,19 @@ components:
       - additive
       - unknown
       type: string
+    LlmpricingruletypesGettableBulkUpdateMeta:
+      properties:
+        inserted:
+          type: integer
+        preserved:
+          type: integer
+        updated:
+          type: integer
+      required:
+      - inserted
+      - updated
+      - preserved
+      type: object
     LlmpricingruletypesGettablePricingRules:
       properties:
         items:
@@ -2545,7 +2558,7 @@ components:
       - costCacheWrite
       - enabled
       type: object
-    LlmpricingruletypesUpdatablePricingRulesRequest:
+    LlmpricingruletypesUpdatablePricingRules:
       properties:
         rules:
           items:
@@ -2554,19 +2567,6 @@ components:
           type: array
       required:
       - rules
-      type: object
-    LlmpricingruletypesUpdatablePricingRulesResponse:
-      properties:
-        inserted:
-          type: integer
-        preserved:
-          type: integer
-        updated:
-          type: integer
-      required:
-      - inserted
-      - updated
-      - preserved
       type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
@@ -7330,7 +7330,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LlmpricingruletypesUpdatablePricingRulesRequest'
+              $ref: '#/components/schemas/LlmpricingruletypesUpdatablePricingRules'
       responses:
         "200":
           content:
@@ -7338,7 +7338,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/LlmpricingruletypesUpdatablePricingRulesResponse'
+                    $ref: '#/components/schemas/LlmpricingruletypesGettableBulkUpdateMeta'
                   status:
                     type: string
                 required:
