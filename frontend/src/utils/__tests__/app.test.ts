@@ -1,23 +1,23 @@
-import { getLocation } from 'utils/getLocation';
-
 import { buildAbsolutePath } from '../app';
 
-jest.mock('utils/getLocation');
+// buildAbsolutePath reads history.location.pathname (basename-relative) rather than
+// window.location.pathname, so we mock lib/history instead of utils/getLocation.
+jest.mock('lib/history', () => ({
+	__esModule: true,
+	default: {
+		location: { pathname: '/' },
+	},
+}));
+
+// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
+const mockHistory = require('lib/history').default as {
+	location: { pathname: string };
+};
 
 const BASE_PATH = '/some-base-path';
 
 const mockLocation = (pathname: string): void => {
-	(getLocation as jest.Mock).mockReturnValue({
-		pathname,
-		href: `http://localhost:8080${pathname}`,
-		origin: 'http://localhost:8080',
-		protocol: 'http:',
-		host: 'localhost',
-		hostname: 'localhost',
-		port: '',
-		search: '',
-		hash: '',
-	});
+	mockHistory.location.pathname = pathname;
 };
 
 describe('buildAbsolutePath', () => {
