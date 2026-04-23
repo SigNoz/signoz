@@ -12,11 +12,11 @@ import { useDashboardVariablesByType } from './useDashboardVariablesByType';
  */
 export function useWidgetsByDynamicVariableId(): Record<string, string[]> {
 	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	return useMemo(() => {
 		const widgets =
-			selectedDashboard?.data?.widgets?.filter(
+			dashboardData?.data?.widgets?.filter(
 				(widget) => widget.panelTypes !== PANEL_GROUP_TYPES.ROW,
 			) || [];
 
@@ -24,5 +24,5 @@ export function useWidgetsByDynamicVariableId(): Record<string, string[]> {
 			dynamicVariables,
 			widgets as Widgets[],
 		);
-	}, [selectedDashboard, dynamicVariables]);
+	}, [dashboardData, dynamicVariables]);
 }

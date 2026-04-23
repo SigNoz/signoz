@@ -12,8 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -22,6 +20,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -48,29 +50,30 @@ import (
 )
 
 type Handlers struct {
-	SavedView                savedview.Handler
-	Apdex                    apdex.Handler
-	Dashboard                dashboard.Handler
-	QuickFilter              quickfilter.Handler
-	TraceFunnel              tracefunnel.Handler
-	RawDataExport            rawdataexport.Handler
-	SpanPercentile           spanpercentile.Handler
-	Services                 services.Handler
-	MetricsExplorer          metricsexplorer.Handler
-	Global                   global.Handler
-	FlaggerHandler           flagger.Handler
-	GatewayHandler           gateway.Handler
-	Fields                   fields.Handler
-	AuthzHandler             authz.Handler
-	ZeusHandler              zeus.Handler
-	QuerierHandler           querier.Handler
-	ServiceAccountHandler    serviceaccount.Handler
-	RegistryHandler          factory.Handler
-	CloudIntegrationHandler  cloudintegration.Handler
-	RuleStateHistory         rulestatehistory.Handler
-	AlertmanagerHandler      alertmanager.Handler
-	LLMPricingRuleHandler    llmpricingrule.Handler
-	RulerHandler             ruler.Handler
+	SavedView               savedview.Handler
+	Apdex                   apdex.Handler
+	Dashboard               dashboard.Handler
+	QuickFilter             quickfilter.Handler
+	TraceFunnel             tracefunnel.Handler
+	RawDataExport           rawdataexport.Handler
+	SpanPercentile          spanpercentile.Handler
+	Services                services.Handler
+	MetricsExplorer         metricsexplorer.Handler
+	InfraMonitoring         inframonitoring.Handler
+	Global                  global.Handler
+	FlaggerHandler          flagger.Handler
+	GatewayHandler          gateway.Handler
+	Fields                  fields.Handler
+	AuthzHandler            authz.Handler
+	ZeusHandler             zeus.Handler
+	QuerierHandler          querier.Handler
+	ServiceAccountHandler   serviceaccount.Handler
+	RegistryHandler         factory.Handler
+	CloudIntegrationHandler cloudintegration.Handler
+	RuleStateHistory        rulestatehistory.Handler
+	AlertmanagerHandler     alertmanager.Handler
+	RulerHandler            ruler.Handler
+	LLMPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewHandlers(
@@ -90,28 +93,29 @@ func NewHandlers(
 	rulerService ruler.Ruler,
 ) Handlers {
 	return Handlers{
-		SavedView:                implsavedview.NewHandler(modules.SavedView),
-		Apdex:                    implapdex.NewHandler(modules.Apdex),
-		Dashboard:                impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
-		QuickFilter:              implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:              impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:            implrawdataexport.NewHandler(modules.RawDataExport),
-		Services:                 implservices.NewHandler(modules.Services),
-		MetricsExplorer:          implmetricsexplorer.NewHandler(modules.MetricsExplorer),
-		SpanPercentile:           implspanpercentile.NewHandler(modules.SpanPercentile),
-		Global:                   signozglobal.NewHandler(global),
-		FlaggerHandler:           flagger.NewHandler(flaggerService),
-		GatewayHandler:           gateway.NewHandler(gatewayService),
-		Fields:                   implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AuthzHandler:             signozauthzapi.NewHandler(authz),
-		ZeusHandler:              zeus.NewHandler(zeusService, licensing),
-		QuerierHandler:           querierHandler,
-		ServiceAccountHandler:    implserviceaccount.NewHandler(modules.ServiceAccount),
-		RegistryHandler:          registryHandler,
-		RuleStateHistory:         implrulestatehistory.NewHandler(modules.RuleStateHistory),
-		CloudIntegrationHandler:  implcloudintegration.NewHandler(modules.CloudIntegration),
-		AlertmanagerHandler:      signozalertmanager.NewHandler(alertmanagerService),
-		LLMPricingRuleHandler:    impllmpricingrule.NewHandler(nil, providerSettings),
-		RulerHandler:             signozruler.NewHandler(rulerService),
+		SavedView:               implsavedview.NewHandler(modules.SavedView),
+		Apdex:                   implapdex.NewHandler(modules.Apdex),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
+		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
+		Services:                implservices.NewHandler(modules.Services),
+		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		InfraMonitoring:         implinframonitoring.NewHandler(modules.InfraMonitoring),
+		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
+		Global:                  signozglobal.NewHandler(global),
+		FlaggerHandler:          flagger.NewHandler(flaggerService),
+		GatewayHandler:          gateway.NewHandler(gatewayService),
+		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AuthzHandler:            signozauthzapi.NewHandler(authz),
+		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
+		QuerierHandler:          querierHandler,
+		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
+		RegistryHandler:         registryHandler,
+		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
+		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
+		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		RulerHandler:            signozruler.NewHandler(rulerService),
+		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(nil, providerSettings),
 	}
 }

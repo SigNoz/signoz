@@ -121,7 +121,7 @@ function useNavigateToExplorerPages(): (
 ) => Promise<{
 	[queryName: string]: { filters: TagFilterItem[]; dataSource?: string };
 }> {
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(
@@ -143,7 +143,7 @@ function useNavigateToExplorerPages(): (
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[selectedDashboard, notifications],
+		[dashboardData, notifications],
 	);
 }
 

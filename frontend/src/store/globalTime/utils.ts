@@ -17,7 +17,9 @@ export const CUSTOM_TIME_SEPARATOR: CustomTimeRangeSeparator = '||_||';
 /**
  * Check if selectedTime represents a custom time range
  */
-export function isCustomTimeRange(selectedTime: string): boolean {
+export function isCustomTimeRange(
+	selectedTime: string,
+): selectedTime is CustomTimeRange {
 	return selectedTime.includes(CUSTOM_TIME_SEPARATOR);
 }
 

@@ -24,6 +24,10 @@ window.matchMedia =
 		};
 	};
 
+if (!HTMLElement.prototype.scrollIntoView) {
+	HTMLElement.prototype.scrollIntoView = function (): void {};
+}
+
 // Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
 // These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
 // jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),

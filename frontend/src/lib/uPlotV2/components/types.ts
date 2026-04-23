@@ -62,10 +62,11 @@ export interface TooltipRenderArgs {
 
 export interface BaseTooltipProps {
 	showTooltipHeader?: boolean;
-	timezone?: Timezone;
+	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
+	timezone?: Timezone;
 }
 
 export interface TimeSeriesTooltipProps

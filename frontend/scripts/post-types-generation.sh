@@ -16,20 +16,20 @@ echo "\n✅ Tag files renamed to index.ts"
 
 # Format generated files
 echo "\n\n---\nRunning prettier...\n"
-if ! prettier --write src/api/generated; then
-  echo "Prettier formatting failed!"
+if ! yarn prettify src/api/generated; then
+  echo "Formatting failed!"
   exit 1
 fi
-echo "\n✅ Prettier formatting successful"
+echo "\n✅ Formatting successful"
 
 
 # Fix linting issues
-echo "\n\n---\nRunning eslint...\n"
+echo "\n\n---\nRunning lint...\n"
 if ! yarn lint:generated; then
-  echo "ESLint check failed! Please fix linting errors before proceeding."
+  echo "Lint check failed! Please fix linting errors before proceeding."
   exit 1
 fi
-echo "\n✅ ESLint check successful"
+echo "\n✅ Lint check successful"
 
 
 # Check for type errors

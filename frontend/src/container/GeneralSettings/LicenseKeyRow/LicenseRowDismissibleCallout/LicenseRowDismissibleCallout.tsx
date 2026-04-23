@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Callout } from '@signozhq/callout';
+import { Callout } from '@signozhq/ui';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
@@ -44,39 +44,38 @@ function LicenseRowDismissibleCallout(): JSX.Element | null {
 			type="info"
 			size="small"
 			showIcon
-			dismissable
-			onClose={handleDismissCallout}
+			action="dismissible"
+			onClick={handleDismissCallout}
 			className="license-key-callout"
-			description={
-				<div className="license-key-callout__description">
-					This is <strong>NOT</strong> your ingestion or Service account key.
-					{(hasServiceAccountsAccess || hasIngestionAccess) && (
-						<>
-							{' '}
-							Find your{' '}
-							{hasServiceAccountsAccess && (
-								<Link
-									to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
-									className="license-key-callout__link"
-								>
-									Service account here
-								</Link>
-							)}
-							{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
-							{hasIngestionAccess && (
-								<Link
-									to={ROUTES.INGESTION_SETTINGS}
-									className="license-key-callout__link"
-								>
-									Ingestion key here
-								</Link>
-							)}
-							.
-						</>
-					)}
-				</div>
-			}
-		/>
+		>
+			<div className="license-key-callout__description">
+				This is <strong>NOT</strong> your ingestion or Service account key.
+				{(hasServiceAccountsAccess || hasIngestionAccess) && (
+					<>
+						{' '}
+						Find your{' '}
+						{hasServiceAccountsAccess && (
+							<Link
+								to={ROUTES.SERVICE_ACCOUNTS_SETTINGS}
+								className="license-key-callout__link"
+							>
+								Service account here
+							</Link>
+						)}
+						{hasServiceAccountsAccess && hasIngestionAccess && ' and '}
+						{hasIngestionAccess && (
+							<Link
+								to={ROUTES.INGESTION_SETTINGS}
+								className="license-key-callout__link"
+							>
+								Ingestion key here
+							</Link>
+						)}
+						.
+					</>
+				)}
+			</div>
+		</Callout>
 	) : null;
 }
 

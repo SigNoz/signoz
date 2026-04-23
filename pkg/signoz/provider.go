@@ -194,6 +194,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
 	)
 }
 
@@ -269,6 +270,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
 			handlers.AuthzHandler,

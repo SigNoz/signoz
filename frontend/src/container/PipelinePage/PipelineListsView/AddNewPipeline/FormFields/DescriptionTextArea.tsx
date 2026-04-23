@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 
 import { ProcessorFormField } from '../../AddNewProcessor/config';
-import { FormLabelStyle } from '../styles';
 
 function DescriptionTextArea({
 	fieldData,
@@ -13,7 +12,7 @@ function DescriptionTextArea({
 		<Form.Item
 			required={false}
 			name={fieldData.name}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 		>
 			<Input.TextArea rows={3} placeholder={t(fieldData.placeholder)} />

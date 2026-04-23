@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
-import { Input } from 'antd';
+import { Input } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';
@@ -132,7 +132,6 @@ function CreateFunnel({
 					onChange={handleInputChange}
 					placeholder="Eg. checkout dropoff funnel"
 					autoFocus
-					status={inputError && 'error'}
 				/>
 				{inputError && (
 					<span className="funnel-modal-content__error">{inputError}</span>

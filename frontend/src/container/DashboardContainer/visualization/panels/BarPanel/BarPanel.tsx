@@ -121,15 +121,16 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
 					plotRef={onPlotRef}
 					onDestroy={onPlotDestroy}
-					yAxisUnit={widget.yAxisUnit}
-					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
 					isStackedBarChart={widget.stackedBarChart ?? false}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
 				>
 					<ContextMenu

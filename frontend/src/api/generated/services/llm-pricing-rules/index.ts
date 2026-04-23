@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,20 +16,20 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	DeleteLLMPricingRulePathParameters,
 	GetLLMPricingRule200,
 	GetLLMPricingRulePathParameters,
 	ListLLMPricingRules200,
 	ListLLMPricingRulesParams,
-	LlmpricingruletypesUpsertPricingRulesRequestDTO,
+	LlmpricingruletypesUpdatablePricingRulesRequestDTO,
 	RenderErrorResponseDTO,
-	UpsertLLMPricingRules200,
+	UpdateLLMPricingRules200,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * Returns all LLM pricing rules for the authenticated org, with pagination.
@@ -54,7 +55,7 @@ export const getListLLMPricingRulesQueryKey = (
 
 export const getListLLMPricingRulesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listLLMPricingRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListLLMPricingRulesParams,
 	options?: {
@@ -92,7 +93,7 @@ export type ListLLMPricingRulesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListLLMPricingRules<
 	TData = Awaited<ReturnType<typeof listLLMPricingRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListLLMPricingRulesParams,
 	options?: {
@@ -132,82 +133,84 @@ export const invalidateListLLMPricingRules = async (
 
 /**
  * Single write endpoint used by both the user and the Zeus sync job. Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true) are fully preserved when the request does not provide isOverride; only synced_at is stamped.
- * @summary Bulk upsert pricing rules
+ * @summary Bulk update pricing rules
  */
-export const upsertLLMPricingRules = (
-	llmpricingruletypesUpsertPricingRulesRequestDTO: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO>,
+export const updateLLMPricingRules = (
+	llmpricingruletypesUpdatablePricingRulesRequestDTO: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO>,
 ) => {
-	return GeneratedAPIInstance<UpsertLLMPricingRules200>({
+	return GeneratedAPIInstance<UpdateLLMPricingRules200>({
 		url: `/api/v1/llm_pricing_rules`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: llmpricingruletypesUpsertPricingRulesRequestDTO,
+		data: llmpricingruletypesUpdatablePricingRulesRequestDTO,
 	});
 };
 
-export const getUpsertLLMPricingRulesMutationOptions = <
+export const getUpdateLLMPricingRulesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof upsertLLMPricingRules>>,
+		Awaited<ReturnType<typeof updateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO> },
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof upsertLLMPricingRules>>,
+	Awaited<ReturnType<typeof updateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO> },
+	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
 	TContext
 > => {
-	const mutationKey = ['upsertLLMPricingRules'];
+	const mutationKey = ['updateLLMPricingRules'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof upsertLLMPricingRules>>,
-		{ data: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO> }
+		Awaited<ReturnType<typeof updateLLMPricingRules>>,
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return upsertLLMPricingRules(data);
+		return updateLLMPricingRules(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
 };
 
-export type UpsertLLMPricingRulesMutationResult = NonNullable<
-	Awaited<ReturnType<typeof upsertLLMPricingRules>>
+export type UpdateLLMPricingRulesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateLLMPricingRules>>
 >;
-export type UpsertLLMPricingRulesMutationBody = BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO>;
-export type UpsertLLMPricingRulesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateLLMPricingRulesMutationBody =
+	BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO>;
+export type UpdateLLMPricingRulesMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
- * @summary Bulk upsert pricing rules
+ * @summary Bulk update pricing rules
  */
-export const useUpsertLLMPricingRules = <
+export const useUpdateLLMPricingRules = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof upsertLLMPricingRules>>,
+		Awaited<ReturnType<typeof updateLLMPricingRules>>,
 		TError,
-		{ data: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO> },
+		{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
-	Awaited<ReturnType<typeof upsertLLMPricingRules>>,
+	Awaited<ReturnType<typeof updateLLMPricingRules>>,
 	TError,
-	{ data: BodyType<LlmpricingruletypesUpsertPricingRulesRequestDTO> },
+	{ data: BodyType<LlmpricingruletypesUpdatablePricingRulesRequestDTO> },
 	TContext
 > => {
-	const mutationOptions = getUpsertLLMPricingRulesMutationOptions(options);
+	const mutationOptions = getUpdateLLMPricingRulesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
@@ -226,7 +229,7 @@ export const deleteLLMPricingRule = ({
 
 export const getDeleteLLMPricingRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLLMPricingRule>>,
@@ -243,8 +246,8 @@ export const getDeleteLLMPricingRuleMutationOptions = <
 	const mutationKey = ['deleteLLMPricingRule'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -265,14 +268,15 @@ export type DeleteLLMPricingRuleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteLLMPricingRule>>
 >;
 
-export type DeleteLLMPricingRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteLLMPricingRuleMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete a pricing rule
  */
 export const useDeleteLLMPricingRule = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLLMPricingRule>>,
@@ -313,7 +317,7 @@ export const getGetLLMPricingRuleQueryKey = ({
 
 export const getGetLLMPricingRuleQueryOptions = <
 	TData = Awaited<ReturnType<typeof getLLMPricingRule>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetLLMPricingRulePathParameters,
 	options?: {
@@ -356,7 +360,7 @@ export type GetLLMPricingRuleQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetLLMPricingRule<
 	TData = Awaited<ReturnType<typeof getLLMPricingRule>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetLLMPricingRulePathParameters,
 	options?: {

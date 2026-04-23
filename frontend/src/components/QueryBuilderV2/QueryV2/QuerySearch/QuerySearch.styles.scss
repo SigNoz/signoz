@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .code-mirror-where-clause {
 	width: 100%;
 	display: flex;
@@ -30,7 +32,7 @@
 			border-left: none !important;
 
 			&.hasErrors {
-				border-color: var(--bg-cherry-500);
+				border-color: var(--danger-background);
 			}
 		}
 	}
@@ -39,7 +41,7 @@
 		&.hasErrors {
 			.cm-editor {
 				.cm-content {
-					border-color: var(--bg-cherry-500);
+					border-color: var(--danger-background);
 					border-top-right-radius: 0px !important;
 					border-bottom-right-radius: 0px !important;
 				}
@@ -156,7 +158,7 @@
 		.cm-line {
 			line-height: 34px !important;
 			font-family: 'Space Mono', monospace !important;
-			background-color: var(--l1-background) !important;
+			background-color: var(--l2-background) !important;
 
 			::-moz-selection {
 				background: var(--l3-background) !important;
@@ -211,7 +213,7 @@
 
 		.invalid {
 			background-color: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-			color: var(--bg-cherry-500);
+			color: var(--danger-background);
 		}
 
 		.query-validation-status {
@@ -232,7 +234,7 @@
 
 				font-size: 12px;
 				font-family: 'Space Mono', monospace !important;
-				color: var(--bg-cherry-500);
+				color: var(--danger-background);
 				padding: 8px;
 			}
 		}
@@ -452,32 +454,5 @@
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 		margin-top: -6px !important;
-	}
-}
-
-.lightMode {
-	.code-mirror-where-clause {
-		.cm-editor {
-			.cm-tooltip-autocomplete {
-				background: var(--l1-background) !important;
-				border: 1px solid var(--l1-border);
-				backdrop-filter: blur(20px);
-				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-			}
-
-			.cm-line {
-				::-moz-selection {
-					background: var(--bg-robin-200) !important;
-				}
-
-				::selection {
-					background: var(--bg-robin-200) !important;
-				}
-			}
-
-			.cm-selectionBackground {
-				background: var(--bg-robin-200) !important;
-			}
-		}
 	}
 }

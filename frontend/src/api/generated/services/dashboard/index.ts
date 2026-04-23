@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
@@ -35,6 +33,9 @@ import type {
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+
 /**
  * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
  * @summary Delete public dashboard
@@ -50,7 +51,7 @@ export const deletePublicDashboard = ({
 
 export const getDeletePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deletePublicDashboard>>,
@@ -67,8 +68,8 @@ export const getDeletePublicDashboardMutationOptions = <
 	const mutationKey = ['deletePublicDashboard'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -89,14 +90,15 @@ export type DeletePublicDashboardMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deletePublicDashboard>>
 >;
 
-export type DeletePublicDashboardMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeletePublicDashboardMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete public dashboard
  */
 export const useDeletePublicDashboard = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deletePublicDashboard>>,
@@ -137,7 +139,7 @@ export const getGetPublicDashboardQueryKey = ({
 
 export const getGetPublicDashboardQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboard>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetPublicDashboardPathParameters,
 	options?: {
@@ -180,7 +182,7 @@ export type GetPublicDashboardQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetPublicDashboard<
 	TData = Awaited<ReturnType<typeof getPublicDashboard>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetPublicDashboardPathParameters,
 	options?: {
@@ -238,7 +240,7 @@ export const createPublicDashboard = (
 
 export const getCreatePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createPublicDashboard>>,
@@ -261,8 +263,8 @@ export const getCreatePublicDashboardMutationOptions = <
 	const mutationKey = ['createPublicDashboard'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -285,15 +287,17 @@ export const getCreatePublicDashboardMutationOptions = <
 export type CreatePublicDashboardMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createPublicDashboard>>
 >;
-export type CreatePublicDashboardMutationBody = BodyType<DashboardtypesPostablePublicDashboardDTO>;
-export type CreatePublicDashboardMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreatePublicDashboardMutationBody =
+	BodyType<DashboardtypesPostablePublicDashboardDTO>;
+export type CreatePublicDashboardMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create public dashboard
  */
 export const useCreatePublicDashboard = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createPublicDashboard>>,
@@ -335,7 +339,7 @@ export const updatePublicDashboard = (
 
 export const getUpdatePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
@@ -358,8 +362,8 @@ export const getUpdatePublicDashboardMutationOptions = <
 	const mutationKey = ['updatePublicDashboard'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -382,15 +386,17 @@ export const getUpdatePublicDashboardMutationOptions = <
 export type UpdatePublicDashboardMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updatePublicDashboard>>
 >;
-export type UpdatePublicDashboardMutationBody = BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-export type UpdatePublicDashboardMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdatePublicDashboardMutationBody =
+	BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+export type UpdatePublicDashboardMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update public dashboard
  */
 export const useUpdatePublicDashboard = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
@@ -437,7 +443,7 @@ export const getGetPublicDashboardDataQueryKey = ({
 
 export const getGetPublicDashboardDataQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboardData>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetPublicDashboardDataPathParameters,
 	options?: {
@@ -472,7 +478,8 @@ export const getGetPublicDashboardDataQueryOptions = <
 export type GetPublicDashboardDataQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getPublicDashboardData>>
 >;
-export type GetPublicDashboardDataQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetPublicDashboardDataQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get public dashboard data
@@ -480,7 +487,7 @@ export type GetPublicDashboardDataQueryError = ErrorType<RenderErrorResponseDTO>
 
 export function useGetPublicDashboardData<
 	TData = Awaited<ReturnType<typeof getPublicDashboardData>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetPublicDashboardDataPathParameters,
 	options?: {
@@ -542,7 +549,7 @@ export const getGetPublicDashboardWidgetQueryRangeQueryKey = ({
 
 export const getGetPublicDashboardWidgetQueryRangeQueryOptions = <
 	TData = Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
 	options?: {
@@ -578,7 +585,8 @@ export const getGetPublicDashboardWidgetQueryRangeQueryOptions = <
 export type GetPublicDashboardWidgetQueryRangeQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>
 >;
-export type GetPublicDashboardWidgetQueryRangeQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetPublicDashboardWidgetQueryRangeQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get query range result
@@ -586,7 +594,7 @@ export type GetPublicDashboardWidgetQueryRangeQueryError = ErrorType<RenderError
 
 export function useGetPublicDashboardWidgetQueryRange<
 	TData = Awaited<ReturnType<typeof getPublicDashboardWidgetQueryRange>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, idx }: GetPublicDashboardWidgetQueryRangePathParameters,
 	options?: {

@@ -50,6 +50,7 @@
 	.app-content {
 		width: calc(100% - 54px); // width of the sidebar
 		z-index: 0;
+		background: var(--l1-background);
 
 		margin: 0 auto;
 
@@ -136,22 +137,6 @@
 
 	.add-credit-card-btn {
 		box-shadow: none;
-	}
-}
-
-.isDarkMode {
-	.app-layout {
-		.app-content {
-			background: var(--background);
-		}
-	}
-}
-
-.isLightMode {
-	.app-layout {
-		.app-content {
-			background: var(--card);
-		}
 	}
 }
 

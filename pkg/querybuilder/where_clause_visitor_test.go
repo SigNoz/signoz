@@ -318,7 +318,7 @@ func TestVisitKey(t *testing.T) {
 					{
 						Name:          "count",
 						FieldContext:  telemetrytypes.FieldContextAttribute,
-						FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						FieldDataType: telemetrytypes.FieldDataTypeInt64,
 					},
 				},
 			},
@@ -326,7 +326,7 @@ func TestVisitKey(t *testing.T) {
 				{
 					Name:          "count",
 					FieldContext:  telemetrytypes.FieldContextAttribute,
-					FieldDataType: telemetrytypes.FieldDataTypeNumber,
+					FieldDataType: telemetrytypes.FieldDataTypeInt64,
 				},
 			},
 			expectedErrors:     nil,

@@ -6,7 +6,7 @@ import {
 	CircleHelp,
 	TriangleAlert,
 } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Input } from '@signozhq/ui';
 import { Collapse, Form, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 

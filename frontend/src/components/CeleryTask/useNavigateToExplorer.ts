@@ -79,7 +79,7 @@ export function useNavigateToExplorer(): (
 	);
 
 	const { getUpdatedQuery } = useUpdatedQuery();
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(
@@ -111,7 +111,7 @@ export function useNavigateToExplorer(): (
 						panelTypes: PANEL_TYPES.TIME_SERIES,
 						timePreferance: 'GLOBAL_TIME',
 					},
-					selectedDashboard,
+					dashboardData,
 				})
 					.then((query) => {
 						preparedQuery = query;
@@ -140,7 +140,7 @@ export function useNavigateToExplorer(): (
 			minTime,
 			maxTime,
 			getUpdatedQuery,
-			selectedDashboard,
+			dashboardData,
 			notifications,
 		],
 	);

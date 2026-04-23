@@ -1,3 +1,5 @@
+// TODO: Improve the styling of the query aggregation container and its components. - @YounixM , @H4ad
+
 .query-add-ons {
 	width: 100%;
 }
@@ -102,7 +104,7 @@
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 					padding: 0px !important;
-					background-color: var(--card) !important;
+					background-color: var(--l2-background) !important;
 
 					&:focus-within {
 						border-color: var(--l1-border);
@@ -211,7 +213,7 @@
 				.cm-line {
 					line-height: 36px !important;
 					font-family: 'Space Mono', monospace !important;
-					background-color: var(--card) !important;
+					background-color: var(--l2-background) !important;
 
 					::-moz-selection {
 						background: var(--l3-background) !important;
@@ -249,8 +251,8 @@
 
 		.close-btn {
 			border-radius: 0px 2px 2px 0px;
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
 			height: 38px;
 			width: 38px;
 
@@ -281,111 +283,6 @@
 		position: relative;
 		.cm-placeholder {
 			font-size: 12px !important;
-		}
-	}
-}
-
-.lightMode {
-	.add-ons-list {
-		.add-ons-tabs {
-			.add-on-tab-title {
-				color: var(--l1-foreground) !important;
-			}
-
-			.tab {
-				border: 1px solid var(--l1-border) !important;
-				background: var(--l1-background) !important;
-
-				&:first-child {
-					border-left: 1px solid var(--l1-border) !important;
-				}
-			}
-
-			.tab::before {
-				background: var(--l3-background) !important;
-			}
-
-			.selected-view {
-				color: var(--primary-background) !important;
-				border: 1px solid var(--l1-border) !important;
-			}
-
-			.selected-view::before {
-				background: var(--l3-background) !important;
-			}
-		}
-
-		.compass-button {
-			border: 1px solid var(--l1-border) !important;
-			background: var(--l1-background) !important;
-		}
-	}
-
-	.having-filter-container {
-		.having-filter-select-container {
-			.having-filter-select-editor {
-				.cm-editor {
-					&:focus-within {
-						border-color: var(--l1-border) !important;
-					}
-
-					.cm-content {
-						border: 1px solid var(--l1-border) !important;
-						background: var(--l1-background) !important;
-
-						&:focus-within {
-							border-color: var(--l1-border) !important;
-						}
-					}
-
-					.cm-tooltip-autocomplete {
-						background: var(--l1-background) !important;
-						border: 1px solid var(--l1-border) !important;
-						color: var(--l1-foreground) !important;
-						box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-
-						ul {
-							li {
-								color: var(--l1-foreground) !important;
-								&:hover {
-									background: var(--l3-background) !important;
-								}
-
-								&[aria-selected='true'] {
-									background: var(--l3-background) !important;
-									font-weight: 600 !important;
-								}
-							}
-						}
-					}
-
-					.cm-line {
-						background-color: var(--l1-background) !important;
-
-						::-moz-selection {
-							background: var(--l1-background) !important;
-						}
-
-						::selection {
-							background: var(--l3-background) !important;
-						}
-
-						.chip-decorator {
-							background: var(--l3-background) !important;
-							color: var(--l1-foreground) !important;
-						}
-					}
-
-					.cm-selectionBackground {
-						background: var(--l1-background) !important;
-					}
-				}
-			}
-
-			.close-btn {
-				border: 1px solid var(--l1-border) !important;
-				background: var(--l1-background) !important;
-			}
 		}
 	}
 }

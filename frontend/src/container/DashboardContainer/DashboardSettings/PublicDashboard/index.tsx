@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { Checkbox } from '@signozhq/checkbox';
-import { toast } from '@signozhq/ui';
+import { Checkbox, toast } from '@signozhq/ui';
 import { Button, Select, Typography } from 'antd';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
@@ -60,7 +59,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [defaultTimeRange, setDefaultTimeRange] = useState(DEFAULT_TIME_RANGE);
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -85,8 +84,8 @@ function PublicDashboardSetting(): JSX.Element {
 		refetch: refetchPublicDashboard,
 		error: errorPublicDashboard,
 	} = useGetPublicDashboardMeta(
-		selectedDashboard?.id || '',
-		!!selectedDashboard?.id && isPublicDashboardEnabled,
+		dashboardData?.id || '',
+		!!dashboardData?.id && isPublicDashboardEnabled,
 	);
 
 	const isPublicDashboard = !!publicDashboardData?.publicPath;
@@ -155,36 +154,36 @@ function PublicDashboardSetting(): JSX.Element {
 	});
 
 	const handleCreatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		createPublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleUpdatePublicDashboard = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		updatePublicDashboard({
-			dashboardId: selectedDashboard.id,
+			dashboardId: dashboardData.id,
 			timeRangeEnabled,
 			defaultTimeRange,
 		});
 	};
 
 	const handleRevokePublicDashboardAccess = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		revokePublicDashboardAccess({
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 		});
 	};
 
@@ -247,10 +246,11 @@ function PublicDashboardSetting(): JSX.Element {
 				<div className="timerange-enabled-checkbox">
 					<Checkbox
 						id="enable-time-range"
-						checked={timeRangeEnabled}
-						onCheckedChange={handleTimeRangeEnabled}
-						labelName="Enable time range"
-					/>
+						value={timeRangeEnabled}
+						onChange={handleTimeRangeEnabled}
+					>
+						Enable time range
+					</Checkbox>
 				</div>
 
 				<div className="default-time-range-select">

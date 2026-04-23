@@ -2,6 +2,7 @@
 	background-color: var(--l1-background);
 	font-family: inherit;
 	color: var(--l1-foreground);
+	padding: 12px 16px;
 
 	&__tab-bar {
 		display: flex;
@@ -14,23 +15,20 @@
 		display: flex;
 		align-items: center;
 		background-color: var(--l1-background);
-		padding: 0 12px;
 		height: 32px;
 		font-size: 13px;
 		color: var(--l1-foreground);
-		margin-left: 12px;
-		margin-top: 12px;
 	}
 
 	&__tab::before {
 		content: '•';
 		margin-right: 6px;
-		font-size: 14px;
+		font-size: 13px;
 		color: var(--l3-foreground);
 	}
 
 	&__content {
-		padding: 16px;
+		padding: 8px 0;
 		background: var(--l1-background);
 		display: flex;
 		flex-direction: column;
@@ -40,22 +38,14 @@
 	}
 
 	&__input.title {
-		font-size: 18px;
-		font-weight: 500;
 		background-color: transparent;
 		color: var(--l1-foreground);
 		width: 100%;
 		min-width: 300px;
 	}
 
-	&__input:focus,
-	&__input:active {
-		border: none;
-		outline: none;
-	}
-
 	&__input.description {
-		font-size: 14px;
+		font-size: 13px;
 		background-color: transparent;
 		color: var(--l2-foreground);
 	}

@@ -12,11 +12,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
-	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -35,34 +36,35 @@ import (
 )
 
 type provider struct {
-	config                   apiserver.Config
-	settings                 factory.ScopedProviderSettings
-	router                   *mux.Router
-	authZ                    *middleware.AuthZ
-	orgHandler               organization.Handler
-	userHandler              user.Handler
-	sessionHandler           session.Handler
-	authDomainHandler        authdomain.Handler
-	preferenceHandler        preference.Handler
-	globalHandler            global.Handler
-	promoteHandler           promote.Handler
-	flaggerHandler           flagger.Handler
-	dashboardModule          dashboard.Module
-	dashboardHandler         dashboard.Handler
-	metricsExplorerHandler   metricsexplorer.Handler
-	gatewayHandler           gateway.Handler
-	fieldsHandler            fields.Handler
-	authzHandler             authz.Handler
-	rawDataExportHandler     rawdataexport.Handler
-	zeusHandler              zeus.Handler
-	querierHandler           querier.Handler
-	serviceAccountHandler    serviceaccount.Handler
-	factoryHandler           factory.Handler
-	cloudIntegrationHandler  cloudintegration.Handler
-	ruleStateHistoryHandler  rulestatehistory.Handler
-	alertmanagerHandler      alertmanager.Handler
-	llmPricingRuleHandler    llmpricingrule.Handler
-	rulerHandler             ruler.Handler
+	config                  apiserver.Config
+	settings                factory.ScopedProviderSettings
+	router                  *mux.Router
+	authZ                   *middleware.AuthZ
+	orgHandler              organization.Handler
+	userHandler             user.Handler
+	sessionHandler          session.Handler
+	authDomainHandler       authdomain.Handler
+	preferenceHandler       preference.Handler
+	globalHandler           global.Handler
+	promoteHandler          promote.Handler
+	flaggerHandler          flagger.Handler
+	dashboardModule         dashboard.Module
+	dashboardHandler        dashboard.Handler
+	metricsExplorerHandler  metricsexplorer.Handler
+	infraMonitoringHandler  inframonitoring.Handler
+	gatewayHandler          gateway.Handler
+	fieldsHandler           fields.Handler
+	authzHandler            authz.Handler
+	rawDataExportHandler    rawdataexport.Handler
+	zeusHandler             zeus.Handler
+	querierHandler          querier.Handler
+	serviceAccountHandler   serviceaccount.Handler
+	factoryHandler          factory.Handler
+	cloudIntegrationHandler cloudintegration.Handler
+	ruleStateHistoryHandler rulestatehistory.Handler
+	alertmanagerHandler     alertmanager.Handler
+	rulerHandler            ruler.Handler
+	llmPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewFactory(
@@ -79,6 +81,7 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -111,6 +114,7 @@ func NewFactory(
 			dashboardModule,
 			dashboardHandler,
 			metricsExplorerHandler,
+			infraMonitoringHandler,
 			gatewayHandler,
 			fieldsHandler,
 			authzHandler,
@@ -145,6 +149,7 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -164,33 +169,34 @@ func newProvider(
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:                   config,
-		settings:                 settings,
-		router:                   router,
-		orgHandler:               orgHandler,
-		userHandler:              userHandler,
-		sessionHandler:           sessionHandler,
-		authDomainHandler:        authDomainHandler,
-		preferenceHandler:        preferenceHandler,
-		globalHandler:            globalHandler,
-		promoteHandler:           promoteHandler,
-		flaggerHandler:           flaggerHandler,
-		dashboardModule:          dashboardModule,
-		dashboardHandler:         dashboardHandler,
-		metricsExplorerHandler:   metricsExplorerHandler,
-		gatewayHandler:           gatewayHandler,
-		fieldsHandler:            fieldsHandler,
-		authzHandler:             authzHandler,
-		rawDataExportHandler:     rawDataExportHandler,
-		zeusHandler:              zeusHandler,
-		querierHandler:           querierHandler,
-		serviceAccountHandler:    serviceAccountHandler,
-		factoryHandler:           factoryHandler,
-		cloudIntegrationHandler:  cloudIntegrationHandler,
-		ruleStateHistoryHandler:  ruleStateHistoryHandler,
-		alertmanagerHandler:      alertmanagerHandler,
-		llmPricingRuleHandler:    llmPricingRuleHandler,
-		rulerHandler:             rulerHandler,
+		config:                  config,
+		settings:                settings,
+		router:                  router,
+		orgHandler:              orgHandler,
+		userHandler:             userHandler,
+		sessionHandler:          sessionHandler,
+		authDomainHandler:       authDomainHandler,
+		preferenceHandler:       preferenceHandler,
+		globalHandler:           globalHandler,
+		promoteHandler:          promoteHandler,
+		flaggerHandler:          flaggerHandler,
+		dashboardModule:         dashboardModule,
+		dashboardHandler:        dashboardHandler,
+		metricsExplorerHandler:  metricsExplorerHandler,
+		infraMonitoringHandler:  infraMonitoringHandler,
+		gatewayHandler:          gatewayHandler,
+		fieldsHandler:           fieldsHandler,
+		authzHandler:            authzHandler,
+		rawDataExportHandler:    rawDataExportHandler,
+		zeusHandler:             zeusHandler,
+		querierHandler:          querierHandler,
+		serviceAccountHandler:   serviceAccountHandler,
+		factoryHandler:          factoryHandler,
+		cloudIntegrationHandler: cloudIntegrationHandler,
+		ruleStateHistoryHandler: ruleStateHistoryHandler,
+		alertmanagerHandler:     alertmanagerHandler,
+		rulerHandler:            rulerHandler,
+		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -244,6 +250,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addMetricsExplorerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addInfraMonitoringRoutes(router); err != nil {
 		return err
 	}
 

@@ -69,17 +69,17 @@ jest.mock('react-redux', () => ({
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	return (
 		<div>
-			<div data-testid="dashboard-id">{selectedDashboard?.id}</div>
+			<div data-testid="dashboard-id">{dashboardData?.id}</div>
 			<div data-testid="dashboard-variables">
 				{dashboardVariables ? JSON.stringify(dashboardVariables) : 'null'}
 			</div>
 			<div data-testid="dashboard-data">
-				{selectedDashboard?.data?.title || 'No Title'}
+				{dashboardData?.data?.title || 'No Title'}
 			</div>
 		</div>
 	);

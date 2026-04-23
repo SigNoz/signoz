@@ -2,15 +2,8 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	ColorPicker,
-	Input,
-	Modal,
-	Table,
-	TableProps,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui';
+import { ColorPicker, Input, Modal, Table, TableProps, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
@@ -348,15 +341,19 @@ function SaveView(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="solid"
+						color="secondary"
 						onClick={hideDeleteViewModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
+						prefix={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						onClick={onDeleteHandler}
 						className="delete-btn"
 						disabled={isDeleteLoading}
@@ -382,7 +379,9 @@ function SaveView(): JSX.Element {
 				footer={[
 					<Button
 						key="submit"
-						icon={<Check size={16} color={Color.BG_VANILLA_100} />}
+						variant="solid"
+						color="primary"
+						prefix={<Check size={16} color={Color.BG_VANILLA_100} />}
 						onClick={onUpdateQueryHandler}
 						disabled={isViewUpdating}
 						data-testid="save-view"
