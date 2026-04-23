@@ -9,19 +9,19 @@ function loadModule(href?: string): BasePath {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
-		document.head.appendChild(base);
+		document.head.append(base);
 	}
 
 	let mod!: BasePath;
 	jest.isolateModules(() => {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 		mod = require('../basePath');
 	});
 	return mod;
 }
 
 afterEach(() => {
-	document.head.querySelectorAll('base').forEach((el) => el.remove());
+	for (const el of document.head.querySelectorAll('base')) { el.remove(); }
 });
 
 describe('at basePath="/"', () => {

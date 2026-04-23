@@ -6,32 +6,33 @@ function loadNavigationModule(href?: string): NavigationModule {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
-		document.head.appendChild(base);
+		document.head.append(base);
 	}
 	let mod!: NavigationModule;
 	jest.isolateModules(() => {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 		mod = require('../navigation');
 	});
 	return mod;
 }
+
+const createMouseEvent = (overrides: Partial<MouseEvent> = {}): MouseEvent =>
+	({
+		metaKey: false,
+		ctrlKey: false,
+		button: 0,
+		...overrides,
+	}) as MouseEvent;
 
 describe('navigation utilities', () => {
 	const originalWindowOpen = window.open;
 
 	afterEach(() => {
 		window.open = originalWindowOpen;
-		document.head.querySelectorAll('base').forEach((el) => el.remove());
+		for (const el of document.head.querySelectorAll('base')) { el.remove(); }
 	});
 
 	describe('isModifierKeyPressed', () => {
-		const createMouseEvent = (overrides: Partial<MouseEvent> = {}): MouseEvent =>
-			({
-				metaKey: false,
-				ctrlKey: false,
-				button: 0,
-				...overrides,
-			} as MouseEvent);
 
 		it('returns true when metaKey is pressed (Cmd on Mac)', () => {
 			const event = createMouseEvent({ metaKey: true });
@@ -71,7 +72,7 @@ describe('navigation utilities', () => {
 		describe('at basePath="/"', () => {
 			let m: NavigationModule;
 			beforeEach(() => {
-				window.open = jest.fn();
+				jest.spyOn(window, 'open').mockImplementation();
 				m = loadNavigationModule('/');
 			});
 
@@ -100,7 +101,7 @@ describe('navigation utilities', () => {
 		describe('at basePath="/signoz/"', () => {
 			let m: NavigationModule;
 			beforeEach(() => {
-				window.open = jest.fn();
+				jest.spyOn(window, 'open').mockImplementation();
 				m = loadNavigationModule('/signoz/');
 			});
 
