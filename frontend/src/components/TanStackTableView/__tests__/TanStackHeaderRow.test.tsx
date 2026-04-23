@@ -252,7 +252,7 @@ describe('TanStackHeaderRow', () => {
 				</table>,
 			);
 			const sortButton = screen.getByTitle('Sortable');
-			expect(sortButton).toHaveAttribute('aria-sort', 'ascending');
+			expect(sortButton).toHaveAttribute('data-sort', 'ascending');
 		});
 
 		it('shows descending indicator when orderBy matches column with desc', () => {
@@ -273,7 +273,7 @@ describe('TanStackHeaderRow', () => {
 				</table>,
 			);
 			const sortButton = screen.getByTitle('Sortable');
-			expect(sortButton).toHaveAttribute('aria-sort', 'descending');
+			expect(sortButton).toHaveAttribute('data-sort', 'descending');
 		});
 
 		it('does not show sort button when enableSort is false', () => {

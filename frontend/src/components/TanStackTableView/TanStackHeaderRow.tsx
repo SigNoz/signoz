@@ -162,6 +162,13 @@ function TanStackHeaderRow<TData>({
 						)}
 						title={headerTitleAttr}
 						onClick={handleSortClick}
+						data-sort={
+							currentSortDirection === 'asc'
+								? 'ascending'
+								: currentSortDirection === 'desc'
+									? 'descending'
+									: 'none'
+						}
 					>
 						<span className={headerStyles.tanstackSortLabel}>
 							{header?.column?.columnDef
