@@ -573,5 +573,144 @@ describe('ResourceProvider', () => {
 
 			expect(result.current.queries).toHaveLength(2);
 		});
+
+		it('filters fetched tag keys through whilelistedKeys on SERVICE_MAP', async () => {
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload([
+					'resource_service_name',
+					'resource_k8s_cluster_name',
+				]),
+			);
+			mockLibHistory('', ROUTES.SERVICE_MAP);
+
+			const routerHistory = createMemoryHistory({
+				initialEntries: [ROUTES.SERVICE_MAP],
+			});
+			const { result } = renderHook(() => useResourceAttribute(), {
+				wrapper: createWrapper({ routerHistory }),
+			});
+
+			act(() => {
+				result.current.handleFocus();
+			});
+
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+				expect(result.current.optionsData.options).toStrictEqual([
+					{
+						label: 'k8s.cluster.name',
+						value: 'resource_k8s_cluster_name',
+					},
+				]);
+			});
+		});
+	});
+
+	describe('URL re-hydration and in-flight loading', () => {
+		it('re-hydrates queries when the router URL changes mid-session', async () => {
+			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
+			const { result } = renderHook(() => useResourceAttribute(), {
+				wrapper: createWrapper({ routerHistory }),
+			});
+
+			expect(result.current.queries).toStrictEqual([]);
+
+			const seeded = [
+				{
+					id: 'z',
+					tagKey: 'resource_service_name',
+					operator: 'IN',
+					tagValue: ['api'],
+				},
+			];
+			const encoded = encode(JSON.stringify(seeded));
+
+			// The useEffect that re-hydrates reads from lib/history (mocked singleton)
+			// but is triggered by urlQuery, which comes from the router.
+			// Update both to simulate a real URL change.
+			mockLibHistory(`?resourceAttribute=${encoded}`, '/');
+			act(() => {
+				routerHistory.push(`/?resourceAttribute=${encoded}`);
+			});
+
+			await waitFor(() => {
+				expect(result.current.queries).toStrictEqual(seeded);
+			});
+		});
+
+		it('clears optionsData and keeps loading=true while GetTagKeys is in flight', async () => {
+			// First cycle: complete a fetch so we have non-empty options to prove clearing later.
+			mockTagKeys.mockResolvedValueOnce(
+				successTagKeysPayload(['resource_service_name']),
+			);
+			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
+			const { result } = renderHook(() => useResourceAttribute(), {
+				wrapper: createWrapper({ routerHistory }),
+			});
+
+			act(() => {
+				result.current.handleFocus();
+			});
+			await waitFor(() => expect(result.current.loading).toBe(false));
+			expect(result.current.optionsData.options).toHaveLength(1);
+
+			// Reset step back to Idle via blur.
+			act(() => {
+				result.current.handleBlur();
+			});
+			await waitFor(() => expect(result.current.staging).toStrictEqual([]));
+
+			// Second cycle: pending promise — capture state while in flight.
+			let resolveTagKeys: (v: TagKeysPayload) => void = (): void => {};
+			const pending = new Promise<TagKeysPayload>((resolve) => {
+				resolveTagKeys = resolve;
+			});
+			mockTagKeys.mockReturnValueOnce(
+				(pending as unknown) as ReturnType<typeof mockTagKeys>,
+			);
+
+			act(() => {
+				result.current.handleFocus();
+			});
+
+			expect(result.current.loading).toBe(true);
+			expect(result.current.optionsData).toStrictEqual({
+				mode: undefined,
+				options: [],
+			});
+
+			// Clean up so the pending promise doesn't leak past the test.
+			await act(async () => {
+				resolveTagKeys(successTagKeysPayload(['resource_service_name']));
+				await pending;
+			});
+			await waitFor(() => expect(result.current.loading).toBe(false));
+		});
+
+		it('flips loading back to false when the API returns an error payload', async () => {
+			// getResourceAttributesTagKeys catches axios errors internally and
+			// returns an ErrorResponse with payload null. GetTagKeys then returns [].
+			// This exercises the actually-reachable API-error path.
+			mockTagKeys.mockResolvedValueOnce(({
+				statusCode: 500,
+				error: 'server error',
+				message: 'boom',
+				payload: null,
+			} as unknown) as TagKeysPayload);
+
+			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
+			const { result } = renderHook(() => useResourceAttribute(), {
+				wrapper: createWrapper({ routerHistory }),
+			});
+
+			act(() => {
+				result.current.handleFocus();
+			});
+
+			await waitFor(() => {
+				expect(result.current.loading).toBe(false);
+				expect(result.current.optionsData.options).toStrictEqual([]);
+			});
+		});
 	});
 });
