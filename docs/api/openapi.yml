@@ -4387,51 +4387,98 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
-    SpanattributemappingtypesCondition:
-      properties:
-        attributes:
-          items:
-            type: string
-          nullable: true
-          type: array
-        resource:
-          items:
-            type: string
-          nullable: true
-          type: array
-      required:
-      - attributes
-      - resource
-      type: object
-    SpanattributemappingtypesFieldContext:
+    SpantypesFieldContext:
       enum:
       - attribute
       - resource
       type: string
-    SpanattributemappingtypesGettableGroups:
+    SpantypesGettableSpanMapperGroups:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/SpanattributemappingtypesGroup'
+            $ref: '#/components/schemas/SpantypesSpanMapperGroup'
           type: array
       required:
       - items
       type: object
-    SpanattributemappingtypesGettableMappers:
+    SpantypesPostableSpanMapper:
       properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpanattributemappingtypesMapper'
-          type: array
+        config:
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+        name:
+          type: string
       required:
-      - items
+      - name
+      - field_context
+      - config
       type: object
-    SpanattributemappingtypesGroup:
+    SpantypesPostableSpanMapperGroup:
       properties:
         category:
-          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
-          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        name:
+          type: string
+      required:
+      - name
+      - category
+      - condition
+      type: object
+    SpantypesSpanMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+        group_id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - group_id
+      - name
+      - field_context
+      - config
+      - enabled
+      type: object
+    SpantypesSpanMapperConfig:
+      properties:
+        sources:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperSource'
+          nullable: true
+          type: array
+      required:
+      - sources
+      type: object
+    SpantypesSpanMapperGroup:
+      properties:
+        category:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
           format: date-time
           type: string
@@ -4458,63 +4505,37 @@ components:
       - condition
       - enabled
       type: object
-    SpanattributemappingtypesGroupCategory:
+    SpantypesSpanMapperGroupCategory:
       type: object
-    SpanattributemappingtypesMapper:
+    SpantypesSpanMapperGroupCondition:
       properties:
-        config:
-          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        enabled:
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
-        group_id:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-      required:
-      - id
-      - group_id
-      - name
-      - field_context
-      - config
-      - enabled
-      type: object
-    SpanattributemappingtypesMapperConfig:
-      properties:
-        sources:
+        attributes:
           items:
-            $ref: '#/components/schemas/SpanattributemappingtypesMapperSource'
+            type: string
+          nullable: true
+          type: array
+        resource:
+          items:
+            type: string
           nullable: true
           type: array
       required:
-      - sources
+      - attributes
+      - resource
       type: object
-    SpanattributemappingtypesMapperOperation:
+    SpantypesSpanMapperOperation:
       enum:
       - move
       - copy
       type: string
-    SpanattributemappingtypesMapperSource:
+    SpantypesSpanMapperSource:
       properties:
         context:
-          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+          $ref: '#/components/schemas/SpantypesFieldContext'
         key:
           type: string
         operation:
-          $ref: '#/components/schemas/SpanattributemappingtypesMapperOperation'
+          $ref: '#/components/schemas/SpantypesSpanMapperOperation'
         priority:
           type: integer
       required:
@@ -4523,56 +4544,26 @@ components:
       - operation
       - priority
       type: object
-    SpanattributemappingtypesPostableGroup:
-      properties:
-        category:
-          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
-        condition:
-          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
-        enabled:
-          type: boolean
-        name:
-          type: string
-      required:
-      - name
-      - category
-      - condition
-      type: object
-    SpanattributemappingtypesPostableMapper:
+    SpantypesUpdatableSpanMapper:
       properties:
         config:
-          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
-        enabled:
-          type: boolean
-        field_context:
-          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
-        name:
-          type: string
-      required:
-      - name
-      - field_context
-      - config
-      type: object
-    SpanattributemappingtypesUpdatableGroup:
-      properties:
-        condition:
-          $ref: '#/components/schemas/SpanattributemappingtypesCondition'
-        enabled:
-          nullable: true
-          type: boolean
-        name:
-          nullable: true
-          type: string
-      type: object
-    SpanattributemappingtypesUpdatableMapper:
-      properties:
-        config:
-          $ref: '#/components/schemas/SpanattributemappingtypesMapperConfig'
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
           nullable: true
           type: boolean
         field_context:
-          $ref: '#/components/schemas/SpanattributemappingtypesFieldContext'
+          $ref: '#/components/schemas/SpantypesFieldContext'
+      type: object
+    SpantypesUpdatableSpanMapperGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -9182,7 +9173,7 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
-  /api/v1/span_attribute_mapping_groups:
+  /api/v1/span_mapper_groups:
     get:
       deprecated: false
       description: Returns all span attribute mapping groups for the authenticated
@@ -9193,7 +9184,7 @@ paths:
         in: query
         name: category
         schema:
-          $ref: '#/components/schemas/SpanattributemappingtypesGroupCategory'
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         style: deepObject
       - in: query
         name: enabled
@@ -9207,7 +9198,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesGettableGroups'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
                   status:
                     type: string
                 required:
@@ -9255,7 +9246,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesPostableGroup'
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperGroup'
       responses:
         "201":
           content:
@@ -9263,7 +9254,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesGroup'
+                    $ref: '#/components/schemas/SpantypesSpanMapperGroup'
                   status:
                     type: string
                 required:
@@ -9309,7 +9300,7 @@ paths:
       summary: Create a span attribute mapping group
       tags:
       - span-attribute-mapping
-  /api/v1/span_attribute_mapping_groups/{groupId}:
+  /api/v1/span_mapper_groups/{groupId}:
     delete:
       deprecated: false
       description: Hard-deletes a mapping group and cascades to all its mappers.
@@ -9370,7 +9361,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableGroup'
+              $ref: '#/components/schemas/SpantypesUpdatableSpanMapperGroup'
       responses:
         "204":
           description: No Content
@@ -9412,7 +9403,7 @@ paths:
       summary: Update a span attribute mapping group
       tags:
       - span-attribute-mapping
-  /api/v1/span_attribute_mapping_groups/{groupId}/mappers:
+  /api/v1/span_mapper_groups/{groupId}/span_mappers:
     get:
       deprecated: false
       description: Returns all attribute mappers belonging to a mapping group.
@@ -9430,7 +9421,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesGettableMappers'
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
                   status:
                     type: string
                 required:
@@ -9490,7 +9481,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesPostableMapper'
+              $ref: '#/components/schemas/SpantypesPostableSpanMapper'
       responses:
         "201":
           content:
@@ -9498,7 +9489,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpanattributemappingtypesMapper'
+                    $ref: '#/components/schemas/SpantypesSpanMapper'
                   status:
                     type: string
                 required:
@@ -9550,7 +9541,7 @@ paths:
       summary: Create a span attribute mapper
       tags:
       - span-attribute-mapping
-  /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}:
+  /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}:
     delete:
       deprecated: false
       description: Hard-deletes a mapper from a mapping group.
@@ -9621,7 +9612,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpanattributemappingtypesUpdatableMapper'
+              $ref: '#/components/schemas/SpantypesUpdatableSpanMapper'
       responses:
         "204":
           description: No Content

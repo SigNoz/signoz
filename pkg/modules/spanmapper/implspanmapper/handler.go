@@ -1,4 +1,4 @@
-package implspanattributemapping
+package implspanmapper
 
 import (
 	"context"
@@ -9,23 +9,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
-	"github.com/SigNoz/signoz/pkg/modules/spanattributemapping"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/spanattributemappingtypes"
+	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
 
 type handler struct {
-	module           spanattributemapping.Module
+	module           spanmapper.Module
 	providerSettings factory.ProviderSettings
 }
 
-func NewHandler(module spanattributemapping.Module, providerSettings factory.ProviderSettings) spanattributemapping.Handler {
+func NewHandler(module spanmapper.Module, providerSettings factory.ProviderSettings) spanmapper.Handler {
 	return &handler{module: module, providerSettings: providerSettings}
 }
 
-// ListGroups handles GET /api/v1/span_attribute_mapping_groups.
+// ListGroups handles GET /api/v1/span_mapper_groups.
 func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -42,7 +42,7 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var q spanattributemappingtypes.ListGroupsQuery
+	var q spantypes.ListSpanMapperGroupsQuery
 	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
 		render.Error(rw, err)
 		return
@@ -54,10 +54,10 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableGroups(groups))
+	render.Success(rw, http.StatusOK, spantypes.NewGettableSpanMapperGroups(groups))
 }
 
-// CreateGroup handles POST /api/v1/span_attribute_mapping_groups.
+// CreateGroup handles POST /api/v1/span_mapper_groups.
 func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -74,13 +74,13 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.PostableGroup)
+	req := new(spantypes.PostableSpanMapperGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	group := spanattributemappingtypes.NewGroupFromPostable(req)
+	group := spantypes.NewSpanMapperGroupFromPostable(req)
 
 	err = h.module.CreateGroup(ctx, orgID, claims.Email, group)
 	if err != nil {
@@ -90,7 +90,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, group)
 }
 
-// UpdateGroup handles PUT /api/v1/span_attribute_mapping_groups/{id}.
+// UpdateGroup handles PUT /api/v1/span_mapper_groups/{id}.
 func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -113,13 +113,13 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.UpdatableGroup)
+	req := new(spantypes.UpdatableSpanMapperGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = h.module.UpdateGroup(ctx, orgID, id, claims.Email, spanattributemappingtypes.NewGroupFromUpdatable(req))
+	err = h.module.UpdateGroup(ctx, orgID, id, claims.Email, spantypes.NewSpanMapperGroupFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -128,7 +128,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// DeleteGroup handles DELETE /api/v1/span_attribute_mapping_groups/{id}.
+// DeleteGroup handles DELETE /api/v1/span_mapper_groups/{id}.
 func (h *handler) DeleteGroup(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -159,7 +159,7 @@ func (h *handler) DeleteGroup(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// ListMappers handles GET /api/v1/span_attribute_mapping_groups/{id}/mappers.
+// ListMappers handles GET /api/v1/span_mapper_groups/{id}/span_mappers.
 func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -188,10 +188,10 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, spanattributemappingtypes.NewGettableMappers(mappers))
+	render.Success(rw, http.StatusOK, spantypes.NewGettableSpanMappers(mappers))
 }
 
-// CreateMapper handles POST /api/v1/span_attribute_mapping_groups/{id}/mappers.
+// CreateMapper handles POST /api/v1/span_mapper_groups/{id}/span_mappers.
 func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -214,12 +214,12 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.PostableMapper)
+	req := new(spantypes.PostableSpanMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
-	mapper := spanattributemappingtypes.NewMapperFromPostable(req)
+	mapper := spantypes.NewSpanMapperFromPostable(req)
 
 	err = h.module.CreateMapper(ctx, orgID, groupID, claims.Email, mapper)
 	if err != nil {
@@ -230,7 +230,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, mapper)
 }
 
-// UpdateMapper handles PUT /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}.
+// UpdateMapper handles PUT /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}.
 func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -259,13 +259,13 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(spanattributemappingtypes.UpdatableMapper)
+	req := new(spantypes.UpdatableSpanMapper)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spanattributemappingtypes.NewMapperFromUpdatable(req))
+	err = h.module.UpdateMapper(ctx, orgID, groupID, mapperID, claims.Email, spantypes.NewSpanMapperFromUpdatable(req))
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -274,7 +274,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-// DeleteMapper handles DELETE /api/v1/span_attribute_mapping_groups/{groupId}/mappers/{mapperId}.
+// DeleteMapper handles DELETE /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}.
 func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -317,7 +317,7 @@ func groupIDFromPath(r *http.Request) (valuer.UUID, error) {
 	raw := vars["groupId"]
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeMappingInvalidInput, "group id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "group id is not a valid uuid")
 	}
 	return id, nil
 }
@@ -327,7 +327,7 @@ func mapperIDFromPath(r *http.Request) (valuer.UUID, error) {
 	raw := mux.Vars(r)["mapperId"]
 	id, err := valuer.NewUUID(raw)
 	if err != nil {
-		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spanattributemappingtypes.ErrCodeMappingInvalidInput, "mapper id is not a valid uuid")
+		return valuer.UUID{}, errors.Wrapf(err, errors.TypeInvalidInput, spantypes.ErrCodeMappingInvalidInput, "mapper id is not a valid uuid")
 	}
 	return id, nil
 }

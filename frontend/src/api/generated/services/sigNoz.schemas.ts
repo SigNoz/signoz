@@ -5370,40 +5370,93 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
-export interface SpanattributemappingtypesConditionDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	attributes: string[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	resource: string[] | null;
-}
-
-export enum SpanattributemappingtypesFieldContextDTO {
+export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
 }
-export interface SpanattributemappingtypesGettableGroupsDTO {
+export interface SpantypesGettableSpanMapperGroupsDTO {
 	/**
 	 * @type array
 	 */
-	items: SpanattributemappingtypesGroupDTO[];
+	items: SpantypesSpanMapperGroupDTO[];
 }
 
-export interface SpanattributemappingtypesGettableMappersDTO {
+export interface SpantypesPostableSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	field_context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperGroupDTO {
+	category: SpantypesSpanMapperGroupCategoryDTO;
+	condition: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	field_context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	group_id: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	items: SpanattributemappingtypesMapperDTO[];
+	sources: SpantypesSpanMapperSourceDTO[] | null;
 }
 
-export interface SpanattributemappingtypesGroupDTO {
-	category: SpanattributemappingtypesGroupCategoryDTO;
-	condition: SpanattributemappingtypesConditionDTO;
+export interface SpantypesSpanMapperGroupDTO {
+	category: SpantypesSpanMapperGroupCategoryDTO;
+	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -5440,102 +5493,52 @@ export interface SpanattributemappingtypesGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpanattributemappingtypesGroupCategoryDTO {
+export interface SpantypesSpanMapperGroupCategoryDTO {
 	[key: string]: unknown;
 }
 
-export interface SpanattributemappingtypesMapperDTO {
-	config: SpanattributemappingtypesMapperConfigDTO;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type boolean
-	 */
-	enabled: boolean;
-	field_context: SpanattributemappingtypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	group_id: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-}
-
-export interface SpanattributemappingtypesMapperConfigDTO {
+export interface SpantypesSpanMapperGroupConditionDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	sources: SpanattributemappingtypesMapperSourceDTO[] | null;
+	attributes: string[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resource: string[] | null;
 }
 
-export enum SpanattributemappingtypesMapperOperationDTO {
+export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
 	copy = 'copy',
 }
-export interface SpanattributemappingtypesMapperSourceDTO {
-	context: SpanattributemappingtypesFieldContextDTO;
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
 	key: string;
-	operation: SpanattributemappingtypesMapperOperationDTO;
+	operation: SpantypesSpanMapperOperationDTO;
 	/**
 	 * @type integer
 	 */
 	priority: number;
 }
 
-export interface SpanattributemappingtypesPostableGroupDTO {
-	category: SpanattributemappingtypesGroupCategoryDTO;
-	condition: SpanattributemappingtypesConditionDTO;
+export interface SpantypesUpdatableSpanMapperDTO {
+	config?: SpantypesSpanMapperConfigDTO;
 	/**
 	 * @type boolean
+	 * @nullable true
 	 */
-	enabled?: boolean;
-	/**
-	 * @type string
-	 */
-	name: string;
+	enabled?: boolean | null;
+	field_context?: SpantypesFieldContextDTO;
 }
 
-export interface SpanattributemappingtypesPostableMapperDTO {
-	config: SpanattributemappingtypesMapperConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	enabled?: boolean;
-	field_context: SpanattributemappingtypesFieldContextDTO;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface SpanattributemappingtypesUpdatableGroupDTO {
-	condition?: SpanattributemappingtypesConditionDTO;
+export interface SpantypesUpdatableSpanMapperGroupDTO {
+	condition?: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type boolean
 	 * @nullable true
@@ -5546,16 +5549,6 @@ export interface SpanattributemappingtypesUpdatableGroupDTO {
 	 * @nullable true
 	 */
 	name?: string | null;
-}
-
-export interface SpanattributemappingtypesUpdatableMapperDTO {
-	config?: SpanattributemappingtypesMapperConfigDTO;
-	/**
-	 * @type boolean
-	 * @nullable true
-	 */
-	enabled?: boolean | null;
-	field_context?: SpanattributemappingtypesFieldContextDTO;
 }
 
 export enum TelemetrytypesFieldContextDTO {
@@ -6781,7 +6774,7 @@ export type ListSpanAttributeMappingGroupsParams = {
 	/**
 	 * @description undefined
 	 */
-	category?: SpanattributemappingtypesGroupCategoryDTO;
+	category?: SpantypesSpanMapperGroupCategoryDTO;
 	/**
 	 * @type boolean
 	 * @nullable true
@@ -6791,7 +6784,7 @@ export type ListSpanAttributeMappingGroupsParams = {
 };
 
 export type ListSpanAttributeMappingGroups200 = {
-	data: SpanattributemappingtypesGettableGroupsDTO;
+	data: SpantypesGettableSpanMapperGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -6799,7 +6792,7 @@ export type ListSpanAttributeMappingGroups200 = {
 };
 
 export type CreateMappingGroup201 = {
-	data: SpanattributemappingtypesGroupDTO;
+	data: SpantypesSpanMapperGroupDTO;
 	/**
 	 * @type string
 	 */
@@ -6816,7 +6809,7 @@ export type ListMappersPathParameters = {
 	groupId: string;
 };
 export type ListMappers200 = {
-	data: SpanattributemappingtypesGettableMappersDTO;
+	data: SpantypesGettableSpanMapperGroupsDTO;
 	/**
 	 * @type string
 	 */
@@ -6827,7 +6820,7 @@ export type CreateMapperPathParameters = {
 	groupId: string;
 };
 export type CreateMapper201 = {
-	data: SpanattributemappingtypesMapperDTO;
+	data: SpantypesSpanMapperDTO;
 	/**
 	 * @type string
 	 */
