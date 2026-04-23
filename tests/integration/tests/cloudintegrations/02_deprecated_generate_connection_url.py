@@ -1,6 +1,6 @@
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -22,9 +22,7 @@ def test_generate_connection_url(
     # Get authentication token for admin user
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     cloud_provider = "aws"
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
 
     # Prepare request payload
     request_payload = {
@@ -47,9 +45,7 @@ def test_generate_connection_url(
     )
 
     # Assert successful response
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     # Parse response JSON
     response_data = response.json()
@@ -61,9 +57,7 @@ def test_generate_connection_url(
     expected_fields = ["account_id", "connection_url"]
 
     for field in expected_fields:
-        assert (
-            field in response_data["data"]
-        ), f"Response data should contain '{field}' field"
+        assert field in response_data["data"], f"Response data should contain '{field}' field"
 
     data = response_data["data"]
 
@@ -74,14 +68,10 @@ def test_generate_connection_url(
     connection_url = data["connection_url"]
 
     # Verify it's an AWS CloudFormation URL
-    assert (
-        "console.aws.amazon.com/cloudformation" in connection_url
-    ), "connection_url should be an AWS CloudFormation URL"
+    assert "console.aws.amazon.com/cloudformation" in connection_url, "connection_url should be an AWS CloudFormation URL"
 
     # Verify region is included
-    assert (
-        "region=us-east-1" in connection_url
-    ), "connection_url should contain the specified region"
+    assert "region=us-east-1" in connection_url, "connection_url should contain the specified region"
 
     # Verify required parameters are in the URL
     required_params = [
@@ -96,9 +86,7 @@ def test_generate_connection_url(
     ]
 
     for param in required_params:
-        assert (
-            param in connection_url
-        ), f"connection_url should contain parameter: {param}"
+        assert param in connection_url, f"connection_url should contain parameter: {param}"
 
 
 def test_generate_connection_url_unsupported_provider(
@@ -112,9 +100,7 @@ def test_generate_connection_url_unsupported_provider(
     # Try with GCP (unsupported)
     cloud_provider = "gcp"
 
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
 
     request_payload = {
         "account_config": {"regions": ["us-central1"]},
@@ -135,15 +121,11 @@ def test_generate_connection_url_unsupported_provider(
     )
 
     # Should return Bad Request for unsupported provider
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400 for unsupported provider, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400 for unsupported provider, got {response.status_code}"
 
     response_data = response.json()
     assert "error" in response_data, "Response should contain 'error' field"
-    assert (
-        "unsupported cloud provider" in response_data["error"].lower()
-    ), "Error message should indicate unsupported provider"
+    assert "unsupported cloud provider" in response_data["error"].lower(), "Error message should indicate unsupported provider"
 
 
 def test_duplicate_cloud_account_checkins(
@@ -168,18 +150,10 @@ def test_duplicate_cloud_account_checkins(
     assert account1_id != account2_id, "Two accounts should have different internal IDs"
 
     #     First check-in succeeds: account1 claims cloud_account_id
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account1_id, same_cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account1_id, same_cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
     #
     # Second check-in should fail: account2 tries to use the same cloud_account_id
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account2_id, same_cloud_account_id
-    )
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account2_id, same_cloud_account_id)
 
-    assert (
-        response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    ), f"Expected 500 for duplicate cloud_account_id, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"Expected 500 for duplicate cloud_account_id, got {response.status_code}: {response.text}"

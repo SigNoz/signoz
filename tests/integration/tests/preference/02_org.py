@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -36,9 +36,7 @@ def test_get_set_org_preference_by_name(
 
     # preference does not exist
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/org/preferences/somenonexistentpreference"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/org/preferences/somenonexistentpreference"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

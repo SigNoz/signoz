@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -106,9 +106,7 @@ def test_get_user_roles(
     # admin+rolechange user was promoted to ADMIN in test_change_role
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={
-            "Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"
-        },
+        headers={"Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
@@ -139,9 +137,7 @@ def test_assign_role_replaces_previous(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={
-            "Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"
-        },
+        headers={"Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
@@ -176,9 +172,7 @@ def test_get_users_by_role(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={
-            "Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"
-        },
+        headers={"Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
@@ -191,9 +185,7 @@ def test_get_users_by_role(
     )
     assert response.status_code == HTTPStatus.OK
     roles = response.json()["data"]
-    editor_role_id = next((r for r in roles if r["name"] == "signoz-editor"), None)[
-        "id"
-    ]
+    editor_role_id = next((r for r in roles if r["name"] == "signoz-editor"), None)["id"]
     assert editor_role_id is not None
 
     response = requests.get(
@@ -214,9 +206,7 @@ def test_remove_role(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={
-            "Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"
-        },
+        headers={"Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
@@ -230,15 +220,11 @@ def test_remove_role(
     )
     assert response.status_code == HTTPStatus.OK
     roles = response.json()["data"]
-    editor_role_id = next((r for r in roles if r["name"] == "signoz-editor"), None)[
-        "id"
-    ]
+    editor_role_id = next((r for r in roles if r["name"] == "signoz-editor"), None)["id"]
     assert editor_role_id is not None
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{user_id}/roles/{editor_role_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}/roles/{editor_role_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -262,9 +248,7 @@ def test_user_with_roles_reflects_change(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/users/me"),
-        headers={
-            "Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"
-        },
+        headers={"Authorization": f"Bearer {get_token(ROLECHANGE_USER_EMAIL, ROLECHANGE_USER_PASSWORD)}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK
@@ -329,9 +313,7 @@ def test_admin_cannot_remove_own_role(
     assert admin_role_id is not None
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{admin_data['id']}/roles/{admin_role_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{admin_data['id']}/roles/{admin_role_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -382,14 +364,10 @@ def test_editor_cannot_manage_roles(
     )
     assert response.status_code == HTTPStatus.OK
     viewer_roles = response.json()["data"]
-    viewer_role_id = next(
-        (r for r in viewer_roles if r["name"] == "signoz-viewer"), None
-    )["id"]
+    viewer_role_id = next((r for r in viewer_roles if r["name"] == "signoz-viewer"), None)["id"]
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{viewer_id}/roles/{viewer_role_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{viewer_id}/roles/{viewer_role_id}"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=5,
     )

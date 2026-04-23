@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -39,22 +39,14 @@ def test_create_account(
     assert "id" in data, "Response data should contain 'id' field"
     assert len(data["id"]) > 0, "id should be a non-empty UUID string"
 
-    assert (
-        "connectionArtifact" in data
-    ), "Response data should contain 'connectionArtifact' field"
+    assert "connectionArtifact" in data, "Response data should contain 'connectionArtifact' field"
     artifact = data["connectionArtifact"]
     assert "aws" in artifact, "connectionArtifact should contain 'aws' field"
-    assert (
-        "connectionUrl" in artifact["aws"]
-    ), "connectionArtifact.aws should contain 'connectionUrl'"
+    assert "connectionUrl" in artifact["aws"], "connectionArtifact.aws should contain 'connectionUrl'"
 
     connection_url = artifact["aws"]["connectionUrl"]
-    assert (
-        "console.aws.amazon.com/cloudformation" in connection_url
-    ), "connectionUrl should be an AWS CloudFormation URL"
-    assert (
-        "region=us-east-1" in connection_url
-    ), "connectionUrl should contain the deployment region"
+    assert "console.aws.amazon.com/cloudformation" in connection_url, "connectionUrl should be an AWS CloudFormation URL"
+    assert "region=us-east-1" in connection_url, "connectionUrl should contain the deployment region"
 
 
 def test_create_account_unsupported_provider(
@@ -71,9 +63,7 @@ def test_create_account_unsupported_provider(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
-            "config": {
-                "gcp": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}
-            },
+            "config": {"gcp": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}},
             "credentials": {
                 "sigNozApiURL": "https://test.signoz.cloud",
                 "sigNozApiKey": "test-key",
@@ -84,9 +74,7 @@ def test_create_account_unsupported_provider(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400 for unsupported provider, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400 for unsupported provider, got {response.status_code}"
 
     response_data = response.json()
     assert "error" in response_data, "Response should contain 'error' field"

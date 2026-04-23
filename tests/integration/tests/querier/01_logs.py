@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 import requests
@@ -21,7 +21,7 @@ def test_logs_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -39,7 +39,7 @@ def test_logs_list(
     insert_logs(
         [
             Logs(
-                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=1),
+                timestamp=datetime.now(tz=UTC) - timedelta(seconds=1),
                 resources={
                     "deployment.environment": "production",
                     "service.name": "java",
@@ -60,7 +60,7 @@ def test_logs_list(
                 severity_text="DEBUG",
             ),
             Logs(
-                timestamp=datetime.now(tz=timezone.utc),
+                timestamp=datetime.now(tz=UTC),
                 resources={
                     "deployment.environment": "production",
                     "service.name": "go",
@@ -95,11 +95,8 @@ def test_logs_list(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (datetime.now(tz=timezone.utc) - timedelta(seconds=10)).timestamp()
-                * 1000
-            ),
-            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "start": int((datetime.now(tz=UTC) - timedelta(seconds=10)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).timestamp() * 1000),
             "requestType": "raw",
             "compositeQuery": {
                 "queries": [
@@ -134,9 +131,7 @@ def test_logs_list(
     rows = results[0]["rows"]
     assert len(rows) == 2
 
-    assert (
-        rows[0]["data"]["body"] == "This is a log message, coming from a go application"
-    )
+    assert rows[0]["data"]["body"] == "This is a log message, coming from a go application"
     assert rows[0]["data"]["resources_string"] == {
         "cloud.account.id": "001",
         "cloud.provider": "integration",
@@ -155,10 +150,7 @@ def test_logs_list(
     }
     assert rows[0]["data"]["attributes_number"] == {"code.line": 120}
 
-    assert (
-        rows[1]["data"]["body"]
-        == "This is a log message, coming from a java application"
-    )
+    assert rows[1]["data"]["body"] == "This is a log message, coming from a java application"
     assert rows[1]["data"]["resources_string"] == {
         "cloud.account.id": "001",
         "cloud.provider": "integration",
@@ -417,9 +409,9 @@ def test_logs_list_with_order_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
     order_by_context: str,
-    expected_order: List[str],
+    expected_order: list[str],
 ) -> None:
     """
     Setup:
@@ -435,7 +427,7 @@ def test_logs_list_with_order_by(
     insert_logs(
         [
             Logs(
-                timestamp=datetime.now(tz=timezone.utc) - timedelta(seconds=3),
+                timestamp=datetime.now(tz=UTC) - timedelta(seconds=3),
                 attributes=attribute_resource_pair[i][0],
                 resources=attribute_resource_pair[i][1],
                 body="Log with DEBUG severity",
@@ -483,10 +475,8 @@ def test_logs_list_with_order_by(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=1)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[query],
     )
@@ -495,10 +485,8 @@ def test_logs_list_with_order_by(
     response_with_inline_context = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=1)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=1)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[query_with_inline_context],
     )
@@ -519,7 +507,7 @@ def test_logs_time_series_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -532,23 +520,20 @@ def test_logs_time_series_count(
     3. count() of all logs where service.name = "erlang" OR cloud.account.id = "000" for last 5 minutes
     4. count() of all logs grouped by host.name for the last 5 minutes
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = []
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = []
 
     for i in range(17):
         logs.append(
             Logs(
-                timestamp=now
-                - timedelta(
-                    microseconds=i + 1
-                ),  # These logs will be grouped in the now - 1 minute bucket
+                timestamp=now - timedelta(microseconds=i + 1),  # These logs will be grouped in the now - 1 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "java",
                     "os.type": "linux",
-                    "host.name": f"linux-00{i%2}",
+                    "host.name": f"linux-00{i % 2}",
                     "cloud.provider": "integration",
-                    "cloud.account.id": f"00{i%2}",
+                    "cloud.account.id": f"00{i % 2}",
                 },
                 attributes={
                     "log.iostream": "stdout",
@@ -558,25 +543,21 @@ def test_logs_time_series_count(
                     "code.line": i + 1,
                     "telemetry.sdk.language": "java",
                 },
-                body=f"This is a log message, number {i+1} coming from a java application",
+                body=f"This is a log message, number {i + 1} coming from a java application",
                 severity_text="DEBUG",
             )
         )
     for i in range(23):
         logs.append(
             Logs(
-                timestamp=now
-                - timedelta(minutes=1)
-                - timedelta(
-                    microseconds=i + 1
-                ),  # These logs will be grouped in the now - 2 minute bucket
+                timestamp=now - timedelta(minutes=1) - timedelta(microseconds=i + 1),  # These logs will be grouped in the now - 2 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "erlang",
                     "os.type": "linux",
-                    "host.name": f"linux-00{i%2}",
+                    "host.name": f"linux-00{i % 2}",
                     "cloud.provider": "integration",
-                    "cloud.account.id": f"00{i%2}",
+                    "cloud.account.id": f"00{i % 2}",
                 },
                 attributes={
                     "log.iostream": "stdout",
@@ -586,25 +567,21 @@ def test_logs_time_series_count(
                     "code.line": i + 1,
                     "telemetry.sdk.language": "erlang",
                 },
-                body=f"This is a log message, number {i+1} coming from a erlang application",
+                body=f"This is a log message, number {i + 1} coming from a erlang application",
                 severity_text="ERROR",
             )
         )
     for i in range(29):
         logs.append(
             Logs(
-                timestamp=now
-                - timedelta(minutes=2)
-                - timedelta(
-                    microseconds=i + 1
-                ),  # These logs will be grouped in the now - 3 minute bucket
+                timestamp=now - timedelta(minutes=2) - timedelta(microseconds=i + 1),  # These logs will be grouped in the now - 3 minute bucket
                 resources={
                     "deployment.environment": "production",
                     "service.name": "go",
                     "os.type": "linux",
-                    "host.name": f"linux-00{i%2}",
+                    "host.name": f"linux-00{i % 2}",
                     "cloud.provider": "integration",
-                    "cloud.account.id": f"00{i%2}",
+                    "cloud.account.id": f"00{i % 2}",
                 },
                 attributes={
                     "log.iostream": "stdout",
@@ -614,7 +591,7 @@ def test_logs_time_series_count(
                     "code.line": i + 1,
                     "telemetry.sdk.language": "go",
                 },
-                body=f"This is a log message, number {i+1} coming from a go application",
+                body=f"This is a log message, number {i + 1} coming from a go application",
                 severity_text="WARNING",
             )
         )
@@ -631,19 +608,8 @@ def test_logs_time_series_count(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
@@ -686,30 +652,15 @@ def test_logs_time_series_count(
         if i
         not in [
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=3))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 29,
             },
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=2))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 23,
             },
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=1))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 17,
             },
         ]
@@ -724,19 +675,8 @@ def test_logs_time_series_count(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
@@ -780,30 +720,15 @@ def test_logs_time_series_count(
         if i
         not in [
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=3))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 1,
             },
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=2))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 1,
             },
             {
-                "timestamp": int(
-                    (now - timedelta(minutes=1))
-                    .replace(second=0, microsecond=0)
-                    .timestamp()
-                    * 1000
-                ),
+                "timestamp": int((now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp() * 1000),
                 "value": 1,
             },
         ]
@@ -818,19 +743,8 @@ def test_logs_time_series_count(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
@@ -841,9 +755,7 @@ def test_logs_time_series_count(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {
-                                "expression": "service.name = 'erlang' OR cloud.account.id = '000'"
-                            },
+                            "filter": {"expression": "service.name = 'erlang' OR cloud.account.id = '000'"},
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -871,24 +783,15 @@ def test_logs_time_series_count(
 
     # Do not care about the order of the values
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 15,
     } in values
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 23,
     } in values
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 9,
     } in values
 
@@ -901,19 +804,8 @@ def test_logs_time_series_count(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "time_series",
             "compositeQuery": {
                 "queries": [
@@ -931,9 +823,7 @@ def test_logs_time_series_count(
                                     "fieldContext": "resource",
                                 }
                             ],
-                            "order": [
-                                {"key": {"name": "host.name"}, "direction": "desc"}
-                            ],
+                            "order": [{"key": {"name": "host.name"}, "direction": "desc"}],
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -947,17 +837,8 @@ def test_logs_time_series_count(
     response_with_inline_context = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (
-                datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                - timedelta(minutes=5)
-            ).timestamp()
-            * 1000
-        ),
-        end_ms=int(
-            datetime.now(tz=timezone.utc).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        start_ms=int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
         request_type="time_series",
         queries=[
             {
@@ -1004,24 +885,15 @@ def test_logs_time_series_count(
         }
     ]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 14,
     } in series[0]["values"]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 11,
     } in series[0]["values"]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 8,
     } in series[0]["values"]
 
@@ -1034,24 +906,15 @@ def test_logs_time_series_count(
         }
     ]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=3)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 15,
     } in series[1]["values"]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=2)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 12,
     } in series[1]["values"]
     assert {
-        "timestamp": int(
-            (now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp()
-            * 1000
-        ),
+        "timestamp": int((now - timedelta(minutes=1)).replace(second=0, microsecond=0).timestamp() * 1000),
         "value": 9,
     } in series[1]["values"]
 
@@ -1060,7 +923,7 @@ def test_datatype_collision(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -1072,8 +935,8 @@ def test_datatype_collision(
     3. response.time with string values in numeric field
     4. Edge cases: empty strings
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = []
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = []
 
     # Logs with string values in numeric fields
     severity_levels = ["DEBUG", "INFO", "WARN"]
@@ -1085,9 +948,9 @@ def test_datatype_collision(
                     "deployment.environment": "production",
                     "service.name": "java",
                     "os.type": "linux",
-                    "host.name": f"linux-00{i%2}",
+                    "host.name": f"linux-00{i % 2}",
                     "cloud.provider": "integration",
-                    "cloud.account.id": f"00{i%2}",
+                    "cloud.account.id": f"00{i % 2}",
                 },
                 attributes={
                     "log.iostream": "stdout",
@@ -1099,7 +962,7 @@ def test_datatype_collision(
                     "http.status_code": "200",  # String value
                     "response.time": "123.45",  # String value
                 },
-                body=f"Test log {i+1} with string values",
+                body=f"Test log {i + 1} with string values",
                 severity_text=severity_levels[i],  # DEBUG(5-8), INFO(9-12), WARN(13-16)
             )
         )
@@ -1114,9 +977,9 @@ def test_datatype_collision(
                     "deployment.environment": "production",
                     "service.name": "go",
                     "os.type": "linux",
-                    "host.name": f"linux-00{i%2}",
+                    "host.name": f"linux-00{i % 2}",
                     "cloud.provider": "integration",
-                    "cloud.account.id": f"00{i%2}",
+                    "cloud.account.id": f"00{i % 2}",
                 },
                 attributes={
                     "log.iostream": "stdout",
@@ -1128,10 +991,8 @@ def test_datatype_collision(
                     "http.status_code": 404,  # Numeric value
                     "response.time": 456.78,  # Numeric value
                 },
-                body=f"Test log {i+4} with numeric values",
-                severity_text=severity_levels_2[
-                    i
-                ],  # ERROR(17-20), FATAL(21-24), TRACE(1-4), DEBUG(5-8)
+                body=f"Test log {i + 4} with numeric values",
+                severity_text=severity_levels_2[i],  # ERROR(17-20), FATAL(21-24), TRACE(1-4), DEBUG(5-8)
             )
         )
 
@@ -1175,19 +1036,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1227,19 +1077,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1279,19 +1118,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1302,9 +1130,7 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {
-                                "expression": "severity_number = '13'"
-                            },  # String comparison with numeric field
+                            "filter": {"expression": "severity_number = '13'"},  # String comparison with numeric field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1334,19 +1160,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1357,9 +1172,7 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {
-                                "expression": "http.status_code = 200"
-                            },  # Numeric comparison with string field
+                            "filter": {"expression": "http.status_code = 200"},  # Numeric comparison with string field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1389,19 +1202,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1412,9 +1214,7 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {
-                                "expression": "http.status_code = '404'"
-                            },  # String comparison with numeric field
+                            "filter": {"expression": "http.status_code = '404'"},  # String comparison with numeric field
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1444,19 +1244,8 @@ def test_datatype_collision(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (
-                    datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-                    - timedelta(minutes=5)
-                ).timestamp()
-                * 1000
-            ),
-            "end": int(
-                datetime.now(tz=timezone.utc)
-                .replace(second=0, microsecond=0)
-                .timestamp()
-                * 1000
-            ),
+            "start": int((datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).replace(second=0, microsecond=0).timestamp() * 1000),
             "requestType": "scalar",
             "compositeQuery": {
                 "queries": [
@@ -1467,9 +1256,7 @@ def test_datatype_collision(
                             "signal": "logs",
                             "stepInterval": 60,
                             "disabled": False,
-                            "filter": {
-                                "expression": "http.status_code = ''"
-                            },  # Empty string comparison
+                            "filter": {"expression": "http.status_code = ''"},  # Empty string comparison
                             "having": {"expression": ""},
                             "aggregations": [{"expression": "count()"}],
                         },
@@ -1495,13 +1282,13 @@ def test_logs_fill_gaps(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillGaps for logs without groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "test-service"},
@@ -1581,13 +1368,13 @@ def test_logs_fill_gaps_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillGaps for logs with groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "service-a"},
@@ -1682,13 +1469,13 @@ def test_logs_fill_gaps_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillGaps for logs with formula.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "test"},
@@ -1789,13 +1576,13 @@ def test_logs_fill_gaps_formula_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillGaps for logs with formula and groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "group1"},
@@ -1917,13 +1704,13 @@ def test_logs_fill_zero(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillZero function for logs without groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "test"},
@@ -1993,13 +1780,13 @@ def test_logs_fill_zero_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillZero function for logs with groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "service-a"},
@@ -2093,13 +1880,13 @@ def test_logs_fill_zero_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillZero function for logs with formula.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "test"},
@@ -2201,13 +1988,13 @@ def test_logs_fill_zero_formula_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Test fillZero function for logs with formula and groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    logs: List[Logs] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    logs: list[Logs] = [
         Logs(
             timestamp=now - timedelta(minutes=3),
             resources={"service.name": "group1"},

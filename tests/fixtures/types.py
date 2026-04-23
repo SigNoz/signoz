@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Literal
+from typing import Literal
 from urllib.parse import urljoin
 
 import clickhouse_connect
@@ -39,33 +39,22 @@ class TestContainerUrlConfig:
 class TestContainerDocker:
     __test__ = False
     id: str
-    host_configs: Dict[str, TestContainerUrlConfig]
-    container_configs: Dict[str, TestContainerUrlConfig]
+    host_configs: dict[str, TestContainerUrlConfig]
+    container_configs: dict[str, TestContainerUrlConfig]
 
     @staticmethod
     def from_cache(cache: dict) -> "TestContainerDocker":
         return TestContainerDocker(
             id=cache["id"],
-            host_configs={
-                port: TestContainerUrlConfig(**config)
-                for port, config in cache["host_configs"].items()
-            },
-            container_configs={
-                port: TestContainerUrlConfig(**config)
-                for port, config in cache["container_configs"].items()
-            },
+            host_configs={port: TestContainerUrlConfig(**config) for port, config in cache["host_configs"].items()},
+            container_configs={port: TestContainerUrlConfig(**config) for port, config in cache["container_configs"].items()},
         )
 
     def __cache__(self) -> dict:
         return {
             "id": self.id,
-            "host_configs": {
-                port: config.__cache__() for port, config in self.host_configs.items()
-            },
-            "container_configs": {
-                port: config.__cache__()
-                for port, config in self.container_configs.items()
-            },
+            "host_configs": {port: config.__cache__() for port, config in self.host_configs.items()},
+            "container_configs": {port: config.__cache__() for port, config in self.container_configs.items()},
         }
 
     def __log__(self) -> str:
@@ -77,7 +66,7 @@ class TestContainerSQL:
     __test__ = False
     container: TestContainerDocker
     conn: Engine
-    env: Dict[str, str]
+    env: dict[str, str]
 
     def __cache__(self) -> dict:
         return {
@@ -94,7 +83,7 @@ class TestContainerClickhouse:
     __test__ = False
     container: TestContainerDocker
     conn: clickhouse_connect.driver.client.Client
-    env: Dict[str, str]
+    env: dict[str, str]
 
     def __cache__(self) -> dict:
         return {
@@ -187,7 +176,7 @@ class AlertExpectation:
     # whether we expect any alerts to be fired
     should_alert: bool
     # alerts that we expect to be fired
-    expected_alerts: List[FiringAlert]
+    expected_alerts: list[FiringAlert]
     # seconds to wait for the alerts to be fired, if no
     # alerts are fired in the expected time, the test will fail
     wait_time_seconds: int
@@ -200,6 +189,6 @@ class AlertTestCase:
     # path to the rule file in testdata directory
     rule_path: str
     # list of alert data that will be inserted into the database
-    alert_data: List[AlertData]
+    alert_data: list[AlertData]
     # list of alert expectations for the test case
     alert_expectation: AlertExpectation

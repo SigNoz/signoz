@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 
@@ -41,7 +41,7 @@ def test_for_one_service(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     time_agg: str,
     space_agg: str,
     service: str,
@@ -51,7 +51,7 @@ def test_for_one_service(
     twentieth_min_val: float,
     after_twentieth_min_val: float,  ## web service has a gap of 10 mins after the 20th minute
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_memory_{time_agg}_{space_agg}_{service}_usage"
@@ -99,7 +99,7 @@ def test_for_multiple_aggregations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     time_agg: str,
     space_agg: str,
     start_val: float,
@@ -108,7 +108,7 @@ def test_for_multiple_aggregations(
     twenty_first_min_val: float,  ## web service has a gap of 10 mins after the 20th minute
     thirty_first_min_val: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_memory_{time_agg}_{space_agg}_usage"

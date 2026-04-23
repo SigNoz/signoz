@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Callable, List
+from typing import Any
 
 import pytest
 
@@ -373,9 +374,9 @@ def test_logs_list_query_timestamp_expectations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
     query: BuilderQuery,
-    result: Callable[[List[Logs]], List[Any]],
+    result: Callable[[list[Logs]], list[Any]],
 ) -> None:
     """
     Setup:
@@ -392,10 +393,8 @@ def test_logs_list_query_timestamp_expectations(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=10)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=10)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[query.to_dict()],
     )
@@ -645,9 +644,9 @@ def test_logs_list_query_trace_id_expectations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
     query: BuilderQuery,
-    results: Callable[[List[Logs]], List[Any]],
+    results: Callable[[list[Logs]], list[Any]],
 ) -> None:
     """
     Justification for expected rows and ordering:
@@ -660,7 +659,7 @@ def test_logs_list_query_trace_id_expectations(
 
     Tests:
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     logs = [
         Logs(
@@ -723,10 +722,8 @@ def test_logs_list_query_trace_id_expectations(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=10)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=10)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[query.to_dict()],
     )
@@ -740,19 +737,15 @@ def test_logs_list_query_trace_id_expectations(
         else:
             print(response.json())
             rows = response.json()["data"]["data"]["results"][0]["rows"]
-            assert len(rows) == len(
-                results(logs)
-            ), f"Expected {len(results(logs))} rows, got {len(rows)}"
+            assert len(rows) == len(results(logs)), f"Expected {len(results(logs))} rows, got {len(rows)}"
             for row, expected_row in zip(rows, results(logs)):
                 data = row["data"]
                 keys = list(data.keys())
                 for i, expected_value in enumerate(expected_row):
-                    assert (
-                        data[keys[i]] == expected_value
-                    ), f"Row mismatch at key '{keys[i]}': expected {expected_value}, got {data[keys[i]]}"
+                    assert data[keys[i]] == expected_value, f"Row mismatch at key '{keys[i]}': expected {expected_value}, got {data[keys[i]]}"
 
 
-def _flatten_log(log: Logs) -> List[Any]:
+def _flatten_log(log: Logs) -> list[Any]:
     return [
         log.attributes_bool,
         log.attributes_number,

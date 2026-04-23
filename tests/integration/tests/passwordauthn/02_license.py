@@ -1,5 +1,5 @@
 import http
-from typing import Callable, List
+from collections.abc import Callable
 
 import requests
 from wiremock.client import (
@@ -15,7 +15,7 @@ from fixtures import types
 
 def test_apply_license(
     signoz: types.SigNoz,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     make_http_mocks(
@@ -25,11 +25,7 @@ def test_apply_license(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/licenses/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -78,7 +74,7 @@ def test_apply_license(
 
 def test_refresh_license(
     signoz: types.SigNoz,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     make_http_mocks(
@@ -88,11 +84,7 @@ def test_refresh_license(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/licenses/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -148,7 +140,7 @@ def test_refresh_license(
 
 def test_license_checkout(
     signoz: types.SigNoz,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     make_http_mocks(
@@ -158,11 +150,7 @@ def test_license_checkout(
                 request=MappingRequest(
                     method=HttpMethods.POST,
                     url="/v2/subscriptions/me/sessions/checkout",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -199,7 +187,7 @@ def test_license_checkout(
 
 def test_license_portal(
     signoz: types.SigNoz,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     make_http_mocks(
@@ -209,11 +197,7 @@ def test_license_portal(
                 request=MappingRequest(
                     method=HttpMethods.POST,
                     url="/v2/subscriptions/me/sessions/portal",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,

@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 
@@ -18,9 +18,9 @@ def test_query_range_cost_meter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_meter_samples: Callable[[List[MeterSample]], None],
+    insert_meter_samples: Callable[[list[MeterSample]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
@@ -64,9 +64,9 @@ def test_list_meter_metric_names(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_meter_samples: Callable[[List[MeterSample]], None],
+    insert_meter_samples: Callable[[list[MeterSample]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
@@ -105,9 +105,7 @@ def test_list_meter_metric_names(
     data = response.json()
     metrics = data.get("data", {}).get("metrics", [])
     metric_names = [m["metricName"] for m in metrics]
-    assert (
-        metric_name in metric_names
-    ), f"Expected {metric_name} in metric names, got: {metric_names}"
+    assert metric_name in metric_names, f"Expected {metric_name} in metric names, got: {metric_names}"
 
 
 # Verify /api/v1/fields/values with source=meter filters label values by metricNamespace
@@ -117,9 +115,9 @@ def test_metric_namespace_meter_values_filtering(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_meter_samples: Callable[[List[MeterSample]], None],
+    insert_meter_samples: Callable[[list[MeterSample]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     samples_a = make_meter_samples(
         "meter.ns.a.cost",

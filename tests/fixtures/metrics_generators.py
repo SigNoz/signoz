@@ -1,8 +1,8 @@
 import math
 import random
+from collections.abc import Generator
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Generator, List, Optional, Tuple
+from datetime import UTC, datetime, timedelta
 
 from fixtures.metrics import Metrics
 
@@ -10,7 +10,7 @@ from fixtures.metrics import Metrics
 @dataclass
 class DeterministicAnomalies:
     # resets: (offset)
-    COUNTER_RESET_OFFSETS: List[timedelta] = field(
+    COUNTER_RESET_OFFSETS: list[timedelta] = field(
         default_factory=lambda: [
             timedelta(hours=6),
             timedelta(hours=24),
@@ -18,7 +18,7 @@ class DeterministicAnomalies:
     )
 
     # gaps: (offset, duration)
-    DATA_GAP_OFFSETS: List[Tuple[timedelta, timedelta]] = field(
+    DATA_GAP_OFFSETS: list[tuple[timedelta, timedelta]] = field(
         default_factory=lambda: [
             (timedelta(hours=12), timedelta(minutes=30)),  # 30 min gap
             (timedelta(hours=36), timedelta(minutes=15)),  # 15 min gap
@@ -26,14 +26,14 @@ class DeterministicAnomalies:
     )
 
     # spikes: (offset, multiplier)
-    SPIKE_OFFSETS: List[Tuple[timedelta, float]] = field(
+    SPIKE_OFFSETS: list[tuple[timedelta, float]] = field(
         default_factory=lambda: [
             (timedelta(hours=18), 10.0),  # at this point the value spikes 10x
         ]
     )
 
     # 0 value offsets
-    ZERO_VALUE_OFFSETS: List[timedelta] = field(
+    ZERO_VALUE_OFFSETS: list[timedelta] = field(
         default_factory=lambda: [
             timedelta(hours=30),  # at this point the value drops to zero
         ]
@@ -83,7 +83,7 @@ class MetricsDataGenerator:
         duration = (self.end - self.start).total_seconds()
         self.num_points = int(duration / step_seconds)
 
-    def _timestamps(self) -> Generator[datetime, None, None]:
+    def _timestamps(self) -> Generator[datetime]:
         current = self.start
         while current < self.end:
             yield current
@@ -92,16 +92,12 @@ class MetricsDataGenerator:
     def _offset_from_start(self, ts: datetime) -> timedelta:
         return ts - self.start
 
-    def steady_with_noise(
-        self, base: float, noise_pct: float = 0.1
-    ) -> Generator[float, None, None]:
+    def steady_with_noise(self, base: float, noise_pct: float = 0.1) -> Generator[float]:
         for _ in range(self.num_points):
             noise = self.rng.uniform(-noise_pct, noise_pct) * base
             yield base + noise
 
-    def diurnal_pattern(
-        self, min_val: float, max_val: float
-    ) -> Generator[float, None, None]:
+    def diurnal_pattern(self, min_val: float, max_val: float) -> Generator[float]:
         amplitude = (max_val - min_val) / 2
         baseline = min_val + amplitude
 
@@ -117,9 +113,7 @@ class MetricsDataGenerator:
             if i >= self.num_points - 1:
                 break
 
-    def monotonic_increasing(
-        self, rate_per_minute: float, noise_pct: float = 0.1
-    ) -> Generator[float, None, None]:
+    def monotonic_increasing(self, rate_per_minute: float, noise_pct: float = 0.1) -> Generator[float]:
         value = 0.0
         for ts in self._timestamps():
             offset = self._offset_from_start(ts)
@@ -139,7 +133,7 @@ class MetricsDataGenerator:
         base: float,
         spike_factor: float = 10.0,
         spike_interval_minutes: int = 60,
-    ) -> Generator[float, None, None]:
+    ) -> Generator[float]:
         for i, ts in enumerate(self._timestamps()):
             offset = self._offset_from_start(ts)
 
@@ -160,7 +154,7 @@ class MetricsDataGenerator:
         self,
         base: float,
         noise_pct: float = 0.1,
-    ) -> Generator[float, None, None]:
+    ) -> Generator[float]:
         for ts in self._timestamps():
             offset = self._offset_from_start(ts)
 
@@ -170,9 +164,7 @@ class MetricsDataGenerator:
                 noise = self.rng.uniform(-noise_pct, noise_pct) * base
                 yield max(0, base + noise)
 
-    def latency_distribution(
-        self, p50_ms: float, p99_ms: float
-    ) -> Generator[List[float], None, None]:
+    def latency_distribution(self, p50_ms: float, p99_ms: float) -> Generator[list[float]]:
         # see otel defaults (in ms)
         # https://opentelemetry.io/docs/specs/otel/metrics/sdk/#explicit-bucket-histogram-aggregation
         buckets = [5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000]
@@ -209,9 +201,9 @@ class MetricsDataGenerator:
     def generate_gauge_metrics(
         self,
         metric_name: str = "system.cpu.utilization",
-        services: List[str] = None,
-        hosts: List[str] = None,
-    ) -> List[Metrics]:
+        services: list[str] = None,
+        hosts: list[str] = None,
+    ) -> list[Metrics]:
         if services is None:
             services = ["frontend", "backend", "worker", "database"]
         if hosts is None:
@@ -249,10 +241,10 @@ class MetricsDataGenerator:
     def generate_cumulative_counter_metrics(
         self,
         metric_name: str = "http.server.request.count",
-        services: List[str] = None,
-        endpoints: List[str] = None,
-        status_codes: List[str] = None,
-    ) -> List[Metrics]:
+        services: list[str] = None,
+        endpoints: list[str] = None,
+        status_codes: list[str] = None,
+    ) -> list[Metrics]:
         if services is None:
             services = ["api", "web", "auth"]
         if endpoints is None:
@@ -304,10 +296,10 @@ class MetricsDataGenerator:
     def generate_delta_counter_metrics(
         self,
         metric_name: str = "http.server.request.delta",
-        services: List[str] = None,
-        endpoints: List[str] = None,
-        status_codes: List[str] = None,
-    ) -> List[Metrics]:
+        services: list[str] = None,
+        endpoints: list[str] = None,
+        status_codes: list[str] = None,
+    ) -> list[Metrics]:
         if services is None:
             services = ["api", "web", "auth"]
         if endpoints is None:
@@ -359,9 +351,9 @@ class MetricsDataGenerator:
     def generate_connection_gauge_metrics(
         self,
         metric_name: str = "db.client.connections",
-        services: List[str] = None,
-        pool_names: List[str] = None,
-    ) -> List[Metrics]:
+        services: list[str] = None,
+        pool_names: list[str] = None,
+    ) -> list[Metrics]:
         if services is None:
             services = ["backend", "worker"]
         if pool_names is None:
@@ -398,16 +390,14 @@ class MetricsDataGenerator:
     def generate_gc_duration_metrics(
         self,
         metric_name: str = "process.runtime.gc.duration",
-        services: List[str] = None,
-    ) -> List[Metrics]:
+        services: list[str] = None,
+    ) -> list[Metrics]:
         if services is None:
             services = ["frontend", "backend", "worker", "api"]
 
         metrics = []
         for service in services:
-            values = list[float](
-                self.spike_pattern(5.0, 10.0, 30)
-            )  # bump every 30 minutes (to similate real pattern)
+            values = list[float](self.spike_pattern(5.0, 10.0, 30))  # bump every 30 minutes (to similate real pattern)
             labels = {"service_name": service}
 
             for i, ts in enumerate[datetime](self._timestamps()):
@@ -431,7 +421,7 @@ class MetricsDataGenerator:
 
         return metrics
 
-    def generate_all_metrics(self) -> Dict[str, List[Metrics]]:
+    def generate_all_metrics(self) -> dict[str, list[Metrics]]:
         return {
             "gauge": self.generate_gauge_metrics(),
             "cumulative_counter": self.generate_cumulative_counter_metrics(),
@@ -440,7 +430,7 @@ class MetricsDataGenerator:
             "gc_duration": self.generate_gc_duration_metrics(),
         }
 
-    def generate_flat_metrics(self) -> List[Metrics]:
+    def generate_flat_metrics(self) -> list[Metrics]:
         all_metrics = []
         for metrics_list in self.generate_all_metrics().values():
             all_metrics.extend(metrics_list)
@@ -452,7 +442,7 @@ def create_test_data_generator(
     step_seconds: int = 60,
     seed: int = 42,
 ) -> MetricsDataGenerator:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start = now - timedelta(hours=duration_hours)
     return MetricsDataGenerator(
         start_time=start,
@@ -464,13 +454,13 @@ def create_test_data_generator(
 
 def generate_simple_gauge_series(
     metric_name: str,
-    labels: Dict[str, str],
-    values: List[float],
-    start_time: Optional[datetime] = None,
+    labels: dict[str, str],
+    values: list[float],
+    start_time: datetime | None = None,
     step_seconds: int = 60,
-) -> List[Metrics]:
+) -> list[Metrics]:
     if start_time is None:
-        start_time = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+        start_time = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     metrics = []
     for i, value in enumerate(values):
@@ -491,14 +481,14 @@ def generate_simple_gauge_series(
 
 def generate_simple_counter_series(
     metric_name: str,
-    labels: Dict[str, str],
-    values: List[float],
+    labels: dict[str, str],
+    values: list[float],
     temporality: str = "Cumulative",
-    start_time: Optional[datetime] = None,
+    start_time: datetime | None = None,
     step_seconds: int = 60,
-) -> List[Metrics]:
+) -> list[Metrics]:
     if start_time is None:
-        start_time = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+        start_time = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     metrics = []
     for i, value in enumerate(values):
@@ -519,14 +509,14 @@ def generate_simple_counter_series(
 
 def generate_non_monotonic_sum_series(
     metric_name: str,
-    labels: Dict[str, str],
-    values: List[float],
+    labels: dict[str, str],
+    values: list[float],
     temporality: str = "Cumulative",
-    start_time: Optional[datetime] = None,
+    start_time: datetime | None = None,
     step_seconds: int = 60,
-) -> List[Metrics]:
+) -> list[Metrics]:
     if start_time is None:
-        start_time = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+        start_time = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     metrics = []
     for i, value in enumerate(values):
@@ -547,15 +537,15 @@ def generate_non_monotonic_sum_series(
 
 def generate_counter_with_resets(
     metric_name: str,
-    labels: Dict[str, str],
+    labels: dict[str, str],
     num_points: int,
     rate_per_point: float,
-    reset_at_indices: List[int],
-    start_time: Optional[datetime] = None,
+    reset_at_indices: list[int],
+    start_time: datetime | None = None,
     step_seconds: int = 60,
-) -> List[Metrics]:
+) -> list[Metrics]:
     if start_time is None:
-        start_time = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+        start_time = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     metrics = []
     value = 0.0
@@ -582,16 +572,16 @@ def generate_counter_with_resets(
 
 def generate_sparse_series(
     metric_name: str,
-    labels: Dict[str, str],
-    values_at_indices: Dict[int, float],
+    labels: dict[str, str],
+    values_at_indices: dict[int, float],
     total_points: int,
     temporality: str = "Unspecified",
     type_: str = "Gauge",
-    start_time: Optional[datetime] = None,
+    start_time: datetime | None = None,
     step_seconds: int = 60,
-) -> List[Metrics]:
+) -> list[Metrics]:
     if start_time is None:
-        start_time = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+        start_time = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     metrics = []
     for i, value in values_at_indices.items():

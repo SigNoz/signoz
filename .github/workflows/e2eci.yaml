@@ -9,6 +9,27 @@ on:
       - labeled
 
 jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: install
+        run: |
+          cd tests/e2e && yarn install --frozen-lockfile
+      - name: fmt
+        run: |
+          cd tests/e2e && yarn fmt:check
+      - name: lint
+        run: |
+          cd tests/e2e && yarn lint
   test:
     strategy:
       fail-fast: false

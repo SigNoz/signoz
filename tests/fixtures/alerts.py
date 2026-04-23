@@ -1,9 +1,9 @@
 import base64
 import json
 import time
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 import requests
@@ -20,9 +20,7 @@ logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="create_alert_rule", scope="function")
-def create_alert_rule(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> Callable[[dict], str]:
+def create_alert_rule(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> Callable[[dict], str]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     rule_ids = []
@@ -34,9 +32,7 @@ def create_alert_rule(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert (
-            response.status_code == HTTPStatus.OK
-        ), f"Failed to create rule, api returned {response.status_code} with response: {response.text}"
+        assert response.status_code == HTTPStatus.OK, f"Failed to create rule, api returned {response.status_code} with response: {response.text}"
         rule_id = response.json()["data"]["id"]
         rule_ids.append(rule_id)
         return rule_id
@@ -64,23 +60,21 @@ def create_alert_rule(
 
 @pytest.fixture(name="insert_alert_data", scope="function")
 def insert_alert_data(
-    insert_metrics: Callable[[List[Metrics]], None],
-    insert_traces: Callable[[List[Traces]], None],
-    insert_logs: Callable[[List[Logs]], None],
-) -> Callable[[List[types.AlertData]], None]:
+    insert_metrics: Callable[[list[Metrics]], None],
+    insert_traces: Callable[[list[Traces]], None],
+    insert_logs: Callable[[list[Logs]], None],
+) -> Callable[[list[types.AlertData]], None]:
 
     def _insert_alert_data(
-        alert_data_items: List[types.AlertData],
+        alert_data_items: list[types.AlertData],
         base_time: datetime = None,
     ) -> None:
 
-        metrics: List[Metrics] = []
-        traces: List[Traces] = []
-        logs: List[Logs] = []
+        metrics: list[Metrics] = []
+        traces: list[Traces] = []
+        logs: list[Logs] = []
 
-        now = base_time or datetime.now(tz=timezone.utc).replace(
-            second=0, microsecond=0
-        )
+        now = base_time or datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
         for data_item in alert_data_items:
             if data_item.type == "metrics":
@@ -113,9 +107,7 @@ def insert_alert_data(
     yield _insert_alert_data
 
 
-def collect_webhook_firing_alerts(
-    webhook_test_container: types.TestContainerDocker, notification_channel_name: str
-) -> List[types.FiringAlert]:
+def collect_webhook_firing_alerts(webhook_test_container: types.TestContainerDocker, notification_channel_name: str) -> list[types.FiringAlert]:
     # Prepare the endpoint path for the channel name, for alerts tests we have
     # used different paths for receiving alerts from each channel so that
     # multiple rules can be tested in isolation.
@@ -127,10 +119,7 @@ def collect_webhook_firing_alerts(
         "url": rule_webhook_endpoint,
     }
     res = requests.post(url, json=req, timeout=5)
-    assert res.status_code == HTTPStatus.OK, (
-        f"Failed to collect firing alerts for notification channel {notification_channel_name}, "
-        f"status code: {res.status_code}, response: {res.text}"
-    )
+    assert res.status_code == HTTPStatus.OK, f"Failed to collect firing alerts for notification channel {notification_channel_name}, status code: {res.status_code}, response: {res.text}"
     response = res.json()
     alerts = []
     for req in response["requests"]:
@@ -144,9 +133,7 @@ def collect_webhook_firing_alerts(
     return alerts
 
 
-def _verify_alerts_labels(
-    firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]
-) -> tuple[int, list[dict[str, str]]]:
+def _verify_alerts_labels(firing_alerts: list[dict[str, str]], expected_alerts: list[dict[str, str]]) -> tuple[int, list[dict[str, str]]]:
     """
     Checks how many of the expected alerts have been fired.
     Returns the count of expected alerts that have been fired.
@@ -159,10 +146,7 @@ def _verify_alerts_labels(
 
         for fired_alert in firing_alerts:
             # Check if current expected alert is present in the fired alerts
-            if all(
-                key in fired_alert and fired_alert[key] == value
-                for key, value in alert.items()
-            ):
+            if all(key in fired_alert and fired_alert[key] == value for key, value in alert.items()):
                 is_alert_fired = True
                 break
 
@@ -181,35 +165,24 @@ def verify_webhook_alert_expectation(
 ) -> bool:
 
     # time to wait till the expected alerts are fired
-    time_to_wait = datetime.now() + timedelta(
-        seconds=alert_expectations.wait_time_seconds
-    )
-    expected_alerts_labels = [
-        alert.labels for alert in alert_expectations.expected_alerts
-    ]
+    time_to_wait = datetime.now() + timedelta(seconds=alert_expectations.wait_time_seconds)
+    expected_alerts_labels = [alert.labels for alert in alert_expectations.expected_alerts]
 
     while datetime.now() < time_to_wait:
-        firing_alerts = collect_webhook_firing_alerts(
-            test_alert_container, notification_channel_name
-        )
+        firing_alerts = collect_webhook_firing_alerts(test_alert_container, notification_channel_name)
         firing_alert_labels = [alert.labels for alert in firing_alerts]
 
         if alert_expectations.should_alert:
             # verify the number of alerts fired, currently we're only verifying the labels of the alerts
             # but there could be verification of annotations and other fields in the FiringAlert
-            (verified_count, missing_alerts) = _verify_alerts_labels(
-                firing_alert_labels, expected_alerts_labels
-            )
+            (verified_count, missing_alerts) = _verify_alerts_labels(firing_alert_labels, expected_alerts_labels)
 
             if verified_count == len(alert_expectations.expected_alerts):
-                logger.info(
-                    "Got expected number of alerts: %s", {"count": verified_count}
-                )
+                logger.info("Got expected number of alerts: %s", {"count": verified_count})
                 return True
-        else:
-            # No alert is supposed to be fired if should_alert is False
-            if len(firing_alerts) > 0:
-                break
+        # No alert is supposed to be fired if should_alert is False
+        elif len(firing_alerts) > 0:
+            break
 
         # wait for some time before checking again
         time.sleep(1)
@@ -220,7 +193,7 @@ def verify_webhook_alert_expectation(
     if not alert_expectations.should_alert:
         assert len(firing_alerts) == 0, (
             "Expected no alerts to be fired, ",
-            f"got {len(firing_alerts)} alerts, " f"firing alerts: {firing_alerts}",
+            f"got {len(firing_alerts)} alerts, firing alerts: {firing_alerts}",
         )
         logger.info("No alerts fired, as expected")
         return True

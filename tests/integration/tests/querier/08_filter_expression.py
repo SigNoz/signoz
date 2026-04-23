@@ -1,8 +1,8 @@
 import os
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List, Set
 
 import pytest
 import requests
@@ -95,9 +95,9 @@ def test_not_filter_expression(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
     expression: str,
-    expected_logs: Set[str],
+    expected_logs: set[str],
 ) -> None:
     """
     Verifies that valid NOT filter expressions return the correct set of logs.
@@ -113,7 +113,7 @@ def test_not_filter_expression(
     status_code/latency_ms/error_count are present as attribute on alpha and as resource on beta.
     This intentional overlap exercises context-prefix disambiguation.
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_logs(
         [
             Logs(
@@ -149,7 +149,7 @@ def test_not_filter_expression(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     response = make_query_request(
         signoz,
@@ -200,7 +200,7 @@ def test_filter_expressions_no_server_error(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_logs(
         [
             Logs(
@@ -240,7 +240,7 @@ def test_filter_expressions_no_server_error(
         filter_expression: str,
     ) -> requests.Response:
         """Helper to query raw logs with a filter expression over the last 30 seconds."""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         return make_query_request(
             signoz,
             token,
@@ -268,22 +268,13 @@ def test_filter_expressions_no_server_error(
             ],
         )
 
-    failures: List[str] = []
+    failures: list[str] = []
     with ThreadPoolExecutor(max_workers=40) as executor:
         with open(FILTER_EXPRESSIONS_FILE, encoding="utf-8") as f:
-            futures = {
-                executor.submit(
-                    _make_raw_logs_query, signoz, token, expr.rstrip("\n")
-                ): expr.rstrip("\n")
-                for expr in f
-            }
+            futures = {executor.submit(_make_raw_logs_query, signoz, token, expr.rstrip("\n")): expr.rstrip("\n") for expr in f}
             for future in as_completed(futures):
                 expr = futures[future]
                 if future.result().status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
                     failures.append(expr)
 
-    assert (
-        len(failures) <= 0
-    ), f"{len(failures)} expression(s) caused HTTP 500:\n" + "\n".join(
-        f"  {expr!r}" for expr in failures
-    )
+    assert len(failures) <= 0, f"{len(failures)} expression(s) caused HTTP 500:\n" + "\n".join(f"  {expr!r}" for expr in failures)

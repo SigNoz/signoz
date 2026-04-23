@@ -23,10 +23,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "pylint>=3.3.6",
-    "isort>=6.0.1",
-    "autoflake>=2.3.1",
-    "black>=25.1.0",
+    "ruff>=0.8.0",
 ]
 
 [tool.pytest.ini_options]
@@ -43,35 +40,38 @@ log_cli = true
 log_format = "%(asctime)s [%(levelname)s] (%(filename)s:%(lineno)s) %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 
-[tool.pylint.main]
-ignore = [".venv", "node_modules"]
-# `py` (the legacy pytest path lib) uses dynamic attributes that pylint's
-# static analyzer can't resolve. Whitelist it so `py.path.local` stops
-# firing no-member.
-extension-pkg-whitelist = ["py"]
-ignored-modules = ["py"]
+[tool.ruff]
+# ruff caps line-length at 320 (prior pylint setting was 400, but both are
+# far above any line that organically shows up in this tree).
+line-length = 320
+extend-exclude = [".venv", "node_modules"]
 
-[tool.pylint.format]
-max-line-length = "400"
+[tool.ruff.lint]
+# E/W = pycodestyle, F = pyflakes, I = isort, UP = pyupgrade, B = bugbear,
+# PL = pylint-compat. Mirrors the intent of the prior pylint + isort +
+# autoflake stack.
+select = ["E", "F", "W", "I", "UP", "B", "PL"]
+ignore = [
+    # pylint: too-many-* — preserved from prior pylint config
+    "PLR0911", # too-many-return-statements
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
+    # magic-value-comparison — noisy in assertion-heavy test code
+    "PLR2004",
+    # ruff flags mutable-argument-default (B006) where pylint ignored
+    # dangerous-default-value; preserve that behaviour.
+    "B006",
+    # Rules not previously enforced under pylint. Keep muted so this
+    # migration stays a pure tool swap; enable selectively in follow-ups.
+    "B011",    # assert False
+    "B024",    # abstract-class-without-abstract-method
+    "B905",    # zip() without strict=
+    "E741",    # ambiguous variable name
+    "UP047",   # non-pep695-generic-function
+    "PLC0206", # dict-index-missing-items
+    "PLW2901", # for-loop-var-overwritten
+]
 
-[tool.pylint.basic]
-# test ordering (example; 01_abc.py)
-module-rgx = "(([0-9]+_)?[a-z_][a-z0-9_]*)|(__.*__)$"
-
-# to avoid overly restrictive pylint naming for attributes
-attr-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
-class-attribute-rgx = "([A-Z_][A-Z0-9_]*|[a-z_][a-z0-9_]*|(__.*__))$"
-class-const-rgx = "[A-Z_][A-Z0-9_]*$"
-
-[tool.pylint."messages control"]
-disable = ["missing-module-docstring", "missing-function-docstring", "missing-class-docstring", "duplicate-code", "dangerous-default-value", "too-many-positional-arguments", "too-many-arguments", "too-few-public-methods", "too-many-instance-attributes", "too-many-locals", "too-many-statements", "too-many-lines"]
-
-[tool.isort]
-profile = "black"
-
-[tool.autoflake]
-recursive = true
-remove-all-unused-imports = true
-remove-unused-variables = true
-exclude = [".venv/**"]
-in-place = true
+[tool.ruff.format]
+# Defaults align with black (double quotes, 4-space indent).

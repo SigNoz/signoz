@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 from sqlalchemy import sql
@@ -14,9 +14,7 @@ PASSWORD_USER_EMAIL = "admin+password@integration.test"
 PASSWORD_USER_PASSWORD = "password123Z$"
 
 
-def test_change_password(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_change_password(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create another admin user
@@ -73,9 +71,7 @@ def test_change_password(
     assert token is not None
 
 
-def test_reset_password(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_reset_password(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Get the user id via v2
@@ -83,9 +79,7 @@ def test_reset_password(
 
     # Create a reset password token via v2 PUT
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -98,9 +92,7 @@ def test_reset_password(
 
     # Calling PUT again should return the same token (still valid)
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -109,9 +101,7 @@ def test_reset_password(
 
     # GET should also return the same token
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -140,9 +130,7 @@ def test_reset_password(
     assert token is not None
 
 
-def test_reset_password_with_no_password(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_reset_password_with_no_password(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Get the user id via v2
@@ -157,9 +145,7 @@ def test_reset_password_with_no_password(
 
     # GET should return 404 since there's no password (and thus no token)
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -167,9 +153,7 @@ def test_reset_password_with_no_password(
 
     # Generate a new reset password token via v2 PUT
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -226,9 +210,7 @@ def test_forgot_password_returns_204_for_nonexistent_email(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
 
-def test_forgot_password_creates_reset_token(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_forgot_password_creates_reset_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """
     Test the full forgot password flow:
     1. Call forgotPassword endpoint for existing user
@@ -292,9 +274,7 @@ def test_forgot_password_creates_reset_token(
     found_user = find_user_by_email(signoz, admin_token, forgot_email)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/users/{found_user['id']}/reset_password_tokens"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{found_user['id']}/reset_password_tokens"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -325,9 +305,7 @@ def test_forgot_password_creates_reset_token(
         pass  # Expected - old password should fail
 
 
-def test_reset_password_with_expired_token(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_reset_password_with_expired_token(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """
     Test that resetting password with an expired token fails.
     """
