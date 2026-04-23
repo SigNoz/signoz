@@ -227,4 +227,4 @@ def test_delete_already_deleted_service_account(
         timeout=5,
     )
 
-    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, f"Expected 501 for already-deleted SA, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404 for already-deleted SA, got {response.status_code}: {response.text}"

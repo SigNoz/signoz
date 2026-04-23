@@ -17,13 +17,12 @@ import (
 )
 
 var (
-	ErrCodeServiceAccountInvalidConfig        = errors.MustNewCode("service_account_invalid_config")
-	ErrCodeServiceAccountInvalidInput         = errors.MustNewCode("service_account_invalid_input")
-	ErrCodeServiceAccountAlreadyExists        = errors.MustNewCode("service_account_already_exists")
-	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
-	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
-	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
-	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 50 characters long")
+	ErrCodeServiceAccountInvalidConfig     = errors.MustNewCode("service_account_invalid_config")
+	ErrCodeServiceAccountInvalidInput      = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountAlreadyExists     = errors.MustNewCode("service_account_already_exists")
+	ErrCodeServiceAccountNotFound          = errors.MustNewCode("service_account_not_found")
+	ErrCodeServiceAccountRoleAlreadyExists = errors.MustNewCode("service_account_role_already_exists")
+	errInvalidServiceAccountName           = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 50 characters long")
 )
 
 var (
@@ -120,7 +119,7 @@ func (serviceAccount *ServiceAccount) UpdateStatus(status ServiceAccountStatus) 
 
 func (serviceAccount *ServiceAccount) ErrIfDeleted() error {
 	if serviceAccount.Status == ServiceAccountStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeServiceAccountOperationUnsupported, "this operation is not supported for disabled service account")
+		return errors.Newf(errors.TypeNotFound, ErrCodeServiceAccountNotFound, "an active service account with id: %s does not exist", serviceAccount.ID)
 	}
 
 	return nil
