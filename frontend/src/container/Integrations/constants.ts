@@ -53,7 +53,7 @@ export const AZURE_INTEGRATION = {
 	is_new: true,
 };
 
-export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION];
+export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION, AZURE_INTEGRATION];
 
 export const AZURE_REGIONS: AzureRegion[] = [
 	{

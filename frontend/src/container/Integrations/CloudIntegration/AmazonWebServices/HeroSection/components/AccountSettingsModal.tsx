@@ -110,11 +110,7 @@ function AccountSettingsModal({
 		form,
 		selectedRegions,
 		includeAllRegions,
-		account?.id,
-		handleRemoveIntegrationAccountSuccess,
-		isSaveDisabled,
-		handleSubmit,
-		isLoading,
+		account?.providerAccountId,
 		setSelectedRegions,
 		setIncludeAllRegions,
 	]);

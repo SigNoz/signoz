@@ -7,11 +7,14 @@ import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
-import { INTEGRATION_TYPES } from 'container/Integrations/constants';
+import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 
-import { mapAccountDtoToAwsCloudAccount } from '../../mapAwsCloudAccountFromDto';
+import {
+	mapAccountDtoToAwsCloudAccount,
+	mapAccountDtoToAzureCloudAccount,
+} from '../../../mapCloudAccountFromDto';
 import { CloudAccount } from '../../types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
@@ -19,6 +22,7 @@ import CloudAccountSetupModal from './CloudAccountSetupModal';
 import './AccountActions.style.scss';
 
 function AccountActionsRenderer({
+	type,
 	accounts,
 	isLoading,
 	activeAccount,
@@ -27,6 +31,7 @@ function AccountActionsRenderer({
 	onIntegrationModalOpen,
 	onAccountSettingsModalOpen,
 }: {
+	type: IntegrationType;
 	accounts: CloudAccount[] | undefined;
 	isLoading: boolean;
 	activeAccount: CloudAccount | null;
@@ -59,7 +64,7 @@ function AccountActionsRenderer({
 							options={selectOptions}
 							rootClassName="cloud-account-selector"
 							popupMatchSelectWidth={false}
-							placeholder="Select AWS Account"
+							placeholder={`Select ${type} Account`}
 							suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 							onChange={onAccountChange}
 						/>
@@ -102,21 +107,41 @@ function AccountActionsRenderer({
 	);
 }
 
-function AccountActions(): JSX.Element {
+function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
+
 	const { data: listAccountsResponse, isLoading } = useListAccounts({
-		cloudProvider: INTEGRATION_TYPES.AWS,
+		cloudProvider: type,
 	});
+
 	const accounts = useMemo((): CloudAccount[] | undefined => {
 		const raw = listAccountsResponse?.data?.accounts;
+
 		if (!raw) {
 			return undefined;
 		}
-		return raw
-			.map(mapAccountDtoToAwsCloudAccount)
-			.filter((account): account is CloudAccount => account !== null);
-	}, [listAccountsResponse]);
+
+		const mappedAccounts: CloudAccount[] = [];
+
+		if (type === IntegrationType.AWS_SERVICES) {
+			mappedAccounts.push(
+				...raw
+					.map(mapAccountDtoToAwsCloudAccount)
+					.filter((account): account is CloudAccount => account !== null),
+			);
+		}
+
+		if (type === IntegrationType.AZURE_SERVICES) {
+			mappedAccounts.push(
+				...raw
+					.map(mapAccountDtoToAzureCloudAccount)
+					.filter((account): account is CloudAccount => account !== null),
+			);
+		}
+
+		return mappedAccounts;
+	}, [listAccountsResponse, type]);
 
 	const initialAccount = useMemo(
 		() =>
@@ -149,16 +174,18 @@ function AccountActions(): JSX.Element {
 	}, [initialAccount]);
 
 	const [isIntegrationModalOpen, setIsIntegrationModalOpen] = useState(false);
+
 	const startAccountConnectionAttempt = (): void => {
 		setIsIntegrationModalOpen(true);
-		logEvent('AWS Integration: Account connection attempt started', {});
+		logEvent(`${type} Integration: Account connection attempt started`, {});
 	};
 
-	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] =
-		useState(false);
+	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
+		false,
+	);
 	const openAccountSettings = (): void => {
 		setIsAccountSettingsModalOpen(true);
-		logEvent('AWS Integration: Account settings viewed', {
+		logEvent(`${type} Integration: Account settings viewed`, {
 			cloudAccountId: activeAccount?.cloud_account_id,
 		});
 	};
@@ -166,13 +193,13 @@ function AccountActions(): JSX.Element {
 	// log telemetry event when an account is viewed.
 	useEffect(() => {
 		if (activeAccount) {
-			logEvent('AWS Integration: Account viewed', {
+			logEvent(`${type} Integration: Account viewed`, {
 				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
 				enabledRegions: activeAccount?.config?.regions,
 			});
 		}
-	}, [activeAccount]);
+	}, [activeAccount, type]);
 
 	const selectOptions: SelectProps['options'] = useMemo(
 		() =>
@@ -188,6 +215,7 @@ function AccountActions(): JSX.Element {
 	return (
 		<div className="hero-section__actions">
 			<AccountActionsRenderer
+				type={type}
 				accounts={accounts}
 				isLoading={isLoading}
 				activeAccount={activeAccount}

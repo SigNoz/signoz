@@ -17,9 +17,9 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import ServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards';
+import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { IServiceStatus } from 'container/Integrations/types';
+import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Save, X } from 'lucide-react';
 
@@ -36,7 +36,11 @@ type ServiceDetailsData = CloudintegrationtypesServiceDTO & {
 	status?: IServiceStatus;
 };
 
-function ServiceDetails(): JSX.Element | null {
+function ServiceDetails({
+	type,
+}: {
+	type: IntegrationType;
+}): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
@@ -51,7 +55,7 @@ function ServiceDetails(): JSX.Element | null {
 		isLoading: isServiceDetailsLoading,
 	} = useGetService(
 		{
-			cloudProvider: INTEGRATION_TYPES.AWS,
+			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
 		{

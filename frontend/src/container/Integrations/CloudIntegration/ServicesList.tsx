@@ -4,15 +4,20 @@ import { Skeleton } from 'antd';
 import { useListServicesMetadata } from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import emptyStateIconUrl from '@/assets/Icons/emptyState.svg';
 
 interface ServicesListProps {
 	cloudAccountId: string;
+	type: IntegrationType;
 }
 
-function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
+function ServicesList({
+	cloudAccountId,
+	type,
+}: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
 	const hasValidCloudAccountId = Boolean(cloudAccountId);
@@ -22,7 +27,7 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 
 	const { data: servicesMetadata, isLoading } = useListServicesMetadata(
 		{
-			cloudProvider: 'aws',
+			cloudProvider: type,
 		},
 		serviceQueryParams,
 	);
