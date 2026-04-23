@@ -1,9 +1,6 @@
 package spanattributemappingtypes
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -60,31 +57,7 @@ type ListGroupsQuery struct {
 }
 
 type GettableGroups struct {
-	Items []*GettableGroup `json:"items" required:"true" nullable:"true"`
-}
-
-func (c Condition) Value() (driver.Value, error) {
-	b, err := json.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
-	return string(b), nil
-}
-
-func (c *Condition) Scan(src any) error {
-	var raw []byte
-	switch v := src.(type) {
-	case string:
-		raw = []byte(v)
-	case []byte:
-		raw = v
-	case nil:
-		*c = Condition{}
-		return nil
-	default:
-		return errors.NewInternalf(errors.CodeInternal, "spanattributemappingtypes: cannot scan %T into Condition", src)
-	}
-	return json.Unmarshal(raw, c)
+	Items []*GettableGroup `json:"items" required:"true" nullable:"false"`
 }
 
 func NewGroupFromStorable(s *StorableGroup) *Group {

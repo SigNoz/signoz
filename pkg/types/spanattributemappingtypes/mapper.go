@@ -1,9 +1,6 @@
 package spanattributemappingtypes
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -89,30 +86,6 @@ func (FieldContext) Enum() []any {
 
 func (MapperOperation) Enum() []any {
 	return []any{MapperOperationMove, MapperOperationCopy}
-}
-
-func (m MapperConfig) Value() (driver.Value, error) {
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	return string(b), nil
-}
-
-func (m *MapperConfig) Scan(src any) error {
-	var raw []byte
-	switch v := src.(type) {
-	case string:
-		raw = []byte(v)
-	case []byte:
-		raw = v
-	case nil:
-		*m = MapperConfig{}
-		return nil
-	default:
-		return errors.NewInternalf(errors.CodeInternal, "spanattributemapping: cannot scan %T into MapperConfig", src)
-	}
-	return json.Unmarshal(raw, m)
 }
 
 func NewMapperFromStorable(s *StorableMapper) *Mapper {
