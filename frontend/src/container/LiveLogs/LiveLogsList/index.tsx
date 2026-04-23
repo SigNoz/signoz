@@ -1,6 +1,5 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { toast } from '@signozhq/ui';
@@ -36,6 +35,7 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
+import { getAbsoluteUrl } from '@/utils/basePath';
 
 import { LiveLogsListProps } from './types';
 
@@ -47,7 +47,6 @@ function LiveLogsList({
 	handleChangeSelectedView,
 }: LiveLogsListProps): JSX.Element {
 	const ref = useRef<TanStackTableHandle | VirtuosoHandle | null>(null);
-	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
 	const isDarkMode = useIsDarkMode();
 
@@ -132,11 +131,13 @@ function LiveLogsList({
 			urlQuery.delete(QueryParams.activeLogId);
 			urlQuery.delete(QueryParams.relativeTime);
 			urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
-			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+			const link = getAbsoluteUrl(
+				`${window.location.pathname}?${urlQuery.toString()}`,
+			);
 			setCopy(link);
 			toast.success('Copied to clipboard', { position: 'top-right' });
 		},
-		[pathname, setCopy],
+		[setCopy],
 	);
 
 	const handleScrollToLog = useScrollToLog({

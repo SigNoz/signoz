@@ -1,4 +1,6 @@
 import { ColumnSizingState } from '@tanstack/react-table';
+import get from 'api/browser/localstorage/get';
+import set from 'api/browser/localstorage/set';
 import { create } from 'zustand';
 
 import { TableColumnDef } from './types';
@@ -53,7 +55,7 @@ const getStorageKeyForTable = (tableKey: string): string =>
 
 const loadTableFromStorage = (tableKey: string): ColumnState | null => {
 	try {
-		const raw = localStorage.getItem(getStorageKeyForTable(tableKey));
+		const raw = get(getStorageKeyForTable(tableKey));
 		if (!raw) {
 			persistedTableCache.delete(tableKey);
 			return null;
@@ -76,7 +78,7 @@ const loadTableFromStorage = (tableKey: string): ColumnState | null => {
 const saveTableToStorage = (tableKey: string, state: ColumnState): void => {
 	try {
 		const raw = JSON.stringify(state);
-		localStorage.setItem(getStorageKeyForTable(tableKey), raw);
+		set(getStorageKeyForTable(tableKey), raw);
 		persistedTableCache.set(tableKey, { raw, parsed: state });
 	} catch {
 		// Ignore storage errors (e.g., private browsing quota exceeded)

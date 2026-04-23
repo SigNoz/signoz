@@ -15,6 +15,8 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
+import { getAbsoluteUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import './PublicDashboard.styles.scss';
 
@@ -212,7 +214,7 @@ function PublicDashboardSetting(): JSX.Element {
 
 		try {
 			setCopyPublicDashboardURL(
-				`${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
+				getAbsoluteUrl(publicDashboardResponse?.data?.publicPath ?? ''),
 			);
 			toast.success('Copied Public Dashboard URL successfully');
 		} catch (error) {
@@ -221,7 +223,7 @@ function PublicDashboardSetting(): JSX.Element {
 	};
 
 	const publicDashboardURL = useMemo(
-		() => `${window.location.origin}${publicDashboardResponse?.data?.publicPath}`,
+		() => getAbsoluteUrl(publicDashboardResponse?.data?.publicPath ?? ''),
 		[publicDashboardResponse],
 	);
 
@@ -294,7 +296,7 @@ function PublicDashboardSetting(): JSX.Element {
 								icon={<ExternalLink size={12} />}
 								onClick={(): void => {
 									if (publicDashboardURL) {
-										window.open(publicDashboardURL, '_blank');
+										openInNewTab(publicDashboardURL);
 									}
 								}}
 							/>

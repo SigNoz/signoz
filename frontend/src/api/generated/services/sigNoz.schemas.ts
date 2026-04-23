@@ -795,7 +795,8 @@ export interface CloudintegrationtypesAccountDTO {
 }
 
 export interface CloudintegrationtypesAccountConfigDTO {
-	aws: CloudintegrationtypesAWSAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -827,6 +828,86 @@ export interface CloudintegrationtypesAssetsDTO {
 	 * @nullable true
 	 */
 	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesAzureAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	cloudPowerShellCommand: string;
+}
+
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
+export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	categoryGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesAzureServiceConfigDTO {
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+}
+
+export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
 }
 
 /**
@@ -890,7 +971,8 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
-	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
+	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
+	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -1074,7 +1156,8 @@ export interface CloudintegrationtypesPostableAccountDTO {
 }
 
 export interface CloudintegrationtypesPostableAccountConfigDTO {
-	aws: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -1109,7 +1192,8 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 }
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesServiceDTO {
@@ -1137,7 +1221,8 @@ export interface CloudintegrationtypesServiceDTO {
 }
 
 export interface CloudintegrationtypesServiceConfigDTO {
-	aws: CloudintegrationtypesAWSServiceConfigDTO;
+	aws?: CloudintegrationtypesAWSServiceConfigDTO;
+	azure?: CloudintegrationtypesAzureServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -1154,6 +1239,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**
@@ -1186,11 +1273,24 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 }
 
 export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
-	config: CloudintegrationtypesAccountConfigDTO;
+	config: CloudintegrationtypesUpdatableAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
 }
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
