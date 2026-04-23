@@ -68,8 +68,14 @@
 			// Mirrors the logic in ThemeProvider (hooks/useDarkMode/index.tsx).
 			(function () {
 				try {
-					var theme = localStorage.getItem('THEME');
-					var autoSwitch = localStorage.getItem('THEME_AUTO_SWITCH') === 'true';
+					// When served under a URL prefix (e.g. /signoz/), storage keys are scoped
+					// to that prefix by the React app (see utils/storage.ts getScopedKey).
+					// Read the <base> tag — already populated by the Go template — to derive
+					// the same prefix here, before any JS module has loaded.
+					var basePath = (document.querySelector('base') || {}).getAttribute('href') || '/';
+					var prefix = basePath === '/' ? '' : basePath;
+					var theme = localStorage.getItem(prefix + 'THEME');
+					var autoSwitch = localStorage.getItem(prefix + 'THEME_AUTO_SWITCH') === 'true';
 					if (autoSwitch) {
 						theme = window.matchMedia('(prefers-color-scheme: dark)').matches
 							? 'dark'

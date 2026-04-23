@@ -19,10 +19,10 @@ export function setSelectedRowWidgetId(
 
 	// Object.keys returns the raw/already-scoped keys from the browser.
 	// Direct sessionStorage.removeItem is intentional here — k is already fully scoped.
-	// eslint-disable-next-line no-restricted-globals
+	// oxlint-disable-next-line no-restricted-globals
 	Object.keys(sessionStorage)
 		.filter((k) => k.startsWith(scopedPrefix) && k !== scopedKey)
-		// eslint-disable-next-line no-restricted-globals
+		// oxlint-disable-next-line no-restricted-globals
 		.forEach((k) => sessionStorage.removeItem(k));
 
 	setSessionStorageApi(unscopedKey, widgetId);

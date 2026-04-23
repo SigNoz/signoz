@@ -18,8 +18,8 @@ export const GeneratedAPIInstance = <T>(
 	return generatedAPIAxiosInstance({ ...config }).then(({ data }) => data);
 };
 
-generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
+generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 generatedAPIAxiosInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,
