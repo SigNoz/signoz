@@ -16,6 +16,8 @@
     "codegen": "playwright codegen",
     "install:browsers": "playwright install",
     "install:cli": "npm install -g @playwright/cli@latest && playwright-cli install --skills",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "typecheck": "tsc --noEmit"
@@ -36,6 +38,7 @@
     "dotenv": "^16.0.0",
     "eslint": "^9.26.0",
     "eslint-plugin-playwright": "^0.16.0",
+    "oxfmt": "^0.41.0",
     "typescript": "^5.0.0"
   },
   "engines": {
