@@ -36,11 +36,7 @@ func (h *handler) ListGroups(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	var q spantypes.ListSpanMapperGroupsQuery
 	if err := binding.Query.BindQuery(r.URL.Query(), &q); err != nil {
@@ -68,11 +64,7 @@ func (h *handler) CreateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	req := new(spantypes.PostableSpanMapperGroup)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
@@ -101,11 +93,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, err := groupIDFromPath(r)
 	if err != nil {
@@ -139,11 +127,7 @@ func (h *handler) DeleteGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	id, err := groupIDFromPath(r)
 	if err != nil {
@@ -170,11 +154,7 @@ func (h *handler) ListMappers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	groupID, err := groupIDFromPath(r)
 	if err != nil {
@@ -202,11 +182,7 @@ func (h *handler) CreateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	groupID, err := groupIDFromPath(r)
 	if err != nil {
@@ -241,11 +217,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	groupID, err := groupIDFromPath(r)
 	if err != nil {
@@ -285,11 +257,7 @@ func (h *handler) DeleteMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	groupID, err := groupIDFromPath(r)
 	if err != nil {
