@@ -134,7 +134,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -221,57 +223,6 @@
 			flex-direction: row;
 			gap: 4px;
 			align-items: center;
-		}
-	}
-}
-
-.lightMode {
-	.api-quick-filter-left-section {
-		.api-quick-filters-header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-		}
-	}
-
-	.api-module-right-section {
-		.toolbar {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-		}
-	}
-
-	.no-filtered-domains-message-container {
-		.no-filtered-domains-message-content {
-			.no-filtered-domains-message {
-				.no-domain-title {
-					color: var(--l1-foreground);
-				}
-
-				.no-domain-subtitle {
-					color: var(--l2-foreground);
-
-					.attribute {
-						font-family: 'Space Mono';
-					}
-				}
-			}
-		}
-	}
-	.api-monitoring-domain-list-table {
-		.ant-table {
-			.ant-table-cell {
-				color: var(--l1-foreground);
-			}
-
-			.table-row-light {
-				background: none;
-			}
-
-			.table-row-dark {
-				background: none;
-			}
-
-			.round-metric-tag {
-				color: var(--l1-foreground);
-			}
 		}
 	}
 }

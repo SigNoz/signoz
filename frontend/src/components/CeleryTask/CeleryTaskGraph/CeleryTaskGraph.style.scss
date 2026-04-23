@@ -238,18 +238,7 @@
 		height: 2px;
 		bottom: 0;
 		left: 0;
-		background-color: var(--l1-foreground);
-	}
-}
-
-.lightMode {
-	.celery-task-graph-grid-container {
-		.celery-task-graph-worker-count {
-			background: unset;
-		}
-	}
-
-	.configure-option-Info {
-		border: 1px dashed var(--bg-robin-400);
+		background-color: var(--l1-background);
+		color: var(--l1-foreground);
 	}
 }

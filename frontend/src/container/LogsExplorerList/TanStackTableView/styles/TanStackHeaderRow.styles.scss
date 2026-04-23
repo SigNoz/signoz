@@ -102,7 +102,9 @@
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
-	transition: background-color 120ms ease, color 120ms ease;
+	transition:
+		background-color 120ms ease,
+		color 120ms ease;
 
 	&:hover {
 		background: var(--l2-background-hover);
@@ -143,10 +145,12 @@
 	left: 50%;
 	width: 4px;
 	transform: translateX(-50%);
-	background: var(--l2-border);
+	background: var(--l2-background);
 	opacity: 1;
 	pointer-events: none;
-	transition: background 120ms ease, width 120ms ease;
+	transition:
+		background 120ms ease,
+		width 120ms ease;
 }
 
 .tanstack-header-cell.is-resizing .tanstack-resize-handle-line {

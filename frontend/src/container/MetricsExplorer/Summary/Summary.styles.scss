@@ -177,7 +177,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -225,29 +227,6 @@
 		min-height: 400px;
 		gap: 16px;
 		padding-top: 32px;
-	}
-}
-
-.lightMode {
-	.metrics-table-container {
-		.ant-table {
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
-		}
-
-		.ant-pagination {
-			.ant-pagination-item {
-				&-active {
-					background: var(--primary-background);
-					border-color: var(--bg-robin-500);
-
-					a {
-						color: var(--l1-foreground) !important;
-					}
-				}
-			}
-		}
 	}
 }
 
