@@ -2406,30 +2406,11 @@ components:
       - list
       - grouped_list
       type: string
-    LlmpricingruletypesCacheMode:
-      enum:
-      - subtract
-      - additive
-      - unknown
-      type: string
-    LlmpricingruletypesGettableBulkUpdateMeta:
-      properties:
-        inserted:
-          type: integer
-        preserved:
-          type: integer
-        updated:
-          type: integer
-      required:
-      - inserted
-      - updated
-      - preserved
-      type: object
     LlmpricingruletypesGettablePricingRules:
       properties:
         items:
           items:
-            $ref: '#/components/schemas/LlmpricingruletypesPricingRule'
+            $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
           nullable: true
           type: array
         limit:
@@ -2444,10 +2425,10 @@ components:
       - offset
       - limit
       type: object
-    LlmpricingruletypesPricingRule:
+    LlmpricingruletypesLLMPricingRule:
       properties:
         cacheMode:
-          $ref: '#/components/schemas/LlmpricingruletypesCacheMode'
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
         costCacheRead:
           format: double
           type: number
@@ -2487,7 +2468,7 @@ components:
           nullable: true
           type: string
         unit:
-          $ref: '#/components/schemas/LlmpricingruletypesUnit'
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
         updatedAt:
           format: date-time
           type: string
@@ -2507,14 +2488,20 @@ components:
       - isOverride
       - enabled
       type: object
-    LlmpricingruletypesUnit:
+    LlmpricingruletypesLLMPricingRuleCacheMode:
+      enum:
+      - subtract
+      - additive
+      - unknown
+      type: string
+    LlmpricingruletypesLLMPricingRuleUnit:
       enum:
       - per_million_tokens
       type: string
-    LlmpricingruletypesUpdatablePricingRule:
+    LlmpricingruletypesUpdatableLLMPricingRule:
       properties:
         cacheMode:
-          $ref: '#/components/schemas/LlmpricingruletypesCacheMode'
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
         costCacheRead:
           format: double
           type: number
@@ -2546,7 +2533,7 @@ components:
           nullable: true
           type: string
         unit:
-          $ref: '#/components/schemas/LlmpricingruletypesUnit'
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
       required:
       - modelName
       - modelPattern
@@ -2558,11 +2545,11 @@ components:
       - costCacheWrite
       - enabled
       type: object
-    LlmpricingruletypesUpdatablePricingRules:
+    LlmpricingruletypesUpdatableLLMPricingRules:
       properties:
         rules:
           items:
-            $ref: '#/components/schemas/LlmpricingruletypesUpdatablePricingRule'
+            $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRule'
           nullable: true
           type: array
       required:
@@ -7318,7 +7305,7 @@ paths:
         - VIEWER
       summary: List pricing rules
       tags:
-      - llm-pricing-rules
+      - llmpricingrules
     put:
       deprecated: false
       description: Single write endpoint used by both the user and the Zeus sync job.
@@ -7330,22 +7317,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LlmpricingruletypesUpdatablePricingRules'
+              $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRules'
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/LlmpricingruletypesGettableBulkUpdateMeta'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
+        "204":
+          description: No Content
         "400":
           content:
             application/json:
@@ -7377,7 +7352,7 @@ paths:
         - ADMIN
       summary: Bulk update pricing rules
       tags:
-      - llm-pricing-rules
+      - llmpricingrules
   /api/v1/llm_pricing_rules/{id}:
     delete:
       deprecated: false
@@ -7424,7 +7399,7 @@ paths:
         - ADMIN
       summary: Delete a pricing rule
       tags:
-      - llm-pricing-rules
+      - llmpricingrules
     get:
       deprecated: false
       description: Returns a single LLM pricing rule by ID.
@@ -7442,7 +7417,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/LlmpricingruletypesPricingRule'
+                    $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
                   status:
                     type: string
                 required:
@@ -7481,7 +7456,7 @@ paths:
         - VIEWER
       summary: Get a pricing rule
       tags:
-      - llm-pricing-rules
+      - llmpricingrules
   /api/v1/logs/promote_paths:
     get:
       deprecated: false

@@ -3178,32 +3178,12 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
-export enum LlmpricingruletypesCacheModeDTO {
-	subtract = 'subtract',
-	additive = 'additive',
-	unknown = 'unknown',
-}
-export interface LlmpricingruletypesGettableBulkUpdateMetaDTO {
-	/**
-	 * @type integer
-	 */
-	inserted: number;
-	/**
-	 * @type integer
-	 */
-	preserved: number;
-	/**
-	 * @type integer
-	 */
-	updated: number;
-}
-
 export interface LlmpricingruletypesGettablePricingRulesDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	items: LlmpricingruletypesPricingRuleDTO[] | null;
+	items: LlmpricingruletypesLLMPricingRuleDTO[] | null;
 	/**
 	 * @type integer
 	 */
@@ -3218,8 +3198,8 @@ export interface LlmpricingruletypesGettablePricingRulesDTO {
 	total: number;
 }
 
-export interface LlmpricingruletypesPricingRuleDTO {
-	cacheMode: LlmpricingruletypesCacheModeDTO;
+export interface LlmpricingruletypesLLMPricingRuleDTO {
+	cacheMode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -3284,7 +3264,7 @@ export interface LlmpricingruletypesPricingRuleDTO {
 	 * @nullable true
 	 */
 	syncedAt?: Date | null;
-	unit: LlmpricingruletypesUnitDTO;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3296,11 +3276,16 @@ export interface LlmpricingruletypesPricingRuleDTO {
 	updatedBy?: string;
 }
 
-export enum LlmpricingruletypesUnitDTO {
+export enum LlmpricingruletypesLLMPricingRuleCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export enum LlmpricingruletypesLLMPricingRuleUnitDTO {
 	per_million_tokens = 'per_million_tokens',
 }
-export interface LlmpricingruletypesUpdatablePricingRuleDTO {
-	cacheMode: LlmpricingruletypesCacheModeDTO;
+export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
+	cacheMode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
 	/**
 	 * @type number
 	 * @format double
@@ -3349,15 +3334,15 @@ export interface LlmpricingruletypesUpdatablePricingRuleDTO {
 	 * @nullable true
 	 */
 	sourceId?: string | null;
-	unit: LlmpricingruletypesUnitDTO;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
 }
 
-export interface LlmpricingruletypesUpdatablePricingRulesDTO {
+export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
 	/**
 	 * @type array
 	 * @nullable true
 	 */
-	rules: LlmpricingruletypesUpdatablePricingRuleDTO[] | null;
+	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
 }
 
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
@@ -6526,14 +6511,6 @@ export type ListLLMPricingRules200 = {
 	status: string;
 };
 
-export type UpdateLLMPricingRules200 = {
-	data: LlmpricingruletypesGettableBulkUpdateMetaDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type DeleteLLMPricingRulePathParameters = {
 	id: string;
 };
@@ -6541,7 +6518,7 @@ export type GetLLMPricingRulePathParameters = {
 	id: string;
 };
 export type GetLLMPricingRule200 = {
-	data: LlmpricingruletypesPricingRuleDTO;
+	data: LlmpricingruletypesLLMPricingRuleDTO;
 	/**
 	 * @type string
 	 */

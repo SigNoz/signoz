@@ -66,7 +66,7 @@ func (h *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, llmpricingruletypes.NewGettablePricingRulesFromPricingRules(rules, total, q.Offset, q.Limit))
+	render.Success(rw, http.StatusOK, llmpricingruletypes.NewGettableLLMPricingRulesFromLLMPricingRules(rules, total, q.Offset, q.Limit))
 }
 
 // Get handles GET /api/v1/llm_pricing_rules/{id}.
@@ -117,19 +117,19 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(llmpricingruletypes.UpdatablePricingRules)
+	req := new(llmpricingruletypes.UpdatableLLMPricingRules)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	inserted, updated, preserved, err := h.module.Update(ctx, orgID, claims.Email, req.Rules)
+	err = h.module.Update(ctx, orgID, claims.Email, req.Rules)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, llmpricingruletypes.NewUpdatablePricingRulesResponse(inserted, updated, preserved))
+	render.Success(rw, http.StatusNoContent, nil)
 }
 
 // Delete handles DELETE /api/v1/llm_pricing_rules/{id}.

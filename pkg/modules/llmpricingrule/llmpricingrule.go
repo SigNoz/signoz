@@ -9,9 +9,9 @@ import (
 )
 
 type Module interface {
-	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.PricingRule, int, error)
-	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.PricingRule, error)
-	Update(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatablePricingRule) (inserted, updated, preserved int, err error)
+	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.LLMPricingRule, int, error)
+	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error)
+	Update(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatableLLMPricingRule) (err error)
 	Delete(ctx context.Context, orgID, id valuer.UUID) error
 }
 

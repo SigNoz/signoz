@@ -15,24 +15,24 @@ import (
 // It is compatible with both SQLite and PostgreSQL.
 type StringSlice []string
 
-// StorablePricingRule is the bun/DB representation of an LLM pricing rule.
-type StorablePricingRule struct {
+// StorableLLMPricingRule is the bun/DB representation of an LLM pricing rule.
+type StorableLLMPricingRule struct {
 	bun.BaseModel `bun:"table:llm_pricing_rules,alias:llm_pricing_rules"`
 
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID          valuer.UUID  `bun:"org_id,type:text,notnull"`
-	SourceID       *valuer.UUID `bun:"source_id,type:text"`
-	Model          string       `bun:"model,type:text,notnull"`
-	ModelPattern   StringSlice  `bun:"model_pattern,type:text,notnull"`
-	Unit           Unit         `bun:"unit,type:text,notnull"`
-	CacheMode      CacheMode    `bun:"cache_mode,type:text,notnull"`
-	CostInput      float64      `bun:"cost_input,notnull"`
-	CostOutput     float64      `bun:"cost_output,notnull"`
-	CostCacheRead  float64      `bun:"cost_cache_read,notnull"`
-	CostCacheWrite float64      `bun:"cost_cache_write,notnull"`
+	OrgID          valuer.UUID             `bun:"org_id,type:text,notnull"`
+	SourceID       *valuer.UUID            `bun:"source_id,type:text"`
+	Model          string                  `bun:"model,type:text,notnull"`
+	ModelPattern   StringSlice             `bun:"model_pattern,type:text,notnull"`
+	Unit           LLMPricingRuleUnit      `bun:"unit,type:text,notnull"`
+	CacheMode      LLMPricingRuleCacheMode `bun:"cache_mode,type:text,notnull"`
+	CostInput      float64                 `bun:"cost_input,notnull"`
+	CostOutput     float64                 `bun:"cost_output,notnull"`
+	CostCacheRead  float64                 `bun:"cost_cache_read,notnull"`
+	CostCacheWrite float64                 `bun:"cost_cache_write,notnull"`
 	// IsOverride marks the row as user-pinned. When true, Zeus skips it entirely.
 	IsOverride bool       `bun:"is_override,notnull,default:false"`
 	SyncedAt   *time.Time `bun:"synced_at"`
