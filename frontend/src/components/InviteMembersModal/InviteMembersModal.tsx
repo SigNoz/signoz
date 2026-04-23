@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import { Style } from '@signozhq/design-tokens';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/ui';
+import {
+	Button,
+	Callout,
+	DialogFooter,
+	DialogWrapper,
+	Input,
+	toast,
+} from '@signozhq/ui';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
@@ -200,10 +203,7 @@ function InviteMembersModal({
 					})),
 				});
 			}
-			toast.success('Invites sent successfully', {
-				richColors: true,
-				position: 'top-right',
-			});
+			toast.success('Invites sent successfully', { position: 'top-right' });
 			resetAndClose();
 			onComplete?.();
 		} catch (err) {
@@ -274,7 +274,6 @@ function InviteMembersModal({
 											<Button
 												variant="ghost"
 												color="destructive"
-												className="remove-team-member-button"
 												onClick={(): void => removeRow(row.id)}
 												aria-label="Remove row"
 											>
@@ -289,14 +288,16 @@ function InviteMembersModal({
 				</div>
 
 				{(hasInvalidEmails || hasInvalidRoles) && (
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						icon={<CircleAlert size={12} />}
-						className="invite-team-members-error-callout"
-						description={getValidationErrorMessage()}
-					/>
+					<div className="invite-members-modal__error-callout">
+						<Callout
+							type="error"
+							size="small"
+							showIcon
+							icon={<CircleAlert size={12} />}
+						>
+							{getValidationErrorMessage()}
+						</Callout>
+					</div>
 				)}
 			</div>
 
@@ -304,9 +305,8 @@ function InviteMembersModal({
 				<Button
 					variant="dashed"
 					color="secondary"
-					size="sm"
 					className="add-another-member-button"
-					prefixIcon={<Plus size={12} color={Style.L1_FOREGROUND} />}
+					prefix={<Plus size={12} color={Style.L1_FOREGROUND} />}
 					onClick={addRow}
 				>
 					Add another
@@ -317,7 +317,6 @@ function InviteMembersModal({
 						type="button"
 						variant="solid"
 						color="secondary"
-						size="sm"
 						onClick={resetAndClose}
 					>
 						<X size={12} />
@@ -327,7 +326,6 @@ function InviteMembersModal({
 					<Button
 						variant="solid"
 						color="primary"
-						size="sm"
 						onClick={handleSubmit}
 						disabled={isSubmitDisabled}
 						loading={isSubmitting}

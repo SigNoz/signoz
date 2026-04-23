@@ -1,5 +1,5 @@
-import { memo, useEffect } from 'react';
-import { useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -30,10 +30,11 @@ function LeftContainer({
 	setRequestData,
 	setQueryResponse,
 	enableDrillDown = false,
-	selectedDashboard,
+	dashboardData,
 	isNewPanel = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
+	const queryClient = useQueryClient();
 
 	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
 		AppState,
@@ -49,11 +50,24 @@ function LeftContainer({
 		],
 		[globalSelectedInterval, requestData, minTime, maxTime],
 	);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries(queryRangeKey);
+		setIsCancelled(true);
+	}, [queryClient, queryRangeKey]);
+
 	const queryResponse = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
 		enabled: !!stagedQuery,
 		queryKey: queryRangeKey,
 		keepPreviousData: true,
 	});
+
+	useEffect(() => {
+		if (queryResponse.isFetching) {
+			setIsCancelled(false);
+		}
+	}, [queryResponse.isFetching]);
 
 	// Update parent component with query response for legend colors
 	useEffect(() => {
@@ -71,16 +85,17 @@ function LeftContainer({
 				selectedWidget={selectedWidget}
 				isLoadingPanelData={isLoadingPanelData}
 				enableDrillDown={enableDrillDown}
+				isCancelled={isCancelled}
 			/>
 			<QueryContainer className="query-section-left-container">
 				<QuerySection
 					selectedGraph={selectedGraph}
-					queryRangeKey={queryRangeKey}
 					isLoadingQueries={queryResponse.isFetching}
+					handleCancelQuery={handleCancelQuery}
 					selectedWidget={selectedWidget}
 					dashboardVersion={ENTITY_VERSION_V5}
-					dashboardId={selectedDashboard?.id}
-					dashboardName={selectedDashboard?.data.title}
+					dashboardId={dashboardData?.id}
+					dashboardName={dashboardData?.data.title}
 					isNewPanel={isNewPanel}
 				/>
 				{selectedGraph === PANEL_TYPES.LIST && (

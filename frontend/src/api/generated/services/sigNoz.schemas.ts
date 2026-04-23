@@ -795,7 +795,8 @@ export interface CloudintegrationtypesAccountDTO {
 }
 
 export interface CloudintegrationtypesAccountConfigDTO {
-	aws: CloudintegrationtypesAWSAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -827,6 +828,86 @@ export interface CloudintegrationtypesAssetsDTO {
 	 * @nullable true
 	 */
 	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesAzureAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	cloudPowerShellCommand: string;
+}
+
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
+export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	categoryGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesAzureServiceConfigDTO {
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+}
+
+export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
 }
 
 /**
@@ -890,7 +971,8 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
-	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
+	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
+	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -1024,16 +1106,17 @@ export interface CloudintegrationtypesOldAWSCollectionStrategyDTO {
 	s3_buckets?: CloudintegrationtypesOldAWSCollectionStrategyDTOS3Buckets;
 }
 
-export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem = {
-	/**
-	 * @type string
-	 */
-	filter_pattern?: string;
-	/**
-	 * @type string
-	 */
-	log_group_name_prefix?: string;
-};
+export type CloudintegrationtypesOldAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem =
+	{
+		/**
+		 * @type string
+		 */
+		filter_pattern?: string;
+		/**
+		 * @type string
+		 */
+		log_group_name_prefix?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 	/**
@@ -1045,16 +1128,17 @@ export interface CloudintegrationtypesOldAWSLogsStrategyDTO {
 		| null;
 }
 
-export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem = {
-	/**
-	 * @type array
-	 */
-	MetricNames?: string[];
-	/**
-	 * @type string
-	 */
-	Namespace?: string;
-};
+export type CloudintegrationtypesOldAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem =
+	{
+		/**
+		 * @type array
+		 */
+		MetricNames?: string[];
+		/**
+		 * @type string
+		 */
+		Namespace?: string;
+	};
 
 export interface CloudintegrationtypesOldAWSMetricsStrategyDTO {
 	/**
@@ -1072,7 +1156,8 @@ export interface CloudintegrationtypesPostableAccountDTO {
 }
 
 export interface CloudintegrationtypesPostableAccountConfigDTO {
-	aws: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -1107,7 +1192,8 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 }
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesServiceDTO {
@@ -1135,7 +1221,8 @@ export interface CloudintegrationtypesServiceDTO {
 }
 
 export interface CloudintegrationtypesServiceConfigDTO {
-	aws: CloudintegrationtypesAWSServiceConfigDTO;
+	aws?: CloudintegrationtypesAWSServiceConfigDTO;
+	azure?: CloudintegrationtypesAzureServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -1152,6 +1239,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**
@@ -1184,11 +1273,24 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 }
 
 export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
-	config: CloudintegrationtypesAccountConfigDTO;
+	config: CloudintegrationtypesUpdatableAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
 }
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
@@ -3051,6 +3153,131 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface InframonitoringtypesHostFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesHostRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesHostRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activeHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	diskUsage: number;
+	/**
+	 * @type string
+	 */
+	hostName: string;
+	/**
+	 * @type integer
+	 */
+	inactiveHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	load15: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesHostRecordDTOMeta;
+	status: InframonitoringtypesHostStatusDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	wait: number;
+}
+
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
+export interface InframonitoringtypesHostsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingMetrics: string[] | null;
+}
+
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
 	/**
 	 * @type integer
@@ -4774,7 +5001,7 @@ export interface RuletypesPostableRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4899,7 +5126,7 @@ export interface RuletypesRuleDTO {
 	 * @type string
 	 */
 	alert: string;
-	alertType?: RuletypesAlertTypeDTO;
+	alertType: RuletypesAlertTypeDTO;
 	/**
 	 * @type object
 	 */
@@ -4984,8 +5211,8 @@ export interface RuletypesRuleConditionDTO {
 	 */
 	algorithm?: string;
 	compositeQuery: RuletypesAlertCompositeQueryDTO;
-	matchType: RuletypesMatchTypeDTO;
-	op: RuletypesCompareOperatorDTO;
+	matchType?: RuletypesMatchTypeDTO;
+	op?: RuletypesCompareOperatorDTO;
 	/**
 	 * @type boolean
 	 */
@@ -6862,6 +7089,14 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListHosts200 = {
+	data: InframonitoringtypesHostsDTO;
 	/**
 	 * @type string
 	 */

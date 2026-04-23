@@ -1,0 +1,91 @@
+name: e2eci
+
+on:
+  pull_request:
+    types:
+      - labeled
+  pull_request_target:
+    types:
+      - labeled
+
+jobs:
+  fmtlint:
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: install
+        run: |
+          cd tests/e2e && yarn install --frozen-lockfile
+      - name: fmt
+        run: |
+          cd tests/e2e && yarn fmt:check
+      - name: lint
+        run: |
+          cd tests/e2e && yarn lint
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - chromium
+    if: |
+      ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-e2e')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+      - name: uv
+        uses: astral-sh/setup-uv@v4
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: python-install
+        run: |
+          cd tests && uv sync
+      - name: yarn-install
+        run: |
+          cd tests/e2e && yarn install --frozen-lockfile
+      - name: playwright-browsers
+        run: |
+          cd tests/e2e && yarn playwright install --with-deps ${{ matrix.project }}
+      - name: bring-up-stack
+        run: |
+          cd tests && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            -vv --reuse --with-web \
+            e2e/bootstrap/setup.py::test_setup
+      - name: playwright-test
+        run: |
+          cd tests/e2e && \
+            yarn playwright test --project=${{ matrix.project }}
+      - name: teardown-stack
+        if: always()
+        run: |
+          cd tests && \
+            uv run pytest \
+            --basetemp=./tmp/ \
+            -vv --teardown \
+            e2e/bootstrap/setup.py::test_teardown
+      - name: upload-artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ matrix.project }}
+          path: tests/e2e/artifacts/
+          retention-days: 5

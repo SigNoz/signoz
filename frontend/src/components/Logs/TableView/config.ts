@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { Color } from '@signozhq/design-tokens';
 import { TableProps } from 'antd';
 
 export function getDefaultCellStyle(isDarkMode?: boolean): CSSProperties {
@@ -7,7 +8,7 @@ export function getDefaultCellStyle(isDarkMode?: boolean): CSSProperties {
 		paddingBottom: 6,
 		paddingRight: 8,
 		paddingLeft: 8,
-		color: isDarkMode ? 'var(--bg-vanilla-400)' : 'var(--bg-slate-400)',
+		color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_400,
 		fontSize: '14px',
 		fontStyle: 'normal',
 		fontWeight: 400,

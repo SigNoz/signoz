@@ -9,8 +9,8 @@ export type WidgetColumnWidths = {
 
 export interface DashboardUISlice {
 	//
-	selectedDashboard: Dashboard | undefined;
-	setSelectedDashboard: (
+	dashboardData: Dashboard | undefined;
+	setDashboardData: (
 		updater:
 			| Dashboard
 			| undefined
@@ -26,7 +26,7 @@ export interface DashboardUISlice {
 }
 
 export const initialDashboardUIState = {
-	selectedDashboard: undefined as Dashboard | undefined,
+	dashboardData: undefined as Dashboard | undefined,
 	columnWidths: {} as WidgetColumnWidths,
 };
 
@@ -38,10 +38,10 @@ export const createDashboardUISlice: StateCreator<
 > = (set) => ({
 	...initialDashboardUIState,
 
-	setSelectedDashboard: (updater): void =>
+	setDashboardData: (updater): void =>
 		set((state: DashboardUISlice): void => {
-			state.selectedDashboard =
-				typeof updater === 'function' ? updater(state.selectedDashboard) : updater;
+			state.dashboardData =
+				typeof updater === 'function' ? updater(state.dashboardData) : updater;
 		}),
 
 	setColumnWidths: (updater): void =>

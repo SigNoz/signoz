@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Typography } from 'antd';
 import { LineInterpolation } from 'lib/uPlotV2/config/types';
 
@@ -21,19 +21,14 @@ export default function LineInterpolationSelector({
 			<ToggleGroup
 				type="single"
 				value={value}
-				variant="outline"
 				size="lg"
-				onValueChange={(newValue): void => {
+				onChange={(newValue): void => {
 					if (newValue) {
 						onChange(newValue as LineInterpolation);
 					}
 				}}
 			>
-				<ToggleGroupItem
-					value={LineInterpolation.Linear}
-					aria-label="Linear"
-					title="Linear"
-				>
+				<ToggleGroupItem value={LineInterpolation.Linear} aria-label="Linear">
 					<svg
 						className="line-interpolation-icon"
 						viewBox="0 0 48 48"

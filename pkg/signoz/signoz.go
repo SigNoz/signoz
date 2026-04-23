@@ -100,7 +100,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
+	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, []authz.OnBeforeRoleDelete, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
@@ -328,18 +328,27 @@ func New(
 	// Initialize dashboard module (needed for authz registry)
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 
-	// Initialize authz
-	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, dashboard)
-	if err != nil {
-		return nil, err
-	}
-	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize user getter
 	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
+
+	// Initialize service account getter
+	serviceAccountGetter := implserviceaccount.NewGetter(implserviceaccount.NewStore(sqlstore))
+
+	// Build pre-delete callbacks from modules
+	onBeforeRoleDelete := []authz.OnBeforeRoleDelete{
+		userGetter.OnBeforeRoleDelete,
+		serviceAccountGetter.OnBeforeRoleDelete,
+	}
+
+	// Initialize authz
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, onBeforeRoleDelete, dashboard)
+	if err != nil {
+		return nil, err
+	}
+	authz, err := authzProviderFactory.New(ctx, providerSettings, config.Authz)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(

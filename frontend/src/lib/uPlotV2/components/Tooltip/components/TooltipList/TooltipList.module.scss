@@ -1,0 +1,31 @@
+.list {
+	width: 100%;
+	:global(div[data-viewport-type='element']) {
+		left: 0;
+		box-sizing: border-box;
+		padding: 0px var(--spacing-2) 0 var(--spacing-4);
+
+		[data-test-id='virtuoso-item-list'] > * + * {
+			margin-top: var(--spacing-2);
+		}
+	}
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-slate-100);
+		border-radius: 0.5rem;
+	}
+}
+
+.listLightMode {
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-vanilla-400);
+	}
+}

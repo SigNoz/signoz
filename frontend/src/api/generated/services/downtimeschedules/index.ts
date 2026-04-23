@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,10 +16,7 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreateDowntimeSchedule201,
 	DeleteDowntimeScheduleByIDPathParameters,
@@ -30,6 +28,9 @@ import type {
 	RuletypesPostablePlannedMaintenanceDTO,
 	UpdateDowntimeScheduleByIDPathParameters,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint lists all planned maintenance / downtime schedules
@@ -55,7 +56,7 @@ export const getListDowntimeSchedulesQueryKey = (
 
 export const getListDowntimeSchedulesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listDowntimeSchedules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListDowntimeSchedulesParams,
 	options?: {
@@ -93,7 +94,7 @@ export type ListDowntimeSchedulesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListDowntimeSchedules<
 	TData = Awaited<ReturnType<typeof listDowntimeSchedules>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: ListDowntimeSchedulesParams,
 	options?: {
@@ -150,7 +151,7 @@ export const createDowntimeSchedule = (
 
 export const getCreateDowntimeScheduleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDowntimeSchedule>>,
@@ -167,8 +168,8 @@ export const getCreateDowntimeScheduleMutationOptions = <
 	const mutationKey = ['createDowntimeSchedule'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -188,15 +189,17 @@ export const getCreateDowntimeScheduleMutationOptions = <
 export type CreateDowntimeScheduleMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createDowntimeSchedule>>
 >;
-export type CreateDowntimeScheduleMutationBody = BodyType<RuletypesPostablePlannedMaintenanceDTO>;
-export type CreateDowntimeScheduleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateDowntimeScheduleMutationBody =
+	BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+export type CreateDowntimeScheduleMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create downtime schedule
  */
 export const useCreateDowntimeSchedule = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDowntimeSchedule>>,
@@ -229,7 +232,7 @@ export const deleteDowntimeScheduleByID = ({
 
 export const getDeleteDowntimeScheduleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDowntimeScheduleByID>>,
@@ -246,8 +249,8 @@ export const getDeleteDowntimeScheduleByIDMutationOptions = <
 	const mutationKey = ['deleteDowntimeScheduleByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -268,14 +271,15 @@ export type DeleteDowntimeScheduleByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteDowntimeScheduleByID>>
 >;
 
-export type DeleteDowntimeScheduleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteDowntimeScheduleByIDMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Delete downtime schedule
  */
 export const useDeleteDowntimeScheduleByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDowntimeScheduleByID>>,
@@ -316,7 +320,7 @@ export const getGetDowntimeScheduleByIDQueryKey = ({
 
 export const getGetDowntimeScheduleByIDQueryOptions = <
 	TData = Awaited<ReturnType<typeof getDowntimeScheduleByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetDowntimeScheduleByIDPathParameters,
 	options?: {
@@ -351,7 +355,8 @@ export const getGetDowntimeScheduleByIDQueryOptions = <
 export type GetDowntimeScheduleByIDQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getDowntimeScheduleByID>>
 >;
-export type GetDowntimeScheduleByIDQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetDowntimeScheduleByIDQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get downtime schedule by ID
@@ -359,7 +364,7 @@ export type GetDowntimeScheduleByIDQueryError = ErrorType<RenderErrorResponseDTO
 
 export function useGetDowntimeScheduleByID<
 	TData = Awaited<ReturnType<typeof getDowntimeScheduleByID>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetDowntimeScheduleByIDPathParameters,
 	options?: {
@@ -415,7 +420,7 @@ export const updateDowntimeScheduleByID = (
 
 export const getUpdateDowntimeScheduleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDowntimeScheduleByID>>,
@@ -438,8 +443,8 @@ export const getUpdateDowntimeScheduleByIDMutationOptions = <
 	const mutationKey = ['updateDowntimeScheduleByID'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -462,15 +467,17 @@ export const getUpdateDowntimeScheduleByIDMutationOptions = <
 export type UpdateDowntimeScheduleByIDMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateDowntimeScheduleByID>>
 >;
-export type UpdateDowntimeScheduleByIDMutationBody = BodyType<RuletypesPostablePlannedMaintenanceDTO>;
-export type UpdateDowntimeScheduleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateDowntimeScheduleByIDMutationBody =
+	BodyType<RuletypesPostablePlannedMaintenanceDTO>;
+export type UpdateDowntimeScheduleByIDMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update downtime schedule
  */
 export const useUpdateDowntimeScheduleByID = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDowntimeScheduleByID>>,

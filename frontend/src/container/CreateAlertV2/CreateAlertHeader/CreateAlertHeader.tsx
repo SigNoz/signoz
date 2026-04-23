@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from 'antd';
+import { Button, Input } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { QueryParams } from 'constants/query';
@@ -59,15 +59,18 @@ function CreateAlertHeader(): JSX.Element {
 				<div className="alert-header__tab-bar">
 					<div className="alert-header__tab">New Alert Rule</div>
 					<Button
-						icon={<RotateCcw size={16} />}
+						prefix={<RotateCcw size={12} />}
 						onClick={handleSwitchToClassicExperience}
+						variant="solid"
+						color="secondary"
+						size="sm"
 					>
 						Switch to Classic Experience
 					</Button>
 				</div>
 			)}
 			<div className="alert-header__content">
-				<input
+				<Input
 					type="text"
 					value={alertState.name}
 					onChange={(e): void =>

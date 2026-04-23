@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Button } from '@signozhq/button';
 import { ArrowLeft, ArrowRight } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, Input } from '@signozhq/ui';
 import { Form, Select } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useForgotPassword } from 'api/generated/services/users';
@@ -191,7 +190,7 @@ function ForgotPassword({
 						data-testid="forgot-password-back"
 						className="forgot-password-back-button"
 						onClick={handleBackToLogin}
-						prefixIcon={<ArrowLeft size={12} />}
+						prefix={<ArrowLeft size={12} />}
 					>
 						Back to login
 					</Button>
@@ -204,7 +203,7 @@ function ForgotPassword({
 						type="submit"
 						data-testid="forgot-password-submit"
 						className="login-submit-btn"
-						suffixIcon={<ArrowRight size={12} />}
+						suffix={<ArrowRight size={12} />}
 					>
 						{isLoading ? 'Sending...' : 'Send reset link'}
 					</Button>

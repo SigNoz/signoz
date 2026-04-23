@@ -6,7 +6,7 @@
 	height: 100%;
 	width: 100%;
 
-	background: color-mix(in srgb, var(--background) 90%, transparent);
+	background: color-mix(in srgb, var(--l1-background) 90%, transparent);
 
 	&::-webkit-scrollbar {
 		width: 0.3rem;
@@ -759,12 +759,11 @@
 }
 
 .welcome-checklist-popover {
-	padding: 1rem 1.5rem;
-	background-color: var(--l2-background);
+	padding: 12px 24px;
 	border-radius: 2px;
 	border: 1px solid var(--l2-border);
 	background: var(--l2-background);
-	color: var(--l1-foreground);
+	color: var(--l2-foreground);
 
 	.ant-popover-content {
 		border: none;
@@ -777,7 +776,7 @@
 
 	.home-checklist-container {
 		background-color: transparent !important;
-		width: 400px;
+		width: 420px;
 	}
 }
 

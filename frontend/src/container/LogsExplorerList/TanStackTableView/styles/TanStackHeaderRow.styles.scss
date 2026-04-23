@@ -17,6 +17,9 @@
 	&.is-resizing {
 		background: var(--l2-background-hover);
 	}
+
+	border: none !important;
+	background-color: var(--l2-background) !important;
 }
 
 .tanstack-header-content {

@@ -22,7 +22,7 @@
 				color: var(--l2-foreground);
 				font-weight: 500;
 				margin: 0 4px;
-				font-size: 14px;
+				font-size: 13px;
 			}
 		}
 
@@ -30,7 +30,7 @@
 			.ant-btn {
 				border: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
-				font-size: 14px;
+				font-size: 13px;
 				display: flex;
 				align-items: center;
 				gap: 8px;
@@ -48,7 +48,7 @@
 
 	.evaluation-cadence-details-title {
 		color: var(--l1-foreground);
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
 		padding-left: 16px;
 		padding-top: 16px;
@@ -138,7 +138,7 @@
 					border-radius: 4px;
 					color: var(--l2-foreground) !important;
 					font-family: 'Space Mono';
-					font-size: 14px;
+					font-size: 13px;
 
 					&::placeholder {
 						font-family: 'Space Mono';
@@ -202,7 +202,7 @@
 				gap: 8px;
 				height: 100%;
 				color: var(--l1-foreground);
-				font-size: 14px;
+				font-size: 13px;
 			}
 
 			.schedule-preview {
@@ -225,7 +225,7 @@
 
 					.schedule-preview-title {
 						color: var(--l2-foreground);
-						font-size: 14px;
+						font-size: 13px;
 						font-weight: 500;
 					}
 				}
@@ -281,7 +281,7 @@
 
 							.schedule-preview-date {
 								color: var(--l2-foreground);
-								font-size: 14px;
+								font-size: 13px;
 								font-weight: 400;
 								white-space: nowrap;
 							}
@@ -396,7 +396,7 @@
 
 						.schedule-preview-title {
 							color: var(--l1-foreground);
-							font-size: 14px;
+							font-size: 13px;
 							font-weight: 500;
 						}
 					}
@@ -422,7 +422,7 @@
 							.schedule-preview-content {
 								.schedule-preview-date {
 									color: var(--l1-foreground);
-									font-size: 14px;
+									font-size: 13px;
 									font-weight: 500;
 								}
 

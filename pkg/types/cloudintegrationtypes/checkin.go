@@ -48,12 +48,8 @@ type IntegrationConfig struct {
 }
 
 type ProviderIntegrationConfig struct {
-	AWS *AWSIntegrationConfig `json:"aws" required:"true" nullable:"false"`
-}
-
-type AWSIntegrationConfig struct {
-	EnabledRegions              []string                        `json:"enabledRegions" required:"true" nullable:"false"`
-	TelemetryCollectionStrategy *AWSTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
+	AWS   *AWSIntegrationConfig   `json:"aws,omitempty" required:"false" nullable:"false"`
+	Azure *AzureIntegrationConfig `json:"azure,omitempty" required:"false" nullable:"false"`
 }
 
 // NewGettableAgentCheckIn constructs a backward-compatible response from an AgentCheckInResponse.

@@ -417,3 +417,11 @@ tracedetail:
     max_depth_to_auto_expand: 5
     # Threshold below which all spans are returned without windowing.
     max_limit_to_select_all_spans: 10000
+
+##################### Authz #################################
+authz:
+  # Specifies the authz provider to use.
+  provider: openfga
+  openfga:
+    # maximum tuples allowed per openfga write operation.
+    max_tuples_per_write: 100

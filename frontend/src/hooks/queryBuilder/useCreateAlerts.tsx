@@ -33,7 +33,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -49,8 +49,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -58,8 +58,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Dashboard Detail: Panel action', {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -76,6 +76,9 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation.mutate(queryPayload, {
 			onSuccess: (data) => {
 				const updatedQuery = mapQueryDataFromApi(data.data.compositeQuery);
+				if (widget.query.queryType) {
+					updatedQuery.queryType = widget.query.queryType;
+				}
 				// If widget has a y-axis unit, set it to the updated query if it is not already set
 				if (widget.yAxisUnit && !isEmpty(widget.yAxisUnit)) {
 					updatedQuery.unit = widget.yAxisUnit;

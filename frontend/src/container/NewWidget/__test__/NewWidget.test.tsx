@@ -326,7 +326,7 @@ describe('Stacking bar in new panel', () => {
 					<PreferenceContextProvider>
 						<NewWidget
 							dashboardId=""
-							selectedDashboard={undefined}
+							dashboardData={undefined}
 							selectedGraph={PANEL_TYPES.BAR}
 						/>
 					</PreferenceContextProvider>
@@ -378,7 +378,7 @@ describe('when switching to BAR panel type', () => {
 			<DashboardBootstrapWrapper dashboardId="">
 				<NewWidget
 					dashboardId=""
-					selectedDashboard={undefined}
+					dashboardData={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
 				/>
 			</DashboardBootstrapWrapper>,

@@ -20,6 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -57,6 +59,7 @@ type Handlers struct {
 	SpanPercentile          spanpercentile.Handler
 	Services                services.Handler
 	MetricsExplorer         metricsexplorer.Handler
+	InfraMonitoring         inframonitoring.Handler
 	Global                  global.Handler
 	FlaggerHandler          flagger.Handler
 	GatewayHandler          gateway.Handler
@@ -98,6 +101,7 @@ func NewHandlers(
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
 		Services:                implservices.NewHandler(modules.Services),
 		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		InfraMonitoring:         implinframonitoring.NewHandler(modules.InfraMonitoring),
 		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
 		Global:                  signozglobal.NewHandler(global),
 		FlaggerHandler:          flagger.NewHandler(flaggerService),

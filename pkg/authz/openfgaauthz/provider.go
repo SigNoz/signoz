@@ -68,68 +68,32 @@ func (provider *provider) Write(ctx context.Context, additions []*openfgav1.Tupl
 	return provider.server.Write(ctx, additions, deletions)
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
-	return provider.server.ListObjects(ctx, subject, relation, typeable)
+func (provider *provider) ReadTuples(ctx context.Context, tupleKey *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error) {
+	return provider.server.ReadTuples(ctx, tupleKey)
+}
+
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType authtypes.Type) ([]*authtypes.Object, error) {
+	return provider.server.ListObjects(ctx, subject, relation, objectType)
 }
 
 func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
-	storableRole, err := provider.store.Get(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return authtypes.NewRoleFromStorableRole(storableRole), nil
+	return provider.store.Get(ctx, orgID, id)
 }
 
 func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
-	storableRole, err := provider.store.GetByOrgIDAndName(ctx, orgID, name)
-	if err != nil {
-		return nil, err
-	}
-
-	return authtypes.NewRoleFromStorableRole(storableRole), nil
+	return provider.store.GetByOrgIDAndName(ctx, orgID, name)
 }
 
 func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.Role, error) {
-	storableRoles, err := provider.store.List(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	roles := make([]*authtypes.Role, len(storableRoles))
-	for idx, storableRole := range storableRoles {
-		roles[idx] = authtypes.NewRoleFromStorableRole(storableRole)
-	}
-
-	return roles, nil
+	return provider.store.List(ctx, orgID)
 }
 
 func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
-	storableRoles, err := provider.store.ListByOrgIDAndNames(ctx, orgID, names)
-	if err != nil {
-		return nil, err
-	}
-
-	roles := make([]*authtypes.Role, len(storableRoles))
-	for idx, storable := range storableRoles {
-		roles[idx] = authtypes.NewRoleFromStorableRole(storable)
-	}
-
-	return roles, nil
+	return provider.store.ListByOrgIDAndNames(ctx, orgID, names)
 }
 
 func (provider *provider) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*authtypes.Role, error) {
-	storableRoles, err := provider.store.ListByOrgIDAndIDs(ctx, orgID, ids)
-	if err != nil {
-		return nil, err
-	}
-
-	roles := make([]*authtypes.Role, len(storableRoles))
-	for idx, storable := range storableRoles {
-		roles[idx] = authtypes.NewRoleFromStorableRole(storable)
-	}
-
-	return roles, nil
+	return provider.store.ListByOrgIDAndIDs(ctx, orgID, ids)
 }
 
 func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
@@ -197,7 +161,7 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names [
 func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*authtypes.Role) error {
 	err := provider.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, role := range managedRoles {
-			err := provider.store.Create(ctx, authtypes.NewStorableRoleFromRole(role))
+			err := provider.store.Create(ctx, role)
 			if err != nil {
 				return err
 			}

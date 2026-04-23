@@ -12,8 +12,11 @@ interface BaseChartProps {
 	height: number;
 	showTooltip?: boolean;
 	showLegend?: boolean;
-	timezone?: Timezone;
 	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
+	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
+	onClick?: (clickData: TooltipClickData) => void;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
@@ -32,18 +35,31 @@ interface UPlotBasedChartProps {
 	layoutChildren?: React.ReactNode;
 }
 
+interface UPlotChartDataProps {
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+}
+
 export interface TimeSeriesChartProps
 	extends BaseChartProps,
-		UPlotBasedChartProps {}
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
+	timezone?: Timezone;
+}
 
 export interface HistogramChartProps
 	extends BaseChartProps,
-		UPlotBasedChartProps {
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
 	isQueriesMerged?: boolean;
 }
 
-export interface BarChartProps extends BaseChartProps, UPlotBasedChartProps {
+export interface BarChartProps
+	extends BaseChartProps,
+		UPlotBasedChartProps,
+		UPlotChartDataProps {
 	isStackedBarChart?: boolean;
+	timezone?: Timezone;
 }
 
 export type ChartProps =
