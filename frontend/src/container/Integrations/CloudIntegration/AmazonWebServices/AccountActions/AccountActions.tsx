@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui';
@@ -7,17 +7,22 @@ import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
-import { IntegrationType } from 'container/Integrations/types';
+import {
+	CloudAccount as IntegrationCloudAccount,
+	IntegrationType,
+} from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 
+import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
+import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';
 import {
 	mapAccountDtoToAwsCloudAccount,
 	mapAccountDtoToAzureCloudAccount,
 } from '../../mapCloudAccountFromDto';
-import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
-import AccountSettingsModal from '../EditAccount/AccountSettingsModal';
-import { CloudAccount } from '../types';
+import AwsCloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
+import AwsAccountSettingsModal from '../EditAccount/AccountSettingsModal';
+import { CloudAccount as AwsCloudAccount } from '../types';
 
 import './AccountActions.style.scss';
 
@@ -32,9 +37,9 @@ function AccountActionsRenderer({
 	onAccountSettingsModalOpen,
 }: {
 	type: IntegrationType;
-	accounts: CloudAccount[] | undefined;
+	accounts: IntegrationCloudAccount[] | undefined;
 	isLoading: boolean;
-	activeAccount: CloudAccount | null;
+	activeAccount: IntegrationCloudAccount | null;
 	selectOptions: SelectProps['options'];
 	onAccountChange: (value: string) => void;
 	onIntegrationModalOpen: () => void;
@@ -115,29 +120,37 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 		cloudProvider: type,
 	});
 
-	const accounts = useMemo((): CloudAccount[] | undefined => {
+	const accounts = useMemo((): IntegrationCloudAccount[] | undefined => {
 		const raw = listAccountsResponse?.data?.accounts;
 
 		if (!raw) {
 			return undefined;
 		}
 
-		const mappedAccounts: CloudAccount[] = [];
+		const mappedAccounts: IntegrationCloudAccount[] = [];
 
 		if (type === IntegrationType.AWS_SERVICES) {
-			mappedAccounts.push(
-				...raw
-					.map(mapAccountDtoToAwsCloudAccount)
-					.filter((account): account is CloudAccount => account !== null),
-			);
+			raw.forEach((account) => {
+				if (!account) {
+					return;
+				}
+				const mapped = mapAccountDtoToAwsCloudAccount(account);
+				if (mapped) {
+					mappedAccounts.push(mapped);
+				}
+			});
 		}
 
 		if (type === IntegrationType.AZURE_SERVICES) {
-			mappedAccounts.push(
-				...raw
-					.map(mapAccountDtoToAzureCloudAccount)
-					.filter((account): account is CloudAccount => account !== null),
-			);
+			raw.forEach((account) => {
+				if (!account) {
+					return;
+				}
+				const mapped = mapAccountDtoToAzureCloudAccount(account);
+				if (mapped) {
+					mappedAccounts.push(mapped);
+				}
+			});
 		}
 
 		return mappedAccounts;
@@ -152,9 +165,10 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 		[accounts, urlQuery],
 	);
 
-	const [activeAccount, setActiveAccount] = useState<CloudAccount | null>(
-		initialAccount,
-	);
+	const [
+		activeAccount,
+		setActiveAccount,
+	] = useState<IntegrationCloudAccount | null>(initialAccount);
 
 	// Update state when initial value changes
 	useEffect(() => {
@@ -196,7 +210,10 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 			logEvent(`${type} Integration: Account viewed`, {
 				cloudAccountId: activeAccount?.cloud_account_id,
 				status: activeAccount?.status,
-				enabledRegions: activeAccount?.config?.regions,
+				enabledRegions:
+					'regions' in activeAccount.config
+						? activeAccount.config.regions
+						: activeAccount.config.resource_groups,
 			});
 		}
 	}, [activeAccount, type]);
@@ -232,17 +249,39 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 			/>
 
 			{isIntegrationModalOpen && (
-				<CloudAccountSetupModal
-					onClose={(): void => setIsIntegrationModalOpen(false)}
-				/>
+				<>
+					{type === IntegrationType.AWS_SERVICES && (
+						<AwsCloudAccountSetupModal
+							onClose={(): void => setIsIntegrationModalOpen(false)}
+						/>
+					)}
+					{type === IntegrationType.AZURE_SERVICES && (
+						<AzureCloudAccountSetupModal
+							onClose={(): void => setIsIntegrationModalOpen(false)}
+						/>
+					)}
+				</>
 			)}
 
 			{isAccountSettingsModalOpen && activeAccount && (
-				<AccountSettingsModal
-					onClose={(): void => setIsAccountSettingsModalOpen(false)}
-					account={activeAccount}
-					setActiveAccount={setActiveAccount}
-				/>
+				<>
+					{type === IntegrationType.AWS_SERVICES && (
+						<AwsAccountSettingsModal
+							onClose={(): void => setIsAccountSettingsModalOpen(false)}
+							account={activeAccount as AwsCloudAccount}
+							setActiveAccount={
+								setActiveAccount as Dispatch<SetStateAction<AwsCloudAccount | null>>
+							}
+						/>
+					)}
+					{type === IntegrationType.AZURE_SERVICES && (
+						<AzureAccountSettingsModal
+							onClose={(): void => setIsAccountSettingsModalOpen(false)}
+							account={activeAccount}
+							setActiveAccount={setActiveAccount}
+						/>
+					)}
+				</>
 			)}
 		</div>
 	);
