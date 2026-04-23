@@ -21,10 +21,17 @@ export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
+				canPinTooltip: rest.canPinTooltip,
 			};
 			return <TimeSeriesTooltip {...tooltipProps} />;
 		},
-		[customTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
+		[
+			customTooltip,
+			rest.timezone,
+			rest.yAxisUnit,
+			rest.decimalPrecision,
+			rest.canPinTooltip,
+		],
 	);
 
 	return (

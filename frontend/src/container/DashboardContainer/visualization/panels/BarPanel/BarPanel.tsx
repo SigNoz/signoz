@@ -121,6 +121,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
 					plotRef={onPlotRef}
 					onDestroy={onPlotDestroy}
 					data={chartData as uPlot.AlignedData}

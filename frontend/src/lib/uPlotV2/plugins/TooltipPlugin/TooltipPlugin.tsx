@@ -1,7 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
-import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
 import { syncCursorRegistry } from './syncCursorRegistry';
@@ -17,18 +16,21 @@ import {
 } from './tooltipController';
 import {
 	DashboardCursorSync,
-	TooltipClickData,
+	DEFAULT_PIN_TOOLTIP_KEY,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
 	TooltipPluginProps,
 	TooltipViewState,
 } from './types';
-import { createInitialViewState, createLayoutObserver } from './utils';
+import {
+	buildClickData,
+	createInitialViewState,
+	createLayoutObserver,
+} from './utils';
 
-import './TooltipPlugin.styles.scss';
+import Styles from './TooltipPlugin.module.scss';
 
-const INTERACTIVE_CONTAINER_CLASSNAME = '.tooltip-plugin-container';
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
 const HOVER_DISMISS_DELAY_MS = 100;
@@ -44,6 +46,8 @@ export default function TooltipPlugin({
 	syncMetadata,
 	pinnedTooltipElement,
 	canPinTooltip = false,
+	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
+	onClick,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafId = useRef<number | null>(null);
@@ -131,8 +135,8 @@ export default function TooltipPlugin({
 		// Dismiss the tooltip when the user clicks / presses a key
 		// outside the tooltip container while it is pinned.
 		const onOutsideInteraction = (event: Event): void => {
-			const target = event.target as HTMLElement;
-			if (!target.closest(INTERACTIVE_CONTAINER_CLASSNAME)) {
+			const target = event.target as Node;
+			if (!containerRef.current?.contains(target)) {
 				dismissTooltip();
 			}
 		};
@@ -159,13 +163,14 @@ export default function TooltipPlugin({
 
 		// Attach / detach global listeners when pin state changes so
 		// we can detect when the user interacts outside the tooltip.
+		// Keyboard unpinning is handled exclusively in handleKeyDown so
+		// that only P (toggle) and Escape (release) can dismiss — not
+		// arbitrary keystrokes like arrow keys or Tab.
 		function toggleOutsideListeners(enable: boolean): void {
 			if (enable) {
 				document.addEventListener('mousedown', onOutsideInteraction, true);
-				document.addEventListener('keydown', onOutsideInteraction, true);
 			} else {
 				document.removeEventListener('mousedown', onOutsideInteraction, true);
-				document.removeEventListener('keydown', onOutsideInteraction, true);
 			}
 		}
 
@@ -283,66 +288,84 @@ export default function TooltipPlugin({
 			}
 		};
 
-		// When pinning is enabled, a click on the plot overlay while
-		// hovering converts the transient tooltip into a pinned one.
-		// Uses getPlot(controller) to avoid closing over u (plot), which
-		// would retain the plot and detached canvases across unmounts.
-		const handleUPlotOverClick = (event: MouseEvent): void => {
+		// Handles all tooltip-pin keyboard interactions:
+		//   Escape  — always releases the tooltip when pinned (never steals Escape
+		//             from other handlers since we do not call stopPropagation).
+		//   pinKey  — toggles: pins when hovering+unpinned, unpins when pinned.
+		const handleKeyDown = (event: KeyboardEvent): void => {
+			// Escape: release-only (never toggles on).
+			if (event.key === 'Escape') {
+				if (controller.pinned) {
+					dismissTooltip();
+				}
+				return;
+			}
+
+			if (event.key.toLowerCase() !== pinKey.toLowerCase()) {
+				return;
+			}
+
+			// Toggle off: P pressed while already pinned.
+			if (controller.pinned) {
+				dismissTooltip();
+				return;
+			}
+
+			// Toggle on: P pressed while hovering.
 			const plot = getPlot(controller);
+			if (
+				!plot ||
+				!controller.hoverActive ||
+				controller.focusedSeriesIndex == null
+			) {
+				return;
+			}
+
+			const cursorLeft = plot.cursor.left ?? -1;
+			const cursorTop = plot.cursor.top ?? -1;
+			if (cursorLeft < 0 || cursorTop < 0) {
+				return;
+			}
+
+			const plotRect = plot.over.getBoundingClientRect();
+			const syntheticEvent = ({
+				clientX: plotRect.left + cursorLeft,
+				clientY: plotRect.top + cursorTop,
+				target: plot.over,
+				offsetX: cursorLeft,
+				offsetY: cursorTop,
+			} as unknown) as MouseEvent;
+
+			controller.clickData = buildClickData(syntheticEvent, plot);
+			controller.pinned = true;
+			scheduleRender(true);
+		};
+
+		// Forward overlay clicks to the consumer-provided onClick callback.
+		const handleOverClick = (event: MouseEvent): void => {
+			const plot = getPlot(controller);
+			/**
+			 * Only trigger onClick if the click happened on the plot overlay and there is a focused series.
+			 * It also ensures that clicks only trigger onClick when there is a relevant data point (i.e. a focused series) to provide context for the click.
+			 */
 			if (
 				plot &&
 				event.target === plot.over &&
-				controller.hoverActive &&
-				!controller.pinned &&
 				controller.focusedSeriesIndex != null
 			) {
-				const xValue = plot.posToVal(event.offsetX, 'x');
-				const yValue = plot.posToVal(event.offsetY, 'y');
-				const focusedSeries = getFocusedSeriesAtPosition(event, plot);
-
-				let clickedDataTimestamp = xValue;
-				if (focusedSeries) {
-					const dataIndex = plot.posToIdx(event.offsetX);
-					const xSeriesData = plot.data[0];
-					if (
-						xSeriesData &&
-						dataIndex >= 0 &&
-						dataIndex < xSeriesData.length &&
-						xSeriesData[dataIndex] !== undefined
-					) {
-						clickedDataTimestamp = xSeriesData[dataIndex];
-					}
-				}
-
-				const clickData: TooltipClickData = {
-					xValue,
-					yValue,
-					focusedSeries,
-					clickedDataTimestamp,
-					mouseX: event.offsetX,
-					mouseY: event.offsetY,
-					absoluteMouseX: event.clientX,
-					absoluteMouseY: event.clientY,
-				};
-
-				controller.clickData = clickData;
-
-				setTimeout(() => {
-					controller.pinned = true;
-					scheduleRender(true);
-				}, 0);
+				const clickData = buildClickData(event, plot);
+				onClick?.(clickData);
 			}
 		};
 
 		let overClickHandler: ((event: MouseEvent) => void) | null = null;
 
-		// Called once per uPlot instance; used to store the instance
-		// on the controller and optionally attach the pinning handler.
+		// Called once per uPlot instance; used to store the instance on the controller.
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
 			updateState({ hasPlot: true });
-			if (canPinTooltip) {
-				overClickHandler = handleUPlotOverClick;
+			if (onClick) {
+				overClickHandler = handleOverClick;
 				u.over.addEventListener('click', overClickHandler);
 			}
 		};
@@ -389,13 +412,18 @@ export default function TooltipPlugin({
 
 		window.addEventListener('resize', handleWindowResize);
 		window.addEventListener('scroll', handleScroll, true);
+		if (canPinTooltip) {
+			document.addEventListener('keydown', handleKeyDown, true);
+		}
 
 		return (): void => {
 			layoutRef.current?.observer.disconnect();
 			window.removeEventListener('resize', handleWindowResize);
 			window.removeEventListener('scroll', handleScroll, true);
 			document.removeEventListener('mousedown', onOutsideInteraction, true);
-			document.removeEventListener('keydown', onOutsideInteraction, true);
+			if (canPinTooltip) {
+				document.removeEventListener('keydown', handleKeyDown, true);
+			}
 			cancelPendingRender();
 			removeReadyHook();
 			removeInitHook();
@@ -405,9 +433,7 @@ export default function TooltipPlugin({
 			removeSetCursorHook();
 			if (overClickHandler) {
 				const plot = getPlot(controller);
-				if (plot) {
-					plot.over.removeEventListener('click', overClickHandler);
-				}
+				plot?.over.removeEventListener('click', overClickHandler);
 				overClickHandler = null;
 			}
 			clearPlotReferences();
@@ -447,8 +473,12 @@ export default function TooltipPlugin({
 	}, [isHovering, hasPlot]);
 
 	const tooltipBody = useMemo(() => {
-		if (isPinned && pinnedTooltipElement != null && viewState.clickData != null) {
-			return pinnedTooltipElement(viewState.clickData);
+		if (isPinned) {
+			if (pinnedTooltipElement != null && viewState.clickData != null) {
+				return pinnedTooltipElement(viewState.clickData);
+			}
+			// No custom pinned element — keep showing the last hover contents.
+			return contents ?? null;
 		}
 
 		if (isHovering) {
@@ -471,9 +501,8 @@ export default function TooltipPlugin({
 
 	return createPortal(
 		<div
-			className={cx('tooltip-plugin-container', {
-				pinned: isPinned,
-				visible: isTooltipVisible,
+			className={cx(Styles.tooltipPluginContainer, {
+				[Styles.visible]: isTooltipVisible,
 			})}
 			style={{
 				...style,
@@ -484,6 +513,7 @@ export default function TooltipPlugin({
 			aria-atomic="true"
 			aria-hidden={!isTooltipVisible}
 			ref={containerRef}
+			data-pinned={isPinned}
 			data-testid="tooltip-plugin-container"
 		>
 			{tooltipBody}

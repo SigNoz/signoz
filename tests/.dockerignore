@@ -1,0 +1,19 @@
+# Build context for tests/Dockerfile.seeder. Keep the context lean — the
+# seeder image only needs fixtures/ to be importable alongside seeder/,
+# plus pyproject.toml + uv.lock for dep install.
+
+.venv
+.pytest_cache
+tmp
+**/__pycache__
+**/*.pyc
+
+# e2e Playwright outputs and deps
+e2e/node_modules
+e2e/artifacts
+e2e/.auth
+e2e/.playwright-cli
+
+# Integration-side outputs (if any stale dirs remain)
+integration/tmp
+integration/testdata
