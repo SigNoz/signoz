@@ -11,7 +11,7 @@ import (
 type Module interface {
 	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.PricingRule, int, error)
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.PricingRule, error)
-	Upsert(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatablePricingRule) (inserted, updated, preserved int, err error)
+	Update(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatablePricingRule) (inserted, updated, preserved int, err error)
 	Delete(ctx context.Context, orgID, id valuer.UUID) error
 }
 
@@ -19,6 +19,6 @@ type Module interface {
 type Handler interface {
 	List(rw http.ResponseWriter, r *http.Request)
 	Get(rw http.ResponseWriter, r *http.Request)
-	Upsert(rw http.ResponseWriter, r *http.Request)
+	Update(rw http.ResponseWriter, r *http.Request)
 	Delete(rw http.ResponseWriter, r *http.Request)
 }

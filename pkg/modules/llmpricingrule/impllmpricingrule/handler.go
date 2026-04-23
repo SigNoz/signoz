@@ -101,7 +101,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, rule)
 }
 
-func (h *handler) Upsert(rw http.ResponseWriter, r *http.Request) {
+func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
@@ -117,23 +117,19 @@ func (h *handler) Upsert(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(llmpricingruletypes.UpsertPricingRulesRequest)
+	req := new(llmpricingruletypes.UpdatablePricingRulesRequest)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	inserted, updated, preserved, err := h.module.Upsert(ctx, orgID, claims.Email, req.Rules)
+	inserted, updated, preserved, err := h.module.Update(ctx, orgID, claims.Email, req.Rules)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, &llmpricingruletypes.UpsertPricingRulesResponse{
-		Inserted:  inserted,
-		Updated:   updated,
-		Preserved: preserved,
-	})
+	render.Success(rw, http.StatusOK, llmpricingruletypes.NewUpdatablePricingRulesResponse(inserted, updated, preserved))
 }
 
 // Delete handles DELETE /api/v1/llm_pricing_rules/{id}.

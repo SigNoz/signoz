@@ -32,15 +32,15 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules", handler.New(
-		provider.authZ.AdminAccess(provider.llmPricingRuleHandler.Upsert),
+		provider.authZ.AdminAccess(provider.llmPricingRuleHandler.Update),
 		handler.OpenAPIDef{
-			ID:                  "UpsertLLMPricingRules",
+			ID:                  "UpdateLLMPricingRules",
 			Tags:                []string{"llm-pricing-rules"},
-			Summary:             "Bulk upsert pricing rules",
+			Summary:             "Bulk update pricing rules",
 			Description:         "Single write endpoint used by both the user and the Zeus sync job. Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true) are fully preserved when the request does not provide isOverride; only synced_at is stamped.",
-			Request:             new(llmpricingruletypes.UpsertPricingRulesRequest),
+			Request:             new(llmpricingruletypes.UpdatablePricingRulesRequest),
 			RequestContentType:  "application/json",
-			Response:            new(llmpricingruletypes.UpsertPricingRulesResponse),
+			Response:            new(llmpricingruletypes.UpdatablePricingRulesResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
