@@ -10,6 +10,7 @@ import (
 	"text/template"
 	"time"
 
+	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -52,6 +53,36 @@ func newchSQLQuery(
 		kind:           kind,
 		vars:           variables,
 	}
+}
+
+// userFacingCHCodes are ClickHouse error codes that indicate a problem with the
+// query itself (bad SQL, unknown table/column, etc.) rather than a server-side
+// failure. This list is incomplete and should be expanded as we discover more error codes that should map to HTTP 400 instead of 500.
+// It is a subset of the error codes that are known to be user-facing.
+var userFacingCHCodes = map[chproto.Error]bool{
+	chproto.ErrSyntaxError:                  true,
+	chproto.ErrUnknownTable:                 true,
+	chproto.ErrUnknownDatabase:              true,
+	chproto.ErrUnknownIdentifier:            true,
+	chproto.ErrUnknownFunction:              true,
+	chproto.ErrUnknownAggregateFunction:     true,
+	chproto.ErrUnknownType:                  true,
+	chproto.ErrUnknownStorage:               true,
+	chproto.ErrUnknownElementInAst:          true,
+	chproto.ErrUnknownTypeOfQuery:           true,
+	chproto.ErrIllegalTypeOfArgument:        true,
+	chproto.ErrIllegalColumn:                true,
+	chproto.ErrNumberOfArgumentsDoesntMatch: true,
+	chproto.ErrTooManyArgumentsForFunction:  true,
+	chproto.ErrTooLessArgumentsForFunction:  true,
+}
+
+func mapClickHouseError(err error) error {
+	var ex *clickhouse.Exception
+	if errors.As(err, &ex) && userFacingCHCodes[chproto.Error(ex.Code)] {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "%s", ex.Message)
+	}
+	return err
 }
 
 func (q *chSQLQuery) Fingerprint() string {
@@ -121,11 +152,10 @@ func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	rows, err := q.telemetryStore.ClickhouseDB().Query(ctx, query, q.args...)
 	if err != nil {
-		return nil, err
+		return nil, mapClickHouseError(err)
 	}
 	defer rows.Close()
 
-	// TODO: map the errors from ClickHouse to our error types
 	payload, err := consume(rows, q.kind, nil, qbtypes.Step{}, q.query.Name)
 	if err != nil {
 		return nil, err

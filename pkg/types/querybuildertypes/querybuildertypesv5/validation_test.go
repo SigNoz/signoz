@@ -311,7 +311,7 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Type: QueryTypeClickHouseSQL,
 							Spec: ClickHouseQuery{
 								Name:     "CH1",
-								Query:    "SELECT count() FROM logs",
+								Query:    "SELECT count() FROM distributed_logs_v2",
 								Disabled: true,
 							},
 						},
@@ -615,7 +615,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Type: QueryTypeClickHouseSQL,
 							Spec: ClickHouseQuery{
 								Name:  "CH1",
-								Query: "SELECT count() FROM logs",
+								Query: "SELECT count() FROM distributed_logs_v2",
 							},
 						},
 					},
@@ -1257,6 +1257,22 @@ func TestRequestType_IsAggregation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClickHouseQuery_Validate(t *testing.T) {
+	t.Run("empty name", func(t *testing.T) {
+		err := (ClickHouseQuery{Name: "", Query: "SELECT 1"}).Validate()
+		if err == nil || !contains(err.Error(), "name is required") {
+			t.Errorf("Validate() expected 'name is required' error, got %v", err)
+		}
+	})
+
+	t.Run("empty query", func(t *testing.T) {
+		err := (ClickHouseQuery{Name: "A", Query: ""}).Validate()
+		if err == nil || !contains(err.Error(), "ClickHouse SQL query is required") {
+			t.Errorf("Validate() expected 'ClickHouse SQL query is required' error, got %v", err)
+		}
+	})
 }
 
 func TestNonAggregationFieldsSkipped(t *testing.T) {

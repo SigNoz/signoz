@@ -248,10 +248,14 @@ def get_all_series(response_json: Dict, query_name: str) -> List[Dict]:
 
 
 def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
-    values = get_series_values(response_json, query_name)
-    if values:
-        return values[0].get("value")
-    return None
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    result = find_named_result(results, query_name)
+    if not result:
+        return None
+    data = result.get("data", [])
+    if not data or not data[0]:
+        return None
+    return data[0][0]
 
 
 def get_all_warnings(response_json: Dict) -> List[Dict]:
