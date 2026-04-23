@@ -9,11 +9,11 @@ function loadStorageModule(href?: string): StorageModule {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
-		document.head.appendChild(base);
+		document.head.append(base);
 	}
 	let mod!: StorageModule;
 	jest.isolateModules(() => {
-		// eslint-disable-next-line @typescript-eslint/no-var-requires, global-require
+		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 		mod = require('../storage');
 	});
 	return mod;
