@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Callable, Dict, List
+from typing import Any
 
 import pytest
 import requests
@@ -24,16 +25,14 @@ FILL_ZERO = "fillZero"
 HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 
 
-def _build_format_options(fill_mode: str) -> Dict[str, Any]:
+def _build_format_options(fill_mode: str) -> dict[str, Any]:
     return {
         "formatTableResultForUI": False,
         "fillGaps": fill_mode == FILL_GAPS,
     }
 
 
-def _maybe_add_functions(
-    spec: Dict[str, Any], fill_mode: str, is_formula: bool = False
-) -> None:
+def _maybe_add_functions(spec: dict[str, Any], fill_mode: str, is_formula: bool = False) -> None:
     """Add fillZero function to the spec when using fillZero mode.
 
     For builder_query: functions go on the query spec.
@@ -44,29 +43,27 @@ def _maybe_add_functions(
         spec["functions"] = [{"name": "fillZero"}]
 
 
-def _maybe_add_formula_functions(spec: Dict[str, Any], fill_mode: str) -> None:
+def _maybe_add_formula_functions(spec: dict[str, Any], fill_mode: str) -> None:
     if fill_mode == FILL_ZERO:
         spec["functions"] = [{"name": "fillZero"}]
 
 
-@pytest.mark.parametrize(
-    "fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"]
-)
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
 def test_metrics_fill_no_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     """
     Test that gaps in time series are filled with zeros (no groupBy).
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = f"test_{fill_mode}_metric"
 
     # Insert at minute 3 and minute 1 (gap at minute 2)
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name=metric_name,
             labels={"service": "test-service"},
@@ -92,7 +89,7 @@ def test_metrics_fill_no_group_by(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    query_spec: Dict[str, Any] = {
+    query_spec: dict[str, Any] = {
         "name": "A",
         "signal": "metrics",
         "aggregations": [
@@ -117,9 +114,7 @@ def test_metrics_fill_no_group_by(
             "start": start_ms,
             "end": end_ms,
             "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [{"type": "builder_query", "spec": query_spec}]
-            },
+            "compositeQuery": {"queries": [{"type": "builder_query", "spec": query_spec}]},
             "formatOptions": _build_format_options(fill_mode),
         },
     )
@@ -144,23 +139,21 @@ def test_metrics_fill_no_group_by(
     )
 
 
-@pytest.mark.parametrize(
-    "fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"]
-)
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
 def test_metrics_fill_with_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     """
     Test that gaps are filled per group when using groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = f"test_{fill_mode}_grouped_metric"
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name=metric_name,
             labels={"my_tag": "service-a"},
@@ -196,7 +189,7 @@ def test_metrics_fill_with_group_by(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    query_spec: Dict[str, Any] = {
+    query_spec: dict[str, Any] = {
         "name": "A",
         "signal": "metrics",
         "aggregations": [
@@ -228,9 +221,7 @@ def test_metrics_fill_with_group_by(
             "start": start_ms,
             "end": end_ms,
             "requestType": "time_series",
-            "compositeQuery": {
-                "queries": [{"type": "builder_query", "spec": query_spec}]
-            },
+            "compositeQuery": {"queries": [{"type": "builder_query", "spec": query_spec}]},
             "formatOptions": _build_format_options(fill_mode),
         },
     )
@@ -252,7 +243,7 @@ def test_metrics_fill_with_group_by(
     series_by_tag = index_series_by_label(series, "my_tag")
     assert set(series_by_tag.keys()) == {"service-a", "service-b"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "service-a": {ts_min_2: 20.0},
         "service-b": {ts_min_2: 5.0},
     }
@@ -266,24 +257,22 @@ def test_metrics_fill_with_group_by(
         )
 
 
-@pytest.mark.parametrize(
-    "fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"]
-)
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
 def test_metrics_fill_formula(
     fill_mode: str,
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     """
     Test that formula results have gaps filled.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name_a = f"test_{fill_mode}_formula_a"
     metric_name_b = f"test_{fill_mode}_formula_b"
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name=metric_name_a,
             labels={"service": "test"},
@@ -319,7 +308,7 @@ def test_metrics_fill_formula(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    formula_spec: Dict[str, Any] = {
+    formula_spec: dict[str, Any] = {
         "name": "F1",
         "expression": "A + B",
         "disabled": False,
@@ -393,9 +382,7 @@ def test_metrics_fill_formula(
     aggregations = f1.get("aggregations") or []
     assert len(aggregations) == 1
     series = aggregations[0].get("series") or []
-    assert (
-        len(series) >= 1
-    ), f"Expected at least one series for F1, got {aggregations[0]}"
+    assert len(series) >= 1, f"Expected at least one series for F1, got {aggregations[0]}"
 
     assert_minutely_bucket_values(
         series[0]["values"],
@@ -405,20 +392,18 @@ def test_metrics_fill_formula(
     )
 
 
-@pytest.mark.parametrize(
-    "fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"]
-)
+@pytest.mark.parametrize("fill_mode", [FILL_GAPS, FILL_ZERO], ids=["fillGaps", "fillZero"])
 def test_metrics_fill_formula_with_group_by(
     fill_mode: str,
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
     """
     Test that formula results with groupBy have gaps filled per group.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name_a = f"test_{fill_mode}_formula_grp_a"
     metric_name_b = f"test_{fill_mode}_formula_grp_b"
 
@@ -430,7 +415,7 @@ def test_metrics_fill_formula_with_group_by(
         }
     ]
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name=metric_name_a,
             labels={"my_tag": "group1"},
@@ -494,7 +479,7 @@ def test_metrics_fill_formula_with_group_by(
     start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    formula_spec: Dict[str, Any] = {
+    formula_spec: dict[str, Any] = {
         "name": "F1",
         "expression": "A + B",
         "disabled": False,
@@ -574,7 +559,7 @@ def test_metrics_fill_formula_with_group_by(
     series_by_group = index_series_by_label(series, "my_tag")
     assert set(series_by_group.keys()) == {"group1", "group2"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "group1": {ts_min_3: 110.0},
         "group2": {ts_min_2: 220.0},
     }
@@ -592,10 +577,10 @@ def test_histogram_p90_returns_warning_outside_data_window(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = "test_p90_last_seen_bucket"
 
     metrics = Metrics.load_from_file(
@@ -626,9 +611,7 @@ def test_histogram_p90_returns_warning_outside_data_window(
     data = response.json()
     warnings = get_all_warnings(data)
     assert len(warnings) == 1
-    assert warnings[0]["message"].startswith(
-        f"no data found for the metric {metric_name}"
-    )
+    assert warnings[0]["message"].startswith(f"no data found for the metric {metric_name}")
 
 
 def test_non_existent_metrics_returns_404(
@@ -637,7 +620,7 @@ def test_non_existent_metrics_returns_404(
     get_token: Callable[[str, str], str],
 ) -> None:
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     metric_name = "whatevergoennnsgoeshere"
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -654,10 +637,7 @@ def test_non_existent_metrics_returns_404(
     response = make_query_request(signoz, token, start_2h, end_ms, [query])
     assert response.status_code == HTTPStatus.NOT_FOUND
 
-    assert (
-        get_error_message(response.json())
-        == "could not find the metric whatevergoennnsgoeshere"
-    )
+    assert get_error_message(response.json()) == "could not find the metric whatevergoennnsgoeshere"
 
 
 # Verify /api/v1/fields/values filters label values by metricNamespace prefix.
@@ -667,11 +647,11 @@ def test_metric_namespace_values_filtering(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name="ns.a.requests_total",
             labels={"service": "svc-a"},
@@ -737,11 +717,11 @@ def test_metric_namespace_metric_name_values_filtering(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name="ns.a.cpu.utilization",
             labels={"host": "host-a"},
@@ -807,11 +787,11 @@ def test_metric_namespace_keys_filtering(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    metrics: List[Metrics] = [
+    metrics: list[Metrics] = [
         Metrics(
             metric_name="ns.a.cpu.utilization",
             labels={"a_only_label": "val-a"},

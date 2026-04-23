@@ -10,9 +10,7 @@ logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="network", scope="package")
-def network(
-    request: pytest.FixtureRequest, pytestconfig: pytest.Config
-) -> types.Network:
+def network(request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Network:
     """
     Package-Scoped fixture for creating a network
     """

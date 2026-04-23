@@ -1,8 +1,9 @@
 import datetime
 import json
 from abc import ABC
+from collections.abc import Callable, Generator
 from http import HTTPStatus
-from typing import Any, Callable, Generator, List, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -25,9 +26,7 @@ class LogsResource(ABC):
         fingerprint: str,
         seen_at_ts_bucket_start: np.int64,
     ) -> None:
-        self.labels = json.dumps(
-            labels, separators=(",", ":")
-        )  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
+        self.labels = json.dumps(labels, separators=(",", ":"))  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
         self.fingerprint = fingerprint
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
@@ -67,7 +66,7 @@ class LogsTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: Optional[str],
+        string_value: str | None,
         number_value: np.float64,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
@@ -111,14 +110,14 @@ class Logs(ABC):
     scope_version: str
     scope_string: dict[str, str]
 
-    resource: List[LogsResource]
-    tag_attributes: List[LogsTagAttributes]
-    resource_keys: List[LogsResourceOrAttributeKeys]
-    attribute_keys: List[LogsResourceOrAttributeKeys]
+    resource: list[LogsResource]
+    tag_attributes: list[LogsTagAttributes]
+    resource_keys: list[LogsResourceOrAttributeKeys]
+    attribute_keys: list[LogsResourceOrAttributeKeys]
 
     def __init__(
         self,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: datetime.datetime | None = None,
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
@@ -169,9 +168,7 @@ class Logs(ABC):
 
         # Process resources and attributes
         self.resources_string = {k: str(v) for k, v in resources.items()}
-        self.resource_json = (
-            {} if resource_write_mode == "legacy_only" else dict(self.resources_string)
-        )
+        self.resource_json = {} if resource_write_mode == "legacy_only" else dict(self.resources_string)
         for k, v in self.resources_string.items():
             self.tag_attributes.append(
                 LogsTagAttributes(
@@ -183,14 +180,10 @@ class Logs(ABC):
                     number_value=None,
                 )
             )
-            self.resource_keys.append(
-                LogsResourceOrAttributeKeys(name=k, datatype="string")
-            )
+            self.resource_keys.append(LogsResourceOrAttributeKeys(name=k, datatype="string"))
 
         # Calculate resource fingerprint
-        self.resource_fingerprint = LogsOrTracesFingerprint(
-            self.resources_string
-        ).calculate()
+        self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
 
         # Process attributes by type
         self.attributes_string = {}
@@ -210,9 +203,7 @@ class Logs(ABC):
                         number_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    LogsResourceOrAttributeKeys(name=k, datatype="bool")
-                )
+                self.attribute_keys.append(LogsResourceOrAttributeKeys(name=k, datatype="bool"))
             elif isinstance(v, (int, float)):
                 self.attributes_number[k] = np.float64(v)
                 self.tag_attributes.append(
@@ -225,9 +216,7 @@ class Logs(ABC):
                         number_value=np.float64(v),
                     )
                 )
-                self.attribute_keys.append(
-                    LogsResourceOrAttributeKeys(name=k, datatype="float64")
-                )
+                self.attribute_keys.append(LogsResourceOrAttributeKeys(name=k, datatype="float64"))
             else:
                 self.attributes_string[k] = str(v)
                 self.tag_attributes.append(
@@ -240,9 +229,7 @@ class Logs(ABC):
                         number_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    LogsResourceOrAttributeKeys(name=k, datatype="string")
-                )
+                self.attribute_keys.append(LogsResourceOrAttributeKeys(name=k, datatype="string"))
 
         # Initialize scope fields
         self.scope_name = scope_name
@@ -280,9 +267,7 @@ class Logs(ABC):
                 number_value=None,
             )
         )
-        self.attribute_keys.append(
-            LogsResourceOrAttributeKeys(name="severity_text", datatype="string")
-        )
+        self.attribute_keys.append(LogsResourceOrAttributeKeys(name="severity_text", datatype="string"))
 
         self.tag_attributes.append(
             LogsTagAttributes(
@@ -294,9 +279,7 @@ class Logs(ABC):
                 number_value=float(self.severity_number),
             )
         )
-        self.attribute_keys.append(
-            LogsResourceOrAttributeKeys(name="severity_number", datatype="float64")
-        )
+        self.attribute_keys.append(LogsResourceOrAttributeKeys(name="severity_number", datatype="float64"))
 
     def _get_severity_number(self, severity_text: str) -> np.uint8:
         """Convert severity text to numeric value"""
@@ -357,12 +340,12 @@ class Logs(ABC):
     def load_from_file(
         cls,
         file_path: str,
-        base_time: Optional[datetime.datetime] = None,
-    ) -> List["Logs"]:
+        base_time: datetime.datetime | None = None,
+    ) -> list["Logs"]:
         """Load logs from a JSONL file."""
 
         data_list = []
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -391,7 +374,7 @@ class Logs(ABC):
         return logs
 
 
-def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
+def insert_logs_to_clickhouse(conn, logs: list[Logs]) -> None:
     """
     Insert logs into ClickHouse tables following the same logic as the Go exporter.
     Handles insertion into:
@@ -404,7 +387,7 @@ def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
     Pure function so the seeder container can reuse the exact insert path
     used by the pytest fixture. `conn` is a clickhouse-connect Client.
     """
-    resources: List[LogsResource] = []
+    resources: list[LogsResource] = []
     for log in logs:
         resources.extend(log.resource)
 
@@ -420,7 +403,7 @@ def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
             ],
         )
 
-    tag_attributes: List[LogsTagAttributes] = []
+    tag_attributes: list[LogsTagAttributes] = []
     for log in logs:
         tag_attributes.extend(log.tag_attributes)
 
@@ -431,7 +414,7 @@ def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
             data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
         )
 
-    attribute_keys: List[LogsResourceOrAttributeKeys] = []
+    attribute_keys: list[LogsResourceOrAttributeKeys] = []
     for log in logs:
         attribute_keys.extend(log.attribute_keys)
 
@@ -442,7 +425,7 @@ def insert_logs_to_clickhouse(conn, logs: List[Logs]) -> None:
             data=[attribute_key.np_arr() for attribute_key in attribute_keys],
         )
 
-    resource_keys: List[LogsResourceOrAttributeKeys] = []
+    resource_keys: list[LogsResourceOrAttributeKeys] = []
     for log in logs:
         resource_keys.extend(log.resource_keys)
 
@@ -500,8 +483,8 @@ def truncate_logs_tables(conn, cluster: str) -> None:
 @pytest.fixture(name="insert_logs", scope="function")
 def insert_logs(
     clickhouse: types.TestContainerClickhouse,
-) -> Generator[Callable[[List[Logs]], None], Any, None]:
-    def _insert_logs(logs: List[Logs]) -> None:
+) -> Generator[Callable[[list[Logs]], None], Any]:
+    def _insert_logs(logs: list[Logs]) -> None:
         insert_logs_to_clickhouse(clickhouse.conn, logs)
 
     yield _insert_logs
@@ -515,8 +498,8 @@ def insert_logs(
 @pytest.fixture(name="materialize_log_field", scope="function")
 def materialize_log_field(
     signoz: types.SigNoz,
-) -> Generator[Callable[[str, str, str, str], None], None, None]:
-    mat_fields: List[tuple[str, str, str]] = []
+) -> Generator[Callable[[str, str, str, str], None]]:
+    mat_fields: list[tuple[str, str, str]] = []
 
     def _materialize_log_field(
         token: str,
@@ -535,10 +518,7 @@ def materialize_log_field(
             },
             timeout=10,
         )
-        assert response.status_code == HTTPStatus.OK, (
-            f"Failed to materialize log field {name}: "
-            f"{response.status_code} {response.text}"
-        )
+        assert response.status_code == HTTPStatus.OK, f"Failed to materialize log field {name}: {response.status_code} {response.text}"
         mat_fields.append((field_type, data_type, name))
 
     yield _materialize_log_field
@@ -548,16 +528,10 @@ def materialize_log_field(
         if mat_field_type == "resources":
             mat_field_type = "resource"
         field = f"{mat_field_type}_{mat_field_data_type}_{mat_field_name}"
-        signoz.telemetrystore.conn.query(
-            f"ALTER TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP INDEX IF EXISTS {field}_idx"
-        )
+        signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP INDEX IF EXISTS {field}_idx")
         for table in ["logs_v2", "distributed_logs_v2"]:
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}"
-            )
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}_exists"
-            )
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}")
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}_exists")
 
 
 @pytest.fixture(name="ttl_legacy_logs_v2_table_setup", scope="function")
@@ -569,20 +543,14 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
     """
 
     # Setup code
-    result = signoz.telemetrystore.conn.query(
-        f"RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
-    ).result_rows
+    result = signoz.telemetrystore.conn.query(f"RENAME TABLE signoz_logs.logs_v2 TO signoz_logs.logs_v2_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'").result_rows
     assert result is not None
     # Add cleanup to restore original table
-    request.addfinalizer(
-        lambda: signoz.telemetrystore.conn.query(
-            f"RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
-        )
-    )
+    request.addfinalizer(lambda: signoz.telemetrystore.conn.query(f"RENAME TABLE signoz_logs.logs_v2_backup TO signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"))
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
-        f"""CREATE TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+        f"""CREATE TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]}'
                                                 (
                                                     `id` String,
                                                     `timestamp` UInt64 CODEC(DoubleDelta, LZ4)
@@ -594,11 +562,7 @@ def ttl_legacy_logs_v2_table_setup(request, signoz: types.SigNoz):
 
     assert result is not None
     # Add cleanup to drop test table
-    request.addfinalizer(
-        lambda: signoz.telemetrystore.conn.query(
-            f"DROP TABLE IF EXISTS signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
-        )
-    )
+    request.addfinalizer(lambda: signoz.telemetrystore.conn.query(f"DROP TABLE IF EXISTS signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"))
 
     yield  # Test runs here
 
@@ -612,20 +576,14 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
     """
 
     # Setup code
-    result = signoz.telemetrystore.conn.query(
-        f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
-    ).result_rows
+    result = signoz.telemetrystore.conn.query(f"RENAME TABLE signoz_logs.logs_v2_resource TO signoz_logs.logs_v2_resource_backup ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'").result_rows
     assert result is not None
     # Add cleanup to restore original table
-    request.addfinalizer(
-        lambda: signoz.telemetrystore.conn.query(
-            f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"
-        )
-    )
+    request.addfinalizer(lambda: signoz.telemetrystore.conn.query(f"RENAME TABLE signoz_logs.logs_v2_resource_backup TO signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'"))
 
     # Create new test tables
     result = signoz.telemetrystore.conn.query(
-        f"""CREATE TABLE signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+        f"""CREATE TABLE signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]}'
                                                 (
                                                     `id` String,
                                                     `seen_at_ts_bucket_start` Int64 CODEC(Delta(8), ZSTD(1))
@@ -636,11 +594,7 @@ def ttl_legacy_logs_v2_resource_table_setup(request, signoz: types.SigNoz):
 
     assert result is not None
     # Add cleanup to drop test table
-    request.addfinalizer(
-        lambda: signoz.telemetrystore.conn.query(
-            f"DROP TABLE IF EXISTS signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}';"
-        )
-    )
+    request.addfinalizer(lambda: signoz.telemetrystore.conn.query(f"DROP TABLE IF EXISTS signoz_logs.logs_v2_resource ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}';"))
 
     yield  # Test runs here
 
@@ -661,7 +615,6 @@ def remove_logs_ttl_settings(signoz: types.SigNoz):
         "logs_resource_keys",
     ]
     for table in tables:
-
         try:
             # Reset _retention_days and _retention_days_cold default values to 0 for tables that have these columns
             if table in [
@@ -671,19 +624,19 @@ def remove_logs_ttl_settings(signoz: types.SigNoz):
                 "distributed_logs_v2_resource",
             ]:
                 reset_retention_query = f"""
-                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]}'
                 MODIFY COLUMN _retention_days UInt16 DEFAULT 0
                 """
                 signoz.telemetrystore.conn.query(reset_retention_query)
 
                 reset_retention_cold_query = f"""
-                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]}'
                 MODIFY COLUMN _retention_days_cold UInt16 DEFAULT 0
                 """
                 signoz.telemetrystore.conn.query(reset_retention_cold_query)
             else:
                 alter_query = f"""
-                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}'
+                ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]}'
                 REMOVE TTL
                 """
                 signoz.telemetrystore.conn.query(alter_query)

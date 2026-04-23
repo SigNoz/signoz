@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 from wiremock.client import (
@@ -39,11 +39,7 @@ def test_generate_connection_params(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -85,12 +81,8 @@ def test_generate_connection_params(
                         "tags": ["integration", "aws"],
                     },
                     headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        },
-                        "X-Consumer-Username": {
-                            WireMockMatchers.EQUAL_TO: "lid:00000000-0000-0000-0000-000000000000"
-                        },
+                        "X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"},
+                        "X-Consumer-Username": {WireMockMatchers.EQUAL_TO: "lid:00000000-0000-0000-0000-000000000000"},
                         "X-Consumer-Groups": {WireMockMatchers.EQUAL_TO: "ns:default"},
                     },
                 ),
@@ -119,9 +111,7 @@ def test_generate_connection_params(
     )
 
     # Assert successful response
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     # Parse response JSON
     response_data = response.json()
@@ -138,27 +128,19 @@ def test_generate_connection_params(
     ]
 
     for field in expected_fields:
-        assert (
-            field in response_data["data"]
-        ), f"Response data should contain '{field}' field"
+        assert field in response_data["data"], f"Response data should contain '{field}' field"
 
     # Assert values for the returned fields
     data = response_data["data"]
 
     # ingestion_key is created by the mocked gateway and should match
-    assert (
-        data["ingestion_key"] == "test-ingestion-key-123456"
-    ), "ingestion_key should match the mocked ingestion key"
+    assert data["ingestion_key"] == "test-ingestion-key-123456", "ingestion_key should match the mocked ingestion key"
 
     # ingestion_url should be https://ingest.test.signoz.cloud based on the mocked deployment DNS
-    assert (
-        data["ingestion_url"] == "https://ingest.test.signoz.cloud"
-    ), "ingestion_url should be https://ingest.test.signoz.cloud"
+    assert data["ingestion_url"] == "https://ingest.test.signoz.cloud", "ingestion_url should be https://ingest.test.signoz.cloud"
 
     # signoz_api_url should be https://test-deployment.test.signoz.cloud based on the mocked deployment name and DNS
-    assert (
-        data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud"
-    ), "signoz_api_url should be https://test-deployment.test.signoz.cloud"
+    assert data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud", "signoz_api_url should be https://test-deployment.test.signoz.cloud"
 
     # Verify the integration service account was created with viewer role, not admin.
     # This guards against a privilege-escalation regression where the SA was
@@ -178,18 +160,12 @@ def test_generate_connection_params(
 
     # Fetch roles via the dedicated roles endpoint
     roles_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/service_accounts/{integration_sa['id']}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/service_accounts/{integration_sa['id']}/roles"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
     assert roles_resp.status_code == HTTPStatus.OK, roles_resp.text
     role_names = [role["name"] for role in roles_resp.json()["data"]]
 
-    assert (
-        "signoz-viewer" in role_names
-    ), f"Integration SA should have VIEWER role, got {role_names}"
-    assert (
-        "signoz-admin" not in role_names
-    ), f"Integration SA must NOT have ADMIN role, got {role_names}"
+    assert "signoz-viewer" in role_names, f"Integration SA should have VIEWER role, got {role_names}"
+    assert "signoz-admin" not in role_names, f"Integration SA must NOT have ADMIN role, got {role_names}"

@@ -52,12 +52,8 @@ def idp(
                     ),
                 },
                 container_configs={
-                    "6060": types.TestContainerUrlConfig(
-                        "http", container.get_wrapped_container().name, 6060
-                    ),
-                    "6061": types.TestContainerUrlConfig(
-                        "http", container.get_wrapped_container().name, 6061
-                    ),
+                    "6060": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6060),
+                    "6061": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 6061),
                 },
             ),
         )
@@ -84,11 +80,7 @@ def idp(
         request,
         pytestconfig,
         "idp",
-        lambda: types.TestContainerIDP(
-            container=types.TestContainerDocker(
-                id="", host_configs={}, container_configs={}
-            )
-        ),
+        lambda: types.TestContainerIDP(container=types.TestContainerDocker(id="", host_configs={}, container_configs={})),
         create,
         delete,
         restore,

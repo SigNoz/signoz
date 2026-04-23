@@ -2,8 +2,9 @@
 can POST per-test telemetry (tagged `seeder=true`) and DELETE to clear."""
 
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any
 
 import clickhouse_connect
 from fastapi import FastAPI, HTTPException, Response, status
@@ -38,9 +39,7 @@ SEEDER_MARKER = {"seeder": "true"}
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    conn = clickhouse_connect.get_client(
-        host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD
-    )
+    conn = clickhouse_connect.get_client(host=CH_HOST, port=CH_PORT, username=CH_USER, password=CH_PASSWORD)
     app.state.ch = conn
     try:
         yield
@@ -56,11 +55,11 @@ app = FastAPI(title="seeder", version="dev", lifespan=lifespan)
 
 
 @app.get("/healthz")
-def healthz() -> Dict[str, str]:
+def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-def _tag(item: Dict[str, Any]) -> Dict[str, Any]:
+def _tag(item: dict[str, Any]) -> dict[str, Any]:
     resources = {**(item.get("resources") or {}), **SEEDER_MARKER}
     return {**item, "resources": resources}
 
@@ -68,22 +67,20 @@ def _tag(item: Dict[str, Any]) -> Dict[str, Any]:
 # Metrics payload carries label dicts at the top level, not a `resources`
 # key — tagging goes on the `resource_attrs` wrapper that Metrics.from_dict
 # unpacks. Same effect, different key.
-def _tag_metrics(item: Dict[str, Any]) -> Dict[str, Any]:
+def _tag_metrics(item: dict[str, Any]) -> dict[str, Any]:
     resource_attrs = {**(item.get("resource_attrs") or {}), **SEEDER_MARKER}
     return {**item, "resource_attrs": resource_attrs}
 
 
 @app.post("/telemetry/traces", status_code=status.HTTP_201_CREATED)
-def post_traces(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
+def post_traces(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         traces = [Traces.from_dict(_tag(item)) for item in payload]
         insert_traces_to_clickhouse(get_conn(), traces)
         logger.info("inserted %d traces", len(traces))
         return {"inserted": len(traces)}
     except KeyError as e:
-        raise HTTPException(
-            status_code=400, detail=f"missing required field: {e}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -101,16 +98,14 @@ def delete_traces() -> Response:
 
 
 @app.post("/telemetry/logs", status_code=status.HTTP_201_CREATED)
-def post_logs(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
+def post_logs(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         logs = [Logs.from_dict(_tag(item)) for item in payload]
         insert_logs_to_clickhouse(get_conn(), logs)
         logger.info("inserted %d logs", len(logs))
         return {"inserted": len(logs)}
     except KeyError as e:
-        raise HTTPException(
-            status_code=400, detail=f"missing required field: {e}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -128,16 +123,14 @@ def delete_logs() -> Response:
 
 
 @app.post("/telemetry/metrics", status_code=status.HTTP_201_CREATED)
-def post_metrics(payload: List[Dict[str, Any]]) -> Dict[str, Any]:
+def post_metrics(payload: list[dict[str, Any]]) -> dict[str, Any]:
     try:
         metrics = [Metrics.from_dict(_tag_metrics(item)) for item in payload]
         insert_metrics_to_clickhouse(get_conn(), metrics)
         logger.info("inserted %d metrics", len(metrics))
         return {"inserted": len(metrics)}
     except KeyError as e:
-        raise HTTPException(
-            status_code=400, detail=f"missing required field: {e}"
-        ) from e
+        raise HTTPException(status_code=400, detail=f"missing required field: {e}") from e
     except Exception as e:
         logger.exception("insert failed")
         raise HTTPException(status_code=500, detail=str(e)) from e

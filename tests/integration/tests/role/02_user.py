@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import pytest
 import requests
@@ -132,9 +132,7 @@ def test_user_update_role_grant(
         viewer_tuple_object_id = f"organization/{org_id}/role/signoz-viewer"
         # Check there is no tuple for signoz-editor assignment
         editor_tuple_result = conn.execute(
-            sql.text(
-                "SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"
-            ),
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
             {"object_id": editor_tuple_object_id},
         )
         for row in editor_tuple_result.mappings().fetchall():
@@ -147,9 +145,7 @@ def test_user_update_role_grant(
 
         # Check that a tuple exists for signoz-viewer assignment
         viewer_tuple_result = conn.execute(
-            sql.text(
-                "SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"
-            ),
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
             {"object_id": viewer_tuple_object_id},
         )
         row = viewer_tuple_result.mappings().fetchone()
@@ -204,9 +200,7 @@ def test_user_delete_role_revoke(
 
     with signoz.sqlstore.conn.connect() as conn:
         tuple_result = conn.execute(
-            sql.text(
-                "SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"
-            ),
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = 'assignee'"),
             {"object_id": tuple_object_id},
         )
 

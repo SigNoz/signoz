@@ -7,8 +7,8 @@ invalid configurations, and retrieval of TTL settings.
 """
 
 import time
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import pytest
 import requests
@@ -45,34 +45,20 @@ def verify_table_partition_expressions(
         # This verifies that data was inserted into a partition with the correct TTL
         retention, retention_cold, count = expected_partition_expressions_map[table]
 
-        retention_query = (
-            f"SELECT COUNT(*) FROM {table} "
-            f"WHERE _retention_days = {retention} AND _retention_days_cold = {retention_cold}"
-        )
+        retention_query = f"SELECT COUNT(*) FROM {table} WHERE _retention_days = {retention} AND _retention_days_cold = {retention_cold}"
         retention_result = signoz.telemetrystore.conn.query(retention_query).result_rows
 
-        assert retention_result[0][0] == count, (
-            f"No data found with retention values '{retention}, {retention_cold}' in table {table}. "
-            f"Expected at least one row with these retention settings."
-        )
+        assert retention_result[0][0] == count, f"No data found with retention values '{retention}, {retention_cold}' in table {table}. Expected at least one row with these retention settings."
 
-        partition_query = (
-            "SELECT rows FROM system.parts "
-            f"WHERE `table` = '{table.split('.')[-1]}' AND active = 1 AND partition LIKE '%{retention},{retention_cold}%' "
-            "ORDER BY partition ASC"
-        )
+        partition_query = f"SELECT rows FROM system.parts WHERE `table` = '{table.split('.')[-1]}' AND active = 1 AND partition LIKE '%{retention},{retention_cold}%' ORDER BY partition ASC"
 
         partition_result = signoz.telemetrystore.conn.query(partition_query).result_rows
-        assert (
-            len(partition_result) >= 1
-        ), f"No active partitions found for table {table}"
+        assert len(partition_result) >= 1, f"No active partitions found for table {table}"
 
         assert partition_result[0][0] >= count
 
 
-def verify_table_retention_expression(
-    signoz: types.SigNoz, table_expected_retention_expression_map: dict[str, str]
-):
+def verify_table_retention_expression(signoz: types.SigNoz, table_expected_retention_expression_map: dict[str, str]):
     """
     Verify table partitions exist with data and have correct retention values.
 
@@ -92,10 +78,7 @@ def verify_table_retention_expression(
         assert all(" SETTINGS" in r[0] for r in result)
 
         ttl_part = result[0][0].split("TTL ")[1].split(" SETTINGS")[0]
-        assert table_expected_retention_expression_map[table] in ttl_part, (
-            f"Expected retention expression {table_expected_retention_expression_map[table]} "
-            f"not found in table {table} TTL part {ttl_part}"
-        )
+        assert table_expected_retention_expression_map[table] in ttl_part, f"Expected retention expression {table_expected_retention_expression_map[table]} not found in table {table} TTL part {ttl_part}"
 
 
 @pytest.fixture(name="ttl_test_suite_setup", scope="package", autouse=True)
@@ -120,9 +103,7 @@ def test_set_ttl_traces_success(
         "duration": f"{test_duration_hours}h",  # Don't choose a round number to avoid matching any residual test data
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -142,13 +123,13 @@ def test_set_ttl_traces_success(
     verify_table_retention_expression(
         signoz,
         {
-            "signoz_index_v3": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "traces_v3_resource": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "usage_explorer": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "trace_summary": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
-            "span_attributes_keys": f"toIntervalSecond({test_duration_hours*3600})",  # 3601 hours in seconds
+            "signoz_index_v3": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "traces_v3_resource": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "usage_explorer": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "trace_summary": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
+            "span_attributes_keys": f"toIntervalSecond({test_duration_hours * 3600})",  # 3601 hours in seconds
         },
     )
 
@@ -170,9 +151,7 @@ def test_set_ttl_traces_with_cold_storage(
         "toColdDuration": f"{test_cold_duration_hours}h",  # 32 days in hours
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -191,25 +170,25 @@ def test_set_ttl_traces_with_cold_storage(
     verify_table_retention_expression(
         signoz,
         {
-            "signoz_index_v3": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "traces_v3_resource": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "usage_explorer": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "trace_summary": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
-            "span_attributes_keys": f"toIntervalSecond({test_duration_hours*3600})",  # 91 days in seconds
+            "signoz_index_v3": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "traces_v3_resource": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "signoz_error_index_v2": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "usage_explorer": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "trace_summary": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
+            "span_attributes_keys": f"toIntervalSecond({test_duration_hours * 3600})",  # 91 days in seconds
         },
     )
 
     verify_table_retention_expression(
         signoz,
         {
-            "signoz_index_v3": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            "traces_v3_resource": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            "signoz_error_index_v2": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            "usage_explorer": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            "dependency_graph_minutes_v2": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
-            "trace_summary": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME 'cold'",
+            "signoz_index_v3": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            "traces_v3_resource": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            "signoz_error_index_v2": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            "usage_explorer": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            "dependency_graph_minutes_v2": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
+            "trace_summary": f"toIntervalSecond({test_cold_duration_hours * 3600}) TO VOLUME 'cold'",
             # "span_attributes_keys": f"toIntervalSecond({test_cold_duration_hours*3600}) TO VOLUME",
             # Span attributes keys table does not have cold storage configured
         },
@@ -232,9 +211,7 @@ def test_set_ttl_metrics_success(
         "toColdDuration": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -284,9 +261,7 @@ def test_set_ttl_metrics_with_cold_storage(
         "toColdDuration": f"{test_cold_duration_hours}h",  # 21 days in hours
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -338,20 +313,16 @@ def test_set_ttl_metrics_with_cold_storage(
     )
 
 
-def test_set_ttl_invalid_type(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-):
+def test_set_ttl_invalid_type(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     """Test setting TTL with invalid type returns error."""
     payload = {
         "type": "invalid_type",
-        "duration": f"{90*24}h",
+        "duration": f"{90 * 24}h",
         "coldStorage": "",
         "toColdDuration": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -381,9 +352,7 @@ def test_set_custom_retention_ttl_basic(
         "coldStorageDurationDays": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -443,9 +412,7 @@ def test_set_custom_retention_ttl_basic_with_cold_storage(
         "coldStorageDurationDays": test_retention_days_cold,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -511,9 +478,7 @@ def test_set_custom_retention_ttl_basic_fallback(
         "coldStorageDurationDays": test_retention_days_cold,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -575,9 +540,7 @@ def test_set_custom_retention_ttl_basic_101_times(
             "coldStorageDurationDays": 0,
         }
 
-        headers = {
-            "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-        }
+        headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
         response = requests.post(
             signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -617,9 +580,7 @@ def test_set_custom_retention_ttl_with_conditions(
         "defaultTTLDays": test_retention_days,
         "ttlConditions": [
             {
-                "conditions": [
-                    {"key": "service_name", "values": ["frontend", "backend"]}
-                ],
+                "conditions": [{"key": "service_name", "values": ["frontend", "backend"]}],
                 "ttlDays": test_retention_days_condition,
             }
         ],
@@ -627,9 +588,7 @@ def test_set_custom_retention_ttl_with_conditions(
         "coldStorageDurationDays": test_retention_days_cold,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -738,9 +697,7 @@ def test_set_custom_retention_ttl_with_invalid_cold_storage(
     ]
     insert_logs(logs)
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -756,9 +713,7 @@ def test_set_custom_retention_ttl_with_invalid_cold_storage(
     assert "No such volume `logs_cold_storage`" in response_data["error"]["message"]
 
 
-def test_set_custom_retention_ttl_duplicate_conditions(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-):
+def test_set_custom_retention_ttl_duplicate_conditions(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     """Test that duplicate TTL conditions are rejected."""
     payload = {
         "type": "logs",
@@ -782,9 +737,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
         "coldStorageDurationDays": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -797,9 +750,7 @@ def test_set_custom_retention_ttl_duplicate_conditions(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_set_custom_retention_ttl_invalid_condition(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-):
+def test_set_custom_retention_ttl_invalid_condition(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     """Test that conditions with empty values are rejected."""
     payload = {
         "type": "logs",
@@ -819,9 +770,7 @@ def test_set_custom_retention_ttl_invalid_condition(
         "coldStorageDurationDays": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -834,9 +783,7 @@ def test_set_custom_retention_ttl_invalid_condition(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_get_custom_retention_ttl(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs
-):
+def test_get_custom_retention_ttl(signoz: types.SigNoz, get_token: Callable[[str, str], str], insert_logs):
     """Test getting custom retention TTL configuration."""
     # First set a custom retention TTL
     set_payload = {
@@ -858,9 +805,7 @@ def test_get_custom_retention_ttl(
     ]
     insert_logs(logs)
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
     set_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
         json=set_payload,
@@ -873,9 +818,7 @@ def test_get_custom_retention_ttl(
     time.sleep(2)
 
     # Now get the TTL configuration
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     get_response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),
@@ -892,9 +835,7 @@ def test_get_custom_retention_ttl(
     assert response_data["cold_storage_ttl_days"] == -1
     assert response_data["ttl_conditions"][0]["ttlDays"] == 90
     assert response_data["ttl_conditions"][0]["conditions"][0]["key"] == "service_name"
-    assert response_data["ttl_conditions"][0]["conditions"][0]["values"] == [
-        "test-service"
-    ]
+    assert response_data["ttl_conditions"][0]["conditions"][0]["values"] == ["test-service"]
 
 
 def test_set_ttl_logs_success(
@@ -911,9 +852,7 @@ def test_set_ttl_logs_success(
         "duration": f"{test_retention_days * 24}h",
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -941,9 +880,7 @@ def test_set_ttl_logs_success(
     )
 
 
-def test_get_ttl_traces_success(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-):
+def test_get_ttl_traces_success(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
     """Test getting TTL for traces."""
     # First set a TTL configuration for traces
 
@@ -953,9 +890,7 @@ def test_get_ttl_traces_success(
         "duration": f"{test_retention_days * 24}h",  # 33 days in hours
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     set_response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/settings/ttl"),
@@ -984,12 +919,8 @@ def test_get_ttl_traces_success(
     assert response_data["status"] == "success"
     assert "traces_ttl_duration_hrs" in response_data
     assert "traces_move_ttl_duration_hrs" in response_data
-    assert (
-        response_data["traces_ttl_duration_hrs"] == test_retention_days * 24
-    )  # Note: response is in hours as integer
-    assert (
-        response_data["traces_move_ttl_duration_hrs"] == -1
-    )  # -1 indicates no cold storage configured
+    assert response_data["traces_ttl_duration_hrs"] == test_retention_days * 24  # Note: response is in hours as integer
+    assert response_data["traces_move_ttl_duration_hrs"] == -1  # -1 indicates no cold storage configured
 
 
 def test_large_ttl_conditions_list(
@@ -1009,10 +940,7 @@ def test_large_ttl_conditions_list(
             }
         )
 
-    logs = [
-        Logs(resources={"service_name": f"service-{i}"}, severity_text="ERROR")
-        for i in range(10)
-    ]
+    logs = [Logs(resources={"service_name": f"service-{i}"}, severity_text="ERROR") for i in range(10)]
     insert_logs(logs)
 
     payload = {
@@ -1023,9 +951,7 @@ def test_large_ttl_conditions_list(
         "coldStorageDurationDays": 0,
     }
 
-    headers = {
-        "Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"
-    }
+    headers = {"Authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v2/settings/ttl"),

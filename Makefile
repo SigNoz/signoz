@@ -201,14 +201,12 @@ docker-buildx-enterprise: go-build-enterprise js-build
 # python commands
 ##############################################################
 .PHONY: py-fmt
-py-fmt: ## Run black across the shared tests project
-	@cd tests && uv run black .
+py-fmt: ## Run ruff format across the shared tests project
+	@cd tests && uv run ruff format .
 
 .PHONY: py-lint
-py-lint: ## Run lint across the shared tests project
-	@cd tests && uv run isort .
-	@cd tests && uv run autoflake .
-	@cd tests && uv run pylint .
+py-lint: ## Run ruff check across the shared tests project
+	@cd tests && uv run ruff check --fix .
 
 .PHONY: py-test-setup
 py-test-setup: ## Bring up the shared SigNoz backend used by integration and e2e tests

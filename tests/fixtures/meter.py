@@ -1,7 +1,8 @@
 import hashlib
 import json
+from collections.abc import Callable, Generator
 from datetime import datetime, timedelta
-from typing import Any, Callable, Generator, List
+from typing import Any
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class MeterSample:
         self.value = np.float64(value)
 
         fingerprint_str = metric_name + self.labels
-        self.fingerprint = np.uint64(
-            int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16)
-        )
+        self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
 
     def to_samples_row(self) -> list:
         return [
@@ -70,7 +69,7 @@ def make_meter_samples(
     count: int = 60,
     base_value: float = 100.0,
     **kwargs,
-) -> List[MeterSample]:
+) -> list[MeterSample]:
     samples = []
     for i in range(count):
         ts = now - timedelta(minutes=count - i)
@@ -89,8 +88,8 @@ def make_meter_samples(
 @pytest.fixture(name="insert_meter_samples", scope="function")
 def insert_meter_samples(
     clickhouse: types.TestContainerClickhouse,
-) -> Generator[Callable[[List[MeterSample]], None], Any, None]:
-    def _insert_meter_samples(samples: List[MeterSample]) -> None:
+) -> Generator[Callable[[list[MeterSample]], None], Any]:
+    def _insert_meter_samples(samples: list[MeterSample]) -> None:
         if len(samples) == 0:
             return
 
@@ -116,6 +115,4 @@ def insert_meter_samples(
 
     cluster = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     for table in ["samples", "samples_agg_1d"]:
-        clickhouse.conn.query(
-            f"TRUNCATE TABLE signoz_meter.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+        clickhouse.conn.query(f"TRUNCATE TABLE signoz_meter.{table} ON CLUSTER '{cluster}' SYNC")

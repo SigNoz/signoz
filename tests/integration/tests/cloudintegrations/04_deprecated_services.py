@@ -1,6 +1,6 @@
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -29,9 +29,7 @@ def test_list_services_without_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -57,18 +55,12 @@ def test_list_services_with_account(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # List services for the account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
@@ -79,9 +71,7 @@ def test_list_services_with_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -125,9 +115,7 @@ def test_get_service_details_without_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -153,18 +141,12 @@ def test_get_service_details_with_account(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get list of services first
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -186,9 +168,7 @@ def test_get_service_details_with_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -221,9 +201,7 @@ def test_get_service_details_invalid_service(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404, got {response.status_code}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
 
 
 def test_list_services_unsupported_provider(
@@ -243,9 +221,7 @@ def test_list_services_unsupported_provider(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"
 
 
 def test_update_service_config(
@@ -259,18 +235,12 @@ def test_update_service_config(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get list of services to pick a valid service ID
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -285,9 +255,7 @@ def test_update_service_config(
     service_id = list_data["services"][0]["id"]
 
     # Update service configuration
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
 
     config_payload = {
         "cloud_account_id": cloud_account_id,
@@ -304,9 +272,7 @@ def test_update_service_config(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -341,9 +307,7 @@ def test_update_service_config_without_account(
     service_id = list_data["services"][0]["id"]
 
     # Try to update config with non-existent account
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
 
     fake_cloud_account_id = str(uuid.uuid4())
     config_payload = {
@@ -360,9 +324,7 @@ def test_update_service_config_without_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    ), f"Expected 500 for non-existent account, got {response.status_code}"
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR, f"Expected 500 for non-existent account, got {response.status_code}"
 
 
 def test_update_service_config_invalid_service(
@@ -376,24 +338,16 @@ def test_update_service_config_invalid_service(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Try to update config for invalid service
     fake_service_id = "non-existent-service"
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}/config"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}/config"
 
     config_payload = {
         "cloud_account_id": cloud_account_id,
@@ -409,9 +363,7 @@ def test_update_service_config_invalid_service(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404 for invalid service, got {response.status_code}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404 for invalid service, got {response.status_code}"
 
 
 def test_update_service_config_disable_service(
@@ -425,18 +377,12 @@ def test_update_service_config_disable_service(
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get a valid service
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -450,9 +396,7 @@ def test_update_service_config_disable_service(
     service_id = list_data["services"][0]["id"]
 
     # First enable the service
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
 
     enable_payload = {
         "cloud_account_id": cloud_account_id,
@@ -486,9 +430,7 @@ def test_update_service_config_disable_service(
         timeout=10,
     )
 
-    assert (
-        disable_response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {disable_response.status_code}"
+    assert disable_response.status_code == HTTPStatus.OK, f"Expected 200, got {disable_response.status_code}"
 
     response_data = disable_response.json()
     data = response_data.get("data", response_data)

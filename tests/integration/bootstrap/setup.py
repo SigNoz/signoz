@@ -10,14 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 def test_setup(signoz: types.SigNoz) -> None:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
-    )
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2)
     assert response.status_code == HTTPStatus.OK
 
-    healthz = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/healthz"), timeout=2
-    )
+    healthz = requests.get(signoz.self.host_configs["8080"].get("/api/v2/healthz"), timeout=2)
     logger.info("healthz response: %s", healthz.json())
     assert healthz.status_code == HTTPStatus.OK
 
@@ -35,9 +31,7 @@ def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:
     ]
 
     for db_name in required_databases:
-        assert any(
-            db_name in str(db) for db in databases
-        ), f"Database {db_name} not found"
+        assert any(db_name in str(db) for db in databases), f"Database {db_name} not found"
 
 
 def test_teardown(

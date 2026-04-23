@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -103,9 +103,7 @@ def test_get_service_account(
     service_account = find_service_account_by_name(signoz, token, "test-sa")
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -127,9 +125,7 @@ def test_get_service_account_not_found(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/00000000-0000-0000-0000-000000000000"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/00000000-0000-0000-0000-000000000000"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -146,9 +142,7 @@ def test_update_service_account(
     service_account = find_service_account_by_name(signoz, token, "test-sa")
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"),
         json={"name": "test-sa-updated"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -158,9 +152,7 @@ def test_update_service_account(
 
     # verify the update
     get_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -179,9 +171,7 @@ def test_delete_service_account(
 
     # verify status changed to deleted
     get_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -232,13 +222,9 @@ def test_delete_already_deleted_service_account(
 
     # second delete should be handled gracefully (idempotent or error)
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_IMPLEMENTED
-    ), f"Expected 501 for already-deleted SA, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NOT_IMPLEMENTED, f"Expected 501 for already-deleted SA, got {response.status_code}: {response.text}"

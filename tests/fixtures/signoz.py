@@ -2,7 +2,6 @@ import platform
 import time
 from http import HTTPStatus
 from os import path
-from typing import Optional
 
 import docker
 import docker.errors
@@ -26,7 +25,7 @@ def create_signoz(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "signoz",
-    env_overrides: Optional[dict] = None,
+    env_overrides: dict | None = None,
 ) -> types.SigNoz:
     """
     Factory function for creating a SigNoz container.

@@ -1,5 +1,6 @@
 import os
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import clickhouse_connect
 import clickhouse_connect.driver
@@ -18,7 +19,7 @@ logger = setup_logger(__name__)
 
 @pytest.fixture(name="clickhouse", scope="package")
 def clickhouse(
-    tmpfs: Generator[types.LegacyPath, Any, None],
+    tmpfs: Generator[types.LegacyPath, Any],
     network: Network,
     zookeeper: types.TestContainerDocker,
     request: pytest.FixtureRequest,
@@ -153,9 +154,7 @@ def clickhouse(
         with open(custom_function_file_path, "w", encoding="utf-8") as f:
             f.write(custom_function_config)
 
-        container.with_volume_mapping(
-            cluster_config_file_path, "/etc/clickhouse-server/config.d/cluster.xml"
-        )
+        container.with_volume_mapping(cluster_config_file_path, "/etc/clickhouse-server/config.d/cluster.xml")
         container.with_volume_mapping(
             custom_function_file_path,
             "/etc/clickhouse-server/custom-function.xml",
@@ -183,9 +182,7 @@ def clickhouse(
             ],
         )
         if exit_code != 0:
-            raise RuntimeError(
-                f"Failed to install histogramQuantile binary: {output.decode()}"
-            )
+            raise RuntimeError(f"Failed to install histogramQuantile binary: {output.decode()}")
 
         connection = clickhouse_connect.get_client(
             user=container.username,
@@ -210,12 +207,8 @@ def clickhouse(
                     ),
                 },
                 container_configs={
-                    "9000": types.TestContainerUrlConfig(
-                        "tcp", container.get_wrapped_container().name, 9000
-                    ),
-                    "8123": types.TestContainerUrlConfig(
-                        "tcp", container.get_wrapped_container().name, 8123
-                    ),
+                    "9000": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 9000),
+                    "8123": types.TestContainerUrlConfig("tcp", container.get_wrapped_container().name, 8123),
                 },
             ),
             conn=connection,
@@ -261,9 +254,7 @@ def clickhouse(
         pytestconfig,
         "clickhouse",
         empty=lambda: types.TestContainerSQL(
-            container=types.TestContainerDocker(
-                id="", host_configs={}, container_configs={}
-            ),
+            container=types.TestContainerDocker(id="", host_configs={}, container_configs={}),
             conn=None,
             env={},
         ),

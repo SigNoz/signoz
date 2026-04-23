@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 from wiremock.client import (
@@ -29,7 +29,7 @@ GATEWAY_APIS_EDITOR_PASSWORD = "password123Z$"
 def test_apply_license(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Activate a license so that all subsequent gateway calls succeed."""
@@ -74,9 +74,7 @@ def test_create_ingestion_key_limit_only_size(
     )
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"),
         json={
             "signal": "logs",
             "config": {"day": {"size": 1000}},
@@ -86,9 +84,7 @@ def test_create_ingestion_key_limit_only_size(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.CREATED
-    ), f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.CREATED, f"Expected 201, got {response.status_code}: {response.text}"
 
     assert response.json()["data"]["id"] == "limit-created-1"
 
@@ -134,9 +130,7 @@ def test_create_ingestion_key_limit_only_count(
     )
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"),
         json={
             "signal": "traces",
             "config": {"day": {"count": 500}},
@@ -146,9 +140,7 @@ def test_create_ingestion_key_limit_only_count(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.CREATED
-    ), f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.CREATED, f"Expected 201, got {response.status_code}: {response.text}"
 
     body = get_latest_gateway_request_body(signoz, "POST", gateway_url)
     assert body is not None, "Expected a POST request to reach the gateway"
@@ -191,9 +183,7 @@ def test_create_ingestion_key_limit_both_size_and_count(
     )
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}/limits"),
         json={
             "signal": "metrics",
             "config": {
@@ -206,9 +196,7 @@ def test_create_ingestion_key_limit_both_size_and_count(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.CREATED
-    ), f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.CREATED, f"Expected 201, got {response.status_code}: {response.text}"
 
     body = get_latest_gateway_request_body(signoz, "POST", gateway_url)
     assert body is not None, "Expected a POST request to reach the gateway"
@@ -252,9 +240,7 @@ def test_update_ingestion_key_limit_only_size(
     )
 
     response = requests.patch(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"),
         json={
             "config": {"day": {"size": 2000}},
             "tags": ["test"],
@@ -263,9 +249,7 @@ def test_update_ingestion_key_limit_only_size(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
@@ -302,9 +286,7 @@ def test_update_ingestion_key_limit_only_count(
     )
 
     response = requests.patch(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"),
         json={
             "config": {"day": {"count": 750}},
             "tags": ["test"],
@@ -313,9 +295,7 @@ def test_update_ingestion_key_limit_only_count(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
@@ -351,9 +331,7 @@ def test_update_ingestion_key_limit_both_size_and_count(
     )
 
     response = requests.patch(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"),
         json={
             "config": {"day": {"size": 1000, "count": 500}},
             "tags": ["test"],
@@ -362,9 +340,7 @@ def test_update_ingestion_key_limit_both_size_and_count(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
     assert body is not None, "Expected a PATCH request to reach the gateway"
@@ -405,16 +381,12 @@ def test_delete_ingestion_key_limit(
     )
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     # Verify at least one DELETE reached the gateway
     matched = get_gateway_requests(signoz, "DELETE", gateway_url)

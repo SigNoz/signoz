@@ -1,6 +1,6 @@
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import pytest
 import requests
@@ -85,16 +85,12 @@ def test_unique_index_allows_multiple_deleted_rows(
     # Step 3: assert the DB has exactly two deleted rows for this email
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
-            sql.text(
-                "SELECT id FROM users WHERE email = :email AND status = 'deleted'"
-            ),
+            sql.text("SELECT id FROM users WHERE email = :email AND status = 'deleted'"),
             {"email": UNIQUE_INDEX_USER_EMAIL},
         )
         deleted_rows = result.fetchall()
 
-    assert (
-        len(deleted_rows) == 2
-    ), f"expected 2 deleted rows for {UNIQUE_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
+    assert len(deleted_rows) == 2, f"expected 2 deleted rows for {UNIQUE_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
     deleted_ids = {row[0] for row in deleted_rows}
     assert first_user_id in deleted_ids
     assert second_user_id in deleted_ids
@@ -115,12 +111,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     active_id = str(uuid.uuid4())
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
-            sql.text(
-                "INSERT INTO users"
-                " (id, display_name, email, org_id, is_root, status, created_at, updated_at)"
-                " VALUES (:id, :display_name, :email, :org_id,"
-                "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-            ),
+            sql.text("INSERT INTO users (id, display_name, email, org_id, is_root, status, created_at, updated_at) VALUES (:id, :display_name, :email, :org_id,         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"),
             {
                 "id": active_id,
                 "display_name": "first active row",
@@ -133,12 +124,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     with signoz.sqlstore.conn.connect() as conn:
         with pytest.raises(IntegrityError):
             conn.execute(
-                sql.text(
-                    "INSERT INTO users"
-                    " (id, display_name, email, org_id, is_root, status, created_at, updated_at)"
-                    " VALUES (:id, :display_name, :email, :org_id,"
-                    "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-                ),
+                sql.text("INSERT INTO users (id, display_name, email, org_id, is_root, status, created_at, updated_at) VALUES (:id, :display_name, :email, :org_id,         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"),
                 {
                     "id": str(uuid.uuid4()),
                     "display_name": "should violate index",
@@ -150,12 +136,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     # Step 5: a third deleted row must be accepted (excluded from partial index)
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
-            sql.text(
-                "INSERT INTO users"
-                " (id, display_name, email, org_id, is_root, status, created_at, updated_at)"
-                " VALUES (:id, :display_name, :email, :org_id,"
-                "         false, 'deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-            ),
+            sql.text("INSERT INTO users (id, display_name, email, org_id, is_root, status, created_at, updated_at) VALUES (:id, :display_name, :email, :org_id,         false, 'deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"),
             {
                 "id": str(uuid.uuid4()),
                 "display_name": "third deleted row",
@@ -168,10 +149,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     # Step 6: confirm three deleted rows now exist
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
-            sql.text(
-                "SELECT COUNT(*) FROM users"
-                " WHERE email = :email AND status = 'deleted'"
-            ),
+            sql.text("SELECT COUNT(*) FROM users WHERE email = :email AND status = 'deleted'"),
             {"email": UNIQUE_INDEX_USER_EMAIL},
         )
         count = result.fetchone()[0]

@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -55,9 +55,7 @@ def test_get_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
     assert_user_has_role(data, "signoz-editor")
 
 
-def test_get_my_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_get_my_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify GET /api/v2/users/me returns authenticated user with roles."""
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
 
@@ -74,9 +72,7 @@ def test_get_my_user(
     assert_user_has_role(data, "signoz-editor")
 
 
-def test_update_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_update_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify PUT /api/v2/users/{id} updates displayName."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -94,9 +90,7 @@ def test_update_user(
     assert updated["displayName"] == "updated editor"
 
 
-def test_update_my_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_update_my_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify PUT /api/v2/users/me updates own displayName."""
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
 
@@ -117,9 +111,7 @@ def test_update_my_user(
     assert response.json()["data"]["displayName"] == "self updated editor"
 
 
-def test_admin_cannot_update_self_via_id(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_admin_cannot_update_self_via_id(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify PUT /api/v2/users/{own_id} is rejected (self-mutation guard)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -140,9 +132,7 @@ def test_admin_cannot_update_self_via_id(
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_editor_cannot_list_users(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_editor_cannot_list_users(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify non-admin cannot call GET /api/v2/users."""
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
 
@@ -154,9 +144,7 @@ def test_editor_cannot_list_users(
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_editor_cannot_get_other_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_editor_cannot_get_other_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify non-admin cannot call GET /api/v2/users/{other_id}."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
@@ -177,9 +165,7 @@ def test_editor_cannot_get_other_user(
     assert response.status_code == HTTPStatus.FORBIDDEN
 
 
-def test_editor_cannot_update_other_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_editor_cannot_update_other_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """Verify non-admin cannot call PUT /api/v2/users/{other_id}."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)

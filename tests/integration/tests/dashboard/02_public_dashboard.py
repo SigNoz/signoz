@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 import requests
@@ -15,7 +15,7 @@ from fixtures.types import Operation, SigNoz, TestContainerDocker
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -44,9 +44,7 @@ def test_create_and_get_public_dashboard(
     dashboard_id = data["id"]
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}/public"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
         json={
             "timeRangeEnabled": True,
             "defaultTimeRange": "10s",
@@ -59,9 +57,7 @@ def test_create_and_get_public_dashboard(
     assert "id" in response.json()["data"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}/public"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -76,13 +72,13 @@ def test_public_dashboard_widget_query_range(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Insert metric data so the widget query returns results instead of 404
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
-    metrics: List[Metrics] = [
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    metrics: list[Metrics] = [
         Metrics(
             metric_name="container.cpu.time",
             labels={"service": "test-service"},
@@ -146,13 +142,9 @@ def test_public_dashboard_widget_query_range(
                         "queryFormulas": [],
                         "queryTraceOperator": [],
                     },
-                    "clickhouse_sql": [
-                        {"disabled": False, "legend": "", "name": "A", "query": ""}
-                    ],
+                    "clickhouse_sql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
                     "id": "80f12506-ef72-4013-8282-2713c8114c9e",
-                    "promql": [
-                        {"disabled": False, "legend": "", "name": "A", "query": ""}
-                    ],
+                    "promql": [{"disabled": False, "legend": "", "name": "A", "query": ""}],
                     "queryType": "builder",
                 },
             }
@@ -170,9 +162,7 @@ def test_public_dashboard_widget_query_range(
 
     # create public dashboard
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}/public"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
         json={
             "timeRangeEnabled": False,
             "defaultTimeRange": "10m",
@@ -185,9 +175,7 @@ def test_public_dashboard_widget_query_range(
     assert "id" in response.json()["data"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/dashboards/{dashboard_id}/public"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/dashboards/{dashboard_id}/public"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -198,26 +186,20 @@ def test_public_dashboard_widget_query_range(
     public_dashboard_id = public_path.split("/public/dashboard/")[-1]
 
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/0/query_range"),
         timeout=2,
     )
     assert resp.status_code == HTTPStatus.OK
     assert resp.json().get("status") == "success"
 
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/-1/query_range"),
         timeout=2,
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST
 
     resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/public/dashboards/{public_dashboard_id}/widgets/1/query_range"),
         timeout=2,
     )
     assert resp.status_code == HTTPStatus.BAD_REQUEST
@@ -245,9 +227,7 @@ def test_anonymous_role_has_public_dashboard_permission(
     assert response.json()["status"] == "success"
 
     roles = response.json()["data"]
-    anonymous_role = next(
-        (role for role in roles if role["name"] == "signoz-anonymous"), None
-    )
+    anonymous_role = next((role for role in roles if role["name"] == "signoz-anonymous"), None)
     assert anonymous_role is not None
     org_id = anonymous_role["orgId"]
 
@@ -267,13 +247,7 @@ def test_anonymous_role_has_public_dashboard_permission(
 
         if request.config.getoption("--sqlstore-provider") == "sqlite":
             assert tuple_row["user_object_type"] == "role"
-            assert (
-                tuple_row["user_object_id"]
-                == f"organization/{org_id}/role/signoz-anonymous"
-            )
+            assert tuple_row["user_object_id"] == f"organization/{org_id}/role/signoz-anonymous"
             assert tuple_row["user_relation"] == "assignee"
         else:
-            assert (
-                tuple_row["_user"]
-                == f"role:organization/{org_id}/role/signoz-anonymous#assignee"
-            )
+            assert tuple_row["_user"] == f"role:organization/{org_id}/role/signoz-anonymous#assignee"

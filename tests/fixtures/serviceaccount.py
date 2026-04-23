@@ -26,9 +26,7 @@ def find_role_by_name(signoz: types.SigNoz, token: str, name: str) -> str:
     return role["id"]
 
 
-def create_service_account(
-    signoz: types.SigNoz, token: str, name: str, role: str = "signoz-viewer"
-) -> str:
+def create_service_account(signoz: types.SigNoz, token: str, name: str, role: str = "signoz-viewer") -> str:
     """Create a service account, assign a role, and return its ID."""
     resp = requests.post(
         signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
@@ -41,9 +39,7 @@ def create_service_account(
 
     role_id = find_role_by_name(signoz, token, role)
     role_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         json={"id": role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -53,16 +49,12 @@ def create_service_account(
     return service_account_id
 
 
-def create_service_account_with_key(
-    signoz: types.SigNoz, token: str, name: str, role: str = "signoz-admin"
-) -> tuple:
+def create_service_account_with_key(signoz: types.SigNoz, token: str, name: str, role: str = "signoz-admin") -> tuple:
     """Create a service account with an API key and return (service_account_id, api_key)."""
     service_account_id = create_service_account(signoz, token, name, role)
 
     key_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "auth-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -73,14 +65,10 @@ def create_service_account_with_key(
     return service_account_id, api_key
 
 
-def delete_service_account(
-    signoz: types.SigNoz, token: str, service_account_id: str
-) -> None:
+def delete_service_account(signoz: types.SigNoz, token: str, service_account_id: str) -> None:
     """Soft-delete a service account."""
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -95,8 +83,4 @@ def find_service_account_by_name(signoz: types.SigNoz, token: str, name: str) ->
         timeout=5,
     )
     assert list_resp.status_code == HTTPStatus.OK, list_resp.text
-    return next(
-        service_account
-        for service_account in list_resp.json()["data"]
-        if service_account["name"] == name
-    )
+    return next(service_account for service_account in list_resp.json()["data"] if service_account["name"] == name)

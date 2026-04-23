@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, List
 from urllib.parse import urlparse
 
 import requests
@@ -23,7 +23,7 @@ from fixtures.types import Operation, SigNoz, TestContainerDocker, TestContainer
 def test_apply_license(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -64,7 +64,7 @@ def test_create_auth_domain(
                     "clientId": settings["client_id"],
                     "clientSecret": settings["client_secret"],
                     # Change the hostname of the issuer to the internal resolvable hostname of the idp
-                    "issuer": f"{idp.container.container_configs['6060'].get(urlparse(settings["issuer"]).path)}",
+                    "issuer": f"{idp.container.container_configs['6060'].get(urlparse(settings['issuer']).path)}",
                     "issuerAlias": settings["issuer"],
                     "getUserInfo": True,
                 },
@@ -103,9 +103,7 @@ def test_oidc_authn(
 
     # change the url to the external resolvable hostname of the idp
     parsed_url = urlparse(url)
-    actual_url = (
-        f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
-    )
+    actual_url = f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
 
     driver.get(actual_url)
     idp_login("viewer@oidc.integration.test", "password123")
@@ -113,9 +111,7 @@ def test_oidc_authn(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Assert that the user was created in signoz.
-    found_user = find_user_with_roles_by_email(
-        signoz, admin_token, "viewer@oidc.integration.test"
-    )
+    found_user = find_user_with_roles_by_email(signoz, admin_token, "viewer@oidc.integration.test")
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -174,7 +170,7 @@ def test_oidc_role_mapping_single_group_admin(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -185,9 +181,7 @@ def test_oidc_role_mapping_single_group_admin(
     email = "admin-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-admins"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -199,7 +193,7 @@ def test_oidc_role_mapping_single_group_editor(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -210,9 +204,7 @@ def test_oidc_role_mapping_single_group_editor(
     email = "editor-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-editors"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -224,7 +216,7 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -235,13 +227,9 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     Expected: User gets ADMIN (highest of the two).
     """
     email = "multi-group-user@oidc.integration.test"
-    create_user_idp_with_groups(
-        email, "password123", True, ["signoz-viewers", "signoz-admins"]
-    )
+    create_user_idp_with_groups(email, "password123", True, ["signoz-viewers", "signoz-admins"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -253,7 +241,7 @@ def test_oidc_role_mapping_explicit_viewer_group(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -265,9 +253,7 @@ def test_oidc_role_mapping_explicit_viewer_group(
     email = "viewer-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -279,7 +265,7 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -290,9 +276,7 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     email = "unmapped-group-user@oidc.integration.test"
     create_user_idp_with_groups(email, "password123", True, ["some-other-group"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -354,7 +338,7 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_role: Callable[[str, str, bool, str, List[str]], None],
+    create_user_idp_with_role: Callable[[str, str, bool, str, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -369,9 +353,7 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     email = "role-claim-precedence@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "ADMIN", ["signoz-editors"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -383,7 +365,7 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_role: Callable[[str, str, bool, str, List[str]], None],
+    create_user_idp_with_role: Callable[[str, str, bool, str, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -396,13 +378,9 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     """
     setup_user_profile()
     email = "invalid-role-user@oidc.integration.test"
-    create_user_idp_with_role(
-        email, "password123", True, "SUPERADMIN", ["signoz-editors"]
-    )
+    create_user_idp_with_role(email, "password123", True, "SUPERADMIN", ["signoz-editors"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -414,7 +392,7 @@ def test_oidc_role_mapping_case_insensitive(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_role: Callable[[str, str, bool, str, List[str]], None],
+    create_user_idp_with_role: Callable[[str, str, bool, str, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -429,9 +407,7 @@ def test_oidc_role_mapping_case_insensitive(
     email = "lowercase-role-user@oidc.integration.test"
     create_user_idp_with_role(email, "password123", True, "editor", [])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -454,9 +430,7 @@ def test_oidc_name_mapping(
     # Create user with explicit first/last name
     create_user_idp(email, "password123", True, first_name="John", last_name="Doe")
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -481,9 +455,7 @@ def test_oidc_empty_name_uses_fallback(
     # Create user without first/last name
     create_user_idp(email, "password123", True)
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
@@ -497,7 +469,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
     signoz: SigNoz,
     idp: TestContainerIDP,
     driver: webdriver.Chrome,
-    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    create_user_idp_with_groups: Callable[[str, str, bool, list[str]], None],
     idp_login: Callable[[str, str], None],
     get_token: Callable[[str, str], str],
     get_session_context: Callable[[str], str],
@@ -525,9 +497,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
     # Create IDP user in viewer group — SSO would normally assign VIEWER
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
 
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
+    perform_oidc_login(signoz, idp, driver, get_session_context, idp_login, email, "password123")
 
     # User should be active with VIEWER role from SSO, not ADMIN from invite
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
