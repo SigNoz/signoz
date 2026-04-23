@@ -15,7 +15,6 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 - [Endpoint](endpoint.md) - HTTP endpoint patterns
 - [Flagger](flagger.md) - Feature flag patterns
 - [Handler](handler.md) - HTTP handler patterns
-- [Integration](integration.md) - Integration testing
 - [Provider](provider.md) - Dependency injection and provider patterns
 - [Packages](packages.md) - Naming, layout, and conventions for `pkg/` packages
 - [Service](service.md) - Managed service lifecycle with `factory.Service`

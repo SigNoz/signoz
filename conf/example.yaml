@@ -407,3 +407,11 @@ cloudintegration:
   agent:
     # The version of the cloud integration agent.
     version: v0.0.8
+
+##################### Authz #################################
+authz:
+  # Specifies the authz provider to use.
+  provider: openfga
+  openfga:
+    # maximum tuples allowed per openfga write operation.
+    max_tuples_per_write: 100

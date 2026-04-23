@@ -1,0 +1,18 @@
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 7px 12px;
+	border-top: 1px solid var(--l2-border);
+	background: var(--l2-background);
+	border-radius: 0 0 6px 6px;
+}
+
+.hint {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	font-size: 11px;
+	color: var(--l2-foreground);
+}

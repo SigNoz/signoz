@@ -13,6 +13,12 @@ interface BaseChartProps {
 	showTooltip?: boolean;
 	showLegend?: boolean;
 	canPinTooltip?: boolean;
+	/** Key that pins the tooltip while hovering. Defaults to DEFAULT_PIN_TOOLTIP_KEY ('l'). */
+	pinKey?: string;
+	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
+	onClick?: (clickData: TooltipClickData) => void;
+	yAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
