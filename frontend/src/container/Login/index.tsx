@@ -60,10 +60,8 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
-	const [
-		sessionsContextLoading,
-		setIsLoadingSessionsContext,
-	] = useState<boolean>(false);
+	const [sessionsContextLoading, setIsLoadingSessionsContext] =
+		useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 
@@ -213,7 +211,7 @@ function Login(): JSX.Element {
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
 
-				// eslint-disable-next-line rulesdir/no-raw-absolute-path
+				// oxlint-disable-next-line signoz/no-raw-absolute-path
 				window.location.href = url;
 			}
 		} catch (error) {
@@ -329,7 +327,6 @@ function Login(): JSX.Element {
 								data-testid="email"
 								required
 								placeholder="e.g. john@signoz.io"
-								autoFocus
 								disabled={versionLoading}
 								className="login-form-input"
 								onPressEnter={onNextHandler}
