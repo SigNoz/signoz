@@ -57,7 +57,7 @@ func (c *SpanMapperGroupCondition) Scan(src any) error {
 		*c = SpanMapperGroupCondition{}
 		return nil
 	default:
-		return errors.NewInternalf(errors.CodeInternal, "spanattributemappingtypes: cannot scan %T into Condition", src)
+		return errors.NewInternalf(errors.CodeInternal, "spanmapper: cannot scan %T into Condition", src)
 	}
 	return json.Unmarshal(raw, c)
 }
@@ -81,7 +81,7 @@ func (m *SpanMapperConfig) Scan(src any) error {
 		*m = SpanMapperConfig{}
 		return nil
 	default:
-		return errors.NewInternalf(errors.CodeInternal, "spanattributemapping: cannot scan %T into MapperConfig", src)
+		return errors.NewInternalf(errors.CodeInternal, "spanmapper: cannot scan %T into MapperConfig", src)
 	}
 	return json.Unmarshal(raw, m)
 }

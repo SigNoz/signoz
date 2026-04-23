@@ -9178,7 +9178,7 @@ paths:
       deprecated: false
       description: Returns all span attribute mapping groups for the authenticated
         org.
-      operationId: ListSpanAttributeMappingGroups
+      operationId: ListSpanMapperGroups
       parameters:
       - explode: true
         in: query
@@ -9237,11 +9237,11 @@ paths:
         - VIEWER
       summary: List span attribute mapping groups
       tags:
-      - span-attribute-mapping
+      - spanmapper
     post:
       deprecated: false
       description: Creates a new span attribute mapping group for the org.
-      operationId: CreateMappingGroup
+      operationId: CreateSpanMapperGroup
       requestBody:
         content:
           application/json:
@@ -9299,12 +9299,12 @@ paths:
         - ADMIN
       summary: Create a span attribute mapping group
       tags:
-      - span-attribute-mapping
+      - spanmapper
   /api/v1/span_mapper_groups/{groupId}:
     delete:
       deprecated: false
       description: Hard-deletes a mapping group and cascades to all its mappers.
-      operationId: DeleteMappingGroup
+      operationId: DeleteSpanMapperGroup
       parameters:
       - in: path
         name: groupId
@@ -9345,12 +9345,12 @@ paths:
         - ADMIN
       summary: Delete a span attribute mapping group
       tags:
-      - span-attribute-mapping
+      - spanmapper
     patch:
       deprecated: false
       description: Partially updates an existing mapping group's name, condition,
         or enabled state.
-      operationId: UpdateMappingGroup
+      operationId: UpdateSpanMapperGroup
       parameters:
       - in: path
         name: groupId
@@ -9402,12 +9402,12 @@ paths:
         - ADMIN
       summary: Update a span attribute mapping group
       tags:
-      - span-attribute-mapping
+      - spanmapper
   /api/v1/span_mapper_groups/{groupId}/span_mappers:
     get:
       deprecated: false
-      description: Returns all attribute mappers belonging to a mapping group.
-      operationId: ListMappers
+      description: Returns all mappers belonging to a mapping group.
+      operationId: ListSpanMappers
       parameters:
       - in: path
         name: groupId
@@ -9464,13 +9464,13 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: List span attribute mappers for a group
+      summary: List span mappers for a group
       tags:
-      - span-attribute-mapping
+      - spanmapper
     post:
       deprecated: false
-      description: Adds a new attribute mapper to the specified mapping group.
-      operationId: CreateMapper
+      description: Adds a new mapper to the specified mapping group.
+      operationId: CreateSpanMapper
       parameters:
       - in: path
         name: groupId
@@ -9538,14 +9538,14 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Create a span attribute mapper
+      summary: Create a span mapper
       tags:
-      - span-attribute-mapping
+      - spanmapper
   /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}:
     delete:
       deprecated: false
       description: Hard-deletes a mapper from a mapping group.
-      operationId: DeleteMapper
+      operationId: DeleteSpanMapper
       parameters:
       - in: path
         name: groupId
@@ -9589,14 +9589,14 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Delete a span attribute mapper
+      summary: Delete a span mapper
       tags:
-      - span-attribute-mapping
+      - spanmapper
     patch:
       deprecated: false
       description: Partially updates an existing mapper's field context, config, or
         enabled state.
-      operationId: UpdateMapper
+      operationId: UpdateSpanMapper
       parameters:
       - in: path
         name: groupId
@@ -9651,9 +9651,9 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Update a span attribute mapper
+      summary: Update a span mapper
       tags:
-      - span-attribute-mapping
+      - spanmapper
   /api/v1/testChannel:
     post:
       deprecated: true

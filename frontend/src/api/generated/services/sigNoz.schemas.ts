@@ -6770,7 +6770,7 @@ export type GetMyServiceAccount200 = {
 	status: string;
 };
 
-export type ListSpanAttributeMappingGroupsParams = {
+export type ListSpanMapperGroupsParams = {
 	/**
 	 * @description undefined
 	 */
@@ -6783,7 +6783,7 @@ export type ListSpanAttributeMappingGroupsParams = {
 	enabled?: boolean | null;
 };
 
-export type ListSpanAttributeMappingGroups200 = {
+export type ListSpanMapperGroups200 = {
 	data: SpantypesGettableSpanMapperGroupsDTO;
 	/**
 	 * @type string
@@ -6791,7 +6791,7 @@ export type ListSpanAttributeMappingGroups200 = {
 	status: string;
 };
 
-export type CreateMappingGroup201 = {
+export type CreateSpanMapperGroup201 = {
 	data: SpantypesSpanMapperGroupDTO;
 	/**
 	 * @type string
@@ -6799,16 +6799,16 @@ export type CreateMappingGroup201 = {
 	status: string;
 };
 
-export type DeleteMappingGroupPathParameters = {
+export type DeleteSpanMapperGroupPathParameters = {
 	groupId: string;
 };
-export type UpdateMappingGroupPathParameters = {
+export type UpdateSpanMapperGroupPathParameters = {
 	groupId: string;
 };
-export type ListMappersPathParameters = {
+export type ListSpanMappersPathParameters = {
 	groupId: string;
 };
-export type ListMappers200 = {
+export type ListSpanMappers200 = {
 	data: SpantypesGettableSpanMapperGroupsDTO;
 	/**
 	 * @type string
@@ -6816,10 +6816,10 @@ export type ListMappers200 = {
 	status: string;
 };
 
-export type CreateMapperPathParameters = {
+export type CreateSpanMapperPathParameters = {
 	groupId: string;
 };
-export type CreateMapper201 = {
+export type CreateSpanMapper201 = {
 	data: SpantypesSpanMapperDTO;
 	/**
 	 * @type string
@@ -6827,11 +6827,11 @@ export type CreateMapper201 = {
 	status: string;
 };
 
-export type DeleteMapperPathParameters = {
+export type DeleteSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
-export type UpdateMapperPathParameters = {
+export type UpdateSpanMapperPathParameters = {
 	groupId: string;
 	mapperId: string;
 };
