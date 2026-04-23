@@ -89,6 +89,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 					onDestroy={(): void => {
 						uPlotRef.current = null;
 					}}
+					canPinTooltip
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					isQueriesMerged={widget.mergeAllActiveQueries}

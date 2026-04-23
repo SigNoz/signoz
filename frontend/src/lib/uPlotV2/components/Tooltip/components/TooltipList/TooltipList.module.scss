@@ -1,0 +1,27 @@
+.list {
+	width: 100%;
+	:global(div[data-viewport-type='element']) {
+		left: 0;
+		box-sizing: border-box;
+		padding: 4px 12px 4px 16px;
+	}
+
+	&::-webkit-scrollbar {
+		width: 0.3rem;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-slate-100);
+		border-radius: 0.5rem;
+	}
+}
+
+.listLightMode {
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-vanilla-400);
+	}
+}

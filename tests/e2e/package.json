@@ -1,0 +1,45 @@
+{
+  "name": "signoz-frontend-automation",
+  "version": "1.0.0",
+  "description": "E2E tests for SigNoz frontend with Playwright",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:staging": "SIGNOZ_E2E_BASE_URL=https://app.us.staging.signoz.cloud playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "report": "playwright show-report artifacts/html",
+    "codegen": "playwright codegen",
+    "install:browsers": "playwright install",
+    "install:cli": "npm install -g @playwright/cli@latest && playwright-cli install --skills",
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "testing",
+    "signoz"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0-alpha-2025-10-09",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "dotenv": "^16.0.0",
+    "eslint": "^9.26.0",
+    "eslint-plugin-playwright": "^0.16.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  }
+}

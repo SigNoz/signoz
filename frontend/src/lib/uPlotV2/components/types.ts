@@ -62,6 +62,7 @@ export interface TooltipRenderArgs {
 
 export interface BaseTooltipProps {
 	showTooltipHeader?: boolean;
+	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];

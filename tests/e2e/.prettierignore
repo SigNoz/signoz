@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Generated test outputs
+artifacts/
+playwright/.cache/
+
+# Build outputs
+dist/
+
+# Environment files
+.env
+.env.local
+.env*.local
+
+# Lock files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Logs
+*.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+
+# Other
+.DS_Store
