@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree
 
@@ -15,9 +16,7 @@ from fixtures.keycloak import IDP_ROOT_PASSWORD, IDP_ROOT_USERNAME
 
 
 @pytest.fixture(name="create_saml_client", scope="function")
-def create_saml_client(
-    idp: types.TestContainerIDP, signoz: types.SigNoz
-) -> Callable[[str, str], None]:
+def create_saml_client(idp: types.TestContainerIDP, signoz: types.SigNoz) -> Callable[[str, str], None]:
     def _create_saml_client(client_id: str, callback_path: str) -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
@@ -34,9 +33,7 @@ def create_saml_client(
                 "description": f"client for {client_id}",
                 "rootUrl": "",
                 "adminUrl": "",
-                "baseUrl": urljoin(
-                    f"{signoz.self.host_configs['8080'].base()}", callback_path
-                ),
+                "baseUrl": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path),
                 "surrogateAuthRequired": False,
                 "enabled": True,
                 "alwaysDisplayInConsole": False,
@@ -71,9 +68,7 @@ def create_saml_client(
                     "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
                     "saml.onetimeuse.condition": "false",
                     "saml.server.signature.keyinfo.xmlSigKeyInfoKeyNameTransformer": "NONE",
-                    "saml_assertion_consumer_url_post": urljoin(
-                        f"{signoz.self.host_configs['8080'].base()}", callback_path
-                    ),
+                    "saml_assertion_consumer_url_post": urljoin(f"{signoz.self.host_configs['8080'].base()}", callback_path),
                 },
                 "authenticationFlowBindingOverrides": {},
                 "fullScopeAllowed": True,
@@ -164,10 +159,8 @@ def create_saml_client(
 @pytest.fixture(name="update_saml_client_attributes", scope="function")
 def update_saml_client_attributes(
     idp: types.TestContainerIDP,
-) -> Callable[[str, Dict[str, Any]], None]:
-    def _update_saml_client_attributes(
-        client_id: str, attributes: Dict[str, Any]
-    ) -> None:
+) -> Callable[[str, dict[str, Any]], None]:
+    def _update_saml_client_attributes(client_id: str, attributes: dict[str, Any]) -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
             username=IDP_ROOT_USERNAME,
@@ -189,9 +182,7 @@ def update_saml_client_attributes(
 
 
 @pytest.fixture(name="create_oidc_client", scope="function")
-def create_oidc_client(
-    idp: types.TestContainerIDP, signoz: types.SigNoz
-) -> Callable[[str, str], None]:
+def create_oidc_client(idp: types.TestContainerIDP, signoz: types.SigNoz) -> Callable[[str, str], None]:
     def _create_oidc_client(client_id: str, callback_path: str) -> None:
         client = KeycloakAdmin(
             server_url=idp.container.host_configs["6060"].base(),
@@ -215,9 +206,7 @@ def create_oidc_client(
                 "enabled": True,
                 "alwaysDisplayInConsole": False,
                 "clientAuthenticatorType": "client-secret",
-                "redirectUris": [
-                    f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"
-                ],
+                "redirectUris": [f"{urljoin(signoz.self.host_configs['8080'].base(), callback_path)}"],
                 "webOrigins": ["/*"],
                 "notBefore": 0,
                 "bearerOnly": False,
@@ -287,9 +276,7 @@ def get_saml_settings(idp: types.TestContainerIDP) -> dict:
         return {
             "entityID": entity_id,
             "certificate": certificate_el.text if certificate_el is not None else None,
-            "singleSignOnServiceLocation": (
-                sso_post_el.get("Location") if sso_post_el is not None else None
-            ),
+            "singleSignOnServiceLocation": (sso_post_el.get("Location") if sso_post_el is not None else None),
         }
 
     return _get_saml_settings
@@ -422,7 +409,7 @@ def create_group_idp(idp: types.TestContainerIDP) -> Callable[[str], str]:
 def create_user_idp_with_groups(
     idp: types.TestContainerIDP,
     create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
-) -> Callable[[str, str, bool, List[str]], None]:
+) -> Callable[[str, str, bool, list[str]], None]:
     """Creates a user in Keycloak IDP with specified groups."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
@@ -433,9 +420,7 @@ def create_user_idp_with_groups(
 
     created_users = []
 
-    def _create_user_idp_with_groups(
-        email: str, password: str, verified: bool, groups: List[str]
-    ) -> None:
+    def _create_user_idp_with_groups(email: str, password: str, verified: bool, groups: list[str]) -> None:
         # Create groups first
         group_ids = []
         for group_name in groups:
@@ -493,7 +478,7 @@ def add_user_to_group(
 def create_user_idp_with_role(
     idp: types.TestContainerIDP,
     create_group_idp: Callable[[str], str],  # pylint: disable=redefined-outer-name
-) -> Callable[[str, str, bool, str, List[str]], None]:
+) -> Callable[[str, str, bool, str, list[str]], None]:
     """Creates a user in Keycloak IDP with a custom role attribute and optional groups."""
     client = KeycloakAdmin(
         server_url=idp.container.host_configs["6060"].base(),
@@ -504,9 +489,7 @@ def create_user_idp_with_role(
 
     created_users = []
 
-    def _create_user_idp_with_role(
-        email: str, password: str, verified: bool, role: str, groups: List[str]
-    ) -> None:
+    def _create_user_idp_with_role(email: str, password: str, verified: bool, role: str, groups: list[str]) -> None:
         # Create groups first
         group_ids = []
         for group_name in groups:
@@ -559,9 +542,7 @@ def setup_user_profile(idp: types.TestContainerIDP) -> Callable[[], None]:
 
         # Check if signoz_role attribute already exists
         attributes = profile.get("attributes", [])
-        signoz_role_exists = any(
-            attr.get("name") == "signoz_role" for attr in attributes
-        )
+        signoz_role_exists = any(attr.get("name") == "signoz_role" for attr in attributes)
 
         if not signoz_role_exists:
             # Add signoz_role attribute to user profile
@@ -645,11 +626,7 @@ def get_oidc_domain(signoz: types.SigNoz, admin_token: str) -> dict:
         timeout=2,
     )
     return next(
-        (
-            domain
-            for domain in response.json()["data"]
-            if domain["name"] == "oidc.integration.test"
-        ),
+        (domain for domain in response.json()["data"] if domain["name"] == "oidc.integration.test"),
         None,
     )
 
@@ -680,9 +657,7 @@ def perform_oidc_login(
     session_context = get_session_context(email)
     url = session_context["orgs"][0]["authNSupport"]["callback"][0]["url"]
     parsed_url = urlparse(url)
-    actual_url = (
-        f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
-    )
+    actual_url = f"{idp.container.host_configs['6060'].get(parsed_url.path)}?{parsed_url.query}"
     driver.get(actual_url)
     idp_login(email, password)
 
@@ -694,11 +669,7 @@ def get_saml_domain(signoz: types.SigNoz, admin_token: str) -> dict:
         timeout=2,
     )
     return next(
-        (
-            domain
-            for domain in response.json()["data"]
-            if domain["name"] == "saml.integration.test"
-        ),
+        (domain for domain in response.json()["data"] if domain["name"] == "saml.integration.test"),
         None,
     )
 

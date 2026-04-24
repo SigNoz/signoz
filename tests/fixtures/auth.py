@@ -1,6 +1,6 @@
 import time
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, Dict, List, Tuple
 
 import pytest
 import requests
@@ -57,9 +57,7 @@ def _login(signoz: types.SigNoz, email: str, password: str) -> str:
 
 
 @pytest.fixture(name="create_user_admin", scope="package")
-def create_user_admin(
-    signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config
-) -> types.Operation:
+def create_user_admin(signoz: types.SigNoz, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.Operation:
     def create() -> None:
         response = requests.post(
             signoz.self.host_configs["8080"].get("/api/v1/register"),
@@ -143,7 +141,7 @@ def get_token(signoz: types.SigNoz) -> Callable[[str, str], str]:
 
 
 @pytest.fixture(name="get_tokens", scope="function")
-def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], Tuple[str, str]]:
+def get_tokens(signoz: types.SigNoz) -> Callable[[str, str], tuple[str, str]]:
     def _get_tokens(email: str, password: str) -> str:
         response = requests.get(
             signoz.self.host_configs["8080"].get("/api/v2/sessions/context"),
@@ -193,11 +191,7 @@ def apply_license(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/licenses/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -245,9 +239,7 @@ def apply_license(
         # redirects first-time admins to a questionnaire. Mark the preference
         # complete so specs can navigate directly to the feature under test.
         pref_resp = requests.put(
-            signoz.self.host_configs["8080"].get(
-                "/api/v1/org/preferences/org_onboarding"
-            ),
+            signoz.self.host_configs["8080"].get("/api/v1/org/preferences/org_onboarding"),
             json={"value": True},
             headers=auth_header,
             timeout=5,
@@ -276,7 +268,7 @@ def apply_license(
 # This is also idempotent in nature.
 def add_license(
     signoz: types.SigNoz,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],  # pylint: disable=redefined-outer-name
 ) -> None:
     make_http_mocks(
@@ -286,11 +278,7 @@ def add_license(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/licenses/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,
@@ -368,7 +356,7 @@ def create_active_user(
     return invited_user["id"]
 
 
-def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> Dict:
+def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> dict:
     """Find a user by email from the user list. Raises AssertionError if not found."""
     response = requests.get(
         signoz.self.host_configs["8080"].get(USERS_BASE),
@@ -381,7 +369,7 @@ def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> Dict:
     return user
 
 
-def find_user_with_roles_by_email(signoz: types.SigNoz, token: str, email: str) -> Dict:
+def find_user_with_roles_by_email(signoz: types.SigNoz, token: str, email: str) -> dict:
     """Find a user by email and return UserWithRoles (user fields + userRoles).
 
     Raises AssertionError if the user is not found.
@@ -396,7 +384,7 @@ def find_user_with_roles_by_email(signoz: types.SigNoz, token: str, email: str) 
     return response.json()["data"]
 
 
-def assert_user_has_role(data: Dict, role_name: str) -> None:
+def assert_user_has_role(data: dict, role_name: str) -> None:
     """Assert that a UserWithRoles response contains the expected managed role."""
     role_names = {ur["role"]["name"] for ur in data.get("userRoles", [])}
     assert role_name in role_names, f"Expected role '{role_name}' in {role_names}"
@@ -427,9 +415,7 @@ def change_user_role(
 
     # Remove old role
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{USERS_BASE}/{user_id}/roles/{old_role_entry['id']}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user_id}/roles/{old_role_entry['id']}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )

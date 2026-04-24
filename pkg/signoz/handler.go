@@ -40,6 +40,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -73,6 +75,7 @@ type Handlers struct {
 	RuleStateHistory        rulestatehistory.Handler
 	SpanMapperHandler       spanmapper.Handler
 	AlertmanagerHandler     alertmanager.Handler
+	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
 }
 
@@ -116,6 +119,7 @@ func NewHandlers(
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		SpanMapperHandler:       implspanmapper.NewHandler(nil, providerSettings), // todo(nitya): will update this in future PR
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
 	}
 }

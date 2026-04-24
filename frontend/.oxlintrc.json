@@ -286,6 +286,20 @@
     // Prevents useStore.getState() - export standalone actions instead
     "signoz/no-navigator-clipboard": "error",
     // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
+    "signoz/no-raw-absolute-path": "error",
+    // Prevents window.open(path), window.location.origin + path, window.location.href = path
+    "no-restricted-globals": [
+      "error",
+      {
+        "name": "localStorage",
+        "message": "Use scoped wrappers from api/browser/localstorage/ instead (ensures keys are prefixed when served under a URL base path)."
+      },
+      {
+        "name": "sessionStorage",
+        "message": "Use scoped wrappers from api/browser/sessionstorage/ instead (ensures keys are prefixed when served under a URL base path)."
+      }
+    ],
+    // Prevents direct localStorage/sessionStorage access — use scoped wrappers
     "no-restricted-imports": [
       "error",
       {
@@ -597,8 +611,11 @@
       "rules": {
         "import/first": "off",
         // Should ignore due to mocks
-        "signoz/no-navigator-clipboard": "off"
-        // Tests can use navigator.clipboard directly
+        "signoz/no-navigator-clipboard": "off",
+        // Tests can use navigator.clipboard directly,
+        "signoz/no-raw-absolute-path":"off",
+        "no-restricted-globals": "off"
+        // Tests need raw localStorage/sessionStorage to seed DOM state for isolation
       }
     },
     {

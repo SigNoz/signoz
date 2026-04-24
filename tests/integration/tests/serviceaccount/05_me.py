@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -23,9 +23,7 @@ def test_get_my_service_account(
 ):
     """Service account with API key calls GET /me, gets own details."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id, api_key = create_service_account_with_key(
-        signoz, token, "sa-me-get"
-    )
+    service_account_id, api_key = create_service_account_with_key(signoz, token, "sa-me-get")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(ME_ENDPOINT),
@@ -54,9 +52,7 @@ def test_get_me_requires_sa_identity(
     )
 
     # user JWT has no service account ID in claims, should fail
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected error for user JWT on service account /me, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected error for user JWT on service account /me, got {response.status_code}: {response.text}"
 
 
 def test_update_my_service_account(
@@ -66,9 +62,7 @@ def test_update_my_service_account(
 ):
     """Service account calls PUT /me with new name, verify update."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id, api_key = create_service_account_with_key(
-        signoz, token, "sa-me-update"
-    )
+    service_account_id, api_key = create_service_account_with_key(signoz, token, "sa-me-update")
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(ME_ENDPOINT),

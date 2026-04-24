@@ -1,21 +1,23 @@
 .headerContainer {
-	padding: 1rem 1rem 0 1rem;
 	display: flex;
 	flex-direction: column;
-	gap: var(--spacing-4);
 
-	&:last-child {
-		padding-bottom: var(--spacing-4);
-	}
 }
 
+
 .headerRow {
+	padding: var(--spacing-8) var(--spacing-8) 0 var(--spacing-8);
 	font-size: var(--font-size-sm);
 	font-weight: 500;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-2);
+}
+
+.pinnedItem {
+	padding: var(--spacing-4) var(--spacing-4) 0 var(--spacing-4);
 }
 
 .status {

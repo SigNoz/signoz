@@ -123,6 +123,25 @@ func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status
 	return storable, nil
 }
 
+func (store *store) GetServiceAccountsByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
+	serviceAccounts := make([]*serviceaccounttypes.ServiceAccount, 0)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&serviceAccounts).
+		Join(`JOIN service_account_role ON service_account_role.service_account_id = service_account.id`).
+		Where(`service_account.org_id = ?`, orgID).
+		Where("service_account_role.role_id = ?", roleID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccounts, nil
+}
+
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	storable := new(serviceaccounttypes.ServiceAccount)
 

@@ -32,9 +32,7 @@ def test_root_user_created(signoz: types.SigNoz) -> None:
         )
         time.sleep(2)
     else:
-        raise AssertionError(
-            "setupCompleted did not become true within the expected time"
-        )
+        raise AssertionError("setupCompleted did not become true within the expected time")
 
     # Phase 2: wait for root user to be fully resolved
     for attempt in range(15):

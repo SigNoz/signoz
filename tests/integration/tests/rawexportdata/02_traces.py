@@ -1,9 +1,9 @@
 import csv
 import io
 import json
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 
@@ -45,7 +45,7 @@ def test_export_traces_csv(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -63,7 +63,7 @@ def test_export_traces_csv(
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -188,7 +188,7 @@ def test_export_traces_jsonl(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -205,7 +205,7 @@ def test_export_traces_jsonl(
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -305,7 +305,7 @@ def test_export_traces_with_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -320,7 +320,7 @@ def test_export_traces_with_filter(
     service_b_trace_id = TraceIdGenerator.trace_id()
     service_b_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -404,7 +404,7 @@ def test_export_traces_with_limit(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -414,7 +414,7 @@ def test_export_traces_with_limit(
     1. Export traces with limit applied
     2. Verify only limited number of traces are returned
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     traces = []
     for i in range(5):
@@ -482,7 +482,7 @@ def test_export_traces_multiple_queries_rejected(
     1. POST with multiple builder queries but no trace operator is rejected
     2. Verify 400 error is returned
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
@@ -526,7 +526,7 @@ def test_export_traces_with_composite_query_trace_operator(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -541,7 +541,7 @@ def test_export_traces_with_composite_query_trace_operator(
     child_span_id_1 = TraceIdGenerator.span_id()
     child_span_id_2 = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -668,7 +668,7 @@ def test_export_traces_with_select_fields(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -681,7 +681,7 @@ def test_export_traces_with_select_fields(
     trace_id = TraceIdGenerator.trace_id()
     span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [

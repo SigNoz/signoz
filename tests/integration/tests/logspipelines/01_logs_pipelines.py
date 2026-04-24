@@ -5,8 +5,8 @@ It verifies the correct behavior of log pipeline CRUD operations, versioning, pr
 and pipeline processing.
 """
 
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -98,9 +98,7 @@ def test_create_logs_pipeline_success(
 
     # Verify version information
     assert "version" in response_data["data"]
-    assert (
-        response_data["data"]["version"] >= 1
-    )  # Version might be higher if other tests ran first
+    assert response_data["data"]["version"] >= 1  # Version might be higher if other tests ran first
 
 
 def test_list_logs_pipelines_success(
@@ -666,9 +664,5 @@ def test_delete_all_pipelines_success(
     assert "data" in list_data
     assert "pipelines" in list_data["data"]
     # Note: Integration pipelines might still be present, so we check user-created ones
-    user_pipelines = [
-        p
-        for p in list_data["data"]["pipelines"]
-        if p.get("name") == "Pipeline to Delete"
-    ]
+    user_pipelines = [p for p in list_data["data"]["pipelines"] if p.get("name") == "Pipeline to Delete"]
     assert len(user_pipelines) == 0

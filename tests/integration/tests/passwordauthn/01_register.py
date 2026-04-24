@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -55,9 +55,7 @@ def test_register_with_invalid_input(signoz: types.SigNoz) -> None:
 
 
 def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
-    )
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2)
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is False
@@ -75,9 +73,7 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
     )
     assert response.status_code == HTTPStatus.OK
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
-    )
+    response = requests.get(signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2)
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["setupCompleted"] is True
@@ -126,9 +122,7 @@ def test_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> N
 
     # Verify that the editor user status has been updated to ACTIVE
     admin_token_fresh = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    found_user = find_user_with_roles_by_email(
-        signoz, admin_token_fresh, USER_EDITOR_EMAIL
-    )
+    found_user = find_user_with_roles_by_email(signoz, admin_token_fresh, USER_EDITOR_EMAIL)
 
     assert_user_has_role(found_user, "signoz-editor")
     assert found_user["displayName"] == USER_EDITOR_NAME
@@ -136,9 +130,7 @@ def test_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> N
     assert found_user["status"] == "active"
 
 
-def test_revoke_invite(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_revoke_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Invite the viewer user
@@ -169,9 +161,7 @@ def test_revoke_invite(
     assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
 
 
-def test_provision_user(
-    signoz: types.SigNoz, get_token: Callable[[str, str], str]
-) -> None:
+def test_provision_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
     """
     Simulates the upstream zeus provisioning flow:
     1. Invite a user as ADMIN (register already happened via test_register)
@@ -213,9 +203,7 @@ def test_provision_user(
 
     # Step 3: Get reset password token (mirrors zeus GET /api/v1/getResetPasswordToken/{id})
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{user_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v1/getResetPasswordToken/{user_id}"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
@@ -236,9 +224,7 @@ def test_provision_user(
     user_token = get_token(provisioned_email, provisioned_password)
     assert user_token is not None
 
-    provisioned_user = find_user_with_roles_by_email(
-        signoz, admin_token, provisioned_email
-    )
+    provisioned_user = find_user_with_roles_by_email(signoz, admin_token, provisioned_email)
     assert provisioned_user["status"] == "active"
     assert provisioned_user["displayName"] == provisioned_name
     assert_user_has_role(provisioned_user, "signoz-admin")

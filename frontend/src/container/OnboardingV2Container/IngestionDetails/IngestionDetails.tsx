@@ -8,6 +8,7 @@ import { DOCS_BASE_URL } from 'constants/app';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
+import { withBasePath } from 'utils/basePath';
 
 import './IngestionDetails.styles.scss';
 
@@ -215,7 +216,7 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 							</a>
 							. To create a new one,{' '}
 							<a
-								href="/settings/ingestion-settings"
+								href={withBasePath('/settings/ingestion-settings')}
 								target="_blank"
 								className="learn-more"
 								rel="noreferrer"

@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 from wiremock.client import (
@@ -28,7 +28,7 @@ GATEWAY_APIS_EDITOR_PASSWORD = "password123Z$"
 def test_apply_license(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     get_token: Callable[[str, str], str],
 ) -> None:
     """Activate a license so that all subsequent gateway calls succeed."""
@@ -109,9 +109,7 @@ def test_create_ingestion_key(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.CREATED
-    ), f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.CREATED, f"Expected 201, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert data["id"] == TEST_KEY_ID
@@ -178,9 +176,7 @@ def test_get_ingestion_keys(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert len(data["keys"]) == 1
@@ -225,16 +221,12 @@ def test_get_ingestion_keys_custom_pagination(
     )
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v2/gateway/ingestion_keys?page=2&per_page=5"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_keys?page=2&per_page=5"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert len(data["keys"]) == 0
@@ -291,16 +283,12 @@ def test_search_ingestion_keys(
     )
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v2/gateway/ingestion_keys/search?name=my-test"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_keys/search?name=my-test"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert len(data["keys"]) == 1
@@ -343,16 +331,12 @@ def test_search_ingestion_keys_empty(
     )
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v2/gateway/ingestion_keys/search?name=nonexistent"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_keys/search?name=nonexistent"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     assert len(data["keys"]) == 0
@@ -386,9 +370,7 @@ def test_update_ingestion_key(
     )
 
     response = requests.patch(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"),
         json={
             "name": "renamed-key",
             "tags": ["env:prod"],
@@ -398,9 +380,7 @@ def test_update_ingestion_key(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     # Verify the body forwarded to the gateway
     body = get_latest_gateway_request_body(signoz, "PATCH", gateway_url)
@@ -436,16 +416,12 @@ def test_delete_ingestion_key(
     )
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"
-        ),
+        signoz.self.host_configs["8080"].get(f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"),
         headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NO_CONTENT
-    ), f"Expected 204, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Expected 204, got {response.status_code}: {response.text}"
 
     # Verify at least one DELETE reached the gateway
     matched = get_gateway_requests(signoz, "DELETE", gateway_url)

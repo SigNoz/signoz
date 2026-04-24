@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -23,14 +23,10 @@ def test_get_service_account_roles(
 ):
     """GET /{id}/roles returns the assigned roles list."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-get-roles", role="signoz-viewer"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-get-roles", role="signoz-viewer")
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -52,16 +48,12 @@ def test_assign_role_to_service_account(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # create service account with viewer role
-    service_account_id = create_service_account(
-        signoz, token, "sa-assign-role", role="signoz-viewer"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-assign-role", role="signoz-viewer")
 
     # assign editor role (replaces viewer)
     editor_role_id = find_role_by_name(signoz, token, "signoz-editor")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         json={"id": editor_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -70,9 +62,7 @@ def test_assign_role_to_service_account(
 
     # verify only editor role is present (viewer was replaced)
     roles_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -90,17 +80,13 @@ def test_assign_role_idempotent(
 ):
     """POST same role twice succeeds (replace with same role is idempotent)."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-role-idempotent", role="signoz-viewer"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-role-idempotent", role="signoz-viewer")
 
     viewer_role_id = find_role_by_name(signoz, token, "signoz-viewer")
 
     # assign the same role again
     resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         json={"id": viewer_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -109,9 +95,7 @@ def test_assign_role_idempotent(
 
     # verify only one instance of the role
     roles_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -128,9 +112,7 @@ def test_assign_role_replaces_access(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # create SA with viewer role and an API key
-    service_account_id, api_key = create_service_account_with_key(
-        signoz, token, "sa-role-replace-access", role="signoz-viewer"
-    )
+    service_account_id, api_key = create_service_account_with_key(signoz, token, "sa-role-replace-access", role="signoz-viewer")
 
     # viewer should get 403 on admin-only endpoint
     resp = requests.get(
@@ -138,16 +120,12 @@ def test_assign_role_replaces_access(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert (
-        resp.status_code == HTTPStatus.FORBIDDEN
-    ), f"Expected 403 for viewer on admin endpoint, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"Expected 403 for viewer on admin endpoint, got {resp.status_code}: {resp.text}"
 
     # assign admin role (replaces viewer)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     assign_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         json={"id": admin_role_id},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -160,15 +138,11 @@ def test_assign_role_replaces_access(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert (
-        resp.status_code == HTTPStatus.OK
-    ), f"Expected 200 for admin on admin endpoint, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == HTTPStatus.OK, f"Expected 200 for admin on admin endpoint, got {resp.status_code}: {resp.text}"
 
     # verify only admin role is present
     roles_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -186,17 +160,13 @@ def test_remove_role_from_service_account(
 ):
     """DELETE /{id}/roles/{rid} revokes a role."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id = create_service_account(
-        signoz, token, "sa-remove-role", role="signoz-editor"
-    )
+    service_account_id = create_service_account(signoz, token, "sa-remove-role", role="signoz-editor")
 
     editor_role_id = find_role_by_name(signoz, token, "signoz-editor")
 
     # remove the role
     resp = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{editor_role_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{editor_role_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -204,9 +174,7 @@ def test_remove_role_from_service_account(
 
     # verify role is gone
     roles_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -222,9 +190,7 @@ def test_remove_role_verify_access_lost(
 ):
     """After role removal, service account key gets 403 on endpoints requiring that role."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    service_account_id, api_key = create_service_account_with_key(
-        signoz, token, "sa-role-access-lost", role="signoz-admin"
-    )
+    service_account_id, api_key = create_service_account_with_key(signoz, token, "sa-role-access-lost", role="signoz-admin")
 
     # verify admin access works
     resp = requests.get(
@@ -237,9 +203,7 @@ def test_remove_role_verify_access_lost(
     # remove admin role
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
     del_resp = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{admin_role_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/roles/{admin_role_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -251,6 +215,4 @@ def test_remove_role_verify_access_lost(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert (
-        resp.status_code == HTTPStatus.FORBIDDEN
-    ), f"Expected 403 after role removal, got {resp.status_code}: {resp.text}"
+    assert resp.status_code == HTTPStatus.FORBIDDEN, f"Expected 403 after role removal, got {resp.status_code}: {resp.text}"

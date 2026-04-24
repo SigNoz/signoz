@@ -34,6 +34,7 @@ import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { openInNewTab } from 'utils/navigation';
 
 import { ActionItemProps } from './ActionItem';
 import FieldRenderer from './FieldRenderer';
@@ -191,7 +192,7 @@ function TableView({
 
 			if (event.ctrlKey || event.metaKey) {
 				// open the trace in new tab
-				window.open(route, '_blank');
+				openInNewTab(route);
 			} else {
 				history.push(route);
 			}

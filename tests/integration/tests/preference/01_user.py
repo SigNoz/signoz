@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -36,9 +36,7 @@ def test_get_set_user_preference_by_name(
 
     # preference does not exist
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/somenonexistentpreference"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/user/preferences/somenonexistentpreference"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -48,9 +46,7 @@ def test_get_set_user_preference_by_name(
 
     # get preference by name
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/welcome_checklist_do_later"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/user/preferences/welcome_checklist_do_later"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -62,9 +58,7 @@ def test_get_set_user_preference_by_name(
 
     # play with welcome_checklist_do_later preference
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/welcome_checklist_do_later"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/user/preferences/welcome_checklist_do_later"),
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"value": True},
         timeout=2,
@@ -74,9 +68,7 @@ def test_get_set_user_preference_by_name(
 
     # get preference by name
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/user/preferences/welcome_checklist_do_later"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/user/preferences/welcome_checklist_do_later"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )

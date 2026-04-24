@@ -31,6 +31,7 @@ import {
 	UPDATE_SPANS_AGGREGATE_PAGE_SIZE,
 } from 'types/actions/trace';
 import { TraceReducer } from 'types/reducer/trace';
+import { openInNewTab } from 'utils/navigation';
 import { v4 } from 'uuid';
 
 dayjs.extend(duration);
@@ -214,7 +215,7 @@ function TraceTable(): JSX.Element {
 					event.preventDefault();
 					event.stopPropagation();
 					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(record), '_blank');
+						openInNewTab(getLink(record));
 					} else {
 						history.push(getLink(record));
 					}

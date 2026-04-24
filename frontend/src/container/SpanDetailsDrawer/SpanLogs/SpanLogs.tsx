@@ -28,6 +28,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import { openInNewTab } from 'utils/navigation';
 import { v4 as uuid } from 'uuid';
 
 import noDataUrl from '@/assets/Icons/no-data.svg';
@@ -143,7 +144,7 @@ function SpanLogs({
 
 			const url = `${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`;
 
-			window.open(url, '_blank');
+			openInNewTab(url);
 		},
 		[
 			isLogSpanRelated,

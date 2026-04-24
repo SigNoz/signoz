@@ -1,7 +1,7 @@
 """Fixtures for cloud integration tests."""
 
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import pytest
 import requests
@@ -52,9 +52,7 @@ def deprecated_create_cloud_integration_account(
             timeout=10,
         )
 
-        assert (
-            response.status_code == HTTPStatus.OK
-        ), f"Failed to create test account: {response.status_code}"
+        assert response.status_code == HTTPStatus.OK, f"Failed to create test account: {response.status_code}"
 
         data = response.json().get("data", response.json())
         created_accounts.append((data.get("account_id"), cloud_provider))
@@ -127,9 +125,7 @@ def create_cloud_integration_account(
             timeout=10,
         )
 
-        assert (
-            response.status_code == HTTPStatus.CREATED
-        ), f"Failed to create test account: {response.status_code}: {response.text}"
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create test account: {response.status_code}: {response.text}"
 
         data = response.json()["data"]
         created_accounts.append((data["id"], cloud_provider))
@@ -143,9 +139,7 @@ def create_cloud_integration_account(
         try:
             admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
             for account_id, cloud_provider in created_accounts:
-                delete_endpoint = (
-                    f"/api/v1/cloud_integrations/{cloud_provider}/accounts/{account_id}"
-                )
+                delete_endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts/{account_id}"
                 r = requests.delete(
                     signoz.self.host_configs["8080"].get(delete_endpoint),
                     headers={"Authorization": f"Bearer {admin_token}"},
@@ -206,11 +200,7 @@ def setup_create_account_mocks(
                 request=MappingRequest(
                     method=HttpMethods.GET,
                     url="/v2/deployments/me",
-                    headers={
-                        "X-Signoz-Cloud-Api-Key": {
-                            WireMockMatchers.EQUAL_TO: "secret-key"
-                        }
-                    },
+                    headers={"X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"}},
                 ),
                 response=MappingResponse(
                     status=200,

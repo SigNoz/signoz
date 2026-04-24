@@ -16,8 +16,10 @@
     "codegen": "playwright codegen",
     "install:browsers": "playwright install",
     "install:cli": "npm install -g @playwright/cli@latest && playwright-cli install --skills",
-    "lint": "eslint . --ext .ts,.js",
-    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -31,11 +33,11 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0-alpha-2025-10-09",
     "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
     "dotenv": "^16.0.0",
-    "eslint": "^9.26.0",
-    "eslint-plugin-playwright": "^0.16.0",
+    "eslint-plugin-playwright": "^2.10.2",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.59.0",
+    "oxlint-tsgolint": "^0.20.0",
     "typescript": "^5.0.0"
   },
   "engines": {

@@ -1,6 +1,6 @@
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -28,17 +28,13 @@ def test_list_connected_accounts_empty(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
     assert "accounts" in data, "Response should contain 'accounts' field"
     assert isinstance(data["accounts"], list), "Accounts should be a list"
-    assert (
-        len(data["accounts"]) == 0
-    ), "Accounts list should be empty when no accounts are connected"
+    assert len(data["accounts"]) == 0, "Accounts list should be empty when no accounts are connected"
 
 
 def test_list_connected_accounts_with_account(
@@ -52,19 +48,13 @@ def test_list_connected_accounts_with_account(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # List accounts
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -74,9 +64,7 @@ def test_list_connected_accounts_with_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -101,24 +89,18 @@ def test_get_account_status(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     # Create a test account (no check-in needed for status check)
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Get account status
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/status"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/status"
     response = requests.get(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -138,18 +120,14 @@ def test_get_account_status_not_found(
     cloud_provider = "aws"
     fake_account_id = "00000000-0000-0000-0000-000000000000"
 
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{fake_account_id}/status"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{fake_account_id}/status"
     response = requests.get(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404, got {response.status_code}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
 
 
 def test_update_account_config(
@@ -163,24 +141,16 @@ def test_update_account_config(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Update account configuration
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/config"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/config"
 
     updated_config = {"config": {"regions": ["us-east-1", "us-west-2", "eu-west-1"]}}
 
@@ -191,9 +161,7 @@ def test_update_account_config(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     response_data = response.json()
     data = response_data.get("data", response_data)
@@ -233,24 +201,16 @@ def test_disconnect_account(
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = deprecated_create_cloud_integration_account(
-        admin_token, cloud_provider
-    )
+    account_data = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = deprecated_simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
+    response = deprecated_simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Disconnect the account
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/disconnect"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/disconnect"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
@@ -258,9 +218,7 @@ def test_disconnect_account(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
     # Verify our specific account is no longer in the connected list
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -274,12 +232,8 @@ def test_disconnect_account(
     list_data = list_response_data.get("data", list_response_data)
 
     # Check that our specific account is not in the list
-    disconnected_account = next(
-        (a for a in list_data["accounts"] if a["id"] == account_id), None
-    )
-    assert (
-        disconnected_account is None
-    ), f"Account {account_id} should be removed from connected accounts"
+    disconnected_account = next((a for a in list_data["accounts"] if a["id"] == account_id), None)
+    assert disconnected_account is None, f"Account {account_id} should be removed from connected accounts"
 
 
 def test_disconnect_account_not_found(
@@ -301,9 +255,7 @@ def test_disconnect_account_not_found(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404, got {response.status_code}"
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
 
 
 def test_list_accounts_unsupported_provider(
@@ -324,6 +276,4 @@ def test_list_accounts_unsupported_provider(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"

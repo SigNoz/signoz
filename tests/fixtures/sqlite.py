@@ -1,5 +1,6 @@
 from collections import namedtuple
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import pytest
 from sqlalchemy import create_engine, sql
@@ -11,7 +12,7 @@ ConnectionTuple = namedtuple("ConnectionTuple", "connection config")
 
 @pytest.fixture(name="sqlite", scope="package")
 def sqlite(
-    tmpfs: Generator[types.LegacyPath, Any, None],
+    tmpfs: Generator[types.LegacyPath, Any],
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
 ) -> types.TestContainerSQL:
@@ -69,9 +70,7 @@ def sqlite(
         pytestconfig,
         "sqlite",
         lambda: types.TestContainerSQL(
-            container=types.TestContainerDocker(
-                id="", host_configs={}, container_configs={}
-            ),
+            container=types.TestContainerDocker(id="", host_configs={}, container_configs={}),
             conn=None,
             env={},
         ),

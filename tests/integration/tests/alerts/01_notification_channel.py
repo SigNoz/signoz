@@ -1,7 +1,7 @@
 import time
 import uuid
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
@@ -17,7 +17,7 @@ def test_webhook_notification_channel(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
     notification_channel: types.TestContainerDocker,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
 ) -> None:
     """
@@ -28,9 +28,7 @@ def test_webhook_notification_channel(
     # Prepare notification channel name and webhook endpoint
     notification_channel_name = f"notification-channel-{uuid.uuid4()}"
     webhook_endpoint_path = f"/alert/{notification_channel_name}"
-    webhook_endpoint = notification_channel.container_configs["8080"].get(
-        webhook_endpoint_path
-    )
+    webhook_endpoint = notification_channel.container_configs["8080"].get(webhook_endpoint_path)
 
     # register the mock endpoint in notification channel
     make_http_mocks(
@@ -81,10 +79,7 @@ def test_webhook_notification_channel(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.NO_CONTENT, (
-        f"Failed to create notification channel: {response.text}"
-        f"Status code: {response.status_code}"
-    )
+    assert response.status_code == HTTPStatus.NO_CONTENT, f"Failed to create notification channel: {response.text}Status code: {response.status_code}"
 
     # Verify that the alert was sent to the notification channel
     response = requests.post(
@@ -92,11 +87,6 @@ def test_webhook_notification_channel(
         json={"method": "POST", "url": webhook_endpoint_path},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.OK, (
-        f"Failed to get test notification count: {response.text}"
-        f"Status code: {response.status_code}"
-    )
+    assert response.status_code == HTTPStatus.OK, f"Failed to get test notification count: {response.text}Status code: {response.status_code}"
     # Verify that the test notification was sent to the notification channel
-    assert (
-        response.json()["count"] == 1
-    ), f"Expected 1 test notification, got {response.json()['count']}"
+    assert response.json()["count"] == 1, f"Expected 1 test notification, got {response.json()['count']}"
