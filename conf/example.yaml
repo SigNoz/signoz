@@ -11,6 +11,8 @@ global:
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
+  # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
+  # mcp_url: <unset>
 
 ##################### Version #####################
 version:
