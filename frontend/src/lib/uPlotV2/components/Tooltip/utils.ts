@@ -62,6 +62,7 @@ export function buildTooltipContent({
 	yAxisUnit,
 	decimalPrecision,
 	isStackedBarChart,
+	syncedSeriesIndexes,
 }: {
 	data: AlignedData;
 	series: Series[];
@@ -71,12 +72,18 @@ export function buildTooltipContent({
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
 	isStackedBarChart?: boolean;
+	syncedSeriesIndexes?: number[] | null;
 }): TooltipContentItem[] {
 	const items: TooltipContentItem[] = [];
+	const allowedIndexes =
+		syncedSeriesIndexes != null ? new Set(syncedSeriesIndexes) : null;
 
 	for (let seriesIndex = 1; seriesIndex < series.length; seriesIndex += 1) {
 		const seriesItem = series[seriesIndex];
 		if (!seriesItem?.show) {
+			continue;
+		}
+		if (allowedIndexes != null && !allowedIndexes.has(seriesIndex)) {
 			continue;
 		}
 

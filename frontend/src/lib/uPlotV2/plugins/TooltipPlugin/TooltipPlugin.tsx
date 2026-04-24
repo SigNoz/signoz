@@ -140,7 +140,7 @@ export default function TooltipPlugin({
 		function updateCursorLock(): void {
 			const plot = getPlot(controller);
 			if (plot) {
-				// @ts-ignore uPlot cursor lock is not working as expected
+				// @ts-expect-error uPlot cursor lock is not working as expected
 				plot.cursor._lock = controller.pinned;
 			}
 		}
@@ -187,6 +187,16 @@ export default function TooltipPlugin({
 			if (!controller.hoverActive || !plot) {
 				return null;
 			}
+			// In Tooltip sync mode, suppress the receiver tooltip entirely when
+			// no receiver series match the source panel's focused series.
+			if (
+				syncTooltipWithDashboard &&
+				controller.cursorDrivenBySync &&
+				Array.isArray(controller.syncedSeriesIndexes) &&
+				controller.syncedSeriesIndexes.length === 0
+			) {
+				return null;
+			}
 			return renderRef.current({
 				uPlotInstance: plot,
 				dataIndexes: controller.seriesIndexes,
@@ -194,6 +204,7 @@ export default function TooltipPlugin({
 				isPinned: controller.pinned,
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
+				syncedSeriesIndexes: controller.syncedSeriesIndexes,
 			});
 		}
 
@@ -478,7 +489,7 @@ export default function TooltipPlugin({
 		isHovering,
 		contents,
 	]);
-	const isTooltipVisible = isHovering || tooltipBody != null;
+	const isTooltipVisible = tooltipBody != null;
 
 	if (!hasPlot) {
 		return null;

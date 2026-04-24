@@ -65,6 +65,12 @@ function applySourceSync({
 	syncCursorRegistry.setActiveSeriesMetric(syncKey, focusedSeries?.metric ?? null);
 }
 
+/**
+ * Returns:
+ *   null      – no groupBy filtering configured or cursor off-chart (no-op for tooltip)
+ *   []        – groupBy configured but no receiver series match the source (hide synced tooltip)
+ *   number[]  – 1-based indexes of matching receiver series (show only these)
+ */
 function applyReceiverSync({
 	uPlotInstance,
 	yCrosshairEl,
@@ -79,23 +85,23 @@ function applyReceiverSync({
 	syncMetadata: TooltipSyncMetadata | undefined;
 	sourceMetadata: TooltipSyncMetadata | undefined;
 	commonKeys: string[];
-}): void {
+}): number[] | null {
 	yCrosshairEl.style.display =
 		sourceMetadata?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
 
 	if (commonKeys.length === 0) {
-		return;
+		return null;
 	}
 
 	if ((uPlotInstance.cursor.left ?? -1) < 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return;
+		return null;
 	}
 
 	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
 	if (sourceSeriesMetric == null) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return;
+		return [];
 	}
 
 	const matchingIdxs = findMatchingSeriesIndexes(
@@ -106,7 +112,7 @@ function applyReceiverSync({
 
 	if (matchingIdxs.length === 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return;
+		return [];
 	}
 
 	uPlotInstance.batch(() => {
@@ -114,6 +120,8 @@ function applyReceiverSync({
 			uPlotInstance.setSeries(idx, { focus: true });
 		}
 	});
+
+	return matchingIdxs;
 }
 
 export function createSyncDisplayHook(
@@ -136,6 +144,7 @@ export function createSyncDisplayHook(
 		}
 
 		if (u.cursor.event != null) {
+			controller.syncedSeriesIndexes = null;
 			applySourceSync({
 				uPlotInstance: u,
 				syncKey,
@@ -158,7 +167,7 @@ export function createSyncDisplayHook(
 			);
 		}
 
-		applyReceiverSync({
+		controller.syncedSeriesIndexes = applyReceiverSync({
 			uPlotInstance: u,
 			yCrosshairEl,
 			syncKey,
