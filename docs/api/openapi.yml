@@ -2372,6 +2372,10 @@ components:
         mcp_url:
           nullable: true
           type: string
+      required:
+      - external_url
+      - ingestion_url
+      - mcp_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
