@@ -1,32 +1,37 @@
 package cloudintegrationtypes
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
+	"text/template"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
-	AgentArmTemplateStorePath = valuer.NewString("https://signoz-integrations.s3.us-east-1.amazonaws.com/azure-arm-template-%s.json")
-	AgentDeploymentStackName  = valuer.NewString("signoz-integration")
+	AgentArmTemplateStorePath = "https://signoz-integrations.s3.us-east-1.amazonaws.com/azure-arm-template-%s.json"
+	AgentDeploymentStackName  = "signoz-integration"
 
 	// Default values for fixed ARM template parameters.
-	armDefaultRgName           = valuer.NewString("signoz-integration-rg")
-	armDefaultContainerEnvName = valuer.NewString("signoz-integration-agent-env")
-	armDefaultDeploymentEnv    = valuer.NewString("production")
+	armDefaultRgName           = "signoz-integration-rg"
+	armDefaultContainerEnvName = "signoz-integration-agent-env"
+	armDefaultDeploymentEnv    = "production"
 
 	// ARM template parameter key names used in both CLI and PowerShell deployment commands.
-	armParamLocation           = valuer.NewString("location")
-	armParamSignozAPIKey       = valuer.NewString("signozApiKey")
-	armParamSignozAPIUrl       = valuer.NewString("signozApiUrl")
-	armParamSignozIngestionURL = valuer.NewString("signozIngestionUrl")
-	armParamSignozIngestionKey = valuer.NewString("signozIngestionKey")
-	armParamAccountID          = valuer.NewString("signozIntegrationAccountId")
-	armParamAgentVersion       = valuer.NewString("signozIntegrationAgentVersion")
-	armParamRgName             = valuer.NewString("rgName")
-	armParamContainerEnvName   = valuer.NewString("containerEnvName")
-	armParamDeploymentEnv      = valuer.NewString("deploymentEnv")
+	armParamLocation           = "location"
+	armParamSignozAPIKey       = "signozApiKey"
+	armParamSignozAPIUrl       = "signozApiUrl"
+	armParamSignozIngestionURL = "signozIngestionUrl"
+	armParamSignozIngestionKey = "signozIngestionKey"
+	armParamAccountID          = "signozIntegrationAccountId"
+	armParamAgentVersion       = "signozIntegrationAgentVersion"
+	armParamRgName             = "rgName"
+	armParamContainerEnvName   = "containerEnvName"
+	armParamDeploymentEnv      = "deploymentEnv"
+
+	// command templates.
+	azureCLITemplate        = template.Must(template.New("azureCLI").Parse(azureCLITemplateStr()))
+	azurePowerShellTemplate = template.Must(template.New("azurePS").Parse(azurePowerShellTemplateStr()))
 )
 
 type AzureAccountConfig struct {
@@ -80,16 +85,34 @@ type AzureIntegrationConfig struct {
 	TelemetryCollectionStrategy []*AzureTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
 
-// azureDeployParams holds the ARM template parameters shared by both command builders.
-type azureDeployParams struct {
-	templateURL        string
-	location           string
-	signozAPIKey       string
-	signozAPIUrl       string
-	signozIngestionURL string
-	signozIngestionKey string
-	accountID          string
-	agentVersion       string
+// azureTemplateData is the data struct passed to both command templates.
+// All fields are exported so text/template can access them.
+type azureTemplateData struct {
+	// Deploy parameter values.
+	TemplateURL        string
+	Location           string
+	SignozAPIKey       string
+	SignozAPIUrl       string
+	SignozIngestionURL string
+	SignozIngestionKey string
+	AccountID          string
+	AgentVersion       string
+	// ARM parameter key names (from package-level vars).
+	StackName               string
+	ParamLocation           string
+	ParamSignozAPIKey       string
+	ParamSignozAPIUrl       string
+	ParamSignozIngestionURL string
+	ParamSignozIngestionKey string
+	ParamAccountID          string
+	ParamAgentVersion       string
+	ParamRgName             string
+	ParamContainerEnvName   string
+	ParamDeploymentEnv      string
+	// Fixed default values.
+	DefaultRgName           string
+	DefaultContainerEnvName string
+	DefaultDeploymentEnv    string
 }
 
 func NewAzureIntegrationConfig(
@@ -109,92 +132,99 @@ func NewAzureConnectionArtifact(
 	agentVersion string,
 	creds *Credentials,
 	cfg *AzurePostableAccountConfig,
-) *AzureConnectionArtifact {
-	p := azureDeployParams{
-		templateURL:        fmt.Sprintf(AgentArmTemplateStorePath.StringValue(), agentVersion),
-		location:           cfg.DeploymentRegion,
-		signozAPIKey:       creds.SigNozAPIKey,
-		signozAPIUrl:       creds.SigNozAPIURL,
-		signozIngestionURL: creds.IngestionURL,
-		signozIngestionKey: creds.IngestionKey,
-		accountID:          accountID.StringValue(),
-		agentVersion:       agentVersion,
+) (*AzureConnectionArtifact, error) {
+	data := azureTemplateData{
+		TemplateURL:             fmt.Sprintf(AgentArmTemplateStorePath, agentVersion),
+		Location:                cfg.DeploymentRegion,
+		SignozAPIKey:            creds.SigNozAPIKey,
+		SignozAPIUrl:            creds.SigNozAPIURL,
+		SignozIngestionURL:      creds.IngestionURL,
+		SignozIngestionKey:      creds.IngestionKey,
+		AccountID:               accountID.StringValue(),
+		AgentVersion:            agentVersion,
+		StackName:               AgentDeploymentStackName,
+		ParamLocation:           armParamLocation,
+		ParamSignozAPIKey:       armParamSignozAPIKey,
+		ParamSignozAPIUrl:       armParamSignozAPIUrl,
+		ParamSignozIngestionURL: armParamSignozIngestionURL,
+		ParamSignozIngestionKey: armParamSignozIngestionKey,
+		ParamAccountID:          armParamAccountID,
+		ParamAgentVersion:       armParamAgentVersion,
+		ParamRgName:             armParamRgName,
+		ParamContainerEnvName:   armParamContainerEnvName,
+		ParamDeploymentEnv:      armParamDeploymentEnv,
+		DefaultRgName:           armDefaultRgName,
+		DefaultContainerEnvName: armDefaultContainerEnvName,
+		DefaultDeploymentEnv:    armDefaultDeploymentEnv,
+	}
+
+	cliCommand, err := newAzureConnectionCLICommand(data)
+	if err != nil {
+		return nil, err
+	}
+
+	psCommand, err := newAzureConnectionPowerShellCommand(data)
+	if err != nil {
+		return nil, err
 	}
 	return &AzureConnectionArtifact{
-		CLICommand:             newAzureConnectionCLICommand(p),
-		CloudPowerShellCommand: newAzureConnectionPowerShellCommand(p),
+		CLICommand:             cliCommand,
+		CloudPowerShellCommand: psCommand,
+	}, nil
+}
+
+func newAzureConnectionCLICommand(data azureTemplateData) (string, error) {
+	var buf bytes.Buffer
+	err := azureCLITemplate.Execute(&buf, data)
+	if err != nil {
+		return "", err
 	}
+	return buf.String(), nil
 }
 
-// by the nature of cli commands its hard to generate the command in idiomatic way or elegantly,
-// but tried to make it more readable by splitting into multiple lines and using helper functions to format flags and parameters.
-func newAzureConnectionCLICommand(p azureDeployParams) string {
-	lines := []string{
-		"az stack sub create",
-		cliFlag("name", AgentDeploymentStackName.StringValue()),
-		cliFlag("location", p.location),
-		cliFlag("template-uri", p.templateURL),
-		"  --parameters",
-		cliParam(armParamLocation.StringValue(), p.location),
-		cliParam(armParamSignozAPIKey.StringValue(), p.signozAPIKey),
-		cliParam(armParamSignozAPIUrl.StringValue(), p.signozAPIUrl),
-		cliParam(armParamSignozIngestionURL.StringValue(), p.signozIngestionURL),
-		cliParam(armParamSignozIngestionKey.StringValue(), p.signozIngestionKey),
-		cliParam(armParamAccountID.StringValue(), p.accountID),
-		cliParam(armParamAgentVersion.StringValue(), p.agentVersion),
-		cliFlag("action-on-unmanage", "deleteAll"),
-		cliFlag("deny-settings-mode", "denyDelete"),
+func newAzureConnectionPowerShellCommand(data azureTemplateData) (string, error) {
+	var buf bytes.Buffer
+	err := azurePowerShellTemplate.Execute(&buf, data)
+	if err != nil {
+		return "", err
 	}
-	return strings.Join(lines, " \\\n")
+	return buf.String(), nil
 }
 
-func newAzureConnectionPowerShellCommand(p azureDeployParams) string {
-	params := []string{
-		psParam(armParamLocation.StringValue(), p.location),
-		psParam(armParamSignozAPIKey.StringValue(), p.signozAPIKey),
-		psParam(armParamSignozAPIUrl.StringValue(), p.signozAPIUrl),
-		psParam(armParamSignozIngestionURL.StringValue(), p.signozIngestionURL),
-		psParam(armParamSignozIngestionKey.StringValue(), p.signozIngestionKey),
-		psParam(armParamAccountID.StringValue(), p.accountID),
-		psParam(armParamAgentVersion.StringValue(), p.agentVersion),
-		psParam(armParamRgName.StringValue(), armDefaultRgName.StringValue()),
-		psParam(armParamContainerEnvName.StringValue(), armDefaultContainerEnvName.StringValue()),
-		psParam(armParamDeploymentEnv.StringValue(), armDefaultDeploymentEnv.StringValue()),
-	}
-	lines := []string{
-		"New-AzSubscriptionDeploymentStack `",
-		psArg("Name", AgentDeploymentStackName.StringValue()),
-		psArg("Location", p.location),
-		psArg("TemplateUri", p.templateURL),
-		"  -TemplateParameterObject @{",
-		strings.Join(params, "\n"),
-		"  } `",
-		psArg("ActionOnUnmanage", "deleteAll"),
-		psArg("DenySettingsMode", "denyDelete"),
-	}
-	return strings.TrimSuffix(strings.Join(lines, "\n"), " `")
+func azureCLITemplateStr() string {
+	return `az stack sub create \
+  --name {{.StackName}} \
+  --location {{.Location}} \
+  --template-uri {{.TemplateURL}} \
+  --parameters \
+    {{.ParamLocation}}='{{.Location}}' \
+    {{.ParamSignozAPIKey}}='{{.SignozAPIKey}}' \
+    {{.ParamSignozAPIUrl}}='{{.SignozAPIUrl}}' \
+    {{.ParamSignozIngestionURL}}='{{.SignozIngestionURL}}' \
+    {{.ParamSignozIngestionKey}}='{{.SignozIngestionKey}}' \
+    {{.ParamAccountID}}='{{.AccountID}}' \
+    {{.ParamAgentVersion}}='{{.AgentVersion}}' \
+  --action-on-unmanage deleteAll \
+  --deny-settings-mode denyDelete`
 }
 
-// cliFlag formats a top-level az CLI flag: --flag value.
-func cliFlag(flag, value string) string {
-	return fmt.Sprintf("  --%s %s", flag, value)
-}
-
-// cliParam formats an ARM template parameter: key='value'.
-func cliParam(key, value string) string {
-	return fmt.Sprintf("    %s='%s'", key, value)
-}
-
-// psArg formats a PowerShell cmdlet argument with a line-continuation backtick: -Flag "value" `.
-func psArg(flag, value string) string {
-	return fmt.Sprintf("  -%s \"%s\" `", flag, value)
-}
-
-
-// psParam formats a single PowerShell hashtable entry with consistent key alignment.
-func psParam(key, value string) string {
-	// 36 accommodates the longest key ("signozIntegrationAgentVersion", 29 chars) plus padding.
-	// so that final output looks like: "	signozIntegrationAgentVersion = "value"" with some padding
-	const keyWidth = 36
-	return fmt.Sprintf("    %-*s= \"%s\"", keyWidth, key, value)
+func azurePowerShellTemplateStr() string {
+	return "New-AzSubscriptionDeploymentStack `\n" +
+		"  -Name \"{{.StackName}}\" `\n" +
+		"  -Location \"{{.Location}}\" `\n" +
+		"  -TemplateUri \"{{.TemplateURL}}\" `\n" +
+		"  -TemplateParameterObject @{\n" +
+		"    {{.ParamLocation}} = \"{{.Location}}\"\n" +
+		"    {{.ParamSignozAPIKey}} = \"{{.SignozAPIKey}}\"\n" +
+		"    {{.ParamSignozAPIUrl}} = \"{{.SignozAPIUrl}}\"\n" +
+		"    {{.ParamSignozIngestionURL}} = \"{{.SignozIngestionURL}}\"\n" +
+		"    {{.ParamSignozIngestionKey}} = \"{{.SignozIngestionKey}}\"\n" +
+		"    {{.ParamAccountID}} = \"{{.AccountID}}\"\n" +
+		"    {{.ParamAgentVersion}} = \"{{.AgentVersion}}\"\n" +
+		"    {{.ParamRgName}} = \"{{.DefaultRgName}}\"\n" +
+		"    {{.ParamContainerEnvName}} = \"{{.DefaultContainerEnvName}}\"\n" +
+		"    {{.ParamDeploymentEnv}} = \"{{.DefaultDeploymentEnv}}\"\n" +
+		"  } `\n" +
+		"  -ActionOnUnmanage \"deleteAll\" `\n" +
+		"  -DenySettingsMode \"denyDelete\""
 }

@@ -19,8 +19,12 @@ func NewAzureCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore
 }
 
 func (provider *azurecloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.GetConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+	connectionArtifact, err := cloudintegrationtypes.NewAzureConnectionArtifact(account.ID, req.Config.AgentVersion, req.Credentials, req.Config.Azure)
+	if err != nil {
+		return nil, err
+	}
 	return &cloudintegrationtypes.ConnectionArtifact{
-		Azure: cloudintegrationtypes.NewAzureConnectionArtifact(account.ID, req.Config.AgentVersion, req.Credentials, req.Config.Azure),
+		Azure: connectionArtifact,
 	}, nil
 }
 

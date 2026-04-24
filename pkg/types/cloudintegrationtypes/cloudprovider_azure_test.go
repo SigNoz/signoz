@@ -9,32 +9,49 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var testDeployParams = azureDeployParams{
-	templateURL:        fmt.Sprintf(AgentArmTemplateStorePath.StringValue(), "v0.1.0"),
-	location:           "eastus",
-	signozAPIKey:       "test-api-key",
-	signozAPIUrl:       "https://signoz.example.com",
-	signozIngestionURL: "https://ingest.example.com",
-	signozIngestionKey: "test-ingest-key",
-	accountID:          "acct-123",
-	agentVersion:       "v0.1.0",
+var testTemplateData = azureTemplateData{
+	TemplateURL:             fmt.Sprintf(AgentArmTemplateStorePath, "v0.1.0"),
+	Location:                "eastus",
+	SignozAPIKey:            "test-api-key",
+	SignozAPIUrl:            "https://signoz.example.com",
+	SignozIngestionURL:      "https://ingest.example.com",
+	SignozIngestionKey:      "test-ingest-key",
+	AccountID:               "acct-123",
+	AgentVersion:            "v0.1.0",
+	StackName:               AgentDeploymentStackName,
+	ParamLocation:           armParamLocation,
+	ParamSignozAPIKey:       armParamSignozAPIKey,
+	ParamSignozAPIUrl:       armParamSignozAPIUrl,
+	ParamSignozIngestionURL: armParamSignozIngestionURL,
+	ParamSignozIngestionKey: armParamSignozIngestionKey,
+	ParamAccountID:          armParamAccountID,
+	ParamAgentVersion:       armParamAgentVersion,
+	ParamRgName:             armParamRgName,
+	ParamContainerEnvName:   armParamContainerEnvName,
+	ParamDeploymentEnv:      armParamDeploymentEnv,
+	DefaultRgName:           armDefaultRgName,
+	DefaultContainerEnvName: armDefaultContainerEnvName,
+	DefaultDeploymentEnv:    armDefaultDeploymentEnv,
 }
 
 func TestNewAzureConnectionCLICommand(t *testing.T) {
-	cmd := newAzureConnectionCLICommand(testDeployParams)
+	cmd, err := newAzureConnectionCLICommand(testTemplateData)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	mustContain := []string{
 		"az stack sub create",
-		fmt.Sprintf("--name %s", AgentDeploymentStackName.StringValue()),
-		fmt.Sprintf("--location %s", testDeployParams.location),
-		fmt.Sprintf("--template-uri %s", testDeployParams.templateURL),
-		fmt.Sprintf("%s='%s'", armParamLocation.StringValue(), testDeployParams.location),
-		fmt.Sprintf("%s='%s'", armParamSignozAPIKey.StringValue(), testDeployParams.signozAPIKey),
-		fmt.Sprintf("%s='%s'", armParamSignozAPIUrl.StringValue(), testDeployParams.signozAPIUrl),
-		fmt.Sprintf("%s='%s'", armParamSignozIngestionURL.StringValue(), testDeployParams.signozIngestionURL),
-		fmt.Sprintf("%s='%s'", armParamSignozIngestionKey.StringValue(), testDeployParams.signozIngestionKey),
-		fmt.Sprintf("%s='%s'", armParamAccountID.StringValue(), testDeployParams.accountID),
-		fmt.Sprintf("%s='%s'", armParamAgentVersion.StringValue(), testDeployParams.agentVersion),
+		fmt.Sprintf("--name %s", AgentDeploymentStackName),
+		fmt.Sprintf("--location %s", testTemplateData.Location),
+		fmt.Sprintf("--template-uri %s", testTemplateData.TemplateURL),
+		fmt.Sprintf("%s='%s'", armParamLocation, testTemplateData.Location),
+		fmt.Sprintf("%s='%s'", armParamSignozAPIKey, testTemplateData.SignozAPIKey),
+		fmt.Sprintf("%s='%s'", armParamSignozAPIUrl, testTemplateData.SignozAPIUrl),
+		fmt.Sprintf("%s='%s'", armParamSignozIngestionURL, testTemplateData.SignozIngestionURL),
+		fmt.Sprintf("%s='%s'", armParamSignozIngestionKey, testTemplateData.SignozIngestionKey),
+		fmt.Sprintf("%s='%s'", armParamAccountID, testTemplateData.AccountID),
+		fmt.Sprintf("%s='%s'", armParamAgentVersion, testTemplateData.AgentVersion),
 		"--action-on-unmanage deleteAll",
 		"--deny-settings-mode denyDelete",
 	}
@@ -52,26 +69,29 @@ func TestNewAzureConnectionCLICommand(t *testing.T) {
 }
 
 func TestNewAzureConnectionPowerShellCommand(t *testing.T) {
-	cmd := newAzureConnectionPowerShellCommand(testDeployParams)
+	cmd, err := newAzureConnectionPowerShellCommand(testTemplateData)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	mustContain := []string{
 		"New-AzSubscriptionDeploymentStack",
-		fmt.Sprintf("-Name \"%s\"", AgentDeploymentStackName.StringValue()),
-		fmt.Sprintf("-Location \"%s\"", testDeployParams.location),
-		fmt.Sprintf("-TemplateUri \"%s\"", testDeployParams.templateURL),
-		armParamLocation.StringValue(),
-		armParamSignozAPIKey.StringValue(),
-		armParamSignozAPIUrl.StringValue(),
-		armParamSignozIngestionURL.StringValue(),
-		armParamSignozIngestionKey.StringValue(),
-		armParamAccountID.StringValue(),
-		armParamAgentVersion.StringValue(),
-		armParamRgName.StringValue(),
-		armParamContainerEnvName.StringValue(),
-		armParamDeploymentEnv.StringValue(),
-		armDefaultRgName.StringValue(),
-		armDefaultContainerEnvName.StringValue(),
-		armDefaultDeploymentEnv.StringValue(),
+		fmt.Sprintf("-Name \"%s\"", AgentDeploymentStackName),
+		fmt.Sprintf("-Location \"%s\"", testTemplateData.Location),
+		fmt.Sprintf("-TemplateUri \"%s\"", testTemplateData.TemplateURL),
+		armParamLocation,
+		armParamSignozAPIKey,
+		armParamSignozAPIUrl,
+		armParamSignozIngestionURL,
+		armParamSignozIngestionKey,
+		armParamAccountID,
+		armParamAgentVersion,
+		armParamRgName,
+		armParamContainerEnvName,
+		armParamDeploymentEnv,
+		armDefaultRgName,
+		armDefaultContainerEnvName,
+		armDefaultDeploymentEnv,
 		"-ActionOnUnmanage \"deleteAll\"",
 		"-DenySettingsMode \"denyDelete\"",
 	}
@@ -102,7 +122,10 @@ func TestNewAzureConnectionArtifact(t *testing.T) {
 		ResourceGroups:   []string{"rg1"},
 	}
 
-	artifact := NewAzureConnectionArtifact(accountID, agentVersion, creds, cfg)
+	artifact, err := NewAzureConnectionArtifact(accountID, agentVersion, creds, cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if artifact.CLICommand == "" {
 		t.Error("CLICommand must not be empty")
