@@ -35,20 +35,31 @@ type provider struct {
 	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore ruletypes.MaintenanceStore,
+) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
+		return New(settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) (*provider, error) {
+func New(
+	providerSettings factory.ProviderSettings,
+	config alertmanager.Config,
+	sqlstore sqlstore.SQLStore,
+	orgGetter organization.Getter,
+	notificationManager nfmanager.NotificationManager,
+	maintenanceStore ruletypes.MaintenanceStore,
+) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
 
 	p := &provider{
 		service: alertmanager.New(
-			ctx,
 			settings,
 			config.Signoz.Config,
 			stateStore,

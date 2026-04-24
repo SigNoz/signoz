@@ -29,12 +29,10 @@ import (
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
-var (
-	// This is not a real file and will never be used. We need this placeholder to ensure maintenance runs on shutdown. See
-	// https://github.com/prometheus/server/blob/3ee2cd0f1271e277295c02b6160507b4d193dde2/silence/silence.go#L435-L438
-	// and https://github.com/prometheus/server/blob/3b06b97af4d146e141af92885a185891eb79a5b0/nflog/nflog.go#L362.
-	snapfnoop string = "snapfnoop"
-)
+// This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
+// See https://github.com/prometheus/alertmanager/blob/3ee2cd0f1271e277295c02b6160507b4d193dde2/silence/silence.go#L435-L438
+// and https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/nflog/nflog.go#L362.
+var snapfnoop string = "snapfnoop"
 
 type Server struct {
 	// logger is the logger for the alertmanager
@@ -74,7 +72,16 @@ type Server struct {
 	maintenanceStore ruletypes.MaintenanceStore
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) (*Server, error) {
+func New(
+	ctx context.Context,
+	logger *slog.Logger,
+	registry prometheus.Registerer,
+	srvConfig Config,
+	orgID string,
+	stateStore alertmanagertypes.StateStore,
+	nfManager nfmanager.NotificationManager,
+	maintenanceStore ruletypes.MaintenanceStore,
+) (*Server, error) {
 	server := &Server{
 		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
 		registry:            registry,
@@ -164,7 +171,6 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 			return c, server.stateStore.Set(ctx, storableSilences)
 		})
-
 	}()
 
 	// Start maintenance for notification logs
@@ -287,7 +293,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	server.silencer = silence.NewSilencer(server.silences, server.marker, server.logger)
 
 	var pipelinePeer notify.Peer
-	pipeline := server.pipelineBuilder.New(
+	var pipeline notify.Stage = server.pipelineBuilder.New(
 		receivers,
 		func() time.Duration { return 0 },
 		server.inhibitor,
@@ -298,14 +304,11 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		pipelinePeer,
 	)
 
-	// Inject maintenance suppression stage into each routing stage (#9270).
-	// Runs after inhibition/silence so only notification delivery is suppressed,
-	// while rule.Eval() always runs and state history is recorded.
+	// Wrap the routing pipeline with maintenance suppression so it short-circuits
+	// before routing in case of an active maintenance window
 	if server.maintenanceStore != nil {
 		mms := &maintenanceMuteStage{muter: NewMaintenanceMuter(server.maintenanceStore, server.orgID, server.logger)}
-		for name, stage := range pipeline {
-			pipeline[name] = notify.MultiStage{mms, stage}
-		}
+		pipeline = notify.MultiStage{mms, pipeline}
 	}
 
 	timeoutFunc := func(d time.Duration) time.Duration {

@@ -9,10 +9,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
-// MaintenanceMuter implements types.Muter for SigNoz maintenance windows.
+// MaintenanceMuter implements types.Muter for maintenance windows.
 // It suppresses alerts whose ruleId label matches an active maintenance schedule.
 // Results are cached for cacheTTL to avoid a DB query on every per-alert check.
 type MaintenanceMuter struct {
@@ -36,7 +36,7 @@ func NewMaintenanceMuter(store ruletypes.MaintenanceStore, orgID string, logger 
 }
 
 func (m *MaintenanceMuter) Mutes(ctx context.Context, lset model.LabelSet) bool {
-	ruleID := string(lset[model.LabelName(ruletypes.AlertRuleIDLabel)])
+	ruleID := string(lset[ruletypes.AlertRuleIDLabel])
 	if ruleID == "" {
 		return false
 	}
@@ -60,14 +60,16 @@ func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*ruletypes.Pla
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	// Double-check after acquiring write lock.
 	if time.Now().Before(m.cacheExpiry) {
 		return m.cached
 	}
+
 	mws, err := m.maintenanceStore.ListPlannedMaintenance(ctx, m.orgID)
 	if err != nil {
 		m.logger.ErrorContext(ctx, "failed to list planned maintenance windows; alerts will not be suppressed", slog.String("org_id", m.orgID))
-		return m.cached // return stale cache on error; fail open
+		return m.cached // return stale (potentially empty) cache on error
 	}
 	m.cached = mws
 	m.cacheExpiry = time.Now().Add(maintenanceCacheTTL)

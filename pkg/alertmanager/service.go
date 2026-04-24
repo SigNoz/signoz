@@ -45,7 +45,6 @@ type Service struct {
 }
 
 func New(
-	ctx context.Context,
 	settings factory.ScopedProviderSettings,
 	config alertmanagerserver.Config,
 	stateStore alertmanagertypes.StateStore,
@@ -182,7 +181,10 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager, service.maintenanceStore)
+	server, err := alertmanagerserver.New(
+		ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID,
+		service.stateStore, service.notificationManager, service.maintenanceStore,
+	)
 	if err != nil {
 		return nil, err
 	}
