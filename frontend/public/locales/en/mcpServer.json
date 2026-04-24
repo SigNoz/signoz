@@ -13,14 +13,14 @@
 	"region_input_placeholder": "Your SigNoz Cloud region",
 
 	"step1_title": "Configure your client",
-	"step1_description": "Add SigNoz to your MCP client. Use a one-click install where available, or copy the config for manual setup. On first connect, the client will open a SigNoz authorization page — use the instance URL and API key from step 2.",
+	"step1_description": "Add SigNoz to your MCP client. Use a one-click install where available, or copy the config for manual setup. On first connect, the client will open a SigNoz authorization page - use the instance URL and API key from step 2.",
 	"step1_manual_fallback": "Or copy the config below for manual setup.",
 	"step1_client_docs_suffix": " setup docs",
 	"step1_add_to_client_prefix": "Add to ",
 
 	"client_cursor_install_label": "Add to Cursor",
 	"client_vscode_install_label": "Add to VS Code",
-	"client_claude_desktop_instructions": "Open Claude Desktop, go to Settings → Connectors → Add custom connector, and paste the endpoint URL above. Claude Desktop does not read remote MCP servers from claude_desktop_config.json — the connector UI is the only supported path.",
+	"client_claude_desktop_instructions": "Open Claude Desktop, go to Settings → Connectors → Add custom connector, and paste the endpoint URL above. Claude Desktop does not read remote MCP servers from claude_desktop_config.json - the connector UI is the only supported path.",
 	"client_other_instructions": "Most MCP clients that support remote HTTP servers will accept the endpoint URL above. Add it as a new MCP server in your client and paste your SigNoz API key when the client prompts for authentication. See the docs for client-specific instructions.",
 
 	"step2_title": "Authenticate from your client",
@@ -28,7 +28,7 @@
 	"step2_instance_url_label": "SigNoz Instance URL",
 	"step2_api_key_label": "API Key",
 	"step2_admin_cta": "Create service account",
-	"step2_admin_helper": "Create a service account, then add a new key inside it — paste that key into the API Key field.",
+	"step2_admin_helper": "Create a service account, then add a new key inside it - paste that key into the API Key field.",
 	"step2_viewer_helper": "Only admins can create API keys. Ask your workspace admin for a key with read access, then paste it into the API Key field.",
 
 	"use_cases_title": "What you can do with it",
