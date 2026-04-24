@@ -2,8 +2,8 @@ import getLocalStorage from 'api/browser/localstorage/get';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import dayjs from 'dayjs';
+import history from 'lib/history';
 import { get } from 'lodash-es';
-import { getLocation } from 'utils/getLocation';
 
 export const isOnboardingSkipped = (): boolean =>
 	getLocalStorage(SKIP_ONBOARDING) === 'true';
@@ -40,16 +40,15 @@ export function isIngestionActive(data: any): boolean {
 	const key = get(table, 'columns[0].id');
 	const value = get(table, `rows[0].data["${key}"]`) || '0';
 
-	return parseInt(value, 10) > 0;
+	return Number.parseInt(value, 10) > 0;
 }
 
 /**
- * Builds an absolute path by combining the current page's pathname with a relative path.
+ * Builds a path by combining the current page's pathname with a relative path.
  *
- * @param {Object} params - The parameters for building the absolute path
- * @param {string} params.relativePath - The relative path to append to the current pathname
- * @param {string} [params.urlQueryString] - Optional query string to append to the final path (without leading '?')
- *
+ * @param {Object} params
+ * @param {string} params.relativePath - Relative path to append to the current pathname
+ * @param {string} [params.urlQueryString] - Query string without leading '?'
  * @returns {string} The constructed absolute path, optionally with query string
  */
 export function buildAbsolutePath({
@@ -59,14 +58,18 @@ export function buildAbsolutePath({
 	relativePath: string;
 	urlQueryString?: string;
 }): string {
-	const { pathname } = getLocation();
+	const currentPathname = history.location.pathname;
 
 	if (!relativePath) {
-		return urlQueryString ? `${pathname}?${urlQueryString}` : pathname;
+		return urlQueryString
+			? `${currentPathname}?${urlQueryString}`
+			: currentPathname;
 	}
 
 	// ensure base path always ends with a forward slash
-	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+	const basePath = currentPathname.endsWith('/')
+		? currentPathname
+		: `${currentPathname}/`;
 
 	// handle relative path starting with a forward slash
 	const normalizedRelativePath = relativePath.startsWith('/')

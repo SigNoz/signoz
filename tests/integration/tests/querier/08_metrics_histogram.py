@@ -2,9 +2,9 @@
 Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 
@@ -51,13 +51,13 @@ def test_histogram_count_for_one_endpoint(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     threshold: float,
     operator: str,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_one_endpoint_bucket"
@@ -118,13 +118,13 @@ def test_histogram_count_for_one_service(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     threshold: float,
     operator: str,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_one_service_bucket"
@@ -187,14 +187,14 @@ def test_histogram_count_for_delta_service(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     threshold: float,
     operator: str,
     zeroth_value: float,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_delta_service_bucket"
@@ -221,13 +221,9 @@ def test_histogram_count_for_delta_service(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert (
-        len(result_values) == 60
-    )  ## in delta, the value at 10:01 will also be reported
+    assert len(result_values) == 60  ## in delta, the value at 10:01 will also be reported
     assert result_values[0]["value"] == zeroth_value
-    assert (
-        result_values[1]["value"] == first_value
-    )  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
+    assert result_values[1]["value"] == first_value  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
     assert result_values[-1]["value"] == last_value
 
 
@@ -250,14 +246,14 @@ def test_histogram_count_for_all_services(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     threshold: float,
     operator: str,
     zeroth_value: float,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_all_services_bucket"
@@ -284,13 +280,9 @@ def test_histogram_count_for_all_services(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert (
-        len(result_values) == 60
-    )  ## in delta, the value at 10:01 will also be reported
+    assert len(result_values) == 60  ## in delta, the value at 10:01 will also be reported
     assert result_values[0]["value"] == zeroth_value
-    assert (
-        result_values[1]["value"] == first_value
-    )  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
+    assert result_values[1]["value"] == first_value  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
     assert result_values[-1]["value"] == last_value
 
 
@@ -298,9 +290,9 @@ def test_histogram_count_no_param(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = "test_count_no_param_bucket"
@@ -325,9 +317,7 @@ def test_histogram_count_no_param(
 
     data = response.json()
     all_series = get_all_series(data, "A")
-    assert (
-        len(all_series) == 8
-    ), f"Expected 8 series for 8 le buckets, got {len(all_series)}"
+    assert len(all_series) == 8, f"Expected 8 series for 8 le buckets, got {len(all_series)}"
 
     le_buckets = {}
     for series in all_series:
@@ -336,9 +326,7 @@ def test_histogram_count_no_param(
         le_buckets[le] = values
 
     expected_buckets = {"1000", "1500", "2000", "4000", "5000", "6000", "8000", "+Inf"}
-    assert (
-        set(le_buckets.keys()) == expected_buckets
-    ), f"Expected endpoints {expected_buckets}, got {set(le_buckets.keys())}"
+    assert set(le_buckets.keys()) == expected_buckets, f"Expected endpoints {expected_buckets}, got {set(le_buckets.keys())}"
 
     first_values = {
         "1000": 33,
@@ -364,13 +352,9 @@ def test_histogram_count_no_param(
         assert len(values) == 60
 
         for v in values:
-            assert (
-                v["value"] >= 0
-            ), f"Count for {le} should not be negative: {v['value']}"
+            assert v["value"] >= 0, f"Count for {le} should not be negative: {v['value']}"
         assert values[0]["value"] == 12345
-        assert (
-            values[1]["value"] == first_values[le]
-        )  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
+        assert values[1]["value"] == first_values[le]  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
         assert values[-1]["value"] == last_values[le]
 
 
@@ -388,13 +372,13 @@ def test_histogram_percentile_for_all_services(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     space_agg: str,
     zeroth_value: float,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_{space_agg}_bucket"
@@ -439,12 +423,12 @@ def test_histogram_percentile_for_cumulative_service(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     space_agg: str,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_{space_agg}_cumulative_bucket"
@@ -489,13 +473,13 @@ def test_histogram_percentile_for_delta_service(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_metrics: Callable[[List[Metrics]], None],
+    insert_metrics: Callable[[list[Metrics]], None],
     space_agg: str,
     zeroth_value: float,
     first_value: float,
     last_value: float,
 ) -> None:
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_{space_agg}_bucket"

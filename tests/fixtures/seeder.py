@@ -32,21 +32,11 @@ def seeder(
         )
 
         container = DockerContainer("signoz-tests-seeder:latest")
-        container.with_env(
-            "CH_HOST", clickhouse.container.container_configs["8123"].address
-        )
-        container.with_env(
-            "CH_PORT", str(clickhouse.container.container_configs["8123"].port)
-        )
-        container.with_env(
-            "CH_USER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME"]
-        )
-        container.with_env(
-            "CH_PASSWORD", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD"]
-        )
-        container.with_env(
-            "CH_CLUSTER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
-        )
+        container.with_env("CH_HOST", clickhouse.container.container_configs["8123"].address)
+        container.with_env("CH_PORT", str(clickhouse.container.container_configs["8123"].port))
+        container.with_env("CH_USER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_USERNAME"])
+        container.with_env("CH_PASSWORD", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PASSWORD"])
+        container.with_env("CH_CLUSTER", clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"])
         container.with_exposed_ports(8080)
         container.with_network(network=network)
         container.start()
@@ -71,9 +61,7 @@ def seeder(
                 "8080": types.TestContainerUrlConfig("http", host, host_port),
             },
             container_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http", container.get_wrapped_container().name, 8080
-                ),
+                "8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080),
             },
         )
 
@@ -92,9 +80,7 @@ def seeder(
         request,
         pytestconfig,
         "seeder",
-        empty=lambda: types.TestContainerDocker(
-            id="", host_configs={}, container_configs={}
-        ),
+        empty=lambda: types.TestContainerDocker(id="", host_configs={}, container_configs={}),
         create=create,
         delete=delete,
         restore=restore,

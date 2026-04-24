@@ -10,6 +10,7 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import dialsUrl from '@/assets/Icons/dials.svg';
 
@@ -114,7 +115,7 @@ export default function Dashboards({
 							dashboardName: dashboard.data.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(), '_blank');
+							openInNewTab(getLink());
 						} else {
 							safeNavigate(getLink());
 						}

@@ -1,7 +1,7 @@
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Callable, List
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from wiremock.client import HttpMethods, Mapping, MappingRequest, MappingResponse
@@ -583,28 +583,24 @@ logger = setup_logger(__name__)
 
 @pytest.mark.parametrize(
     "alert_test_case",
-    TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS
-    + TEST_RULES_UNIT_CONVERSION
-    + TEST_RULES_MISCELLANEOUS,
+    TEST_RULES_MATCH_TYPE_AND_COMPARE_OPERATORS + TEST_RULES_UNIT_CONVERSION + TEST_RULES_MISCELLANEOUS,
     ids=lambda alert_test_case: alert_test_case.name,
 )
 def test_basic_alert_rule_conditions(
     # Notification channel related fixtures
     notification_channel: types.TestContainerDocker,
-    make_http_mocks: Callable[[types.TestContainerDocker, List[Mapping]], None],
+    make_http_mocks: Callable[[types.TestContainerDocker, list[Mapping]], None],
     create_webhook_notification_channel: Callable[[str, str, dict, bool], str],
     # Alert rule related fixtures
     create_alert_rule: Callable[[dict], str],
     # Alert data insertion related fixtures
-    insert_alert_data: Callable[[List[types.AlertData], datetime], None],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
     alert_test_case: types.AlertTestCase,
 ):
     # Prepare notification channel name and webhook endpoint
     notification_channel_name = str(uuid.uuid4())
     webhook_endpoint_path = f"/alert/{notification_channel_name}"
-    notification_url = notification_channel.container_configs["8080"].get(
-        webhook_endpoint_path
-    )
+    notification_url = notification_channel.container_configs["8080"].get(webhook_endpoint_path)
 
     logger.info("notification_url: %s", {"notification_url": notification_url})
 
@@ -642,12 +638,12 @@ def test_basic_alert_rule_conditions(
     # Insert alert data
     insert_alert_data(
         alert_test_case.alert_data,
-        base_time=datetime.now(tz=timezone.utc) - timedelta(minutes=5),
+        base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
     )
 
     # Create Alert Rule
     rule_path = get_testdata_file_path(alert_test_case.rule_path)
-    with open(rule_path, "r", encoding="utf-8") as f:
+    with open(rule_path, encoding="utf-8") as f:
         rule_data = json.loads(f.read())
     # Update the channel name in the rule data
     update_rule_channel_name(rule_data, notification_channel_name)

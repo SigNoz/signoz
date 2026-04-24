@@ -1,7 +1,8 @@
 import datetime
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List, Optional
+from collections.abc import Callable, Generator
+from typing import Any
 
 import numpy as np
 import pytest
@@ -54,8 +55,8 @@ class AuditTagAttributes(ABC):
     tag_type: str
     tag_data_type: str
     string_value: str
-    int64_value: Optional[np.int64]
-    float64_value: Optional[np.float64]
+    int64_value: np.int64 | None
+    float64_value: np.float64 | None
 
     def __init__(
         self,
@@ -63,9 +64,9 @@ class AuditTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: Optional[str],
-        int64_value: Optional[np.int64],
-        float64_value: Optional[np.float64],
+        string_value: str | None,
+        int64_value: np.int64 | None,
+        float64_value: np.float64 | None,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
         self.tag_key = tag_key
@@ -121,14 +122,14 @@ class AuditLog(ABC):
     resource_json: dict[str, str]
     event_name: str
 
-    resource: List[AuditResource]
-    tag_attributes: List[AuditTagAttributes]
-    resource_keys: List[AuditResourceOrAttributeKeys]
-    attribute_keys: List[AuditResourceOrAttributeKeys]
+    resource: list[AuditResource]
+    tag_attributes: list[AuditTagAttributes]
+    resource_keys: list[AuditResourceOrAttributeKeys]
+    attribute_keys: list[AuditResourceOrAttributeKeys]
 
     def __init__(
         self,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: datetime.datetime | None = None,
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "",
@@ -180,13 +181,9 @@ class AuditLog(ABC):
                     float64_value=None,
                 )
             )
-            self.resource_keys.append(
-                AuditResourceOrAttributeKeys(name=k, datatype="string")
-            )
+            self.resource_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="string"))
 
-        self.resource_fingerprint = LogsOrTracesFingerprint(
-            self.resource_json
-        ).calculate()
+        self.resource_fingerprint = LogsOrTracesFingerprint(self.resource_json).calculate()
 
         # Process attributes by type
         self.attributes_string = {}
@@ -207,9 +204,7 @@ class AuditLog(ABC):
                         float64_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    AuditResourceOrAttributeKeys(name=k, datatype="bool")
-                )
+                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="bool"))
             elif isinstance(v, int):
                 self.attributes_number[k] = np.float64(v)
                 self.tag_attributes.append(
@@ -223,9 +218,7 @@ class AuditLog(ABC):
                         float64_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    AuditResourceOrAttributeKeys(name=k, datatype="int64")
-                )
+                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="int64"))
             elif isinstance(v, float):
                 self.attributes_number[k] = np.float64(v)
                 self.tag_attributes.append(
@@ -239,9 +232,7 @@ class AuditLog(ABC):
                         float64_value=np.float64(v),
                     )
                 )
-                self.attribute_keys.append(
-                    AuditResourceOrAttributeKeys(name=k, datatype="float64")
-                )
+                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="float64"))
             else:
                 self.attributes_string[k] = str(v)
                 self.tag_attributes.append(
@@ -255,9 +246,7 @@ class AuditLog(ABC):
                         float64_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    AuditResourceOrAttributeKeys(name=k, datatype="string")
-                )
+                self.attribute_keys.append(AuditResourceOrAttributeKeys(name=k, datatype="string"))
 
         self.scope_name = scope_name
         self.scope_version = scope_version
@@ -300,9 +289,9 @@ class AuditLog(ABC):
 @pytest.fixture(name="insert_audit_logs", scope="function")
 def insert_audit_logs(
     clickhouse: types.TestContainerClickhouse,
-) -> Generator[Callable[[List[AuditLog]], None], Any, None]:
-    def _insert_audit_logs(logs: List[AuditLog]) -> None:
-        resources: List[AuditResource] = []
+) -> Generator[Callable[[list[AuditLog]], None], Any]:
+    def _insert_audit_logs(logs: list[AuditLog]) -> None:
+        resources: list[AuditResource] = []
         for log in logs:
             resources.extend(log.resource)
 
@@ -318,7 +307,7 @@ def insert_audit_logs(
                 ],
             )
 
-        tag_attributes: List[AuditTagAttributes] = []
+        tag_attributes: list[AuditTagAttributes] = []
         for log in logs:
             tag_attributes.extend(log.tag_attributes)
 
@@ -338,7 +327,7 @@ def insert_audit_logs(
                 ],
             )
 
-        attribute_keys: List[AuditResourceOrAttributeKeys] = []
+        attribute_keys: list[AuditResourceOrAttributeKeys] = []
         for log in logs:
             attribute_keys.extend(log.attribute_keys)
 
@@ -350,7 +339,7 @@ def insert_audit_logs(
                 column_names=["name", "datatype"],
             )
 
-        resource_keys: List[AuditResourceOrAttributeKeys] = []
+        resource_keys: list[AuditResourceOrAttributeKeys] = []
         for log in logs:
             resource_keys.extend(log.resource_keys)
 
@@ -399,6 +388,4 @@ def insert_audit_logs(
         "logs_attribute_keys",
         "logs_resource_keys",
     ]:
-        clickhouse.conn.query(
-            f"TRUNCATE TABLE signoz_audit.{table} ON CLUSTER '{cluster}' SYNC"
-        )
+        clickhouse.conn.query(f"TRUNCATE TABLE signoz_audit.{table} ON CLUSTER '{cluster}' SYNC")

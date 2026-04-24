@@ -1,7 +1,7 @@
 import json
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import requests
 
@@ -14,7 +14,7 @@ def test_logs_json_body_simple_searches(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -27,7 +27,7 @@ def test_logs_json_body_simple_searches(
     4. Search by body.level = "error" with CONTAINS
     5. Search by body.code > 100 (comparison)
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # Log with simple JSON body
     log1_body = json.dumps(
@@ -108,9 +108,7 @@ def test_logs_json_body_simple_searches(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {
-                                "expression": 'body.message CONTAINS "logged in"'
-                            },
+                            "filter": {"expression": 'body.message CONTAINS "logged in"'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -303,7 +301,7 @@ def test_logs_json_body_nested_keys(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -315,7 +313,7 @@ def test_logs_json_body_nested_keys(
     3. Search by body.response.latency = 123.45 (floating point)
     4. Search by body.response.status.code = 200
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     log1_body = json.dumps(
         {
@@ -477,9 +475,7 @@ def test_logs_json_body_nested_keys(
     assert len(results) == 1
     rows = results[0]["rows"]
     assert len(rows) == 2  # log1 and log3 have secure = true
-    secure_values = [
-        json.loads(row["data"]["body"])["request"]["secure"] for row in rows
-    ]
+    secure_values = [json.loads(row["data"]["body"])["request"]["secure"] for row in rows]
     assert all(secure is True for secure in secure_values)
 
     # Test 3: Search by body.response.latency = 123.45
@@ -563,9 +559,7 @@ def test_logs_json_body_nested_keys(
     assert len(results) == 1
     rows = results[0]["rows"]
     assert len(rows) == 2  # log1 and log3 have status.code = 200
-    status_codes = [
-        json.loads(row["data"]["body"])["response"]["status"]["code"] for row in rows
-    ]
+    status_codes = [json.loads(row["data"]["body"])["response"]["status"]["code"] for row in rows]
     assert all(code == 200 for code in status_codes)
 
 
@@ -573,7 +567,7 @@ def test_logs_json_body_array_membership(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -584,7 +578,7 @@ def test_logs_json_body_array_membership(
     2. Search by has(body.ids[*], 123) - numeric array
     3. Search by has(body.flags[*], true) - boolean array
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     log1_body = json.dumps(
         {
@@ -781,7 +775,7 @@ def test_logs_json_body_listing(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
 ) -> None:
     """
     Setup:
@@ -794,7 +788,7 @@ def test_logs_json_body_listing(
     4. List logs with multiple filters combined (AND/OR)
     5. Count logs matching JSON body filters
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     logs_data = [
         {
@@ -1024,9 +1018,7 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {
-                                "expression": 'body.service = "auth" AND body.action = "login"'
-                            },
+                            "filter": {"expression": 'body.service = "auth" AND body.action = "login"'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],
@@ -1070,9 +1062,7 @@ def test_logs_json_body_listing(
                             "disabled": False,
                             "limit": 100,
                             "offset": 0,
-                            "filter": {
-                                "expression": 'body.service = "auth" OR body.service = "payment"'
-                            },
+                            "filter": {"expression": 'body.service = "auth" OR body.service = "payment"'},
                             "order": [
                                 {"key": {"name": "timestamp"}, "direction": "desc"},
                             ],

@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Callable, Dict, List
+from typing import Any
 
 import pytest
 import requests
@@ -23,7 +24,7 @@ def test_traces_list(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -44,7 +45,7 @@ def test_traces_list(
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -159,11 +160,8 @@ def test_traces_list(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
-                * 1000
-            ),
-            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "start": int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).timestamp() * 1000),
             "requestType": "raw",
             "compositeQuery": {
                 "queries": [
@@ -224,10 +222,8 @@ def test_traces_list(
     response_with_inline_context = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[
             {
@@ -339,11 +335,8 @@ def test_traces_list(
         },
         json={
             "schemaVersion": "v1",
-            "start": int(
-                (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp()
-                * 1000
-            ),
-            "end": int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+            "start": int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+            "end": int(datetime.now(tz=UTC).timestamp() * 1000),
             "requestType": "raw",
             "compositeQuery": {
                 "queries": [
@@ -514,9 +507,7 @@ def test_traces_list(
                     "name": "A",
                     "signal": "traces",
                     "disabled": False,
-                    "order": [
-                        {"key": {"name": "attribute.timestamp"}, "direction": "desc"}
-                    ],
+                    "order": [{"key": {"name": "attribute.timestamp"}, "direction": "desc"}],
                     "limit": 1,
                 },
             },
@@ -662,10 +653,10 @@ def test_traces_list_with_corrupt_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
-    payload: Dict[str, Any],
+    insert_traces: Callable[[list[Traces]], None],
+    payload: dict[str, Any],
     status_code: HTTPStatus,
-    results: Callable[[List[Traces]], List[Any]],
+    results: Callable[[list[Traces]], list[Any]],
 ) -> None:
     """
     Setup:
@@ -683,10 +674,8 @@ def test_traces_list_with_corrupt_data(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="raw",
         queries=[payload],
     )
@@ -712,13 +701,9 @@ def test_traces_list_with_corrupt_data(
         # Case 1b: count by count() with alias span.count_
         pytest.param({"name": "count()"}, "span.count_", HTTPStatus.OK),
         # Case 2a: count by count() with context specified in the key
-        pytest.param(
-            {"name": "count()", "fieldContext": "span"}, "count_", HTTPStatus.OK
-        ),
+        pytest.param({"name": "count()", "fieldContext": "span"}, "count_", HTTPStatus.OK),
         # Case 2b: count by count() with context specified in the key with alias span.count_
-        pytest.param(
-            {"name": "count()", "fieldContext": "span"}, "span.count_", HTTPStatus.OK
-        ),
+        pytest.param({"name": "count()", "fieldContext": "span"}, "span.count_", HTTPStatus.OK),
         # Case 3a: count by span.count() and context specified in the key [BAD REQUEST]
         pytest.param(
             {"name": "span.count()", "fieldContext": "span"},
@@ -732,13 +717,9 @@ def test_traces_list_with_corrupt_data(
             HTTPStatus.BAD_REQUEST,
         ),
         # Case 4a: count by span.count() and context specified in the key
-        pytest.param(
-            {"name": "span.count()", "fieldContext": ""}, "count_", HTTPStatus.OK
-        ),
+        pytest.param({"name": "span.count()", "fieldContext": ""}, "count_", HTTPStatus.OK),
         # Case 4b: count by span.count() and context specified in the key with alias span.count_
-        pytest.param(
-            {"name": "span.count()", "fieldContext": ""}, "span.count_", HTTPStatus.OK
-        ),
+        pytest.param({"name": "span.count()", "fieldContext": ""}, "span.count_", HTTPStatus.OK),
         # Case 5a: count by count_
         pytest.param({"name": "count_"}, "count_", HTTPStatus.OK),
         # Case 5b: count by count_ with alias span.count_
@@ -765,8 +746,8 @@ def test_traces_aggergate_order_by_count(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
-    order_by: Dict[str, str],
+    insert_traces: Callable[[list[Traces]], None],
+    order_by: dict[str, str],
     aggregation_alias: str,
     expected_status: HTTPStatus,
 ) -> None:
@@ -786,7 +767,7 @@ def test_traces_aggergate_order_by_count(
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -910,10 +891,8 @@ def test_traces_aggergate_order_by_count(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="time_series",
         queries=[query],
     )
@@ -936,7 +915,7 @@ def test_traces_aggregate_with_mixed_field_selectors(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Setup:
@@ -954,7 +933,7 @@ def test_traces_aggregate_with_mixed_field_selectors(
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     insert_traces(
         [
@@ -1090,10 +1069,8 @@ def test_traces_aggregate_with_mixed_field_selectors(
     response = make_query_request(
         signoz,
         token,
-        start_ms=int(
-            (datetime.now(tz=timezone.utc) - timedelta(minutes=5)).timestamp() * 1000
-        ),
-        end_ms=int(datetime.now(tz=timezone.utc).timestamp() * 1000),
+        start_ms=int((datetime.now(tz=UTC) - timedelta(minutes=5)).timestamp() * 1000),
+        end_ms=int(datetime.now(tz=UTC).timestamp() * 1000),
         request_type="time_series",
         queries=[query],
     )
@@ -1104,24 +1081,22 @@ def test_traces_aggregate_with_mixed_field_selectors(
     assert len(results) == 1
     aggregations = results[0]["aggregations"]
 
-    assert (
-        aggregations[0]["series"][0]["values"][0]["value"] >= 2.5 * 1e9
-    )  # p99 for http-service
+    assert aggregations[0]["series"][0]["values"][0]["value"] >= 2.5 * 1e9  # p99 for http-service
 
 
 def test_traces_fill_gaps(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillGaps for traces without groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1197,14 +1172,14 @@ def test_traces_fill_gaps_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillGaps for traces with groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1292,7 +1267,7 @@ def test_traces_fill_gaps_with_group_by(
     series_by_service = index_series_by_label(series, "service.name")
     assert set(series_by_service.keys()) == {"service-a", "service-b"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "service-a": {ts_min_3: 1},
         "service-b": {ts_min_2: 1},
     }
@@ -1310,14 +1285,14 @@ def test_traces_fill_gaps_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillGaps for traces with formula.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1430,14 +1405,14 @@ def test_traces_fill_gaps_formula_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillGaps for traces with formula and groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1553,7 +1528,7 @@ def test_traces_fill_gaps_formula_with_group_by(
     series_by_service = index_series_by_label(series, "service.name")
     assert set(series_by_service.keys()) == {"group1", "group2"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "group1": {ts_min_3: 2},
         "group2": {ts_min_2: 2},
     }
@@ -1571,14 +1546,14 @@ def test_traces_fill_zero(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillZero function for traces without groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1654,14 +1629,14 @@ def test_traces_fill_zero_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillZero function for traces with groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1750,7 +1725,7 @@ def test_traces_fill_zero_with_group_by(
     series_by_service = index_series_by_label(series, "service.name")
     assert set(series_by_service.keys()) == {"service-a", "service-b"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "service-a": {ts_min_3: 1},
         "service-b": {ts_min_2: 1},
     }
@@ -1768,14 +1743,14 @@ def test_traces_fill_zero_formula(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillZero function for traces with formula.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -1888,14 +1863,14 @@ def test_traces_fill_zero_formula_with_group_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Test fillZero function for traces with formula and groupBy.
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
-    traces: List[Traces] = [
+    traces: list[Traces] = [
         Traces(
             timestamp=now - timedelta(minutes=3),
             duration=timedelta(seconds=1),
@@ -2011,7 +1986,7 @@ def test_traces_fill_zero_formula_with_group_by(
     series_by_service = index_series_by_label(series, "service.name")
     assert set(series_by_service.keys()) == {"group1", "group2"}
 
-    expectations: Dict[str, Dict[int, float]] = {
+    expectations: dict[str, dict[int, float]] = {
         "group1": {ts_min_3: 2},
         "group2": {ts_min_2: 2},
     }
@@ -2029,7 +2004,7 @@ def test_traces_list_filter_by_trace_id(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_traces: Callable[[List[Traces]], None],
+    insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
     Tests that filtering by trace_id:
@@ -2043,7 +2018,7 @@ def test_traces_list_filter_by_trace_id(
     span_id_root = TraceIdGenerator.span_id()
     other_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     common_resources = {
         "deployment.environment": "production",
@@ -2087,7 +2062,7 @@ def test_traces_list_filter_by_trace_id(
 
     trace_filter = f"trace_id = '{target_trace_id}'"
 
-    def _query(start_ms: int, end_ms: int) -> List:
+    def _query(start_ms: int, end_ms: int) -> list:
         response = make_query_request(
             signoz,
             token,
@@ -2129,9 +2104,7 @@ def test_traces_list_filter_by_trace_id(
     narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     narrow_rows = _query(narrow_start_ms, now_ms)
 
-    assert (
-        len(narrow_rows) == 1
-    ), f"Expected 1 span for trace_id filter (narrow window), got {len(narrow_rows)}"
+    assert len(narrow_rows) == 1, f"Expected 1 span for trace_id filter (narrow window), got {len(narrow_rows)}"
     assert narrow_rows[0]["data"]["span_id"] == span_id_root
     assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
 
@@ -2140,10 +2113,7 @@ def test_traces_list_filter_by_trace_id(
     wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
     wide_rows = _query(wide_start_ms, now_ms)
 
-    assert len(wide_rows) == 1, (
-        f"Expected 1 span for trace_id filter (wide window, multi-bucket), "
-        f"got {len(wide_rows)} — possible duplicate-span regression"
-    )
+    assert len(wide_rows) == 1, f"Expected 1 span for trace_id filter (wide window, multi-bucket), got {len(wide_rows)} — possible duplicate-span regression"
     assert wide_rows[0]["data"]["span_id"] == span_id_root
     assert wide_rows[0]["data"]["trace_id"] == target_trace_id
 
@@ -2152,7 +2122,4 @@ def test_traces_list_filter_by_trace_id(
     past_end_ms = int((now - timedelta(hours=2)).timestamp() * 1000)
     past_rows = _query(past_start_ms, past_end_ms)
 
-    assert len(past_rows) == 0, (
-        f"Expected 0 spans for trace_id filter outside time window, "
-        f"got {len(past_rows)}"
-    )
+    assert len(past_rows) == 0, f"Expected 0 spans for trace_id filter outside time window, got {len(past_rows)}"

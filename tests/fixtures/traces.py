@@ -4,8 +4,9 @@ import json
 import secrets
 import uuid
 from abc import ABC
+from collections.abc import Callable, Generator
 from enum import Enum
-from typing import Any, Callable, Generator, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import numpy as np
@@ -65,9 +66,7 @@ class TracesResource(ABC):
         fingerprint: str,
         seen_at_ts_bucket_start: np.int64,
     ) -> None:
-        self.labels = json.dumps(
-            labels, separators=(",", ":")
-        )  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
+        self.labels = json.dumps(labels, separators=(",", ":"))  # clickhouse treats {"a": "b"} differently from {"a":"b"}. In the first case it is not able to run json functions
         self.fingerprint = fingerprint
         self.seen_at_ts_bucket_start = seen_at_ts_bucket_start
 
@@ -81,18 +80,14 @@ class TracesResourceOrAttributeKeys(ABC):
     tag_type: str
     is_column: bool
 
-    def __init__(
-        self, name: str, datatype: str, tag_type: str, is_column: bool = False
-    ) -> None:
+    def __init__(self, name: str, datatype: str, tag_type: str, is_column: bool = False) -> None:
         self.name = name
         self.datatype = datatype
         self.tag_type = tag_type
         self.is_column = is_column
 
     def np_arr(self) -> np.array:
-        return np.array(
-            [self.name, self.tag_type, self.datatype, self.is_column], dtype=object
-        )
+        return np.array([self.name, self.tag_type, self.datatype, self.is_column], dtype=object)
 
 
 class TracesTagAttributes(ABC):
@@ -109,7 +104,7 @@ class TracesTagAttributes(ABC):
         tag_key: str,
         tag_type: str,
         tag_data_type: str,
-        string_value: Optional[str],
+        string_value: str | None,
         number_value: np.float64,
     ) -> None:
         self.unix_milli = np.int64(int(timestamp.timestamp() * 1e3))
@@ -148,9 +143,7 @@ class TracesEvent(ABC):
         self.attribute_map = attribute_map
 
     def np_arr(self) -> np.array:
-        return np.array(
-            [self.name, self.time_unix_nano, json.dumps(self.attribute_map)]
-        )
+        return np.array([self.name, self.time_unix_nano, json.dumps(self.attribute_map)])
 
 
 class TracesErrorEvent(ABC):
@@ -243,7 +236,7 @@ class Traces(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
-    events: List[str]
+    events: list[str]
     links: str
     response_status_code: str
     external_http_url: str
@@ -256,16 +249,16 @@ class Traces(ABC):
     has_error: bool
     is_remote: str
 
-    resource: List[TracesResource]
-    tag_attributes: List[TracesTagAttributes]
-    resource_keys: List[TracesResourceOrAttributeKeys]
-    attribute_keys: List[TracesResourceOrAttributeKeys]
-    span_attributes: List[TracesSpanAttribute]
-    error_events: List[TracesErrorEvent]
+    resource: list[TracesResource]
+    tag_attributes: list[TracesTagAttributes]
+    resource_keys: list[TracesResourceOrAttributeKeys]
+    attribute_keys: list[TracesResourceOrAttributeKeys]
+    span_attributes: list[TracesSpanAttribute]
+    error_events: list[TracesErrorEvent]
 
     def __init__(
         self,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: datetime.datetime | None = None,
         duration: datetime.timedelta = datetime.timedelta(seconds=1),
         trace_id: str = "",
         span_id: str = "",
@@ -276,8 +269,8 @@ class Traces(ABC):
         status_message: str = "",
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
-        events: List[TracesEvent] = [],
-        links: List[TracesLink] = [],
+        events: list[TracesEvent] = [],
+        links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
     ) -> None:
@@ -344,11 +337,7 @@ class Traces(ABC):
                     number_value=None,
                 )
             )
-            self.resource_keys.append(
-                TracesResourceOrAttributeKeys(
-                    name=k, datatype="string", tag_type="resource"
-                )
-            )
+            self.resource_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="resource"))
             self.span_attributes.append(
                 TracesSpanAttribute(
                     key=k,
@@ -359,9 +348,7 @@ class Traces(ABC):
             )
 
         # Calculate resource fingerprint
-        self.resource_fingerprint = LogsOrTracesFingerprint(
-            self.resources_string
-        ).calculate()
+        self.resource_fingerprint = LogsOrTracesFingerprint(self.resources_string).calculate()
 
         # Process attributes by type and populate custom fields
         self.attribute_string = {}
@@ -384,11 +371,7 @@ class Traces(ABC):
                         number_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    TracesResourceOrAttributeKeys(
-                        name=k, datatype="bool", tag_type="tag"
-                    )
-                )
+                self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="bool", tag_type="tag"))
                 self.span_attributes.append(
                     TracesSpanAttribute(
                         key=k,
@@ -409,11 +392,7 @@ class Traces(ABC):
                         number_value=np.float64(v),
                     )
                 )
-                self.attribute_keys.append(
-                    TracesResourceOrAttributeKeys(
-                        name=k, datatype="float64", tag_type="tag"
-                    )
-                )
+                self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="float64", tag_type="tag"))
                 self.span_attributes.append(
                     TracesSpanAttribute(
                         key=k,
@@ -434,11 +413,7 @@ class Traces(ABC):
                         number_value=None,
                     )
                 )
-                self.attribute_keys.append(
-                    TracesResourceOrAttributeKeys(
-                        name=k, datatype="string", tag_type="tag"
-                    )
-                )
+                self.attribute_keys.append(TracesResourceOrAttributeKeys(name=k, datatype="string", tag_type="tag"))
                 self.span_attributes.append(
                     TracesSpanAttribute(
                         key=k,
@@ -451,9 +426,7 @@ class Traces(ABC):
         # Process events and derive error events
         self.events = []
         for event in events:
-            self.events.append(
-                json.dumps([event.name, event.time_unix_nano, event.attribute_map])
-            )
+            self.events.append(json.dumps([event.name, event.time_unix_nano, event.attribute_map]))
 
             # Create error events for exception events (following Go exporter logic)
             if event.name == "exception":
@@ -475,9 +448,7 @@ class Traces(ABC):
                 ),
             )
 
-        self.links = json.dumps(
-            [link.__dict__() for link in links_copy], separators=(",", ":")
-        )
+        self.links = json.dumps([link.__dict__() for link in links_copy], separators=(",", ":"))
 
         # Initialize resource
         self.resource = []
@@ -541,9 +512,7 @@ class Traces(ABC):
             except Exception:  # pylint: disable=broad-exception-caught
                 self.external_http_url = str_value
                 self.http_url = str_value
-        elif (
-            key in ["http.method", "http.request.method"] and self.kind == 3
-        ):  # SPAN_KIND_CLIENT
+        elif key in ["http.method", "http.request.method"] and self.kind == 3:  # SPAN_KIND_CLIENT
             self.external_http_method = str_value
             self.http_method = str_value
         elif key in ["http.url", "url.full"] and self.kind != 3:
@@ -621,12 +590,8 @@ class Traces(ABC):
         timestamp = parse_timestamp(data["timestamp"])
         duration = parse_duration(data.get("duration", "PT1S"))
 
-        kind = TracesKind.from_value(
-            data.get("kind", TracesKind.SPAN_KIND_INTERNAL.value)
-        )
-        status_code = TracesStatusCode.from_value(
-            data.get("status_code", TracesStatusCode.STATUS_CODE_UNSET.value)
-        )
+        kind = TracesKind.from_value(data.get("kind", TracesKind.SPAN_KIND_INTERNAL.value))
+        status_code = TracesStatusCode.from_value(data.get("status_code", TracesStatusCode.STATUS_CODE_UNSET.value))
 
         return cls(
             timestamp=timestamp,
@@ -648,12 +613,12 @@ class Traces(ABC):
     def load_from_file(
         cls,
         file_path: str,
-        base_time: Optional[datetime.datetime] = None,
-    ) -> List["Traces"]:
+        base_time: datetime.datetime | None = None,
+    ) -> list["Traces"]:
         """Load traces from a JSONL file."""
 
         data_list = []
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -689,7 +654,7 @@ class Traces(ABC):
         return traces
 
 
-def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
+def insert_traces_to_clickhouse(conn, traces: list[Traces]) -> None:
     """
     Insert traces into ClickHouse tables following the same logic as the Go exporter.
     Handles insertion into:
@@ -703,7 +668,7 @@ def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
     exact insert path used by the pytest fixtures. `conn` is a
     clickhouse-connect Client.
     """
-    resources: List[TracesResource] = []
+    resources: list[TracesResource] = []
     for trace in traces:
         resources.extend(trace.resource)
 
@@ -714,7 +679,7 @@ def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
             data=[resource.np_arr() for resource in resources],
         )
 
-    tag_attributes: List[TracesTagAttributes] = []
+    tag_attributes: list[TracesTagAttributes] = []
     for trace in traces:
         tag_attributes.extend(trace.tag_attributes)
 
@@ -725,8 +690,8 @@ def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
             data=[tag_attribute.np_arr() for tag_attribute in tag_attributes],
         )
 
-    attribute_keys: List[TracesResourceOrAttributeKeys] = []
-    resource_keys: List[TracesResourceOrAttributeKeys] = []
+    attribute_keys: list[TracesResourceOrAttributeKeys] = []
+    resource_keys: list[TracesResourceOrAttributeKeys] = []
     for trace in traces:
         attribute_keys.extend(trace.attribute_keys)
         resource_keys.extend(trace.resource_keys)
@@ -785,7 +750,7 @@ def insert_traces_to_clickhouse(conn, traces: List[Traces]) -> None:
         data=[trace.np_arr() for trace in traces],
     )
 
-    error_events: List[TracesErrorEvent] = []
+    error_events: list[TracesErrorEvent] = []
     for trace in traces:
         error_events.extend(trace.error_events)
 
@@ -816,8 +781,8 @@ def truncate_traces_tables(conn, cluster: str) -> None:
 @pytest.fixture(name="insert_traces", scope="function")
 def insert_traces(
     clickhouse: types.TestContainerClickhouse,
-) -> Generator[Callable[[List[Traces]], None], Any, None]:
-    def _insert_traces(traces: List[Traces]) -> None:
+) -> Generator[Callable[[list[Traces]], None], Any]:
+    def _insert_traces(traces: list[Traces]) -> None:
         insert_traces_to_clickhouse(clickhouse.conn, traces)
 
     yield _insert_traces
@@ -846,11 +811,7 @@ def remove_traces_ttl_and_storage_settings(signoz: types.SigNoz):
 
     for table in tables:
         try:
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' REMOVE TTL"
-            )
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;"
-            )
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' REMOVE TTL")
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_traces.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' RESET SETTING storage_policy;")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"ttl and storage policy reset failed for {table}: {e}")

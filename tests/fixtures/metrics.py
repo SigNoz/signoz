@@ -2,7 +2,8 @@ import datetime
 import hashlib
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List, Optional
+from collections.abc import Callable, Generator
+from typing import Any
 
 import numpy as np
 import pytest
@@ -63,9 +64,7 @@ class MetricsTimeSeries(ABC):
 
         # Calculate fingerprint from metric_name + labels
         fingerprint_str = metric_name + self.labels
-        self.fingerprint = np.uint64(
-            int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16)
-        )
+        self.fingerprint = np.uint64(int(hashlib.md5(fingerprint_str.encode()).hexdigest()[:16], 16))
 
     def to_row(self) -> list:
         return [
@@ -267,7 +266,7 @@ class Metrics(ABC):
         self,
         metric_name: str,
         labels: dict[str, str] = {},
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: datetime.datetime | None = None,
         value: float = 0.0,
         temporality: str = "Unspecified",
         flags: int = 0,
@@ -334,7 +333,7 @@ class Metrics(ABC):
         cls,
         data: dict,
         # base_time: Optional[datetime.datetime] = None,
-        metric_name_override: Optional[str] = None,
+        metric_name_override: str | None = None,
     ) -> "Metrics":
         """
         Create a Metrics instance from a dict.
@@ -368,9 +367,9 @@ class Metrics(ABC):
     def load_from_file(
         cls,
         file_path: str,
-        base_time: Optional[datetime.datetime] = None,
-        metric_name_override: Optional[str] = None,
-    ) -> List["Metrics"]:
+        base_time: datetime.datetime | None = None,
+        metric_name_override: str | None = None,
+    ) -> list["Metrics"]:
         """
         Load metrics from a JSONL file.
 
@@ -383,7 +382,7 @@ class Metrics(ABC):
             metric_name_override: If provided, overrides metric_name for all metrics
         """
         data_list = []
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -410,14 +409,12 @@ class Metrics(ABC):
             original_ts = parse_timestamp(data["timestamp"])
             adjusted_ts = original_ts + time_offset
             data["timestamp"] = adjusted_ts.isoformat()
-            metrics.append(
-                cls.from_dict(data, metric_name_override=metric_name_override)
-            )
+            metrics.append(cls.from_dict(data, metric_name_override=metric_name_override))
 
         return metrics
 
 
-def insert_metrics_to_clickhouse(conn, metrics: List[Metrics]) -> None:
+def insert_metrics_to_clickhouse(conn, metrics: list[Metrics]) -> None:
     """
     Insert metrics into ClickHouse tables.
     Handles insertion into:
@@ -567,8 +564,8 @@ def truncate_metrics_tables(conn, cluster: str) -> None:
 @pytest.fixture(name="insert_metrics", scope="function")
 def insert_metrics(
     clickhouse: types.TestContainerClickhouse,
-) -> Generator[Callable[[List[Metrics]], None], Any, None]:
-    def _insert_metrics(metrics: List[Metrics]) -> None:
+) -> Generator[Callable[[list[Metrics]], None], Any]:
+    def _insert_metrics(metrics: list[Metrics]) -> None:
         insert_metrics_to_clickhouse(clickhouse.conn, metrics)
 
     yield _insert_metrics
@@ -600,11 +597,7 @@ def remove_metrics_ttl_and_storage_settings(signoz: types.SigNoz):
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     for table in tables:
         try:
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' REMOVE TTL"
-            )
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' RESET SETTING storage_policy;"
-            )
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' REMOVE TTL")
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_metrics.{table} ON CLUSTER '{cluster}' RESET SETTING storage_policy;")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"ttl and storage policy reset failed for {table}: {e}")

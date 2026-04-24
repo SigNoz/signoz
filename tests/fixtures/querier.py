@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import requests
 
@@ -17,10 +17,10 @@ QUERY_TIMEOUT = 30  # seconds
 @dataclass
 class TelemetryFieldKey:
     name: str
-    field_data_type: Optional[str] = None
-    field_context: Optional[str] = None
+    field_data_type: str | None = None
+    field_context: str | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "name": self.name,
             "fieldDataType": self.field_data_type,
@@ -33,7 +33,7 @@ class OrderBy:
     key: TelemetryFieldKey
     direction: str = "asc"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {"key": self.key.to_dict(), "direction": self.direction}
 
 
@@ -41,14 +41,14 @@ class OrderBy:
 class BuilderQuery:
     signal: str
     name: str = "A"
-    source: Optional[str] = None
-    limit: Optional[int] = None
-    filter_expression: Optional[str] = None
-    select_fields: Optional[List[TelemetryFieldKey]] = None
-    order: Optional[List[OrderBy]] = None
+    source: str | None = None
+    limit: int | None = None
+    filter_expression: str | None = None
+    select_fields: list[TelemetryFieldKey] | None = None
+    order: list[OrderBy] | None = None
 
-    def to_dict(self) -> Dict:
-        spec: Dict[str, Any] = {
+    def to_dict(self) -> dict:
+        spec: dict[str, Any] = {
             "signal": self.signal,
             "name": self.name,
         }
@@ -61,9 +61,7 @@ class BuilderQuery:
         if self.select_fields:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
-            spec["order"] = [
-                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
-            ]
+            spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
         return {"type": "builder_query", "spec": spec}
 
 
@@ -72,11 +70,11 @@ class TraceOperatorQuery:
     name: str
     expression: str
     return_spans_from: str
-    limit: Optional[int] = None
-    order: Optional[List[OrderBy]] = None
+    limit: int | None = None
+    order: list[OrderBy] | None = None
 
-    def to_dict(self) -> Dict:
-        spec: Dict[str, Any] = {
+    def to_dict(self) -> dict:
+        spec: dict[str, Any] = {
             "name": self.name,
             "expression": self.expression,
             "returnSpansFrom": self.return_spans_from,
@@ -84,9 +82,7 @@ class TraceOperatorQuery:
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:
-            spec["order"] = [
-                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
-            ]
+            spec["order"] = [o.to_dict() if hasattr(o, "to_dict") else o for o in self.order]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
@@ -94,11 +90,11 @@ class TraceOperatorQuery:
 class QueryRangeRequest:
     start: int  # nanoseconds
     end: int  # nanoseconds
-    queries: List[Union[BuilderQuery, TraceOperatorQuery]]
-    request_type: Optional[str] = "raw"
+    queries: list[BuilderQuery | TraceOperatorQuery]
+    request_type: str | None = "raw"
 
-    def to_dict(self) -> Dict:
-        body: Dict[str, Any] = {
+    def to_dict(self) -> dict:
+        body: dict[str, Any] = {
             "start": self.start,
             "end": self.end,
             "compositeQuery": {
@@ -115,11 +111,11 @@ def make_query_request(
     token: str,
     start_ms: int,
     end_ms: int,
-    queries: List[Dict],
+    queries: list[dict],
     *,
     request_type: str = "time_series",
-    format_options: Optional[Dict] = None,
-    variables: Optional[Dict] = None,
+    format_options: dict | None = None,
+    variables: dict | None = None,
     no_cache: bool = True,
     timeout: int = QUERY_TIMEOUT,
 ) -> requests.Response:
@@ -152,16 +148,16 @@ def build_builder_query(
     time_aggregation: str,
     space_aggregation: str,
     *,
-    comparisonSpaceAggregationParam: Optional[Dict] = None,
-    temporality: Optional[str] = None,
-    source: Optional[str] = None,
+    comparisonSpaceAggregationParam: dict | None = None,
+    temporality: str | None = None,
+    source: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
-    group_by: Optional[List[str]] = None,
-    filter_expression: Optional[str] = None,
-    functions: Optional[List[Dict]] = None,
+    group_by: list[str] | None = None,
+    filter_expression: str | None = None,
+    functions: list[dict] | None = None,
     disabled: bool = False,
-) -> Dict:
-    spec: Dict[str, Any] = {
+) -> dict:
+    spec: dict[str, Any] = {
         "name": name,
         "signal": "metrics",
         "aggregations": [
@@ -179,9 +175,7 @@ def build_builder_query(
     if temporality:
         spec["aggregations"][0]["temporality"] = temporality
     if comparisonSpaceAggregationParam:
-        spec["aggregations"][0][
-            "comparisonSpaceAggregationParam"
-        ] = comparisonSpaceAggregationParam
+        spec["aggregations"][0]["comparisonSpaceAggregationParam"] = comparisonSpaceAggregationParam
     if group_by:
         spec["groupBy"] = [
             {
@@ -203,10 +197,10 @@ def build_formula_query(
     name: str,
     expression: str,
     *,
-    functions: Optional[List[Dict]] = None,
+    functions: list[dict] | None = None,
     disabled: bool = False,
-) -> Dict:
-    spec: Dict[str, Any] = {
+) -> dict:
+    spec: dict[str, Any] = {
         "name": name,
         "expression": expression,
         "disabled": disabled,
@@ -216,14 +210,14 @@ def build_formula_query(
     return {"type": "builder_formula", "spec": spec}
 
 
-def build_function(name: str, *args: Any) -> Dict:
-    func: Dict[str, Any] = {"name": name}
+def build_function(name: str, *args: Any) -> dict:
+    func: dict[str, Any] = {"name": name}
     if args:
         func["args"] = [{"value": arg} for arg in args]
     return func
 
 
-def get_series_values(response_json: Dict, query_name: str) -> List[Dict]:
+def get_series_values(response_json: dict, query_name: str) -> list[dict]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     result = find_named_result(results, query_name)
     if not result:
@@ -238,7 +232,7 @@ def get_series_values(response_json: Dict, query_name: str) -> List[Dict]:
     return series[0].get("values", [])
 
 
-def get_all_series(response_json: Dict, query_name: str) -> List[Dict]:
+def get_all_series(response_json: dict, query_name: str) -> list[dict]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     result = find_named_result(results, query_name)
     if not result:
@@ -250,18 +244,18 @@ def get_all_series(response_json: Dict, query_name: str) -> List[Dict]:
     return aggregations[0].get("series", [])
 
 
-def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
+def get_scalar_value(response_json: dict, query_name: str) -> float | None:
     values = get_series_values(response_json, query_name)
     if values:
         return values[0].get("value")
     return None
 
 
-def get_all_warnings(response_json: Dict) -> List[Dict]:
+def get_all_warnings(response_json: dict) -> list[dict]:
     return response_json.get("data", {}).get("warning", {}).get("warnings", [])
 
 
-def get_error_message(response_json: Dict) -> str:
+def get_error_message(response_json: dict) -> str:
     return response_json.get("error", {}).get("message", "")
 
 
@@ -274,8 +268,8 @@ def compare_values(
 
 
 def compare_series_values(
-    values1: List[Dict],
-    values2: List[Dict],
+    values1: list[dict],
+    values2: list[dict],
     tolerance: float = DEFAULT_TOLERANCE,
 ) -> bool:
     if len(values1) != len(values2):
@@ -293,24 +287,17 @@ def compare_series_values(
 
 
 def compare_all_series(
-    series1: List[Dict],
-    series2: List[Dict],
+    series1: list[dict],
+    series2: list[dict],
     tolerance: float = DEFAULT_TOLERANCE,
 ) -> bool:
     if len(series1) != len(series2):
         return False
 
     # oh my lovely python
-    def series_key(s: Dict) -> str:
+    def series_key(s: dict) -> str:
         labels = s.get("labels", [])
-        return str(
-            sorted(
-                [
-                    (lbl.get("key", {}).get("name", ""), lbl.get("value", ""))
-                    for lbl in labels
-                ]
-            )
-        )
+        return str(sorted([(lbl.get("key", {}).get("name", ""), lbl.get("value", "")) for lbl in labels]))
 
     sorted1 = sorted(series1, key=series_key)
     sorted2 = sorted(series2, key=series_key)
@@ -328,8 +315,8 @@ def compare_all_series(
 
 
 def assert_results_equal(
-    result_cached: Dict,
-    result_no_cache: Dict,
+    result_cached: dict,
+    result_no_cache: dict,
     query_name: str,
     context: str,
     tolerance: float = DEFAULT_TOLERANCE,
@@ -340,27 +327,16 @@ def assert_results_equal(
     sorted_cached = sorted(values_cached, key=lambda x: x["timestamp"])
     sorted_no_cache = sorted(values_no_cache, key=lambda x: x["timestamp"])
 
-    assert len(sorted_cached) == len(sorted_no_cache), (
-        f"{context}: Different number of values. "
-        f"Cached: {len(sorted_cached)}, No-cache: {len(sorted_no_cache)}\n"
-        f"Cached timestamps: {[v['timestamp'] for v in sorted_cached]}\n"
-        f"No-cache timestamps: {[v['timestamp'] for v in sorted_no_cache]}"
-    )
+    assert len(sorted_cached) == len(sorted_no_cache), f"{context}: Different number of values. Cached: {len(sorted_cached)}, No-cache: {len(sorted_no_cache)}\nCached timestamps: {[v['timestamp'] for v in sorted_cached]}\nNo-cache timestamps: {[v['timestamp'] for v in sorted_no_cache]}"
 
     for v_cached, v_no_cache in zip(sorted_cached, sorted_no_cache):
-        assert v_cached["timestamp"] == v_no_cache["timestamp"], (
-            f"{context}: Timestamp mismatch. "
-            f"Cached: {v_cached['timestamp']}, No-cache: {v_no_cache['timestamp']}"
-        )
-        assert compare_values(v_cached["value"], v_no_cache["value"], tolerance), (
-            f"{context}: Value mismatch at timestamp {v_cached['timestamp']}. "
-            f"Cached: {v_cached['value']}, No-cache: {v_no_cache['value']}"
-        )
+        assert v_cached["timestamp"] == v_no_cache["timestamp"], f"{context}: Timestamp mismatch. Cached: {v_cached['timestamp']}, No-cache: {v_no_cache['timestamp']}"
+        assert compare_values(v_cached["value"], v_no_cache["value"], tolerance), f"{context}: Value mismatch at timestamp {v_cached['timestamp']}. Cached: {v_cached['value']}, No-cache: {v_no_cache['value']}"
 
 
 def assert_all_series_equal(
-    result_cached: Dict,
-    result_no_cache: Dict,
+    result_cached: dict,
+    result_no_cache: dict,
     query_name: str,
     context: str,
     tolerance: float = DEFAULT_TOLERANCE,
@@ -368,25 +344,21 @@ def assert_all_series_equal(
     series_cached = get_all_series(result_cached, query_name)
     series_no_cache = get_all_series(result_no_cache, query_name)
 
-    assert compare_all_series(
-        series_cached, series_no_cache, tolerance
-    ), f"{context}: Cached series differ from non-cached series"
+    assert compare_all_series(series_cached, series_no_cache, tolerance), f"{context}: Cached series differ from non-cached series"
 
 
-def expected_minutely_bucket_timestamps_ms(now: datetime) -> List[List[int]]:
-    previous_five = [
-        int((now - timedelta(minutes=m)).timestamp() * 1000) for m in range(5, 0, -1)
-    ]
+def expected_minutely_bucket_timestamps_ms(now: datetime) -> list[list[int]]:
+    previous_five = [int((now - timedelta(minutes=m)).timestamp() * 1000) for m in range(5, 0, -1)]
     with_current = previous_five + [int(now.timestamp() * 1000)]
     return [previous_five, with_current]
 
 
 def assert_minutely_bucket_timestamps(
-    points: List[Dict[str, Any]],
+    points: list[dict[str, Any]],
     now: datetime,
     *,
     context: str,
-) -> List[int]:
+) -> list[int]:
     expected = expected_minutely_bucket_timestamps_ms(now)
     actual = [p["timestamp"] for p in points]
     assert actual in expected, f"Unexpected timestamps for {context}: {actual}"
@@ -394,10 +366,10 @@ def assert_minutely_bucket_timestamps(
 
 
 def assert_minutely_bucket_values(
-    points: List[Dict[str, Any]],
+    points: list[dict[str, Any]],
     now: datetime,
     *,
-    expected_by_ts: Dict[int, float],
+    expected_by_ts: dict[int, float],
     context: str,
 ) -> None:
     timestamps = assert_minutely_bucket_timestamps(points, now, context=context)
@@ -406,24 +378,17 @@ def assert_minutely_bucket_values(
 
     for point in points:
         ts = point["timestamp"]
-        assert point["value"] == expected[ts], (
-            f"Unexpected value for {context} at timestamp={ts}: "
-            f"got {point['value']}, expected {expected[ts]}"
-        )
+        assert point["value"] == expected[ts], f"Unexpected value for {context} at timestamp={ts}: got {point['value']}, expected {expected[ts]}"
 
 
 def index_series_by_label(
-    series: List[Dict[str, Any]],
+    series: list[dict[str, Any]],
     label_name: str,
-) -> Dict[str, Dict[str, Any]]:
-    series_by_label: Dict[str, Dict[str, Any]] = {}
+) -> dict[str, dict[str, Any]]:
+    series_by_label: dict[str, dict[str, Any]] = {}
     for s in series:
         label = next(
-            (
-                l
-                for l in s.get("labels", [])
-                if l.get("key", {}).get("name") == label_name
-            ),
+            (l for l in s.get("labels", []) if l.get("key", {}).get("name") == label_name),
             None,
         )
         assert label is not None, f"Expected {label_name} label in series"
@@ -432,17 +397,11 @@ def index_series_by_label(
 
 
 def find_named_result(
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     name: str,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     return next(
-        (
-            r
-            for r in results
-            if r.get("name") == name
-            or r.get("queryName") == name
-            or (r.get("spec") or {}).get("name") == name
-        ),
+        (r for r in results if r.get("name") == name or r.get("queryName") == name or (r.get("spec") or {}).get("name") == name),
         None,
     )
 
@@ -450,18 +409,18 @@ def find_named_result(
 def build_scalar_query(
     name: str,
     signal: str,
-    aggregations: List[Dict],
+    aggregations: list[dict],
     *,
-    source: Optional[str] = None,
-    group_by: Optional[List[Dict]] = None,
-    order: Optional[List[Dict]] = None,
-    limit: Optional[int] = None,
-    filter_expression: Optional[str] = None,
-    having_expression: Optional[str] = None,
+    source: str | None = None,
+    group_by: list[dict] | None = None,
+    order: list[dict] | None = None,
+    limit: int | None = None,
+    filter_expression: str | None = None,
+    having_expression: str | None = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     disabled: bool = False,
-) -> Dict:
-    spec: Dict[str, Any] = {
+) -> dict:
+    spec: dict[str, Any] = {
         "name": name,
         "signal": signal,
         "stepInterval": step_interval,
@@ -494,7 +453,7 @@ def build_group_by_field(
     name: str,
     field_data_type: str = "string",
     field_context: str = "resource",
-) -> Dict:
+) -> dict:
     return {
         "name": name,
         "fieldDataType": field_data_type,
@@ -502,12 +461,12 @@ def build_group_by_field(
     }
 
 
-def build_order_by(name: str, direction: str = "desc") -> Dict:
+def build_order_by(name: str, direction: str = "desc") -> dict:
     return {"key": {"name": name}, "direction": direction}
 
 
-def build_logs_aggregation(expression: str, alias: Optional[str] = None) -> Dict:
-    agg: Dict[str, Any] = {"expression": expression}
+def build_logs_aggregation(expression: str, alias: str | None = None) -> dict:
+    agg: dict[str, Any] = {"expression": expression}
     if alias:
         agg["alias"] = alias
     return agg
@@ -518,7 +477,7 @@ def build_metrics_aggregation(
     time_aggregation: str,
     space_aggregation: str,
     temporality: str = "cumulative",
-) -> Dict:
+) -> dict:
     return {
         "metricName": metric_name,
         "temporality": temporality,
@@ -527,65 +486,51 @@ def build_metrics_aggregation(
     }
 
 
-def get_scalar_table_data(response_json: Dict) -> List[List[Any]]:
+def get_scalar_table_data(response_json: dict) -> list[list[Any]]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     if not results:
         return []
     return results[0].get("data", [])
 
 
-def get_scalar_columns(response_json: Dict) -> List[Dict]:
+def get_scalar_columns(response_json: dict) -> list[dict]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     if not results:
         return []
     return results[0].get("columns", [])
 
 
-def get_column_data_from_response(response_json: Dict, column_name: str) -> List[Any]:
+def get_column_data_from_response(response_json: dict, column_name: str) -> list[Any]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     if not results:
         return []
     rows = results[0].get("rows") or []
-    return [
-        row["data"][column_name] for row in rows if column_name in row.get("data", {})
-    ]
+    return [row["data"][column_name] for row in rows if column_name in row.get("data", {})]
 
 
 def assert_scalar_result_order(
-    data: List[List[Any]],
-    expected_order: List[tuple],
+    data: list[list[Any]],
+    expected_order: list[tuple],
     context: str = "",
 ) -> None:
-    assert len(data) == len(expected_order), (
-        f"{context}: Expected {len(expected_order)} rows, got {len(data)}. "
-        f"Data: {data}"
-    )
+    assert len(data) == len(expected_order), f"{context}: Expected {len(expected_order)} rows, got {len(data)}. Data: {data}"
 
     for i, (row, expected) in enumerate(zip(data, expected_order)):
         for j, expected_val in enumerate(expected):
             actual_val = row[j]
-            assert actual_val == expected_val, (
-                f"{context}: Row {i}, column {j} mismatch. "
-                f"Expected {expected_val}, got {actual_val}. "
-                f"Full row: {row}, expected: {expected}"
-            )
+            assert actual_val == expected_val, f"{context}: Row {i}, column {j} mismatch. Expected {expected_val}, got {actual_val}. Full row: {row}, expected: {expected}"
 
 
 def assert_scalar_column_order(
-    data: List[List[Any]],
+    data: list[list[Any]],
     column_index: int,
-    expected_values: List[Any],
+    expected_values: list[Any],
     context: str = "",
 ) -> None:
-    assert len(data) == len(
-        expected_values
-    ), f"{context}: Expected {len(expected_values)} rows, got {len(data)}"
+    assert len(data) == len(expected_values), f"{context}: Expected {len(expected_values)} rows, got {len(data)}"
 
     actual_values = [row[column_index] for row in data]
-    assert actual_values == expected_values, (
-        f"{context}: Column {column_index} order mismatch. "
-        f"Expected {expected_values}, got {actual_values}"
-    )
+    assert actual_values == expected_values, f"{context}: Column {column_index} order mismatch. Expected {expected_values}, got {actual_values}"
 
 
 def format_timestamp(dt: datetime) -> str:
@@ -602,28 +547,21 @@ def format_timestamp(dt: datetime) -> str:
     return f"{base_str}Z"
 
 
-def assert_identical_query_response(
-    response1: requests.Response, response2: requests.Response
-) -> None:
+def assert_identical_query_response(response1: requests.Response, response2: requests.Response) -> None:
     """
     Assert that two query responses are identical in status and data.
     """
     assert response1.status_code == response2.status_code, "Status codes do not match"
     if response1.status_code == HTTPStatus.OK:
-        assert (
-            response1.json()["status"] == response2.json()["status"]
-        ), "Response statuses do not match"
-        assert (
-            response1.json()["data"]["data"]["results"]
-            == response2.json()["data"]["data"]["results"]
-        ), "Response data do not match"
+        assert response1.json()["status"] == response2.json()["status"], "Response statuses do not match"
+        assert response1.json()["data"]["data"]["results"] == response2.json()["data"]["data"]["results"], "Response data do not match"
 
 
-def generate_logs_with_corrupt_metadata() -> List[Logs]:
+def generate_logs_with_corrupt_metadata() -> list[Logs]:
     """
     Specifically, entries with 'id', 'timestamp', 'severity_text', 'severity_number' and 'body' fields in metadata
     """
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     return [
         Logs(
@@ -714,7 +652,7 @@ def generate_logs_with_corrupt_metadata() -> List[Logs]:
     ]
 
 
-def generate_traces_with_corrupt_metadata() -> List[Traces]:
+def generate_traces_with_corrupt_metadata() -> list[Traces]:
     """
     Specifically, entries with 'id', 'timestamp', 'trace_id' and 'duration_nano' fields in metadata
     """
@@ -725,7 +663,7 @@ def generate_traces_with_corrupt_metadata() -> List[Traces]:
     topic_service_trace_id = TraceIdGenerator.trace_id()
     topic_service_span_id = TraceIdGenerator.span_id()
 
-    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
 
     return [
         Traces(

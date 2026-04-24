@@ -1,6 +1,6 @@
 import time
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 
@@ -25,9 +25,7 @@ def test_create_api_key(
     service_account_id = create_service_account(signoz, token, "sa-for-keys")
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "my-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -50,9 +48,7 @@ def test_create_api_key_duplicate_name(
 
     # creating a key with the same name should fail
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"),
         json={"name": "my-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -70,9 +66,7 @@ def test_list_api_keys(
     service_account = find_service_account_by_name(signoz, token, "sa-for-keys")
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -97,18 +91,14 @@ def test_update_api_key(
     service_account = find_service_account_by_name(signoz, token, "sa-for-keys")
 
     keys_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     key_id = keys_resp.json()["data"][0]["id"]
 
     response = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys/{key_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account['id']}/keys/{key_id}"),
         json={"name": "renamed-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -126,9 +116,7 @@ def test_revoke_api_key(
     service_account_id = create_service_account(signoz, token, "sa-revoke-key")
 
     create_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "key-to-revoke", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -137,9 +125,7 @@ def test_revoke_api_key(
     key_id = create_resp.json()["data"]["id"]
 
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys/{key_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys/{key_id}"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -158,9 +144,7 @@ def test_create_api_key_with_expiry(
 
     future_ts = int(time.time()) + 3600  # 1 hour from now
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "future-key", "expiresAt": future_ts},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -179,9 +163,7 @@ def test_create_api_key_with_expiry(
 
     # verify expiresAt is stored correctly
     keys_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -200,17 +182,13 @@ def test_create_api_key_with_past_expiry_rejected(
 
     past_ts = int(time.time()) - 60  # 1 minute ago
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "expired-key", "expiresAt": past_ts},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
 
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400 for past expiresAt, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400 for past expiresAt, got {response.status_code}: {response.text}"
 
 
 def test_create_api_key_no_expiry(
@@ -223,9 +201,7 @@ def test_create_api_key_no_expiry(
     service_account_id = create_service_account(signoz, token, "sa-key-no-expiry")
 
     response = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "forever-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -243,9 +219,7 @@ def test_create_api_key_no_expiry(
 
     # verify expiresAt is 0
     keys_resp = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -264,9 +238,7 @@ def test_update_api_key_expiry(
 
     # create with no expiry
     create_resp = requests.post(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys"),
         json={"name": "update-expiry-key", "expiresAt": 0},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
@@ -278,16 +250,12 @@ def test_update_api_key_expiry(
     # updating to expire in the past should be rejected
     past_ts = int(time.time()) - 60
     update_resp = requests.put(
-        signoz.self.host_configs["8080"].get(
-            f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys/{key_id}"
-        ),
+        signoz.self.host_configs["8080"].get(f"{SERVICE_ACCOUNT_BASE}/{service_account_id}/keys/{key_id}"),
         json={"name": "update-expiry-key", "expiresAt": past_ts},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
-    assert (
-        update_resp.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400 for past expiresAt update, got {update_resp.status_code}: {update_resp.text}"
+    assert update_resp.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400 for past expiresAt update, got {update_resp.status_code}: {update_resp.text}"
 
     # key should still work since the update was rejected
     dash_resp = requests.get(
@@ -295,6 +263,4 @@ def test_update_api_key_expiry(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert (
-        dash_resp.status_code == HTTPStatus.OK
-    ), f"Key should still work after rejected update, got {dash_resp.status_code}: {dash_resp.text}"
+    assert dash_resp.status_code == HTTPStatus.OK, f"Key should still work after rejected update, got {dash_resp.status_code}: {dash_resp.text}"

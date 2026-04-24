@@ -70,7 +70,7 @@ export const updateURL = (
 		userSelectedFilter: JSON.stringify(Object.fromEntries(userSelectedFilter)),
 	};
 	history.replace(
-		`${window.location.pathname}?${createQueryParams(queryParams)}`,
+		`${history.location.pathname}?${createQueryParams(queryParams)}`,
 	);
 };
 

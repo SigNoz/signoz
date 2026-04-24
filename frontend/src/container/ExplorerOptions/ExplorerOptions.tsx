@@ -22,6 +22,8 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import axios from 'axios';
@@ -472,7 +474,7 @@ function ExplorerOptions({
 		value: string;
 	}): void => {
 		// Retrieve stored views from local storage
-		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const storedViews = getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
 
 		// Initialize or parse the stored views
 		const updatedViews: PreservedViewsInLocalStorage = storedViews
@@ -486,7 +488,7 @@ function ExplorerOptions({
 		};
 
 		// Save the updated views back to local storage
-		localStorage.setItem(
+		setLocalStorageKey(
 			PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 			JSON.stringify(updatedViews),
 		);
@@ -537,7 +539,7 @@ function ExplorerOptions({
 
 	const removeCurrentViewFromLocalStorage = (): void => {
 		// Retrieve stored views from local storage
-		const storedViews = localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
+		const storedViews = getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY);
 
 		if (storedViews) {
 			// Parse the stored views
@@ -547,7 +549,7 @@ function ExplorerOptions({
 			delete parsedViews[PRESERVED_VIEW_TYPE];
 
 			// Update local storage with the modified views
-			localStorage.setItem(
+			setLocalStorageKey(
 				PRESERVED_VIEW_LOCAL_STORAGE_KEY,
 				JSON.stringify(parsedViews),
 			);
@@ -672,7 +674,7 @@ function ExplorerOptions({
 		}
 
 		const parsedPreservedView = JSON.parse(
-			localStorage.getItem(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
+			getLocalStorageKey(PRESERVED_VIEW_LOCAL_STORAGE_KEY) || '{}',
 		);
 
 		const preservedView = parsedPreservedView[PRESERVED_VIEW_TYPE] || {};

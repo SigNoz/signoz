@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import pytest
 import requests
@@ -72,9 +72,7 @@ def test_root_user_signoz_admin_assignment(
 
     # Loop over the roles and get the org_id and id for signoz-admin role
     roles = response.json()["data"]
-    admin_role_entry = next(
-        (role for role in roles if role["name"] == "signoz-admin"), None
-    )
+    admin_role_entry = next((role for role in roles if role["name"] == "signoz-admin"), None)
     assert admin_role_entry is not None
     org_id = admin_role_entry["orgId"]
 
@@ -124,9 +122,7 @@ def test_anonymous_user_signoz_anonymous_assignment(
 
     # Loop over the roles and get the org_id and id for signoz-admin role
     roles = response.json()["data"]
-    admin_role_entry = next(
-        (role for role in roles if role["name"] == "signoz-anonymous"), None
-    )
+    admin_role_entry = next((role for role in roles if role["name"] == "signoz-anonymous"), None)
     assert admin_role_entry is not None
     org_id = admin_role_entry["orgId"]
 

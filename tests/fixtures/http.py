@@ -1,4 +1,4 @@
-from typing import Callable, List
+from collections.abc import Callable
 
 import docker
 import docker.errors
@@ -42,11 +42,7 @@ def zeus(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http", container.get_wrapped_container().name, 8080
-                )
-            },
+            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
         )
 
     def delete(container: types.TestContainerDocker):
@@ -99,11 +95,7 @@ def gateway(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http", container.get_wrapped_container().name, 8080
-                )
-            },
+            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
         )
 
     def delete(container: types.TestContainerDocker):
@@ -132,10 +124,8 @@ def gateway(
 
 
 @pytest.fixture(name="make_http_mocks", scope="function")
-def make_http_mocks() -> Callable[[types.TestContainerDocker, List[Mapping]], None]:
-    def _make_http_mocks(
-        container: types.TestContainerDocker, mappings: List[Mapping]
-    ) -> None:
+def make_http_mocks() -> Callable[[types.TestContainerDocker, list[Mapping]], None]:
+    def _make_http_mocks(container: types.TestContainerDocker, mappings: list[Mapping]) -> None:
         Config.base_url = container.host_configs["8080"].get("/__admin")
 
         for mapping in mappings:

@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
-from typing import Callable, List
 
 import pytest
 
@@ -20,10 +20,10 @@ def test_audit_list_all(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
+    insert_audit_logs: Callable[[list[AuditLog]], None],
 ) -> None:
     """List audit events across multiple resource types — verify count, ordering, and fields."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_audit_logs(
         [
             AuditLog(
@@ -85,7 +85,7 @@ def test_audit_list_all(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     response = make_query_request(
         signoz,
         token,
@@ -134,8 +134,7 @@ def test_audit_list_all(
             id="filter_by_outcome_failure",
         ),
         pytest.param(
-            "signoz.audit.resource.kind = 'dashboard'"
-            " AND signoz.audit.resource.id = 'dash-001'",
+            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = 'dash-001'",
             3,
             {"dashboard.deleted", "dashboard.updated", "dashboard.created"},
             id="filter_by_resource_kind_and_id",
@@ -147,8 +146,7 @@ def test_audit_list_all(
             id="filter_by_principal_type",
         ),
         pytest.param(
-            "signoz.audit.resource.kind = 'dashboard'"
-            " AND signoz.audit.action = 'delete'",
+            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
             1,
             {"dashboard.deleted"},
             id="filter_by_resource_kind_and_action",
@@ -159,13 +157,13 @@ def test_audit_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
+    insert_audit_logs: Callable[[list[AuditLog]], None],
     filter_expression: str,
     expected_count: int,
     expected_event_names: set,
 ) -> None:
     """Parametrized audit filter tests covering the documented query patterns."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_audit_logs(
         [
             AuditLog(
@@ -265,7 +263,7 @@ def test_audit_filter(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     response = make_query_request(
         signoz,
         token,
@@ -296,10 +294,10 @@ def test_audit_scalar_count_failures(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
+    insert_audit_logs: Callable[[list[AuditLog]], None],
 ) -> None:
     """Alert query — count multiple failures from different principals."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_audit_logs(
         [
             AuditLog(
@@ -356,7 +354,7 @@ def test_audit_scalar_count_failures(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     response = make_query_request(
         signoz,
         token,
@@ -386,10 +384,10 @@ def test_audit_does_not_leak_into_logs(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
+    insert_audit_logs: Callable[[list[AuditLog]], None],
 ) -> None:
     """A single audit event in signoz_audit must not appear in regular log queries."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     insert_audit_logs(
         [
             AuditLog(
@@ -412,7 +410,7 @@ def test_audit_does_not_leak_into_logs(
     )
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     response = make_query_request(
         signoz,
         token,
@@ -432,10 +430,5 @@ def test_audit_does_not_leak_into_logs(
 
     rows = response.json()["data"]["data"]["results"][0].get("rows") or []
 
-    audit_bodies = [
-        row["data"]["body"]
-        for row in rows
-        if "signoz.audit"
-        in row["data"].get("attributes_string", {}).get("signoz.audit.action", "")
-    ]
+    audit_bodies = [row["data"]["body"] for row in rows if "signoz.audit" in row["data"].get("attributes_string", {}).get("signoz.audit.action", "")]
     assert len(audit_bodies) == 0

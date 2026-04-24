@@ -265,17 +265,45 @@ func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey
 	return nil
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
+func (server *Server) ReadTuples(ctx context.Context, tupleKey *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error) {
+	storeID, _ := server.getStoreIDandModelID()
+	var tuples []*openfgav1.TupleKey
+	continuationToken := ""
+
+	for {
+		response, err := server.openfgaServer.Read(ctx, &openfgav1.ReadRequest{
+			StoreId:           storeID,
+			TupleKey:          tupleKey,
+			ContinuationToken: continuationToken,
+		})
+		if err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "failed to read tuples from authorization server")
+		}
+
+		for _, tuple := range response.Tuples {
+			tuples = append(tuples, tuple.Key)
+		}
+
+		if response.ContinuationToken == "" {
+			break
+		}
+		continuationToken = response.ContinuationToken
+	}
+
+	return tuples, nil
+}
+
+func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType authtypes.Type) ([]*authtypes.Object, error) {
 	storeID, modelID := server.getStoreIDandModelID()
 	response, err := server.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeID,
 		AuthorizationModelId: modelID,
 		User:                 subject,
 		Relation:             relation.StringValue(),
-		Type:                 typeable.Type().StringValue(),
+		Type:                 objectType.StringValue(),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), typeable.Type().StringValue())
+		return nil, errors.Wrapf(err, errors.TypeInternal, authtypes.ErrCodeAuthZUnavailable, "cannot list objects for subject %s with relation %s for type %s", subject, relation.StringValue(), objectType.StringValue())
 	}
 
 	return authtypes.MustNewObjectsFromStringSlice(response.Objects), nil

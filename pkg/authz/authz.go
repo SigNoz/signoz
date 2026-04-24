@@ -22,11 +22,15 @@ type AuthZ interface {
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
 	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
 
+	// CheckTransactions checks whether the given subject is authorized for the given transactions.
+	// Returns results in the same order as the input transactions.
+	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error)
+
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
+	ListObjects(context.Context, string, authtypes.Relation, authtypes.Type) ([]*authtypes.Object, error)
 
 	// Creates the role.
 	Create(context.Context, valuer.UUID, *authtypes.Role) error
@@ -78,7 +82,13 @@ type AuthZ interface {
 
 	// Bootstrap managed roles transactions and user assignments
 	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error
+
+	// ReadTuples reads tuples from the authorization server matching the given tuple key filter.
+	ReadTuples(context.Context, *openfgav1.ReadRequestTupleKey) ([]*openfgav1.TupleKey, error)
 }
+
+// OnBeforeRoleDelete is a callback invoked before a role is deleted.
+type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
 
 type RegisterTypeable interface {
 	MustGetTypeables() []authtypes.Typeable

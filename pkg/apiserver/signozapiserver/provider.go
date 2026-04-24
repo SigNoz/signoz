@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -63,6 +64,7 @@ type provider struct {
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
 	alertmanagerHandler     alertmanager.Handler
+	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
 	llmPricingRuleHandler   llmpricingrule.Handler
 }
@@ -94,6 +96,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -127,6 +130,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			alertmanagerHandler,
 			llmPricingRuleHandler,
+			traceDetailHandler,
 			rulerHandler,
 		)
 	})
@@ -162,7 +166,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	alertmanagerHandler alertmanager.Handler,
 	llmPricingRuleHandler llmpricingrule.Handler,
-
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -195,6 +199,7 @@ func newProvider(
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
 		alertmanagerHandler:     alertmanagerHandler,
+		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
 		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
@@ -306,6 +311,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addTraceDetailRoutes(router); err != nil {
 		return err
 	}
 

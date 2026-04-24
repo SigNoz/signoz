@@ -72,7 +72,7 @@ export function useIntegrationModal({
 		ModalStateEnum.FORM,
 	);
 	const [isLoading, setIsLoading] = useState(false);
-	const [accountId, setAccountId] = useState<string | undefined>(undefined);
+	const [accountId, setAccountId] = useState<string | undefined>();
 	const [activeView, setActiveView] = useState<ActiveViewEnum>(
 		ActiveViewEnum.FORM,
 	);
@@ -80,7 +80,7 @@ export function useIntegrationModal({
 	const [includeAllRegions, setIncludeAllRegions] = useState(false);
 	const [selectedDeploymentRegion, setSelectedDeploymentRegion] = useState<
 		string | undefined
-	>(undefined);
+	>();
 	const allRegions = useMemo(
 		() => regions.flatMap((r) => r.subRegions.map((sr) => sr.name)),
 		[],
@@ -108,7 +108,7 @@ export function useIntegrationModal({
 
 	const handleConnectionSuccess = useCallback(
 		(payload: { cloudAccountId: string; status?: unknown }): void => {
-			logEvent('AWS Integration: Account connected', {
+			void logEvent('AWS Integration: Account connected', {
 				cloudAccountId: payload.cloudAccountId,
 				status: payload.status,
 			});
@@ -126,7 +126,7 @@ export function useIntegrationModal({
 	const handleConnectionTimeout = useCallback(
 		(payload: { id?: string }): void => {
 			setModalState(ModalStateEnum.ERROR);
-			logEvent('AWS Integration: Account connection attempt timed out', {
+			void logEvent('AWS Integration: Account connection attempt timed out', {
 				id: payload.id,
 			});
 		},
@@ -140,19 +140,17 @@ export function useIntegrationModal({
 	const { mutate: generateUrl, isLoading: isGeneratingUrl } = useCreateAccount();
 
 	const handleError = useAxiosError();
-	const {
-		data: connectionParams,
-		isLoading: isConnectionParamsLoading,
-	} = useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
-		{
-			cloudProvider: INTEGRATION_TYPES.AWS,
-		},
-		{
-			query: {
-				onError: handleError,
+	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
+		useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
+			{
+				cloudProvider: INTEGRATION_TYPES.AWS,
 			},
-		},
-	);
+			{
+				query: {
+					onError: handleError,
+				},
+			},
+		);
 
 	const handleGenerateUrl = useCallback(
 		(payload: CloudintegrationtypesPostableAccountDTO): void => {
@@ -164,14 +162,16 @@ export function useIntegrationModal({
 				{
 					onSuccess: (response: CreateAccountMutationResult) => {
 						const accountId = response.data.id;
-						const connectionUrl = response.data.connectionArtifact.aws.connectionUrl;
+						const connectionUrl =
+							response.data.connectionArtifact.aws?.connectionUrl ?? '';
 
-						logEvent(
+						void logEvent(
 							'AWS Integration: Account connection attempt redirected to AWS',
 							{
 								id: accountId,
 							},
 						);
+						// oxlint-disable-next-line signoz/no-raw-absolute-path -- connectionUrl is an external AWS console URL, not an internal path
 						window.open(connectionUrl, '_blank');
 						setModalState(ModalStateEnum.WAITING);
 						setAccountId(accountId);

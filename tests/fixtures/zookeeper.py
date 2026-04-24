@@ -10,9 +10,7 @@ logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="zookeeper", scope="package")
-def zookeeper(
-    network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config
-) -> types.TestContainerDocker:
+def zookeeper(network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.TestContainerDocker:
     """
     Package-scoped fixture for Zookeeper TestContainer.
     """

@@ -20,6 +20,8 @@ var (
 	ErrCodeRoleNotFound                     = errors.MustNewCode("role_not_found")
 	ErrCodeRoleFailedTransactionsFromString = errors.MustNewCode("role_failed_transactions_from_string")
 	ErrCodeRoleUnsupported                  = errors.MustNewCode("role_unsupported")
+	ErrCodeRoleHasUserAssignees             = errors.MustNewCode("role_has_user_assignees")
+	ErrCodeRoleHasServiceAccountAssignees   = errors.MustNewCode("role_has_service_account_assignees")
 )
 
 var (
@@ -60,17 +62,6 @@ var (
 	TypeableResourcesRoles = MustNewTypeableMetaResources(MustNewName("roles"))
 )
 
-type StorableRole struct {
-	bun.BaseModel `bun:"table:role"`
-
-	types.Identifiable
-	types.TimeAuditable
-	Name        string `bun:"name,type:string" json:"name"`
-	Description string `bun:"description,type:string" json:"description"`
-	Type        string `bun:"type,type:string" json:"type"`
-	OrgID       string `bun:"org_id,type:string" json:"orgId"`
-}
-
 type Role struct {
 	bun.BaseModel `bun:"table:role"`
 
@@ -89,28 +80,6 @@ type PostableRole struct {
 
 type PatchableRole struct {
 	Description string `json:"description" required:"true"`
-}
-
-func NewStorableRoleFromRole(role *Role) *StorableRole {
-	return &StorableRole{
-		Identifiable:  role.Identifiable,
-		TimeAuditable: role.TimeAuditable,
-		Name:          role.Name,
-		Description:   role.Description,
-		Type:          role.Type.String(),
-		OrgID:         role.OrgID.StringValue(),
-	}
-}
-
-func NewRoleFromStorableRole(storableRole *StorableRole) *Role {
-	return &Role{
-		Identifiable:  storableRole.Identifiable,
-		TimeAuditable: storableRole.TimeAuditable,
-		Name:          storableRole.Name,
-		Description:   storableRole.Description,
-		Type:          valuer.NewString(storableRole.Type),
-		OrgID:         valuer.MustNewUUID(storableRole.OrgID),
-	}
 }
 
 func NewRole(name, description string, roleType valuer.String, orgID valuer.UUID) *Role {
@@ -264,13 +233,13 @@ func MustGetSigNozManagedRoleFromExistingRole(role types.Role) string {
 }
 
 type RoleStore interface {
-	Create(context.Context, *StorableRole) error
-	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableRole, error)
-	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableRole, error)
-	List(context.Context, valuer.UUID) ([]*StorableRole, error)
-	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*StorableRole, error)
-	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*StorableRole, error)
-	Update(context.Context, valuer.UUID, *StorableRole) error
+	Create(context.Context, *Role) error
+	Get(context.Context, valuer.UUID, valuer.UUID) (*Role, error)
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*Role, error)
+	List(context.Context, valuer.UUID) ([]*Role, error)
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*Role, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*Role, error)
+	Update(context.Context, valuer.UUID, *Role) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 	RunInTx(context.Context, func(ctx context.Context) error) error
 }

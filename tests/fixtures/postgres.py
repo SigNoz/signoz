@@ -12,9 +12,7 @@ logger = setup_logger(__name__)
 
 
 @pytest.fixture(name="postgres", scope="package")
-def postgres(
-    network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config
-) -> types.TestContainerSQL:
+def postgres(network: Network, request: pytest.FixtureRequest, pytestconfig: pytest.Config) -> types.TestContainerSQL:
     """
     Package-scoped fixture for PostgreSQL TestContainer.
     """
@@ -33,9 +31,7 @@ def postgres(
         container.with_network(network)
         container.start()
 
-        engine = create_engine(
-            f"postgresql+psycopg2://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}"
-        )
+        engine = create_engine(f"postgresql+psycopg2://{container.username}:{container.password}@{container.get_container_host_ip()}:{container.get_exposed_port(5432)}/{container.dbname}")
 
         with engine.connect() as conn:
             result = conn.execute(sql.text("SELECT 1"))
@@ -51,11 +47,7 @@ def postgres(
                         container.get_exposed_port(5432),
                     )
                 },
-                container_configs={
-                    "5432": types.TestContainerUrlConfig(
-                        "postgresql", container.get_wrapped_container().name, 5432
-                    )
-                },
+                container_configs={"5432": types.TestContainerUrlConfig("postgresql", container.get_wrapped_container().name, 5432)},
             ),
             conn=engine,
             env={
@@ -83,9 +75,7 @@ def postgres(
         host_config = container.host_configs["5432"]
         env = cache["env"]
 
-        engine = create_engine(
-            f"postgresql+psycopg2://{env['SIGNOZ_SQLSTORE_POSTGRES_USER']}:{env['SIGNOZ_SQLSTORE_POSTGRES_PASSWORD']}@{host_config.address}:{host_config.port}/{env['SIGNOZ_SQLSTORE_POSTGRES_DBNAME']}"
-        )
+        engine = create_engine(f"postgresql+psycopg2://{env['SIGNOZ_SQLSTORE_POSTGRES_USER']}:{env['SIGNOZ_SQLSTORE_POSTGRES_PASSWORD']}@{host_config.address}:{host_config.port}/{env['SIGNOZ_SQLSTORE_POSTGRES_DBNAME']}")
 
         with engine.connect() as conn:
             result = conn.execute(sql.text("SELECT 1"))
@@ -102,9 +92,7 @@ def postgres(
         pytestconfig,
         "postgres",
         lambda: types.TestContainerSQL(
-            container=types.TestContainerDocker(
-                id="", host_configs={}, container_configs={}
-            ),
+            container=types.TestContainerDocker(id="", host_configs={}, container_configs={}),
             conn=None,
             env={},
         ),

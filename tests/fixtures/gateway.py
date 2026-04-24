@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 import requests
 from wiremock.client import WireMockMatchers
@@ -14,9 +13,7 @@ def common_gateway_headers():
     """Common headers expected on requests forwarded to the gateway."""
     return {
         "X-Signoz-Cloud-Api-Key": {WireMockMatchers.EQUAL_TO: "secret-key"},
-        "X-Consumer-Username": {
-            WireMockMatchers.EQUAL_TO: "lid:00000000-0000-0000-0000-000000000000"
-        },
+        "X-Consumer-Username": {WireMockMatchers.EQUAL_TO: "lid:00000000-0000-0000-0000-000000000000"},
         "X-Consumer-Groups": {WireMockMatchers.EQUAL_TO: "ns:default"},
     }
 
@@ -34,9 +31,7 @@ def get_gateway_requests(signoz: types.SigNoz, method: str, url: str) -> list:
     return response.json().get("requests", [])
 
 
-def get_latest_gateway_request_body(
-    signoz: types.SigNoz, method: str, url: str
-) -> Optional[dict]:
+def get_latest_gateway_request_body(signoz: types.SigNoz, method: str, url: str) -> dict | None:
     """Return the parsed JSON body of the most recent matching gateway request.
 
     WireMock returns requests in reverse chronological order, so ``matched[0]``

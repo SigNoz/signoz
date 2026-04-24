@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import requests
 from wiremock.client import (
@@ -47,17 +47,13 @@ def test_get_credentials_success(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     for field in ("sigNozApiUrl", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
         assert field in data, f"Response should contain '{field}'"
         assert isinstance(data[field], str), f"'{field}' should be a string"
-        assert (
-            len(data[field]) > 0
-        ), f"'{field}' should be non-empty when mocks are set up"
+        assert len(data[field]) > 0, f"'{field}' should be non-empty when mocks are set up"
 
 
 def test_get_credentials_partial_when_zeus_unavailable(
@@ -127,9 +123,7 @@ def test_get_credentials_partial_when_zeus_unavailable(
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 even without Zeus, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200 even without Zeus, got {response.status_code}: {response.text}"
 
     data = response.json()["data"]
     for field in ("sigNozApiUrl", "sigNozApiKey", "ingestionUrl", "ingestionKey"):
@@ -137,9 +131,7 @@ def test_get_credentials_partial_when_zeus_unavailable(
         assert isinstance(data[field], str), f"'{field}' should be a string"
 
     # sigNozApiUrl comes from Zeus, which is unavailable, so it should be empty
-    assert (
-        data["sigNozApiUrl"] == ""
-    ), "sigNozApiUrl should be empty when Zeus is unavailable"
+    assert data["sigNozApiUrl"] == "", "sigNozApiUrl should be empty when Zeus is unavailable"
 
 
 def test_get_credentials_unsupported_provider(
@@ -151,14 +143,10 @@ def test_get_credentials_unsupported_provider(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            "/api/v1/cloud_integrations/gcp/credentials"
-        ),
+        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/gcp/credentials"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400 for unsupported provider, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400 for unsupported provider, got {response.status_code}"
     assert "error" in response.json(), "Response should contain 'error' field"

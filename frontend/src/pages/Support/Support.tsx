@@ -20,6 +20,8 @@ import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
+import { openInNewTab } from 'utils/navigation';
 
 import './Support.styles.scss';
 
@@ -92,7 +94,7 @@ export default function Support(): JSX.Element {
 
 	const { pathname } = useLocation();
 	const handleChannelWithRedirects = (url: string): void => {
-		window.open(url, '_blank');
+		openInNewTab(url);
 	};
 
 	useEffect(() => {
@@ -150,7 +152,7 @@ export default function Support(): JSX.Element {
 		});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	};
 

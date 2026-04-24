@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Callable
 
 import docker
 import docker.errors
@@ -39,11 +39,7 @@ def notification_channel(
                     container.get_exposed_port(8080),
                 )
             },
-            container_configs={
-                "8080": types.TestContainerUrlConfig(
-                    "http", container.get_wrapped_container().name, 8080
-                )
-            },
+            container_configs={"8080": types.TestContainerUrlConfig("http", container.get_wrapped_container().name, 8080)},
         )
 
     def delete(container: types.TestContainerDocker):
@@ -101,11 +97,7 @@ def create_webhook_notification_channel(
             headers={"Authorization": f"Bearer {admin_token}"},
             timeout=5,
         )
-        assert response.status_code == HTTPStatus.CREATED, (
-            f"Failed to create channel, "
-            f"Response: {response.text} "
-            f"Response status: {response.status_code}"
-        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create channel, Response: {response.text} Response status: {response.status_code}"
 
         channel_id = response.json()["data"]["id"]
         return channel_id
