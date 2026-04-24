@@ -11,7 +11,6 @@ import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { Cog } from 'lucide-react';
@@ -30,8 +29,6 @@ function SettingsPage(): JSX.Element {
 	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
 		useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
-	const { data: globalConfig } = useGetGlobalConfig();
-	const mcpUrl = globalConfig?.data?.mcp_url ?? null;
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
 		settingsNavSections.flatMap((section) => section.items),
@@ -73,13 +70,6 @@ function SettingsPage(): JSX.Element {
 				return updatedItems;
 			}
 
-			if (mcpUrl) {
-				updatedItems = updatedItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
-				}));
-			}
-
 			if (isCloudUser) {
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
@@ -93,7 +83,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
 							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.SHORTCUTS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -105,7 +96,8 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.INTEGRATIONS ||
-							item.key === ROUTES.SHORTCUTS
+							item.key === ROUTES.SHORTCUTS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -124,7 +116,8 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
 							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-							item.key === ROUTES.INGESTION_SETTINGS
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -135,7 +128,8 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.INTEGRATIONS ||
-							item.key === ROUTES.INGESTION_SETTINGS
+							item.key === ROUTES.INGESTION_SETTINGS ||
+							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
 					}));
@@ -176,7 +170,6 @@ function SettingsPage(): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isFetchingActiveLicense,
 		trialInfo?.workSpaceBlock,
-		mcpUrl,
 		pathname,
 	]);
 
