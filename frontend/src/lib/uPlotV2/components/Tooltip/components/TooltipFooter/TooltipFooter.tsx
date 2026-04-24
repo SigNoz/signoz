@@ -4,6 +4,10 @@ import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types
 import { X } from 'lucide-react';
 
 import Styles from './TooltipFooter.module.scss';
+import { MousePointerClick } from '@signozhq/icons';
+import logEvent from 'api/common/logEvent';
+import { Events } from 'constants/events';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 interface TooltipFooterProps {
 	pinKey?: string;
@@ -16,27 +20,41 @@ export default function TooltipFooter({
 	isPinned,
 	dismiss,
 }: TooltipFooterProps): JSX.Element {
+	const handleUnpinClick = (): void => {
+		logEvent(Events.TOOLTIP_UNPINNED, {
+			path: getAbsoluteUrl(window.location.pathname),
+		});
+		dismiss();
+	};
 	return (
 		<div
 			className={Styles.footer}
 			role="status"
 			data-testid="uplot-tooltip-footer"
 		>
-			<div className={Styles.hint}>
+			<div>
 				{isPinned ? (
-					<>
+					<div className={Styles.hint}>
 						<span>Press</span>
 						<Kbd active>{pinKey.toUpperCase()}</Kbd>
 						<span>or</span>
 						<Kbd active>Esc</Kbd>
 						<span>to unpin</span>
-					</>
+					</div>
 				) : (
-					<>
-						<span>Press</span>
-						<Kbd>{pinKey.toUpperCase()}</Kbd>
-						<span>to pin the tooltip</span>
-					</>
+					<div className={Styles.hintList}>
+						<div className={Styles.hint} data-active="false">
+							<Kbd>
+								<MousePointerClick size={12} />
+							</Kbd>
+							<span>Click to drilldown</span>
+						</div>
+						<div className={Styles.hint} data-active="false">
+							<span>Press</span>
+							<Kbd>{pinKey.toUpperCase()}</Kbd>
+							<span>to pin the tooltip</span>
+						</div>
+					</div>
 				)}
 			</div>
 
@@ -45,7 +63,7 @@ export default function TooltipFooter({
 					variant="outlined"
 					color="secondary"
 					size="sm"
-					onClick={dismiss}
+					onClick={handleUnpinClick}
 					aria-label="Unpin tooltip"
 					data-testid="uplot-tooltip-unpin"
 				>
