@@ -27,6 +27,7 @@ const interestedInOptions: Record<string, string> = {
 	singleTool:
 		'Single Tool (logs, metrics & traces) to reduce operational overhead',
 	correlateSignals: 'Correlate signals for faster troubleshooting',
+	openSourceTooling: 'Prefer open-source tooling',
 };
 
 export function AboutSigNozQuestions({
