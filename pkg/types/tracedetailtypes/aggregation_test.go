@@ -21,10 +21,19 @@ func mkASpan(id string, resource map[string]string, attributes map[string]any, s
 
 func buildTraceFromSpans(spans ...*WaterfallSpan) *WaterfallTrace {
 	spanMap := make(map[string]*WaterfallSpan, len(spans))
+	var startTime, endTime uint64
+	initialized := false
 	for _, s := range spans {
 		spanMap[s.SpanID] = s
+		if !initialized || s.TimeUnixNano < startTime {
+			startTime = s.TimeUnixNano
+			initialized = true
+		}
+		if end := s.TimeUnixNano + s.DurationNano; end > endTime {
+			endTime = end
+		}
 	}
-	return NewWaterfallTrace(0, 0, uint64(len(spanMap)), 0, spanMap, nil, nil, false)
+	return NewWaterfallTrace(startTime, endTime, uint64(len(spanMap)), 0, spanMap, nil, nil, false)
 }
 
 var (
@@ -109,7 +118,7 @@ func TestGetSpanAggregation_Duration(t *testing.T) {
 		want  map[string]uint64
 	}{
 		{
-			name: "sums DurationNano per resource group",
+			name: "non-overlapping spans — merged equals sum",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", map[string]string{"service.name": "frontend"}, nil, 0, 100),
 				mkASpan("s2", map[string]string{"service.name": "frontend"}, nil, 100, 50),
@@ -119,7 +128,7 @@ func TestGetSpanAggregation_Duration(t *testing.T) {
 			want:  map[string]uint64{"frontend": 150, "backend": 80},
 		},
 		{
-			name: "sums DurationNano per attribute group",
+			name: "non-overlapping attribute groups — merged equals sum",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", nil, map[string]any{"http.method": "GET"}, 0, 30),
 				mkASpan("s2", nil, map[string]any{"http.method": "GET"}, 50, 20),
@@ -129,14 +138,13 @@ func TestGetSpanAggregation_Duration(t *testing.T) {
 			want:  map[string]uint64{"GET": 50, "POST": 70},
 		},
 		{
-			name: "overlapping spans are summed independently — no interval merge",
+			name: "overlapping spans — non-overlapping interval merge",
 			trace: buildTraceFromSpans(
-				// Both in group A but the intervals overlap; duration sums raw, not merged
 				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),
 				mkASpan("s2", map[string]string{"service.name": "svc"}, nil, 5, 10),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 20}, // 10 + 10, no overlap merging
+			want:  map[string]uint64{"svc": 15}, // [0,10] ∪ [5,15] = [0,15]
 		},
 	}
 
@@ -158,43 +166,48 @@ func TestGetSpanAggregation_ExecutionTimePercentage(t *testing.T) {
 		want  map[string]uint64
 	}{
 		{
-			name: "non-overlapping spans — result is sum of durations",
+			// trace [0,30]: svc occupies [0,10]+[20,30]=20 → 20*100/30 = 66%
+			name: "non-overlapping spans",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),
 				mkASpan("s2", map[string]string{"service.name": "svc"}, nil, 20, 10),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 20}, // [0,10] + [20,30] = 20
+			want:  map[string]uint64{"svc": 66},
 		},
 		{
-			name: "partially overlapping spans — union of intervals",
+			// trace [0,15]: svc [0,15]=15 → 100%
+			name: "partially overlapping spans",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),
 				mkASpan("s2", map[string]string{"service.name": "svc"}, nil, 5, 10),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 15}, // [0,10] ∪ [5,15] = [0,15]
+			want:  map[string]uint64{"svc": 100},
 		},
 		{
-			name: "fully contained span — outer span absorbs inner",
+			// trace [0,20]: outer absorbs inner → 100%
+			name: "fully contained span",
 			trace: buildTraceFromSpans(
 				mkASpan("outer", map[string]string{"service.name": "svc"}, nil, 0, 20),
 				mkASpan("inner", map[string]string{"service.name": "svc"}, nil, 5, 5),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 20}, // [0,20] ∪ [5,10] = [0,20]
+			want:  map[string]uint64{"svc": 100},
 		},
 		{
+			// trace [0,30]: svc [0,15]+[20,30]=25 → 25*100/30 = 83%
 			name: "three spans with two merges",
 			trace: buildTraceFromSpans(
-				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),  // [0,10]
-				mkASpan("s2", map[string]string{"service.name": "svc"}, nil, 5, 10),  // [5,15]
-				mkASpan("s3", map[string]string{"service.name": "svc"}, nil, 20, 10), // [20,30]
+				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),
+				mkASpan("s2", map[string]string{"service.name": "svc"}, nil, 5, 10),
+				mkASpan("s3", map[string]string{"service.name": "svc"}, nil, 20, 10),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 25}, // [0,15] + [20,30] = 15+10
+			want:  map[string]uint64{"svc": 83},
 		},
 		{
+			// trace [0,28]: frontend [0,15]=15 → 53%, backend [0,5]+[20,28]=13 → 46%
 			name: "independent groups are computed separately",
 			trace: buildTraceFromSpans(
 				mkASpan("a1", map[string]string{"service.name": "frontend"}, nil, 0, 10),
@@ -203,26 +216,16 @@ func TestGetSpanAggregation_ExecutionTimePercentage(t *testing.T) {
 				mkASpan("b2", map[string]string{"service.name": "backend"}, nil, 20, 8),
 			),
 			field: fieldServiceName,
-			want: map[string]uint64{
-				"frontend": 15, // [0,10] ∪ [5,15] = [0,15]
-				"backend":  13, // [0,5] + [20,28] = 5+8
-			},
+			want:  map[string]uint64{"frontend": 53, "backend": 46},
 		},
 		{
-			name: "single span — result equals its duration",
+			// trace [100,150]: svc [100,150]=50 → 100%
+			name: "single span",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 100, 50),
 			),
 			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 50},
-		},
-		{
-			name: "result is in nanoseconds before unit conversion by the caller",
-			trace: buildTraceFromSpans(
-				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 1_000_000_000), // 1 second
-			),
-			field: fieldServiceName,
-			want:  map[string]uint64{"svc": 1_000_000_000}, // raw nanoseconds, not millis
+			want:  map[string]uint64{"svc": 100},
 		},
 	}
 

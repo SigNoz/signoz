@@ -373,13 +373,6 @@ func (wt *WaterfallTrace) GetSpanAggregation(aggregation SpanAggregationType, fi
 		}
 
 	case SpanAggregationDuration:
-		for _, span := range wt.SpanIDToSpanNodeMap {
-			if key, ok := span.FieldValue(field); ok {
-				result.Value[key] += span.DurationNano
-			}
-		}
-
-	case SpanAggregationExecutionTimePercentage:
 		spansByField := make(map[string][]*WaterfallSpan)
 		for _, span := range wt.SpanIDToSpanNodeMap {
 			if key, ok := span.FieldValue(field); ok {
@@ -388,6 +381,20 @@ func (wt *WaterfallTrace) GetSpanAggregation(aggregation SpanAggregationType, fi
 		}
 		for key, spans := range spansByField {
 			result.Value[key] = mergeSpanIntervals(spans)
+		}
+
+	case SpanAggregationExecutionTimePercentage:
+		traceDuration := wt.EndTime - wt.StartTime
+		spansByField := make(map[string][]*WaterfallSpan)
+		for _, span := range wt.SpanIDToSpanNodeMap {
+			if key, ok := span.FieldValue(field); ok {
+				spansByField[key] = append(spansByField[key], span)
+			}
+		}
+		if traceDuration > 0 {
+			for key, spans := range spansByField {
+				result.Value[key] = mergeSpanIntervals(spans) * 100 / traceDuration
+			}
 		}
 	}
 
