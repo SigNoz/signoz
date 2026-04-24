@@ -36,6 +36,7 @@ func (provider *provider) GetConfig(context.Context) *globaltypes.Config {
 		s := provider.config.MCPURL.String()
 		mcpURL = &s
 	}
+
 	return globaltypes.NewConfig(
 		globaltypes.NewEndpoint(provider.config.ExternalURL.String(), provider.config.IngestionURL.String(), mcpURL),
 		globaltypes.NewIdentNConfig(
