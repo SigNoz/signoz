@@ -81,9 +81,9 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 		jest.clearAllMocks();
 
 		// Setup useQueryBuilder mock - only mock what we need
-		mockedUseQueryBuilder.mockReturnValue(({
+		mockedUseQueryBuilder.mockReturnValue({
 			updateAllQueriesOperators: mockUpdateAllQueriesOperators,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		// Setup the mock to return base query
 		mockUpdateAllQueriesOperators.mockReturnValue(mockBaseQuery);

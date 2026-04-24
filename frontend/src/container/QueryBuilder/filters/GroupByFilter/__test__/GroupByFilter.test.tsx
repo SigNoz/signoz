@@ -16,12 +16,12 @@ function setup(
 	overrides?: Partial<React.ComponentProps<typeof GroupByFilter>>,
 ): { onChange: jest.Mock } {
 	const onChange = jest.fn();
-	const query = ({
+	const query = {
 		dataSource: DataSource.METRICS,
 		aggregateAttribute: { key: 'service.name' },
 		aggregateOperator: 'COUNT',
 		groupBy: [],
-	} as unknown) as IBuilderQuery;
+	} as unknown as IBuilderQuery;
 	render(
 		<GroupByFilter
 			query={query}
@@ -66,7 +66,7 @@ describe('GroupByFilter', () => {
 									dataType: 'string',
 									type: '',
 								},
-						  ]
+							]
 						: [];
 				return res(
 					ctx.status(200),

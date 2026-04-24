@@ -90,9 +90,8 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const handleDashboardLockToggle = useLockDashboard();
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
-		false,
-	);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
+		useState<boolean>(false);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
@@ -102,12 +101,16 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		? {
 				...dashboardData.data,
 				uuid: dashboardData.id,
-		  }
+			}
 		: ({} as DashboardData);
 	const { dashboardVariables } = useDashboardVariables();
 
-	const { title = '', description, tags, image = Base64Icons[0] } =
-		selectedData || {};
+	const {
+		title = '',
+		description,
+		tags,
+		image = Base64Icons[0],
+	} = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 
@@ -117,17 +120,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const { user } = useAppContext();
 	const [editDashboard] = useComponentPermission(['edit_dashboard'], user.role);
-	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] = useState<boolean>(
-		false,
-	);
+	const [isDashboardSettingsOpen, setIsDashbordSettingsOpen] =
+		useState<boolean>(false);
 
-	const [isRenameDashboardOpen, setIsRenameDashboardOpen] = useState<boolean>(
-		false,
-	);
+	const [isRenameDashboardOpen, setIsRenameDashboardOpen] =
+		useState<boolean>(false);
 
-	const [isPanelNameModalOpen, setIsPanelNameModalOpen] = useState<boolean>(
-		false,
-	);
+	const [isPanelNameModalOpen, setIsPanelNameModalOpen] =
+		useState<boolean>(false);
 
 	const [isPublicDashboard, setIsPublicDashboard] = useState<boolean>(false);
 

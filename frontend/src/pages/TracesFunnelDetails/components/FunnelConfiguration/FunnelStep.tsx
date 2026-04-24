@@ -36,16 +36,13 @@ function FunnelStep({
 	index,
 	stepsCount,
 }: FunnelStepProps): JSX.Element {
-	const {
-		handleStepChange: onStepChange,
-		handleStepRemoval: onStepRemove,
-	} = useFunnelContext();
+	const { handleStepChange: onStepChange, handleStepRemoval: onStepRemove } =
+		useFunnelContext();
 	const [form] = Form.useForm();
 	const currentQuery = initialQueriesMap[DataSource.TRACES];
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
-	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] = useState<boolean>(
-		false,
-	);
+	const [isAddDetailsModalOpen, setIsAddDetailsModalOpen] =
+		useState<boolean>(false);
 
 	const latencyPointerItems: MenuProps['items'] = LatencyPointers.map(
 		(option) => ({
@@ -157,7 +154,7 @@ function FunnelStep({
 											hasEditPermission
 												? (v): void => {
 														onStepChange(index, { service_name: (v ?? '') as string });
-												  }
+													}
 												: undefined
 										}
 									/>

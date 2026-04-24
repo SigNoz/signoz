@@ -124,19 +124,20 @@ function LiveLogsList({
 	);
 
 	const makeOnLogCopy = useCallback(
-		(log: ILog) => (event: MouseEvent<HTMLElement>): void => {
-			event.preventDefault();
-			event.stopPropagation();
-			const urlQuery = new URLSearchParams(window.location.search);
-			urlQuery.delete(QueryParams.activeLogId);
-			urlQuery.delete(QueryParams.relativeTime);
-			urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
-			const link = getAbsoluteUrl(
-				`${window.location.pathname}?${urlQuery.toString()}`,
-			);
-			setCopy(link);
-			toast.success('Copied to clipboard', { position: 'top-right' });
-		},
+		(log: ILog) =>
+			(event: MouseEvent<HTMLElement>): void => {
+				event.preventDefault();
+				event.stopPropagation();
+				const urlQuery = new URLSearchParams(window.location.search);
+				urlQuery.delete(QueryParams.activeLogId);
+				urlQuery.delete(QueryParams.relativeTime);
+				urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
+				const link = getAbsoluteUrl(
+					`${window.location.pathname}?${urlQuery.toString()}`,
+				);
+				setCopy(link);
+				toast.success('Copied to clipboard', { position: 'top-right' });
+			},
 		[setCopy],
 	);
 
@@ -251,7 +252,7 @@ function LiveLogsList({
 										isDarkMode,
 										getLogIndicatorType(log),
 									),
-								} as CSSProperties)
+								}) as CSSProperties
 							}
 							onRowClick={(log): void => {
 								handleSetActiveLog(log);

@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "prettify": "oxfmt",
-    "fmt": "echo 'Disabled due to migration' || oxfmt --check",
+    "fmt": "oxfmt --check",
     "lint": "oxlint ./src && stylelint \"src/**/*.scss\"",
     "lint:js": "oxlint ./src",
     "lint:generated": "oxlint ./src/api/generated --fix",
@@ -240,7 +240,7 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "echo 'Disabled due to migration' || oxfmt --check",
+      "oxfmt --check",
       "oxlint --fix",
       "sh scripts/typecheck-staged.sh"
     ]

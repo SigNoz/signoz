@@ -96,9 +96,10 @@ export function useColumnState<TData>({
 	);
 
 	const columnOrder = useStoreOrder(storageKey ?? '');
-	const columnMap = useMemo(() => new Map(columns.map((c) => [c.id, c])), [
-		columns,
-	]);
+	const columnMap = useMemo(
+		() => new Map(columns.map((c) => [c.id, c])),
+		[columns],
+	);
 
 	const hiddenColumnIds = useMemo(
 		() =>

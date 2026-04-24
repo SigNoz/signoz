@@ -46,7 +46,7 @@ describe('useLegendsSync', () => {
 			| ((u: uPlot, seriesIndex: number | null, opts: uPlot.Series) => void)
 			| null = null;
 
-		const config = ({
+		const config = {
 			getLegendItems: jest.fn(() => legendItems),
 			addHook: jest.fn(
 				(
@@ -66,7 +66,7 @@ describe('useLegendsSync', () => {
 					};
 				},
 			),
-		} as unknown) as UPlotConfigBuilder;
+		} as unknown as UPlotConfigBuilder;
 
 		const invokeSetSeries = (
 			seriesIndex: number | null,

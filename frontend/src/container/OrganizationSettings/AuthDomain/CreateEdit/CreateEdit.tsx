@@ -77,15 +77,11 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const samlEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const {
-		mutate: createAuthDomain,
-		isLoading: isCreating,
-	} = useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createAuthDomain, isLoading: isCreating } =
+		useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: updateAuthDomain,
-		isLoading: isUpdating,
-	} = useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAuthDomain, isLoading: isUpdating } =
+		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	/**
 	 * Prepares Google Auth config for API payload

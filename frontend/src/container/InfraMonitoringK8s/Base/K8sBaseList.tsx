@@ -184,34 +184,35 @@ export function K8sBaseList<T>({
 		);
 	}, [pageData, renderRowData, groupBy]);
 
-	const handleTableChange: TableProps<K8sRenderedRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<K8sRenderedRowData>
-				| SorterResult<K8sRenderedRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: eventCategory,
-				});
-			}
+	const handleTableChange: TableProps<K8sRenderedRowData>['onChange'] =
+		useCallback(
+			(
+				pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<K8sRenderedRowData>
+					| SorterResult<K8sRenderedRowData>[],
+			): void => {
+				if (pagination.current) {
+					setCurrentPage(pagination.current);
+					logEvent(InfraMonitoringEvents.PageNumberChanged, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.ListPage,
+						category: eventCategory,
+					});
+				}
 
-			if ('field' in sorter && sorter.order) {
-				setOrderBy({
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				});
-			} else {
-				setOrderBy(null);
-			}
-		},
-		[eventCategory, setCurrentPage, setOrderBy],
-	);
+				if ('field' in sorter && sorter.order) {
+					setOrderBy({
+						columnName: sorter.field as string,
+						order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+					});
+				} else {
+					setOrderBy(null);
+				}
+			},
+			[eventCategory, setCurrentPage, setOrderBy],
+		);
 
 	useEffect(() => {
 		logEvent(InfraMonitoringEvents.PageVisited, {
@@ -262,10 +263,8 @@ export function K8sBaseList<T>({
 		});
 	};
 
-	const [
-		columnsDefinitions,
-		columnsHidden,
-	] = useInfraMonitoringTableColumnsForPage(entity);
+	const [columnsDefinitions, columnsHidden] =
+		useInfraMonitoringTableColumnsForPage(entity);
 
 	const hiddenColumnIdsOnList = useMemo(
 		() =>

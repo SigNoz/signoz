@@ -43,37 +43,36 @@ export function useRowKeyData<TData>({
 
 		const keyCount = new Map<string, number>();
 
-		return data.map(
-			(item, index): RowKeyDataItem => {
-				const itemIdentifier = getRowKey(item);
-				const itemKey = getItemKey?.(item) ?? itemIdentifier;
-				const groupMeta = groupBy?.length ? getGroupKey?.(item) : undefined;
+		return data.map((item, index): RowKeyDataItem => {
+			const itemIdentifier = getRowKey(item);
+			const itemKey = getItemKey?.(item) ?? itemIdentifier;
+			const groupMeta = groupBy?.length ? getGroupKey?.(item) : undefined;
 
-				// Build rowKey with group prefix when grouped
-				let rowKey: string;
-				if (groupBy?.length && groupMeta) {
-					const groupKeyStr = Object.values(groupMeta).join('-');
-					if (groupKeyStr && itemIdentifier) {
-						rowKey = `${groupKeyStr}-${itemIdentifier}`;
-					} else {
-						rowKey = groupKeyStr || itemIdentifier || String(index);
-					}
+			// Build rowKey with group prefix when grouped
+			let rowKey: string;
+			if (groupBy?.length && groupMeta) {
+				const groupKeyStr = Object.values(groupMeta).join('-');
+				if (groupKeyStr && itemIdentifier) {
+					rowKey = `${groupKeyStr}-${itemIdentifier}`;
 				} else {
-					rowKey = itemIdentifier || String(index);
+					rowKey = groupKeyStr || itemIdentifier || String(index);
 				}
+			} else {
+				rowKey = itemIdentifier || String(index);
+			}
 
-				const count = keyCount.get(rowKey) || 0;
-				keyCount.set(rowKey, count + 1);
-				const finalKey = count > 0 ? `${rowKey}-${count}` : rowKey;
+			const count = keyCount.get(rowKey) || 0;
+			keyCount.set(rowKey, count + 1);
+			const finalKey = count > 0 ? `${rowKey}-${count}` : rowKey;
 
-				return { finalKey, itemKey, groupMeta };
-			},
-		);
+			return { finalKey, itemKey, groupMeta };
+		});
 	}, [data, getRowKey, getItemKey, groupBy, getGroupKey, isLoading]);
 
-	const getRowKeyData = useCallback((index: number) => rowKeyData?.[index], [
-		rowKeyData,
-	]);
+	const getRowKeyData = useCallback(
+		(index: number) => rowKeyData?.[index],
+		[rowKeyData],
+	);
 
 	return { rowKeyData, getRowKeyData };
 }

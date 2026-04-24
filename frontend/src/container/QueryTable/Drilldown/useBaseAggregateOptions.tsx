@@ -63,10 +63,8 @@ const useBaseAggregateOptions = ({
 	baseAggregateOptionsConfig: BaseAggregateOptionsConfig;
 } => {
 	const [resolvedQuery, setResolvedQuery] = useState<Query>(query);
-	const {
-		getUpdatedQuery,
-		isLoading: isResolveQueryLoading,
-	} = useUpdatedQuery();
+	const { getUpdatedQuery, isLoading: isResolveQueryLoading } =
+		useUpdatedQuery();
 	const { dashboardData } = useDashboardStore();
 
 	useEffect(() => {

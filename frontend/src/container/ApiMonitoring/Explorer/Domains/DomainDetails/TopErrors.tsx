@@ -45,9 +45,8 @@ function TopErrors({
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 
 	const [endPointName, setSelectedEndPointName] = useState<string>('');
-	const [showStatusCodeErrors, setShowStatusCodeErrors] = useState<boolean>(
-		true,
-	);
+	const [showStatusCodeErrors, setShowStatusCodeErrors] =
+		useState<boolean>(true);
 
 	const queryPayload = useMemo(
 		() =>
@@ -72,7 +71,7 @@ function TopErrors({
 									op: '=',
 									value: endPointName,
 								},
-						  ]
+							]
 						: [...(initialFilters?.items || [])],
 					op: 'AND',
 				},

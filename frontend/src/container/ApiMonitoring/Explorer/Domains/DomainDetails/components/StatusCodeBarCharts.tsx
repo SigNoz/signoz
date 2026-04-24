@@ -57,13 +57,11 @@ function StatusCodeBarCharts({
 	// 1 : Status Code Latency
 	const [currentWidgetInfoIndex, setCurrentWidgetInfoIndex] = useState(0);
 
-	const {
-		data: endPointStatusCodeBarChartsData,
-	} = endPointStatusCodeBarChartsDataQuery;
+	const { data: endPointStatusCodeBarChartsData } =
+		endPointStatusCodeBarChartsDataQuery;
 
-	const {
-		data: endPointStatusCodeLatencyBarChartsData,
-	} = endPointStatusCodeLatencyBarChartsDataQuery;
+	const { data: endPointStatusCodeLatencyBarChartsData } =
+		endPointStatusCodeLatencyBarChartsDataQuery;
 
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 

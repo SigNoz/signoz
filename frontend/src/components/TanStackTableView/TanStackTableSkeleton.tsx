@@ -21,9 +21,10 @@ export function TanStackTableSkeleton<TData>({
 	isDarkMode,
 	columnSizing,
 }: TanStackTableSkeletonProps<TData>): JSX.Element {
-	const rows = useMemo(() => Array.from({ length: rowCount }, (_, i) => i), [
-		rowCount,
-	]);
+	const rows = useMemo(
+		() => Array.from({ length: rowCount }, (_, i) => i),
+		[rowCount],
+	);
 
 	return (
 		<table className={tableStyles.tanStackTable}>

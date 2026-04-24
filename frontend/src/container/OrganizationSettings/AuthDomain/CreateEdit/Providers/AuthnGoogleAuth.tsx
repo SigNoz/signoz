@@ -193,19 +193,20 @@ function ConfigureGoogleAuthAuthnProvider({
 											Requires a Service Account with domain-wide delegation.
 										</p>
 									</div>
-									{expandedSection !== 'workspace-groups' && hasWorkspaceGroupsErrors && (
-										<Tooltip
-											title={
-												<div>
-													{workspaceGroupsErrorMessages.map((msg) => (
-														<div key={msg}>{msg}</div>
-													))}
-												</div>
-											}
-										>
-											<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
-										</Tooltip>
-									)}
+									{expandedSection !== 'workspace-groups' &&
+										hasWorkspaceGroupsErrors && (
+											<Tooltip
+												title={
+													<div>
+														{workspaceGroupsErrorMessages.map((msg) => (
+															<div key={msg}>{msg}</div>
+														))}
+													</div>
+												}
+											>
+												<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+											</Tooltip>
+										)}
 								</div>
 							}
 						>

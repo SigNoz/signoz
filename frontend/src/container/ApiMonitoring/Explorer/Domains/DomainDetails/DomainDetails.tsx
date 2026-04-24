@@ -51,9 +51,8 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
-	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] = useState<
-		IBuilderQuery['filters']
-	>(domainListFilters);
+	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
+		useState<IBuilderQuery['filters']>(domainListFilters);
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -83,12 +82,14 @@ function DomainDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / TimeRangeOffset),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / TimeRangeOffset),
+		[maxTime],
+	);
 
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
 		(params.selectedInterval as Time) || (selectedTime as Time),

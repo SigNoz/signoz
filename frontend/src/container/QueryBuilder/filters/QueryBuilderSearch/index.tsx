@@ -80,9 +80,10 @@ function QueryBuilderSearch({
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
@@ -292,7 +293,7 @@ function QueryBuilderSearch({
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
 					? tagValue?.slice(0, -1)
-					: tagValue ?? '';
+					: (tagValue ?? '');
 
 			return {
 				id: uuid().slice(0, 8),
@@ -502,7 +503,7 @@ function QueryBuilderSearch({
 								/>
 								{option.selected && <StyledCheckOutlined />}
 							</Select.Option>
-					  ))}
+						))}
 			</Select>
 		</div>
 	);

@@ -32,35 +32,36 @@ function MetricsTable({
 	queryFilterExpression,
 	onFilterChange,
 }: MetricsTableProps): JSX.Element {
-	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
-		(
-			_pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<MetricsListItemRowData>
-				| SorterResult<MetricsListItemRowData>[],
-		): void => {
-			if ('field' in sorter && sorter.order) {
-				setOrderBy({
-					key: {
-						name: sorter.field as string,
-					},
-					direction:
-						sorter.order === 'ascend'
-							? Querybuildertypesv5OrderDirectionDTO.asc
-							: Querybuildertypesv5OrderDirectionDTO.desc,
-				});
-			} else {
-				setOrderBy({
-					key: {
-						name: 'samples',
-					},
-					direction: Querybuildertypesv5OrderDirectionDTO.desc,
-				});
-			}
-		},
-		[setOrderBy],
-	);
+	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] =
+		useCallback(
+			(
+				_pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<MetricsListItemRowData>
+					| SorterResult<MetricsListItemRowData>[],
+			): void => {
+				if ('field' in sorter && sorter.order) {
+					setOrderBy({
+						key: {
+							name: sorter.field as string,
+						},
+						direction:
+							sorter.order === 'ascend'
+								? Querybuildertypesv5OrderDirectionDTO.asc
+								: Querybuildertypesv5OrderDirectionDTO.desc,
+					});
+				} else {
+					setOrderBy({
+						key: {
+							name: 'samples',
+						},
+						direction: Querybuildertypesv5OrderDirectionDTO.desc,
+					});
+				}
+			},
+			[setOrderBy],
+		);
 
 	return (
 		<div className="metrics-table-container">

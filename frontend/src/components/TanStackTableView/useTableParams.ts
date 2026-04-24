@@ -53,26 +53,26 @@ export function useTableParams(
 		typeof enableQueryParams === 'string'
 			? `${enableQueryParams}_page`
 			: typeof enableQueryParams === 'object'
-			? enableQueryParams.page
-			: 'page';
+				? enableQueryParams.page
+				: 'page';
 	const limitQueryParam =
 		typeof enableQueryParams === 'string'
 			? `${enableQueryParams}_limit`
 			: typeof enableQueryParams === 'object'
-			? enableQueryParams.limit
-			: 'limit';
+				? enableQueryParams.limit
+				: 'limit';
 	const orderByQueryParam =
 		typeof enableQueryParams === 'string'
 			? `${enableQueryParams}_order_by`
 			: typeof enableQueryParams === 'object'
-			? enableQueryParams.orderBy
-			: 'order_by';
+				? enableQueryParams.orderBy
+				: 'order_by';
 	const expandedQueryParam =
 		typeof enableQueryParams === 'string'
 			? `${enableQueryParams}_expanded`
 			: typeof enableQueryParams === 'object'
-			? enableQueryParams.expanded
-			: 'expanded';
+				? enableQueryParams.expanded
+				: 'expanded';
 	const pageDefault = defaults?.page ?? DEFAULT_PAGE;
 	const limitDefault = defaults?.limit ?? DEFAULT_LIMIT;
 	const orderByDefault = defaults?.orderBy ?? null;
@@ -88,9 +88,8 @@ export function useTableParams(
 	const [localOrderBy, setLocalOrderBy] = useState<SortState | null>(
 		orderByDefault,
 	);
-	const [localExpanded, setLocalExpanded] = useState<ExpandedState>(
-		expandedDefault,
-	);
+	const [localExpanded, setLocalExpanded] =
+		useState<ExpandedState>(expandedDefault);
 
 	const [urlPage, setUrlPage] = useQueryState(
 		pageQueryParam,

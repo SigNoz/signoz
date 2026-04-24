@@ -152,7 +152,7 @@ function TanStackTableInner<TData>(
 	const effectiveVisibility = columnStorageKey ? storeVisibility : {};
 	const effectiveSizing = columnStorageKey
 		? storeSizing
-		: columnSizingProp ?? {};
+		: (columnSizingProp ?? {});
 
 	const effectiveData = useEffectiveData<TData>({
 		data,
@@ -429,7 +429,7 @@ function TanStackTableInner<TData>(
 						if (prop in target) {
 							return Reflect.get(target, prop);
 						}
-						const v = (virtuosoRef.current as unknown) as Record<string, unknown>;
+						const v = virtuosoRef.current as unknown as Record<string, unknown>;
 						const value = v?.[prop as string];
 						if (typeof value === 'function') {
 							return (value as (...a: unknown[]) => unknown).bind(virtuosoRef.current);
@@ -473,7 +473,7 @@ function TanStackTableInner<TData>(
 		() =>
 			({
 				'--tanstack-plain-body-line-clamp': plainTextCellLineClamp,
-			} as CSSProperties),
+			}) as CSSProperties,
 		[plainTextCellLineClamp],
 	);
 

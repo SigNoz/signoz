@@ -42,7 +42,7 @@ export type RowKeyData = {
 export type TableColumnDef<
 	TData,
 	TKey extends keyof TData = any,
-	TValue = TData[TKey]
+	TValue = TData[TKey],
 > = {
 	id: string;
 	header: string | (() => ReactNode);

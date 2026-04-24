@@ -464,36 +464,37 @@ function QueryAddOns({
 						</div>
 					)}
 
-					{selectedViews.find((view) => view.key === 'reduce_to') && showReduceTo && (
-						<div className="add-on-content" data-testid="reduce-to-content">
-							<div className="periscope-input-with-label">
-								<Tooltip
-									title={
-										<TooltipContent
-											label="Reduce to"
-											description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
-											docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
-										/>
-									}
-									placement="top"
-									mouseEnterDelay={0.5}
-								>
-									<div className="label" style={{ cursor: 'help' }}>
-										Reduce to
+					{selectedViews.find((view) => view.key === 'reduce_to') &&
+						showReduceTo && (
+							<div className="add-on-content" data-testid="reduce-to-content">
+								<div className="periscope-input-with-label">
+									<Tooltip
+										title={
+											<TooltipContent
+												label="Reduce to"
+												description="Apply mathematical operations like sum, average, min, max, or percentiles to reduce multiple time series into a single value."
+												docLink="https://signoz.io/docs/userguide/query-builder-v5/#reduce-operations"
+											/>
+										}
+										placement="top"
+										mouseEnterDelay={0.5}
+									>
+										<div className="label" style={{ cursor: 'help' }}>
+											Reduce to
+										</div>
+									</Tooltip>
+									<div className="input">
+										<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
 									</div>
-								</Tooltip>
-								<div className="input">
-									<ReduceToFilter query={query} onChange={handleChangeReduceToV5} />
-								</div>
 
-								<Button
-									className="close-btn periscope-btn ghost"
-									icon={<ChevronUp size={16} />}
-									onClick={(): void => handleRemoveView('reduce_to')}
-								/>
+									<Button
+										className="close-btn periscope-btn ghost"
+										icon={<ChevronUp size={16} />}
+										onClick={(): void => handleRemoveView('reduce_to')}
+									/>
+								</div>
 							</div>
-						</div>
-					)}
+						)}
 
 					{selectedViews.find((view) => view.key === 'legend_format') && (
 						<div className="add-on-content" data-testid="legend-format-content">

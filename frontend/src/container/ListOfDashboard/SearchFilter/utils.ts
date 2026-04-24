@@ -125,7 +125,7 @@ export function OptionsValueResolution(
 						? {
 								name: searchItem.data.description,
 								value: searchItem.data.description,
-						  }
+							}
 						: null,
 				).filter(Boolean),
 				(prev, next) => prev?.name === next?.name,

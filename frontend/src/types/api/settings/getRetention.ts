@@ -30,7 +30,7 @@ export type Props = TTTLType;
 export type PayloadProps<T> = T extends 'metrics'
 	? PayloadPropsMetrics
 	: T extends 'traces'
-	? PayloadPropsTraces
-	: T extends 'logs'
-	? PayloadPropsLogs
-	: never;
+		? PayloadPropsTraces
+		: T extends 'logs'
+			? PayloadPropsLogs
+			: never;

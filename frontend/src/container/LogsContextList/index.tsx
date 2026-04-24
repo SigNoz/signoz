@@ -50,17 +50,18 @@ function LogsContextList({
 	const lastLog = useMemo(() => logs[logs.length - 1], [logs]);
 	const orderByTimestamp = useMemo(() => getOrderByTimestamp(order), [order]);
 
-	const logsMorePageSize = useMemo(() => (page - 1) * LOGS_MORE_PAGE_SIZE, [
-		page,
-	]);
+	const logsMorePageSize = useMemo(
+		() => (page - 1) * LOGS_MORE_PAGE_SIZE,
+		[page],
+	);
 	const pageSize = useMemo(
 		() => (page <= 1 ? INITIAL_PAGE_SIZE : logsMorePageSize + INITIAL_PAGE_SIZE),
 		[page, logsMorePageSize],
 	);
-	const isDisabledFetch = useMemo(() => logs.length < pageSize, [
-		logs.length,
-		pageSize,
-	]);
+	const isDisabledFetch = useMemo(
+		() => logs.length < pageSize,
+		[logs.length, pageSize],
+	);
 
 	const currentStagedQueryData = useMemo(() => {
 		if (!query || query.builder.queryData.length !== 1) {

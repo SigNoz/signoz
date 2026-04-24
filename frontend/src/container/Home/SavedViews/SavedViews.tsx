@@ -54,17 +54,20 @@ export default function SavedViews({
 		isError: metricsViewsError,
 	} = useGetAllViews(DataSource.METRICS);
 
-	const logsViews = useMemo(() => [...(logsViewsData?.data.data || [])], [
-		logsViewsData,
-	]);
+	const logsViews = useMemo(
+		() => [...(logsViewsData?.data.data || [])],
+		[logsViewsData],
+	);
 
-	const tracesViews = useMemo(() => [...(tracesViewsData?.data.data || [])], [
-		tracesViewsData,
-	]);
+	const tracesViews = useMemo(
+		() => [...(tracesViewsData?.data.data || [])],
+		[tracesViewsData],
+	);
 
-	const metricsViews = useMemo(() => [...(metricsViewsData?.data.data || [])], [
-		metricsViewsData,
-	]);
+	const metricsViews = useMemo(
+		() => [...(metricsViewsData?.data.data || [])],
+		[metricsViewsData],
+	);
 
 	useEffect(() => {
 		if (selectedEntity === 'logs') {

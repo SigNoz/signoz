@@ -54,8 +54,8 @@ export function renderTanStackTable<T = TestRow>(
 	const { props = {}, queryParams, onUrlUpdate } = options;
 
 	const mergedProps = {
-		data: (defaultData as unknown) as T[],
-		columns: (defaultColumns as unknown) as TableColumnDef<T>[],
+		data: defaultData as unknown as T[],
+		columns: defaultColumns as unknown as TableColumnDef<T>[],
 		...props,
 	} as TanStackTableProps<T>;
 

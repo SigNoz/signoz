@@ -69,15 +69,15 @@ beforeEach(() => {
 	window.open = jest.fn();
 
 	// Mock useDashboardStore
-	mockUseDashboard.mockReturnValue(({
+	mockUseDashboard.mockReturnValue({
 		dashboardData: mockDashboardData,
-	} as unknown) as ReturnType<typeof useDashboardStore>);
+	} as unknown as ReturnType<typeof useDashboardStore>);
 
 	// Mock useCopyToClipboard
-	mockUseCopyToClipboard.mockReturnValue(([
+	mockUseCopyToClipboard.mockReturnValue([
 		undefined,
 		mockSetCopyPublicDashboardURL,
-	] as unknown) as ReturnType<typeof useCopyToClipboard>);
+	] as unknown as ReturnType<typeof useCopyToClipboard>);
 });
 
 afterEach(() => {

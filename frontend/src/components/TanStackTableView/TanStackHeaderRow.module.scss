@@ -104,7 +104,9 @@
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
-	transition: background-color 120ms ease, color 120ms ease;
+	transition:
+		background-color 120ms ease,
+		color 120ms ease;
 
 	&:hover {
 		background: var(--l2-background-hover);
@@ -147,7 +149,9 @@
 	transform: translateX(-50%);
 	opacity: 1;
 	pointer-events: none;
-	transition: background 120ms ease, width 120ms ease;
+	transition:
+		background 120ms ease,
+		width 120ms ease;
 	background: transparent;
 }
 

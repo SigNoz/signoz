@@ -47,23 +47,16 @@ export function useDashboardBootstrap(
 		(state) => state.globalTime,
 	);
 
-	const {
-		setDashboardData,
-		setLayouts,
-		setPanelMap,
-		resetDashboardStore,
-	} = useDashboardStore();
+	const { setDashboardData, setLayouts, setPanelMap, resetDashboardStore } =
+		useDashboardStore();
 
 	const dashboardRef = useRef<Dashboard>();
 	const modalRef = useRef<ReturnType<typeof Modal.confirm>>();
 
 	const isVisible = useTabVisibility();
 
-	const {
-		getUrlVariables,
-		updateUrlVariable,
-		transformDashboardVariables,
-	} = useTransformDashboardVariables(dashboardId);
+	const { getUrlVariables, updateUrlVariable, transformDashboardVariables } =
+		useTransformDashboardVariables(dashboardId);
 
 	// Keep the external variables store in sync with dashboardData
 	useDashboardVariablesSync(dashboardId);

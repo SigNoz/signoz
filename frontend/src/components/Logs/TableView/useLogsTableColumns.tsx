@@ -75,10 +75,10 @@ export function useLogsTableColumns({
 								: formatTimezoneAdjustedTimestamp(
 										ts / 1e6,
 										DATE_TIME_FORMATS.ISO_DATETIME_MS,
-								  );
+									);
 						return <TanStackTable.Text>{formatted}</TanStackTable.Text>;
 					},
-			  }
+				}
 			: null;
 
 		const bodyCol: TableColumnDef<ILog> | null = fields.some(
@@ -100,7 +100,7 @@ export function useLogsTableColumns({
 							data-active={isActive}
 						/>
 					),
-			  }
+				}
 			: null;
 
 		return [

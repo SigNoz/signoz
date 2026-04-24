@@ -74,11 +74,11 @@ function createTooltipContent(
 }
 
 function createUPlotInstance(cursorIdx: number | null): uPlot {
-	return ({
+	return {
 		data: [[1], []],
 		cursor: { idx: cursorIdx },
 		// The rest of the uPlot fields are not used by Tooltip
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {

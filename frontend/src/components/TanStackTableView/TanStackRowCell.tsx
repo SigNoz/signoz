@@ -85,4 +85,5 @@ const TanStackRowCellMemo = memo(
 
 TanStackRowCellMemo.displayName = 'TanStackRowCell';
 
-export const TanStackRowCell = TanStackRowCellMemo as typeof TanStackRowCellInner;
+export const TanStackRowCell =
+	TanStackRowCellMemo as typeof TanStackRowCellInner;

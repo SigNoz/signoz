@@ -127,9 +127,8 @@ function FormAlertRules({
 		handleSetConfig,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const { matchType, op, target, targetUnit } = usePrefillAlertConditions(
-		stagedQuery,
-	);
+	const { matchType, op, target, targetUnit } =
+		usePrefillAlertConditions(stagedQuery);
 
 	useEffect(() => {
 		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
@@ -172,9 +171,10 @@ function FormAlertRules({
 	}, [currentQuery.unit]);
 
 	// initQuery contains initial query when component was mounted
-	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
-		initialValue,
-	]);
+	const initQuery = useMemo(
+		() => initialValue.condition.compositeQuery,
+		[initialValue],
+	);
 
 	const queryOptions = useMemo(() => {
 		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
@@ -808,9 +808,10 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
 
 	// Only update automatically when creating a new metrics-based alert rule
 	const shouldUpdateYAxisUnit = useMemo(() => {

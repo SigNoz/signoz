@@ -42,9 +42,10 @@ function DataSourceInfo({
 		[hostsData],
 	);
 
-	const url = useMemo(() => activeHost?.url?.split('://')[1] ?? '', [
-		activeHost,
-	]);
+	const url = useMemo(
+		() => activeHost?.url?.split('://')[1] ?? '',
+		[activeHost],
+	);
 
 	const handleConnect = (): void => {
 		logEvent('Homepage: Connect dataSource clicked', {});
