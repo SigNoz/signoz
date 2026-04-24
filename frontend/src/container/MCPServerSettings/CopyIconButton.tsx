@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button, Tooltip, TooltipProvider } from '@signozhq/ui';
-import { Copy } from 'lucide-react';
+import { Copy } from '@signozhq/icons';
 import './CopyIconButton.styles.scss';
 
 interface CopyIconButtonProps {

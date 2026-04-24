@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Tabs } from '@signozhq/ui';
 import LearnMore from 'components/LearnMore/LearnMore';
-import { Download } from 'lucide-react';
+import { Download } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 import CopyIconButton from '../CopyIconButton';
 import { docsUrl, MCP_CLIENTS, McpClient } from '../clients';

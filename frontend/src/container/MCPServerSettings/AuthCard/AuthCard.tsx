@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Badge, Button } from '@signozhq/ui';
-import { Info, KeyRound } from 'lucide-react';
+import { Info, KeyRound } from '@signozhq/icons';
 import CopyIconButton from '../CopyIconButton';
 
 import './AuthCard.styles.scss';

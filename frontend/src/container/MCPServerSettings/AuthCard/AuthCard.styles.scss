@@ -43,7 +43,7 @@
 		gap: var(--spacing-2);
 		padding: var(--padding-2) var(--padding-3);
 		border: 1px solid var(--l3-border);
-		border-radius: 0.375rem;
+		border-radius: 6px;
 		background: var(--l3-background);
 		font-family: var(--font-family-sf-mono, monospace);
 		font-size: var(--paragraph-base-400-font-size);
@@ -70,14 +70,14 @@
 		align-items: flex-start;
 		gap: var(--spacing-2);
 		padding: var(--padding-2) var(--padding-3);
-		border-left: 0.1875rem solid var(--bg-robin-400);
+		border-left: 3px solid var(--bg-robin-400);
 		background: var(--l3-background);
-		border-radius: 0.25rem;
+		border-radius: 4px;
 
 		svg {
 			flex-shrink: 0;
 			color: var(--bg-robin-400);
-			margin-top: 0.125rem;
+			margin-top: 2px;
 		}
 	}
 }
