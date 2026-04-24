@@ -9,6 +9,7 @@ import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 
 import Styles from './TooltipList.module.scss';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 // Fallback per-item height before Virtuoso reports the real total.
 const TOOLTIP_ITEM_HEIGHT = 38;
@@ -39,7 +40,7 @@ export default function TooltipList({
 	const handleScroll = useCallback(() => {
 		if (!isScrollEventTriggered.current) {
 			logEvent(Events.TOOLTIP_CONTENT_SCROLLED, {
-				path: window.location.pathname,
+				path: getAbsoluteUrl(window.location.pathname),
 			});
 			isScrollEventTriggered.current = true;
 		}

@@ -7,6 +7,7 @@ import Styles from './TooltipFooter.module.scss';
 import { MousePointerClick } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 interface TooltipFooterProps {
 	pinKey?: string;
@@ -21,7 +22,7 @@ export default function TooltipFooter({
 }: TooltipFooterProps): JSX.Element {
 	const handleUnpinClick = (): void => {
 		logEvent(Events.TOOLTIP_UNPINNED, {
-			path: window.location.pathname,
+			path: getAbsoluteUrl(window.location.pathname),
 		});
 		dismiss();
 	};

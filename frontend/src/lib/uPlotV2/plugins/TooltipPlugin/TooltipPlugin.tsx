@@ -32,6 +32,7 @@ import {
 import { Events } from 'constants/events';
 
 import Styles from './TooltipPlugin.module.scss';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
@@ -298,6 +299,9 @@ export default function TooltipPlugin({
 			// Escape: release-only (never toggles on).
 			if (event.key === 'Escape') {
 				if (controller.pinned) {
+					logEvent(Events.TOOLTIP_UNPINNED, {
+						path: getAbsoluteUrl(window.location.pathname),
+					});
 					dismissTooltip();
 				}
 				return;
@@ -309,6 +313,9 @@ export default function TooltipPlugin({
 
 			// Toggle off: P pressed while already pinned.
 			if (controller.pinned) {
+				logEvent(Events.TOOLTIP_UNPINNED, {
+					path: getAbsoluteUrl(window.location.pathname),
+				});
 				dismissTooltip();
 				return;
 			}
@@ -341,7 +348,7 @@ export default function TooltipPlugin({
 			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;
 			logEvent(Events.TOOLTIP_PINNED, {
-				path: window.location.pathname,
+				path: getAbsoluteUrl(window.location.pathname),
 			});
 			scheduleRender(true);
 		};
