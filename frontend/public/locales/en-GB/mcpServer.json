@@ -2,8 +2,8 @@
 	"page_title": "SigNoz MCP Server",
 	"page_subtitle": "Connect AI assistants like Claude, Cursor, VS Code, and Codex to your SigNoz data via the Model Context Protocol. Authenticate from your MCP client with a service-account API key.",
 
-	"fallback_title": "MCP Server is available on SigNoz Cloud",
-	"fallback_body": "This in-product setup guide is for SigNoz Cloud. Self-hosted users can follow the docs to run the MCP server against their instance.",
+	"fallback_title": "MCP Server is available on SigNoz",
+	"fallback_body": "Users can follow the docs to setup the MCP server against their SigNoz instance.",
 	"fallback_docs_link": "View MCP Server docs",
 
 	"region_warning_prefix": "We couldn't detect your Cloud region from this URL. Find it at ",

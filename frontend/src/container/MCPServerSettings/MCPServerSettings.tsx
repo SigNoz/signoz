@@ -11,8 +11,10 @@ import { USER_ROLES } from 'types/roles';
 import { getBaseUrl } from 'utils/basePath';
 
 import { Badge, toast } from '@signozhq/ui';
+import Spinner from 'components/Spinner';
 import AuthCard from './AuthCard/AuthCard';
 import ClientTabs from './ClientTabs/ClientTabs';
+import NotCloudFallback from './NotCloudFallback/NotCloudFallback';
 import UseCasesCard from './UseCasesCard/UseCasesCard';
 import { MCP_CLIENTS } from './clients';
 
@@ -36,7 +38,7 @@ function MCPServerSettings(): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const instanceUrl = getBaseUrl();
 
-	const { data: globalConfig } = useGetGlobalConfig();
+	const { data: globalConfig, isLoading: isConfigLoading } = useGetGlobalConfig();
 	const endpoint = globalConfig?.data?.mcp_url ?? '';
 
 	const [activeTab, setActiveTab] = useState<string>(MCP_CLIENTS[0]?.key ?? '');
@@ -86,6 +88,14 @@ function MCPServerSettings(): JSX.Element {
 		setActiveTab(key);
 		void logEvent(ANALYTICS.CLIENT_TAB_SELECTED, { client: key });
 	}, []);
+
+	if (isConfigLoading) {
+		return <Spinner tip="Loading..." height="70vh" />;
+	}
+
+	if (!endpoint) {
+		return <NotCloudFallback />;
+	}
 
 	return (
 		<div className="mcp-settings" data-testid="mcp-settings">

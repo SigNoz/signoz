@@ -28,7 +28,6 @@ export const getRoutes = (
 	isCloudUser: boolean,
 	isEnterpriseSelfHostedUser: boolean,
 	t: TFunction,
-	mcpUrl?: string | null,
 ): RouteTabProps['routes'] => {
 	const settings = [];
 
@@ -81,11 +80,8 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...mcpServerSettings(t)
 	);
-
-	if (mcpUrl) {
-		settings.push(...mcpServerSettings(t));
-	}
 
 	return settings;
 };

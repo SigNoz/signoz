@@ -47,6 +47,13 @@ export const MCP_CLIENTS: McpClient[] = [
 		installLabelKey: 'client_cursor_install_label',
 	},
 	{
+		key: 'claude-code',
+		label: 'Claude Code',
+		docsPath: '/docs/ai/signoz-mcp-server/#claude-code',
+		snippet: (endpoint): string =>
+			`claude mcp add --scope user --transport http signoz ${endpoint}`,
+	},
+	{
 		key: 'vscode',
 		label: 'VS Code',
 		docsPath: '/docs/ai/signoz-mcp-server/#vs-code',
@@ -80,13 +87,6 @@ export const MCP_CLIENTS: McpClient[] = [
 		docsPath: '/docs/ai/signoz-mcp-server/#claude-desktop',
 		snippet: null,
 		instructionsKey: 'client_claude_desktop_instructions',
-	},
-	{
-		key: 'claude-code',
-		label: 'Claude Code',
-		docsPath: '/docs/ai/signoz-mcp-server/#claude-code',
-		snippet: (endpoint): string =>
-			`claude mcp add --scope user --transport http signoz ${endpoint}`,
 	},
 	{
 		key: 'codex',

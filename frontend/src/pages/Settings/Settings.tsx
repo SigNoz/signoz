@@ -190,7 +190,6 @@ function SettingsPage(): JSX.Element {
 				isCloudUser,
 				isEnterpriseSelfHostedUser,
 				t,
-				mcpUrl,
 			),
 		[
 			user.role,
@@ -200,7 +199,6 @@ function SettingsPage(): JSX.Element {
 			isCloudUser,
 			isEnterpriseSelfHostedUser,
 			t,
-			mcpUrl,
 		],
 	);
 
