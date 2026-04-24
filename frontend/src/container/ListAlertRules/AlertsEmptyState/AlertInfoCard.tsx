@@ -1,5 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { openInNewTab } from 'utils/navigation';
 
 interface AlertInfoCardProps {
 	header: string;
@@ -19,7 +20,7 @@ function AlertInfoCard({
 			className="alert-info-card"
 			onClick={(): void => {
 				onClick();
-				window.open(link, '_blank');
+				openInNewTab(link);
 			}}
 		>
 			<div className="alert-card-text">

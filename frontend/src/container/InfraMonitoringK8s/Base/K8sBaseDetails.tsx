@@ -51,6 +51,7 @@ import {
 	LogsAggregatorOperator,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
+import { openInNewTab } from 'utils/navigation';
 import { v4 as uuidv4 } from 'uuid';
 
 import { filterDuplicateFilters } from '../commonUtils';
@@ -563,10 +564,7 @@ function K8sBaseDetails<T>({
 
 			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
 
-			window.open(
-				`${window.location.origin}${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`,
-				'_blank',
-			);
+			openInNewTab(`${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`);
 		} else if (selectedView === VIEW_TYPES.TRACES) {
 			const compositeQuery = {
 				...initialQueryState,
@@ -585,10 +583,7 @@ function K8sBaseDetails<T>({
 
 			urlQuery.set('compositeQuery', JSON.stringify(compositeQuery));
 
-			window.open(
-				`${window.location.origin}${ROUTES.TRACES_EXPLORER}?${urlQuery.toString()}`,
-				'_blank',
-			);
+			openInNewTab(`${ROUTES.TRACES_EXPLORER}?${urlQuery.toString()}`);
 		}
 	};
 

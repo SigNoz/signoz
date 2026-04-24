@@ -55,6 +55,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
+import { openInNewTab } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -777,7 +778,7 @@ function FormAlertRules({
 				queryType: currentQuery.queryType,
 				link: url,
 			});
-			window.open(url, '_blank');
+			openInNewTab(url);
 		}
 	}
 

@@ -211,6 +211,7 @@ function Login(): JSX.Element {
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
 
+				// oxlint-disable-next-line signoz/no-raw-absolute-path
 				window.location.href = url;
 			}
 		} catch (error) {
@@ -326,7 +327,6 @@ function Login(): JSX.Element {
 								data-testid="email"
 								required
 								placeholder="e.g. john@signoz.io"
-								autoFocus
 								disabled={versionLoading}
 								className="login-form-input"
 								onPressEnter={onNextHandler}

@@ -31,6 +31,7 @@ import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
@@ -322,7 +323,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			updateCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		} else {
 			logEvent('Billing : Manage Billing', {
@@ -331,7 +332,7 @@ export default function BillingContainer(): JSX.Element {
 			});
 
 			manageCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps

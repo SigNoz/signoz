@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -37,7 +38,7 @@ const getTracesUpdaterConfig = (
 			});
 
 			const local = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.TRACES_LIST_OPTIONS) || '{}',
+				getLocalStorageKey(LOCALSTORAGE.TRACES_LIST_OPTIONS) || '{}',
 			);
 			local.selectColumns = newColumns;
 			setLocalStorageKey(LOCALSTORAGE.TRACES_LIST_OPTIONS, JSON.stringify(local));

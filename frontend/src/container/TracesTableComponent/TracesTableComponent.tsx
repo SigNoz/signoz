@@ -28,6 +28,7 @@ import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { openInNewTab } from 'utils/navigation';
 
 import './TracesTableComponent.styles.scss';
 
@@ -87,7 +88,7 @@ function TracesTableComponent({
 				event.preventDefault();
 				event.stopPropagation();
 				if (event.metaKey || event.ctrlKey) {
-					window.open(getTraceLink(record), '_blank');
+					openInNewTab(getTraceLink(record));
 				} else {
 					history.push(getTraceLink(record));
 				}

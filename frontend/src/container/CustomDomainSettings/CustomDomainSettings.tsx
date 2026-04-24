@@ -46,6 +46,7 @@ function DomainUpdateToast({
 					className="custom-domain-toast-visit-btn"
 					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
+						// oxlint-disable-next-line signoz/no-raw-absolute-path
 						window.open(url, '_blank', 'noopener,noreferrer');
 					}}
 				>
@@ -133,7 +134,7 @@ export default function CustomDomainSettings(): JSX.Element {
 			{
 				onSuccess: () => {
 					setIsPollingEnabled(true);
-					refetchHosts();
+					void refetchHosts();
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
 					const newUrl = `https://${subdomain}.${dnsSuffix}`;

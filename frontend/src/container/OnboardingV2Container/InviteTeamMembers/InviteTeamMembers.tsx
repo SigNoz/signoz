@@ -8,6 +8,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
 import { ArrowRight, CheckCircle, Plus, TriangleAlert, X } from 'lucide-react';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
 
 import './InviteTeamMembers.styles.scss';
@@ -56,7 +57,7 @@ function InviteTeamMembers({
 		email: '',
 		role: 'EDITOR',
 		name: '',
-		frontendBaseUrl: window.location.origin,
+		frontendBaseUrl: getBaseUrl(),
 		id: '',
 	};
 

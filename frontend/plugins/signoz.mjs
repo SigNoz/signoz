@@ -8,6 +8,7 @@
 import noZustandGetStateInHooks from './rules/no-zustand-getstate-in-hooks.mjs';
 import noNavigatorClipboard from './rules/no-navigator-clipboard.mjs';
 import noUnsupportedAssetPattern from './rules/no-unsupported-asset-pattern.mjs';
+import noRawAbsolutePath from './rules/no-raw-absolute-path.mjs';
 
 export default {
 	meta: {
@@ -17,5 +18,6 @@ export default {
 		'no-zustand-getstate-in-hooks': noZustandGetStateInHooks,
 		'no-navigator-clipboard': noNavigatorClipboard,
 		'no-unsupported-asset-pattern': noUnsupportedAssetPattern,
+		'no-raw-absolute-path': noRawAbsolutePath,
 	},
 };

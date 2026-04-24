@@ -668,8 +668,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
       type: object
     CloudintegrationtypesAgentReport:
       nullable: true
@@ -692,6 +692,90 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesDashboard'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesAzureAccountConfig:
+      properties:
+        deploymentRegion:
+          type: string
+        resourceGroups:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentRegion
+      - resourceGroups
+      type: object
+    CloudintegrationtypesAzureConnectionArtifact:
+      properties:
+        cliCommand:
+          type: string
+        cloudPowerShellCommand:
+          type: string
+      required:
+      - cliCommand
+      - cloudPowerShellCommand
+      type: object
+    CloudintegrationtypesAzureIntegrationConfig:
+      properties:
+        deploymentRegion:
+          type: string
+        resourceGroups:
+          items:
+            type: string
+          type: array
+        telemetryCollectionStrategy:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
+          type: array
+      required:
+      - deploymentRegion
+      - resourceGroups
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesAzureLogsCollectionStrategy:
+      properties:
+        categoryGroups:
+          items:
+            type: string
+          type: array
+      required:
+      - categoryGroups
+      type: object
+    CloudintegrationtypesAzureMetricsCollectionStrategy:
+      type: object
+    CloudintegrationtypesAzureServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceMetricsConfig'
+      required:
+      - logs
+      - metrics
+      type: object
+    CloudintegrationtypesAzureServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAzureServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAzureTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureMetricsCollectionStrategy'
+        resourceProvider:
+          type: string
+        resourceType:
+          type: string
+      required:
+      - resourceProvider
+      - resourceType
       type: object
     CloudintegrationtypesCloudIntegrationService:
       nullable: true
@@ -737,8 +821,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureConnectionArtifact'
       type: object
     CloudintegrationtypesCredentials:
       properties:
@@ -910,8 +994,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSPostableAccountConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureAccountConfig'
       type: object
     CloudintegrationtypesPostableAgentCheckIn:
       properties:
@@ -934,8 +1018,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureIntegrationConfig'
       type: object
     CloudintegrationtypesService:
       properties:
@@ -972,8 +1056,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureServiceConfig'
       type: object
     CloudintegrationtypesServiceID:
       enum:
@@ -990,6 +1074,8 @@ components:
       - s3sync
       - sns
       - sqs
+      - storageaccountsblob
+      - cdnprofile
       type: string
     CloudintegrationtypesServiceMetadata:
       properties:
@@ -1018,15 +1104,31 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
-      required:
-      - aws
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesAzureTelemetryCollectionStrategy'
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
         config:
-          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableAccountConfig'
       required:
       - config
+      type: object
+    CloudintegrationtypesUpdatableAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
+        azure:
+          $ref: '#/components/schemas/CloudintegrationtypesUpdatableAzureAccountConfig'
+      type: object
+    CloudintegrationtypesUpdatableAzureAccountConfig:
+      properties:
+        resourceGroups:
+          items:
+            type: string
+          type: array
+      required:
+      - resourceGroups
       type: object
     CloudintegrationtypesUpdatableService:
       properties:
@@ -2267,6 +2369,13 @@ components:
           $ref: '#/components/schemas/GlobaltypesIdentNConfig'
         ingestion_url:
           type: string
+        mcp_url:
+          nullable: true
+          type: string
+      required:
+      - external_url
+      - ingestion_url
+      - mcp_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
@@ -4479,6 +4588,140 @@ components:
     TimeDuration:
       format: int64
       type: integer
+    TracedetailtypesEvent:
+      properties:
+        attributeMap:
+          additionalProperties: {}
+          type: object
+        isError:
+          type: boolean
+        name:
+          type: string
+        timeUnixNano:
+          minimum: 0
+          type: integer
+      type: object
+    TracedetailtypesGettableWaterfallTrace:
+      properties:
+        endTimestampMillis:
+          minimum: 0
+          type: integer
+        hasMissingSpans:
+          type: boolean
+        hasMore:
+          type: boolean
+        rootServiceEntryPoint:
+          type: string
+        rootServiceName:
+          type: string
+        serviceNameToTotalDurationMap:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+        spans:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesWaterfallSpan'
+          nullable: true
+          type: array
+        startTimestampMillis:
+          minimum: 0
+          type: integer
+        totalErrorSpansCount:
+          minimum: 0
+          type: integer
+        totalSpansCount:
+          minimum: 0
+          type: integer
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    TracedetailtypesPostableWaterfall:
+      properties:
+        limit:
+          minimum: 0
+          type: integer
+        selectedSpanId:
+          type: string
+        uncollapsedSpans:
+          items:
+            type: string
+          nullable: true
+          type: array
+      type: object
+    TracedetailtypesWaterfallSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        db_name:
+          type: string
+        db_operation:
+          type: string
+        duration_nano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesEvent'
+          nullable: true
+          type: array
+        external_http_method:
+          type: string
+        external_http_url:
+          type: string
+        flags:
+          minimum: 0
+          type: integer
+        has_children:
+          type: boolean
+        has_error:
+          type: boolean
+        http_host:
+          type: string
+        http_method:
+          type: string
+        http_url:
+          type: string
+        is_remote:
+          type: string
+        kind_string:
+          type: string
+        level:
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        parent_span_id:
+          type: string
+        resource:
+          additionalProperties:
+            type: string
+          nullable: true
+          type: object
+        response_status_code:
+          type: string
+        span_id:
+          type: string
+        status_code:
+          type: integer
+        status_code_string:
+          type: string
+        status_message:
+          type: string
+        sub_tree_node_count:
+          minimum: 0
+          type: integer
+        trace_id:
+          type: string
+        trace_state:
+          type: string
+      type: object
     TypesAlertStatus:
       properties:
         inhibitedBy:
@@ -15893,6 +16136,76 @@ paths:
       summary: Put profile in Zeus for a deployment.
       tags:
       - zeus
+  /api/v3/traces/{traceID}/waterfall:
+    post:
+      deprecated: false
+      description: Returns the waterfall view of spans for a given trace ID with tree
+        structure, metadata, and windowed pagination
+      operationId: GetWaterfall
+      parameters:
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TracedetailtypesPostableWaterfall'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TracedetailtypesGettableWaterfallTrace'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get waterfall view for a trace
+      tags:
+      - tracedetail
   /api/v5/query_range:
     post:
       deprecated: false
