@@ -192,7 +192,8 @@ const onboardingConfigWithLinks = [
 			'setup',
 		],
 		imgUrl: signozBrandLogoUrl,
-		link: '/docs/ai/signoz-mcp-server/',
+		link: '/settings/mcp-server',
+		internalRedirect: true,
 	},
 	{
 		dataSource: 'migrate-from-datadog',
