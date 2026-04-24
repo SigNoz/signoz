@@ -1,0 +1,7 @@
+name: Workflow Sanity
+on:
+  pull_request:
+    paths: ['.github/workflows/**']
+jobs:
+  sanity:
+    uses: hanzoai/.github/.github/workflows/workflow-sanity.yml@main

@@ -186,6 +186,10 @@ func (s Server) HealthCheckStatus() chan healthcheck.Status {
 func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server, error) {
 	r := NewRouter()
 
+	// Rewrite /v1/o11y/* to /api/* so external clients use the
+	// /<version>/<service>/<path> convention while internal routes stay unchanged.
+	r.Use(middleware.NewRewrite("/v1/o11y", "/api").Wrap)
+
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.o11y.Instrumentation.MeterProvider()),
