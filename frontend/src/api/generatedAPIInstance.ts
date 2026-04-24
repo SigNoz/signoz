@@ -20,6 +20,7 @@ export const GeneratedAPIInstance = <T>(
 
 generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
+generatedAPIAxiosInstance.interceptors.request.use(interceptorsRequestBasePath);
 generatedAPIAxiosInstance.interceptors.response.use(
 	interceptorsResponse,
 	interceptorRejected,

@@ -36,10 +36,11 @@ function LeftContainer({
 	const { stagedQuery } = useQueryBuilder();
 	const queryClient = useQueryClient();
 
-	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedInterval,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const queryRangeKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,

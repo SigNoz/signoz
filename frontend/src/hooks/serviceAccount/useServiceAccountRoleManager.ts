@@ -35,9 +35,10 @@ export function useServiceAccountRoleManager(
 
 	const { data, isLoading } = useGetServiceAccountRoles({ id: accountId });
 
-	const currentRoles = useMemo<AuthtypesRoleDTO[]>(() => data?.data ?? [], [
-		data?.data,
-	]);
+	const currentRoles = useMemo<AuthtypesRoleDTO[]>(
+		() => data?.data ?? [],
+		[data?.data],
+	);
 
 	// the retry for these mutations is safe due to being idempotent on backend
 	const { mutateAsync: createRole } = useCreateServiceAccountRole({

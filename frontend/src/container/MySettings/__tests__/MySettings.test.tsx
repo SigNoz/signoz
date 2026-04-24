@@ -176,10 +176,10 @@ describe('MySettings Flows', () => {
 				screen.getByText((content, element) =>
 					Boolean(
 						element &&
-							'className' in element &&
-							typeof element.className === 'string' &&
-							element.className.includes('title') &&
-							content === RESET_PASSWORD_BUTTON_TEXT,
+						'className' in element &&
+						typeof element.className === 'string' &&
+						element.className.includes('title') &&
+						content === RESET_PASSWORD_BUTTON_TEXT,
 					),
 				),
 			).toBeInTheDocument();

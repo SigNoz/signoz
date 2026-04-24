@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -48,7 +49,7 @@ const getLogsUpdaterConfig = (
 
 			// Also update local storage
 			const local = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
+				getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
 			);
 			local.selectColumns = newColumns;
 			setLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS, JSON.stringify(local));
@@ -76,7 +77,7 @@ const getLogsUpdaterConfig = (
 
 			// Also update local storage
 			const local = JSON.parse(
-				localStorage.getItem(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
+				getLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS) || '{}',
 			);
 			Object.assign(local, newFormatting);
 			setLocalStorageKey(LOCALSTORAGE.LOGS_LIST_OPTIONS, JSON.stringify(local));

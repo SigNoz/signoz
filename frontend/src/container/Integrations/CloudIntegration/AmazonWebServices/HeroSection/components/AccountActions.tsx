@@ -122,7 +122,7 @@ function AccountActions(): JSX.Element {
 		() =>
 			accounts?.length
 				? getAccountById(accounts, urlQuery.get('cloudAccountId') || '') ||
-				  accounts[0]
+					accounts[0]
 				: null,
 		[accounts, urlQuery],
 	);
@@ -154,9 +154,8 @@ function AccountActions(): JSX.Element {
 		logEvent('AWS Integration: Account connection attempt started', {});
 	};
 
-	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
-		false,
-	);
+	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] =
+		useState(false);
 	const openAccountSettings = (): void => {
 		setIsAccountSettingsModalOpen(true);
 		logEvent('AWS Integration: Account settings viewed', {
@@ -181,7 +180,7 @@ function AccountActions(): JSX.Element {
 				? accounts.map((account) => ({
 						value: account.cloud_account_id,
 						label: account.providerAccountId,
-				  }))
+					}))
 				: [],
 		[accounts],
 	);

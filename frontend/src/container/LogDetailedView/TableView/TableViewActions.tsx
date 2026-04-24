@@ -356,7 +356,95 @@ export default function TableViewActions(
 					bodyHtml={bodyHtml}
 					textToCopy={textToCopy}
 				/>
-				{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
+				{!isListViewPanel &&
+					!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
+						<span className="action-btn">
+							<Tooltip title="Filter for value" mouseLeaveDelay={0}>
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterInLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(
+										OPERATORS['='],
+										fieldFilterKey,
+										parseFieldValue(fieldData.value),
+										dataType,
+										fieldType,
+									)}
+								/>
+							</Tooltip>
+							<Tooltip title="Filter out value" mouseLeaveDelay={0}>
+								<Button
+									className="filter-btn periscope-btn"
+									icon={
+										isfilterOutLoading ? (
+											<Spin size="small" />
+										) : (
+											<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
+										)
+									}
+									onClick={onClickHandler(
+										OPERATORS['!='],
+										fieldFilterKey,
+										parseFieldValue(fieldData.value),
+										dataType,
+										fieldType,
+									)}
+								/>
+							</Tooltip>
+							{!isOldLogsExplorerOrLiveLogsPage && (
+								<Popover
+									open={isOpen}
+									onOpenChange={setIsOpen}
+									arrow={false}
+									content={
+										<div data-log-detail-ignore="true">
+											<Button
+												className="more-filter-actions"
+												type="text"
+												icon={<GroupByIcon />}
+												onClick={handleGroupByAttribute}
+											>
+												Group By Attribute
+											</Button>
+											<Button
+												className="more-filter-actions"
+												type="text"
+												icon={<RefreshCw size={14} />}
+												onClick={handleReplaceFilter}
+											>
+												Replace filters with this value
+											</Button>
+										</div>
+									}
+									rootClassName="table-view-actions-content"
+									trigger="hover"
+									placement="bottomLeft"
+								>
+									<Button
+										icon={<Ellipsis size={14} />}
+										className="filter-btn periscope-btn"
+									/>
+								</Popover>
+							)}
+						</span>
+					)}
+			</div>
+		);
+	}
+
+	return (
+		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
+			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
+				{renderFieldContent()}
+			</CopyClipboardHOC>
+			{!isListViewPanel &&
+				!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
 					<span className="action-btn">
 						<Tooltip title="Filter for value" mouseLeaveDelay={0}>
 							<Button
@@ -433,92 +521,6 @@ export default function TableViewActions(
 						)}
 					</span>
 				)}
-			</div>
-		);
-	}
-
-	return (
-		<div className={cx('value-field', isOpen ? 'open-popover' : '')}>
-			<CopyClipboardHOC entityKey={fieldFilterKey} textToCopy={textToCopy}>
-				{renderFieldContent()}
-			</CopyClipboardHOC>
-			{!isListViewPanel && !RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
-				<span className="action-btn">
-					<Tooltip title="Filter for value" mouseLeaveDelay={0}>
-						<Button
-							className="filter-btn periscope-btn"
-							icon={
-								isfilterInLoading ? (
-									<Spin size="small" />
-								) : (
-									<ArrowDownToDot size={14} style={{ transform: 'rotate(90deg)' }} />
-								)
-							}
-							onClick={onClickHandler(
-								OPERATORS['='],
-								fieldFilterKey,
-								parseFieldValue(fieldData.value),
-								dataType,
-								fieldType,
-							)}
-						/>
-					</Tooltip>
-					<Tooltip title="Filter out value" mouseLeaveDelay={0}>
-						<Button
-							className="filter-btn periscope-btn"
-							icon={
-								isfilterOutLoading ? (
-									<Spin size="small" />
-								) : (
-									<ArrowUpFromDot size={14} style={{ transform: 'rotate(90deg)' }} />
-								)
-							}
-							onClick={onClickHandler(
-								OPERATORS['!='],
-								fieldFilterKey,
-								parseFieldValue(fieldData.value),
-								dataType,
-								fieldType,
-							)}
-						/>
-					</Tooltip>
-					{!isOldLogsExplorerOrLiveLogsPage && (
-						<Popover
-							open={isOpen}
-							onOpenChange={setIsOpen}
-							arrow={false}
-							content={
-								<div data-log-detail-ignore="true">
-									<Button
-										className="more-filter-actions"
-										type="text"
-										icon={<GroupByIcon />}
-										onClick={handleGroupByAttribute}
-									>
-										Group By Attribute
-									</Button>
-									<Button
-										className="more-filter-actions"
-										type="text"
-										icon={<RefreshCw size={14} />}
-										onClick={handleReplaceFilter}
-									>
-										Replace filters with this value
-									</Button>
-								</div>
-							}
-							rootClassName="table-view-actions-content"
-							trigger="hover"
-							placement="bottomLeft"
-						>
-							<Button
-								icon={<Ellipsis size={14} />}
-								className="filter-btn periscope-btn"
-							/>
-						</Popover>
-					)}
-				</span>
-			)}
 		</div>
 	);
 }

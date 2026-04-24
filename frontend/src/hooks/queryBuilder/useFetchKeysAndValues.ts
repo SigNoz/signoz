@@ -204,8 +204,8 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
 			} else {
@@ -218,8 +218,8 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
 			}

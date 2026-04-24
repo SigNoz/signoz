@@ -108,9 +108,8 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
-	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
-		false,
-	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] =
+		useState(false);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);

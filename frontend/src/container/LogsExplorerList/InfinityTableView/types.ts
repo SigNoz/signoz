@@ -15,7 +15,7 @@ export type InfinityTableProps = {
 	logs?: ILog[];
 	onSetActiveLog?: (
 		log: ILog,
-		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+		selectedTab?: (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES],
 	) => void;
 	onClearActiveLog?: () => void;
 	activeLog?: ILog | null;

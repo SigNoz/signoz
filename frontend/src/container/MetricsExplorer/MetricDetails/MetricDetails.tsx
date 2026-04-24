@@ -57,13 +57,8 @@ function MetricDetails({
 		if (!metricMetadataResponse) {
 			return null;
 		}
-		const {
-			type,
-			description,
-			unit,
-			temporality,
-			isMonotonic,
-		} = metricMetadataResponse.data;
+		const { type, description, unit, temporality, isMonotonic } =
+			metricMetadataResponse.data;
 
 		return {
 			type,
@@ -74,9 +69,10 @@ function MetricDetails({
 		};
 	}, [metricMetadataResponse]);
 
-	const showInspectFeature = useMemo(() => isInspectEnabled(metadata?.type), [
-		metadata?.type,
-	]);
+	const showInspectFeature = useMemo(
+		() => isInspectEnabled(metadata?.type),
+		[metadata?.type],
+	);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {

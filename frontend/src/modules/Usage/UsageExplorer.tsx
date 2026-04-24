@@ -69,13 +69,8 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const {
-		getServicesList,
-		getUsageData,
-		globalTime,
-		totalCount,
-		usageData,
-	} = props;
+	const { getServicesList, getUsageData, globalTime, totalCount, usageData } =
+		props;
 	const { services } = useSelector<AppState, MetricReducer>(
 		(state) => state.metrics,
 	);

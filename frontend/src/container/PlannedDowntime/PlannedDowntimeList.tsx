@@ -246,8 +246,8 @@ export function CustomCollapseList(
 	const scheduleTime = schedule?.startTime
 		? dayjs(schedule.startTime).toISOString()
 		: createdAt
-		? dayjs(createdAt).toISOString()
-		: '';
+			? dayjs(createdAt).toISOString()
+			: '';
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
@@ -269,7 +269,7 @@ export function CustomCollapseList(
 									: getDuration(
 											schedule?.startTime ? dayjs(schedule.startTime).toISOString() : '',
 											schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '',
-									  )
+										)
 							}
 							name={defaultTo(name, '')}
 							handleEdit={(): void => {

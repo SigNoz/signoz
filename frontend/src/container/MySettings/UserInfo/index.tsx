@@ -29,13 +29,10 @@ function UserInfo(): JSX.Element {
 		user?.displayName || '',
 	);
 
-	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] = useState<boolean>(
-		false,
-	);
-	const [
-		isResetPasswordModalOpen,
-		setIsResetPasswordModalOpen,
-	] = useState<boolean>(false);
+	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] =
+		useState<boolean>(false);
+	const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+		useState<boolean>(false);
 
 	const defaultPlaceHolder = '*************';
 

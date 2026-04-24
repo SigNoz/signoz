@@ -7,9 +7,10 @@ import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 jest.mock('hooks/dashboard/useDashboardFromLocalStorage');
 jest.mock('hooks/dashboard/useVariablesFromUrl');
 
-const mockGetLocalStorageDashboardVariables = getLocalStorageDashboardVariables as jest.MockedFunction<
-	typeof getLocalStorageDashboardVariables
->;
+const mockGetLocalStorageDashboardVariables =
+	getLocalStorageDashboardVariables as jest.MockedFunction<
+		typeof getLocalStorageDashboardVariables
+	>;
 const mockUseVariablesFromUrl = useVariablesFromUrl as jest.MockedFunction<
 	typeof useVariablesFromUrl
 >;

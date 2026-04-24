@@ -19,10 +19,10 @@ const mockGetToolTipValue = getToolTipValue as jest.MockedFunction<
 >;
 
 function createUPlotInstance(): uPlot {
-	return ({
+	return {
 		data: [],
 		cursor: { idx: 0 },
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 describe('Tooltip utils', () => {
@@ -144,7 +144,7 @@ describe('Tooltip utils', () => {
 			const data: AlignedData = [
 				[0, 1],
 				[10, 20], // series 1
-				[5, (null as unknown) as number], // series 2 missing
+				[5, null as unknown as number], // series 2 missing
 			];
 
 			const series: Series[] = [

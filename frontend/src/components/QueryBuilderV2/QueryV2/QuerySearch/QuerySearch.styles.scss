@@ -5,8 +5,14 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', sans-serif;
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		sans-serif;
 
 	.query-where-clause-editor-container {
 		position: relative;

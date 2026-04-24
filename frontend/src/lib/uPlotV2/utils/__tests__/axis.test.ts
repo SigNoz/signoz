@@ -10,27 +10,27 @@ import {
 describe('axis utils', () => {
 	describe('calculateTextWidth', () => {
 		it('returns 0 when values are undefined or empty', () => {
-			const mockSelf = ({
+			const mockSelf = {
 				ctx: {
 					measureText: jest.fn(),
 					font: '',
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			// internally the type is string but it is an array of strings
-			const mockAxis: Axis = { font: (['12px sans-serif'] as unknown) as string };
+			const mockAxis: Axis = { font: ['12px sans-serif'] as unknown as string };
 
 			expect(calculateTextWidth(mockSelf, mockAxis, undefined)).toBe(0);
 			expect(calculateTextWidth(mockSelf, mockAxis, [])).toBe(0);
 		});
 
 		it('returns 0 when longest value is empty string or axis has no usable font', () => {
-			const mockSelf = ({
+			const mockSelf = {
 				ctx: {
 					measureText: jest.fn(),
 					font: '',
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			const axisWithoutFont: Axis = { font: '' };
 			const axisWithEmptyFontArray: Axis = { font: '' };
@@ -43,18 +43,17 @@ describe('axis utils', () => {
 
 		it('measures longest value using canvas context and axis font', () => {
 			const measureText = jest.fn(() => ({ width: 100 }));
-			const mockSelf = ({
+			const mockSelf = {
 				ctx: {
 					font: '',
 					measureText,
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
-			const mockAxis: Axis = { font: (['14px Arial'] as unknown) as string };
+			const mockAxis: Axis = { font: ['14px Arial'] as unknown as string };
 			const values = ['1', '1234', '12'];
 			const dpr =
-				((global as unknown) as { devicePixelRatio?: number }).devicePixelRatio ??
-				1;
+				(global as unknown as { devicePixelRatio?: number }).devicePixelRatio ?? 1;
 
 			const result = calculateTextWidth(mockSelf, mockAxis, values);
 
@@ -72,7 +71,7 @@ describe('axis utils', () => {
 			};
 
 			const result = getExistingAxisSize({
-				uplotInstance: ({} as unknown) as uPlot,
+				uplotInstance: {} as unknown as uPlot,
 				axis,
 				axisIdx: 0,
 				cycleNum: 0,
@@ -84,7 +83,7 @@ describe('axis utils', () => {
 		it('invokes size function when _size is not set', () => {
 			const sizeFn = jest.fn(() => 24);
 			const axis: Axis = { size: sizeFn };
-			const instance = ({} as unknown) as uPlot;
+			const instance = {} as unknown as uPlot;
 
 			const result = getExistingAxisSize({
 				uplotInstance: instance,
@@ -101,7 +100,7 @@ describe('axis utils', () => {
 		it('returns numeric size or 0 when neither _size nor size are provided', () => {
 			const axisWithSize: Axis = { size: 16 };
 			const axisWithoutSize: Axis = {};
-			const instance = ({} as unknown) as uPlot;
+			const instance = {} as unknown as uPlot;
 
 			expect(
 				getExistingAxisSize({
@@ -134,13 +133,13 @@ describe('axis utils', () => {
 			};
 
 			const measureText = jest.fn(() => ({ width: 60 }));
-			const self = ({
+			const self = {
 				axes: [axis],
 				ctx: {
 					font: '',
 					measureText,
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			if (typeof sizeCalculator === 'number') {
 				throw new Error('Size calculator is a number');
@@ -158,21 +157,20 @@ describe('axis utils', () => {
 
 			const axis: Axis = {
 				ticks: { size: 12 },
-				font: (['12px sans-serif'] as unknown) as string,
+				font: ['12px sans-serif'] as unknown as string,
 			};
 
 			const measureText = jest.fn(() => ({ width: 50 }));
-			const self = ({
+			const self = {
 				axes: [axis],
 				ctx: {
 					font: '',
 					measureText,
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			const dpr =
-				((global as unknown) as { devicePixelRatio?: number }).devicePixelRatio ??
-				1;
+				(global as unknown as { devicePixelRatio?: number }).devicePixelRatio ?? 1;
 			const expected = Math.ceil(12 + gap + 50 / dpr);
 
 			if (typeof sizeCalculator === 'number') {
@@ -189,21 +187,20 @@ describe('axis utils', () => {
 			const sizeCalculator = buildYAxisSizeCalculator(gap);
 
 			const axis: Axis = {
-				font: (['12px sans-serif'] as unknown) as string,
+				font: ['12px sans-serif'] as unknown as string,
 			};
 
 			const measureText = jest.fn(() => ({ width: 40 }));
-			const self = ({
+			const self = {
 				axes: [axis],
 				ctx: {
 					font: '',
 					measureText,
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			const dpr =
-				((global as unknown) as { devicePixelRatio?: number }).devicePixelRatio ??
-				1;
+				(global as unknown as { devicePixelRatio?: number }).devicePixelRatio ?? 1;
 			const expected = Math.ceil(gap + 40 / dpr);
 
 			if (typeof sizeCalculator === 'number') {

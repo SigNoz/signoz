@@ -98,13 +98,15 @@ function PublicDashboardContainer({
 	const isTimeRangeEnabled = publicDashboard?.timeRangeEnabled || false;
 
 	// Memoize dashboardLayout to prevent array recreation on every render
-	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
-		dashboard?.data?.layout,
-	]);
+	const dashboardLayout = useMemo(
+		() => dashboard?.data?.layout || [],
+		[dashboard?.data?.layout],
+	);
 
-	const currentPanelMap = useMemo(() => dashboard?.data?.panelMap || {}, [
-		dashboard?.data?.panelMap,
-	]);
+	const currentPanelMap = useMemo(
+		() => dashboard?.data?.panelMap || {},
+		[dashboard?.data?.panelMap],
+	);
 
 	const handleTimeChange = (
 		interval: Time | CustomTimeType,

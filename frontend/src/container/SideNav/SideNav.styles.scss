@@ -19,7 +19,10 @@
 	background: var(--l1-background);
 
 	padding-bottom: 48px;
-	transition: all 0.08s ease, background 0s, border 0s;
+	transition:
+		all 0.08s ease,
+		background 0s,
+		border 0s;
 
 	.brand-container {
 		padding: 8px 15px;
@@ -295,7 +298,9 @@
 					.nav-section-title-icon {
 						display: flex;
 						align-items: center;
-						transition: opacity 0.08s ease, transform 0.08s ease;
+						transition:
+							opacity 0.08s ease,
+							transform 0.08s ease;
 
 						&.reorder {
 							display: none;
@@ -332,7 +337,10 @@
 
 					display: none;
 
-					transition: all 0.08s ease, background 0s, border 0s;
+					transition:
+						all 0.08s ease,
+						background 0s,
+						border 0s;
 					transition-delay: 0.03s;
 				}
 
@@ -456,7 +464,10 @@
 				width: 54px;
 				// width: 100%; // temp
 
-				transition: all 0.08s ease, background 0s, border 0s;
+				transition:
+					all 0.08s ease,
+					background 0s,
+					border 0s;
 
 				background: linear-gradient(
 					180deg,
@@ -573,7 +584,11 @@
 
 		color: var(--primary-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -586,7 +601,11 @@
 	.sidenav-beta-tag {
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -736,7 +755,8 @@
 						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
@@ -916,7 +936,8 @@
 						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),

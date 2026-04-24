@@ -4,10 +4,8 @@ import { Info } from 'lucide-react';
 import { useCreateAlertState } from '../context';
 
 function NotificationMessage(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 
 	// const templateVariables = [
 	// 	{ variable: '{{alertname}}', description: 'Name of the alert rule' },

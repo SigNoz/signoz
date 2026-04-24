@@ -39,9 +39,10 @@ function QuerySection(): JSX.Element {
 		redirectWithQueryBuilderData(query);
 	};
 
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
 
 	const didQueryChange = useMemo(() => {
 		if (alertType !== AlertTypes.METRICS_BASED_ALERT) {

@@ -14,9 +14,8 @@ import { getBaseUrl } from 'utils/basePath';
 export default function ChatSupportGateway(): JSX.Element {
 	const { notifications } = useNotifications();
 
-	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
-		false,
-	);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
+		useState(false);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,

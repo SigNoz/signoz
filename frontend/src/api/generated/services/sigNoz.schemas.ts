@@ -3125,12 +3125,17 @@ export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
 	 */
-	external_url?: string;
+	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;
 	/**
 	 * @type string
 	 */
-	ingestion_url?: string;
+	ingestion_url: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	mcp_url: string | null;
 }
 
 export interface GlobaltypesIdentNConfigDTO {
@@ -5559,6 +5564,237 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 
 export type TimeDurationDTO = number;
 
+export type TracedetailtypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface TracedetailtypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: TracedetailtypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
+	{ [key: string]: number } | null;
+
+export interface TracedetailtypesGettableWaterfallTraceDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	spans?: TracedetailtypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface TracedetailtypesPostableWaterfallDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOAttributes = {
+	[key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOResource = {
+	[key: string]: string;
+} | null;
+
+export interface TracedetailtypesWaterfallSpanDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	attributes?: TracedetailtypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	events?: TracedetailtypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	resource?: TracedetailtypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
+
 export interface TypesAlertStatusDTO {
 	/**
 	 * @type array
@@ -7487,6 +7723,17 @@ export type GetMyUser200 = {
 
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetWaterfallPathParameters = {
+	traceID: string;
+};
+export type GetWaterfall200 = {
+	data: TracedetailtypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */
