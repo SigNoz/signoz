@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Button, Tooltip, TooltipProvider } from '@signozhq/ui';
 import { Copy } from '@signozhq/icons';
 import './CopyIconButton.styles.scss';
@@ -14,10 +13,9 @@ function CopyIconButton({
 	onCopy,
 	disabled = false,
 }: CopyIconButtonProps): JSX.Element {
-	const { t } = useTranslation('mcpServer');
 	const tooltipTitle = disabled
-		? t('copy_tooltip_disabled')
-		: t('copy_tooltip_enabled');
+		? 'Enter your Cloud region first'
+		: 'Copy to clipboard';
 
 	return (
 		<TooltipProvider>

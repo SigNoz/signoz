@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -31,7 +30,6 @@ const ANALYTICS = {
 } as const;
 
 function MCPServerSettings(): JSX.Element {
-	const { t } = useTranslation('mcpServer');
 	const { user } = useAppContext();
 	const [, copyToClipboard] = useCopyToClipboard();
 
@@ -54,14 +52,14 @@ function MCPServerSettings(): JSX.Element {
 	const handleCopySnippet = useCallback(
 		(clientKey: string, snippet: string) => {
 			if (!endpoint) {
-				toast.warning(t('toast_region_required'));
+				toast.warning('Enter your Cloud region before copying');
 				return;
 			}
 			copyToClipboard(snippet);
-			toast.success(t('toast_snippet_copied'));
+			toast.success('Snippet copied to clipboard');
 			void logEvent(ANALYTICS.SNIPPET_COPIED, { client: clientKey });
 		},
-		[endpoint, copyToClipboard, t],
+		[endpoint, copyToClipboard],
 	);
 
 	const handleCreateServiceAccount = useCallback(() => {
@@ -73,9 +71,9 @@ function MCPServerSettings(): JSX.Element {
 
 	const handleCopyInstanceUrl = useCallback(() => {
 		copyToClipboard(instanceUrl);
-		toast.success(t('toast_instance_url_copied'));
+		toast.success('Instance URL copied to clipboard');
 		void logEvent(ANALYTICS.INSTANCE_URL_COPIED, {});
-	}, [copyToClipboard, instanceUrl, t]);
+	}, [copyToClipboard, instanceUrl]);
 
 	const handleDocsLinkClick = useCallback((target: string) => {
 		void logEvent(ANALYTICS.DOCS_LINK_CLICKED, { target });
@@ -101,8 +99,12 @@ function MCPServerSettings(): JSX.Element {
 	return (
 		<div className="mcp-settings" data-testid="mcp-settings">
 			<header className="mcp-settings__header">
-				<h1 className="mcp-settings__header-title">{t('page_title')}</h1>
-				<p className="mcp-settings__header-subtitle">{t('page_subtitle')}</p>
+				<h1 className="mcp-settings__header-title">SigNoz MCP Server</h1>
+				<p className="mcp-settings__header-subtitle">
+					Connect AI assistants like Claude, Cursor, VS Code, and Codex to your
+					SigNoz data via the Model Context Protocol. Authenticate from your MCP
+					client with a service-account API key.
+				</p>
 			</header>
 
 			<section className="mcp-settings__card">
@@ -110,9 +112,13 @@ function MCPServerSettings(): JSX.Element {
 					<Badge color="secondary" variant="default">
 						1
 					</Badge>
-					{t('step1_title')}
+					Configure your client
 				</h3>
-				<p className="mcp-settings__card-description">{t('step1_description')}</p>
+				<p className="mcp-settings__card-description">
+					Add SigNoz to your MCP client. Use a one-click install where available, or
+					copy the config for manual setup. On first connect, the client will open a
+					SigNoz authorization page - use the instance URL and API key from step 2.
+				</p>
 				<ClientTabs
 					endpoint={endpoint}
 					activeTab={activeTab}

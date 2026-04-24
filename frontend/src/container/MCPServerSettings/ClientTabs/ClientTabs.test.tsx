@@ -46,11 +46,16 @@ describe('ClientTabs', () => {
 		expect(snippetPre?.textContent).toContain('mcpServers');
 	});
 
-	it('renders instructions text for clients without a snippet (Claude Desktop)', () => {
+	it('renders endpoint block and instructions text for clients without a snippet (Claude Desktop)', () => {
 		render(<ClientTabs {...defaultProps} activeTab="claude-desktop" />);
 
+		const snippetPre = document.querySelector('.mcp-client-tabs__snippet-pre');
+		expect(snippetPre?.textContent).toBe(MCP_ENDPOINT);
+
 		expect(
-			screen.getByText('client_claude_desktop_instructions'),
+			screen.getByText(
+				'Open Claude Desktop, go to Settings → Connectors → Add custom connector, and paste the endpoint URL above. Claude Desktop does not read remote MCP servers from claude_desktop_config.json - the connector UI is the only supported path.',
+			),
 		).toBeInTheDocument();
 	});
 
@@ -58,7 +63,7 @@ describe('ClientTabs', () => {
 		render(<ClientTabs {...defaultProps} activeTab="cursor" />);
 
 		const installBtn = screen.getByRole('button', {
-			name: 'client_cursor_install_label',
+			name: 'Add to Cursor',
 		});
 		expect(installBtn).toBeEnabled();
 	});
@@ -67,7 +72,7 @@ describe('ClientTabs', () => {
 		render(<ClientTabs {...defaultProps} endpoint="" activeTab="cursor" />);
 
 		const installBtn = screen.getByRole('button', {
-			name: 'client_cursor_install_label',
+			name: 'Add to Cursor',
 		});
 		expect(installBtn).toBeDisabled();
 	});
@@ -80,7 +85,7 @@ describe('ClientTabs', () => {
 
 		await user.click(
 			screen.getByRole('button', {
-				name: `copy_aria_snippet_prefix${cursorClient.label}copy_aria_snippet_suffix`,
+				name: `Copy ${cursorClient.label} config`,
 			}),
 		);
 
@@ -95,7 +100,7 @@ describe('ClientTabs', () => {
 
 		const cursorClient = MCP_CLIENTS.find((c) => c.key === 'cursor')!;
 		const copyBtn = screen.getByRole('button', {
-			name: `copy_aria_snippet_prefix${cursorClient.label}copy_aria_snippet_suffix`,
+			name: `Copy ${cursorClient.label} config`,
 		});
 
 		expect(copyBtn).toBeDisabled();

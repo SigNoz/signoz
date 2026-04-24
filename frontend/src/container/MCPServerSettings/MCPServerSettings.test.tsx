@@ -77,7 +77,9 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />);
 
-		expect(screen.getByText('fallback_title')).toBeInTheDocument();
+		expect(
+			screen.getByText('MCP Server is available on SigNoz'),
+		).toBeInTheDocument();
 		expect(screen.queryByTestId('mcp-settings')).not.toBeInTheDocument();
 	});
 
@@ -87,9 +89,9 @@ describe('MCPServerSettings', () => {
 		render(<MCPServerSettings />);
 
 		expect(screen.getByTestId('mcp-settings')).toBeInTheDocument();
-		expect(screen.getByText('page_title')).toBeInTheDocument();
-		expect(screen.getByText('step1_title')).toBeInTheDocument();
-		expect(screen.getByText('step2_title')).toBeInTheDocument();
+		expect(screen.getByText('SigNoz MCP Server')).toBeInTheDocument();
+		expect(screen.getByText('Configure your client')).toBeInTheDocument();
+		expect(screen.getByText('Authenticate from your client')).toBeInTheDocument();
 	});
 
 	it('fires PAGE_VIEWED analytics event on mount', () => {
@@ -107,8 +109,12 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-		expect(screen.getByText('step2_admin_cta')).toBeInTheDocument();
-		expect(screen.queryByText('step2_viewer_helper')).not.toBeInTheDocument();
+		expect(screen.getByText('Create service account')).toBeInTheDocument();
+		expect(
+			screen.queryByText(
+				'Only admins can create API keys. Ask your workspace admin for a key with read access, then paste it into the API Key field.',
+			),
+		).not.toBeInTheDocument();
 	});
 
 	it('non-admin sees an info banner instead of the CTA', () => {
@@ -116,8 +122,12 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
 
-		expect(screen.getByText('step2_viewer_helper')).toBeInTheDocument();
-		expect(screen.queryByText('step2_admin_cta')).not.toBeInTheDocument();
+		expect(
+			screen.getByText(
+				'Only admins can create API keys. Ask your workspace admin for a key with read access, then paste it into the API Key field.',
+			),
+		).toBeInTheDocument();
+		expect(screen.queryByText('Create service account')).not.toBeInTheDocument();
 	});
 
 	it('navigates to service accounts when admin clicks Create CTA', async () => {
@@ -126,7 +136,7 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-		await user.click(screen.getByText('step2_admin_cta'));
+		await user.click(screen.getByText('Create service account'));
 
 		expect(mockHistoryPush).toHaveBeenCalledWith(
 			'/settings/service-accounts?create-sa=true',
@@ -140,10 +150,12 @@ describe('MCPServerSettings', () => {
 		render(<MCPServerSettings />);
 
 		await user.click(
-			screen.getByRole('button', { name: 'copy_aria_instance_url' }),
+			screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
 		);
 
 		expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
-		expect(mockToastSuccess).toHaveBeenCalledWith('toast_instance_url_copied');
+		expect(mockToastSuccess).toHaveBeenCalledWith(
+			'Instance URL copied to clipboard',
+		);
 	});
 });

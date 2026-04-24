@@ -2,17 +2,12 @@ import { DOCS_BASE_URL } from 'constants/app';
 
 export interface McpClient {
 	key: string;
-	// `label` is the client brand name (Cursor, VS Code, Claude Desktop …).
-	// Brand names are not translated.
 	label: string;
 	docsPath: string;
 	snippet: ((endpoint: string) => string) | null;
-	// i18n key under the `mcpServer` namespace. Resolved at render time via t().
-	instructionsKey?: string;
+	instructions?: string;
 	installUrl?: (endpoint: string) => string;
-	// i18n key for the install button label. Falls back to
-	// `step1_add_to_client_prefix` + `label` when not set.
-	installLabelKey?: string;
+	installLabel?: string;
 }
 
 function b64url(input: string): string {
@@ -44,7 +39,7 @@ export const MCP_CLIENTS: McpClient[] = [
 			const config = b64url(JSON.stringify({ url: endpoint }));
 			return `cursor://anysphere.cursor-deeplink/mcp/install?name=SigNoz&config=${config}`;
 		},
-		installLabelKey: 'client_cursor_install_label',
+		installLabel: 'Add to Cursor',
 	},
 	{
 		key: 'claude-code',
@@ -79,14 +74,15 @@ export const MCP_CLIENTS: McpClient[] = [
 			);
 			return `vscode:mcp/install?${payload}`;
 		},
-		installLabelKey: 'client_vscode_install_label',
+		installLabel: 'Add to VS Code',
 	},
 	{
 		key: 'claude-desktop',
 		label: 'Claude Desktop',
 		docsPath: '/docs/ai/signoz-mcp-server/#claude-desktop',
 		snippet: null,
-		instructionsKey: 'client_claude_desktop_instructions',
+		instructions:
+			'Open Claude Desktop, go to Settings → Connectors → Add custom connector, and paste the endpoint URL above. Claude Desktop does not read remote MCP servers from claude_desktop_config.json - the connector UI is the only supported path.',
 	},
 	{
 		key: 'codex',
@@ -99,7 +95,8 @@ export const MCP_CLIENTS: McpClient[] = [
 		label: 'Other',
 		docsPath: '/docs/ai/signoz-mcp-server/',
 		snippet: null,
-		instructionsKey: 'client_other_instructions',
+		instructions:
+			'Most MCP clients that support remote HTTP servers will accept the endpoint URL above. Add it as a new MCP server in your client and paste your SigNoz API key when the client prompts for authentication. See the docs for client-specific instructions.',
 	},
 ];
 

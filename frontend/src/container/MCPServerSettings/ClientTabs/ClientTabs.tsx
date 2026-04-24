@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button, Tabs } from '@signozhq/ui';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { Download } from '@signozhq/icons';
@@ -28,8 +27,6 @@ function ClientTabs({
 	onInstallClick,
 	onDocsLinkClick,
 }: ClientTabsProps): JSX.Element {
-	const { t } = useTranslation('mcpServer');
-
 	const items = useMemo(
 		() =>
 			MCP_CLIENTS.map((client: McpClient) => {
@@ -39,9 +36,7 @@ function ClientTabs({
 				const installHref =
 					client.installUrl && endpoint ? client.installUrl(endpoint) : null;
 
-				const installLabel = client.installLabelKey
-					? t(client.installLabelKey)
-					: `${t('step1_add_to_client_prefix')}${client.label}`;
+				const installLabel = client.installLabel ?? `Add to ${client.label}`;
 
 				return {
 					key: client.key,
@@ -52,15 +47,27 @@ function ClientTabs({
 								<div className="mcp-client-tabs__endpoint-value mcp-client-tabs__snippet">
 									<pre className="mcp-client-tabs__snippet-pre">{snippet}</pre>
 									<CopyIconButton
-										ariaLabel={`${t('copy_aria_snippet_prefix')}${client.label}${t('copy_aria_snippet_suffix')}`}
+										ariaLabel={`Copy ${client.label} config`}
 										disabled={!endpoint}
 										onCopy={(): void => onCopySnippet(client.key, snippet)}
 									/>
 								</div>
 							) : (
-								<p className="mcp-client-tabs__instructions">
-									{client.instructionsKey ? t(client.instructionsKey) : ''}
-								</p>
+								<>
+									<div className="mcp-client-tabs__endpoint-value mcp-client-tabs__snippet">
+										<pre className="mcp-client-tabs__snippet-pre">
+											{endpoint || ENDPOINT_PLACEHOLDER}
+										</pre>
+										<CopyIconButton
+											ariaLabel="Copy MCP endpoint"
+											disabled={!endpoint}
+											onCopy={(): void => onCopySnippet(client.key, endpoint)}
+										/>
+									</div>
+									<p className="mcp-client-tabs__instructions">
+										{client.instructions ?? ''}
+									</p>
+								</>
 							)}
 
 							{client.installUrl && (
@@ -88,13 +95,13 @@ function ClientTabs({
 										</Button>
 									)}
 									<span className="mcp-client-tabs__helper-text">
-										{t('step1_manual_fallback')}
+										Or copy the config below for manual setup.
 									</span>
 								</div>
 							)}
 
 							<LearnMore
-								text={`${client.label}${t('step1_client_docs_suffix')}`}
+								text={`${client.label} setup docs`}
 								url={docsUrl(client.docsPath)}
 								onClick={(): void => onDocsLinkClick(`client-${client.key}`)}
 							/>
@@ -103,7 +110,7 @@ function ClientTabs({
 				};
 			}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[endpoint, onCopySnippet, onInstallClick, onDocsLinkClick, t],
+		[endpoint, onCopySnippet, onInstallClick, onDocsLinkClick],
 	);
 
 	return (
