@@ -5,6 +5,8 @@ import {
 } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 
+type RegularValue = { timestamp: number; value: string };
+
 export const convertNewDataToOld = (
 	newData: MetricRangePayloadV3,
 ): MetricRangePayloadProps => {
@@ -14,9 +16,11 @@ export const convertNewDataToOld = (
 	result.forEach((item) => {
 		if (item.series) {
 			item.series.forEach((series) => {
-				const values: QueryData['values'] = series.values.reduce<
+				// Cast to regular values array (this function only handles non-heatmap data)
+				const regularValues = series.values as RegularValue[];
+				const values: QueryData['values'] = regularValues.reduce<
 					QueryData['values']
-				>((acc, currentInfo) => {
+				>((acc, currentInfo: RegularValue) => {
 					const renderValues: [number, string] = [
 						currentInfo.timestamp / 1000,
 						currentInfo.value,
@@ -38,9 +42,10 @@ export const convertNewDataToOld = (
 
 		if (item.predictedSeries) {
 			item.predictedSeries.forEach((series) => {
-				const values: QueryData['values'] = series.values.reduce<
+				const regularValues = series.values as RegularValue[];
+				const values: QueryData['values'] = regularValues.reduce<
 					QueryData['values']
-				>((acc, currentInfo) => {
+				>((acc, currentInfo: RegularValue) => {
 					const renderValues: [number, string] = [
 						currentInfo.timestamp / 1000,
 						currentInfo.value,
@@ -62,9 +67,10 @@ export const convertNewDataToOld = (
 
 		if (item.upperBoundSeries) {
 			item.upperBoundSeries.forEach((series) => {
-				const values: QueryData['values'] = series.values.reduce<
+				const regularValues = series.values as RegularValue[];
+				const values: QueryData['values'] = regularValues.reduce<
 					QueryData['values']
-				>((acc, currentInfo) => {
+				>((acc, currentInfo: RegularValue) => {
 					const renderValues: [number, string] = [
 						currentInfo.timestamp / 1000,
 						currentInfo.value,
@@ -86,9 +92,10 @@ export const convertNewDataToOld = (
 
 		if (item.lowerBoundSeries) {
 			item.lowerBoundSeries.forEach((series) => {
-				const values: QueryData['values'] = series.values.reduce<
+				const regularValues = series.values as RegularValue[];
+				const values: QueryData['values'] = regularValues.reduce<
 					QueryData['values']
-				>((acc, currentInfo) => {
+				>((acc, currentInfo: RegularValue) => {
 					const renderValues: [number, string] = [
 						currentInfo.timestamp / 1000,
 						currentInfo.value,

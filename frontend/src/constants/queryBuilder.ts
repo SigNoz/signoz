@@ -359,6 +359,7 @@ export enum PANEL_TYPES {
 	BAR = 'bar',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
+	HEATMAP = 'heatmap',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
@@ -533,6 +534,7 @@ export enum PanelDisplay {
 	BAR = 'Bar',
 	PIE = 'Pie',
 	HISTOGRAM = 'Histogram',
+	HEATMAP = 'Heatmap',
 }
 
 export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<
@@ -575,6 +577,7 @@ export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
 	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
 	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
 	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
+	[PANEL_TYPES.HEATMAP]: initialQueriesMap.metrics,
 	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
 };
 

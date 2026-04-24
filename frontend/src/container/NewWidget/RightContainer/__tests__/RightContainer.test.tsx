@@ -170,6 +170,8 @@ describe('RightContainer - Alerts Section', () => {
 		setContextLinks: jest.fn(),
 		enableDrillDown: false,
 		isNewDashboard: false,
+		heatmapColorPalette: 'default',
+		setHeatmapColorPalette: jest.fn(),
 		lineInterpolation: LineInterpolation.Spline,
 		fillMode: FillMode.None,
 		lineStyle: LineStyle.Solid,

@@ -324,6 +324,10 @@ export const tracesAggregateOperatorOptions: SelectOption<string, string>[] = [
 		value: TracesAggregatorOperator.RATE_MAX,
 		label: 'Rate_max',
 	},
+	{
+		value: TracesAggregatorOperator.HEATMAP,
+		label: 'Heatmap',
+	},
 ];
 
 export const logsAggregateOperatorOptions: SelectOption<string, string>[] = [
@@ -406,6 +410,10 @@ export const logsAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{
 		value: LogsAggregatorOperator.RATE_MAX,
 		label: 'Rate_max',
+	},
+	{
+		value: LogsAggregatorOperator.HEATMAP,
+		label: 'Heatmap',
 	},
 ];
 

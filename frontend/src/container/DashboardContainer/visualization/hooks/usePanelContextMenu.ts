@@ -85,21 +85,30 @@ export const usePanelContextMenu = ({
 			let timeRange;
 
 			if (axesData && queryData?.queryName) {
+				// Get the compositeQuery from the response params
 				const compositeQuery = (queryResponse?.data?.params as any)?.compositeQuery;
 
 				if (compositeQuery?.queries) {
+					// Find the specific query by name from the queries array
 					const specificQuery = compositeQuery.queries.find(
 						(query: any) => query.spec?.name === queryData.queryName,
 					);
 
+					// Use the stepInterval from the specific query, fallback to default
 					const stepInterval = specificQuery?.spec?.stepInterval || 60;
-
-					timeRange = getTimeRangeFromStepInterval(
+					const clickedTimestamp = metric?.clickedTimestamp
+						? Number(metric.clickedTimestamp)
+						: xValue;
+					const timeRangeInSeconds = getTimeRangeFromStepInterval(
 						stepInterval,
-						metric?.clickedTimestamp || xValue,
+						clickedTimestamp,
 						specificQuery?.spec?.signal === DataSource.METRICS &&
 							isApmMetric(specificQuery?.spec?.aggregations[0]?.metricName),
 					);
+					timeRange = {
+						startTime: timeRangeInSeconds.startTime * 1000,
+						endTime: timeRangeInSeconds.endTime * 1000,
+					};
 				}
 			}
 
