@@ -115,11 +115,7 @@ function applyReceiverSync({
 		return [];
 	}
 
-	uPlotInstance.batch(() => {
-		for (const idx of matchingIdxs) {
-			uPlotInstance.setSeries(idx, { focus: true });
-		}
-	});
+	uPlotInstance.setSeries(matchingIdxs[0], { focus: true });
 
 	return matchingIdxs;
 }

@@ -88,8 +88,18 @@ export function buildTooltipContent({
 		}
 
 		const dataIndex = dataIndexes[seriesIndex];
-		// Skip series with no data at the current cursor position
+		const isSync = allowedIndexes != null;
+
 		if (dataIndex === null) {
+			if (isSync) {
+				items.push({
+					label: String(seriesItem.label ?? ''),
+					value: 0,
+					tooltipValue: 'No Data',
+					color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+					isActive: false,
+				});
+			}
 			continue;
 		}
 
@@ -108,6 +118,14 @@ export function buildTooltipContent({
 				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
 				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
 				isActive: seriesIndex === activeSeriesIndex,
+			});
+		} else if (isSync) {
+			items.push({
+				label: String(seriesItem.label ?? ''),
+				value: 0,
+				tooltipValue: 'No Data',
+				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+				isActive: false,
 			});
 		}
 	}
