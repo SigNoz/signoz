@@ -38,7 +38,7 @@ const createGroupByFilters = (
 							op: '=',
 							value,
 						},
-				  ]
+					]
 				: [];
 		})
 		.flat();

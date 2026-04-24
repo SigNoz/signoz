@@ -21,7 +21,7 @@ export const ListMarker = memo(function ListMarker({
 				type: isDisabled ? 'default' : 'primary',
 				icon: isDisabled ? <EyeInvisibleFilled /> : <EyeFilled />,
 				onClick: (): void => onDisable(index),
-		  }
+			}
 		: { type: 'primary' };
 
 	return (

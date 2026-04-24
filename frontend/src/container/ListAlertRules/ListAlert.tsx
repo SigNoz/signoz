@@ -145,46 +145,45 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	};
 
-	const onCloneHandler = (
-		originalAlert: RuletypesRuleDTO,
-	) => async (): Promise<void> => {
-		const copyAlert: RuletypesRuleDTO = {
-			...originalAlert,
-			alert: `${originalAlert.alert} - Copy`,
-		};
+	const onCloneHandler =
+		(originalAlert: RuletypesRuleDTO) => async (): Promise<void> => {
+			const copyAlert: RuletypesRuleDTO = {
+				...originalAlert,
+				alert: `${originalAlert.alert} - Copy`,
+			};
 
-		try {
-			setCloneLoader(true);
-			await createRule(copyAlert);
+			try {
+				setCloneLoader(true);
+				await createRule(copyAlert);
 
-			notificationsApi.success({
-				message: 'Success',
-				description: 'Alert cloned successfully',
-			});
-
-			const { data: refetchData, status } = await refetch();
-			const rules = refetchData?.data;
-			if (status === 'success' && rules) {
-				setData(rules);
-				setTimeout(() => {
-					const clonedAlert = rules[rules.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
-				}, 2000);
-			}
-			if (status === 'error') {
-				notificationsApi.error({
-					message: t('something_went_wrong'),
+				notificationsApi.success({
+					message: 'Success',
+					description: 'Alert cloned successfully',
 				});
+
+				const { data: refetchData, status } = await refetch();
+				const rules = refetchData?.data;
+				if (status === 'success' && rules) {
+					setData(rules);
+					setTimeout(() => {
+						const clonedAlert = rules[rules.length - 1];
+						params.set(QueryParams.ruleId, String(clonedAlert.id));
+						safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+					}, 2000);
+				}
+				if (status === 'error') {
+					notificationsApi.error({
+						message: t('something_went_wrong'),
+					});
+				}
+			} catch (error) {
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
+			} finally {
+				setCloneLoader(false);
 			}
-		} catch (error) {
-			showErrorModal(
-				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
-			);
-		} finally {
-			setCloneLoader(false);
-		}
-	};
+		};
 
 	const handleSearch = useDebouncedFn((e: unknown) => {
 		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
@@ -399,8 +398,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
-							url:
-								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							url: 'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
 							urlText: 'Learn More',
 						}}
 					/>

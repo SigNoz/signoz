@@ -328,13 +328,13 @@ export default function TooltipPlugin({
 			}
 
 			const plotRect = plot.over.getBoundingClientRect();
-			const syntheticEvent = ({
+			const syntheticEvent = {
 				clientX: plotRect.left + cursorLeft,
 				clientY: plotRect.top + cursorTop,
 				target: plot.over,
 				offsetX: cursorLeft,
 				offsetY: cursorTop,
-			} as unknown) as MouseEvent;
+			} as unknown as MouseEvent;
 
 			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;

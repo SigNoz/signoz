@@ -42,21 +42,20 @@ export const ProcessorIndexIcon = styled(Avatar)`
 	font-weight: 400;
 `;
 
-export const StyledTable: React.FC<
-	TableProps<any> & { isDarkMode: boolean }
-> = styled(Table)`
-	.ant-table-tbody > tr > td {
-		border: none;
-	}
+export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =
+	styled(Table)`
+		.ant-table-tbody > tr > td {
+			border: none;
+		}
 
-	.ant-table-tbody > tr:last-child > td {
-		border: none;
-	}
-	.ant-table-content {
-		background: ${({ isDarkMode }: { isDarkMode: boolean }): StyledCSS =>
-			isDarkMode ? themeColors.neroBlack : themeColors.snowWhite};
-	}
-`;
+		.ant-table-tbody > tr:last-child > td {
+			border: none;
+		}
+		.ant-table-content {
+			background: ${({ isDarkMode }: { isDarkMode: boolean }): StyledCSS =>
+				isDarkMode ? themeColors.neroBlack : themeColors.snowWhite};
+		}
+	`;
 
 export const AlertContentWrapper = styled.div`
 	font-weight: 400;

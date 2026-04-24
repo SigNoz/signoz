@@ -141,8 +141,8 @@ function MembersSettings(): JSX.Element {
 		filterMode === FilterMode.All
 			? `All members ⎯ ${totalCount}`
 			: filterMode === FilterMode.Invited
-			? `Pending invites ⎯ ${pendingCount}`
-			: `Deleted ⎯ ${deletedCount}`;
+				? `Pending invites ⎯ ${pendingCount}`
+				: `Deleted ⎯ ${deletedCount}`;
 
 	const handleInviteComplete = useCallback((): void => {
 		refetchUsers();

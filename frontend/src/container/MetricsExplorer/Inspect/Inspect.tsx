@@ -35,20 +35,14 @@ function Inspect({
 	onClose,
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const [currentMetricName, setCurrentMetricName] = useState<string>(
-		defaultMetricName,
-	);
-	const [appliedMetricName, setAppliedMetricName] = useState<string>(
-		defaultMetricName,
-	);
-	const [
-		popoverOptions,
-		setPopoverOptions,
-	] = useState<GraphPopoverOptions | null>(null);
-	const [
-		expandedViewOptions,
-		setExpandedViewOptions,
-	] = useState<GraphPopoverOptions | null>(null);
+	const [currentMetricName, setCurrentMetricName] =
+		useState<string>(defaultMetricName);
+	const [appliedMetricName, setAppliedMetricName] =
+		useState<string>(defaultMetricName);
+	const [popoverOptions, setPopoverOptions] =
+		useState<GraphPopoverOptions | null>(null);
+	const [expandedViewOptions, setExpandedViewOptions] =
+		useState<GraphPopoverOptions | null>(null);
 	const [showExpandedView, setShowExpandedView] = useState(false);
 
 	const { data: metricDetailsData } = useGetMetricMetadata(
@@ -144,13 +138,15 @@ function Inspect({
 		[dispatchMetricInspectionOptions],
 	);
 
-	const selectedMetricType = useMemo(() => metricDetailsData?.data?.type, [
-		metricDetailsData,
-	]);
+	const selectedMetricType = useMemo(
+		() => metricDetailsData?.data?.type,
+		[metricDetailsData],
+	);
 
-	const selectedMetricUnit = useMemo(() => metricDetailsData?.data?.unit, [
-		metricDetailsData,
-	]);
+	const selectedMetricUnit = useMemo(
+		() => metricDetailsData?.data?.unit,
+		[metricDetailsData],
+	);
 
 	const aggregateAttribute = useMemo(
 		() => ({

@@ -32,20 +32,18 @@ function IntergrationsUninstallBar(
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const {
-		mutate: uninstallIntegration,
-		isLoading: isUninstallLoading,
-	} = useMutation(unInstallIntegration, {
-		onSuccess: () => {
-			onUnInstallSuccess?.();
-			setIsModalOpen(false);
-		},
-		onError: () => {
-			notifications.error({
-				message: SOMETHING_WENT_WRONG,
-			});
-		},
-	});
+	const { mutate: uninstallIntegration, isLoading: isUninstallLoading } =
+		useMutation(unInstallIntegration, {
+			onSuccess: () => {
+				onUnInstallSuccess?.();
+				setIsModalOpen(false);
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 
 	const showModal = (): void => {
 		setIsModalOpen(true);

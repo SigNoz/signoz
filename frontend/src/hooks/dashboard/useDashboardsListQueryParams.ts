@@ -31,22 +31,20 @@ function useDashboardsListQueryParams(): {
 	const pageQueryParam = params.get('page');
 	const searchQueryParam = params.get('search');
 
-	const [
-		dashboardsListQueryParams,
-		setDashboardsListQueryParams,
-	] = useState<IDashboardsListQueryParams>({
-		columnKey:
-			orderColumnKeyQueryParam &&
-			SUPPORTED_COLUMN_KEYS.includes(orderColumnKeyQueryParam)
-				? orderColumnKeyQueryParam
-				: 'updatedAt',
-		order:
-			orderQueryParam && SUPPORTED_ORDER_KEYS.includes(orderQueryParam)
-				? orderQueryParam
-				: 'descend',
-		page: pageQueryParam || '1',
-		search: searchQueryParam || '',
-	});
+	const [dashboardsListQueryParams, setDashboardsListQueryParams] =
+		useState<IDashboardsListQueryParams>({
+			columnKey:
+				orderColumnKeyQueryParam &&
+				SUPPORTED_COLUMN_KEYS.includes(orderColumnKeyQueryParam)
+					? orderColumnKeyQueryParam
+					: 'updatedAt',
+			order:
+				orderQueryParam && SUPPORTED_ORDER_KEYS.includes(orderQueryParam)
+					? orderQueryParam
+					: 'descend',
+			page: pageQueryParam || '1',
+			search: searchQueryParam || '',
+		});
 
 	function updateDashboardsListQueryParams(
 		updatedQueryParams: IDashboardsListQueryParams,

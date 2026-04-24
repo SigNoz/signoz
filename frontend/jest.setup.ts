@@ -42,13 +42,13 @@ window.getComputedStyle = function (
 	} catch {
 		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
 		// see the element as visible and without animations.
-		return ({
+		return {
 			display: '',
 			visibility: '',
 			opacity: '1',
 			animationName: 'none',
 			getPropertyValue: () => '',
-		} as unknown) as CSSStyleDeclaration;
+		} as unknown as CSSStyleDeclaration;
 	}
 };
 

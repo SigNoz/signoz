@@ -117,7 +117,9 @@
 						color: var(--bg-sakura-400);
 						font-variant-numeric: lining-nums tabular-nums stacked-fractions
 							slashed-zero;
-						font-feature-settings: 'dlig' on, 'salt' on;
+						font-feature-settings:
+							'dlig' on,
+							'salt' on;
 
 						border-radius: 0 50px 50px 0;
 
@@ -193,7 +195,9 @@
 							color: var(--bg-sakura-400);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on;
 						}
 
 						.span-percentile-value-loader {
@@ -289,7 +293,9 @@
 								color: var(--l1-foreground);
 								text-align: right;
 								font-variant-numeric: lining-nums tabular-nums slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on;
 								font-family: Inter;
 								font-size: 12px;
 								font-style: normal;
@@ -301,7 +307,10 @@
 								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on, 'ss02' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on,
+									'ss02' on;
 								font-family: Inter;
 								font-size: 12px;
 								font-style: normal;
@@ -588,7 +597,9 @@
 					background: color-mix(in srgb, var(--bg-robin-200) 10%, transparent);
 					color: var(--l2-foreground);
 					font-variant-numeric: lining-nums tabular-nums slashed-zero;
-					font-feature-settings: 'dlig' on, 'salt' on;
+					font-feature-settings:
+						'dlig' on,
+						'salt' on;
 					font-family: Inter;
 					font-size: 13px;
 					font-style: normal;
@@ -618,7 +629,9 @@
 		color: var(--l2-foreground);
 		font-variant-numeric: lining-nums tabular-nums stacked-fractions ordinal
 			slashed-zero;
-		font-feature-settings: 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -629,7 +642,9 @@
 		.span-percentile-tooltip-text-percentile {
 			color: var(--text-sakura-500);
 			font-variant-numeric: lining-nums tabular-nums stacked-fractions slashed-zero;
-			font-feature-settings: 'dlig' on, 'salt' on;
+			font-feature-settings:
+				'dlig' on,
+				'salt' on;
 			font-family: Inter;
 			font-size: 12px;
 		}

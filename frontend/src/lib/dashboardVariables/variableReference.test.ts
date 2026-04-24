@@ -121,7 +121,7 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [
 								{ id: '1', op: '=', value: ['$service_name', 'hardcoded'] },
@@ -129,7 +129,7 @@ describe('extractQueryTextStrings', () => {
 							],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -146,10 +146,10 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: { items: [], op: 'AND' },
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -166,12 +166,12 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: [42, true] }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -222,18 +222,18 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$env' }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
-					({
+					} as unknown as IBuilderQuery,
+					{
 						filters: {
 							items: [{ id: '2', op: '=', value: ['$service_name'] }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -249,13 +249,13 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$service_name' }],
 							op: 'AND',
 						},
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -304,7 +304,7 @@ describe('extractQueryTextStrings', () => {
 	it('returns empty array for unknown query type', () => {
 		const query = {
 			...baseQuery,
-			queryType: ('unknown' as unknown) as EQueryType,
+			queryType: 'unknown' as unknown as EQueryType,
 		};
 		expect(extractQueryTextStrings(query)).toEqual([]);
 	});
@@ -328,7 +328,7 @@ describe('getVariableReferencesInQuery', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [
 								{ id: '1', op: '=', value: '$service_name' },
@@ -336,7 +336,7 @@ describe('getVariableReferencesInQuery', () => {
 							],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -390,15 +390,15 @@ describe('getVariableReferencesInQuery', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$service_name' }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
-					({
+					} as unknown as IBuilderQuery,
+					{
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],

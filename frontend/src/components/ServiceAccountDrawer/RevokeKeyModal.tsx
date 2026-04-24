@@ -67,31 +67,29 @@ function RevokeKeyModal(): JSX.Element {
 	const cachedKeys = accountId
 		? queryClient.getQueryData<{
 				data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
-		  }>(getListServiceAccountKeysQueryKey({ id: accountId }))
+			}>(getListServiceAccountKeysQueryKey({ id: accountId }))
 		: null;
 	const keyName = cachedKeys?.data?.find((k) => k.id === revokeKeyId)?.name;
 
-	const {
-		mutate: revokeKey,
-		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Key revoked successfully');
-				await setRevokeKeyId(null);
-				if (accountId) {
-					await invalidateListServiceAccountKeys(queryClient, { id: accountId });
-				}
+	const { mutate: revokeKey, isLoading: isRevoking } =
+		useRevokeServiceAccountKey({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Key revoked successfully');
+					await setRevokeKeyId(null);
+					if (accountId) {
+						await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+					}
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	function handleConfirm(): void {
 		if (!revokeKeyId || !accountId) {

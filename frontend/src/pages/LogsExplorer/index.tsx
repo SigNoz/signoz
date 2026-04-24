@@ -127,9 +127,8 @@ function LogsExplorer(): JSX.Element {
 		setShowFilters((prev) => !prev);
 	};
 
-	const {
-		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const { redirectWithQuery: redirectWithOptionsData } =
+		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	// Get and parse stored columns from localStorage
 	const logListOptionsFromLocalStorage = useMemo(() => {

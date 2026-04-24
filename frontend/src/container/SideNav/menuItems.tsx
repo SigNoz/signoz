@@ -504,7 +504,7 @@ export const getUserSettingsDropdownMenuItems = ({
 						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
 						dataTestId: 'manage-license-nav-item',
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'keyboard-shortcuts',

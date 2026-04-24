@@ -164,7 +164,7 @@ export function PlannedDowntimeForm(
 									values.timezone,
 									shouldKeepLocalTime,
 								),
-						  )
+							)
 						: undefined,
 					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
@@ -216,7 +216,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
-							  )
+								)
 							: undefined,
 						startTime: handleTimeConversion(
 							values.startTime,
@@ -228,7 +228,7 @@ export function PlannedDowntimeForm(
 							? undefined
 							: values.recurrence?.repeatOn,
 						repeatType: values.recurrence?.repeatType,
-				  };
+					};
 
 		const payloadValues = {
 			...values,

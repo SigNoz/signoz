@@ -53,10 +53,11 @@ function TimeSeries({
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const queryClient = useQueryClient();
 
 	const isValidToConvertToMs = useMemo(() => {
@@ -85,7 +86,7 @@ function TimeSeries({
 						stagedQuery || initialQueriesMap[DataSource.METRICS],
 						metricNames,
 						metricUnits,
-				  )
+					)
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[showOneChartPerQuery, stagedQuery, JSON.stringify(metricUnits)],
@@ -182,10 +183,8 @@ function TimeSeries({
 		[metricUnits, metrics, yAxisUnit],
 	);
 
-	const {
-		mutate: updateMetricMetadata,
-		isLoading: isUpdatingMetricMetadata,
-	} = useUpdateMetricMetadata();
+	const { mutate: updateMetricMetadata, isLoading: isUpdatingMetricMetadata } =
+		useUpdateMetricMetadata();
 
 	const handleSaveUnit = (): void => {
 		if (metrics[0] && yAxisUnit) {

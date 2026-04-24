@@ -116,10 +116,8 @@ function DashboardsList(): JSX.Element {
 
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
-	const {
-		dashboardsListQueryParams,
-		updateDashboardsListQueryParams,
-	} = useDashboardsListQueryParams();
+	const { dashboardsListQueryParams, updateDashboardsListQueryParams } =
+		useDashboardsListQueryParams();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
@@ -131,22 +129,17 @@ function DashboardsList(): JSX.Element {
 		user.role,
 	);
 
-	const [
-		showNewDashboardTemplatesModal,
-		setShowNewDashboardTemplatesModal,
-	] = useState(false);
+	const [showNewDashboardTemplatesModal, setShowNewDashboardTemplatesModal] =
+		useState(false);
 
 	const { t } = useTranslation('dashboard');
 
-	const [
-		isImportJSONModalVisible,
-		setIsImportJSONModalVisible,
-	] = useState<boolean>(false);
+	const [isImportJSONModalVisible, setIsImportJSONModalVisible] =
+		useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
-		false,
-	);
+	const [isConfigureMetadataOpen, setIsConfigureMetadata] =
+		useState<boolean>(false);
 
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = getLocalStorageKey('dashboard');

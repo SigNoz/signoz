@@ -203,9 +203,10 @@ function InviteTeamMembers({
 	);
 
 	const createEmailChangeHandler = useCallback(
-		(member: TeamMember) => (e: React.ChangeEvent<HTMLInputElement>): void => {
-			handleEmailChange(e, member);
-		},
+		(member: TeamMember) =>
+			(e: React.ChangeEvent<HTMLInputElement>): void => {
+				handleEmailChange(e, member);
+			},
 		[handleEmailChange],
 	);
 

@@ -29,11 +29,12 @@ describe('navigation utilities', () => {
 
 	afterEach(() => {
 		window.open = originalWindowOpen;
-		for (const el of document.head.querySelectorAll('base')) { el.remove(); }
+		for (const el of document.head.querySelectorAll('base')) {
+			el.remove();
+		}
 	});
 
 	describe('isModifierKeyPressed', () => {
-
 		it('returns true when metaKey is pressed (Cmd on Mac)', () => {
 			const event = createMouseEvent({ metaKey: true });
 			expect(isModifierKeyPressed(event)).toBe(true);

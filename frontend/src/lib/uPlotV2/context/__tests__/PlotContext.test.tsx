@@ -14,9 +14,10 @@ jest.mock(
 	}),
 );
 
-const mockUpdateSeriesVisibilityToLocalStorage = updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
-	typeof updateSeriesVisibilityToLocalStorage
->;
+const mockUpdateSeriesVisibilityToLocalStorage =
+	updateSeriesVisibilityToLocalStorage as jest.MockedFunction<
+		typeof updateSeriesVisibilityToLocalStorage
+	>;
 
 interface MockSeries extends Partial<uPlot.Series> {
 	label?: string;
@@ -24,11 +25,11 @@ interface MockSeries extends Partial<uPlot.Series> {
 }
 
 const createMockPlot = (series: MockSeries[] = []): uPlot =>
-	(({
+	({
 		series,
 		batch: jest.fn((fn: () => void) => fn()),
 		setSeries: jest.fn(),
-	} as unknown) as uPlot);
+	}) as unknown as uPlot;
 
 interface TestComponentProps {
 	plot?: uPlot;

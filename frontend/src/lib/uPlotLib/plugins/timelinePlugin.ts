@@ -578,7 +578,7 @@ function timelinePlugin(opts: any): any {
 								scaleMin: number,
 								scaleMax: number,
 								foundIncr: number,
-						  ): any => {
+							): any => {
 								const splits = [];
 
 								const dataIncr = u.data[0][1] - u.data[0][0];
@@ -593,7 +593,7 @@ function timelinePlugin(opts: any): any {
 								}
 
 								return splits;
-						  }
+							}
 						: null,
 				grid: {
 					show: showGrid ?? mode !== 2,
