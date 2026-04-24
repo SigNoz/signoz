@@ -17,7 +17,7 @@ type StringSlice []string
 
 // StorableLLMPricingRule is the bun/DB representation of an LLM pricing rule.
 type StorableLLMPricingRule struct {
-	bun.BaseModel `bun:"table:llm_pricing_rules,alias:llm_pricing_rules"`
+	bun.BaseModel `bun:"table:llm_pricing_rule,alias:llm_pricing_rule"`
 
 	types.Identifiable
 	types.TimeAuditable
