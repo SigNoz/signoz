@@ -34,6 +34,7 @@ import ROUTES from 'constants/routes';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { infinityDefaultStyles } from '../InfinityTableView/config';
 import { TanStackTableStyled } from '../InfinityTableView/styles';
@@ -239,7 +240,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				urlQuery.delete(QueryParams.activeLogId);
 				urlQuery.delete(QueryParams.relativeTime);
 				urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
-				const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+				const link = getAbsoluteUrl(`${pathname}?${urlQuery.toString()}`);
 
 				setCopy(link);
 				toast.success('Copied to clipboard', { position: 'top-right' });

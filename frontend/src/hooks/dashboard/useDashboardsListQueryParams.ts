@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import setSessionStorageApi from 'api/browser/sessionstorage/set';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import isEqual from 'lodash-es/isEqual';
@@ -61,7 +62,7 @@ function useDashboardsListQueryParams(): {
 
 		const queryParamsString = params.toString();
 
-		sessionStorage.setItem(
+		setSessionStorageApi(
 			DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
 			queryParamsString,
 		);

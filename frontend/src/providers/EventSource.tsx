@@ -22,6 +22,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
 import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
+import { withBasePath } from 'utils/basePath';
 
 interface IEventSourceContext {
 	eventSourceInstance: EventSourcePolyfill | null;
@@ -129,9 +130,12 @@ export function EventSourceProvider({
 
 	const handleStartOpenConnection = useCallback(
 		(filterExpression?: string): void => {
-			const eventSourceUrl = `${
-				ENVIRONMENT.baseURL
-			}${apiV3}logs/livetail?filter=${encodeURIComponent(filterExpression || '')}`;
+			const apiPath = `${apiV3}logs/livetail?filter=${encodeURIComponent(
+				filterExpression || '',
+			)}`;
+			const eventSourceUrl = ENVIRONMENT.baseURL
+				? `${ENVIRONMENT.baseURL}${apiPath}`
+				: withBasePath(apiPath);
 
 			eventSourceRef.current = new EventSourcePolyfill(eventSourceUrl, {
 				headers: {

@@ -17,6 +17,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
@@ -191,7 +192,7 @@ function InviteMembersModal({
 					email: row.email.trim(),
 					name: '',
 					role: row.role as ROLES,
-					frontendBaseUrl: window.location.origin,
+					frontendBaseUrl: getBaseUrl(),
 				});
 			} else {
 				await inviteUsers({
@@ -199,7 +200,7 @@ function InviteMembersModal({
 						email: row.email.trim(),
 						name: '',
 						role: row.role,
-						frontendBaseUrl: window.location.origin,
+						frontendBaseUrl: getBaseUrl(),
 					})),
 				});
 			}

@@ -37,6 +37,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
 				isStackedBarChart: isStackedBarChart,
+				canPinTooltip: rest.canPinTooltip,
 			};
 			return <BarChartTooltip {...tooltipProps} />;
 		},
@@ -46,6 +47,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 			rest.yAxisUnit,
 			rest.decimalPrecision,
 			isStackedBarChart,
+			rest.canPinTooltip,
 		],
 	);
 

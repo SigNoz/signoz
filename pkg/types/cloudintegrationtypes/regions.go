@@ -165,3 +165,13 @@ func validateAWSRegion(region string) error {
 
 	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid AWS region: %s", region)
 }
+
+func validateAzureRegion(region string) error {
+	for _, r := range SupportedRegions[CloudProviderTypeAzure] {
+		if r.StringValue() == region {
+			return nil
+		}
+	}
+
+	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid Azure region: %s", region)
+}
