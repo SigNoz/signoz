@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
 import uPlot from 'uplot';
+import logEvent from 'api/common/logEvent';
 
 import { syncCursorRegistry } from './syncCursorRegistry';
 import {
@@ -28,6 +29,7 @@ import {
 	createInitialViewState,
 	createLayoutObserver,
 } from './utils';
+import { Events } from 'constants/events';
 
 import Styles from './TooltipPlugin.module.scss';
 
@@ -156,7 +158,7 @@ export default function TooltipPlugin({
 		function updateCursorLock(): void {
 			const plot = getPlot(controller);
 			if (plot) {
-				// @ts-ignore uPlot cursor lock is not working as expected
+				// @ts-expect-error uPlot cursor lock is not working as expected
 				plot.cursor._lock = controller.pinned;
 			}
 		}
@@ -328,16 +330,19 @@ export default function TooltipPlugin({
 			}
 
 			const plotRect = plot.over.getBoundingClientRect();
-			const syntheticEvent = ({
+			const syntheticEvent = {
 				clientX: plotRect.left + cursorLeft,
 				clientY: plotRect.top + cursorTop,
 				target: plot.over,
 				offsetX: cursorLeft,
 				offsetY: cursorTop,
-			} as unknown) as MouseEvent;
+			} as unknown as MouseEvent;
 
 			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;
+			logEvent(Events.TOOLTIP_PINNED, {
+				path: window.location.pathname,
+			});
 			scheduleRender(true);
 		};
 
