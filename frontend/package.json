@@ -241,7 +241,7 @@
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
       "oxfmt --check",
-      "oxlint --fix",
+      "oxlint --quiet",
       "sh scripts/typecheck-staged.sh"
     ]
   },
