@@ -38,14 +38,13 @@ type RuleTask struct {
 	pause  bool
 	notify NotifyFunc
 
-	maintenanceStore ruletypes.MaintenanceStore
-	orgID            valuer.UUID
+	orgID valuer.UUID
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *RuleTask {
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, orgID valuer.UUID) *RuleTask {
 
 	if frequency == 0 {
 		frequency = DefaultFrequency
@@ -62,9 +61,8 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		logger:           opts.Logger,
 		done:             make(chan struct{}),
 		terminated:       make(chan struct{}),
-		notify:           notify,
-		maintenanceStore: maintenanceStore,
-		orgID:            orgID,
+		notify: notify,
+		orgID:  orgID,
 	}
 }
 
@@ -318,28 +316,8 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
-	maintenance, err := g.maintenanceStore.ListPlannedMaintenance(ctx, g.orgID.StringValue())
-
-	if err != nil {
-		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
-	}
-
 	for i, rule := range g.rules {
 		if rule == nil {
-			continue
-		}
-
-		shouldSkip := false
-		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
-			if m.ShouldSkip(rule.ID(), ts) {
-				shouldSkip = true
-				break
-			}
-		}
-
-		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 

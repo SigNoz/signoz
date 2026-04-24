@@ -40,13 +40,12 @@ type PromRuleTask struct {
 	logger *slog.Logger
 	notify NotifyFunc
 
-	maintenanceStore ruletypes.MaintenanceStore
-	orgID            valuer.UUID
+	orgID valuer.UUID
 }
 
 // NewPromRuleTask holds rules that have promql condition
 // and evaluates the rule at a given frequency
-func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, orgID valuer.UUID) *PromRuleTask {
 	opts.Logger.Info("initiating a new rule group", "name", name, "frequency", frequency)
 
 	if frequency == 0 {
@@ -63,10 +62,9 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		seriesInPreviousEval: make([]map[string]plabels.Labels, len(rules)),
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
-		notify:               notify,
-		maintenanceStore:     maintenanceStore,
-		logger:               opts.Logger,
-		orgID:                orgID,
+		notify: notify,
+		logger: opts.Logger,
+		orgID:  orgID,
 	}
 }
 
@@ -330,27 +328,9 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	}()
 
 	g.logger.InfoContext(ctx, "promql rule task", "name", g.name, "eval_started_at", ts)
-	maintenance, err := g.maintenanceStore.ListPlannedMaintenance(ctx, g.orgID.StringValue())
-	if err != nil {
-		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
-	}
 
 	for i, rule := range g.rules {
 		if rule == nil {
-			continue
-		}
-
-		shouldSkip := false
-		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
-			if m.ShouldSkip(rule.ID(), ts) {
-				shouldSkip = true
-				break
-			}
-		}
-
-		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 

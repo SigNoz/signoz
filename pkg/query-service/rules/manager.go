@@ -32,11 +32,10 @@ import (
 )
 
 type PrepareTaskOptions struct {
-	Rule             *ruletypes.PostableRule
-	TaskName         string
-	RuleStore        ruletypes.RuleStore
-	MaintenanceStore ruletypes.MaintenanceStore
-	Querier          querier.Querier
+	Rule        *ruletypes.PostableRule
+	TaskName    string
+	RuleStore   ruletypes.RuleStore
+	Querier     querier.Querier
 	Logger           *slog.Logger
 	Cache            cache.Cache
 	ManagerOpts      *ManagerOptions
@@ -46,10 +45,9 @@ type PrepareTaskOptions struct {
 }
 
 type PrepareTestRuleOptions struct {
-	Rule             *ruletypes.PostableRule
-	RuleStore        ruletypes.RuleStore
-	MaintenanceStore ruletypes.MaintenanceStore
-	Querier          querier.Querier
+	Rule      *ruletypes.PostableRule
+	RuleStore ruletypes.RuleStore
+	Querier   querier.Querier
 	Logger           *slog.Logger
 	Cache            cache.Cache
 	ManagerOpts      *ManagerOptions
@@ -167,7 +165,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, tr)
 
 		// create ch rule task for evaluation
-		task = newTask(TaskTypeCh, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeCh, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.OrgID)
 
 	} else if opts.Rule.RuleType == ruletypes.RuleTypeProm {
 
@@ -191,7 +189,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 		rules = append(rules, pr)
 
 		// create promql rule task for evaluation
-		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.MaintenanceStore, opts.OrgID)
+		task = newTask(TaskTypeProm, opts.TaskName, taskNameSuffix, evaluation.GetFrequency().Duration(), rules, opts.ManagerOpts, opts.NotifyFunc, opts.OrgID)
 
 	} else {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported rule type %s. Supported types: %s, %s", opts.Rule.RuleType, ruletypes.RuleTypeProm, ruletypes.RuleTypeThreshold)
@@ -432,9 +430,8 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
 		Rule:             rule,
 		TaskName:         taskName,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
+		RuleStore: m.ruleStore,
+		Querier:   m.opts.Querier,
 		Logger:           m.opts.Logger,
 		Cache:            m.cache,
 		ManagerOpts:      m.opts,
@@ -645,9 +642,8 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 	newTask, err := m.prepareTaskFunc(PrepareTaskOptions{
 		Rule:             rule,
 		TaskName:         taskName,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
+		RuleStore: m.ruleStore,
+		Querier:   m.opts.Querier,
 		Logger:           m.opts.Logger,
 		Cache:            m.cache,
 		ManagerOpts:      m.opts,
@@ -1030,9 +1026,8 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 
 	alertCount, err := m.prepareTestRuleFunc(PrepareTestRuleOptions{
 		Rule:             &parsedRule,
-		RuleStore:        m.ruleStore,
-		MaintenanceStore: m.maintenanceStore,
-		Querier:          m.opts.Querier,
+		RuleStore: m.ruleStore,
+		Querier:   m.opts.Querier,
 		Logger:           m.opts.Logger,
 		Cache:            m.cache,
 		ManagerOpts:      m.opts,

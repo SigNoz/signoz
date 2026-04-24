@@ -90,7 +90,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	stateStore := alertmanagertypestest.NewStateStore()
 	registry := prometheus.NewRegistry()
 	logger := slog.New(slog.DiscardHandler)
-	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager)
+	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager, nil)
 	require.NoError(t, err)
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, orgID)
 	require.NoError(t, err)

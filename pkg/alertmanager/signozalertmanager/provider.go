@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -30,16 +31,17 @@ type provider struct {
 	configStore         alertmanagertypes.ConfigStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
+	maintenanceStore    ruletypes.MaintenanceStore
 	stopC               chan struct{}
 }
 
-func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
+func NewFactory(sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
-		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager)
+		return New(ctx, settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager) (*provider, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config alertmanager.Config, sqlstore sqlstore.SQLStore, orgGetter organization.Getter, notificationManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)
 	stateStore := sqlalertmanagerstore.NewStateStore(sqlstore)
@@ -53,12 +55,14 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 			configStore,
 			orgGetter,
 			notificationManager,
+			maintenanceStore,
 		),
 		settings:            settings,
 		config:              config,
 		configStore:         configStore,
 		stateStore:          stateStore,
 		notificationManager: notificationManager,
+		maintenanceStore:    maintenanceStore,
 		stopC:               make(chan struct{}),
 	}
 

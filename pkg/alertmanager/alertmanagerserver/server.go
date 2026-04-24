@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 var (
@@ -69,9 +70,11 @@ type Server struct {
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
+
+	maintenanceStore ruletypes.MaintenanceStore
 }
 
-func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
+func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager, maintenanceStore ruletypes.MaintenanceStore) (*Server, error) {
 	server := &Server{
 		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
 		registry:            registry,
@@ -80,6 +83,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		stateStore:          stateStore,
 		stopc:               make(chan struct{}),
 		notificationManager: nfManager,
+		maintenanceStore:    maintenanceStore,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -293,6 +297,16 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.nflog,
 		pipelinePeer,
 	)
+
+	// Inject maintenance suppression stage into each routing stage (#9270).
+	// Runs after inhibition/silence so only notification delivery is suppressed,
+	// while rule.Eval() always runs and state history is recorded.
+	if server.maintenanceStore != nil {
+		mms := &maintenanceMuteStage{muter: NewMaintenanceMuter(server.maintenanceStore, server.orgID, server.logger)}
+		for name, stage := range pipeline {
+			pipeline[name] = notify.MultiStage{mms, stage}
+		}
+	}
 
 	timeoutFunc := func(d time.Duration) time.Duration {
 		if d < notify.MinTimeout {

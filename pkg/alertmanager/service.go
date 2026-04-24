@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 type Service struct {
@@ -39,6 +40,8 @@ type Service struct {
 	serversMtx sync.RWMutex
 
 	notificationManager nfmanager.NotificationManager
+
+	maintenanceStore ruletypes.MaintenanceStore
 }
 
 func New(
@@ -49,6 +52,7 @@ func New(
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
+	maintenanceStore ruletypes.MaintenanceStore,
 ) *Service {
 	service := &Service{
 		config:              config,
@@ -59,6 +63,7 @@ func New(
 		servers:             make(map[string]*alertmanagerserver.Server),
 		serversMtx:          sync.RWMutex{},
 		notificationManager: nfManager,
+		maintenanceStore:    maintenanceStore,
 	}
 
 	return service
@@ -177,7 +182,7 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager)
+	server, err := alertmanagerserver.New(ctx, service.settings.Logger(), service.settings.PrometheusRegisterer(), service.config, orgID, service.stateStore, service.notificationManager, service.maintenanceStore)
 	if err != nil {
 		return nil, err
 	}
