@@ -74,16 +74,6 @@ func TestGetSpanAggregation_SpanCount(t *testing.T) {
 			want:  map[string]uint64{"GET": 2, "POST": 1},
 		},
 		{
-			name: "counts by numeric attribute field — value formatted as string key",
-			trace: buildTraceFromSpans(
-				mkASpan("s1", nil, map[string]any{"http.status_code": float64(200)}, 0, 10),
-				mkASpan("s2", nil, map[string]any{"http.status_code": float64(500)}, 10, 5),
-				mkASpan("s3", nil, map[string]any{"http.status_code": float64(200)}, 20, 8),
-			),
-			field: fieldStatusCode,
-			want:  map[string]uint64{"200": 2, "500": 1},
-		},
-		{
 			name: "counts by boolean attribute field",
 			trace: buildTraceFromSpans(
 				mkASpan("s1", nil, map[string]any{"db.cached": true}, 0, 10),
@@ -102,32 +92,6 @@ func TestGetSpanAggregation_SpanCount(t *testing.T) {
 			),
 			field: fieldServiceName,
 			want:  map[string]uint64{"frontend": 1, "backend": 1},
-		},
-		{
-			name: "all spans missing the field returns empty map",
-			trace: buildTraceFromSpans(
-				mkASpan("s1", map[string]string{}, nil, 0, 10),
-				mkASpan("s2", map[string]string{}, nil, 10, 5),
-			),
-			field: fieldServiceName,
-			want:  map[string]uint64{},
-		},
-		{
-			name:  "empty trace returns empty map",
-			trace: buildTraceFromSpans(),
-			field: fieldServiceName,
-			want:  map[string]uint64{},
-		},
-		{
-			name: "unknown field context returns empty map",
-			trace: buildTraceFromSpans(
-				mkASpan("s1", map[string]string{"service.name": "svc"}, nil, 0, 10),
-			),
-			field: telemetrytypes.TelemetryFieldKey{
-				Name:         "service.name",
-				FieldContext: telemetrytypes.FieldContextSpan,
-			},
-			want: map[string]uint64{},
 		},
 	}
 

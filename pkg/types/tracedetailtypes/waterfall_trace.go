@@ -2,7 +2,6 @@ package tracedetailtypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"maps"
 	"slices"
 	"sort"
@@ -33,18 +32,19 @@ type WaterfallTrace struct {
 
 // GettableWaterfallTrace is the response for the v3 waterfall API.
 type GettableWaterfallTrace struct {
-	StartTimestampMillis          uint64                  `json:"startTimestampMillis"`
-	EndTimestampMillis            uint64                  `json:"endTimestampMillis"`
-	RootServiceName               string                  `json:"rootServiceName"`
-	RootServiceEntryPoint         string                  `json:"rootServiceEntryPoint"`
-	TotalSpansCount               uint64                  `json:"totalSpansCount"`
-	TotalErrorSpansCount          uint64                  `json:"totalErrorSpansCount"`
+	StartTimestampMillis  uint64 `json:"startTimestampMillis"`
+	EndTimestampMillis    uint64 `json:"endTimestampMillis"`
+	RootServiceName       string `json:"rootServiceName"`
+	RootServiceEntryPoint string `json:"rootServiceEntryPoint"`
+	TotalSpansCount       uint64 `json:"totalSpansCount"`
+	TotalErrorSpansCount  uint64 `json:"totalErrorSpansCount"`
+	// Deprecated: use Aggregations with SpanAggregationExecutionTimePercentage on the service.name field instead.
 	ServiceNameToTotalDurationMap map[string]uint64       `json:"serviceNameToTotalDurationMap"`
 	Spans                         []*WaterfallSpan        `json:"spans"`
 	HasMissingSpans               bool                    `json:"hasMissingSpans"`
 	UncollapsedSpans              []string                `json:"uncollapsedSpans"`
 	HasMore                       bool                    `json:"hasMore"`
-	Analytics                     []SpanAggregationResult `json:"analytics"`
+	Aggregations                  []SpanAggregationResult `json:"aggregations"`
 }
 
 // NewWaterfallTrace constructs a WaterfallTrace from processed span data.
@@ -243,13 +243,13 @@ func (wt *WaterfallTrace) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, wt)
 }
 
-// NewGettableWaterfallTrace constructs a WaterfallResponse from processed trace data and selected spans.
+// NewGettableWaterfallTrace constructs a GettableWaterfallTrace from processed trace data and selected spans.
 func NewGettableWaterfallTrace(
 	traceData *WaterfallTrace,
 	selectedSpans []*WaterfallSpan,
 	uncollapsedSpans []string,
 	selectAllSpans bool,
-	analytics []SpanAggregationResult,
+	aggregations []SpanAggregationResult,
 ) *GettableWaterfallTrace {
 	var rootServiceName, rootServiceEntryPoint string
 	if len(traceData.TraceRoots) > 0 {
@@ -267,14 +267,12 @@ func NewGettableWaterfallTrace(
 		span.TimeUnixNano = span.TimeUnixNano / 1_000_000
 	}
 
-	// duration-type analytics are in nanoseconds; convert to milliseconds for consistency.
-	for i, a := range analytics {
-		if a.Aggregation == SpanAggregationDuration {
-			converted := make(map[string]uint64, len(a.Value))
-			for k, v := range a.Value {
-				converted[k] = v / 1_000_000
+	// duration values are in nanoseconds; convert in-place to milliseconds.
+	for i := range aggregations {
+		if aggregations[i].Aggregation == SpanAggregationDuration {
+			for k, v := range aggregations[i].Value {
+				aggregations[i].Value[k] = v / 1_000_000
 			}
-			analytics[i].Value = converted
 		}
 	}
 
@@ -290,7 +288,7 @@ func NewGettableWaterfallTrace(
 		ServiceNameToTotalDurationMap: serviceDurationsMillis,
 		HasMissingSpans:               traceData.HasMissingSpans,
 		HasMore:                       !selectAllSpans,
-		Analytics:                     analytics,
+		Aggregations:                  aggregations,
 	}
 }
 
@@ -357,24 +355,8 @@ func mergeSpanIntervals(spans []*WaterfallSpan) uint64 {
 	return total + (currentEnd - currentStart)
 }
 
-// spanFieldValue returns the string value of a TelemetryFieldKey for a span.
-// Returns "" if the field is absent (callers skip empty keys).
-func spanFieldValue(span *WaterfallSpan, field telemetrytypes.TelemetryFieldKey) string {
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextResource:
-		return span.Resource[field.Name]
-	case telemetrytypes.FieldContextAttribute:
-		v, ok := span.Attributes[field.Name]
-		if !ok {
-			return ""
-		}
-		return fmt.Sprintf("%v", v)
-	}
-	return ""
-}
-
-// GetSpanAggregation computes one analytics result over all spans in the trace.
-// Duration-type values are returned in nanoseconds; the caller is responsible for unit conversion.
+// GetSpanAggregation computes one aggregation result over all spans in the trace.
+// Duration values are returned in nanoseconds; callers convert to milliseconds as needed.
 func (wt *WaterfallTrace) GetSpanAggregation(aggregation SpanAggregationType, field telemetrytypes.TelemetryFieldKey) SpanAggregationResult {
 	result := SpanAggregationResult{
 		Field:       field,
@@ -385,14 +367,14 @@ func (wt *WaterfallTrace) GetSpanAggregation(aggregation SpanAggregationType, fi
 	switch aggregation {
 	case SpanAggregationSpanCount:
 		for _, span := range wt.SpanIDToSpanNodeMap {
-			if key := spanFieldValue(span, field); key != "" {
+			if key, ok := span.FieldValue(field); ok {
 				result.Value[key]++
 			}
 		}
 
 	case SpanAggregationDuration:
 		for _, span := range wt.SpanIDToSpanNodeMap {
-			if key := spanFieldValue(span, field); key != "" {
+			if key, ok := span.FieldValue(field); ok {
 				result.Value[key] += span.DurationNano
 			}
 		}
@@ -400,7 +382,7 @@ func (wt *WaterfallTrace) GetSpanAggregation(aggregation SpanAggregationType, fi
 	case SpanAggregationExecutionTimePercentage:
 		spansByField := make(map[string][]*WaterfallSpan)
 		for _, span := range wt.SpanIDToSpanNodeMap {
-			if key := spanFieldValue(span, field); key != "" {
+			if key, ok := span.FieldValue(field); ok {
 				spansByField[key] = append(spansByField[key], span)
 			}
 		}

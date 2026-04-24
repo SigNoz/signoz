@@ -2,6 +2,7 @@ package tracedetailtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
 	"sort"
 	"time"
@@ -25,20 +26,20 @@ type PostableWaterfall struct {
 	SelectedSpanID   string            `json:"selectedSpanId"`
 	UncollapsedSpans []string          `json:"uncollapsedSpans"`
 	Limit            uint              `json:"limit"`
-	Analytics        []SpanAggregation `json:"analytics"`
+	Aggregations     []SpanAggregation `json:"aggregations"`
 }
 
 func (p *PostableWaterfall) Validate() error {
-	if len(p.Analytics) > maxAnalyticsItems {
-		return ErrTooManyAnalyticsItems
+	if len(p.Aggregations) > maxAggregationItems {
+		return ErrTooManyAggregationItems
 	}
-	for _, a := range p.Analytics {
+	for _, a := range p.Aggregations {
 		if !a.Aggregation.isValid() {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
 		}
 		fc := a.Field.FieldContext
 		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "analytics field context must be %q or %q, got %q",
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "aggregation field context must be %q or %q, got %q",
 				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
 		}
 	}
@@ -179,7 +180,24 @@ func (ws *WaterfallSpan) GetSubtreeNodeCount() uint64 {
 	return count
 }
 
-// getPreOrderedSpans returns spans in pre-order, uncollapsedSpanIDs must be pre-computed.
+// FieldValue returns the string representation of field's value on this span for grouping.
+// The bool reports whether the field was present with a non-empty value.
+func (ws *WaterfallSpan) FieldValue(field telemetrytypes.TelemetryFieldKey) (string, bool) {
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextResource:
+		v := ws.Resource[field.Name]
+		return v, v != ""
+	case telemetrytypes.FieldContextAttribute:
+		v, ok := ws.Attributes[field.Name]
+		if !ok {
+			return "", false
+		}
+		str := fmt.Sprintf("%v", v)
+		return str, str != ""
+	}
+	return "", false
+}
+
 func (ws *WaterfallSpan) getPreOrderedSpans(uncollapsedSpanIDs map[string]struct{}, selectAll bool, level uint64) []*WaterfallSpan {
 	result := []*WaterfallSpan{ws.GetWithoutChildren(level)}
 	_, isUncollapsed := uncollapsedSpanIDs[ws.SpanID]
