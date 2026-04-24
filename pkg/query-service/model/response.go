@@ -331,17 +331,7 @@ func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetryt
 				s.Resource[field.Name] = v
 			}
 		case telemetrytypes.FieldContextAttribute:
-			if v, ok := item.Attributes_string[field.Name]; ok && v != "" {
-				if s.Attributes == nil {
-					s.Attributes = make(map[string]any)
-				}
-				s.Attributes[field.Name] = v
-			} else if v, ok := item.Attributes_number[field.Name]; ok {
-				if s.Attributes == nil {
-					s.Attributes = make(map[string]any)
-				}
-				s.Attributes[field.Name] = v
-			} else if v, ok := item.Attributes_bool[field.Name]; ok {
+			if v := item.AttributeValue(field.Name); v != nil {
 				if s.Attributes == nil {
 					s.Attributes = make(map[string]any)
 				}
