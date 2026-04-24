@@ -640,7 +640,7 @@
               "dataSource": "metrics",
               "expression": "A",
               "filter": {
-                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400"
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route AND kong.response.status_code >= 400"
               },
               "filters": {
                 "items": [
@@ -1429,7 +1429,7 @@
               "dataSource": "metrics",
               "expression": "A",
               "filter": {
-                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
               },
               "filters": {
                 "items": [
@@ -1491,7 +1491,7 @@
               "dataSource": "metrics",
               "expression": "A",
               "filter": {
-                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400 AND kong.response.status_code < 500"
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route AND kong.response.status_code >= 400 AND kong.response.status_code < 500"
               },
               "filters": {
                 "items": [
@@ -1553,7 +1553,7 @@
               "dataSource": "metrics",
               "expression": "A",
               "filter": {
-                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400"
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route AND kong.response.status_code >= 400"
               },
               "filters": {
                 "items": [
@@ -1612,7 +1612,7 @@
               "dataSource": "metrics",
               "expression": "A",
               "filter": {
-                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
               },
               "filters": {
                 "items": [
