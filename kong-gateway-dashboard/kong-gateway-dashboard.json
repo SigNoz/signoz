@@ -1,0 +1,2176 @@
+{
+  "description": "Comprehensive Kong API Gateway monitoring dashboard using the OpenTelemetry plugin (Kong 3.13+). Covers request rate, latency percentiles (p50/p90/p99), error metrics, bandwidth, upstream health, connection states, request/response sizes, Lua shared dict memory, worker Lua VM memory, Nginx timers, and DB/CP connectivity status. Variables: deployment environment, Kong service, Kong route.",
+  "layout": [
+    {
+      "h": 1,
+      "i": "row-overview",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 3,
+      "i": "val-total-req",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "h": 3,
+      "i": "val-req-rate",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 3,
+      "y": 1
+    },
+    {
+      "h": 3,
+      "i": "val-active-conn",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 6,
+      "y": 1
+    },
+    {
+      "h": 3,
+      "i": "val-db-status",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 9,
+      "y": 1
+    },
+    {
+      "h": 3,
+      "i": "val-cp-status",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "h": 3,
+      "i": "val-total-errors",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 3,
+      "y": 4
+    },
+    {
+      "h": 3,
+      "i": "val-waiting-conn",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 6,
+      "y": 4
+    },
+    {
+      "h": 3,
+      "i": "val-handled-conn",
+      "minH": 2,
+      "minW": 2,
+      "w": 3,
+      "x": 9,
+      "y": 4
+    },
+    {
+      "h": 1,
+      "i": "row-request",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 7
+    },
+    {
+      "h": 7,
+      "i": "ts-req-rate-svc",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 8
+    },
+    {
+      "h": 7,
+      "i": "ts-status-code",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 8
+    },
+    {
+      "h": 7,
+      "i": "ts-req-size",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 15
+    },
+    {
+      "h": 7,
+      "i": "ts-resp-size",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 15
+    },
+    {
+      "h": 1,
+      "i": "row-latency",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 22
+    },
+    {
+      "h": 7,
+      "i": "ts-req-latency",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 23
+    },
+    {
+      "h": 7,
+      "i": "ts-ups-latency",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 23
+    },
+    {
+      "h": 7,
+      "i": "ts-internal-latency",
+      "minH": 5,
+      "minW": 4,
+      "w": 12,
+      "x": 0,
+      "y": 30
+    },
+    {
+      "h": 1,
+      "i": "row-error",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 37
+    },
+    {
+      "h": 7,
+      "i": "ts-5xx-svc",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 38
+    },
+    {
+      "h": 7,
+      "i": "ts-4xx-code",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 38
+    },
+    {
+      "h": 7,
+      "i": "ts-error-rate",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 45
+    },
+    {
+      "h": 7,
+      "i": "ts-5xx-by-route",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 45
+    },
+    {
+      "h": 1,
+      "i": "row-traffic",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 52
+    },
+    {
+      "h": 7,
+      "i": "ts-bandwidth",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 53
+    },
+    {
+      "h": 7,
+      "i": "ts-nginx-conn-gauge",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 53
+    },
+    {
+      "h": 7,
+      "i": "ts-conn-accepted-handled",
+      "minH": 5,
+      "minW": 4,
+      "w": 12,
+      "x": 0,
+      "y": 60
+    },
+    {
+      "h": 1,
+      "i": "row-upstream",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 67
+    },
+    {
+      "h": 7,
+      "i": "ts-upstream-health",
+      "minH": 5,
+      "minW": 4,
+      "w": 12,
+      "x": 0,
+      "y": 68
+    },
+    {
+      "h": 1,
+      "i": "row-resource",
+      "minH": 1,
+      "minW": 2,
+      "w": 12,
+      "x": 0,
+      "y": 75
+    },
+    {
+      "h": 7,
+      "i": "ts-lua-shared-dict",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 0,
+      "y": 76
+    },
+    {
+      "h": 7,
+      "i": "ts-lua-vm-mem",
+      "minH": 5,
+      "minW": 4,
+      "w": 6,
+      "x": 6,
+      "y": 76
+    },
+    {
+      "h": 7,
+      "i": "ts-nginx-timers",
+      "minH": 5,
+      "minW": 4,
+      "w": 12,
+      "x": 0,
+      "y": 83
+    }
+  ],
+  "tags": ["kong", "api-gateway", "opentelemetry", "kubernetes"],
+  "title": "Kong Gateway",
+  "variables": {
+    "deployment_environment": {
+      "allSelected": false,
+      "description": "Deployment environment (e.g. production, staging)",
+      "dynamicVariablesAttribute": "deployment.environment",
+      "dynamicVariablesSource": "metrics",
+      "id": "v-env",
+      "key": "deployment_environment",
+      "multiSelect": true,
+      "name": "deployment_environment",
+      "order": 1,
+      "showALLOption": true,
+      "sort": "ASC",
+      "type": "DYNAMIC"
+    },
+    "kong_service": {
+      "allSelected": true,
+      "description": "Kong service name",
+      "dynamicVariablesAttribute": "kong.service.name",
+      "dynamicVariablesSource": "metrics",
+      "id": "v-svc",
+      "key": "kong_service",
+      "multiSelect": true,
+      "name": "kong_service",
+      "order": 2,
+      "showALLOption": true,
+      "sort": "ASC",
+      "type": "DYNAMIC"
+    },
+    "kong_route": {
+      "allSelected": true,
+      "description": "Kong route name",
+      "dynamicVariablesAttribute": "kong.route.name",
+      "dynamicVariablesSource": "metrics",
+      "id": "v-route",
+      "key": "kong_route",
+      "multiSelect": true,
+      "name": "kong_route",
+      "order": 3,
+      "showALLOption": true,
+      "sort": "ASC",
+      "type": "DYNAMIC"
+    }
+  },
+  "widgets": [
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-overview",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "General Overview"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Total HTTP requests handled by Kong in the selected time range",
+      "id": "val-total-req",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "increase"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Total Requests"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Average request rate across Kong in requests per second",
+      "id": "val-req-rate",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Request Rate (req/s)",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Current number of active Nginx connections",
+      "id": "val-active-conn",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state = 'active'"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Active Connections"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "1 = connected to DB, 0 = not connected. Always 1 in DB-less mode.",
+      "id": "val-db-status",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.db.connection.status",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "DB Connected"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "1 = data plane connected to control plane, 0 = not connected",
+      "id": "val-cp-status",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.cp.connection.status",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "CP Connected"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Total 4xx + 5xx errors in the selected time range",
+      "id": "val-total-errors",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "increase"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" },
+                    "op": ">=",
+                    "value": 400
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Total Errors (4xx+5xx)"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Current number of idle/waiting Nginx connections",
+      "id": "val-waiting-conn",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state = 'waiting'"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Waiting Connections"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Total number of handled connections (cumulative)",
+      "id": "val-handled-conn",
+      "panelTypes": "value",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state = 'handled'"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Handled Connections"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-request",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Request Metrics"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "HTTP request rate (req/s) broken down by Kong service",
+      "id": "ts-req-rate-svc",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.service.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.service.name}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Request Rate by Service",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Request rate grouped by HTTP response status code — shows 2xx, 4xx, 5xx distribution",
+      "id": "ts-status-code",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.response.status_code}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Requests by HTTP Status Code",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Request body size percentiles (p50/p90/p99) in bytes",
+      "id": "ts-req-size",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.size.bucket",
+                  "spaceAggregation": "p50",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p50",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.size.bucket",
+                  "spaceAggregation": "p90",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p90",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.size.bucket",
+                  "spaceAggregation": "p99",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "C",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p99",
+              "orderBy": [],
+              "queryName": "C",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Request Size (p50 / p90 / p99)",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Response body size percentiles (p50/p90/p99) in bytes",
+      "id": "ts-resp-size",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.response.size.bucket",
+                  "spaceAggregation": "p50",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p50",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.response.size.bucket",
+                  "spaceAggregation": "p90",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p90",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.response.size.bucket",
+                  "spaceAggregation": "p99",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "C",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p99",
+              "orderBy": [],
+              "queryName": "C",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Response Size (p50 / p90 / p99)",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-latency",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Latency Metrics"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Total end-to-end request latency percentiles (Kong + upstream) in seconds",
+      "id": "ts-req-latency",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.latency.total.bucket",
+                  "spaceAggregation": "p50",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p50",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.latency.total.bucket",
+                  "spaceAggregation": "p90",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p90",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.latency.total.bucket",
+                  "spaceAggregation": "p99",
+                  "temporality": "cumulative"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "C",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p99",
+              "orderBy": [],
+              "queryName": "C",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Request Latency (p50 / p90 / p99)",
+      "yAxisUnit": "s"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Latency added by upstream services only (excludes Kong plugin overhead) in seconds",
+      "id": "ts-ups-latency",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.upstream.bucket", "spaceAggregation": "p50", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p50",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.upstream.bucket", "spaceAggregation": "p90", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p90",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.upstream.bucket", "spaceAggregation": "p99", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "C",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p99",
+              "orderBy": [],
+              "queryName": "C",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Upstream Latency (p50 / p90 / p99)",
+      "yAxisUnit": "s"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Kong internal processing time only (gateway overhead, excludes upstream) in seconds",
+      "id": "ts-internal-latency",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.internal.bucket", "spaceAggregation": "p50", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p50",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.internal.bucket", "spaceAggregation": "p90", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p90",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                { "metricName": "kong.latency.internal.bucket", "spaceAggregation": "p99", "temporality": "cumulative" }
+              ],
+              "dataSource": "metrics",
+              "expression": "C",
+              "filter": { "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route" },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "p99",
+              "orderBy": [],
+              "queryName": "C",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Kong Internal Latency (p50 / p90 / p99)",
+      "yAxisUnit": "s"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-error",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Error Metrics"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Rate of 5xx server errors per Kong service",
+      "id": "ts-5xx-svc",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
+              },
+              "filters": {
+                "items": [
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": ">=", "value": 500 },
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": "<", "value": 600 }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.service.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.service.name}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "5xx Error Rate by Service",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Rate of 4xx client errors broken down by specific status code",
+      "id": "ts-4xx-code",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400 AND kong.response.status_code < 500"
+              },
+              "filters": {
+                "items": [
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": ">=", "value": 400 },
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": "<", "value": 500 }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.response.status_code}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "4xx Errors by Status Code",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Combined 4xx + 5xx error rate over time",
+      "id": "ts-error-rate",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 400"
+              },
+              "filters": {
+                "items": [
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": ">=", "value": 400 }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "Error rate (4xx+5xx)",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Error Rate (4xx + 5xx)",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "5xx errors broken down by route to identify problematic endpoints",
+      "id": "ts-5xx-by-route",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.response.status_code >= 500 AND kong.response.status_code < 600"
+              },
+              "filters": {
+                "items": [
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": ">=", "value": 500 },
+                  { "key": { "dataType": "int64", "key": "kong.response.status_code", "type": "tag" }, "op": "<", "value": 600 }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.route.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.route.name}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "5xx Errors by Route",
+      "yAxisUnit": "reqps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-traffic",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Traffic Metrics"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Ingress (request) and egress (response) bandwidth rate per Kong service in bytes/s",
+      "id": "ts-bandwidth",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.request.size.sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.service.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.service.name}} ingress",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "http.server.response.size.sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "cumulative",
+                  "timeAggregation": "rate"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.service.name IN $kong_service AND kong.route.name IN $kong_route"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.service.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.service.name}} egress",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Bandwidth by Service (bytes/s)",
+      "yAxisUnit": "binBps"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Current active, writing, waiting, and reading connection counts from Nginx",
+      "id": "ts-nginx-conn-gauge",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state IN ('active', 'writing', 'waiting', 'reading')"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "key": { "dataType": "string", "key": "kong.connection.state", "type": "tag" },
+                    "op": "IN",
+                    "value": ["active", "writing", "waiting", "reading"]
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.connection.state", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.connection.state}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Nginx Connection States"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Cumulative accepted vs handled connections — a gap indicates rejected connections",
+      "id": "ts-conn-accepted-handled",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state = 'accepted'"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "Accepted",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.connection.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment AND kong.connection.state = 'handled'"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [],
+              "having": { "expression": "" },
+              "legend": "Handled",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Accepted vs Handled Connections"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-upstream",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Upstream Health"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Health state per upstream target. Value=1 when state is active. States: healthy, unhealthy, dns_error",
+      "id": "ts-upstream-health",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.upstream.target.status",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.upstream.name", "type": "tag" },
+                { "dataType": "string", "key": "kong.upstream.state", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.upstream.name}} — {{kong.upstream.state}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Upstream Target Health"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "id": "row-resource",
+      "panelTypes": "row",
+      "query": {
+        "builder": { "queryData": [], "queryFormulas": [] },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [],
+      "selectedTracesFields": [],
+      "thresholds": [],
+      "title": "Resource Usage"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Used vs total capacity of Kong's Lua shared dictionaries",
+      "id": "ts-lua-shared-dict",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.shared_dict.usage",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.shared_dict.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.shared_dict.name}} used",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            },
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.shared_dict.size",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "B",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.shared_dict.name", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.shared_dict.name}} total",
+              "orderBy": [],
+              "queryName": "B",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Lua Shared Dict Memory",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Memory used by each Kong worker's Lua VM, grouped by worker PID",
+      "id": "ts-lua-vm-mem",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.memory.workers.lua_vm",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "latest"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.pid", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "Worker {{kong.pid}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Worker Lua VM Memory",
+      "yAxisUnit": "bytes"
+    },
+    {
+      "contextLinks": { "linksData": [] },
+      "description": "Number of pending and running Nginx timers — high counts may indicate resource pressure",
+      "id": "ts-nginx-timers",
+      "legendPosition": "bottom",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregateAttribute": {},
+              "aggregations": [
+                {
+                  "metricName": "kong.nginx.timer.count",
+                  "spaceAggregation": "sum",
+                  "temporality": "unspecified",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "expression": "A",
+              "filter": {
+                "expression": "deployment.environment IN $deployment_environment"
+              },
+              "filters": { "items": [], "op": "AND" },
+              "functions": [],
+              "groupBy": [
+                { "dataType": "string", "key": "kong.timer.state", "type": "tag" }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{kong.timer.state}}",
+              "orderBy": [],
+              "queryName": "A",
+              "selectColumns": [],
+              "stepInterval": 60
+            }
+          ],
+          "queryFormulas": []
+        },
+        "clickhouse_sql": [],
+        "promql": [],
+        "queryType": "builder"
+      },
+      "selectedLogFields": [
+        { "fieldContext": "log", "name": "timestamp", "signal": "logs", "type": "log" },
+        { "fieldContext": "log", "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "name": "duration_nano", "signal": "traces" }
+      ],
+      "thresholds": [],
+      "title": "Nginx Timers (Pending / Running)"
+    }
+  ]
+}
