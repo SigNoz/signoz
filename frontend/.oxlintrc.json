@@ -614,8 +614,9 @@
         "signoz/no-navigator-clipboard": "off",
         // Tests can use navigator.clipboard directly,
         "signoz/no-raw-absolute-path":"off",
-        "no-restricted-globals": "off"
+        "no-restricted-globals": "off",
         // Tests need raw localStorage/sessionStorage to seed DOM state for isolation
+        "signoz/no-zustand-getstate-in-hooks": "off"
       }
     },
     {

@@ -1,8 +1,8 @@
-.tanstack-header-cell {
+.tanstackHeaderCell {
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: 0;
+	padding: 0.3rem;
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
@@ -10,11 +10,11 @@
 	);
 	transition: var(--tanstack-header-transition, none);
 
-	&.is-dragging {
+	&.isDragging {
 		opacity: 0.85;
 	}
 
-	&.is-resizing {
+	&.isResizing {
 		background: var(--l2-background-hover);
 	}
 
@@ -22,7 +22,7 @@
 	background-color: var(--l2-background) !important;
 }
 
-.tanstack-header-content {
+.tanstackHeaderContent {
 	display: flex;
 	align-items: center;
 	height: 100%;
@@ -31,20 +31,20 @@
 	cursor: default;
 	max-width: 100%;
 
-	&.has-resize-control {
+	&.hasResizeControl {
 		max-width: calc(100% - 5px);
 	}
 
-	&.has-action-control {
+	&.hasActionControl {
 		max-width: calc(100% - 5px);
 	}
 
-	&.has-resize-control.has-action-control {
+	&.hasResizeControl.hasActionControl {
 		max-width: calc(100% - 10px);
 	}
 }
 
-.tanstack-grip-slot {
+.tanstackGripSlot {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -54,7 +54,7 @@
 	flex-shrink: 0;
 }
 
-.tanstack-grip-activator {
+.tanstackGripActivator {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -66,7 +66,7 @@
 	touch-action: none;
 }
 
-.tanstack-header-action-trigger {
+.tanstackHeaderActionTrigger {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -75,9 +75,11 @@
 	cursor: pointer;
 	flex-shrink: 0;
 	color: var(--l2-foreground);
+
+	margin-left: auto;
 }
 
-.tanstack-column-actions-content {
+.tanstackColumnActionsContent {
 	width: 140px;
 	padding: 0;
 	background: var(--l2-background);
@@ -86,7 +88,7 @@
 	box-shadow: none;
 }
 
-.tanstack-remove-column-action {
+.tanstackRemoveColumnAction {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -108,19 +110,19 @@
 		background: var(--l2-background-hover);
 		color: var(--l2-foreground);
 
-		.tanstack-remove-column-action-icon {
+		.tanstackRemoveColumnActionIcon {
 			color: var(--l2-foreground);
 		}
 	}
 }
 
-.tanstack-remove-column-action-icon {
+.tanstackRemoveColumnActionIcon {
 	font-size: 11px;
 	color: var(--l2-foreground);
 	opacity: 0.95;
 }
 
-.tanstack-header-cell .cursor-col-resize {
+.tanstackHeaderCell .cursorColResize {
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -132,25 +134,84 @@
 	background: transparent;
 }
 
-.tanstack-header-cell.is-resizing .cursor-col-resize {
+.tanstackHeaderCell.isResizing .cursorColResize {
 	background: var(--bg-robin-300);
 }
 
-.tanstack-resize-handle-line {
+.tanstackResizeHandleLine {
 	position: absolute;
 	top: 0;
 	bottom: 0;
 	left: 50%;
 	width: 4px;
 	transform: translateX(-50%);
-	background: var(--l2-border);
 	opacity: 1;
 	pointer-events: none;
 	transition: background 120ms ease, width 120ms ease;
+	background: transparent;
 }
 
-.tanstack-header-cell.is-resizing .tanstack-resize-handle-line {
+.cursorColResize:hover .tanstackResizeHandleLine {
+	background: var(--l2-border);
+}
+
+.tanstackHeaderCell.isResizing .tanstackResizeHandleLine {
 	width: 2px;
 	background: var(--bg-robin-500);
 	transition: none;
+}
+
+.tanstackSortButton {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	text-align: left;
+	min-width: 0;
+	max-width: 100%;
+	flex: 1;
+	overflow: hidden;
+
+	&:hover {
+		color: var(--l2-foreground);
+	}
+
+	&.isSorted {
+		color: var(--l2-foreground);
+	}
+}
+
+.tanstackHeaderTitle {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+	flex: 1;
+}
+
+.tanstackSortLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.tanstackSortIndicator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 14px;
+	height: 14px;
+	color: var(--l2-foreground);
+}
+
+.isSortable {
+	cursor: pointer;
 }
