@@ -31,7 +31,9 @@ export default function Tooltip({
 
 	return (
 		<div
-			className={cx(Styles.container, isPinned && Styles.pinned)}
+			className={cx(Styles.container, {
+				[Styles.pinned]: isPinned,
+			})}
 			data-testid="uplot-tooltip-container"
 		>
 			{showHeader && (

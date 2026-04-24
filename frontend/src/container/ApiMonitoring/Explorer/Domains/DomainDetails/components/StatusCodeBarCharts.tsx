@@ -228,6 +228,7 @@ function StatusCodeBarCharts({
 					<BarChart
 						config={config}
 						data={chartData}
+						canPinTooltip
 						width={dimensions.width}
 						height={dimensions.height}
 						timezone={timezone}

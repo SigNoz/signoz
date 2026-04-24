@@ -8,15 +8,15 @@
 	border: 1px solid var(--l2-border);
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
 
 	&.pinned {
 		border-color: var(--ring);
 	}
+}
 
-	.divider {
-		width: 100%;
-		height: 1px;
-		background-color: var(--l2-border);
-	}
+.divider {
+	display: block;
+	width: 100%;
+	height: 1px;
+	background-color: var(--l2-border);
 }
