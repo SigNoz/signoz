@@ -66,7 +66,9 @@ function createWrapper({
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>
-				<AppContext.Provider value={getAppContextMock('ADMIN', appContextOverrides)}>
+				<AppContext.Provider
+					value={getAppContextMock('ADMIN', appContextOverrides)}
+				>
 					<Router history={routerHistory}>
 						<ResourceProvider>{children}</ResourceProvider>
 					</Router>
@@ -85,7 +87,7 @@ type TagKeysPayload = Parameters<typeof mockTagKeys.mockResolvedValue>[0];
 type TagValuesPayload = Parameters<typeof mockTagValues.mockResolvedValue>[0];
 
 function successTagKeysPayload(keys: string[]): TagKeysPayload {
-	return ({
+	return {
 		statusCode: 200,
 		error: null,
 		message: 'ok',
@@ -99,11 +101,11 @@ function successTagKeysPayload(keys: string[]): TagKeysPayload {
 				})),
 			},
 		},
-	} as unknown) as TagKeysPayload;
+	} as unknown as TagKeysPayload;
 }
 
 function successTagValuesPayload(values: string[]): TagValuesPayload {
-	return ({
+	return {
 		statusCode: 200,
 		error: null,
 		message: 'ok',
@@ -112,7 +114,7 @@ function successTagValuesPayload(values: string[]): TagValuesPayload {
 				stringAttributeValues: values,
 			},
 		},
-	} as unknown) as TagValuesPayload;
+	} as unknown as TagValuesPayload;
 }
 
 describe('ResourceProvider', () => {
@@ -134,7 +136,10 @@ describe('ResourceProvider', () => {
 			expect(result.current.queries).toStrictEqual([]);
 			expect(result.current.staging).toStrictEqual([]);
 			expect(result.current.selectedQuery).toStrictEqual([]);
-			expect(result.current.optionsData).toStrictEqual({ mode: undefined, options: [] });
+			expect(result.current.optionsData).toStrictEqual({
+				mode: undefined,
+				options: [],
+			});
 		});
 
 		it('hydrates queries from the resourceAttribute URL param on mount', () => {
@@ -159,7 +164,9 @@ describe('ResourceProvider', () => {
 
 	describe('state-machine transitions via handleFocus / handleChange', () => {
 		it('Idle → TagKey fetches tag keys and populates options', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
 				wrapper: createWrapper({ routerHistory }),
@@ -179,7 +186,9 @@ describe('ResourceProvider', () => {
 		});
 
 		it('TagKey → Operator sets OperatorSchema on handleChange (no mode)', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
 				wrapper: createWrapper({ routerHistory }),
@@ -202,8 +211,12 @@ describe('ResourceProvider', () => {
 		});
 
 		it('Operator → TagValue fetches values using staging[0]', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
-			mockTagValues.mockResolvedValue(successTagValuesPayload(['frontend', 'backend']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
+			mockTagValues.mockResolvedValue(
+				successTagValuesPayload(['frontend', 'backend']),
+			);
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
 				wrapper: createWrapper({ routerHistory }),
@@ -233,7 +246,9 @@ describe('ResourceProvider', () => {
 		});
 
 		it('handleChange with mode updates selectedQuery instead of staging', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
 			mockTagValues.mockResolvedValue(successTagValuesPayload(['frontend']));
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
@@ -250,11 +265,13 @@ describe('ResourceProvider', () => {
 			act(() => {
 				result.current.handleChange('IN');
 			});
-			await waitFor(() => expect(result.current.optionsData.mode).toBe('multiple'));
+			await waitFor(() =>
+				expect(result.current.optionsData.mode).toBe('multiple'),
+			);
 
 			act(() => {
 				// In multiple mode, handleChange treats value as iterable of selected values.
-				result.current.handleChange(('frontend' as unknown) as string);
+				result.current.handleChange('frontend' as unknown as string);
 			});
 
 			expect(result.current.selectedQuery).toStrictEqual([
@@ -268,13 +285,18 @@ describe('ResourceProvider', () => {
 				'd',
 			]);
 			// Staging not advanced by mode-mode handleChange
-			expect(result.current.staging).toStrictEqual(['resource_service_name', 'IN']);
+			expect(result.current.staging).toStrictEqual([
+				'resource_service_name',
+				'IN',
+			]);
 		});
 	});
 
 	describe('handleBlur', () => {
 		it('commits a query when TagValue staging is complete and selectedQuery non-empty', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
 			mockTagValues.mockResolvedValue(successTagValuesPayload(['frontend']));
 			const routerHistory = createMemoryHistory({ initialEntries: ['/svc'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
@@ -287,10 +309,12 @@ describe('ResourceProvider', () => {
 			await waitFor(() => expect(result.current.loading).toBe(false));
 			act(() => result.current.handleChange('resource_service_name'));
 			act(() => result.current.handleChange('IN'));
-			await waitFor(() => expect(result.current.optionsData.mode).toBe('multiple'));
+			await waitFor(() =>
+				expect(result.current.optionsData.mode).toBe('multiple'),
+			);
 			act(() => {
 				// Build selectedQuery = ['frontend']
-				result.current.handleChange((['frontend'] as unknown) as string);
+				result.current.handleChange(['frontend'] as unknown as string);
 			});
 
 			act(() => {
@@ -311,7 +335,9 @@ describe('ResourceProvider', () => {
 		});
 
 		it('resets state without committing when staging is incomplete', async () => {
-			mockTagKeys.mockResolvedValue(successTagKeysPayload(['resource_service_name']));
+			mockTagKeys.mockResolvedValue(
+				successTagKeysPayload(['resource_service_name']),
+			);
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
 				wrapper: createWrapper({ routerHistory }),
@@ -564,7 +590,10 @@ describe('ResourceProvider', () => {
 					tagValue: ['prod'],
 				},
 			];
-			mockLibHistory(`?resourceAttribute=${encode(JSON.stringify(seeded))}`, '/services');
+			mockLibHistory(
+				`?resourceAttribute=${encode(JSON.stringify(seeded))}`,
+				'/services',
+			);
 
 			const routerHistory = createMemoryHistory({ initialEntries: ['/services'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
@@ -666,7 +695,7 @@ describe('ResourceProvider', () => {
 				resolveTagKeys = resolve;
 			});
 			mockTagKeys.mockReturnValueOnce(
-				(pending as unknown) as ReturnType<typeof mockTagKeys>,
+				pending as unknown as ReturnType<typeof mockTagKeys>,
 			);
 
 			act(() => {
@@ -691,12 +720,12 @@ describe('ResourceProvider', () => {
 			// getResourceAttributesTagKeys catches axios errors internally and
 			// returns an ErrorResponse with payload null. GetTagKeys then returns [].
 			// This exercises the actually-reachable API-error path.
-			mockTagKeys.mockResolvedValueOnce(({
+			mockTagKeys.mockResolvedValueOnce({
 				statusCode: 500,
 				error: 'server error',
 				message: 'boom',
 				payload: null,
-			} as unknown) as TagKeysPayload);
+			} as unknown as TagKeysPayload);
 
 			const routerHistory = createMemoryHistory({ initialEntries: ['/'] });
 			const { result } = renderHook(() => useResourceAttribute(), {
