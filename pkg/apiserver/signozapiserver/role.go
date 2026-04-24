@@ -61,7 +61,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relation/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.GetObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.GetObjects), handler.OpenAPIDef{
 		ID:                  "GetObjects",
 		Tags:                []string{"role"},
 		Summary:             "Get objects for a role by relation",
@@ -95,7 +95,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relation/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.PatchObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.PatchObjects), handler.OpenAPIDef{
 		ID:                  "PatchObjects",
 		Tags:                []string{"role"},
 		Summary:             "Patch objects for a role by relation",

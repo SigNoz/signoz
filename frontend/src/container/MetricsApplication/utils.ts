@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { withBasePath } from 'utils/basePath';
 
 import { TopOperationList } from './TopOperationsTable';
 import { NavigateToTraceProps } from './types';
@@ -37,7 +38,7 @@ export const navigateToTrace = ({
 	}=${JSONCompositeQuery}`;
 
 	if (openInNewTab) {
-		window.open(newTraceExplorerPath, '_blank');
+		window.open(withBasePath(newTraceExplorerPath), '_blank');
 	} else {
 		safeNavigate(newTraceExplorerPath);
 	}

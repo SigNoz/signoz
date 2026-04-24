@@ -73,6 +73,7 @@ import {
 import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
@@ -461,7 +462,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [manageCreditCard]);
 

@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { Card } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -22,6 +23,7 @@ function WidgetGraph({
 	selectedWidget,
 	isLoadingPanelData,
 	enableDrillDown = false,
+	isCancelled = false,
 }: WidgetGraphContainerProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
@@ -46,20 +48,24 @@ function WidgetGraph({
 				</div>
 				<DateTimeSelectionV2 showAutoRefresh={false} hideShareModal />
 			</div>
-			{queryResponse.error && (
+			{!isCancelled && queryResponse.error && (
 				<AlertIconContainer color="red" title={queryResponse.error.message}>
 					<InfoCircleOutlined />
 				</AlertIconContainer>
 			)}
 
-			<WidgetGraphComponent
-				isLoadingPanelData={isLoadingPanelData}
-				selectedGraph={selectedGraph}
-				queryResponse={queryResponse}
-				setRequestData={setRequestData}
-				selectedWidget={selectedWidget}
-				enableDrillDown={enableDrillDown}
-			/>
+			{isCancelled ? (
+				<QueryCancelledPlaceholder subText='Click "Run Query" to reload the chart.' />
+			) : (
+				<WidgetGraphComponent
+					isLoadingPanelData={isLoadingPanelData}
+					selectedGraph={selectedGraph}
+					queryResponse={queryResponse}
+					setRequestData={setRequestData}
+					selectedWidget={selectedWidget}
+					enableDrillDown={enableDrillDown}
+				/>
+			)}
 		</Container>
 	);
 }

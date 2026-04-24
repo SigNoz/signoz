@@ -1,70 +1,27 @@
-import { useMemo, useState } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import { useMemo } from 'react';
 import cx from 'classnames';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs from 'dayjs';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useTimezone } from 'providers/Timezone';
 
 import { TooltipProps } from '../types';
-import TooltipItem from './components/TooltipItem/TooltipItem';
+import TooltipFooter from './components/TooltipFooter/TooltipFooter';
+import TooltipHeader from './components/TooltipHeader/TooltipHeader';
+import TooltipList from './components/TooltipList/TooltipList';
 
 import Styles from './Tooltip.module.scss';
-
-// Fallback per-item height used for the initial size estimate before
-// Virtuoso reports the real total height via totalListHeightChanged.
-const TOOLTIP_ITEM_HEIGHT = 38;
-const LIST_MAX_HEIGHT = 300;
 
 export default function Tooltip({
 	uPlotInstance,
 	timezone,
 	content,
 	showTooltipHeader = true,
+	isPinned,
+	canPinTooltip,
+	dismiss,
 }: TooltipProps): JSX.Element {
-	const isDarkMode = useIsDarkMode();
-	const { timezone: userTimezone } = useTimezone();
-	const [totalListHeight, setTotalListHeight] = useState(0);
-
 	const tooltipContent = useMemo(() => content ?? [], [content]);
-
-	const resolvedTimezone = timezone?.value ?? userTimezone.value;
-
-	const headerTitle = useMemo(() => {
-		if (!showTooltipHeader) {
-			return null;
-		}
-		const cursorIdx = uPlotInstance.cursor.idx;
-		if (cursorIdx == null) {
-			return null;
-		}
-		const timestamp = uPlotInstance.data[0]?.[cursorIdx];
-		if (timestamp == null) {
-			return null;
-		}
-		return dayjs(timestamp * 1000)
-			.tz(resolvedTimezone)
-			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
-	}, [
-		resolvedTimezone,
-		uPlotInstance.data,
-		uPlotInstance.cursor.idx,
-		showTooltipHeader,
-	]);
-
 	const activeItem = useMemo(
 		() => tooltipContent.find((item) => item.isActive) ?? null,
 		[tooltipContent],
 	);
-
-	// Use the measured height from Virtuoso when available; fall back to a
-	// per-item estimate on the first render.  Math.ceil prevents a 1 px
-	// subpixel rounding gap from triggering a spurious scrollbar.
-	const virtuosoHeight = useMemo(() => {
-		return totalListHeight > 0
-			? Math.ceil(Math.min(totalListHeight, LIST_MAX_HEIGHT))
-			: Math.min(tooltipContent.length * TOOLTIP_ITEM_HEIGHT, LIST_MAX_HEIGHT);
-	}, [totalListHeight, tooltipContent.length]);
 
 	const showHeader = showTooltipHeader || activeItem != null;
 	// With a single series the active item is fully represented in the header —
@@ -74,46 +31,24 @@ export default function Tooltip({
 
 	return (
 		<div
-			className={cx(Styles.uplotTooltipContainer, !isDarkMode && Styles.lightMode)}
+			className={cx(Styles.container, isPinned && Styles.pinned)}
 			data-testid="uplot-tooltip-container"
 		>
 			{showHeader && (
-				<div className={Styles.uplotTooltipHeaderContainer}>
-					{showTooltipHeader && headerTitle && (
-						<div
-							className={Styles.uplotTooltipHeader}
-							data-testid="uplot-tooltip-header"
-						>
-							<span>{headerTitle}</span>
-						</div>
-					)}
-
-					{activeItem && (
-						<TooltipItem
-							item={activeItem}
-							isItemActive={true}
-							containerTestId="uplot-tooltip-pinned"
-							markerTestId="uplot-tooltip-pinned-marker"
-							contentTestId="uplot-tooltip-pinned-content"
-						/>
-					)}
-				</div>
-			)}
-
-			{showDivider && <span className={Styles.uplotTooltipDivider} />}
-
-			{showList && (
-				<Virtuoso
-					className={Styles.uplotTooltipList}
-					data-testid="uplot-tooltip-list"
-					data={tooltipContent}
-					style={{ height: virtuosoHeight, width: '100%' }}
-					totalListHeightChanged={setTotalListHeight}
-					itemContent={(_, item): JSX.Element => (
-						<TooltipItem item={item} isItemActive={false} />
-					)}
+				<TooltipHeader
+					uPlotInstance={uPlotInstance}
+					timezone={timezone}
+					showTooltipHeader={showTooltipHeader}
+					isPinned={isPinned}
+					activeItem={activeItem}
 				/>
 			)}
+
+			{showDivider && <span className={Styles.divider} />}
+
+			{showList && <TooltipList content={tooltipContent} />}
+
+			{canPinTooltip && <TooltipFooter isPinned={isPinned} dismiss={dismiss} />}
 		</div>
 	);
 }

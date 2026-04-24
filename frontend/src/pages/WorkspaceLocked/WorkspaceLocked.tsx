@@ -29,6 +29,7 @@ import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -115,7 +116,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [updateCreditCard]);
 

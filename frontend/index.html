@@ -2,6 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<base href="[[.BaseHref]]" />
 		<meta
 			http-equiv="Cache-Control"
 			content="no-cache, no-store, must-revalidate, max-age: 0"
@@ -39,12 +40,12 @@
 		<meta
 			data-react-helmet="true"
 			property="og:image"
-			content="/images/signoz-hero-image.webp"
+			content="[[.BaseHref]]images/signoz-hero-image.webp"
 		/>
 		<meta
 			data-react-helmet="true"
 			name="twitter:image"
-			content="/images/signoz-hero-image.webp"
+			content="[[.BaseHref]]images/signoz-hero-image.webp"
 		/>
 		<meta
 			data-react-helmet="true"
@@ -59,7 +60,7 @@
 		<meta data-react-helmet="true" name="docusaurus_locale" content="en" />
 		<meta data-react-helmet="true" name="docusaurus_tag" content="default" />
 		<meta name="robots" content="noindex" />
-		<link data-react-helmet="true" rel="shortcut icon" href="/favicon.ico" />
+		<link data-react-helmet="true" rel="shortcut icon" href="favicon.ico" />
 	</head>
 	<body data-theme="default">
 		<script>
@@ -67,8 +68,14 @@
 			// Mirrors the logic in ThemeProvider (hooks/useDarkMode/index.tsx).
 			(function () {
 				try {
-					var theme = localStorage.getItem('THEME');
-					var autoSwitch = localStorage.getItem('THEME_AUTO_SWITCH') === 'true';
+					// When served under a URL prefix (e.g. /signoz/), storage keys are scoped
+					// to that prefix by the React app (see utils/storage.ts getScopedKey).
+					// Read the <base> tag — already populated by the Go template — to derive
+					// the same prefix here, before any JS module has loaded.
+					var basePath = (document.querySelector('base') || {}).getAttribute('href') || '/';
+					var prefix = basePath === '/' ? '' : basePath;
+					var theme = localStorage.getItem(prefix + 'THEME');
+					var autoSwitch = localStorage.getItem(prefix + 'THEME_AUTO_SWITCH') === 'true';
 					if (autoSwitch) {
 						theme = window.matchMedia('(prefers-color-scheme: dark)').matches
 							? 'dark'
@@ -136,7 +143,7 @@
 				})(document, 'script');
 			}
 		</script>
-		<link rel="stylesheet" href="/css/uPlot.min.css" />
+		<link rel="stylesheet" href="css/uPlot.min.css" />
 		<script type="module" src="./src/index.tsx"></script>
 	</body>
 </html>

@@ -28,6 +28,7 @@ import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
+import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
 
 import DeleteMemberDialog from './DeleteMemberDialog';
@@ -381,7 +382,7 @@ function EditMemberDrawer({
 				pathParams: { id: member.id },
 			});
 			if (response?.data?.token) {
-				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
+				const link = getAbsoluteUrl(`/password-reset?token=${response.data.token}`);
 				setResetLink(link);
 				setResetLinkExpiresAt(
 					response.data.expiresAt

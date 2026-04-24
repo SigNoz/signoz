@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
@@ -21,7 +23,15 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-function TimeSeries(): JSX.Element {
+interface TimeSeriesProps {
+	onFetchingStateChange?: (isFetching: boolean) => void;
+	isCancelled?: boolean;
+}
+
+function TimeSeries({
+	onFetchingStateChange,
+	isCancelled = false,
+}: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
@@ -67,7 +77,11 @@ function TimeSeries(): JSX.Element {
 				minTime,
 				index,
 			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+			queryFn: ({
+				signal,
+			}: {
+				signal?: AbortSignal;
+			}): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(
 					{
 						query: payload,
@@ -79,9 +93,15 @@ function TimeSeries(): JSX.Element {
 						},
 					},
 					ENTITY_VERSION_V5,
+					undefined,
+					signal,
 				),
 			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
+			retry: (failureCount: number, error: unknown): boolean => {
+				if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+					return false;
+				}
+
 				let status: number | undefined;
 
 				if (error instanceof APIError) {
@@ -94,13 +114,18 @@ function TimeSeries(): JSX.Element {
 					return false;
 				}
 
-				return failureCount < 3;
+				return failureCount < MAX_QUERY_RETRIES;
 			},
 			onError: (error: APIError): void => {
 				showErrorModal(error);
 			},
 		})),
 	);
+
+	const isFetching = queries.some((q) => q.isFetching);
+	useEffect(() => {
+		onFetchingStateChange?.(isFetching);
+	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 
@@ -122,7 +147,11 @@ function TimeSeries(): JSX.Element {
 			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
 				{!hasMetricSelected && <EmptyMetricsSearch />}
-				{hasMetricSelected &&
+				{isCancelled && hasMetricSelected && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					hasMetricSelected &&
 					responseData.map((datapoint, index) => (
 						<div
 							className="time-series-view-panel"
