@@ -39,6 +39,7 @@ export default function TooltipList({
 
 	const handleScroll = useCallback(() => {
 		if (!isScrollEventTriggered.current) {
+			// TODO: remove event in July 2026
 			logEvent(Events.TOOLTIP_CONTENT_SCROLLED, {
 				path: getAbsoluteUrl(window.location.pathname),
 			});
