@@ -538,8 +538,8 @@
     "sonarjs/no-nested-template-literals": "error",
     // Avoids nested template literals
     "sonarjs/no-redundant-boolean": "warn", // TODO: Change to error after migration
-    // Removes redundant boolean literals
-    "sonarjs/no-redundant-jump": "error",
+    // Removes redundant boolean literals - turned off because it clashes with unicorn rules
+    "sonarjs/no-redundant-jump": "off",
     // Removes unnecessary returns/continues
     "sonarjs/no-same-line-conditional": "error",
     // Prevents same-line conditionals
