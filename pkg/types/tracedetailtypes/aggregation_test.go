@@ -36,10 +36,6 @@ var (
 		Name:         "http.method",
 		FieldContext: telemetrytypes.FieldContextAttribute,
 	}
-	fieldStatusCode = telemetrytypes.TelemetryFieldKey{
-		Name:         "http.status_code",
-		FieldContext: telemetrytypes.FieldContextAttribute,
-	}
 	fieldCached = telemetrytypes.TelemetryFieldKey{
 		Name:         "db.cached",
 		FieldContext: telemetrytypes.FieldContextAttribute,
