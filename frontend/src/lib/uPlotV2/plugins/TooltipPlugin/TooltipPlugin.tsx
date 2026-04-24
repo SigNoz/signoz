@@ -121,7 +121,12 @@ export default function TooltipPlugin({
 		const onOutsideInteraction = (event: Event): void => {
 			const target = event.target as Node;
 			if (!containerRef.current?.contains(target)) {
-				dismissTooltip();
+				// Don't dismiss if the click landed inside any other pinned tooltip.
+				const isInsideAnyPinnedTooltip =
+					(target as Element).closest?.('[data-pinned="true"]') != null;
+				if (!isInsideAnyPinnedTooltip) {
+					dismissTooltip();
+				}
 			}
 		};
 
