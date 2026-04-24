@@ -23,7 +23,9 @@ function AuthCard({
 	return (
 		<section className="mcp-auth-card">
 			<h3 className="mcp-auth-card__title">
-				<Badge color="secondary" variant="default" >2</Badge>
+				<Badge color="secondary" variant="default">
+					2
+				</Badge>
 				{t('step2_title')}
 			</h3>
 			<p className="mcp-auth-card__description">{t('step2_description')}</p>

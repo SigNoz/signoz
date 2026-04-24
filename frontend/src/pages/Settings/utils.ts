@@ -80,7 +80,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
-		...mcpServerSettings(t)
+		...mcpServerSettings(t),
 	);
 
 	return settings;

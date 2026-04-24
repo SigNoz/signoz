@@ -25,7 +25,7 @@ function CopyIconButton({
 				<span>
 					<Button
 						color="secondary"
-						variant='ghost'
+						variant="ghost"
 						size="icon"
 						aria-label={ariaLabel}
 						disabled={disabled}

@@ -38,7 +38,8 @@ function MCPServerSettings(): JSX.Element {
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const instanceUrl = getBaseUrl();
 
-	const { data: globalConfig, isLoading: isConfigLoading } = useGetGlobalConfig();
+	const { data: globalConfig, isLoading: isConfigLoading } =
+		useGetGlobalConfig();
 	const endpoint = globalConfig?.data?.mcp_url ?? '';
 
 	const [activeTab, setActiveTab] = useState<string>(MCP_CLIENTS[0]?.key ?? '');
@@ -106,7 +107,9 @@ function MCPServerSettings(): JSX.Element {
 
 			<section className="mcp-settings__card">
 				<h3 className="mcp-settings__card-title">
-					<Badge color="secondary" variant='default'>1</Badge>
+					<Badge color="secondary" variant="default">
+						1
+					</Badge>
 					{t('step1_title')}
 				</h3>
 				<p className="mcp-settings__card-description">{t('step1_description')}</p>
