@@ -50,3 +50,52 @@ export interface IGlobalTimeStoreActions {
 	 */
 	getMinMaxTime: (selectedItem?: GlobalTimeSelectedTime) => ParsedTimeRange;
 }
+
+export interface GlobalTimeProviderOptions {
+	/** Initialize from parent/global time */
+	inheritGlobalTime?: boolean;
+	/** Initial time if not inheriting */
+	initialTime?: GlobalTimeSelectedTime;
+	/** URL sync configuration. When false/omitted, no URL sync. */
+	enableUrlParams?:
+		| boolean
+		| {
+				relativeTimeKey?: string;
+				startTimeKey?: string;
+				endTimeKey?: string;
+		  };
+	removeQueryParamsOnUnmount?: boolean;
+	localStoragePersistKey?: string;
+	refreshInterval?: number;
+}
+
+export interface GlobalTimeState {
+	selectedTime: GlobalTimeSelectedTime;
+	refreshInterval: number;
+	isRefreshEnabled: boolean;
+	lastRefreshTimestamp: number;
+	lastComputedMinMax: ParsedTimeRange;
+}
+
+export interface GlobalTimeActions {
+	setSelectedTime: (
+		time: GlobalTimeSelectedTime,
+		refreshInterval?: number,
+	) => void;
+	setRefreshInterval: (interval: number) => void;
+	getMinMaxTime: (selectedTime?: GlobalTimeSelectedTime) => ParsedTimeRange;
+	/**
+	 * Compute fresh rounded min/max values, store them, and update refresh timestamp.
+	 * Call this before invalidating queries to ensure all queries use the same time values.
+	 *
+	 * @returns The newly computed ParsedTimeRange
+	 */
+	computeAndStoreMinMax: () => ParsedTimeRange;
+	/**
+	 * Update the refresh timestamp to current time.
+	 * Called by QueryCache listener when auto-refresh queries complete.
+	 */
+	updateRefreshTimestamp: () => void;
+}
+
+export type GlobalTimeStore = GlobalTimeState & GlobalTimeActions;
