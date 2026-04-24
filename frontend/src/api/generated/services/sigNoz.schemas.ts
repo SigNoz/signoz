@@ -3131,6 +3131,11 @@ export interface GlobaltypesConfigDTO {
 	 * @type string
 	 */
 	ingestion_url?: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	mcp_url?: string | null;
 }
 
 export interface GlobaltypesIdentNConfigDTO {
