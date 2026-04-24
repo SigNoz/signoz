@@ -581,6 +581,56 @@ func TestParseQueryRangeParamsCompositeQuery(t *testing.T) {
 			hasShiftBy: true,
 			shiftBy:    3600,
 		},
+		{
+			desc: "builder query with shift by as compact duration string",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{"5m"},
+							},
+						},
+					},
+				},
+			},
+			hasShiftBy: true,
+			shiftBy:    300,
+		},
+		{
+			desc: "builder query with shift by as human readable string",
+			compositeQuery: v3.CompositeQuery{
+				PanelType: v3.PanelTypeGraph,
+				QueryType: v3.QueryTypeBuilder,
+				BuilderQueries: map[string]*v3.BuilderQuery{
+					"A": {
+						QueryName:          "A",
+						DataSource:         "logs",
+						AggregateOperator:  "sum",
+						AggregateAttribute: v3.AttributeKey{Key: "attribute"},
+						GroupBy:            []v3.AttributeKey{{Key: "group_key"}},
+						Expression:         "A",
+						Functions: []v3.Function{
+							{
+								Name: v3.FunctionNameTimeShift,
+								Args: []interface{}{"1 hour ago"},
+							},
+						},
+					},
+				},
+			},
+			hasShiftBy: true,
+			shiftBy:    3600,
+		},
 	}
 
 	for _, tc := range reqCases {

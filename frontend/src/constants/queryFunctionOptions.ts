@@ -154,6 +154,7 @@ export const queryFunctionsTypesConfig: QueryFunctionConfigType = {
 	timeShift: {
 		showInput: true,
 		inputType: 'text',
+		placeholder: 'e.g. 5m, 1h, 1 day ago',
 	},
 	fillZero: {
 		showInput: false,
