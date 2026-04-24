@@ -11,6 +11,7 @@ import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { Cog } from 'lucide-react';
@@ -29,6 +30,8 @@ function SettingsPage(): JSX.Element {
 	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
 		useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	const { data: globalConfig } = useGetGlobalConfig();
+	const mcpUrl = globalConfig?.data?.mcp_url ?? null;
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
 		settingsNavSections.flatMap((section) => section.items),
@@ -70,12 +73,14 @@ function SettingsPage(): JSX.Element {
 				return updatedItems;
 			}
 
-			if (isCloudUser) {
+			if (mcpUrl) {
 				updatedItems = updatedItems.map((item) => ({
 					...item,
 					isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
 				}));
+			}
 
+			if (isCloudUser) {
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
@@ -171,6 +176,7 @@ function SettingsPage(): JSX.Element {
 		isEnterpriseSelfHostedUser,
 		isFetchingActiveLicense,
 		trialInfo?.workSpaceBlock,
+		mcpUrl,
 		pathname,
 	]);
 
@@ -184,6 +190,7 @@ function SettingsPage(): JSX.Element {
 				isCloudUser,
 				isEnterpriseSelfHostedUser,
 				t,
+				mcpUrl,
 			),
 		[
 			user.role,
@@ -193,6 +200,7 @@ function SettingsPage(): JSX.Element {
 			isCloudUser,
 			isEnterpriseSelfHostedUser,
 			t,
+			mcpUrl,
 		],
 	);
 

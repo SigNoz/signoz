@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -14,16 +13,8 @@ import { getBaseUrl } from 'utils/basePath';
 import { Badge, toast } from '@signozhq/ui';
 import AuthCard from './AuthCard/AuthCard';
 import ClientTabs from './ClientTabs/ClientTabs';
-import NotCloudFallback from './NotCloudFallback/NotCloudFallback';
-import RegionFallbackCard from './RegionFallbackCard/RegionFallbackCard';
 import UseCasesCard from './UseCasesCard/UseCasesCard';
 import { MCP_CLIENTS } from './clients';
-import {
-	buildMcpEndpoint,
-	getCloudRegion,
-	normalizeRegion,
-	parseRegionFromUrl,
-} from './getCloudRegion';
 
 import './MCPServerSettings.styles.scss';
 
@@ -40,37 +31,19 @@ const ANALYTICS = {
 function MCPServerSettings(): JSX.Element {
 	const { t } = useTranslation('mcpServer');
 	const { user } = useAppContext();
-	const { isCloudUser } = useGetTenantLicense();
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const instanceUrl = getBaseUrl();
 
 	const { data: globalConfig } = useGetGlobalConfig();
-	const regionFromHost = useMemo(() => getCloudRegion(), []);
-	const regionFromIngestion = useMemo(
-		() =>
-			globalConfig?.data?.ingestion_url
-				? parseRegionFromUrl(globalConfig.data.ingestion_url)
-				: null,
-		[globalConfig?.data?.ingestion_url],
-	);
+	const endpoint = globalConfig?.data?.mcp_url ?? '';
 
-	const autoDetectedRegion = regionFromHost.region ?? regionFromIngestion;
-
-	const [manualRegion, setManualRegion] = useState<string>('');
 	const [activeTab, setActiveTab] = useState<string>(MCP_CLIENTS[0]?.key ?? '');
-
-	const resolvedRegion: string | null =
-		autoDetectedRegion ?? normalizeRegion(manualRegion);
-	const endpoint = resolvedRegion ? buildMcpEndpoint(resolvedRegion) : '';
 
 	useEffect(() => {
 		void logEvent(ANALYTICS.PAGE_VIEWED, {
-			isCloudUser,
 			role: user.role,
-			region: regionFromHost.region,
-			isAutoDetected: Boolean(regionFromHost.region),
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -105,11 +78,6 @@ function MCPServerSettings(): JSX.Element {
 		void logEvent(ANALYTICS.DOCS_LINK_CLICKED, { target });
 	}, []);
 
-	const handleIngestionLinkClick = useCallback(() => {
-		void logEvent(ANALYTICS.DOCS_LINK_CLICKED, { target: 'ingestion-settings' });
-		history.push(ROUTES.INGESTION_SETTINGS);
-	}, []);
-
 	const handleInstallClick = useCallback((clientKey: string) => {
 		void logEvent(ANALYTICS.ONE_CLICK_INSTALL_CLICKED, { client: clientKey });
 	}, []);
@@ -119,24 +87,12 @@ function MCPServerSettings(): JSX.Element {
 		void logEvent(ANALYTICS.CLIENT_TAB_SELECTED, { client: key });
 	}, []);
 
-	if (!isCloudUser) {
-		return <NotCloudFallback />;
-	}
-
 	return (
 		<div className="mcp-settings" data-testid="mcp-settings">
 			<header className="mcp-settings__header">
 				<h1 className="mcp-settings__header-title">{t('page_title')}</h1>
 				<p className="mcp-settings__header-subtitle">{t('page_subtitle')}</p>
 			</header>
-
-			{!autoDetectedRegion && (
-				<RegionFallbackCard
-					manualRegion={manualRegion}
-					onRegionChange={setManualRegion}
-					onIngestionLinkClick={handleIngestionLinkClick}
-				/>
-			)}
 
 			<section className="mcp-settings__card">
 				<h3 className="mcp-settings__card-title">

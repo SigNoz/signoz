@@ -3,9 +3,9 @@
 	flex-direction: column;
 	gap: var(--spacing-4);
 	padding: var(--padding-4) var(--padding-5);
-	border: 1px solid var(--l1-border);
+	border: 1px solid var(--l2-border);
 	border-radius: 8px;
-	background: var(--l1-background);
+	background: var(--l2-background);
 
 	&__title {
 		font-size: var(--label-medium-500-font-size);
