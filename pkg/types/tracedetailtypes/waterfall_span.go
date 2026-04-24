@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const (
@@ -21,9 +22,27 @@ var ErrTraceNotFound = errors.NewNotFoundf(errors.CodeNotFound, "trace not found
 
 // PostableWaterfall is the request body for the v3 waterfall API.
 type PostableWaterfall struct {
-	SelectedSpanID   string   `json:"selectedSpanId"`
-	UncollapsedSpans []string `json:"uncollapsedSpans"`
-	Limit            uint     `json:"limit"`
+	SelectedSpanID   string            `json:"selectedSpanId"`
+	UncollapsedSpans []string          `json:"uncollapsedSpans"`
+	Limit            uint              `json:"limit"`
+	Analytics        []SpanAggregation `json:"analytics"`
+}
+
+func (p *PostableWaterfall) Validate() error {
+	if len(p.Analytics) > maxAnalyticsItems {
+		return ErrTooManyAnalyticsItems
+	}
+	for _, a := range p.Analytics {
+		if !a.Aggregation.isValid() {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown aggregation type: %q", a.Aggregation)
+		}
+		fc := a.Field.FieldContext
+		if fc != telemetrytypes.FieldContextResource && fc != telemetrytypes.FieldContextAttribute {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "analytics field context must be %q or %q, got %q",
+				telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute, fc)
+		}
+	}
+	return nil
 }
 
 // Event represents a span event.

@@ -24,6 +24,10 @@ func NewModule(traceStore tracedetailtypes.TraceStore, providerSettings factory.
 }
 
 func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedetailtypes.PostableWaterfall) (*tracedetailtypes.GettableWaterfallTrace, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	waterfallTrace, err := m.getTraceData(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -37,7 +41,12 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedet
 		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
 
-	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans), nil
+	analyticsResults := make([]tracedetailtypes.SpanAggregationResult, 0, len(req.Analytics))
+	for _, a := range req.Analytics {
+		analyticsResults = append(analyticsResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
+	}
+
+	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, analyticsResults), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.
