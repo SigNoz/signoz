@@ -1,3 +1,7 @@
+// Copyright (c) 2026 SigNoz, Inc.
+// Copyright 2015 Prometheus Team
+// SPDX-License-Identifier: Apache-2.0
+
 package alertmanagerserver
 
 // pipelineBuilder is a local copy of notify.PipelineBuilder that injects
