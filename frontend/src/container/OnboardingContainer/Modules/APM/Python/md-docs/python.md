@@ -116,3 +116,50 @@ where,
 
 
 Step 4. Make sure to dockerise your application along with OpenTelemetry instrumentation.
+
+---
+
+## Troubleshooting
+
+### Missing spans with Gunicorn/Uvicorn multiple workers
+
+If you're running Gunicorn or Uvicorn with multiple workers and notice spans missing or not exporting, this is likely a forking issue.
+
+#### The problem
+
+Gunicorn and Uvicorn use `fork()` to create worker processes. The OpenTelemetry SDK gets initialized in the parent process before forking. After the fork, each worker has its own memory space, but the SDK state (spans, exporters, etc.) from the parent isn't properly inherited. This means spans created in workers often don't get exported.
+
+#### Solutions
+
+**Option 1: Single worker (dev/testing only)**
+
+For development, you can just use one worker:
+
+```bash
+gunicorn --workers 1 app:app
+# or
+uvicorn app:app --workers 1
+```
+
+**Option 2: Reinitialize in each worker (production)**
+
+For production with multiple workers, you need to reinitialize the OpenTelemetry SDK in each worker after forking. This usually means:
+
+1. Using Gunicorn's `post_fork` hook or Uvicorn's worker initialization
+2. Re-running the OpenTelemetry bootstrap in each worker
+3. Making sure each worker has its own exporter instance
+
+See the [OpenTelemetry Python multiprocessing docs](https://opentelemetry-python.readthedocs.io/en/latest/instrumentation/runtime.html#multiprocessing) for how to implement this.
+
+**Option 3: Different deployment model**
+
+Instead of in-process workers, consider:
+- Kubernetes with multiple pod replicas (one worker per pod)
+- Process managers like systemd or supervisor
+- Horizontal scaling instead of multiple workers per process
+
+#### More info
+
+- [OpenTelemetry Python - Multiprocessing](https://opentelemetry-python.readthedocs.io/en/latest/instrumentation/runtime.html#multiprocessing)
+- [Gunicorn Workers](https://docs.gunicorn.org/en/stable/design.html#how-many-workers)
+- [Uvicorn Workers](https://www.uvicorn.org/deployment/#workers)

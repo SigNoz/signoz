@@ -111,6 +111,10 @@
 				);
 			}
 
+			.ant-table-tbody > tr {
+				cursor: pointer;
+			}
+
 			.ant-table-cell:first-child {
 				text-align: justify;
 			}
@@ -261,6 +265,10 @@
 		.ant-table {
 			.ant-table-cell {
 				color: var(--l1-foreground);
+			}
+
+			.ant-table-tbody > tr {
+				cursor: pointer;
 			}
 
 			.table-row-light {
