@@ -62,14 +62,12 @@ type Server struct {
 	silencer            *silence.Silencer
 	silences            *silence.Silences
 	timeIntervals       map[string][]timeinterval.TimeInterval
-	pipelineBuilder     *notify.PipelineBuilder
+	pipelineBuilder     *pipelineBuilder
 	marker              *alertmanagertypes.MemMarker
 	tmpl                *template.Template
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
 	notificationManager nfmanager.NotificationManager
-
-	maintenanceStore ruletypes.MaintenanceStore
 }
 
 func New(
@@ -90,7 +88,6 @@ func New(
 		stateStore:          stateStore,
 		stopc:               make(chan struct{}),
 		notificationManager: nfManager,
-		maintenanceStore:    maintenanceStore,
 	}
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
@@ -206,7 +203,7 @@ func New(
 		return nil, err
 	}
 
-	server.pipelineBuilder = notify.NewPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
+	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{}, maintenanceStore, orgID, server.logger)
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
@@ -293,7 +290,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	server.silencer = silence.NewSilencer(server.silences, server.marker, server.logger)
 
 	var pipelinePeer notify.Peer
-	var pipeline notify.Stage = server.pipelineBuilder.New(
+	pipeline := server.pipelineBuilder.New(
 		receivers,
 		func() time.Duration { return 0 },
 		server.inhibitor,
@@ -303,13 +300,6 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.nflog,
 		pipelinePeer,
 	)
-
-	// Wrap the routing pipeline with maintenance suppression so it short-circuits
-	// before routing in case of an active maintenance window
-	if server.maintenanceStore != nil {
-		mms := &maintenanceMuteStage{muter: NewMaintenanceMuter(server.maintenanceStore, server.orgID, server.logger)}
-		pipeline = notify.MultiStage{mms, pipeline}
-	}
 
 	timeoutFunc := func(d time.Duration) time.Duration {
 		if d < notify.MinTimeout {

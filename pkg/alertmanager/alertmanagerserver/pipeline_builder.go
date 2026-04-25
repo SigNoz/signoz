@@ -1,0 +1,115 @@
+package alertmanagerserver
+
+// pipelineBuilder is a local copy of notify.PipelineBuilder that injects
+// the maintenance mute stage immediately before the receiver stage.
+//
+// We maintain our own copy so we can control exactly where in the pipeline
+// the maintenance stage runs (between the silence stage and the receiver),
+// which is not possible by wrapping the output of the upstream builder.
+//
+// Upstream pipeline order (notify.PipelineBuilder.New, notify.go:444):
+//
+//	GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
+
+import (
+	"log/slog"
+	"time"
+
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/inhibit"
+	nflogpb "github.com/prometheus/alertmanager/nflog/nflogpb"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/silence"
+	"github.com/prometheus/alertmanager/timeinterval"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/client_golang/prometheus"
+
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+)
+
+type pipelineBuilder struct {
+	metrics          *notify.Metrics
+	ff               featurecontrol.Flagger
+	maintenanceStore ruletypes.MaintenanceStore
+	orgID            string
+	logger           *slog.Logger
+}
+
+func newPipelineBuilder(
+	r prometheus.Registerer,
+	ff featurecontrol.Flagger,
+	maintenanceStore ruletypes.MaintenanceStore,
+	orgID string,
+	logger *slog.Logger,
+) *pipelineBuilder {
+	return &pipelineBuilder{
+		metrics:          notify.NewMetrics(r, ff),
+		ff:               ff,
+		maintenanceStore: maintenanceStore,
+		orgID:            orgID,
+		logger:           logger,
+	}
+}
+
+// New returns a map of receivers to Stages, mirroring notify.PipelineBuilder.New
+// but inserting a maintenanceMuteStage between the silence stage and the receiver.
+func (pb *pipelineBuilder) New(
+	receivers map[string][]notify.Integration,
+	wait func() time.Duration,
+	inhibitor *inhibit.Inhibitor,
+	silencer *silence.Silencer,
+	intervener *timeinterval.Intervener,
+	marker types.GroupMarker,
+	notificationLog notify.NotificationLog,
+	peer notify.Peer,
+) notify.RoutingStage {
+	rs := make(notify.RoutingStage, len(receivers))
+
+	ms := notify.NewGossipSettleStage(peer)
+	is := notify.NewMuteStage(inhibitor, pb.metrics)
+	tas := notify.NewTimeActiveStage(intervener, marker, pb.metrics)
+	tms := notify.NewTimeMuteStage(intervener, marker, pb.metrics)
+	ss := notify.NewMuteStage(silencer, pb.metrics)
+
+	var mms *maintenanceMuteStage
+	if pb.maintenanceStore != nil {
+		mms = &maintenanceMuteStage{muter: NewMaintenanceMuter(pb.maintenanceStore, pb.orgID, pb.logger)}
+	}
+
+	for name := range receivers {
+		st := buildReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics)
+		if mms != nil {
+			rs[name] = notify.MultiStage{ms, is, tas, tms, ss, mms, st}
+		} else {
+			rs[name] = notify.MultiStage{ms, is, tas, tms, ss, st}
+		}
+	}
+
+	pb.metrics.InitializeFor(receivers)
+	return rs
+}
+
+// buildReceiverStage is a copy of notify.createReceiverStage (unexported upstream).
+func buildReceiverStage(
+	name string,
+	integrations []notify.Integration,
+	wait func() time.Duration,
+	notificationLog notify.NotificationLog,
+	metrics *notify.Metrics,
+) notify.Stage {
+	var fs notify.FanoutStage
+	for i := range integrations {
+		recv := &nflogpb.Receiver{
+			GroupName:   name,
+			Integration: integrations[i].Name(),
+			Idx:         uint32(integrations[i].Index()),
+		}
+		var s notify.MultiStage
+		s = append(s, notify.NewWaitStage(wait))
+		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
+		s = append(s, notify.NewRetryStage(integrations[i], name, metrics))
+		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
+		fs = append(fs, s)
+	}
+	return fs
+}
