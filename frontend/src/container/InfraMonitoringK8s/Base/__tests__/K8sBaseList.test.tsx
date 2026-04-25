@@ -163,10 +163,18 @@ describe('K8sBaseList', () => {
 
 		it('should render all the items in the list', async () => {
 			await waitFor(async () => {
-				await expect(screen.findByText(`PodId:${itemId}`)).resolves.toBeInTheDocument();
-				await expect(screen.findByText(`PodTitle:${itemId}`)).resolves.toBeInTheDocument();
-				await expect(screen.findByText(`PodId:${itemId2}`)).resolves.toBeInTheDocument();
-				await expect(screen.findByText(`PodTitle:${itemId2}`)).resolves.toBeInTheDocument();
+				await expect(
+					screen.findByText(`PodId:${itemId}`),
+				).resolves.toBeInTheDocument();
+				await expect(
+					screen.findByText(`PodTitle:${itemId}`),
+				).resolves.toBeInTheDocument();
+				await expect(
+					screen.findByText(`PodId:${itemId2}`),
+				).resolves.toBeInTheDocument();
+				await expect(
+					screen.findByText(`PodTitle:${itemId2}`),
+				).resolves.toBeInTheDocument();
 			});
 		});
 

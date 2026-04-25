@@ -94,13 +94,8 @@ export const AllMenu: AllMenuProps[] = [
 ];
 
 function SingleTags(props: AllTagsProps): JSX.Element {
-	const {
-		tag,
-		onCloseHandler,
-		setLocalSelectedTags,
-		index,
-		localSelectedTags,
-	} = props;
+	const { tag, onCloseHandler, setLocalSelectedTags, index, localSelectedTags } =
+		props;
 	const {
 		Key: selectedKey,
 		Operator: selectedOperator,

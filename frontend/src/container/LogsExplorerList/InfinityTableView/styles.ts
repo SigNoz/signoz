@@ -104,10 +104,10 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 		fontSize === FontSize.SMALL
 			? `padding:0.3rem;`
 			: fontSize === FontSize.MEDIUM
-			? `padding:0.4rem;`
-			: fontSize === FontSize.LARGE
-			? `padding:0.5rem;`
-			: ``}
+				? `padding:0.4rem;`
+				: fontSize === FontSize.LARGE
+					? `padding:0.5rem;`
+					: ``}
 	background-color: ${(props): string =>
 		props.$isDarkMode ? 'inherit' : themeColors.whiteCream};
 
@@ -192,10 +192,10 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px; padding: 0.1rem;`
 			: fontSize === FontSize.MEDIUM
-			? `font-size:13px; line-height:20px; padding:0.3rem;`
-			: fontSize === FontSize.LARGE
-			? `font-size:14px; line-height:24px; padding: 0.5rem;`
-			: ``};
+				? `font-size:13px; line-height:20px; padding:0.3rem;`
+				: fontSize === FontSize.LARGE
+					? `font-size:14px; line-height:24px; padding: 0.5rem;`
+					: ``};
 	${({ $isLogIndicator }): string =>
 		$isLogIndicator ? 'padding: 0px; width: 1%;' : ''}
 	border-top: 1px solid var(--l2-border);

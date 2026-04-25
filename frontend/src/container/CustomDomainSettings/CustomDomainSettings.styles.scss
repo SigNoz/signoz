@@ -90,7 +90,9 @@
 		gap: var(--spacing-3);
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: var(--paragraph-small-400-font-size);
 		font-style: normal;

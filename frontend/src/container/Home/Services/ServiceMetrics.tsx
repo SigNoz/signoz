@@ -31,6 +31,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
@@ -79,11 +80,7 @@ const EmptyState = memo(
 								) {
 									history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 								} else {
-									window?.open(
-										DOCS_LINKS.ADD_DATA_SOURCE,
-										'_blank',
-										'noopener noreferrer',
-									);
+									openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 								}
 							}}
 						>
@@ -252,9 +249,10 @@ function ServiceMetrics({
 		},
 	);
 
-	const isLoading = useMemo(() => dataQueries.some((query) => query.isLoading), [
-		dataQueries,
-	]);
+	const isLoading = useMemo(
+		() => dataQueries.some((query) => query.isLoading),
+		[dataQueries],
+	);
 
 	const services: ServicesList[] = useMemo(
 		() =>
@@ -277,9 +275,10 @@ function ServiceMetrics({
 	);
 
 	const servicesExist = sortedServices.length > 0;
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (!loadingUserPreferences && servicesExist) {

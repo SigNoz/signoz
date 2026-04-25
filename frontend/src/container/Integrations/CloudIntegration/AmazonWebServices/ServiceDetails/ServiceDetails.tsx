@@ -115,10 +115,8 @@ function ServiceDetails(): JSX.Element | null {
 		}
 	}, [cloudAccountId, serviceId]);
 
-	const {
-		mutate: updateService,
-		isLoading: isUpdatingServiceConfig,
-	} = useUpdateService();
+	const { mutate: updateService, isLoading: isUpdatingServiceConfig } =
+		useUpdateService();
 
 	const queryClient = useQueryClient();
 

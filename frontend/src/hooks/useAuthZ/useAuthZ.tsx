@@ -103,12 +103,14 @@ export function useAuthZ(
 		}),
 	);
 
-	const isLoading = useMemo(() => queryResults.some((q) => q.isLoading), [
-		queryResults,
-	]);
-	const isFetching = useMemo(() => queryResults.some((q) => q.isFetching), [
-		queryResults,
-	]);
+	const isLoading = useMemo(
+		() => queryResults.some((q) => q.isLoading),
+		[queryResults],
+	);
+	const isFetching = useMemo(
+		() => queryResults.some((q) => q.isFetching),
+		[queryResults],
+	);
 
 	const error = useMemo(
 		() =>

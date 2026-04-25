@@ -23,14 +23,14 @@ function makeUPlot({
 	valToPosFn?: (val: number) => number;
 	posToIdxFn?: (pos: number) => number;
 }): uPlot {
-	return ({
+	return {
 		data: [xData, yData],
 		series: [{}, { idxs: idxs ?? [0, yData.length - 1] }],
 		valToPos: jest.fn((val: number) => (valToPosFn ? valToPosFn(val) : val)),
 		posToIdx: jest.fn((pos: number) =>
 			posToIdxFn ? posToIdxFn(pos) : Math.round(pos),
 		),
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 // ---------------------------------------------------------------------------
@@ -143,7 +143,7 @@ describe('isolatedPointFilter', () => {
 	});
 
 	it('returns null when series idxs is undefined', () => {
-		const u = ({
+		const u = {
 			data: [
 				[0, 1],
 				[1, null],
@@ -151,7 +151,7 @@ describe('isolatedPointFilter', () => {
 			series: [{}, { idxs: undefined }],
 			valToPos: jest.fn(() => 0),
 			posToIdx: jest.fn(() => 0),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 		expect(isolatedPointFilter(u, 1, false, [[0, 10]])).toBeNull();
 	});
 

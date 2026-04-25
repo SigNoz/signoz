@@ -48,11 +48,11 @@ function AlertActionButtons({
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
+		alertDetails: alertDetails as unknown as AlertDef,
 	});
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
+		alertDetails: alertDetails as unknown as AlertDef,
 		setUpdatedName,
 		intermediateName,
 	});
@@ -80,7 +80,7 @@ function AlertActionButtons({
 						onClick: handleRename,
 						style: finalMenuItemStyle,
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'duplicate-rule',

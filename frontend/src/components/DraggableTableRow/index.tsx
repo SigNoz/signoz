@@ -41,8 +41,7 @@ function DraggableTableRow({
 	);
 }
 
-interface DraggableTableRowProps
-	extends React.HTMLAttributes<HTMLTableRowElement> {
+interface DraggableTableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
 	index: number;
 	moveRow: (dragIndex: number, hoverIndex: number) => void;
 }

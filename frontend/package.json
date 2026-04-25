@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "prettify": "oxfmt",
-    "fmt": "echo 'Disabled due to migration' || oxfmt --check",
+    "fmt": "oxfmt --check",
     "lint": "oxlint ./src && stylelint \"src/**/*.scss\"",
     "lint:js": "oxlint ./src",
     "lint:generated": "oxlint ./src/api/generated --fix",
@@ -214,9 +214,9 @@
     "msw": "1.3.2",
     "npm-run-all": "latest",
     "orval": "7.18.0",
-    "oxfmt": "0.41.0",
-    "oxlint": "1.59.0",
-    "oxlint-tsgolint": "0.20.0",
+    "oxfmt": "0.46.0",
+    "oxlint": "1.61.0",
+    "oxlint-tsgolint": "0.21.1",
     "portfinder-sync": "^0.0.2",
     "postcss": "8.5.6",
     "postcss-scss": "4.0.9",
@@ -240,8 +240,8 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "echo 'Disabled due to migration' || oxfmt --check",
-      "oxlint --fix",
+      "oxfmt --check",
+      "oxlint --quiet",
       "sh scripts/typecheck-staged.sh"
     ]
   },

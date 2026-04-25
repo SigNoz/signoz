@@ -87,6 +87,7 @@ const ROUTES = {
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
 	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
+	MCP_SERVER: '/settings/mcp-server',
 } as const;
 
 export default ROUTES;

@@ -302,10 +302,8 @@ export default function Onboarding(): JSX.Element {
 	}, [location.pathname]);
 
 	const [form] = Form.useForm<InviteMemberFormValues>();
-	const [
-		isInviteTeamMemberModalOpen,
-		setIsInviteTeamMemberModalOpen,
-	] = useState<boolean>(false);
+	const [isInviteTeamMemberModalOpen, setIsInviteTeamMemberModalOpen] =
+		useState<boolean>(false);
 
 	const toggleModal = useCallback(
 		(value: boolean): void => {

@@ -205,12 +205,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [activeLicenseData, isFetchingActiveLicense]);
 
 	// fetcher for feature flags
-	const {
-		isFetching: isFetchingFeatureFlags,
-		error: featureFlagsFetchError,
-	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
-		setFeatureFlags(allFlags);
-	}, isLoggedIn);
+	const { isFetching: isFetchingFeatureFlags, error: featureFlagsFetchError } =
+		useGetFeatureFlag((allFlags: FeatureFlags[]) => {
+			setFeatureFlags(allFlags);
+		}, isLoggedIn);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
@@ -240,14 +238,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
-	const {
-		data: userPreferencesData,
-		isFetching: isFetchingUserPreferences,
-	} = useQuery({
-		queryFn: () => listUserPreferences(),
-		queryKey: ['getAllUserPreferences', 'app-context'],
-		enabled: !!isLoggedIn && !!user.email,
-	});
+	const { data: userPreferencesData, isFetching: isFetchingUserPreferences } =
+		useQuery({
+			queryFn: () => listUserPreferences(),
+			queryKey: ['getAllUserPreferences', 'app-context'],
+			enabled: !!isLoggedIn && !!user.email,
+		});
 
 	useEffect(() => {
 		if (

@@ -36,7 +36,11 @@ export default function AlertRules({
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
-	const { data: alerts, isError, isLoading } = useListRules({
+	const {
+		data: alerts,
+		isError,
+		isLoading,
+	} = useListRules({
 		query: { cacheTime: 0 },
 	});
 

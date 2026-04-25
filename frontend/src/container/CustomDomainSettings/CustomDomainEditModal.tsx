@@ -82,8 +82,8 @@ export default function CustomDomainEditModal({
 	const errorMessage =
 		validationError ??
 		(is409
-			? apiErrorMessage ??
-			  "You've already updated the custom domain once today. Please contact support."
+			? (apiErrorMessage ??
+				"You've already updated the custom domain once today. Please contact support.")
 			: apiErrorMessage);
 
 	const hasError = Boolean(errorMessage);

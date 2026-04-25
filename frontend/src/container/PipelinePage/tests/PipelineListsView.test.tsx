@@ -113,13 +113,9 @@ describe('PipelinePage container test', () => {
 		);
 
 		// table headers assertions
-		[
-			'Pipeline Name',
-			'Filters',
-			'Last Edited',
-			'Edited By',
-			'Actions',
-		].forEach((text) => expect(getByText(text)).toBeInTheDocument());
+		['Pipeline Name', 'Filters', 'Last Edited', 'Edited By', 'Actions'].forEach(
+			(text) => expect(getByText(text)).toBeInTheDocument(),
+		);
 
 		// content assertion
 		expect(container.querySelectorAll('.ant-table-row').length).toBe(2);
@@ -213,7 +209,7 @@ describe('PipelinePage container test', () => {
 		});
 
 		await fireEvent.click(
-			((deleteConfirmationModal as unknown) as HTMLElement)?.querySelector(
+			(deleteConfirmationModal as unknown as HTMLElement)?.querySelector(
 				'.ant-modal-confirm-btns .ant-btn-primary',
 			) as HTMLElement,
 		);
@@ -256,7 +252,7 @@ describe('PipelinePage container test', () => {
 
 		expect(
 			await findByText(
-				(viewPipelineModal as unknown) as HTMLElement,
+				viewPipelineModal as unknown as HTMLElement,
 				'Simulate Processing',
 			),
 		).toBeInTheDocument();

@@ -16,6 +16,7 @@ import {
 	Trash2,
 } from 'lucide-react';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
 
 import { OnboardingQuestionHeader } from '../OnboardingQuestionHeader';
@@ -58,7 +59,7 @@ function InviteTeamMembers({
 		email: '',
 		role: '',
 		name: '',
-		frontendBaseUrl: window.location.origin,
+		frontendBaseUrl: getBaseUrl(),
 		id: '',
 	};
 
@@ -202,9 +203,10 @@ function InviteTeamMembers({
 	);
 
 	const createEmailChangeHandler = useCallback(
-		(member: TeamMember) => (e: React.ChangeEvent<HTMLInputElement>): void => {
-			handleEmailChange(e, member);
-		},
+		(member: TeamMember) =>
+			(e: React.ChangeEvent<HTMLInputElement>): void => {
+				handleEmailChange(e, member);
+			},
 		[handleEmailChange],
 	);
 

@@ -55,10 +55,8 @@ function Retention({
 	);
 
 	// Convert the hours value using only the available units
-	const {
-		value: initialValue,
-		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
+	const { value: initialValue, timeUnitValue: initialTimeUnitValue } =
+		convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
 
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(

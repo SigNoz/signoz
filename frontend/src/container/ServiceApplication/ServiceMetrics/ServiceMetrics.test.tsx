@@ -11,9 +11,10 @@ jest.mock('hooks/useGetTopLevelOperations', () => ({
 	default: jest.fn(),
 }));
 
-const mockUseGetTopLevelOperations = useGetTopLevelOperations as jest.MockedFunction<
-	typeof useGetTopLevelOperations
->;
+const mockUseGetTopLevelOperations =
+	useGetTopLevelOperations as jest.MockedFunction<
+		typeof useGetTopLevelOperations
+	>;
 
 describe('ServicesUsingMetrics', () => {
 	beforeEach(() => {

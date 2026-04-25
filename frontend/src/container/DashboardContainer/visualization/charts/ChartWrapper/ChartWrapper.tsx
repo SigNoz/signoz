@@ -14,7 +14,7 @@ import uPlot from 'uplot';
 import { ChartProps } from '../types';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 200;
+const TOOLTIP_MIN_WIDTH = 300;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },

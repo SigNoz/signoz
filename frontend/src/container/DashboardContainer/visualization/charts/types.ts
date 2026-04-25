@@ -41,23 +41,17 @@ interface UPlotChartDataProps {
 }
 
 export interface TimeSeriesChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	timezone?: Timezone;
 }
 
 export interface HistogramChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	isQueriesMerged?: boolean;
 }
 
 export interface BarChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	isStackedBarChart?: boolean;
 	timezone?: Timezone;
 }

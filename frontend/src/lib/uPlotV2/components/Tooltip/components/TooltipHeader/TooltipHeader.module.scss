@@ -1,9 +1,7 @@
 .headerContainer {
 	display: flex;
 	flex-direction: column;
-
 }
-
 
 .headerRow {
 	padding: var(--spacing-8) var(--spacing-8) 0 var(--spacing-8);
@@ -31,4 +29,3 @@
 	color: var(--callout-primary-title);
 	flex-shrink: 0;
 }
-

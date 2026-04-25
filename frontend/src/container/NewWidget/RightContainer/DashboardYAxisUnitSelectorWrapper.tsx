@@ -24,9 +24,8 @@ function DashboardYAxisUnitSelectorWrapper({
 	selectedQueryName?: string;
 	'data-testid'?: string;
 }): JSX.Element {
-	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
-		selectedQueryName,
-	);
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
 
 	useEffect(() => {
 		if (shouldUpdateYAxisUnit) {

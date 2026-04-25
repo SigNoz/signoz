@@ -52,7 +52,7 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 		])
 			? get(chart, ['options', 'plugins', 'legend', 'labels', 'generateLabels'])(
 					chart,
-			  )
+				)
 			: null;
 
 		items?.forEach((item: Record<any, any>, index: number) => {

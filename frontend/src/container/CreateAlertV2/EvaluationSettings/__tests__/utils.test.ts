@@ -14,7 +14,7 @@ jest.mock('dayjs', () => {
 		return originalDayjs(MOCK_DATE_STRING);
 	});
 	Object.keys(originalDayjs).forEach((key) => {
-		((mockDayjs as unknown) as Record<string, unknown>)[key] = originalDayjs[key];
+		(mockDayjs as unknown as Record<string, unknown>)[key] = originalDayjs[key];
 	});
 	return mockDayjs;
 });

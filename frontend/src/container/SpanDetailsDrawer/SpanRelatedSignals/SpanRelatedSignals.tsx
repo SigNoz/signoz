@@ -17,6 +17,7 @@ import { BarChart2, Compass, X } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
@@ -44,9 +45,8 @@ function SpanRelatedSignals({
 	onClose,
 	initialView,
 }: SpanRelatedSignalsProps): JSX.Element {
-	const [selectedView, setSelectedView] = useState<RelatedSignalsViews>(
-		initialView,
-	);
+	const [selectedView, setSelectedView] =
+		useState<RelatedSignalsViews>(initialView);
 	const isDarkMode = useIsDarkMode();
 
 	// Extract infrastructure metadata from span attributes
@@ -158,9 +158,7 @@ function SpanRelatedSignals({
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
 		window.open(
-			`${window.location.origin}${
-				ROUTES.LOGS_EXPLORER
-			}?${searchParams.toString()}`,
+			getAbsoluteUrl(`${ROUTES.LOGS_EXPLORER}?${searchParams.toString()}`),
 			'_blank',
 			'noopener,noreferrer',
 		);

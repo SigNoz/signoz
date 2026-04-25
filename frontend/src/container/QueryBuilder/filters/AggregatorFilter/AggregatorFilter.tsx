@@ -215,10 +215,8 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 
 	const handleChangeCustomValue = useCallback(
 		async (value: string, attributes: BaseAutocompleteData[]) => {
-			const customAttribute: BaseAutocompleteData = chooseAutocompleteFromCustomValue(
-				attributes,
-				value,
-			);
+			const customAttribute: BaseAutocompleteData =
+				chooseAutocompleteFromCustomValue(attributes, value);
 
 			onChange(customAttribute);
 		},

@@ -22,6 +22,10 @@ type AuthZ interface {
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
 	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
 
+	// CheckTransactions checks whether the given subject is authorized for the given transactions.
+	// Returns results in the same order as the input transactions.
+	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error)
+
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 

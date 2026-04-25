@@ -30,31 +30,30 @@ function LogsFilters(): JSX.Element {
 	};
 
 	const onHandleAddSelectedToInteresting = useCallback(
-		({ fieldData, fieldIndex }: IHandleInterestProps) => (): Promise<void> =>
-			onHandleAddInterest({
-				fieldData,
-				fieldIndex,
-				interesting,
-				interestingFieldLoading,
-				setInterestingFieldLoading,
-				selected,
-			}),
+		({ fieldData, fieldIndex }: IHandleInterestProps) =>
+			(): Promise<void> =>
+				onHandleAddInterest({
+					fieldData,
+					fieldIndex,
+					interesting,
+					interestingFieldLoading,
+					setInterestingFieldLoading,
+					selected,
+				}),
 		[interesting, interestingFieldLoading, selected],
 	);
 
 	const onHandleRemoveSelected = useCallback(
-		({
-			fieldData,
-			fieldIndex,
-		}: IHandleRemoveInterestProps) => (): Promise<void> =>
-			onHandleRemoveInterest({
-				fieldData,
-				fieldIndex,
-				interesting,
-				interestingFieldLoading,
-				selected,
-				setSelectedFieldLoading,
-			}),
+		({ fieldData, fieldIndex }: IHandleRemoveInterestProps) =>
+			(): Promise<void> =>
+				onHandleRemoveInterest({
+					fieldData,
+					fieldIndex,
+					interesting,
+					interestingFieldLoading,
+					selected,
+					setSelectedFieldLoading,
+				}),
 		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
 	);
 

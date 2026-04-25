@@ -70,9 +70,8 @@ export default function Home(): JSX.Element {
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -138,9 +137,8 @@ export default function Home(): JSX.Element {
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
