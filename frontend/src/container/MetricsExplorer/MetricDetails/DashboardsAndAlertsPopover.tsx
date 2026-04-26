@@ -1,3 +1,4 @@
+// File: frontend/src/container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover.tsx
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
@@ -128,7 +129,7 @@ function DashboardsAndAlertsPopover({
 						),
 						onClick: (): void => {
 							const path = generatePath(ROUTES.ALERTS_EDIT, {
-								id: alert.id,
+								alertId: alert.id,
 							});
 							openInNewTab(path);
 						},
@@ -140,24 +141,12 @@ function DashboardsAndAlertsPopover({
 	return (
 		<Dropdown
 			menu={{ items: dropdownItems }}
-			trigger={['hover']}
-			placement="bottomLeft"
+			trigger={['click']}
+			placement="bottomRight"
 		>
-			<Typography.Text style={{ fontSize: '12px', cursor: 'pointer' }}>
-				{hasDashboards && (
-					<>
-						<Grid size={12} style={{ color: Color.BG_VANILLA_100 }} />{' '}
-						{pluralize('dashboard', dashboards.length, true)}
-					</>
-				)}
-				{hasDashboards && hasAlerts && <span> • </span>}
-				{hasAlerts && (
-					<>
-						<Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />{' '}
-						{pluralize('alert', alerts.length, true)}
-					</>
-				)}
-			</Typography.Text>
+			<Typography.Link style={{ fontSize: '12px' }}>
+				View in dashboards & alerts
+			</Typography.Link>
 		</Dropdown>
 	);
 }
