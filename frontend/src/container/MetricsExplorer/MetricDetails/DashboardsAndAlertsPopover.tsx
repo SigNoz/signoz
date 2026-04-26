@@ -98,10 +98,10 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARDS_VIEW, {
+							const path = generatePath(ROUTES.DASHBOARDS_DETAIL, {
 								dashboardId: dashboard.uuid,
 							});
-							openInNewTab(`${path}?${QueryParams.search}=${metricName}`);
+							openInNewTab(`${path}?${QueryParams.graphTitle}=${metricName}`);
 						},
 					})),
 			  ]
@@ -129,7 +129,7 @@ function DashboardsAndAlertsPopover({
 						),
 						onClick: (): void => {
 							const path = generatePath(ROUTES.ALERTS_EDIT, {
-								alertId: alert.id,
+								id: alert.id,
 							});
 							openInNewTab(path);
 						},
@@ -144,20 +144,10 @@ function DashboardsAndAlertsPopover({
 			trigger={['click']}
 			placement="bottomLeft"
 		>
-			<Typography.Text
-				style={{
-					color: Color.BG_VANILLA_100,
-					fontSize: '12px',
-					cursor: 'pointer',
-				}}
-				onClick={(e): void => {
-					e.preventDefault();
-					e.stopPropagation();
-				}}
-			>
+			<Typography.Link style={{ fontSize: '12px' }}>
 				{[...((hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : [])),
 				...((hasAlerts ? [pluralize('alert', alerts.length, true)] : []))].join(', ')}
-			</Typography.Text>
+			</Typography.Link>
 		</Dropdown>
 	);
 }
