@@ -98,10 +98,11 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARDS_APPLICATION, {
-								[QueryParams.dashboardId]: dashboard.uuid,
+							const path = generatePath(ROUTES.DASHBOARDS_VIEW, {
+								dashboardId: dashboard.uuid,
 							});
-							openInNewTab(path);
+							const url = `${window.location.origin}${path}?${QueryParams.shared}`;
+							openInNewTab(url);
 						},
 					})),
 			  ]
@@ -128,10 +129,11 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.ALERTS, {
-								[QueryParams.alertId]: alert.id,
+							const path = generatePath(ROUTES.ALERTS_EDIT, {
+								alertId: alert.id,
 							});
-							openInNewTab(path);
+							const url = `${window.location.origin}${path}`;
+							openInNewTab(url);
 						},
 					})),
 			  ]
@@ -140,22 +142,22 @@ function DashboardsAndAlertsPopover({
 
 	return (
 		<Dropdown
-			menu={{
-				items: dropdownItems,
-			}}
-			trigger={['click']}
+			menu={{ items: dropdownItems }}
+			trigger={['hover']}
+			placement="bottom"
+			disabled={!hasAlerts && !hasDashboards}
 		>
 			<Typography.Text
-				strong
 				style={{
-					color: Color.BG_VANILLA_100,
 					fontSize: '12px',
+					color: Color.BG_VANILLA_100,
 					cursor: 'pointer',
 				}}
+				underline
 			>
-				{hasDashboards && `${pluralize('dashboard', dashboards.length, true)}`}
-				{hasDashboards && hasAlerts && ' • '}
-				{hasAlerts && `${pluralize('alert', alerts.length, true)}`}
+				{pluralize('dashboard', dashboards.length, true)}{' '}
+				{hasDashboards && hasAlerts ? 'and' : ''}{' '}
+				{pluralize('alert', alerts.length, true)}
 			</Typography.Text>
 		</Dropdown>
 	);
