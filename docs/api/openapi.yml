@@ -251,7 +251,7 @@ components:
         object:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/CoretypesRelation'
       required:
       - relation
       - object
@@ -380,13 +380,13 @@ components:
       type: object
     AuthtypesResource:
       properties:
-        name:
+        kind:
           type: string
         type:
           type: string
       required:
-      - name
       - type
+      - kind
       type: object
     AuthtypesRole:
       properties:
@@ -453,7 +453,7 @@ components:
         object:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/CoretypesRelation'
       required:
       - relation
       - object
@@ -2088,6 +2088,15 @@ components:
         to_user:
           type: string
       type: object
+    CoretypesRelation:
+      enum:
+      - create
+      - read
+      - update
+      - delete
+      - list
+      - assignee
+      type: string
     DashboardtypesDashboard:
       properties:
         createdAt:
