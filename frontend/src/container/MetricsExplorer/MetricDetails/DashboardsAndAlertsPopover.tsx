@@ -98,10 +98,10 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARD, {
+							const path = generatePath(ROUTES.DASHBOARDS_DETAIL, {
 								dashboardId: dashboard.uuid,
 							});
-							openInNewTab(`${path}?${QueryParams.graphTitle}=${metricName}`);
+							openInNewTab(path);
 						},
 					})),
 			  ]
@@ -129,7 +129,7 @@ function DashboardsAndAlertsPopover({
 						),
 						onClick: (): void => {
 							const path = generatePath(ROUTES.ALERTS_EDIT, {
-								id: alert.id,
+								[QueryParams.alertId]: alert.id,
 							});
 							openInNewTab(path);
 						},
@@ -150,11 +150,13 @@ function DashboardsAndAlertsPopover({
 					fontSize: '12px',
 					cursor: 'pointer',
 				}}
-				onClick={(e): void => e.stopPropagation()}
+				onClick={(e): void => {
+					e.preventDefault();
+					e.stopPropagation();
+				}}
 			>
-				{[...(hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : []), ...(hasAlerts ? [pluralize('alert', alerts.length, true)] : [])].join(
-					', ',
-				)}
+				{pluralize('dashboard', dashboards.length, true)} •{' '}
+				{pluralize('alert', alerts.length, true)}
 			</Typography.Text>
 		</Dropdown>
 	);
