@@ -1,3 +1,4 @@
+// File: frontend/src/container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils.ts
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageKey from 'api/browser/localstorage/set';
@@ -93,18 +94,8 @@ export function removeSeriesVisibilityFromLocalStorage(widgetId: string): void {
 			return;
 		}
 
-		let visibilityStates: GraphVisibilityState[] = [];
-
-		try {
-			const parsed = JSON.parse(storedData);
-			if (Array.isArray(parsed)) {
-				visibilityStates = parsed;
-			} else {
-				console.warn('Stored visibility states is not an array, skipping removal');
-				return;
-			}
-		} catch (parseError) {
-			console.error('Failed to parse stored visibility states during removal:', parseError);
+		const visibilityStates: GraphVisibilityState[] = JSON.parse(storedData);
+		if (!Array.isArray(visibilityStates)) {
 			return;
 		}
 
@@ -112,11 +103,14 @@ export function removeSeriesVisibilityFromLocalStorage(widgetId: string): void {
 
 		if (filteredStates.length === 0) {
 			removeLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
-			return;
+		} else {
+			setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(filteredStates));
 		}
-
-		setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(filteredStates));
 	} catch (error) {
-		console.error('Failed to remove series visibility from localStorage:', error);
+		if (error instanceof SyntaxError) {
+			console.error('Failed to parse stored series visibility state:', error);
+		} else {
+			console.error('Unexpected error when removing series visibility:', error);
+		}
 	}
 }
