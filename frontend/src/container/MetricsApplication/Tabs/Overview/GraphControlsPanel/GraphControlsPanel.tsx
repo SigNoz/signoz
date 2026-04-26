@@ -13,12 +13,12 @@ interface GraphControlsPanelProps {
 	onViewAPIMonitoringClick?: (e: React.MouseEvent) => void;
 }
 
-function GraphControlsPanel({
+const GraphControlsPanel = ({
 	id,
 	onViewLogsClick,
 	onViewTracesClick,
 	onViewAPIMonitoringClick,
-}: GraphControlsPanelProps): JSX.Element {
+}: GraphControlsPanelProps): JSX.Element => {
 	return (
 		<div id={id} className="graph-controls-panel">
 			{onViewTracesClick && (
@@ -27,6 +27,7 @@ function GraphControlsPanel({
 					icon={<DraftingCompass size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewTracesClick}
+					data-testid="view-traces-button"
 				>
 					View traces
 				</Button>
@@ -37,6 +38,7 @@ function GraphControlsPanel({
 					icon={<ScrollText size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewLogsClick}
+					data-testid="view-logs-button"
 				>
 					View logs
 				</Button>
@@ -47,12 +49,13 @@ function GraphControlsPanel({
 					icon={<Binoculars size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewAPIMonitoringClick}
+					data-testid="view-api-monitoring-button"
 				>
 					View API monitoring
 				</Button>
 			)}
 		</div>
 	);
-}
+};
 
 export default GraphControlsPanel;
