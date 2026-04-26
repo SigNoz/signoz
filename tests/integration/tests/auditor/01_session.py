@@ -23,6 +23,7 @@ def test_session_deleted_event_appears_in_file(
     signoz: types.SigNoz,
     apply_license: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    audit_file_path: str,
 ) -> None:
     """An admin logout posts to DELETE /api/v2/sessions; the audit middleware
     captures the post-auth claims and the file provider writes session.deleted."""
@@ -35,7 +36,7 @@ def test_session_deleted_event_appears_in_file(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     record = wait_for_event(
-        signoz,
+        audit_file_path,
         "session.deleted",
         **{
             "signoz.audit.outcome": "success",
@@ -52,6 +53,7 @@ def test_audit_records_failure_outcome(
     signoz: types.SigNoz,
     apply_license: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    audit_file_path: str,
 ) -> None:
     """A viewer hitting an admin-only mutation must produce an audit record with
     outcome=failure and the captured error.type. Proves the middleware writes
@@ -78,7 +80,7 @@ def test_audit_records_failure_outcome(
     assert forbidden.status_code == HTTPStatus.FORBIDDEN, forbidden.text
 
     record = wait_for_event(
-        signoz,
+        audit_file_path,
         "user.updated",
         **{
             "signoz.audit.outcome": "failure",

@@ -1,25 +1,81 @@
 import json
+import os
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Any
 
-import docker
 import pytest
 import requests
 from testcontainers.core.container import Network
 
-from fixtures import types
+from fixtures import reuse, types
 from fixtures.auth import find_user_by_email
 from fixtures.signoz import create_signoz
 
-# Path to the audit log file inside the SigNoz container. /tmp is guaranteed
-# to exist in the integration image, so the file provider's os.OpenFile call
-# succeeds without provisioning a directory first.
-AUDIT_FILE_PATH = "/tmp/signoz-audit.log"
+# Filename used for the audit log inside the host-mounted tmp dir. The same
+# absolute path is mounted into the SigNoz container at the same location, so
+# the file is visible to both the backend (writer) and the test runner (reader).
+AUDIT_FILE_NAME = "audit.log"
+
+
+@dataclass
+class _AuditDir:
+    """Cacheable wrapper around the audit directory path so the reuse.wrap
+    machinery can persist it across pytest runs alongside the SigNoz container."""
+
+    path: str
+
+    def __cache__(self) -> dict:
+        return {"path": self.path}
+
+    def __log__(self) -> str:
+        return f"AuditDir(path={self.path})"
+
+
+@pytest.fixture(name="audit_dir", scope="package")
+def audit_dir(
+    tmpfs: Callable[[str], types.LegacyPath],
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> str:
+    """Host tmp directory mounted into the SigNoz container as the auditor file path.
+
+    Mirrors the sqlite/clickhouse pattern: a tmpfs directory is created on the
+    host and bind-mounted into the container at the same absolute path, so the
+    audit log file is reachable from both sides without docker exec. The path
+    is cached via reuse.wrap so re-runs under --reuse keep using the same dir
+    that the long-lived SigNoz container has bind-mounted.
+    """
+
+    def create() -> _AuditDir:
+        return _AuditDir(path=str(tmpfs("auditor")))
+
+    def delete(_: _AuditDir) -> None:
+        pass
+
+    def restore(cache: dict) -> _AuditDir:
+        return _AuditDir(path=cache["path"])
+
+    return reuse.wrap(
+        request,
+        pytestconfig,
+        "auditor_dir",
+        lambda: _AuditDir(path=""),
+        create,
+        delete,
+        restore,
+    ).path
+
+
+@pytest.fixture(name="audit_file_path", scope="package")
+def audit_file_path(audit_dir: str) -> str:  # pylint: disable=redefined-outer-name
+    return os.path.join(audit_dir, AUDIT_FILE_NAME)
 
 
 @pytest.fixture(name="signoz", scope="package")
-def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments,redefined-outer-name
     network: Network,
     zeus: types.TestContainerDocker,
     gateway: types.TestContainerDocker,
@@ -27,12 +83,16 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    audit_dir: str,
+    audit_file_path: str,
 ) -> types.SigNoz:
-    """Package-scoped SigNoz container configured to use the file auditor.
+    """Package-scoped SigNoz container configured with the file auditor.
 
-    BatchSize is set to 1 so every audited request flushes to disk on the
-    moreC path without waiting on the periodic ticker. FlushInterval stays
-    short so the periodic flush has bounded lag if BatchSize is ever raised.
+    BatchSize is set to 1 so every audited request flushes to disk on the moreC
+    path without waiting on the periodic ticker. FlushInterval stays short so
+    the periodic flush has bounded lag if BatchSize is ever raised. The audit
+    directory is bind-mounted from the host so tests can read the file with a
+    plain open() call.
     """
     return create_signoz(
         network=network,
@@ -45,45 +105,16 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         cache_key="signoz_auditor",
         env_overrides={
             "SIGNOZ_AUDITOR_PROVIDER": "file",
-            "SIGNOZ_AUDITOR_FILE_PATH": AUDIT_FILE_PATH,
+            "SIGNOZ_AUDITOR_FILE_PATH": audit_file_path,
             "SIGNOZ_AUDITOR_BATCH__SIZE": "1",
             "SIGNOZ_AUDITOR_FLUSH__INTERVAL": "100ms",
         },
+        volume_mappings=[(audit_dir, audit_dir)],
     )
 
 
-def read_audit_records(signoz: types.SigNoz) -> list[dict[str, Any]]:
-    """Read every audit log record persisted to the file inside the SigNoz container.
-
-    Each line of the file is one OTLP-Logs JSON object containing all events
-    flushed in a single export batch. Returns the flattened list of LogRecord
-    dicts across every line, with the parent resource attributes merged into
-    each record's attributes so signoz.audit.resource.kind and
-    signoz.audit.resource.id are reachable via attr_value.
-    """
-    client = docker.from_env()
-    container = client.containers.get(signoz.self.id)
-    result = container.exec_run(["cat", AUDIT_FILE_PATH])
-    if result.exit_code != 0:
-        return []
-
-    records: list[dict[str, Any]] = []
-    for line in result.output.decode().splitlines():
-        if not line:
-            continue
-        payload = json.loads(line)
-        for resource_log in payload.get("resourceLogs", []):
-            resource_attrs = resource_log.get("resource", {}).get("attributes", [])
-            for scope_log in resource_log.get("scopeLogs", []):
-                for record in scope_log.get("logRecords", []):
-                    merged = dict(record)
-                    merged["attributes"] = list(record.get("attributes", [])) + list(resource_attrs)
-                    records.append(merged)
-    return records
-
-
 def ensure_user_active(
-    signoz: types.SigNoz,
+    signoz: types.SigNoz,  # pylint: disable=redefined-outer-name
     admin_token: str,
     email: str,
     role: str,
@@ -116,6 +147,41 @@ def ensure_user_active(
     return invited_user["id"]
 
 
+def read_audit_records(audit_file_path: str) -> list[dict[str, Any]]:  # pylint: disable=redefined-outer-name
+    """Read every audit log record from the host-side audit file.
+
+    Each line of the file is one OTLP-Logs JSON object containing all events
+    flushed in a single export batch. Returns the flattened list of LogRecord
+    dicts across every line, with the parent resource attributes merged into
+    each record's attributes so signoz.audit.resource.kind and
+    signoz.audit.resource.id are reachable via attr_value.
+    """
+    if not os.path.exists(audit_file_path):
+        return []
+
+    records: list[dict[str, Any]] = []
+    with open(audit_file_path, encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except json.JSONDecodeError:
+                # Partial line caught mid-write between flush syscalls; the
+                # next poll will re-read the full file once the write
+                # completes. Skip without failing the test.
+                continue
+            for resource_log in payload.get("resourceLogs", []):
+                resource_attrs = resource_log.get("resource", {}).get("attributes", [])
+                for scope_log in resource_log.get("scopeLogs", []):
+                    for record in scope_log.get("logRecords", []):
+                        merged = dict(record)
+                        merged["attributes"] = list(record.get("attributes", [])) + list(resource_attrs)
+                        records.append(merged)
+    return records
+
+
 def attr_value(record: dict[str, Any], key: str) -> Any:
     """Return the value of an OTLP-JSON attribute by key, or None if absent."""
     for kv in record.get("attributes", []):
@@ -140,7 +206,7 @@ def find_event(records: list[dict[str, Any]], event_name: str, **filters: Any) -
 
 
 def wait_for_event(
-    signoz: types.SigNoz,
+    audit_file_path: str,  # pylint: disable=redefined-outer-name
     event_name: str,
     timeout: float = 2.0,
     interval: float = 0.1,
@@ -150,7 +216,7 @@ def wait_for_event(
     deadline = time.monotonic() + timeout
     last_records: list[dict[str, Any]] = []
     while time.monotonic() < deadline:
-        last_records = read_audit_records(signoz)
+        last_records = read_audit_records(audit_file_path)
         event = find_event(last_records, event_name, **filters)
         if event is not None:
             return event

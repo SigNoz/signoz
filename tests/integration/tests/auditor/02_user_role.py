@@ -24,6 +24,7 @@ def test_user_updated_event_appears_in_file(
     signoz: types.SigNoz,
     apply_license: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    audit_file_path: str,
 ) -> None:
     """Admin renames an editor user via PUT /api/v2/users/{id}; the file provider
     writes user.updated with the editor id as the resource."""
@@ -46,7 +47,7 @@ def test_user_updated_event_appears_in_file(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.text
 
     record = wait_for_event(
-        signoz,
+        audit_file_path,
         "user.updated",
         **{
             "signoz.audit.outcome": "success",
@@ -63,6 +64,7 @@ def test_user_role_change_emits_created_and_deleted_events(
     signoz: types.SigNoz,
     apply_license: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    audit_file_path: str,
 ) -> None:
     """Toggling the editor user's managed role between signoz-editor and signoz-viewer
     fires both DELETE and POST against /api/v2/users/{id}/roles; the file provider
@@ -95,7 +97,7 @@ def test_user_role_change_emits_created_and_deleted_events(
     change_user_role(signoz, admin_token, editor_id, old_role, new_role)
 
     deleted = wait_for_event(
-        signoz,
+        audit_file_path,
         "user-role.deleted",
         **{
             "signoz.audit.outcome": "success",
@@ -108,7 +110,7 @@ def test_user_role_change_emits_created_and_deleted_events(
     assert attr_value(deleted, "signoz.audit.resource.kind") == "user-role"
 
     created = wait_for_event(
-        signoz,
+        audit_file_path,
         "user-role.created",
         **{
             "signoz.audit.outcome": "success",
