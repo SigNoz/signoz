@@ -8,7 +8,7 @@ import './GraphControlsPanel.styles.scss';
 interface GraphControlsPanelProps {
 	id: string;
 	onViewLogsClick?: (e: React.MouseEvent) => void;
-	onViewTracesClick: (e: React.MouseEvent) => void;
+	onViewTracesClick?: (e: React.MouseEvent) => void;
 	onViewAPIMonitoringClick?: (e: React.MouseEvent) => void;
 }
 
@@ -20,15 +20,17 @@ function GraphControlsPanel({
 }: GraphControlsPanelProps): JSX.Element {
 	return (
 		<div id={id} className="graph-controls-panel">
-			<Button
-				type="link"
-				icon={<DraftingCompass size={14} />}
-				size="small"
-				onClick={onViewTracesClick}
-				style={{ color: Color.BG_VANILLA_100 }}
-			>
-				View traces
-			</Button>
+			{onViewTracesClick && (
+				<Button
+					type="link"
+					icon={<DraftingCompass size={14} />}
+					size="small"
+					onClick={onViewTracesClick}
+					style={{ color: Color.BG_VANILLA_100 }}
+				>
+					View traces
+				</Button>
+			)}
 			{onViewLogsClick && (
 				<Button
 					type="link"
@@ -48,16 +50,11 @@ function GraphControlsPanel({
 					onClick={onViewAPIMonitoringClick}
 					style={{ color: Color.BG_VANILLA_100 }}
 				>
-					View External APIs
+					View API monitoring
 				</Button>
 			)}
 		</div>
 	);
 }
-
-GraphControlsPanel.defaultProps = {
-	onViewLogsClick: undefined,
-	onViewAPIMonitoringClick: undefined,
-};
 
 export default GraphControlsPanel;
