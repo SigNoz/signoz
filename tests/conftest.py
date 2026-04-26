@@ -13,6 +13,7 @@ pytest_plugins = [
     "fixtures.zookeeper",
     "fixtures.signoz",
     "fixtures.audit",
+    "fixtures.auditor",
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",

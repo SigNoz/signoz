@@ -4,6 +4,7 @@ from http import HTTPStatus
 import requests
 
 from fixtures import types
+from fixtures.auditor import attr_value, ensure_user_active, wait_for_event
 from fixtures.auth import (
     USER_ADMIN_EMAIL,
     USER_ADMIN_PASSWORD,
@@ -14,8 +15,6 @@ from fixtures.auth import (
     find_user_by_email,
 )
 from fixtures.logger import setup_logger
-
-from .conftest import attr_value, ensure_user_active, wait_for_event
 
 logger = setup_logger(__name__)
 

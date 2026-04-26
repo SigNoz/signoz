@@ -1,81 +1,12 @@
-import json
-import os
-import time
-from collections.abc import Callable
-from dataclasses import dataclass
-from http import HTTPStatus
-from typing import Any
-
 import pytest
-import requests
 from testcontainers.core.container import Network
 
-from fixtures import reuse, types
-from fixtures.auth import find_user_by_email
+from fixtures import types
 from fixtures.signoz import create_signoz
-
-# Filename used for the audit log inside the host-mounted tmp dir. The same
-# absolute path is mounted into the SigNoz container at the same location, so
-# the file is visible to both the backend (writer) and the test runner (reader).
-AUDIT_FILE_NAME = "audit.log"
-
-
-@dataclass
-class _AuditDir:
-    """Cacheable wrapper around the audit directory path so the reuse.wrap
-    machinery can persist it across pytest runs alongside the SigNoz container."""
-
-    path: str
-
-    def __cache__(self) -> dict:
-        return {"path": self.path}
-
-    def __log__(self) -> str:
-        return f"AuditDir(path={self.path})"
-
-
-@pytest.fixture(name="audit_dir", scope="package")
-def audit_dir(
-    tmpfs: Callable[[str], types.LegacyPath],
-    request: pytest.FixtureRequest,
-    pytestconfig: pytest.Config,
-) -> str:
-    """Host tmp directory mounted into the SigNoz container as the auditor file path.
-
-    Mirrors the sqlite/clickhouse pattern: a tmpfs directory is created on the
-    host and bind-mounted into the container at the same absolute path, so the
-    audit log file is reachable from both sides without docker exec. The path
-    is cached via reuse.wrap so re-runs under --reuse keep using the same dir
-    that the long-lived SigNoz container has bind-mounted.
-    """
-
-    def create() -> _AuditDir:
-        return _AuditDir(path=str(tmpfs("auditor")))
-
-    def delete(_: _AuditDir) -> None:
-        pass
-
-    def restore(cache: dict) -> _AuditDir:
-        return _AuditDir(path=cache["path"])
-
-    return reuse.wrap(
-        request,
-        pytestconfig,
-        "auditor_dir",
-        lambda: _AuditDir(path=""),
-        create,
-        delete,
-        restore,
-    ).path
-
-
-@pytest.fixture(name="audit_file_path", scope="package")
-def audit_file_path(audit_dir: str) -> str:  # pylint: disable=redefined-outer-name
-    return os.path.join(audit_dir, AUDIT_FILE_NAME)
 
 
 @pytest.fixture(name="signoz", scope="package")
-def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments,redefined-outer-name
+def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     network: Network,
     zeus: types.TestContainerDocker,
     gateway: types.TestContainerDocker,
@@ -91,8 +22,8 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments,
     BatchSize is set to 1 so every audited request flushes to disk on the moreC
     path without waiting on the periodic ticker. FlushInterval stays short so
     the periodic flush has bounded lag if BatchSize is ever raised. The audit
-    directory is bind-mounted from the host so tests can read the file with a
-    plain open() call.
+    directory is bind-mounted from the host (see fixtures.auditor.audit_dir)
+    so tests can read the file with a plain open() call.
     """
     return create_signoz(
         network=network,
@@ -111,114 +42,3 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments,
         },
         volume_mappings=[(audit_dir, audit_dir)],
     )
-
-
-def ensure_user_active(
-    signoz: types.SigNoz,  # pylint: disable=redefined-outer-name
-    admin_token: str,
-    email: str,
-    role: str,
-    password: str,
-    name: str = "",
-) -> str:
-    """Invite + activate a user, or return the existing user's id if already present.
-
-    Idempotent counterpart to fixtures.auth.create_active_user — needed because the
-    auditor suite reuses a long-lived SigNoz container across pytest runs and would
-    otherwise hit a 409 on the second invite.
-    """
-    invite = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": role, "name": name},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=5,
-    )
-    if invite.status_code == HTTPStatus.CONFLICT:
-        return find_user_by_email(signoz, admin_token, email)["id"]
-    assert invite.status_code == HTTPStatus.CREATED, invite.text
-
-    invited_user = invite.json()["data"]
-    activate = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": password, "token": invited_user["token"]},
-        timeout=5,
-    )
-    assert activate.status_code == HTTPStatus.NO_CONTENT, activate.text
-    return invited_user["id"]
-
-
-def read_audit_records(audit_file_path: str) -> list[dict[str, Any]]:  # pylint: disable=redefined-outer-name
-    """Read every audit log record from the host-side audit file.
-
-    Each line of the file is one OTLP-Logs JSON object containing all events
-    flushed in a single export batch. Returns the flattened list of LogRecord
-    dicts across every line, with the parent resource attributes merged into
-    each record's attributes so signoz.audit.resource.kind and
-    signoz.audit.resource.id are reachable via attr_value.
-    """
-    if not os.path.exists(audit_file_path):
-        return []
-
-    records: list[dict[str, Any]] = []
-    with open(audit_file_path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                payload = json.loads(line)
-            except json.JSONDecodeError:
-                # Partial line caught mid-write between flush syscalls; the
-                # next poll will re-read the full file once the write
-                # completes. Skip without failing the test.
-                continue
-            for resource_log in payload.get("resourceLogs", []):
-                resource_attrs = resource_log.get("resource", {}).get("attributes", [])
-                for scope_log in resource_log.get("scopeLogs", []):
-                    for record in scope_log.get("logRecords", []):
-                        merged = dict(record)
-                        merged["attributes"] = list(record.get("attributes", [])) + list(resource_attrs)
-                        records.append(merged)
-    return records
-
-
-def attr_value(record: dict[str, Any], key: str) -> Any:
-    """Return the value of an OTLP-JSON attribute by key, or None if absent."""
-    for kv in record.get("attributes", []):
-        if kv.get("key") != key:
-            continue
-        value = kv.get("value", {})
-        for kind in ("stringValue", "intValue", "boolValue", "doubleValue"):
-            if kind in value:
-                return value[kind]
-        return None
-    return None
-
-
-def find_event(records: list[dict[str, Any]], event_name: str, **filters: Any) -> dict[str, Any] | None:
-    """Find the first record whose eventName matches and whose audit attributes match every filter."""
-    for record in records:
-        if record.get("eventName") != event_name:
-            continue
-        if all(attr_value(record, k) == v for k, v in filters.items()):
-            return record
-    return None
-
-
-def wait_for_event(
-    audit_file_path: str,  # pylint: disable=redefined-outer-name
-    event_name: str,
-    timeout: float = 2.0,
-    interval: float = 0.1,
-    **filters: Any,
-) -> dict[str, Any]:
-    """Poll the audit file until an event matching event_name + filters appears."""
-    deadline = time.monotonic() + timeout
-    last_records: list[dict[str, Any]] = []
-    while time.monotonic() < deadline:
-        last_records = read_audit_records(audit_file_path)
-        event = find_event(last_records, event_name, **filters)
-        if event is not None:
-            return event
-        time.sleep(interval)
-    raise AssertionError(f"audit event {event_name!r} matching {filters} not found within {timeout}s (saw {len(last_records)} records: {[r.get('eventName') for r in last_records]})")
