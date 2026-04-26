@@ -128,7 +128,7 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.ALERTS_EDIT, {
+							const path = generatePath(ROUTES.ALERTS, {
 								[QueryParams.alertId]: alert.id,
 							});
 							openInNewTab(path);
@@ -140,21 +140,22 @@ function DashboardsAndAlertsPopover({
 
 	return (
 		<Dropdown
-			menu={{ items: dropdownItems }}
+			menu={{
+				items: dropdownItems,
+			}}
 			trigger={['click']}
-			placement="bottomLeft"
 		>
 			<Typography.Text
+				strong
 				style={{
 					color: Color.BG_VANILLA_100,
 					fontSize: '12px',
 					cursor: 'pointer',
 				}}
-				onClick={(e): void => e.stopPropagation()}
 			>
-				{[...(hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : []), ...(hasAlerts ? [pluralize('alert', alerts.length, true)] : [])].join(
-					', ',
-				)}
+				{hasDashboards && `${pluralize('dashboard', dashboards.length, true)}`}
+				{hasDashboards && hasAlerts && ' • '}
+				{hasAlerts && `${pluralize('alert', alerts.length, true)}`}
 			</Typography.Text>
 		</Dropdown>
 	);
