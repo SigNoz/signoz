@@ -144,7 +144,7 @@ func (module *module) DeleteRole(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.NewTypeableServiceAccount(), id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.StringValue(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.RoleNames(), authtypes.MustNewSubject(authtypes.NewTypeableServiceAccount(), id.StringValue(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -386,7 +386,7 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 		return err
 	}
 
-	err = module.authz.ModifyGrant(ctx, orgID, serviceAccount.RoleNames(), []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.authz.ModifyGrant(ctx, orgID, serviceAccount.RoleNames(), []string{role.Name}, authtypes.MustNewSubject(authtypes.NewTypeableServiceAccount(), id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ type typeableOrganization struct {
 }
 
 func NewTypeableOrganization() *typeableOrganization {
-	return &typeableOrganization{}
+	return &typeableOrganization{Typeable: coretypes.NewTypeableOrganization()}
 }
 
 func (typeableOrganization *typeableOrganization) Tuples(subject string, relation coretypes.Relation, selectors []Selector, _ valuer.UUID) ([]*openfgav1.TupleKey, error) {

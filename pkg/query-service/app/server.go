@@ -114,7 +114,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	s := &Server{
 		config:             config,
-		signoz:       signoz,
+		signoz:             signoz,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -296,4 +296,3 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	return nil
 }
-

@@ -43,8 +43,8 @@ func NewService(
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
-		stopC:    make(chan struct{}),
-		healthyC: make(chan struct{}),
+		stopC:     make(chan struct{}),
+		healthyC:  make(chan struct{}),
 	}
 }
 
@@ -148,7 +148,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			orgID,
 			existingUserRoleNames,
 			[]string{authtypes.SigNozAdminRoleName},
-			authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+			authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), orgID, nil),
 		); err != nil {
 			return err
 		}

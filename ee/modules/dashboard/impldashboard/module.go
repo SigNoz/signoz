@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -100,8 +101,8 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 	}
 
 	return []authtypes.Selector{
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, authtypes.WildCardSelectorString),
+		authtypes.MustNewSelector(coretypes.TypeMetaResource, id.StringValue()),
+		authtypes.MustNewSelector(coretypes.TypeMetaResource, authtypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -226,13 +227,13 @@ func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.T
 		authtypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
-				Relation: authtypes.RelationRead,
+				Relation: coretypes.RelationRead,
 				Object: *authtypes.MustNewObject(
 					authtypes.Resource{
-						Type: authtypes.TypeMetaResource,
-						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
+						Type: coretypes.TypeMetaResource,
+						Kind: dashboardtypes.TypeableMetaResourcePublicDashboard.Kind(),
 					},
-					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
+					authtypes.MustNewSelector(coretypes.TypeMetaResource, "*"),
 				),
 			},
 		},

@@ -11,7 +11,7 @@ type typeableServiceAccount struct {
 }
 
 func NewTypeableServiceAccount() *typeableServiceAccount {
-	return &typeableServiceAccount{}
+	return &typeableServiceAccount{Typeable: coretypes.NewTypeableServiceAccount()}
 }
 
 func (typeableServiceAccount *typeableServiceAccount) Tuples(subject string, relation coretypes.Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {

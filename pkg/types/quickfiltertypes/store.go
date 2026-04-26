@@ -2,6 +2,7 @@ package quickfiltertypes
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 

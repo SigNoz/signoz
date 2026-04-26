@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -176,7 +177,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -237,14 +238,14 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 
 	if roleChange {
 		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+			authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAdminRoleName),
 		}
 		err = module.authz.CheckWithTupleCreation(
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			authtypes.RelationAssignee,
-			authtypes.TypeableRole,
+			coretypes.RelationAssignee,
+			authtypes.NewTypeableRole(),
 			selectors,
 			selectors,
 		)
@@ -264,7 +265,7 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 			orgID,
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
-			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+			authtypes.MustNewSubject(authtypes.NewTypeableUser(), id, orgID, nil),
 		)
 		if err != nil {
 			return nil, err
@@ -400,7 +401,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		ctx,
 		orgID,
 		roleNames,
-		authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
+		authtypes.MustNewSubject(authtypes.NewTypeableUser(), id, orgID, nil),
 	)
 	if err != nil {
 		return err
@@ -586,7 +587,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 			ctx,
 			user.OrgID,
 			roleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
 		); err != nil {
 			return err
 		}
@@ -796,7 +797,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -890,7 +891,7 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		orgID,
 		existingRoles,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
@@ -953,7 +954,7 @@ func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.U
 		ctx,
 		orgID,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}

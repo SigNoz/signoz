@@ -14,7 +14,7 @@ type typeableMetaResource struct {
 }
 
 func NewTypeableMetaResource(kind coretypes.Kind) (Typeable, error) {
-	core, err := coretypes.NewTypeableMetaResources(kind)
+	core, err := coretypes.NewTypeableMetaResource(kind)
 	if err != nil {
 		return nil, err
 	}

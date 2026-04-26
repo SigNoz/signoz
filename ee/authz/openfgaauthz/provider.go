@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
@@ -74,11 +75,11 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.openfgaServer.Stop(ctx)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
@@ -108,7 +109,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	return results, nil
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType authtypes.Type) ([]*authtypes.Object, error) {
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation coretypes.Relation, objectType coretypes.Type) ([]*authtypes.Object, error) {
 	return provider.openfgaServer.ListObjects(ctx, subject, relation, objectType)
 }
 
@@ -212,17 +213,17 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 	resources := make([]*authtypes.Resource, 0)
 	for _, register := range provider.registry {
 		for _, typeable := range register.MustGetTypeables() {
-			resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
+			resources = append(resources, &authtypes.Resource{Kind: typeable.Kind(), Type: typeable.Type()})
 		}
 	}
 	for _, typeable := range provider.MustGetTypeables() {
-		resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
+		resources = append(resources, &authtypes.Resource{Kind: typeable.Kind(), Type: typeable.Type()})
 	}
 
 	return resources
 }
 
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
+func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Relation) ([]*authtypes.Object, error) {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -235,14 +236,14 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 
 	objects := make([]*authtypes.Object, 0)
 	for _, objectType := range provider.getUniqueTypes() {
-		if !slices.Contains(authtypes.TypeableRelations[objectType], relation) {
+		if !slices.Contains(coretypes.TypeableRelations[objectType], relation) {
 			continue
 		}
 
 		resourceObjects, err := provider.
 			ListObjects(
 				ctx,
-				authtypes.MustNewSubject(authtypes.TypeableRole, storableRole.Name, orgID, &authtypes.RelationAssignee),
+				authtypes.MustNewSubject(authtypes.NewTypeableRole(), storableRole.Name, orgID, &coretypes.RelationAssignee),
 				relation,
 				objectType,
 			)
@@ -265,7 +266,7 @@ func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *au
 	return provider.store.Update(ctx, orgID, role)
 }
 
-func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation authtypes.Relation, additions, deletions []*authtypes.Object) error {
+func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation coretypes.Relation, additions, deletions []*authtypes.Object) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -319,19 +320,19 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 }
 
 func (provider *provider) MustGetTypeables() []authtypes.Typeable {
-	return []authtypes.Typeable{authtypes.TypeableRole, authtypes.TypeableResourcesRoles}
+	return []authtypes.Typeable{authtypes.NewTypeableRole(), authtypes.MustNewTypeableMetaResources(coretypes.MustNewKind("roles"))}
 }
 
 func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := []*openfgav1.TupleKey{}
 
 	// Grant the admin role to the user
-	adminSubject := authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil)
-	adminTuple, err := authtypes.TypeableRole.Tuples(
+	adminSubject := authtypes.MustNewSubject(authtypes.NewTypeableUser(), userID.String(), orgID, nil)
+	adminTuple, err := authtypes.NewTypeableRole().Tuples(
 		adminSubject,
-		authtypes.RelationAssignee,
+		coretypes.RelationAssignee,
 		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+			authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAdminRoleName),
 		},
 		orgID,
 	)
@@ -341,12 +342,12 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 	tuples = append(tuples, adminTuple...)
 
 	// Grant the admin role to the anonymous user
-	anonymousSubject := authtypes.MustNewSubject(authtypes.TypeableAnonymous, authtypes.AnonymousUser.String(), orgID, nil)
-	anonymousTuple, err := authtypes.TypeableRole.Tuples(
+	anonymousSubject := authtypes.MustNewSubject(authtypes.NewTypeableAnonymous(), coretypes.AnonymousUser.String(), orgID, nil)
+	anonymousTuple, err := authtypes.NewTypeableRole().Tuples(
 		anonymousSubject,
-		authtypes.RelationAssignee,
+		coretypes.RelationAssignee,
 		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAnonymousRoleName),
+			authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAnonymousRoleName),
 		},
 		orgID,
 	)
@@ -369,13 +370,13 @@ func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for roleName, transactions := range transactionsByRole {
 		for _, txn := range transactions {
-			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
+			typeable := authtypes.MustNewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			txnTuples, err := typeable.Tuples(
 				authtypes.MustNewSubject(
-					authtypes.TypeableRole,
+					authtypes.NewTypeableRole(),
 					roleName,
 					orgID,
-					&authtypes.RelationAssignee,
+					&coretypes.RelationAssignee,
 				),
 				txn.Relation,
 				[]authtypes.Selector{txn.Object.Selector},
@@ -392,7 +393,7 @@ func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]
 }
 
 func (provider *provider) deleteTuples(ctx context.Context, roleName string, orgID valuer.UUID) error {
-	subject := authtypes.MustNewSubject(authtypes.TypeableRole, roleName, orgID, &authtypes.RelationAssignee)
+	subject := authtypes.MustNewSubject(authtypes.NewTypeableRole(), roleName, orgID, &coretypes.RelationAssignee)
 
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, objectType := range provider.getUniqueTypes() {
@@ -425,9 +426,9 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 	return nil
 }
 
-func (provider *provider) getUniqueTypes() []authtypes.Type {
+func (provider *provider) getUniqueTypes() []coretypes.Type {
 	seen := make(map[string]struct{})
-	uniqueTypes := make([]authtypes.Type, 0)
+	uniqueTypes := make([]coretypes.Type, 0)
 	for _, register := range provider.registry {
 		for _, typeable := range register.MustGetTypeables() {
 			typeKey := typeable.Type().StringValue()

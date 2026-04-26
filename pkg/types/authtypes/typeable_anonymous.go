@@ -16,6 +16,10 @@ type typeableAnonymous struct {
 	coretypes.Typeable
 }
 
+func NewTypeableAnonymous() *typeableAnonymous {
+	return &typeableAnonymous{Typeable: coretypes.NewTypeableAnonymous()}
+}
+
 func (typeableAnonymous *typeableAnonymous) Tuples(subject string, relation coretypes.Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {

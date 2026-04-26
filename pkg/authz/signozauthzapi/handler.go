@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -97,7 +98,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
-	relation, err := authtypes.NewRelation(relationStr)
+	relation, err := coretypes.NewRelation(relationStr)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -190,7 +191,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relation, err := authtypes.NewRelation(mux.Vars(r)["relation"])
+	relation, err := coretypes.NewRelation(mux.Vars(r)["relation"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -266,7 +267,7 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	subject, err := authtypes.NewSubject(authtypes.NewTypeableUser(), claims.UserID, orgID, nil)
 	if err != nil {
 		render.Error(rw, err)
 		return

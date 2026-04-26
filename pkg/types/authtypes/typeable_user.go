@@ -11,7 +11,7 @@ type typeableUser struct {
 }
 
 func NewTypeableUser() *typeableUser {
-	return &typeableUser{}
+	return &typeableUser{Typeable: coretypes.NewTypeableUser()}
 }
 
 func (typeableUser *typeableUser) Tuples(subject string, relation coretypes.Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
