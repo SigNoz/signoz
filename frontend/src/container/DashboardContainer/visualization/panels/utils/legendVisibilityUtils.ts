@@ -111,7 +111,7 @@ export function removeSeriesVisibilityFromLocalStorage(widgetId: string): void {
 		if (error instanceof SyntaxError) {
 			console.error('Failed to parse visibility states during removal:', error);
 		} else {
-			console.error('Unexpected error when removing series visibility:', error);
+			console.error('Failed to remove series visibility from localStorage:', error);
 		}
 	}
 }
