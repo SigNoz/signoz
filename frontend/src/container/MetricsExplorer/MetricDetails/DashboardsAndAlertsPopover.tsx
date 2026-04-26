@@ -52,117 +52,113 @@ function DashboardsAndAlertsPopover({
 	}, [alertsData]);
 
 	const dashboards = useMemo(() => {
-		const currentDashboards = dashboardsData?.data.dashboards ?? [];
-		// Remove duplicate dashboards
-		return currentDashboards.filter(
-			(dashboard, index, self) =>
-				index === self.findIndex((t) => t.dashboardId === dashboard.dashboardId),
-		);
+		return dashboardsData?.data.dashboards ?? [];
 	}, [dashboardsData]);
 
-	const alertsPopoverContent = useMemo(() => {
-		if (alerts && alerts.length > 0) {
-			return alerts.map((alert) => ({
-				key: alert.alertId,
-				label: (
-					<Typography.Link
-						key={alert.alertId}
-						onClick={(): void => {
-							openInNewTab(
-								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
-							);
-						}}
-						className="dashboards-popover-content-item"
-					>
-						{alert.alertName || alert.alertId}
-					</Typography.Link>
-				),
-			}));
-		}
-		return null;
-	}, [alerts]);
-
-	const dashboardsPopoverContent = useMemo(() => {
-		if (dashboards && dashboards.length > 0) {
-			return dashboards.map((dashboard) => ({
-				key: dashboard.dashboardId,
-				label: (
-					<Typography.Link
-						key={dashboard.dashboardId}
-						onClick={(): void => {
-							openInNewTab(
-								generatePath(ROUTES.DASHBOARD, {
-									dashboardId: dashboard.dashboardId,
-								}),
-							);
-						}}
-						className="dashboards-popover-content-item"
-					>
-						{dashboard.dashboardName || dashboard.dashboardId}
-					</Typography.Link>
-				),
-			}));
-		}
-		return null;
-	}, [dashboards]);
-
-	if (isLoadingAlerts || isLoadingDashboards) {
+	if (isErrorAlerts || isErrorDashboards) {
 		return (
-			<div className="dashboards-and-alerts-popover-container">
-				<Skeleton title={false} paragraph={{ rows: 1 }} active />
-			</div>
+			<Typography.Text type="danger" style={{ fontSize: '12px' }}>
+				Failed to load dashboards or alerts
+			</Typography.Text>
 		);
 	}
 
-	// If there are no dashboards or alerts or both have errors, don't show the popover
-	const hidePopover =
-		(!dashboardsPopoverContent && !alertsPopoverContent) ||
-		(isErrorAlerts && isErrorDashboards);
-	if (hidePopover) {
-		return <div className="dashboards-and-alerts-popover-container" />;
+	if (isLoadingAlerts || isLoadingDashboards) {
+		return <Skeleton.Input size="small" style={{ width: '120px' }} />;
 	}
 
+	const hasAlerts = alerts.length > 0;
+	const hasDashboards = dashboards.length > 0;
+
+	if (!hasAlerts && !hasDashboards) {
+		return null;
+	}
+
+	const dropdownItems = [
+		...(hasDashboards
+			? [
+					{
+						key: 'dashboards',
+						label: (
+							<Typography.Text style={{ fontSize: '12px' }}>
+								{pluralize('dashboard', dashboards.length, true)}
+							</Typography.Text>
+						),
+						icon: <Grid size={12} style={{ color: Color.BG_VANILLA_100 }} />,
+						disabled: true,
+					},
+					...dashboards.map((dashboard) => ({
+						key: `dashboard-${dashboard.uuid}`,
+						label: (
+							<Typography.Text
+								style={{ fontSize: '12px', color: Color.BG_VANILLA_100 }}
+							>
+								{dashboard.title}
+							</Typography.Text>
+						),
+						onClick: (): void => {
+							const path = generatePath(ROUTES.DASHBOARD, {
+								dashboardId: dashboard.uuid,
+							});
+							openInNewTab(`${path}?${QueryParams.metricName}=${metricName}`);
+						},
+					})),
+			  ]
+			: []),
+		...(hasAlerts
+			? [
+					{
+						key: 'alerts',
+						label: (
+							<Typography.Text style={{ fontSize: '12px' }}>
+								{pluralize('alert', alerts.length, true)}
+							</Typography.Text>
+						),
+						icon: <Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />,
+						disabled: true,
+					},
+					...alerts.map((alert) => ({
+						key: `alert-${alert.id}`,
+						label: (
+							<Typography.Text
+								style={{ fontSize: '12px', color: Color.BG_VANILLA_100 }}
+							>
+								{alert.name}
+							</Typography.Text>
+						),
+						onClick: (): void => {
+							const path = generatePath(ROUTES.ALERTS_EDIT, {
+								id: alert.id,
+							});
+							openInNewTab(path);
+						},
+					})),
+			  ]
+			: []),
+	];
+
 	return (
-		<div className="dashboards-and-alerts-popover-container">
-			{dashboardsPopoverContent && (
-				<Dropdown
-					menu={{
-						items: dashboardsPopoverContent,
-					}}
-					placement="bottomLeft"
-					trigger={['click']}
-				>
-					<div
-						className="dashboards-and-alerts-popover dashboards-popover"
-						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
-					>
-						<Grid size={12} color={Color.BG_SIENNA_500} />
-						<Typography.Text>
-							{pluralize(dashboards.length, 'dashboard')}
-						</Typography.Text>
-					</div>
-				</Dropdown>
-			)}
-			{alertsPopoverContent && (
-				<Dropdown
-					menu={{
-						items: alertsPopoverContent,
-					}}
-					placement="bottomLeft"
-					trigger={['click']}
-				>
-					<div
-						className="dashboards-and-alerts-popover alerts-popover"
-						style={{ backgroundColor: `${Color.BG_SAKURA_500}33` }}
-					>
-						<Bell size={12} color={Color.BG_SAKURA_500} />
-						<Typography.Text>
-							{pluralize(alerts.length, 'alert rule')}
-						</Typography.Text>
-					</div>
-				</Dropdown>
-			)}
-		</div>
+		<Dropdown
+			menu={{ items: dropdownItems }}
+			trigger={['hover']}
+			placement="bottomLeft"
+		>
+			<Typography.Text style={{ fontSize: '12px', cursor: 'pointer' }}>
+				{hasDashboards && (
+					<>
+						<Grid size={12} style={{ color: Color.BG_VANILLA_100 }} />{' '}
+						{pluralize('dashboard', dashboards.length, true)}
+					</>
+				)}
+				{hasDashboards && hasAlerts && <span> • </span>}
+				{hasAlerts && (
+					<>
+						<Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />{' '}
+						{pluralize('alert', alerts.length, true)}
+					</>
+				)}
+			</Typography.Text>
+		</Dropdown>
 	);
 }
 
