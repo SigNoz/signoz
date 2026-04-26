@@ -1,9 +1,8 @@
 package authtypes
 
 import (
-	"encoding/json"
-
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -14,107 +13,40 @@ var (
 	ErrCodeAuthZInvalidType = errors.MustNewCode("authz_invalid_type")
 )
 
-var (
-	TypeUser           = Type{valuer.NewString("user")}
-	TypeServiceAccount = Type{valuer.NewString("serviceaccount")}
-	TypeAnonymous      = Type{valuer.NewString("anonymous")}
-	TypeRole           = Type{valuer.NewString("role")}
-	TypeOrganization   = Type{valuer.NewString("organization")}
-	TypeMetaResource   = Type{valuer.NewString("metaresource")}
-	TypeMetaResources  = Type{valuer.NewString("metaresources")}
-)
-
-var (
-	TypeableUser           = &typeableUser{}
-	TypeableServiceAccount = &typeableServiceAccount{}
-	TypeableAnonymous      = &typeableAnonymous{}
-	TypeableRole           = &typeableRole{}
-	TypeableOrganization   = &typeableOrganization{}
-)
-
 type Typeable interface {
-	Type() Type
-	Name() Name
-	Prefix(orgId valuer.UUID) string
-	Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error)
-	Scope(relation Relation) string
+	coretypes.Typeable
+	Tuples(subject string, relation coretypes.Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error)
 }
 
-type Type struct{ valuer.String }
-
-func MustNewType(input string) Type {
-	typed, err := NewType(input)
-	if err != nil {
-		panic(err)
-	}
-
-	return typed
-}
-
-func NewType(input string) (Type, error) {
-	switch input {
-	case "user":
-		return TypeUser, nil
-	case "serviceaccount":
-		return TypeServiceAccount, nil
-	case "role":
-		return TypeRole, nil
-	case "organization":
-		return TypeOrganization, nil
-	case "metaresource":
-		return TypeMetaResource, nil
-	case "metaresources":
-		return TypeMetaResources, nil
-	default:
-		return Type{}, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type: %s", input)
-	}
-}
-
-func (typed *Type) UnmarshalJSON(data []byte) error {
-	str := ""
-	err := json.Unmarshal(data, &str)
-	if err != nil {
-		return err
-	}
-
-	alias, err := NewType(str)
-	if err != nil {
-		return err
-	}
-
-	*typed = alias
-	return nil
-}
-
-func NewTypeableFromType(typed Type, name Name) (Typeable, error) {
+func NewTypeableFromType(typed coretypes.Type, kind coretypes.Kind) (Typeable, error) {
 	switch typed {
-	case TypeRole:
-		return TypeableRole, nil
-	case TypeUser:
-		return TypeableUser, nil
-	case TypeServiceAccount:
-		return TypeableServiceAccount, nil
-	case TypeOrganization:
-		return TypeableOrganization, nil
-	case TypeMetaResource:
-		resource, err := NewTypeableMetaResource(name)
+	case coretypes.TypeRole:
+		return NewTypeableRole(), nil
+	case coretypes.TypeUser:
+		return NewTypeableUser(), nil
+	case coretypes.TypeServiceAccount:
+		return NewTypeableServiceAccount(), nil
+	case coretypes.TypeOrganization:
+		return NewTypeableOrganization(), nil
+	case coretypes.TypeMetaResource:
+		resource, err := NewTypeableMetaResource(kind)
 		if err != nil {
 			return nil, err
 		}
 		return resource, nil
-	case TypeMetaResources:
-		resources, err := NewTypeableMetaResources(name)
+	case coretypes.TypeMetaResources:
+		resources, err := NewTypeableMetaResources(kind)
 		if err != nil {
 			return nil, err
 		}
 		return resources, nil
 	}
 
-	return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidType, "invalid type %s", typed)
+	return nil, errors.Newf(errors.TypeNotFound, coretypes.ErrCodeTypeableNotFound, "typeable does not exist for type %s", typed)
 }
 
-func MustNewTypeableFromType(typed Type, name Name) Typeable {
-	typeable, err := NewTypeableFromType(typed, name)
+func MustNewTypeableFromType(typed coretypes.Type, kind coretypes.Kind) Typeable {
+	typeable, err := NewTypeableFromType(typed, kind)
 	if err != nil {
 		panic(err)
 	}

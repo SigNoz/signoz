@@ -6,16 +6,17 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 type Resource struct {
-	Name Name `json:"name" required:"true"`
-	Type Type `json:"type" required:"true"`
+	Type coretypes.Type `json:"type" required:"true"`
+	Kind coretypes.Kind `json:"kind" required:"true"`
 }
 
 type GettableResources struct {
-	Resources []*Resource         `json:"resources" required:"true" nullable:"false"`
-	Relations map[Relation][]Type `json:"relations" required:"true"`
+	Resources []*Resource                             `json:"resources" required:"true" nullable:"false"`
+	Relations map[coretypes.Relation][]coretypes.Type `json:"relations" required:"true"`
 }
 
 type Object struct {
@@ -59,19 +60,19 @@ func NewObjectsFromGettableObjects(patchableObjects []*GettableObjects) ([]*Obje
 	return objects, nil
 }
 
-func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObjects, relation Relation) ([]*Object, []*Object, error) {
+func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObjects, relation coretypes.Relation) ([]*Object, []*Object, error) {
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil, nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidPatchObject, "empty object patch request received, at least one of additions or deletions must be present")
 	}
 
 	for _, object := range additions {
-		if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+		if !slices.Contains(coretypes.TypeableRelations[object.Resource.Type], relation) {
 			return nil, nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
 		}
 	}
 
 	for _, object := range deletions {
-		if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+		if !slices.Contains(coretypes.TypeableRelations[object.Resource.Type], relation) {
 			return nil, nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
 		}
 	}
@@ -92,7 +93,7 @@ func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObje
 func NewGettableResources(resources []*Resource) *GettableResources {
 	return &GettableResources{
 		Resources: resources,
-		Relations: RelationsTypeable,
+		Relations: coretypes.RelationsTypeable,
 	}
 }
 
@@ -139,8 +140,8 @@ func MustNewObjectFromString(input string) *Object {
 	}
 
 	resource := Resource{
-		Type: MustNewType(typeParts[0]),
-		Name: MustNewName(parts[2]),
+		Type: coretypes.MustNewType(typeParts[0]),
+		Kind: coretypes.MustNewKind(parts[2]),
 	}
 
 	selector := MustNewSelector(resource.Type, parts[3])

@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -11,9 +12,11 @@ var (
 	AnonymousUser = valuer.UUID{}
 )
 
-type typeableAnonymous struct{}
+type typeableAnonymous struct {
+	coretypes.Typeable
+}
 
-func (typeableAnonymous *typeableAnonymous) Tuples(subject string, relation Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableAnonymous *typeableAnonymous) Tuples(subject string, relation coretypes.Relation, selector []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for _, selector := range selector {
 		object := typeableAnonymous.Prefix(orgID) + "/" + selector.String()
@@ -21,21 +24,4 @@ func (typeableAnonymous *typeableAnonymous) Tuples(subject string, relation Rela
 	}
 
 	return tuples, nil
-}
-
-func (typeableAnonymous *typeableAnonymous) Type() Type {
-	return TypeAnonymous
-}
-
-func (typeableAnonymous *typeableAnonymous) Name() Name {
-	return MustNewName("anonymous")
-}
-
-// example: anonymous:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/anonymous
-func (typeableAnonymous *typeableAnonymous) Prefix(orgID valuer.UUID) string {
-	return typeableAnonymous.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableAnonymous.Name().String()
-}
-
-func (typeableAnonymous *typeableAnonymous) Scope(relation Relation) string {
-	return typeableAnonymous.Name().String() + ":" + relation.StringValue()
 }

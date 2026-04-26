@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/uptrace/bun"
@@ -56,10 +57,6 @@ var (
 		SigNozEditorRoleName: types.RoleEditor,
 		SigNozViewerRoleName: types.RoleViewer,
 	}
-)
-
-var (
-	TypeableResourcesRoles = MustNewTypeableMetaResources(MustNewName("roles"))
 )
 
 type Role struct {
@@ -171,17 +168,17 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Relation, additions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
+		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Kind)
 		transactionTuples, err := typeable.Tuples(
 			MustNewSubject(
-				TypeableRole,
+				NewTypeableRole(),
 				name,
 				orgID,
-				&RelationAssignee,
+				&coretypes.RelationAssignee,
 			),
 			relation,
 			[]Selector{object.Selector},
@@ -197,17 +194,17 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additi
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(name string, orgID valuer.UUID, relation coretypes.Relation, deletions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Name)
+		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Kind)
 		transactionTuples, err := typeable.Tuples(
 			MustNewSubject(
-				TypeableRole,
+				NewTypeableRole(),
 				name,
 				orgID,
-				&RelationAssignee,
+				&coretypes.RelationAssignee,
 			),
 			relation,
 			[]Selector{object.Selector},

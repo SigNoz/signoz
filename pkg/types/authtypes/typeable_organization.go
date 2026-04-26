@@ -3,15 +3,20 @@ package authtypes
 import (
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ Typeable = new(typeableOrganization)
+type typeableOrganization struct {
+	coretypes.Typeable
+}
 
-type typeableOrganization struct{}
+func NewTypeableOrganization() *typeableOrganization {
+	return &typeableOrganization{}
+}
 
-func (typeableOrganization *typeableOrganization) Tuples(subject string, relation Relation, selectors []Selector, _ valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableOrganization *typeableOrganization) Tuples(subject string, relation coretypes.Relation, selectors []Selector, _ valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
@@ -20,20 +25,4 @@ func (typeableOrganization *typeableOrganization) Tuples(subject string, relatio
 	}
 
 	return tuples, nil
-}
-
-func (typeableOrganization *typeableOrganization) Type() Type {
-	return TypeOrganization
-}
-
-func (typeableOrganization *typeableOrganization) Name() Name {
-	return MustNewName("organization")
-}
-
-func (typeableOrganization *typeableOrganization) Prefix(_ valuer.UUID) string {
-	return typeableOrganization.Type().StringValue()
-}
-
-func (typeableOrganization *typeableOrganization) Scope(relation Relation) string {
-	return typeableOrganization.Name().String() + ":" + relation.StringValue()
 }

@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -12,13 +13,13 @@ type TupleKeyAuthorization struct {
 
 // TransactionKey returns a composite key for matching transactions to managed roles.
 func (transaction *Transaction) TransactionKey() string {
-	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Name.String()
+	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
 }
 
 func NewTuplesFromTransactions(transactions []*Transaction, subject string, orgID valuer.UUID) (map[string]*openfgav1.TupleKey, error) {
 	tuples := make(map[string]*openfgav1.TupleKey, len(transactions))
 	for _, txn := range transactions {
-		typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
+		typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 		if err != nil {
 			return nil, err
 		}
@@ -52,8 +53,8 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	for _, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
-		if txn.Object.Resource.Type == TypeRole && txn.Relation == RelationAssignee {
-			typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Name)
+		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.RelationAssignee {
+			typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			if err != nil {
 				return nil, nil, nil, err
 			}
@@ -74,8 +75,8 @@ func NewTuplesFromTransactionsWithManagedRoles(
 		}
 
 		for _, roleName := range roleNames {
-			roleSelector := MustNewSelector(TypeRole, roleName)
-			roleTuples, err := TypeableRole.Tuples(subject, RelationAssignee, []Selector{roleSelector}, orgID)
+			roleSelector := MustNewSelector(coretypes.TypeRole, roleName)
+			roleTuples, err := NewTypeableRole().Tuples(subject, coretypes.RelationAssignee, []Selector{roleSelector}, orgID)
 			if err != nil {
 				return nil, nil, nil, err
 			}

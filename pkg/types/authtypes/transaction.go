@@ -5,19 +5,25 @@ import (
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+var (
+	ErrCodeAuthZInvalidRelation = errors.MustNewCode("authz_invalid_relation")
+	ErrCodeInvalidPatchObject   = errors.MustNewCode("authz_invalid_patch_objects")
+)
+
 type Transaction struct {
-	ID       valuer.UUID `json:"-"`
-	Relation Relation    `json:"relation" required:"true"`
-	Object   Object      `json:"object" required:"true"`
+	ID       valuer.UUID        `json:"-"`
+	Relation coretypes.Relation `json:"relation" required:"true"`
+	Object   Object             `json:"object" required:"true"`
 }
 
 type GettableTransaction struct {
-	Relation   Relation `json:"relation" required:"true"`
-	Object     Object   `json:"object" required:"true"`
-	Authorized bool     `json:"authorized" required:"true"`
+	Relation   coretypes.Relation `json:"relation" required:"true"`
+	Object     Object             `json:"object" required:"true"`
+	Authorized bool               `json:"authorized" required:"true"`
 }
 
 type TransactionWithAuthorization struct {
@@ -25,8 +31,8 @@ type TransactionWithAuthorization struct {
 	Authorized  bool
 }
 
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
+func NewTransaction(relation coretypes.Relation, object Object) (*Transaction, error) {
+	if !slices.Contains(coretypes.TypeableRelations[object.Resource.Type], relation) {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
 	}
 
@@ -68,7 +74,7 @@ func NewTransactionWithAuthorizationFromBatchResults(
 			continue
 		}
 
-		if txn.Object.Resource.Type == TypeRole && txn.Relation == RelationAssignee {
+		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.RelationAssignee {
 			output[i] = &TransactionWithAuthorization{
 				Transaction: txn,
 				Authorized:  batchResults[txnID].Authorized,
@@ -96,7 +102,7 @@ func NewTransactionWithAuthorizationFromBatchResults(
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
-		Relation Relation
+		Relation coretypes.Relation
 		Object   Object
 	}{}
 

@@ -1,15 +1,20 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ Typeable = new(typeableUser)
+type typeableUser struct {
+	coretypes.Typeable
+}
 
-type typeableUser struct{}
+func NewTypeableUser() *typeableUser {
+	return &typeableUser{}
+}
 
-func (typeableUser *typeableUser) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableUser *typeableUser) Tuples(subject string, relation coretypes.Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
@@ -18,21 +23,4 @@ func (typeableUser *typeableUser) Tuples(subject string, relation Relation, sele
 	}
 
 	return tuples, nil
-}
-
-func (typeableUser *typeableUser) Type() Type {
-	return TypeUser
-}
-
-func (typeableUser *typeableUser) Name() Name {
-	return MustNewName("user")
-}
-
-// example: user:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/user
-func (typeableUser *typeableUser) Prefix(orgID valuer.UUID) string {
-	return typeableUser.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableUser.Name().String()
-}
-
-func (typeableUser *typeableUser) Scope(relation Relation) string {
-	return typeableUser.Name().String() + ":" + relation.StringValue()
 }

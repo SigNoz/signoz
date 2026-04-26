@@ -8,6 +8,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -44,7 +45,7 @@ type Selector struct {
 	val string
 }
 
-func NewSelector(typed Type, selector string) (Selector, error) {
+func NewSelector(typed coretypes.Type, selector string) (Selector, error) {
 	err := IsValidSelector(typed, selector)
 	if err != nil {
 		return Selector{}, err
@@ -53,7 +54,7 @@ func NewSelector(typed Type, selector string) (Selector, error) {
 	return Selector{val: selector}, nil
 }
 
-func MustNewSelector(typed Type, input string) Selector {
+func MustNewSelector(typed coretypes.Type, input string) Selector {
 	selector, err := NewSelector(typed, input)
 	if err != nil {
 		panic(err)
@@ -92,39 +93,39 @@ func (selector *Selector) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func IsValidSelector(typed Type, selector string) error {
+func IsValidSelector(typed coretypes.Type, selector string) error {
 	switch typed {
-	case TypeUser:
+	case coretypes.TypeUser:
 		if !typeUserSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeUserSelectorRegex.String())
 		}
 		return nil
-	case TypeServiceAccount:
+	case coretypes.TypeServiceAccount:
 		if !typeServiceAccountSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeServiceAccountSelectorRegex.String())
 		}
 		return nil
-	case TypeRole:
+	case coretypes.TypeRole:
 		if !typeRoleSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeRoleSelectorRegex.String())
 		}
 		return nil
-	case TypeAnonymous:
+	case coretypes.TypeAnonymous:
 		if !typeAnonymousSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeAnonymousSelectorRegex.String())
 		}
 		return nil
-	case TypeOrganization:
+	case coretypes.TypeOrganization:
 		if !typeOrganizationSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeOrganizationSelectorRegex.String())
 		}
 		return nil
-	case TypeMetaResource:
+	case coretypes.TypeMetaResource:
 		if !typeMetaResourceSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeMetaResourceSelectorRegex.String())
 		}
 		return nil
-	case TypeMetaResources:
+	case coretypes.TypeMetaResources:
 		if !typeMetaResourcesSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeMetaResourcesSelectorRegex.String())
 		}

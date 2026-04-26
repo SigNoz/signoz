@@ -1,6 +1,7 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
@@ -8,15 +9,21 @@ import (
 var _ Typeable = new(typeableMetaResource)
 
 type typeableMetaResource struct {
-	name Name
+	coretypes.Typeable
+	kind coretypes.Kind
 }
 
-func NewTypeableMetaResource(name Name) (Typeable, error) {
-	return &typeableMetaResource{name: name}, nil
+func NewTypeableMetaResource(kind coretypes.Kind) (Typeable, error) {
+	core, err := coretypes.NewTypeableMetaResources(kind)
+	if err != nil {
+		return nil, err
+	}
+
+	return &typeableMetaResource{kind: kind, Typeable: core}, nil
 }
 
-func MustNewTypeableMetaResource(name Name) Typeable {
-	typeableesource, err := NewTypeableMetaResource(name)
+func MustNewTypeableMetaResource(kind coretypes.Kind) Typeable {
+	typeableesource, err := NewTypeableMetaResource(kind)
 	if err != nil {
 		panic(err)
 	}
@@ -24,7 +31,7 @@ func MustNewTypeableMetaResource(name Name) Typeable {
 	return typeableesource
 }
 
-func (typeableMetaResource *typeableMetaResource) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableMetaResource *typeableMetaResource) Tuples(subject string, relation coretypes.Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
@@ -33,21 +40,4 @@ func (typeableMetaResource *typeableMetaResource) Tuples(subject string, relatio
 	}
 
 	return tuples, nil
-}
-
-func (typeableMetaResource *typeableMetaResource) Type() Type {
-	return TypeMetaResource
-}
-
-func (typeableMetaResource *typeableMetaResource) Name() Name {
-	return typeableMetaResource.name
-}
-
-// example: metaresource:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/dashboard
-func (typeableMetaResource *typeableMetaResource) Prefix(orgID valuer.UUID) string {
-	return typeableMetaResource.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableMetaResource.Name().String()
-}
-
-func (typeableMetaResource *typeableMetaResource) Scope(relation Relation) string {
-	return typeableMetaResource.Name().String() + ":" + relation.StringValue()
 }

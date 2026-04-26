@@ -1,15 +1,20 @@
 package authtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
-var _ Typeable = new(typeableServiceAccount)
+type typeableServiceAccount struct {
+	coretypes.Typeable
+}
 
-type typeableServiceAccount struct{}
+func NewTypeableServiceAccount() *typeableServiceAccount {
+	return &typeableServiceAccount{}
+}
 
-func (typeableServiceAccount *typeableServiceAccount) Tuples(subject string, relation Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (typeableServiceAccount *typeableServiceAccount) Tuples(subject string, relation coretypes.Relation, selectors []Selector, orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
@@ -18,21 +23,4 @@ func (typeableServiceAccount *typeableServiceAccount) Tuples(subject string, rel
 	}
 
 	return tuples, nil
-}
-
-func (typeableServiceAccount *typeableServiceAccount) Type() Type {
-	return TypeServiceAccount
-}
-
-func (typeableServiceAccount *typeableServiceAccount) Name() Name {
-	return MustNewName("serviceaccount")
-}
-
-// example: serviceaccount:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/serviceaccount
-func (typeableServiceAccount *typeableServiceAccount) Prefix(orgID valuer.UUID) string {
-	return typeableServiceAccount.Type().StringValue() + ":" + "organization" + "/" + orgID.StringValue() + "/" + typeableServiceAccount.Name().String()
-}
-
-func (typeableServiceAccount *typeableServiceAccount) Scope(relation Relation) string {
-	return typeableServiceAccount.Name().String() + ":" + relation.StringValue()
 }

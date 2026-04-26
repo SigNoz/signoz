@@ -1,8 +1,11 @@
 package authtypes
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
-func NewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *Relation) (string, error) {
+func NewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *coretypes.Relation) (string, error) {
 	if relation == nil {
 		return subjectType.Prefix(orgID) + "/" + selector, nil
 	}
@@ -10,7 +13,7 @@ func NewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relati
 	return subjectType.Prefix(orgID) + "/" + selector + "#" + relation.StringValue(), nil
 }
 
-func MustNewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *Relation) string {
+func MustNewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *coretypes.Relation) string {
 	subject, err := NewSubject(subjectType, selector, orgID, relation)
 	if err != nil {
 		panic(err)
