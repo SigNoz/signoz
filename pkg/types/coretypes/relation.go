@@ -52,3 +52,7 @@ func (Relation) Enum() []any {
 		RelationAssignee,
 	}
 }
+
+func (r Relation) PastTense() string {
+	return r.pastTense
+}

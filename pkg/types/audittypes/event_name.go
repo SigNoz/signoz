@@ -1,5 +1,7 @@
 package audittypes
 
+import "github.com/SigNoz/signoz/pkg/types/coretypes"
+
 // EventName is a typed wrapper for audit event names, ensuring not every
 // string qualifies as an event name.
 type EventName struct {
@@ -11,11 +13,11 @@ type EventName struct {
 //
 // Examples:
 //
-//	NewEventName("dashboard", ActionCreate)  → "dashboard.created"
-//	NewEventName("dashboard", ActionUpdate)  → "dashboard.updated"
-//	NewEventName("user.role", ActionUpdate)  → "user.role.updated"
-func NewEventName(resourceKind string, action Action) EventName {
-	return EventName{s: resourceKind + "." + action.PastTense()}
+//	NewEventName("dashboard", coretypes.RelationCreate)  → "dashboard.created"
+//	NewEventName("dashboard", coretypes.RelationUpdate)  → "dashboard.updated"
+//	NewEventName("user.role", coretypes.RelationUpdate)  → "user.role.updated"
+func NewEventName(resourceKind coretypes.Kind, action coretypes.Relation) EventName {
+	return EventName{s: resourceKind.String() + "." + action.PastTense()}
 }
 
 // String returns the string representation of the event name.
