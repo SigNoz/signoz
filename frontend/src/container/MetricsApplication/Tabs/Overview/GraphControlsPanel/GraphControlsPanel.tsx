@@ -1,3 +1,4 @@
+// File: frontend/src/container/MetricsApplication/Tabs/Overview/GraphControlsPanel/GraphControlsPanel.tsx
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -23,10 +24,9 @@ function GraphControlsPanel({
 			{onViewTracesClick && (
 				<Button
 					type="link"
-					icon={<DraftingCompass size={14} />}
+					icon={<DraftingCompass size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewTracesClick}
-					style={{ color: Color.BG_VANILLA_100 }}
 				>
 					View traces
 				</Button>
@@ -34,10 +34,9 @@ function GraphControlsPanel({
 			{onViewLogsClick && (
 				<Button
 					type="link"
-					icon={<ScrollText size={14} />}
+					icon={<ScrollText size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewLogsClick}
-					style={{ color: Color.BG_VANILLA_100 }}
 				>
 					View logs
 				</Button>
@@ -45,10 +44,9 @@ function GraphControlsPanel({
 			{onViewAPIMonitoringClick && (
 				<Button
 					type="link"
-					icon={<Binoculars size={14} />}
+					icon={<Binoculars size={14} color={Color.BG_VANILLA_100} />}
 					size="small"
 					onClick={onViewAPIMonitoringClick}
-					style={{ color: Color.BG_VANILLA_100 }}
 				>
 					View API monitoring
 				</Button>
