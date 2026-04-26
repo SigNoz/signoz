@@ -95,20 +95,21 @@ export function removeSeriesVisibilityFromLocalStorage(widgetId: string): void {
 		}
 
 		const visibilityStates: GraphVisibilityState[] = JSON.parse(storedData);
+
 		if (!Array.isArray(visibilityStates)) {
 			return;
 		}
 
 		const filteredStates = visibilityStates.filter((state) => state.name !== widgetId);
 
-		if (filteredStates.length === 0) {
-			removeLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
-		} else {
-			setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(filteredStates));
+		if (filteredStates.length === visibilityStates.length) {
+			return;
 		}
+
+		setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(filteredStates));
 	} catch (error) {
 		if (error instanceof SyntaxError) {
-			console.error('Failed to parse stored series visibility state:', error);
+			console.error('Failed to parse visibility states during removal:', error);
 		} else {
 			console.error('Unexpected error when removing series visibility:', error);
 		}
