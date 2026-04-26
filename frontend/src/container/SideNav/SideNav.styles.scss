@@ -22,7 +22,7 @@
 	transition: all 0.08s ease, background 0s, border 0s;
 
 	.brand-container {
-		padding: 8px 15px;
+		padding: 8px 6px;
 		max-width: 100%;
 		background: transparent;
 	}
@@ -31,8 +31,9 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		flex-shrink: 0;
-		width: 100%;
+		flex: 1 1 auto;
+		min-width: 0;
+		width: auto;
 		justify-content: center;
 	}
 
@@ -44,7 +45,7 @@
 		max-width: 100%;
 		overflow: hidden;
 
-		gap: 32px;
+		gap: 6px;
 		height: 32px;
 		width: 100%;
 
@@ -168,14 +169,15 @@
 			padding: 0;
 			height: 16px;
 			width: 16px;
-			color: var(--bg-vanilla-400, #c0c1c3);
+			color: var(--l2-foreground, var(--bg-vanilla-400, #c0c1c3));
 			display: flex;
 			align-items: center;
 			justify-content: center;
+			flex-shrink: 0;
 			transition: color 0.2s ease;
 
 			&:hover {
-				color: var(--bg-vanilla-100, #fff);
+				color: var(--l1-foreground, var(--bg-vanilla-100, #fff));
 			}
 
 			&:focus {
@@ -665,6 +667,7 @@
 
 		.brand {
 			justify-content: flex-start;
+			gap: 32px;
 
 			.brand-company-meta {
 				justify-content: flex-start;
@@ -845,6 +848,7 @@
 
 		.brand {
 			justify-content: flex-start;
+			gap: 32px;
 
 			.brand-company-meta {
 				justify-content: flex-start;
@@ -1318,14 +1322,6 @@
 
 				.version {
 					color: var(--bg-ink-400);
-				}
-			}
-
-			.dockBtn {
-				color: var(--bg-slate-50, #62687c);
-
-				&:hover {
-					color: var(--bg-slate-500, #161922);
 				}
 			}
 		}

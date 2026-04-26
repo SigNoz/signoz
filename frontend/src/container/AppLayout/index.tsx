@@ -722,34 +722,46 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		? sideNavPinnedPreference
 		: getSidebarStateFromLocalStorage();
 
-	const handleToggleSidebar = useCallback((): void => {
-		const newState = !isSideNavPinned;
+	const handleToggleSidebar = useCallback(
+		(source: 'shortcut' | 'button' = 'shortcut'): void => {
+			const newState = !isSideNavPinned;
 
-		logEvent('Global Shortcut: Sidebar Toggle', {
-			previousState: isSideNavPinned,
-			newState,
-		});
+			logEvent(
+				source === 'shortcut'
+					? 'Global Shortcut: Sidebar Toggle'
+					: 'Sidebar V2: Toggle button clicked',
+				{
+					previousState: isSideNavPinned,
+					newState,
+				},
+			);
 
-		// Save to localStorage immediately for instant feedback
-		setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
+			// Save to localStorage immediately for instant feedback
+			setLocalStorageApi(USER_PREFERENCES.SIDENAV_PINNED, newState.toString());
 
-		// Update the context immediately
-		const save = {
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
-		};
-		updateUserPreferenceInContext(save as UserPreference);
+			// Update the context immediately
+			const save = {
+				name: USER_PREFERENCES.SIDENAV_PINNED,
+				value: newState,
+			};
+			updateUserPreferenceInContext(save as UserPreference);
 
-		// Make the API call in the background
-		updateUserPreferenceMutation({
-			name: USER_PREFERENCES.SIDENAV_PINNED,
-			value: newState,
-		});
-	}, [
-		isSideNavPinned,
-		updateUserPreferenceInContext,
-		updateUserPreferenceMutation,
-	]);
+			// Make the API call in the background
+			updateUserPreferenceMutation({
+				name: USER_PREFERENCES.SIDENAV_PINNED,
+				value: newState,
+			});
+		},
+		[
+			isSideNavPinned,
+			updateUserPreferenceInContext,
+			updateUserPreferenceMutation,
+		],
+	);
+
+	const handleToggleSidebarButton = useCallback((): void => {
+		handleToggleSidebar('button');
+	}, [handleToggleSidebar]);
 
 	// Register the sidebar toggle shortcut
 	useEffect(() => {
@@ -840,7 +852,10 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				)}
 			>
 				{isToDisplayLayout && !renderFullScreen && (
-					<SideNav isPinned={isSideNavPinned} onToggleSidebar={handleToggleSidebar} />
+					<SideNav
+						isPinned={isSideNavPinned}
+						onToggleSidebar={handleToggleSidebarButton}
+					/>
 				)}
 				<div
 					className={cx('app-content', {
