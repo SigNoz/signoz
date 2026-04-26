@@ -22,6 +22,10 @@ export function getStoredSeriesVisibility(
 		}
 
 		const visibilityStates: GraphVisibilityState[] = JSON.parse(storedData);
+		if (!Array.isArray(visibilityStates)) {
+			return null;
+		}
+
 		const widgetState = visibilityStates.find((state) => state.name === widgetId);
 
 		if (!widgetState?.dataIndex?.length) {
@@ -31,43 +35,88 @@ export function getStoredSeriesVisibility(
 		return widgetState.dataIndex;
 	} catch (error) {
 		if (error instanceof SyntaxError) {
-			// If the stored data is malformed, remove it
-			removeLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+			console.error('Failed to parse stored series visibility state:', error);
+		} else {
+			console.error('Unexpected error when retrieving series visibility:', error);
 		}
-		// Silently handle parsing errors - fall back to default visibility
 		return null;
 	}
 }
 
+/**
+ * Updates the series visibility state for a specific widget in localStorage.
+ * @param widgetId - The unique identifier of the widget
+ * @param visibility - Array of visibility states for each series index
+ */
 export function updateSeriesVisibilityToLocalStorage(
 	widgetId: string,
-	seriesVisibility: SeriesVisibilityItem[],
+	visibility: SeriesVisibilityItem[],
 ): void {
-	let visibilityStates: GraphVisibilityState[] = [];
 	try {
 		const storedData = getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
-		visibilityStates = JSON.parse(storedData || '[]');
-	} catch (error) {
-		if (error instanceof SyntaxError) {
-			visibilityStates = [];
+		let visibilityStates: GraphVisibilityState[] = [];
+
+		if (storedData) {
+			try {
+				const parsed = JSON.parse(storedData);
+				if (Array.isArray(parsed)) {
+					visibilityStates = parsed;
+				}
+			} catch (parseError) {
+				console.error('Failed to parse existing visibility states, initializing empty array');
+			}
 		}
-	}
-	const widgetState = visibilityStates.find((state) => state.name === widgetId);
 
-	if (widgetState) {
-		widgetState.dataIndex = seriesVisibility;
-	} else {
-		visibilityStates = [
-			...visibilityStates,
-			{
-				name: widgetId,
-				dataIndex: seriesVisibility,
-			},
-		];
-	}
+		const existingIndex = visibilityStates.findIndex((state) => state.name === widgetId);
 
-	setLocalStorageKey(
-		LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
-		JSON.stringify(visibilityStates),
-	);
+		if (existingIndex > -1) {
+			visibilityStates[existingIndex] = { name: widgetId, dataIndex: visibility };
+		} else {
+			visibilityStates.push({ name: widgetId, dataIndex: visibility });
+		}
+
+		setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(visibilityStates));
+	} catch (error) {
+		console.error('Failed to update series visibility in localStorage:', error);
+	}
+}
+
+/**
+ * Removes the series visibility state for a specific widget from localStorage.
+ * @param widgetId - The unique identifier of the widget
+ */
+export function removeSeriesVisibilityFromLocalStorage(widgetId: string): void {
+	try {
+		const storedData = getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+
+		if (!storedData) {
+			return;
+		}
+
+		let visibilityStates: GraphVisibilityState[] = [];
+
+		try {
+			const parsed = JSON.parse(storedData);
+			if (Array.isArray(parsed)) {
+				visibilityStates = parsed;
+			} else {
+				console.warn('Stored visibility states is not an array, skipping removal');
+				return;
+			}
+		} catch (parseError) {
+			console.error('Failed to parse stored visibility states during removal:', parseError);
+			return;
+		}
+
+		const filteredStates = visibilityStates.filter((state) => state.name !== widgetId);
+
+		if (filteredStates.length === 0) {
+			removeLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
+			return;
+		}
+
+		setLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES, JSON.stringify(filteredStates));
+	} catch (error) {
+		console.error('Failed to remove series visibility from localStorage:', error);
+	}
 }
