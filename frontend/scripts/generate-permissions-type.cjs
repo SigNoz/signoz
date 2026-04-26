@@ -109,7 +109,7 @@ function generateTypeScriptFile(data) {
 	const resourcesStr = data.data.resources
 		.map(
 			(r) =>
-				`\t\t\t{\n\t\t\t\tname: '${r.name}',\n\t\t\t\ttype: '${r.type}',\n\t\t\t},`,
+				`\t\t\t{\n\t\t\t\tkind: '${r.kind}',\n\t\t\t\ttype: '${r.type}',\n\t\t\t},`,
 		)
 		.join('\n');
 

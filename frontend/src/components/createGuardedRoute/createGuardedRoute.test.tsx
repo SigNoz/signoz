@@ -113,7 +113,7 @@ describe('createGuardedRoute', () => {
 						relation: txn.relation,
 						object: {
 							resource: {
-								name: txn.object.resource.name,
+								kind: txn.object.resource.kind,
 								type: txn.object.resource.type,
 							},
 							selector: '123:456',
@@ -370,10 +370,10 @@ describe('createGuardedRoute', () => {
 				requestCount++;
 				const payload = (await req.json()) as AuthtypesTransactionDTO[];
 				const obj = payload[0]?.object;
-				const name = obj?.resource?.name;
+				const kind = obj?.resource?.kind;
 				const selector = obj?.selector ?? '*';
 				const objectStr =
-					obj?.resource?.type === 'metaresources' ? name : `${name}:${selector}`;
+					obj?.resource?.type === 'metaresources' ? kind : `${kind}:${selector}`;
 				requestedObjects.push(objectStr ?? '');
 
 				return res(ctx.status(200), ctx.json(authzMockResponse(payload, [true])));

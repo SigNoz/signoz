@@ -65,8 +65,8 @@ export function deriveResourcesForRelation(
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
-			id: r.name,
-			label: capitalize(r.name).replace(/_/g, ' '),
+			id: r.kind,
+			label: capitalize(r.kind).replaceAll(/_/g, ' '),
 			options: [],
 		}));
 }
@@ -77,7 +77,7 @@ export function objectsToPermissionConfig(
 ): PermissionConfig {
 	const config: PermissionConfig = {};
 	for (const res of resources) {
-		const obj = objects.find((o) => o.resource.name === res.id);
+		const obj = objects.find((o) => o.resource.kind === res.id);
 		if (!obj) {
 			config[res.id] = {
 				scope: PermissionScope.ONLY_SELECTED,
@@ -113,7 +113,7 @@ export function buildPatchPayload({
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const resourceDef = authzRes.resources.find((r) => r.name === res.id);
+		const resourceDef = authzRes.resources.find((r) => r.kind === res.id);
 		if (!resourceDef) {
 			continue;
 		}

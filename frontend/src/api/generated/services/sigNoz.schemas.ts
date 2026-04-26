@@ -302,10 +302,7 @@ export interface AuthtypesGettableTransactionDTO {
 	 */
 	authorized: boolean;
 	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	relation: CoretypesRelationDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -472,7 +469,7 @@ export interface AuthtypesResourceDTO {
 	/**
 	 * @type string
 	 */
-	name: string;
+	kind: string;
 	/**
 	 * @type string
 	 */
@@ -569,10 +566,7 @@ export interface AuthtypesSessionContextDTO {
 
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	relation: CoretypesRelationDTO;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -2758,6 +2752,14 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export enum CoretypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string

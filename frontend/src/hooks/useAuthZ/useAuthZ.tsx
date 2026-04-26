@@ -34,7 +34,7 @@ function dispatchPermission(
 		});
 
 		setTimeout(() => {
-			const copiedPermissions = pendingPermissions.slice();
+			const copiedPermissions = [...pendingPermissions];
 			pendingPermissions = [];
 			ctx = null;
 
@@ -52,7 +52,7 @@ async function fetchManyPermissions(
 		const dto = permissionToTransactionDto(permission);
 		const object: AuthtypesObjectDTO = {
 			resource: {
-				name: dto.object.resource.name,
+				kind: dto.object.resource.kind,
 				type: dto.object.resource.type,
 			},
 			selector: dto.object.selector,
