@@ -98,10 +98,10 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARD, {
+							const path = generatePath(ROUTES.DASHBOARDS_VIEW, {
 								dashboardId: dashboard.uuid,
 							});
-							openInNewTab(path);
+							openInNewTab(`${path}?${QueryParams.search}=${metricName}`);
 						},
 					})),
 			  ]
@@ -129,7 +129,7 @@ function DashboardsAndAlertsPopover({
 						),
 						onClick: (): void => {
 							const path = generatePath(ROUTES.ALERTS_EDIT, {
-								[QueryParams.alertId]: alert.id,
+								alertId: alert.id,
 							});
 							openInNewTab(path);
 						},
@@ -141,24 +141,22 @@ function DashboardsAndAlertsPopover({
 	return (
 		<Dropdown
 			menu={{ items: dropdownItems }}
-			trigger={['hover']}
+			trigger={['click']}
 			placement="bottomLeft"
 		>
 			<Typography.Text
 				style={{
+					color: Color.BG_VANILLA_100,
 					fontSize: '12px',
-					color: Color.TEXT_DISABLED,
 					cursor: 'pointer',
 				}}
+				onClick={(e): void => {
+					e.preventDefault();
+					e.stopPropagation();
+				}}
 			>
-				{[
-					hasDashboards
-						? pluralize('dashboard', dashboards.length, true)
-						: '',
-					hasAlerts ? pluralize('alert', alerts.length, true) : '',
-				]
-					.filter(Boolean)
-					.join(', ')}
+				{[...((hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : [])),
+				...((hasAlerts ? [pluralize('alert', alerts.length, true)] : []))].join(', ')}
 			</Typography.Text>
 		</Dropdown>
 	);
