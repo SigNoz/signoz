@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData, isLoading: false, isError: false };
+	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,96 +81,99 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData, isLoading: false, isError: false };
+	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
 }
 
-function useMetricStatus(metricName: string): Status {
-	return {
-		alerts: useMetricAlertsStatus(metricName),
-		dashboards: useMetricDashboardsStatus(metricName),
-	};
-}
-
-function DashboardsAndAlertsPopover({
+export function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const { alerts, dashboards } = useMetricStatus(metricName);
+	const [open, setOpen] = useState(false);
 
-	if (alerts.isError || dashboards.isError) {
-		return (
-			<Skeleton active>
-				<Typography.Text>Error loading data</Typography.Text>
-			</Skeleton>
-		);
-	}
+	const alertsStatus = useMetricAlertsStatus(metricName);
+	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	if (alerts.isLoading || dashboards.isLoading) {
-		return (
-			<Skeleton active>
-				<Typography.Text>Loading data...</Typography.Text>
-			</Skeleton>
+	const totalAlerts = alertsStatus.data.length;
+	const totalDashboards = dashboardsStatus.data.length;
+
+	const isEmpty = totalAlerts === 0 && totalDashboards === 0;
+
+	const handleOpenChange = (visible: boolean): void => {
+		setOpen(visible);
+	};
+
+	const handleViewAllAlerts = (): void => {
+		openInNewTab(
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
 		);
-	}
+	};
+
+	const handleViewAllDashboards = (): void => {
+		openInNewTab(
+			`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
+	};
+
+	const menu = useMemo(
+		() => (
+			<Menu>
+				<Menu.Item
+					key="alerts"
+					icon={<Bell size={16} />}
+					disabled={alertsStatus.isLoading || alertsStatus.isError}
+					onClick={handleViewAllAlerts}
+				>
+					{alertsStatus.isLoading ? (
+						<Skeleton.Input active size="small" />
+					) : (
+						<Typography.Text>
+							{pluralize('Alert', totalAlerts)} ({totalAlerts})
+						</Typography.Text>
+					)}
+				</Menu.Item>
+				<Menu.Item
+					key="dashboards"
+					icon={<Grid size={16} />}
+					disabled={dashboardsStatus.isLoading || dashboardsStatus.isError}
+					onClick={handleViewAllDashboards}
+				>
+					{dashboardsStatus.isLoading ? (
+						<Skeleton.Input active size="small" />
+					) : (
+						<Typography.Text>
+							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+						</Typography.Text>
+					)}
+				</Menu.Item>
+			</Menu>
+		),
+		[
+			alertsStatus.isLoading,
+			alertsStatus.isError,
+			totalAlerts,
+			dashboardsStatus.isLoading,
+			dashboardsStatus.isError,
+			totalDashboards,
+		],
+	);
 
 	return (
 		<Dropdown
-			overlay={
-				<Menu>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize(alerts.data.length, 'alert')}{' '}
-							{pluralize(dashboards.data.length, 'dashboard')}
-						</Typography.Text>
-					</Menu.Item>
-					{alerts.data.map((alert) => (
-						<Menu.Item key={alert.id}>
-							<Typography.Text>
-								<a
-									href={generatePath(ROUTES.METRIC_ALERTS, {
-										metricName,
-										alertId: alert.id,
-									})}
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.METRIC_ALERTS, {
-											metricName,
-											alertId: alert.id,
-										}));
-									}}
-								>
-									{alert.name}
-								</a>
-							</Typography.Text>
-						</Menu.Item>
-					))}
-					{dashboards.data.map((dashboard) => (
-						<Menu.Item key={dashboard.id}>
-							<Typography.Text>
-								<a
-									href={generatePath(ROUTES.METRIC_DASHBOARD, {
-										metricName,
-										dashboardId: dashboard.id,
-									})}
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.METRIC_DASHBOARD, {
-											metricName,
-											dashboardId: dashboard.id,
-										}));
-									}}
-								>
-									{dashboard.name}
-								</a>
-							</Typography.Text>
-						</Menu.Item>
-					))}
-				</Menu>
-			}
+			overlay={menu}
 			trigger={['click']}
+			open={open}
+			onOpenChange={handleOpenChange}
+			disabled={isEmpty}
 		>
-			<Grid size={24} />
+			<span
+				style={{
+					color: Color.semantic.text.secondary,
+					cursor: isEmpty ? 'not-allowed' : 'pointer',
+					pointerEvents: isEmpty ? 'none' : 'auto',
+				}}
+			>
+				{pluralize('Dashboard & Alert', totalDashboards + totalAlerts)}{' '}
+				({totalDashboards + totalAlerts})
+			</span>
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
