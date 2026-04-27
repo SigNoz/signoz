@@ -96,6 +96,10 @@ export default {
 				type: 'metaresource',
 			},
 			{
+				kind: 'subscription',
+				type: 'metaresource',
+			},
+			{
 				kind: 'trace-funnel',
 				type: 'metaresource',
 			},
@@ -193,6 +197,10 @@ export default {
 			},
 			{
 				kind: 'session',
+				type: 'metaresources',
+			},
+			{
+				kind: 'subscription',
 				type: 'metaresources',
 			},
 			{

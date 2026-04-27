@@ -30,6 +30,7 @@ var Kinds = []Kind{
 	KindFactorPassword,
 	KindFactorAPIKey,
 	KindLicense,
+	KindSubscription,
 }
 
 var (
@@ -62,4 +63,5 @@ var (
 	KindFactorPassword               = MustNewKind("factor-password")
 	KindFactorAPIKey                 = MustNewKind("factor-api-key")
 	KindLicense                      = MustNewKind("license")
+	KindSubscription                 = MustNewKind("subscription")
 )

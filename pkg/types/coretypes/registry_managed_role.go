@@ -52,12 +52,28 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindFactorPassword}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindFactorPassword}, WildCardSelectorString)},
-		// license — admin only
+		// license — admin only.
+		// Uniform LCRUD shape; actual ee routes are POST /api/v3/licenses (create
+		// = Activate), PUT /api/v3/licenses (update = Refresh), GET
+		// /api/v3/licenses/active (read; currently exposed as ViewAccess on the
+		// route side). delete and list are placeholders for shape parity, no
+		// route serves them today.
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindLicense}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindLicense}, WildCardSelectorString)},
+		// subscription — admin only.
+		// Uniform LCRUD shape; actual ee routes are POST /api/v1/checkout
+		// (create), POST /api/v1/portal (update — opens Stripe portal), GET
+		// /api/v1/billing (read — current billing state). delete and list are
+		// placeholders for shape parity; cancellation flows through Stripe's
+		// portal, no in-process route serves them.
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindSubscription}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindSubscription}, WildCardSelectorString)},
 		// organization — admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrganization}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrganization}, WildCardSelectorString)},

@@ -56,6 +56,8 @@ var Resources = []Resource{
 	ResourceMetaResourcesFactorAPIKey,
 	ResourceMetaResourceLicense,
 	ResourceMetaResourcesLicense,
+	ResourceMetaResourceSubscription,
+	ResourceMetaResourcesSubscription,
 }
 
 var (
@@ -114,4 +116,6 @@ var (
 	ResourceMetaResourcesFactorAPIKey                     = NewResourceMetaResources(KindFactorAPIKey)
 	ResourceMetaResourceLicense                           = NewResourceMetaResource(KindLicense)
 	ResourceMetaResourcesLicense                          = NewResourceMetaResources(KindLicense)
+	ResourceMetaResourceSubscription                      = NewResourceMetaResource(KindSubscription)
+	ResourceMetaResourcesSubscription                     = NewResourceMetaResources(KindSubscription)
 )
