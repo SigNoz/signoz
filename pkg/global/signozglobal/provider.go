@@ -31,14 +31,8 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 }
 
 func (provider *provider) GetConfig(context.Context) *globaltypes.Config {
-	var mcpURL *string
-	if provider.config.MCPURL != nil {
-		s := provider.config.MCPURL.String()
-		mcpURL = &s
-	}
-
 	return globaltypes.NewConfig(
-		globaltypes.NewEndpoint(provider.config.ExternalURL.String(), provider.config.IngestionURL.String(), mcpURL),
+		globaltypes.NewEndpoint(provider.config.ExternalURL.String(), provider.config.IngestionURL.String()),
 		globaltypes.NewIdentNConfig(
 			globaltypes.TokenizerConfig{Enabled: provider.identNConfig.Tokenizer.Enabled},
 			globaltypes.APIKeyConfig{Enabled: provider.identNConfig.APIKeyConfig.Enabled},
