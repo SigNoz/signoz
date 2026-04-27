@@ -17,6 +17,11 @@ interface UrlSyncConfig {
 	endTimeKey: string;
 }
 
+/**
+ * Used to sync internal state with URL when URL params are enabled.
+ *
+ * @internal
+ */
 export function useUrlSync(
 	store: GlobalTimeStoreApi,
 	enableUrlParams: GlobalTimeProviderOptions['enableUrlParams'],
@@ -82,7 +87,6 @@ export function useUrlSync(
 		let previousSelectedTime = store.getState().selectedTime;
 
 		return store.subscribe((state) => {
-			// Only update URL when selectedTime actually changes
 			if (state.selectedTime === previousSelectedTime) {
 				return;
 			}

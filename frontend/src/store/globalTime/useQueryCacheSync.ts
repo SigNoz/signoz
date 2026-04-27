@@ -6,8 +6,9 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GlobalTimeStoreApi } from './globalTimeStore';
 
 /**
- * Subscribes to QueryCache events and updates the store's lastRefreshTimestamp
- * when auto-refresh queries complete successfully.
+ * Used to keep lastRefreshTimestamp in sync after every react query refresh.
+ *
+ * @internal
  */
 export function useQueryCacheSync(store: GlobalTimeStoreApi): void {
 	const queryClient = useQueryClient();
@@ -16,7 +17,6 @@ export function useQueryCacheSync(store: GlobalTimeStoreApi): void {
 		const queryCache = queryClient.getQueryCache();
 
 		return queryCache.subscribe((event) => {
-			// Only react to successful query updates
 			if (event?.type !== 'queryUpdated') {
 				return;
 			}
@@ -26,7 +26,6 @@ export function useQueryCacheSync(store: GlobalTimeStoreApi): void {
 				return;
 			}
 
-			// Check if it's an auto-refresh query by key prefix
 			const queryKey = event.query.queryKey;
 			if (
 				!Array.isArray(queryKey) ||
@@ -35,7 +34,6 @@ export function useQueryCacheSync(store: GlobalTimeStoreApi): void {
 				return;
 			}
 
-			// Update the refresh timestamp in store
 			store.getState().updateRefreshTimestamp();
 		});
 	}, [queryClient, store]);

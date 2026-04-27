@@ -9,6 +9,8 @@ import { useGlobalTime } from './hooks';
  *
  * This hook computes fresh time values before invalidating queries,
  * ensuring all queries use the same min/max time during a refresh cycle.
+ *
+ * @public
  */
 export function useGlobalTimeQueryInvalidate(): () => Promise<void> {
 	const queryClient = useQueryClient();
