@@ -83,20 +83,22 @@ function DashboardsAndAlertsPopover({
 
 	const handleAlertsClick = (): void => {
 		if (!hasAlerts) return;
-		openInNewTab(
-			`${ROUTES.ALERTS}?${QueryParams.search}=${encodeURIComponent(
-				metricName,
-			)}`,
-		);
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
 	};
 
 	const handleDashboardsClick = (): void => {
 		if (!hasDashboards) return;
-		openInNewTab(
-			`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${encodeURIComponent(
-				metricName,
-			)}`,
-		);
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
 	};
 
 	const renderContent = (): JSX.Element => {
@@ -123,19 +125,25 @@ function DashboardsAndAlertsPopover({
 		return (
 			<Menu>
 				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick}>
-						<span>
-							<Bell size={14} style={{ marginRight: 8 }} />
+					<Menu.Item
+						key="alerts"
+						icon={<Bell size={16} />}
+						onClick={handleAlertsClick}
+					>
+						<Typography.Text style={{ color: Color.text.primary }}>
 							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</span>
+						</Typography.Text>
 					</Menu.Item>
 				)}
 				{hasDashboards && (
-					<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
-						<span>
-							<Grid size={14} style={{ marginRight: 8 }} />
+					<Menu.Item
+						key="dashboards"
+						icon={<Grid size={16} />}
+						onClick={handleDashboardsClick}
+					>
+						<Typography.Text style={{ color: Color.text.primary }}>
 							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</span>
+						</Typography.Text>
 					</Menu.Item>
 				)}
 			</Menu>
@@ -148,15 +156,25 @@ function DashboardsAndAlertsPopover({
 		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
 			<div
 				style={{
-					color: Color.semantic.text.secondary,
 					cursor: 'pointer',
-					fontSize: 12,
 					display: 'flex',
 					alignItems: 'center',
+					gap: '4px',
+					color: Color.text.secondary,
 				}}
+				onClick={(e): void => e.stopPropagation()}
+				onKeyDown={(e): void => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						e.preventDefault();
+						e.stopPropagation();
+					}
+				}}
+				role="button"
+				tabIndex={0}
+				aria-label="Show dashboards and alerts using this metric"
 			>
-				<Bell size={12} style={{ marginRight: 4 }} />
-				<Grid size={12} />
+				<Grid size={14} />
+				<Bell size={14} />
 			</div>
 		</Dropdown>
 	);
