@@ -78,94 +78,102 @@ function DashboardsAndAlertsPopover({
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
 
-	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
 
-	if (!hasAnyItem && !alertsData.isLoading && !dashboardsData.isLoading) {
-		return null;
+	const handleAlertsClick = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
+	};
+
+	const handleDashboardsClick = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
+	};
+
+	if (!metricName) return null;
+
+	const loading = alertsData.isLoading || dashboardsData.isLoading;
+
+	if (loading) {
+		return (
+			<div>
+				<Skeleton.Input active size="small" />
+			</div>
+		);
 	}
 
-	const menuItems = (
+	if (alertsData.isError || dashboardsData.isError) {
+		return (
+			<Typography.Text type="secondary">Failed to load data</Typography.Text>
+		);
+	}
+
+	const menu = (
 		<Menu>
-			{totalAlerts > 0 && (
-				<Menu.Item
-					key="alerts"
-					icon={<Bell size={16} />}
-					onClick={() => {
-						openInNewTab(
-							`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
-						);
-					}}
-				>
-					<Typography.Text>
-						{pluralize(totalAlerts, 'alert', 'alerts')} using this metric
+			{hasAlerts && (
+				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertsClick}>
+					<Typography.Text strong>
+						{totalAlerts} {pluralize('alert', totalAlerts)} using this metric
 					</Typography.Text>
 				</Menu.Item>
 			)}
-			{totalDashboards > 0 && (
+			{hasDashboards && (
 				<Menu.Item
 					key="dashboards"
 					icon={<Grid size={16} />}
-					onClick={() => {
-						openInNewTab(
-							`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
-						);
-					}}
+					onClick={handleDashboardsClick}
 				>
-					<Typography.Text>
-						{pluralize(totalDashboards, 'dashboard', 'dashboards')} using this
-						metric
+					<Typography.Text strong>
+						{totalDashboards} {pluralize('dashboard', totalDashboards)} using this metric
 					</Typography.Text>
 				</Menu.Item>
 			)}
-			{alertsData.isLoading && (
-				<Menu.Item key="loading-alerts">
-					<Skeleton.Input active size="small" />
-				</Menu.Item>
-			)}
-			{dashboardsData.isLoading && (
-				<Menu.Item key="loading-dashboards">
-					<Skeleton.Input active size="small" />
+			{!hasAlerts && !hasDashboards && (
+				<Menu.Item key="empty" disabled>
+					<Typography.Text type="secondary">
+						No alerts or dashboards using this metric
+					</Typography.Text>
 				</Menu.Item>
 			)}
 		</Menu>
 	);
 
 	return (
-		<Dropdown
-			overlay={menuItems}
-			trigger={['click']}
-			placement="bottomRight"
-			disabled={!hasAnyItem}
-		>
-			<span
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+			<div
 				style={{
 					color: Color.semantic.text.secondary,
-					cursor: hasAnyItem ? 'pointer' : 'not-allowed',
+					cursor: 'pointer',
 					fontSize: 12,
 					display: 'flex',
 					alignItems: 'center',
 					gap: 4,
 				}}
 			>
-				{hasAnyItem ? (
-					<>
-						{totalAlerts > 0 && (
-							<>
-								<Bell size={12} />
-								{totalAlerts}
-							</>
-						)}
-						{totalDashboards > 0 && (
-							<>
-								<Grid size={12} />
-								{totalDashboards}
-							</>
-						)}
-					</>
-				) : (
-					'No references'
+				{hasAlerts && (
+					<span>
+						<Bell size={12} style={{ color: Color.semantic.warning.border }} />
+					</span>
 				)}
-			</span>
+				{hasDashboards && (
+					<span>
+						<Grid size={12} style={{ color: Color.semantic.info.border }} />
+					</span>
+				)}
+				{totalAlerts + totalDashboards > 0 ? (
+					<Typography.Text type="secondary">
+						{totalAlerts + totalDashboards} {pluralize('item', totalAlerts + totalDashboards)}{' '}
+						using
+					</Typography.Text>
+				) : (
+					<Typography.Text type="secondary">No usage</Typography.Text>
+				)}
+			</div>
 		</Dropdown>
 	);
 }
