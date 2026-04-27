@@ -2527,22 +2527,21 @@ components:
       - offset
       - limit
       type: object
+    LlmpricingruletypesLLMPricingCacheCosts:
+      properties:
+        mode:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
+        read:
+          format: double
+          type: number
+        write:
+          format: double
+          type: number
+      required:
+      - mode
+      type: object
     LlmpricingruletypesLLMPricingRule:
       properties:
-        cacheMode:
-          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
-        costCacheRead:
-          format: double
-          type: number
-        costCacheWrite:
-          format: double
-          type: number
-        costInput:
-          format: double
-          type: number
-        costOutput:
-          format: double
-          type: number
         createdAt:
           format: date-time
           type: string
@@ -2557,11 +2556,12 @@ components:
         modelName:
           type: string
         modelPattern:
-          items:
-            type: string
-          nullable: true
-          type: array
+          $ref: '#/components/schemas/LlmpricingruletypesStringSlice'
         orgId:
+          type: string
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
           type: string
         sourceId:
           type: string
@@ -2580,13 +2580,10 @@ components:
       - id
       - orgId
       - modelName
+      - provider
       - modelPattern
       - unit
-      - cacheMode
-      - costInput
-      - costOutput
-      - costCacheRead
-      - costCacheWrite
+      - pricing
       - isOverride
       - enabled
       type: object
@@ -2600,22 +2597,27 @@ components:
       enum:
       - per_million_tokens
       type: string
+    LlmpricingruletypesLLMRulePricing:
+      properties:
+        cache:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingCacheCosts'
+        input:
+          format: double
+          type: number
+        output:
+          format: double
+          type: number
+      required:
+      - input
+      - output
+      type: object
+    LlmpricingruletypesStringSlice:
+      items:
+        type: string
+      nullable: true
+      type: array
     LlmpricingruletypesUpdatableLLMPricingRule:
       properties:
-        cacheMode:
-          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
-        costCacheRead:
-          format: double
-          type: number
-        costCacheWrite:
-          format: double
-          type: number
-        costInput:
-          format: double
-          type: number
-        costOutput:
-          format: double
-          type: number
         enabled:
           type: boolean
         id:
@@ -2631,6 +2633,10 @@ components:
             type: string
           nullable: true
           type: array
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
         sourceId:
           nullable: true
           type: string
@@ -2638,13 +2644,10 @@ components:
           $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
       required:
       - modelName
+      - provider
       - modelPattern
       - unit
-      - cacheMode
-      - costInput
-      - costOutput
-      - costCacheRead
-      - costCacheWrite
+      - pricing
       - enabled
       type: object
     LlmpricingruletypesUpdatableLLMPricingRules:
@@ -7548,7 +7551,7 @@ paths:
         Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true)
         are fully preserved when the request does not provide isOverride; only synced_at
         is stamped.
-      operationId: UpdateLLMPricingRules
+      operationId: CreateOrUpdateLLMPricingRules
       requestBody:
         content:
           application/json:
@@ -7586,7 +7589,7 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Bulk update pricing rules
+      summary: Create or update pricing rules
       tags:
       - llmpricingrules
   /api/v1/llm_pricing_rules/{id}:

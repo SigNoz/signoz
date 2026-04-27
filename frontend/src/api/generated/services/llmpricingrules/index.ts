@@ -132,9 +132,9 @@ export const invalidateListLLMPricingRules = async (
 
 /**
  * Single write endpoint used by both the user and the Zeus sync job. Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true) are fully preserved when the request does not provide isOverride; only synced_at is stamped.
- * @summary Bulk update pricing rules
+ * @summary Create or update pricing rules
  */
-export const updateLLMPricingRules = (
+export const createOrUpdateLLMPricingRules = (
 	llmpricingruletypesUpdatableLLMPricingRulesDTO: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
@@ -145,23 +145,23 @@ export const updateLLMPricingRules = (
 	});
 };
 
-export const getUpdateLLMPricingRulesMutationOptions = <
+export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateLLMPricingRules>>,
+		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
 		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
-	Awaited<ReturnType<typeof updateLLMPricingRules>>,
+	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
 	{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 	TContext
 > => {
-	const mutationKey = ['updateLLMPricingRules'];
+	const mutationKey = ['createOrUpdateLLMPricingRules'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -171,45 +171,46 @@ export const getUpdateLLMPricingRulesMutationOptions = <
 		: { mutation: { mutationKey } };
 
 	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateLLMPricingRules>>,
+		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
-		return updateLLMPricingRules(data);
+		return createOrUpdateLLMPricingRules(data);
 	};
 
 	return { mutationFn, ...mutationOptions };
 };
 
-export type UpdateLLMPricingRulesMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateLLMPricingRules>>
+export type CreateOrUpdateLLMPricingRulesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>
 >;
-export type UpdateLLMPricingRulesMutationBody =
+export type CreateOrUpdateLLMPricingRulesMutationBody =
 	BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>;
-export type UpdateLLMPricingRulesMutationError =
+export type CreateOrUpdateLLMPricingRulesMutationError =
 	ErrorType<RenderErrorResponseDTO>;
 
 /**
- * @summary Bulk update pricing rules
+ * @summary Create or update pricing rules
  */
-export const useUpdateLLMPricingRules = <
+export const useCreateOrUpdateLLMPricingRules = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateLLMPricingRules>>,
+		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
 		{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 		TContext
 	>;
 }): UseMutationResult<
-	Awaited<ReturnType<typeof updateLLMPricingRules>>,
+	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
 	{ data: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
 	TContext
 > => {
-	const mutationOptions = getUpdateLLMPricingRulesMutationOptions(options);
+	const mutationOptions =
+		getCreateOrUpdateLLMPricingRulesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

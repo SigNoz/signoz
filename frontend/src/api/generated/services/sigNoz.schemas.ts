@@ -3298,28 +3298,21 @@ export interface LlmpricingruletypesGettablePricingRulesDTO {
 	total: number;
 }
 
+export interface LlmpricingruletypesLLMPricingCacheCostsDTO {
+	mode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	read?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	write?: number;
+}
+
 export interface LlmpricingruletypesLLMPricingRuleDTO {
-	cacheMode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheRead: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheWrite: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costInput: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costOutput: number;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3345,15 +3338,16 @@ export interface LlmpricingruletypesLLMPricingRuleDTO {
 	 * @type string
 	 */
 	modelName: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	modelPattern: string[] | null;
+	modelPattern: LlmpricingruletypesStringSliceDTO;
 	/**
 	 * @type string
 	 */
 	orgId: string;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
 	/**
 	 * @type string
 	 */
@@ -3384,28 +3378,26 @@ export enum LlmpricingruletypesLLMPricingRuleCacheModeDTO {
 export enum LlmpricingruletypesLLMPricingRuleUnitDTO {
 	per_million_tokens = 'per_million_tokens',
 }
+export interface LlmpricingruletypesLLMRulePricingDTO {
+	cache?: LlmpricingruletypesLLMPricingCacheCostsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	input: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	output: number;
+}
+
+/**
+ * @nullable
+ */
+export type LlmpricingruletypesStringSliceDTO = string[] | null;
+
 export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
-	cacheMode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheRead: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costCacheWrite: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costInput: number;
-	/**
-	 * @type number
-	 * @format double
-	 */
-	costOutput: number;
 	/**
 	 * @type boolean
 	 */
@@ -3429,6 +3421,11 @@ export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
 	 * @nullable true
 	 */
 	modelPattern: string[] | null;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
 	/**
 	 * @type string
 	 * @nullable true

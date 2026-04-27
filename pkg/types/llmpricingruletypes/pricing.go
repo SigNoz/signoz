@@ -1,11 +1,14 @@
 package llmpricingruletypes
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 )
 
 var (
@@ -34,34 +37,48 @@ var (
 	LLMPricingRuleCacheModeUnknown = LLMPricingRuleCacheMode{valuer.NewString("unknown")}
 )
 
-// LLMPricingRule is the domain model for an LLM pricing rule.
-// It also doubles as the HTTP response shape; see GettablePricingRule.
+// StringSlice is a []string that is stored as a JSON text column.
+// It is compatible with both SQLite and PostgreSQL.
+type StringSlice []string
+
+// LLMRulePricing is the per-rule pricing shape, persisted as a single JSON
+type LLMRulePricing struct {
+	Input  float64               `json:"input" required:"true"`
+	Output float64               `json:"output" required:"true"`
+	Cache  *LLMPricingCacheCosts `json:"cache,omitempty"`
+}
+
+type LLMPricingCacheCosts struct {
+	Mode  LLMPricingRuleCacheMode `json:"mode" required:"true"`
+	Read  float64                 `json:"read"`
+	Write float64                 `json:"write"`
+}
+
 type LLMPricingRule struct {
+	bun.BaseModel `bun:"table:llm_pricing_rule,alias:llm_pricing_rule" json:"-"`
+
+	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
 
-	ID             valuer.UUID             `json:"id" required:"true"`
-	OrgID          valuer.UUID             `json:"orgId" required:"true"`
-	SourceID       *valuer.UUID            `json:"sourceId,omitempty"`
-	Model          string                  `json:"modelName" required:"true"`
-	ModelPattern   []string                `json:"modelPattern" required:"true"`
-	Unit           LLMPricingRuleUnit      `json:"unit" required:"true"`
-	CacheMode      LLMPricingRuleCacheMode `json:"cacheMode" required:"true"`
-	CostInput      float64                 `json:"costInput" required:"true"`
-	CostOutput     float64                 `json:"costOutput" required:"true"`
-	CostCacheRead  float64                 `json:"costCacheRead" required:"true"`
-	CostCacheWrite float64                 `json:"costCacheWrite" required:"true"`
-	IsOverride     bool                    `json:"isOverride" required:"true"`
-	SyncedAt       *time.Time              `json:"syncedAt,omitempty"`
-	Enabled        bool                    `json:"enabled" required:"true"`
+	OrgID        valuer.UUID        `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
+	SourceID     *valuer.UUID       `bun:"source_id,type:text" json:"sourceId,omitempty"`
+	Model        string             `bun:"model,type:text,notnull" json:"modelName" required:"true"`
+	Provider     string             `bun:"provider,type:text,notnull" json:"provider" required:"true"`
+	ModelPattern StringSlice        `bun:"model_pattern,type:text,notnull" json:"modelPattern" required:"true"`
+	Unit         LLMPricingRuleUnit `bun:"unit,type:text,notnull" json:"unit" required:"true"`
+	Pricing      LLMRulePricing     `bun:"pricing,type:text,notnull,default:'{}'" json:"pricing" required:"true"`
+	// IsOverride marks the row as user-pinned. When true, Zeus skips it entirely.
+	IsOverride bool       `bun:"is_override,notnull,default:false" json:"isOverride" required:"true"`
+	SyncedAt   *time.Time `bun:"synced_at" json:"syncedAt,omitempty"`
+	Enabled    bool       `bun:"enabled,notnull,default:true" json:"enabled" required:"true"`
 }
 
-// GettablePricingRule is a type alias for PricingRule — the response shape is
-// identical to the core type, so per pkg/types conventions we do not mint a
-// separate flavor.
 type GettableLLMPricingRule = LLMPricingRule
 
-// UpdatablePricingRule is one entry in the bulk upsert batch.
+type StorableLLMPricingRule = LLMPricingRule
+
+// UpdatableLLMPricingRule is one entry in the bulk upsert batch.
 //
 // Identification:
 //   - ID set       → match by id (user editing a known row).
@@ -72,18 +89,15 @@ type GettableLLMPricingRule = LLMPricingRule
 // When IsOverride is nil AND the matched row has is_override = true, the row is fully
 // preserved — only synced_at is stamped.
 type UpdatableLLMPricingRule struct {
-	ID             *valuer.UUID            `json:"id,omitempty"`
-	SourceID       *valuer.UUID            `json:"sourceId,omitempty"`
-	Model          string                  `json:"modelName" required:"true"`
-	ModelPattern   []string                `json:"modelPattern" required:"true"`
-	Unit           LLMPricingRuleUnit      `json:"unit" required:"true"`
-	CacheMode      LLMPricingRuleCacheMode `json:"cacheMode" required:"true"`
-	CostInput      float64                 `json:"costInput" required:"true"`
-	CostOutput     float64                 `json:"costOutput" required:"true"`
-	CostCacheRead  float64                 `json:"costCacheRead" required:"true"`
-	CostCacheWrite float64                 `json:"costCacheWrite" required:"true"`
-	IsOverride     *bool                   `json:"isOverride,omitempty"`
-	Enabled        bool                    `json:"enabled" required:"true"`
+	ID           *valuer.UUID       `json:"id,omitempty"`
+	SourceID     *valuer.UUID       `json:"sourceId,omitempty"`
+	Model        string             `json:"modelName" required:"true"`
+	Provider     string             `json:"provider" required:"true"`
+	ModelPattern []string           `json:"modelPattern" required:"true"`
+	Unit         LLMPricingRuleUnit `json:"unit" required:"true"`
+	Pricing      LLMRulePricing     `json:"pricing" required:"true"`
+	IsOverride   *bool              `json:"isOverride,omitempty"`
+	Enabled      bool               `json:"enabled" required:"true"`
 }
 
 type UpdatableLLMPricingRules struct {
@@ -110,28 +124,55 @@ func (LLMPricingRuleCacheMode) Enum() []any {
 	return []any{LLMPricingRuleCacheModeSubtract, LLMPricingRuleCacheModeAdditive, LLMPricingRuleCacheModeUnknown}
 }
 
-func NewLLMPricingRuleFromStorable(s *StorableLLMPricingRule) *LLMPricingRule {
-	pattern := make([]string, len(s.ModelPattern))
-	copy(pattern, s.ModelPattern)
-
-	return &LLMPricingRule{
-		TimeAuditable:  s.TimeAuditable,
-		UserAuditable:  s.UserAuditable,
-		ID:             s.ID,
-		OrgID:          s.OrgID,
-		SourceID:       s.SourceID,
-		Model:          s.Model,
-		ModelPattern:   pattern,
-		Unit:           s.Unit,
-		CacheMode:      s.CacheMode,
-		CostInput:      s.CostInput,
-		CostOutput:     s.CostOutput,
-		CostCacheRead:  s.CostCacheRead,
-		CostCacheWrite: s.CostCacheWrite,
-		IsOverride:     s.IsOverride,
-		SyncedAt:       s.SyncedAt,
-		Enabled:        s.Enabled,
+func (s StringSlice) Value() (driver.Value, error) {
+	if s == nil {
+		return "[]", nil
 	}
+	b, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return string(b), nil
+}
+
+func (s *StringSlice) Scan(src any) error {
+	var raw []byte
+	switch v := src.(type) {
+	case string:
+		raw = []byte(v)
+	case []byte:
+		raw = v
+	case nil:
+		*s = nil
+		return nil
+	default:
+		return errors.NewInternalf(errors.CodeInternal, "llmpricingruletypes: cannot scan %T into StringSlice", src)
+	}
+	return json.Unmarshal(raw, s)
+}
+
+func (p LLMRulePricing) Value() (driver.Value, error) {
+	b, err := json.Marshal(p)
+	if err != nil {
+		return nil, err
+	}
+	return string(b), nil
+}
+
+func (p *LLMRulePricing) Scan(src any) error {
+	var raw []byte
+	switch v := src.(type) {
+	case string:
+		raw = []byte(v)
+	case []byte:
+		raw = v
+	case nil:
+		*p = LLMRulePricing{}
+		return nil
+	default:
+		return errors.NewInternalf(errors.CodeInternal, "llmpricingruletypes: cannot scan %T into LLMRulePricing", src)
+	}
+	return json.Unmarshal(raw, p)
 }
 
 func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, total, offset, limit int) *GettablePricingRules {

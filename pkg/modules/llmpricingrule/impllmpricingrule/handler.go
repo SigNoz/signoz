@@ -93,7 +93,7 @@ func (h *handler) Get(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, rule)
 }
 
-func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateOrUpdate(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
@@ -111,7 +111,7 @@ func (h *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.Update(ctx, orgID, claims.Email, req.Rules)
+	err = h.module.CreateOrUpdate(ctx, orgID, claims.Email, req.Rules)
 	if err != nil {
 		render.Error(rw, err)
 		return
