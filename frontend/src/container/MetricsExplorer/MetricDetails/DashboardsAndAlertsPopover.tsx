@@ -15,31 +15,26 @@ import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 
-function getErrorStatus(isError: boolean, error: any): { data: any[]; isLoading: boolean; isError: boolean } {
+type Status = {
+	data: any[];
+	isLoading: boolean;
+	isError: boolean;
+};
+
+function getErrorStatus(isError: boolean, error: any): Status {
 	if (isError) {
 		return { data: [], isLoading: false, isError: true, error };
 	}
 	return { data: [], isLoading: false, isError: false };
 }
 
-function getLoadingStatus(isLoading: boolean): { data: any[]; isLoading: boolean; isError: boolean } {
+function getLoadingStatus(isLoading: boolean): Status {
 	return { data: [], isLoading, isError: false };
 }
 
-function DashboardsAndAlertsPopover({
-	metricName,
-}: DashboardsAndAlertsPopoverProps): JSX.Element | null {
-	const [alertsData, setAlertsData] = useState({
-		data: [] as Array<unknown>,
-		isLoading: false,
-		isError: false,
-	});
-	const [dashboardsData, setDashboardsData] = useState({
-		data: [] as Array<unknown>,
-		isLoading: false,
-		isError: false,
-	});
-
+function useMetricAlertsStatus(
+	metricName: string,
+): Status {
 	const {
 		data: newAlertsData,
 		isLoading: newIsLoadingAlerts,
@@ -49,13 +44,16 @@ function DashboardsAndAlertsPopover({
 		{
 			metricName,
 		},
-		{
-			query: {
-				enabled: !!metricName,
-			},
-		},
 	);
 
+	return getErrorStatus(newIsErrorAlerts, newErrorAlerts) ||
+		getLoadingStatus(newIsLoadingAlerts) ||
+		{ data: [], isLoading: false, isError: false };
+}
+
+function useMetricDashboardsStatus(
+	metricName: string,
+): Status {
 	const {
 		data: newDashboardsData,
 		isLoading: newIsLoadingDashboards,
@@ -65,22 +63,26 @@ function DashboardsAndAlertsPopover({
 		{
 			metricName,
 		},
-		{
-			query: {
-				enabled: !!metricName,
-			},
-		},
 	);
 
-	useEffect(() => {
-		const alertsStatus = getErrorStatus(newIsErrorAlerts, newErrorAlerts);
-		const dashboardsStatus = getErrorStatus(newIsErrorDashboards, newErrorDashboards);
-		const alertsLoadingStatus = getLoadingStatus(newIsLoadingAlerts);
-		const dashboardsLoadingStatus = getLoadingStatus(newIsLoadingDashboards);
+	return getErrorStatus(newIsErrorDashboards, newErrorDashboards) ||
+		getLoadingStatus(newIsLoadingDashboards) ||
+		{ data: [], isLoading: false, isError: false };
+}
 
-		setAlertsData(alertsStatus);
-		setDashboardsData(dashboardsStatus);
-	}, [newIsErrorAlerts, newIsErrorDashboards, newIsLoadingAlerts, newIsLoadingDashboards, newErrorAlerts, newErrorDashboards]);
+function DashboardsAndAlertsPopover({
+	metricName,
+}: DashboardsAndAlertsPopoverProps): JSX.Element | null {
+	const alertsStatus = useMetricAlertsStatus(metricName);
+	const dashboardsStatus = useMetricDashboardsStatus(metricName);
+
+	const [alertsData, setAlertsData] = useState(alertsStatus.data);
+	const [dashboardsData, setDashboardsData] = useState(dashboardsStatus.data);
+
+	useEffect(() => {
+		setAlertsData(alertsStatus.data);
+		setDashboardsData(dashboardsStatus.data);
+	}, [alertsStatus, dashboardsStatus]);
 
 	return (
 		<Dropdown
@@ -88,52 +90,37 @@ function DashboardsAndAlertsPopover({
 				<Menu>
 					<Menu.Item>
 						<Typography.Text>
-							{pluralize(alertsData.data.length, 'Alert')}{' '}
-							{newIsLoadingAlerts ? (
+							{pluralize(alertsData.length, 'Alert')}{' '}
+							{alertsStatus.isLoading ? (
 								<Skeleton active paragraph={false} />
 							) : (
-								<a
-									href={generatePath(ROUTES.METRIC_ALERTS, {
-										metricName,
-									})}
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.METRIC_ALERTS, {
-											metricName,
-										}));
-									}}
-								>
-									{ROUTES.METRIC_ALERTS}
-								</a>
+								<Grid size={16} />
 							)}
 						</Typography.Text>
 					</Menu.Item>
 					<Menu.Item>
 						<Typography.Text>
-							{pluralize(dashboardsData.data.length, 'Dashboard')}{' '}
-							{newIsLoadingDashboards ? (
+							{pluralize(dashboardsData.length, 'Dashboard')}{' '}
+							{dashboardsStatus.isLoading ? (
 								<Skeleton active paragraph={false} />
 							) : (
-								<a
-									href={generatePath(ROUTES.METRIC_DASHBOARDS, {
-										metricName,
-									})}
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.METRIC_DASHBOARDS, {
-											metricName,
-										}));
-									}}
-								>
-									{ROUTES.METRIC_DASHBOARDS}
-								</a>
+								<Grid size={16} />
 							)}
 						</Typography.Text>
 					</Menu.Item>
 				</Menu>
 			}
 		>
-			<Grid size={24} />
+			<Dropdown.Trigger>
+				<Typography.Text>
+					Alerts and Dashboards
+					{alertsStatus.isLoading || dashboardsStatus.isLoading ? (
+						<Skeleton active paragraph={false} />
+					) : (
+						<Grid size={16} />
+					)}
+				</Typography.Text>
+			</Dropdown.Trigger>
 		</Dropdown>
 	);
 }
