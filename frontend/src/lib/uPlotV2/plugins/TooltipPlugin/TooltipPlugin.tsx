@@ -107,12 +107,18 @@ export default function TooltipPlugin({
 		let removeSyncDisplayHook: (() => void) | null = null;
 		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
 			config.setCursor({
-				sync: { key: syncKey, scales: ['x', 'y'] },
+				sync: {
+					key: syncKey,
+					scales:
+						syncMode === DashboardCursorSync.Crosshair
+							? ['x', 'y']
+							: ['x', null],
+				},
 			});
 
 			removeSyncDisplayHook = config.addHook(
 				'setCursor',
-				createSyncDisplayHook(syncKey, syncMetadata, controller),
+				createSyncDisplayHook(syncKey, syncMetadata, controller, syncMode),
 			);
 		}
 

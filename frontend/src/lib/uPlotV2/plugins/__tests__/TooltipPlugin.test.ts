@@ -210,7 +210,7 @@ describe('TooltipPlugin', () => {
 			expect(container.parentElement).toBe(document.body);
 
 			const fullscreenRoot = document.createElement('div');
-			document.body.appendChild(fullscreenRoot);
+			document.body.append(fullscreenRoot);
 
 			act(() => {
 				mockedFullscreenElement = fullscreenRoot;
@@ -252,7 +252,7 @@ describe('TooltipPlugin', () => {
 			renderAndActivateHover(config, undefined, { canPinTooltip: true });
 
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 
 			act(() => {
 				document.body.dispatchEvent(
@@ -266,7 +266,7 @@ describe('TooltipPlugin', () => {
 			return waitFor(() => {
 				const updated = screen.getByTestId('tooltip-plugin-container');
 				expect(updated).toBeInTheDocument();
-				expect(updated.getAttribute('data-pinned') === 'true').toBe(true);
+				expect(updated.dataset.pinned === 'true').toBe(true);
 			});
 		});
 
@@ -340,7 +340,7 @@ describe('TooltipPlugin', () => {
 			// Wait until the tooltip is actually pinned.
 			await waitFor(() => {
 				const container = screen.getByTestId('tooltip-plugin-container');
-				expect(container.getAttribute('data-pinned') === 'true').toBe(true);
+				expect(container.dataset.pinned === 'true').toBe(true);
 			});
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
@@ -353,7 +353,7 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 				expect(container.textContent).toBe('');
 			});
 		});
@@ -392,8 +392,7 @@ describe('TooltipPlugin', () => {
 
 			expect(
 				screen
-					.getByTestId('tooltip-plugin-container')
-					.getAttribute('data-pinned') === 'true',
+					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Simulate data update – should dismiss the pinned tooltip.
@@ -405,7 +404,7 @@ describe('TooltipPlugin', () => {
 			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).toBeInTheDocument();
 			expect(container.getAttribute('aria-hidden')).toBe('true');
-			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 
 			jest.useRealTimers();
 		});
@@ -444,8 +443,7 @@ describe('TooltipPlugin', () => {
 
 			expect(
 				screen
-					.getByTestId('tooltip-plugin-container')
-					.getAttribute('data-pinned') === 'true',
+					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Click outside the tooltip container.
@@ -459,7 +457,7 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -499,8 +497,7 @@ describe('TooltipPlugin', () => {
 
 			expect(
 				screen
-					.getByTestId('tooltip-plugin-container')
-					.getAttribute('data-pinned') === 'true',
+					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Press Escape to release.
@@ -515,7 +512,7 @@ describe('TooltipPlugin', () => {
 				const container = screen.getByTestId('tooltip-plugin-container');
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -542,8 +539,7 @@ describe('TooltipPlugin', () => {
 			await waitFor(() => {
 				expect(
 					screen
-						.getByTestId('tooltip-plugin-container')
-						.getAttribute('data-pinned') === 'true',
+						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -560,7 +556,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const container = screen.getByTestId('tooltip-plugin-container');
-				expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
@@ -580,7 +576,7 @@ describe('TooltipPlugin', () => {
 			const container = screen.getByTestId('tooltip-plugin-container');
 			// Tooltip should still be hovering (visible), not dismissed.
 			expect(container.getAttribute('aria-hidden')).toBe('false');
-			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 		});
 
 		it('does not unpin on arbitrary keys that are not Escape or the pin key', async () => {
@@ -604,8 +600,7 @@ describe('TooltipPlugin', () => {
 			await waitFor(() => {
 				expect(
 					screen
-						.getByTestId('tooltip-plugin-container')
-						.getAttribute('data-pinned') === 'true',
+						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -620,8 +615,7 @@ describe('TooltipPlugin', () => {
 			await waitFor(() => {
 				expect(
 					screen
-						.getByTestId('tooltip-plugin-container')
-						.getAttribute('data-pinned') === 'true',
+						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -665,7 +659,7 @@ describe('TooltipPlugin', () => {
 			});
 
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 		});
 
 		it('does not pin when hover is not active', () => {
@@ -699,7 +693,7 @@ describe('TooltipPlugin', () => {
 			// The container exists once the plot is initialised, but it should
 			// be hidden and not pinned since hover was never activated.
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.getAttribute('data-pinned') === 'true').toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 			expect(container.getAttribute('aria-hidden')).toBe('true');
 		});
 
@@ -724,8 +718,7 @@ describe('TooltipPlugin', () => {
 			await waitFor(() => {
 				expect(
 					screen
-						.getByTestId('tooltip-plugin-container')
-						.getAttribute('data-pinned') === 'true',
+						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(false);
 			});
 
@@ -739,8 +732,7 @@ describe('TooltipPlugin', () => {
 			await waitFor(() => {
 				expect(
 					screen
-						.getByTestId('tooltip-plugin-container')
-						.getAttribute('data-pinned') === 'true',
+						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 		});
@@ -796,7 +788,7 @@ describe('TooltipPlugin', () => {
 	// ---- Cursor sync ------------------------------------------------------------
 
 	describe('cursor sync', () => {
-		it('enables uPlot cursor sync for time-based scales when mode is Tooltip', () => {
+		it('enables uPlot cursor sync on x-axis only when mode is Tooltip', () => {
 			const config = createConfigMock();
 			const setCursorSpy = jest.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: true });
@@ -806,6 +798,25 @@ describe('TooltipPlugin', () => {
 					config,
 					render: () => null,
 					syncMode: DashboardCursorSync.Tooltip,
+					syncKey: 'dashboard-sync',
+				}),
+			);
+
+			expect(setCursorSpy).toHaveBeenCalledWith({
+				sync: { key: 'dashboard-sync', scales: ['x', null] },
+			});
+		});
+
+		it('enables uPlot cursor sync on both axes when mode is Crosshair', () => {
+			const config = createConfigMock();
+			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			config.addScale({ scaleKey: 'x', time: true });
+
+			render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => null,
+					syncMode: DashboardCursorSync.Crosshair,
 					syncKey: 'dashboard-sync',
 				}),
 			);

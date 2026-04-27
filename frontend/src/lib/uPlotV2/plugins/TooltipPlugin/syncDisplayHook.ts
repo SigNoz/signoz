@@ -2,6 +2,7 @@ import uPlot from 'uplot';
 
 import type { ExtendedSeries } from '../../config/types';
 import { syncCursorRegistry } from './syncCursorRegistry';
+import { DashboardCursorSync } from './types';
 import type { TooltipControllerState, TooltipSyncMetadata } from './types';
 
 /**
@@ -124,6 +125,7 @@ export function createSyncDisplayHook(
 	syncKey: string,
 	syncMetadata: TooltipSyncMetadata | undefined,
 	controller: TooltipControllerState,
+	syncMode: DashboardCursorSync,
 ): (u: uPlot) => void {
 	// Cached once — avoids a DOM query on every cursor move.
 	let yCrosshairEl: HTMLElement | null = null;
@@ -147,7 +149,8 @@ export function createSyncDisplayHook(
 				syncMetadata,
 				focusedSeriesIndex: controller.focusedSeriesIndex,
 			});
-			yCrosshairEl.style.display = '';
+			yCrosshairEl.style.display =
+				syncMode === DashboardCursorSync.Crosshair ? '' : 'none';
 			return;
 		}
 
