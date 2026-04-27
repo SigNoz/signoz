@@ -19,15 +19,15 @@ const GraphControlsPanel = ({
   onViewAPIMonitoringClick,
 }: GraphControlsPanelProps): JSX.Element => {
   const handleViewTracesClick = (e: React.MouseEvent) => {
-    onViewTracesClick && onViewTracesClick(e);
+    onViewTracesClick?.(e);
   };
 
   const handleViewLogsClick = (e: React.MouseEvent) => {
-    onViewLogsClick && onViewLogsClick(e);
+    onViewLogsClick?.(e);
   };
 
   const handleViewAPIMonitoringClick = (e: React.MouseEvent) => {
-    onViewAPIMonitoringClick && onViewAPIMonitoringClick(e);
+    onViewAPIMonitoringClick?.(e);
   };
 
   return (
