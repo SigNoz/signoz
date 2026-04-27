@@ -61,3 +61,4 @@ const GraphControlsPanel = ({
 };
 
 export default GraphControlsPanel;
+```
