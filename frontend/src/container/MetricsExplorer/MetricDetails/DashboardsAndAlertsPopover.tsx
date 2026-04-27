@@ -86,7 +86,7 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
-}: DashboardsAndAlertsPopoverProps): JSX.Element {
+}: DashboardsAndAlertsPopoverProps) {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
@@ -95,25 +95,29 @@ export function DashboardsAndAlertsPopover({
 	const totalAlerts = alertsStatus.data.length;
 	const totalDashboards = dashboardsStatus.data.length;
 
-	const handleOpenChange = (visible: boolean): void => {
+	const handleOpenChange = (visible: boolean) => {
 		setOpen(visible);
 	};
 
-	const handleViewAllAlerts = (): void => {
+	const handleAlertsClick = () => {
 		openInNewTab(
-			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+			`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
 		);
 	};
 
-	const handleViewAllDashboards = (): void => {
+	const handleDashboardsClick = () => {
 		openInNewTab(
 			`${ROUTES.DASHBOARD_LIST}?${QueryParams.search}=${metricName}`,
 		);
 	};
 
-	const renderContent = (): JSX.Element => {
+	const renderContent = () => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton paragraph={{ rows: 2 }} />;
+			return (
+				<div style={{ width: 200 }}>
+					<Skeleton active paragraph={{ rows: 2 }} />
+				</div>
+			);
 		}
 
 		if (alertsStatus.isError || dashboardsStatus.isError) {
@@ -124,29 +128,24 @@ export function DashboardsAndAlertsPopover({
 
 		return (
 			<Menu>
-				{totalAlerts > 0 && (
-					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
-						<span>
-							<Bell size={16} color={Color.primary[500]} />{' '}
-							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</span>
-					</Menu.Item>
-				)}
-				{totalDashboards > 0 && (
-					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
-						<span>
-							<Grid size={16} color={Color.primary[500]} />{' '}
-							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</span>
-					</Menu.Item>
-				)}
-				{totalAlerts === 0 && totalDashboards === 0 && (
-					<Menu.Item key="empty" disabled>
-						<Typography.Text type="secondary">
-							No dashboards or alerts using this metric
-						</Typography.Text>
-					</Menu.Item>
-				)}
+				<Menu.Item
+					key="alerts"
+					icon={<Bell size={16} />}
+					onClick={handleAlertsClick}
+				>
+					<Typography.Text strong>
+						{pluralize('Alert', totalAlerts)} ({totalAlerts})
+					</Typography.Text>
+				</Menu.Item>
+				<Menu.Item
+					key="dashboards"
+					icon={<Grid size={16} />}
+					onClick={handleDashboardsClick}
+				>
+					<Typography.Text strong>
+						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+					</Typography.Text>
+				</Menu.Item>
 			</Menu>
 		);
 	};
@@ -158,18 +157,13 @@ export function DashboardsAndAlertsPopover({
 			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			placement="bottomRight"
-			destroyPopupOnHide
 		>
-			<span
-				style={{
-					color: Color.primary[500],
-					cursor: 'pointer',
-					fontSize: '14px',
-				}}
+			<Typography.Link
+				onClick={(e) => e.preventDefault()}
+				style={{ color: Color.primary[500] }}
 			>
 				View in Dashboards & Alerts
-			</span>
+			</Typography.Link>
 		</Dropdown>
 	);
 }
