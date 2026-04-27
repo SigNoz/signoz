@@ -83,6 +83,7 @@ function createUPlotInstance(cursorIdx: number | null): uPlot {
 
 function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 	const defaultProps: TooltipTestProps = {
+		id: 'tooltip-1',
 		uPlotInstance: createUPlotInstance(null),
 		timezone: { value: 'UTC', name: 'UTC', offset: '0', searchIndex: '0' },
 		content: [],

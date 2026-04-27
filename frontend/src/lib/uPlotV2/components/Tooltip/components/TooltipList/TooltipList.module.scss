@@ -1,3 +1,7 @@
+.container {
+	padding-bottom: var(--spacing-6);
+}
+
 .list {
 	width: 100%;
 	:global(div[data-viewport-type='element']) {
