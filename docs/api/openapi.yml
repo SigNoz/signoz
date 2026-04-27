@@ -2933,8 +2933,8 @@ components:
       type: object
     PromotetypesWrappedIndex:
       properties:
-        column_type:
-          type: string
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
         granularity:
           type: integer
         type:
