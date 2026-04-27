@@ -60,63 +60,108 @@ function DashboardsAndAlertsPopover({
 	);
 
 	useEffect(() => {
-		if (newAlertsData) {
-			setAlertsData({
-				data: newAlertsData.data?.alerts || [],
-				isLoading: newIsLoadingAlerts,
-				isError: newIsErrorAlerts,
+		setAlertsData({
+			data: newAlertsData?.data?.alerts || [],
+			isLoading: newIsLoadingAlerts,
+			isError: newIsErrorAlerts,
+		});
+	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
+
+	useEffect(() => {
+		setDashboardsData({
+			data: newDashboardsData?.data?.dashboards || [],
+			isLoading: newIsLoadingDashboards,
+			isError: newIsErrorDashboards,
+		});
+	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
+
+	const totalAlerts = alertsData.data.length;
+	const totalDashboards = dashboardsData.data.length;
+
+	const hasAnyData = totalAlerts > 0 || totalDashboards > 0;
+
+	const menuItems = useMemo(() => {
+		const items = [];
+
+		if (totalAlerts > 0) {
+			items.push({
+				key: 'alerts',
+				label: (
+					<Typography.Text
+						strong
+						onClick={(e): void => {
+							e.stopPropagation();
+							openInNewTab(
+								`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
+							);
+						}}
+						style={{ display: 'block', color: Color.text.primary }}
+					>
+						{pluralize('Alert', totalAlerts)} ({totalAlerts})
+					</Typography.Text>
+				),
+				icon: <Bell size={16} />,
 			});
 		}
 
-		if (newDashboardsData) {
-			setDashboardsData({
-				data: newDashboardsData.data?.dashboards || [],
-				isLoading: newIsLoadingDashboards,
-				isError: newIsErrorDashboards,
+		if (totalDashboards > 0) {
+			items.push({
+				key: 'dashboards',
+				label: (
+					<Typography.Text
+						strong
+						onClick={(e): void => {
+							e.stopPropagation();
+							openInNewTab(
+								`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+							);
+						}}
+						style={{ display: 'block', color: Color.text.primary }}
+					>
+						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+					</Typography.Text>
+				),
+				icon: <Grid size={16} />,
 			});
 		}
-	}, [
-		newAlertsData,
-		newDashboardsData,
-		newIsLoadingAlerts,
-		newIsLoadingDashboards,
-		newIsErrorAlerts,
-		newIsErrorDashboards,
-	]);
+
+		return items;
+	}, [totalAlerts, totalDashboards, metricName]);
+
+	if (!metricName) return null;
+
+	if (!hasAnyData && (alertsData.isLoading || dashboardsData.isLoading)) {
+		return (
+			<Dropdown
+				overlay={<Menu items={[]} />}
+				trigger={['click']}
+				disabled
+				overlayStyle={{ minWidth: 200 }}
+			>
+				<Skeleton.Input active size="small" style={{ width: 120 }} />
+			</Dropdown>
+		);
+	}
+
+	if (!hasAnyData) return null;
 
 	return (
 		<Dropdown
-			overlay={
-				<Menu>
-					{alertsData.data.length > 0 && (
-						<Menu.Item
-							key="alerts"
-							onClick={() => openInNewTab(generatePath(ROUTES.METRIC_ALERTS, { metricName }))}
-						>
-							<Typography.Text>
-								{pluralize(alertsData.data.length, 'alert', 'alerts')}{' '}
-								<Grid size={16} />
-							</Typography.Text>
-						</Menu.Item>
-					)}
-					{dashboardsData.data.length > 0 && (
-						<Menu.Item
-							key="dashboards"
-							onClick={() => openInNewTab(generatePath(ROUTES.METRIC_DASHBOARDS, { metricName }))}
-						>
-							<Typography.Text>
-								{pluralize(dashboardsData.data.length, 'dashboard', 'dashboards')}{' '}
-								<Grid size={16} />
-							</Typography.Text>
-						</Menu.Item>
-					)}
-				</Menu>
-			}
+			overlay={<Menu items={menuItems} />}
+			trigger={['click']}
+			overlayStyle={{ minWidth: 200 }}
 		>
-			<Typography.Text>
-				<Grid size={16} />
-				Alerts and Dashboards
-			</Typography.Text>
+			<Typography.Link
+				onClick={(e): void => {
+					e.preventDefault();
+				}}
+				style={{ fontSize: 12 }}
+			>
+				View in {totalDashboards > 0 ? 'Dashboard' : 'Alert'}{' '}
+				{totalDashboards > 1 || totalAlerts > 1 ? '(s)' : ''}
+			</Typography.Link>
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
