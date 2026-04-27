@@ -141,13 +141,17 @@ function DashboardsAndAlertsPopover({
 	return (
 		<Dropdown
 			menu={{ items: dropdownItems }}
-			trigger={['click']}
+			trigger={['hover']}
 			placement="bottomLeft"
 		>
-			<Typography.Link style={{ fontSize: '12px' }}>
-				{[...(hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : []), ...(hasAlerts ? [pluralize('alert', alerts.length, true)] : [])].join(
-					', ',
-				)}
+			<Typography.Link
+				style={{
+					fontSize: '12px',
+					color: Color.TEXT_DISABLED,
+				}}
+			>
+				{pluralize('dashboard', dashboards.length, true)} •{' '}
+				{pluralize('alert', alerts.length, true)}
 			</Typography.Link>
 		</Dropdown>
 	);
