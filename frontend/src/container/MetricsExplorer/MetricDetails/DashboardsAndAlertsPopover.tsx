@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
+	return { data: newAlertsData, isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,125 +81,59 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
+	return { data: newDashboardsData, isLoading: false, isError: false };
 }
 
-export function DashboardsAndAlertsPopover({
-	metricName,
-	children,
-}: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const [open, setOpen] = useState(false);
+function useMetricStatus(metricName: string): Status {
+	const metricAlertsStatus = useMetricAlertsStatus(metricName);
+	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
+	return { ...metricAlertsStatus, ...metricDashboardsStatus };
+}
 
-	const totalAssociatedItems =
-		(alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
+function DashboardsAndAlertsPopover({ metricName }: DashboardsAndAlertsPopoverProps) {
+	const metricStatus = useMetricStatus(metricName);
 
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
-	};
+	if (metricStatus.isError) {
+		return (
+			<Typography.Text>
+				{metricStatus.error.message}
+			</Typography.Text>
+		);
+	}
 
-	const menuItems = useMemo(() => {
-		const items = [];
-
-		if (dashboardsStatus.isLoading) {
-			items.push({
-				key: 'dashboards-loading',
-				label: (
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Grid size={14} color={Color.primary[500]} />
-						<Skeleton.Input active size="small" style={{ width: 120 }} />
-					</div>
-				),
-				disabled: true,
-			});
-		} else if (dashboardsStatus.isError) {
-			items.push({
-				key: 'dashboards-error',
-				label: (
-					<Typography.Text type="danger" style={{ fontSize: 12 }}>
-						Failed to load dashboards
-					</Typography.Text>
-				),
-				disabled: true,
-			});
-		} else {
-			const dashboardCount = dashboardsStatus.data?.length || 0;
-			items.push({
-				key: 'dashboards',
-				label: (
-					<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Grid size={14} color={Color.primary[500]} />
-						{pluralize('Dashboard', dashboardCount)} ({dashboardCount})
-					</span>
-				),
-				onClick: (e) => {
-					e.domEvent.preventDefault();
-					e.domEvent.stopPropagation();
-					openInNewTab(
-						`${generatePath(ROUTES.DASHBOARDS)}?${QueryParams.search}=${metricName}`,
-					);
-				},
-			});
-		}
-
-		if (alertsStatus.isLoading) {
-			items.push({
-				key: 'alerts-loading',
-				label: (
-					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Bell size={14} color={Color.primary[500]} />
-						<Skeleton.Input active size="small" style={{ width: 120 }} />
-					</div>
-				),
-				disabled: true,
-			});
-		} else if (alertsStatus.isError) {
-			items.push({
-				key: 'alerts-error',
-				label: (
-					<Typography.Text type="danger" style={{ fontSize: 12 }}>
-						Failed to load alerts
-					</Typography.Text>
-				),
-				disabled: true,
-			});
-		} else {
-			const alertCount = alertsStatus.data?.length || 0;
-			items.push({
-				key: 'alerts',
-				label: (
-					<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Bell size={14} color={Color.primary[500]} />
-						{pluralize('Alert', alertCount)} ({alertCount})
-					</span>
-				),
-				onClick: (e) => {
-					e.domEvent.preventDefault();
-					e.domEvent.stopPropagation();
-					openInNewTab(
-						`${generatePath(ROUTES.ALL_ALERTS)}?${QueryParams.search}=${metricName}`,
-					);
-				},
-			});
-		}
-
-		return items;
-	}, [dashboardsStatus, alertsStatus, metricName]);
-
-	const menu = <Menu items={menuItems} />;
+	if (metricStatus.isLoading) {
+		return <Skeleton active />;
+	}
 
 	return (
 		<Dropdown
-			overlay={menu}
-			trigger={['click']}
-			open={open}
-			onOpenChange={handleOpenChange}
-			placement="bottomRight"
-			destroyPopupOnHide
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<a
+							onClick={() => openInNewTab(generatePath(ROUTES.DASHBOARD, { metricName }))}
+						>
+							<Grid />
+							{pluralize(metricStatus.data.length, 'dashboard')}
+						</a>
+					</Menu.Item>
+					<Menu.Item>
+						<a
+							onClick={() => openInNewTab(generatePath(ROUTES.ALERTS, { metricName }))}
+						>
+							<Bell />
+							{pluralize(metricStatus.data.length, 'alert')}
+						</a>
+					</Menu.Item>
+				</Menu>
+			}
 		>
-			{children}
+			<Typography.Text>
+				Dashboards and Alerts
+			</Typography.Text>
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
