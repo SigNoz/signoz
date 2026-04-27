@@ -109,28 +109,22 @@ function DashboardsAndAlertsPopover({
 		if (alertsData.isError || dashboardsData.isError) {
 			return (
 				<Typography.Text type="secondary">
-					Failed to load dashboards or alerts.
+					Failed to load alerts or dashboards.
 				</Typography.Text>
 			);
 		}
 
 		if (!hasAlerts && !hasDashboards) {
 			return (
-				<Typography.Text type="secondary">
-					No dashboards or alerts using this metric.
-				</Typography.Text>
+				<Typography.Text type="secondary">No alerts or dashboards found.</Typography.Text>
 			);
 		}
 
 		return (
 			<Menu>
 				{hasAlerts && (
-					<Menu.Item
-						key="alerts"
-						icon={<Bell size={16} />}
-						onClick={handleAlertsClick}
-					>
-						<Typography.Text style={{ color: Color.text.primary }}>
+					<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={16} />}>
+						<Typography.Text strong>
 							{pluralize('Alert', totalAlerts)} ({totalAlerts})
 						</Typography.Text>
 					</Menu.Item>
@@ -138,10 +132,10 @@ function DashboardsAndAlertsPopover({
 				{hasDashboards && (
 					<Menu.Item
 						key="dashboards"
-						icon={<Grid size={16} />}
 						onClick={handleDashboardsClick}
+						icon={<Grid size={16} />}
 					>
-						<Typography.Text style={{ color: Color.text.primary }}>
+						<Typography.Text strong>
 							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
 						</Typography.Text>
 					</Menu.Item>
@@ -156,25 +150,16 @@ function DashboardsAndAlertsPopover({
 		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
 			<div
 				style={{
+					color: Color.primary.primary,
 					cursor: 'pointer',
 					display: 'flex',
 					alignItems: 'center',
 					gap: '4px',
-					color: Color.text.secondary,
 				}}
-				onClick={(e): void => e.stopPropagation()}
-				onKeyDown={(e): void => {
-					if (e.key === 'Enter' || e.key === ' ') {
-						e.preventDefault();
-						e.stopPropagation();
-					}
-				}}
-				role="button"
-				tabIndex={0}
-				aria-label="Show dashboards and alerts using this metric"
 			>
-				<Grid size={14} />
-				<Bell size={14} />
+				<Typography.Link style={{ fontSize: 12 }}>
+					View in Dashboards & Alerts
+				</Typography.Link>
 			</div>
 		</Dropdown>
 	);
