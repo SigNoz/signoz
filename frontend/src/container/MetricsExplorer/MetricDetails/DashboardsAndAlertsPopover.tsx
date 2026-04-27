@@ -80,65 +80,75 @@ function DashboardsAndAlertsPopover({
 
 	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
 
-	if (!hasAnyItem && !alertsData.isLoading && !dashboardsData.isLoading) {
-		return null;
+	if (!hasAnyItem && (alertsData.isLoading || dashboardsData.isLoading)) {
+		return (
+			<div className="flex flex-col gap-2 p-2">
+				<Skeleton.Input active size="small" block />
+				<Skeleton.Input active size="small" block />
+			</div>
+		);
 	}
 
-	const handleAlertClick = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
+	if (!hasAnyItem) {
+		return (
+			<Typography.Text type="secondary" className="p-2">
+				No dashboards or alerts found for this metric
+			</Typography.Text>
+		);
+	}
 
-	const handleDashboardClick = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
+	const menuItems = [];
 
-	const menu = (
-		<Menu>
-			{totalAlerts > 0 && (
-				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
-					<Typography.Text>
-						{pluralize('alert', totalAlerts)} on {totalAlerts} {pluralize('resource', totalAlerts)}
-					</Typography.Text>
-				</Menu.Item>
-			)}
-			{totalDashboards > 0 && (
-				<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
-					<Typography.Text>
-						{pluralize('dashboard', totalDashboards)} on {totalDashboards} {pluralize('resource', totalDashboards)}
-					</Typography.Text>
-				</Menu.Item>
-			)}
-			{alertsData.isLoading && (
-				<Menu.Item key="loading-alerts">
-					<Skeleton.Input active size="small" />
-				</Menu.Item>
-			)}
-			{dashboardsData.isLoading && (
-				<Menu.Item key="loading-dashboards">
-					<Skeleton.Input active size="small" />
-				</Menu.Item>
-			)}
-		</Menu>
-	);
+	if (totalAlerts > 0) {
+		menuItems.push({
+			key: 'alerts',
+			label: (
+				<Typography.Text>
+					{pluralize('Alert', totalAlerts)} ({totalAlerts})
+				</Typography.Text>
+			),
+			icon: <Bell size={14} color={Color.semantic.warning} />,
+			onClick: () => {
+				openInNewTab(
+					`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
+				);
+			},
+		});
+	}
+
+	if (totalDashboards > 0) {
+		menuItems.push({
+			key: 'dashboards',
+			label: (
+				<Typography.Text>
+					{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+				</Typography.Text>
+			),
+			icon: <Grid size={14} color={Color.primary.primary} />,
+			onClick: () => {
+				openInNewTab(
+					`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+				);
+			},
+		});
+	}
+
+	const menu = <Menu items={menuItems} />;
 
 	return (
-		<Dropdown overlay={menu} trigger={['hover']} placement="bottomRight">
-			<span
-				style={{
-					color: Color.primary.primary,
-					cursor: 'pointer',
-					fontWeight: 500,
-				}}
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+			<div
+				className="flex cursor-pointer items-center gap-1 px-2 py-1 text-xs text-secondary hover:bg-gray-100"
+				onClick={(e) => e.stopPropagation()}
 			>
-				View in {hasAnyItem ? totalAlerts + totalDashboards : ''}{' '}
-				{hasAnyItem ? pluralize('resource', totalAlerts + totalDashboards) : 'resources'}
-			</span>
+				{totalAlerts > 0 && (
+					<Bell size={12} color={Color.semantic.warning} />
+				)}
+				{totalDashboards > 0 && (
+					<Grid size={12} color={Color.primary.primary} />
+				)}
+				<span>{totalAlerts + totalDashboards}</span>
+			</div>
 		</Dropdown>
 	);
 }
