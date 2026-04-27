@@ -79,8 +79,6 @@ export function RegionForm({
 			layout="vertical"
 			onFinish={onSubmit}
 		>
-			<AlertMessage modalState={modalState} />
-
 			<div
 				className={cx(`cloud-account-setup-form__content`, {
 					disabled: isFormDisabled,
@@ -102,6 +100,10 @@ export function RegionForm({
 					connectionParams={connectionParams}
 					isFormDisabled={isFormDisabled}
 				/>
+			</div>
+
+			<div className="cloud-account-setup-form__alert">
+				<AlertMessage modalState={modalState} />
 			</div>
 		</Form>
 	);

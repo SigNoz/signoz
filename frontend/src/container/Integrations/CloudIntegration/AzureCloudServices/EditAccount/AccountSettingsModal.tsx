@@ -64,6 +64,7 @@ function AccountSettingsModal({
 							setActiveAccount(null);
 							handleClose();
 						}}
+						cloudProvider={INTEGRATION_TYPES.AZURE}
 					/>
 					<Button
 						variant="solid"
@@ -92,7 +93,7 @@ function AccountSettingsModal({
 								Connected Account details
 							</div>
 							<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
-								Azure Account:{' '}
+								Azure Subscription:{' '}
 								<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
 									{account?.providerAccountId}
 								</span>

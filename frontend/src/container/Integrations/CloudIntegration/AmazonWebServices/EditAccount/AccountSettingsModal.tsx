@@ -129,6 +129,7 @@ function AccountSettingsModal({
 			<RemoveIntegrationAccount
 				accountId={account?.id}
 				onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+				cloudProvider={INTEGRATION_TYPES.AWS}
 			/>
 
 			<Button

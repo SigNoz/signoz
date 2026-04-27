@@ -17,7 +17,7 @@
 		overflow-y: auto;
 		min-height: 0;
 		scrollbar-width: thin;
-		margin-right: 8px;
+		padding-right: 16px;
 
 		&::-webkit-scrollbar-thumb {
 			background: var(--l1-border);
@@ -84,6 +84,7 @@
 	.cloud-account-setup-how-it-works-accordion {
 		display: flex;
 		flex-direction: column;
+		margin: 24px 0;
 
 		&__title {
 			display: flex;
@@ -143,6 +144,52 @@
 		}
 	}
 
+	.cloud-account-setup-form__code-block-tabs {
+		padding: 8px;
+		border-radius: 4px;
+		border: 1px solid var(--l2-border);
+		background: var(--l2-background);
+
+		&-header {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+
+			margin-bottom: 12px;
+
+			&-title {
+				color: var(--l1-foreground);
+				font-size: 14px;
+				font-weight: 500;
+				line-height: 20px;
+				letter-spacing: -0.07px;
+			}
+
+			&-description {
+				color: var(--l2-foreground);
+				font-size: 12px;
+				font-weight: 400;
+				line-height: 18px;
+				letter-spacing: -0.06px;
+			}
+		}
+
+		[role='tablist'] {
+			gap: 8px !important;
+		}
+
+		[role='tabpanel'] {
+			padding: 0 !important;
+		}
+
+		[data-slot='tabs-trigger'] {
+			padding: 4px 24px !important;
+			border: none !important;
+			background-color: transparent !important;
+			font-size: 12px !important;
+		}
+	}
+
 	@keyframes cloud-account-setup-accordion-reveal {
 		from {
 			opacity: 0;
@@ -194,26 +241,11 @@
 		}
 
 		&__alert {
-			&.ant-alert {
-				padding: 12px;
-				border-radius: 6px;
-				font-size: 14px;
-				line-height: 22px; /* 157.143% */
-				letter-spacing: -0.07px;
-			}
+			width: 100%;
 
-			&.ant-alert-error {
-				color: var(--danger-foreground);
-				border: 1px solid
-					color-mix(in srgb, var(--danger-background) 10%, transparent);
-				background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-			}
-
-			&.ant-alert-warning {
-				color: var(--warning-foreground);
-				border: 1px solid
-					color-mix(in srgb, var(--warning-background) 10%, transparent);
-				background: color-mix(in srgb, var(--warning-background) 10%, transparent);
+			[data-slot='callout'] {
+				width: 100%;
+				box-sizing: border-box;
 			}
 
 			&-message {
@@ -231,11 +263,13 @@
 				}
 			}
 		}
+
 		&__form-group {
 			display: flex;
 			flex-direction: column;
 			gap: 12px;
 		}
+
 		&__title {
 			color: var(--l1-foreground);
 			font-size: 14px;

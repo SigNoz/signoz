@@ -8,7 +8,7 @@ import './CloudIntegration.styles.scss';
 const CloudIntegration = ({ type }: { type: IntegrationType }): JSX.Element => {
 	return (
 		<div className="cloud-integration-container">
-			<Header title={type} />
+			<Header type={type} />
 			<ServicesTabs type={type} />
 		</div>
 	);

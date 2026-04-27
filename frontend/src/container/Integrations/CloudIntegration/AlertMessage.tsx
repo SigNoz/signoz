@@ -1,6 +1,6 @@
-import { Color } from '@signozhq/design-tokens';
-import { Alert, Spin } from 'antd';
-import { LoaderCircle, TriangleAlert } from 'lucide-react';
+import { Callout } from '@signozhq/ui';
+import { Spin } from 'antd';
+import { LoaderCircle } from 'lucide-react';
 
 import { ModalStateEnum } from '../HeroSection/types';
 
@@ -12,14 +12,13 @@ function AlertMessage({
 	switch (modalState) {
 		case ModalStateEnum.WAITING:
 			return (
-				<Alert
-					message={
+				<Callout
+					title={
 						<div className="cloud-account-setup-form__alert-message">
 							<Spin
 								indicator={
 									<LoaderCircle
 										size={14}
-										color={Color.BG_AMBER_400}
 										className="anticon anticon-loading anticon-spin ant-spin-dot"
 									/>
 								}
@@ -28,21 +27,19 @@ function AlertMessage({
 							<span className="retry-time">10</span> secs...
 						</div>
 					}
-					className="cloud-account-setup-form__alert"
-					type="warning"
+					type="info"
+					showIcon={false}
 				/>
 			);
 		case ModalStateEnum.ERROR:
 			return (
-				<Alert
-					message={
+				<Callout
+					title={
 						<div className="cloud-account-setup-form__alert-message">
-							<TriangleAlert type="solid" size={15} color={Color.BG_SAKURA_400} />
 							{`We couldn't establish a connection to your AWS account. Please try again`}
 						</div>
 					}
 					type="error"
-					className="cloud-account-setup-form__alert"
 				/>
 			);
 		default:

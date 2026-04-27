@@ -11,9 +11,11 @@ import { Unlink } from 'lucide-react';
 import './RemoveIntegrationAccount.scss';
 
 function RemoveIntegrationAccount({
+	cloudProvider,
 	accountId,
 	onRemoveIntegrationAccountSuccess,
 }: {
+	cloudProvider: string;
 	accountId: string;
 	onRemoveIntegrationAccountSuccess: () => void;
 }): JSX.Element {
@@ -79,9 +81,12 @@ function RemoveIntegrationAccount({
 				}}
 			>
 				Removing this account will remove all components created for sending
-				telemetry to SigNoz in your AWS account within the next ~15 minutes
-				(cloudformation stacks named signoz-integration-telemetry-collection in
-				enabled regions). <br />
+				telemetry to SigNoz in your{' '}
+				<span className="remove-integration-account-modal__cloud-provider">
+					{cloudProvider}
+				</span>{' '}
+				account within the next ~15 minutes (cloudformation stacks named
+				signoz-integration-telemetry-collection in enabled regions). <br />
 				<br />
 				After that, you can delete the cloudformation stack that was created
 				manually when connecting this account.

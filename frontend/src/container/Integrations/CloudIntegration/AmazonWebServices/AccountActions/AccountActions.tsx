@@ -6,6 +6,7 @@ import { Select, Skeleton } from 'antd';
 import { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
+import cx from 'classnames';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
 import {
 	CloudAccount as IntegrationCloudAccount,
@@ -67,7 +68,9 @@ function AccountActionsRenderer({
 						<Select
 							value={activeAccount?.providerAccountId}
 							options={selectOptions}
-							rootClassName="cloud-account-selector"
+							rootClassName={cx('cloud-account-selector', {
+								[type.toLowerCase()]: type,
+							})}
 							popupMatchSelectWidth={false}
 							placeholder={`Select ${type} Account`}
 							suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
