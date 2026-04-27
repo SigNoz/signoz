@@ -101,83 +101,63 @@ function DashboardsAndAlertsPopover({
 		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
 	};
 
-	if (!metricName) return null;
+	const renderContent = (): JSX.Element => {
+		if (alertsData.isLoading || dashboardsData.isLoading) {
+			return <Skeleton active paragraph={{ rows: 2 }} />;
+		}
 
-	const loading = alertsData.isLoading || dashboardsData.isLoading;
+		if (alertsData.isError || dashboardsData.isError) {
+			return (
+				<Typography.Text type="secondary">
+					Failed to load dashboards or alerts.
+				</Typography.Text>
+			);
+		}
 
-	if (loading) {
+		if (!hasAlerts && !hasDashboards) {
+			return (
+				<Typography.Text type="secondary">No dashboards or alerts.</Typography.Text>
+			);
+		}
+
 		return (
-			<div>
-				<Skeleton.Input active size="small" style={{ width: 120 }} />
-			</div>
-		);
-	}
-
-	if (alertsData.isError || dashboardsData.isError) {
-		return (
-			<Typography.Text type="secondary" style={{ fontSize: 12 }}>
-				Failed to load dashboards and alerts
-			</Typography.Text>
-		);
-	}
-
-	const menu = (
-		<Menu>
-			{hasAlerts && (
-				<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={14} />}>
-					<Typography.Text style={{ fontSize: 12 }}>
-						{pluralize('Alert', totalAlerts)} ({totalAlerts})
-					</Typography.Text>
-				</Menu.Item>
-			)}
-			{hasDashboards && (
-				<Menu.Item
-					key="dashboards"
-					onClick={handleDashboardsClick}
-					icon={<Grid size={14} />}
-				>
-					<Typography.Text style={{ fontSize: 12 }}>
-						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-					</Typography.Text>
-				</Menu.Item>
-			)}
-			{!hasAlerts && !hasDashboards && (
-				<Menu.Item key="empty" disabled>
-					<Typography.Text type="secondary" style={{ fontSize: 12 }}>
-						No dashboards or alerts using this metric
-					</Typography.Text>
-				</Menu.Item>
-			)}
-		</Menu>
-	);
-
-	return (
-		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-			<div
-				style={{
-					color: Color.primary[500],
-					cursor: 'pointer',
-					fontSize: 12,
-					display: 'flex',
-					alignItems: 'center',
-					gap: 4,
-				}}
-			>
+			<Menu>
 				{hasAlerts && (
-					<>
-						<Bell size={12} />
-						<span>{totalAlerts}</span>
-					</>
+					<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={16} />}>
+						<Typography.Text strong>
+							{pluralize('Alert', totalAlerts)} ({totalAlerts})
+						</Typography.Text>
+					</Menu.Item>
 				)}
 				{hasDashboards && (
-					<>
-						<Grid size={12} />
-						<span>{totalDashboards}</span>
-					</>
+					<Menu.Item
+						key="dashboards"
+						onClick={handleDashboardsClick}
+						icon={<Grid size={16} />}
+					>
+						<Typography.Text strong>
+							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+						</Typography.Text>
+					</Menu.Item>
 				)}
-				{!hasAlerts && !hasDashboards && (
-					<Typography.Text type="secondary">No references</Typography.Text>
-				)}
+			</Menu>
+		);
+	};
+
+	if (!metricName) return null;
+
+	return (
+		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
+			<div
+				style={{
+					color: Color.primary.primary,
+					cursor: 'pointer',
+					display: 'flex',
+					alignItems: 'center',
+					gap: '4px',
+				}}
+			>
+				<Typography.Link>{pluralize('Dashboard & Alert', totalDashboards + totalAlerts)}</Typography.Link>
 			</div>
 		</Dropdown>
 	);
