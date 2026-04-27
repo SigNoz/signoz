@@ -17,14 +17,14 @@
 	&__title {
 		font-size: var(--font-size-sm);
 		font-weight: var(--font-weight-medium);
-		color: var(--bg-cherry-50);
+		color: var(--callout-error-title);
 	}
 
 	&__subtitle {
 		font-size: var(--paragraph-base-400-font-size);
 		font-weight: var(--paragraph-base-400-font-weight);
 		line-height: var(--paragraph-base-400-line-height);
-		color: var(--bg-cherry-300);
+		color: var(--callout-error-icon);
 	}
 }
 
