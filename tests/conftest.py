@@ -25,6 +25,7 @@ pytest_plugins = [
     "fixtures.cloudintegrations",
     "fixtures.jsontypeexporter",
     "fixtures.seeder",
+    "fixtures.telemetrystore",
 ]
 
 

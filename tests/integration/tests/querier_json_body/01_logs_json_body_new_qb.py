@@ -15,40 +15,6 @@ from fixtures.querier import (
 )
 
 
-def _check_query_log(
-    conn: Any,
-    after_ts: datetime,
-    case_name: str,
-    check_fn: Callable[[str], bool],
-) -> None:
-    """Flush query_log and assert that the most recent body_v2 SELECT passes check_fn."""
-    conn.command("SYSTEM FLUSH LOGS")
-    # Use millisecond precision to avoid timestamp collisions with queries from
-    # adjacent test cases (second-level precision causes bleed-through).
-    after_ms = int(after_ts.timestamp() * 1000)
-    result = conn.query(
-        "SELECT query FROM system.query_log"
-        " WHERE type = 'QueryFinish' AND query_kind = 'Select'"
-        " AND position(query, 'distributed_logs_v2') > 0"
-        " AND position(query, 'body_v2') > 0"
-        # Exclude system.data_skipping_indices metadata queries — they contain
-        # 'body_v2' in their WHERE clause but are not the actual data queries.
-        " AND position(query, 'data_skipping_indices') = 0"
-        " AND query NOT LIKE '%%system.query_log%%'"
-        " AND toUnixTimestamp64Milli(event_time_microseconds) >= %(after_ms)s"
-        " ORDER BY event_time_microseconds DESC LIMIT 10",
-        parameters={"after_ms": after_ms},
-    )
-    queries = [row[0] for row in result.result_rows]
-    assert queries, (
-        f"No recent body_v2 SELECT in system.query_log for case '{case_name}'"
-    )
-    assert any(check_fn(q) for q in queries), (
-        f"Index expression check failed for case '{case_name}'.\n"
-        + "Queries:\n"
-        + "\n---\n".join(queries)
-    )
-
 
 def _get_results(response: requests.Response) -> List[Dict[str, Any]]:
     assert response.json()["status"] == "success"
@@ -489,6 +455,7 @@ def test_indexed_paths(
     insert_logs: Callable[[List[Logs]], None],
     export_json_types: Callable[[List[Logs]], None],
     create_json_index: Callable[[str, List[Dict[str, Any]]], None],
+    check_query_log: Callable[[datetime, str, Callable[[str], bool]], None],
 ) -> None:
     now = datetime.now(tz=timezone.utc)
 
@@ -648,11 +615,11 @@ def test_indexed_paths(
         before = datetime.now(tz=timezone.utc)
         _run_query_case(signoz, token, now, case)
         if "check_query" in case:
-            _check_query_log(
-                signoz.telemetrystore.conn,
+            check_query_log(
                 before,
                 case["name"],
                 case["check_query"],
+                tables=["signoz_logs.distributed_logs_v2"],
             )
 
 
