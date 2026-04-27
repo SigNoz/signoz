@@ -57,32 +57,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.download-logs-popover {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: linear-gradient(
-				139deg,
-				color-mix(in srgb, var(--card) 80%, transparent) 0%,
-				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
-			);
-
-			box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
-
-			.download-logs-content {
-				.action-btns {
-					color: var(--l1-foreground);
-				}
-				.action-btns:hover {
-					&.ant-btn-text {
-						background-color: var(--l3-background) !important;
-					}
-				}
-				.export-heading {
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-}

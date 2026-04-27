@@ -186,29 +186,3 @@
 		letter-spacing: -0.06px;
 	}
 }
-
-.lightMode {
-	.warning-content {
-		&__warning-code {
-			color: var(--l2-foreground);
-		}
-		&__warning-message {
-			color: var(--l1-foreground);
-		}
-		&__message-item {
-			color: var(--l1-foreground);
-		}
-		&__message-badge {
-			&-label-text {
-				color: var(--l1-foreground);
-			}
-			.key-value-label__value {
-				color: var(--l1-foreground);
-			}
-		}
-		&__docs-button {
-			background: var(--l1-background);
-			color: var(--l2-foreground);
-		}
-	}
-}

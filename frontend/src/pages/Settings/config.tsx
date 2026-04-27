@@ -8,6 +8,7 @@ import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
+import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
@@ -24,6 +25,7 @@ import {
 	Pencil,
 	Plus,
 	Shield,
+	Sparkles,
 	User,
 	Users,
 } from 'lucide-react';
@@ -202,6 +204,19 @@ export const serviceAccountsSettings = (
 		),
 		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 		key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+	},
+];
+
+export const mcpServerSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: MCPServerSettings,
+		name: (
+			<div className="periscope-tab">
+				<Sparkles size={16} /> {t('routes:mcp_server').toString()}
+			</div>
+		),
+		route: ROUTES.MCP_SERVER,
+		key: ROUTES.MCP_SERVER,
 	},
 ];
 

@@ -314,14 +314,6 @@
             "message": "[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
           {
-            "name": "xstate",
-            "message": "[State mgmt] xstate is deprecated. Migrate to Zustand or react-query."
-          },
-          {
-            "name": "@xstate/react",
-            "message": "[State mgmt] @xstate/react is deprecated. Migrate to Zustand or react-query."
-          },
-          {
             "name": "react",
             "importNames": [
               "createContext",

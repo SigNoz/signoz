@@ -99,36 +99,6 @@
 	}
 }
 
-.lightMode {
-	.auth-error-container {
-		.error-content {
-			&__error-code {
-				color: var(--l2-foreground);
-			}
-
-			&__error-message {
-				color: var(--l1-foreground);
-			}
-
-			&__message-badge-label-text {
-				color: var(--l2-foreground);
-			}
-
-			&__message-item {
-				color: var(--l1-foreground);
-
-				&::before {
-					background: var(--l3-background);
-				}
-			}
-
-			&__scroll-hint-text {
-				color: var(--l2-foreground);
-			}
-		}
-	}
-}
-
 @keyframes horizontal-shaking {
 	0% {
 		transform: translateX(0);
