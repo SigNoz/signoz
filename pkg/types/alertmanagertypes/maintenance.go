@@ -160,7 +160,7 @@ func (m *PlannedMaintenance) HasScheduleRecurrenceBoundsMismatch() bool {
 		(recurrence.EndTime != nil && !recurrence.EndTime.Equal(m.Schedule.EndTime))
 }
 
-func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
+func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time, labels map[string]string) bool {
 	// Check if the alert ID is in the maintenance window
 	found := false
 	if len(m.RuleIDs) > 0 {
@@ -180,6 +180,23 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 		return false
 	}
 
+	if !m.isScheduleActive(now) {
+		return false
+	}
+
+	// labels is nil when called from IsActive (no instance labels available);
+	// skip expression filtering in that case.
+	if m.LabelExpression != "" && labels != nil {
+		if !evalLabelExpression(m.LabelExpression, labels) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isScheduleActive reports whether now falls inside the maintenance window's schedule.
+func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
@@ -227,6 +244,25 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 	}
 
 	return false
+}
+
+// evalLabelExpression compiles and runs expression against the provided labels.
+// Returns false on any error (safety-first: don't suppress on a bad expression).
+func evalLabelExpression(expression string, labels map[string]string) bool {
+	env := make(map[string]interface{}, len(labels))
+	for k, v := range labels {
+		env[k] = v
+	}
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
+	if err != nil {
+		return false
+	}
+	output, err := expr.Run(program, env)
+	if err != nil {
+		return false
+	}
+	result, ok := output.(bool)
+	return ok && result
 }
 
 // checkDaily rebases the recurrence start to today (or yesterday if needed)
@@ -315,7 +351,7 @@ func (m *PlannedMaintenance) IsActive(now time.Time) bool {
 	if len(m.RuleIDs) > 0 {
 		ruleID = (m.RuleIDs)[0]
 	}
-	return m.ShouldSkip(ruleID, now)
+	return m.ShouldSkip(ruleID, now, nil)
 }
 
 func (m *PlannedMaintenance) IsUpcoming() bool {

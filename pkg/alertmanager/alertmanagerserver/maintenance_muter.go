@@ -42,16 +42,14 @@ func (m *MaintenanceMuter) Mutes(ctx context.Context, lset model.LabelSet) bool 
 		return false
 	}
 	now := time.Now()
+	labels := make(map[string]string, len(lset))
+	for k, v := range lset {
+		labels[string(k)] = string(v)
+	}
 	for _, mw := range m.getMaintenances(ctx) {
-		if !mw.ShouldSkip(ruleID, now) {
-			continue
+		if mw.ShouldSkip(ruleID, now, labels) {
+			return true
 		}
-		if mw.LabelExpression != "" {
-			if !evaluateLabelExpression(ctx, mw.LabelExpression, lset, m.logger) {
-				continue
-			}
-		}
-		return true
 	}
 	return false
 }
@@ -67,14 +65,13 @@ func (m *MaintenanceMuter) MutedBy(ctx context.Context, lset model.LabelSet) []s
 	}
 	var ids []string
 	now := time.Now()
+	labels := make(map[string]string, len(lset))
+	for k, v := range lset {
+		labels[string(k)] = string(v)
+	}
 	for _, mw := range m.getMaintenances(ctx) {
-		if mw.ShouldSkip(ruleID, now) {
+		if mw.ShouldSkip(ruleID, now, labels) {
 			ids = append(ids, mw.ID.String())
-		}
-		if mw.LabelExpression != "" {
-			if !evaluateLabelExpression(ctx, mw.LabelExpression, lset, m.logger) {
-				continue
-			}
 		}
 	}
 	return ids
