@@ -19,21 +19,15 @@ const GraphControlsPanel: React.FC<GraphControlsPanelProps> = ({
   onViewMetricsClick,
 }) => {
   const handleViewLogsClick = (e: React.MouseEvent) => {
-    if (onViewLogsClick) {
-      onViewLogsClick(e);
-    }
+    onViewLogsClick?.(e);
   };
 
   const handleViewTracesClick = (e: React.MouseEvent) => {
-    if (onViewTracesClick) {
-      onViewTracesClick(e);
-    }
+    onViewTracesClick?.(e);
   };
 
   const handleViewMetricsClick = (e: React.MouseEvent) => {
-    if (onViewMetricsClick) {
-      onViewMetricsClick(e);
-    }
+    onViewMetricsClick?.(e);
   };
 
   return (
