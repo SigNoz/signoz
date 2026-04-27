@@ -34,20 +34,18 @@ function ExportPanelContainer({
 
 	const { showErrorModal } = useErrorModal();
 
-	const {
-		mutate: createNewDashboard,
-		isLoading: createDashboardLoading,
-	} = useMutation(createDashboard, {
-		onSuccess: (data) => {
-			if (data.data) {
-				onExport(data?.data, true);
-			}
-			refetch();
-		},
-		onError: (error) => {
-			showErrorModal(error as APIError);
-		},
-	});
+	const { mutate: createNewDashboard, isLoading: createDashboardLoading } =
+		useMutation(createDashboard, {
+			onSuccess: (data) => {
+				if (data.data) {
+					onExport(data?.data, true);
+				}
+				refetch();
+			},
+			onError: (error) => {
+				showErrorModal(error as APIError);
+			},
+		});
 
 	const options = useMemo(() => getSelectOptions(data?.data || []), [data]);
 

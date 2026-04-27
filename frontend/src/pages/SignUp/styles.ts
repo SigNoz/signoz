@@ -17,10 +17,6 @@ export const Label = styled.label`
 	font-weight: 600;
 	line-height: 1;
 	color: var(--l1-foreground);
-
-	.lightMode & {
-		color: var(--text-ink-500);
-	}
 `;
 
 export const ButtonContainer = styled.div`

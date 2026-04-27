@@ -1,5 +1,39 @@
 package cloudintegrationtypes
 
+import (
+	"bytes"
+	"fmt"
+	"text/template"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var (
+	AgentArmTemplateStorePath = "https://signoz-integrations.s3.us-east-1.amazonaws.com/azure-arm-template-%s.json"
+	AgentDeploymentStackName  = "signoz-integration"
+
+	// Default values for fixed ARM template parameters.
+	armDefaultRgName           = "signoz-integration-rg"
+	armDefaultContainerEnvName = "signoz-integration-agent-env"
+	armDefaultDeploymentEnv    = "production"
+
+	// ARM template parameter key names used in both CLI and PowerShell deployment commands.
+	armParamLocation           = "location"
+	armParamSignozAPIKey       = "signozApiKey"
+	armParamSignozAPIUrl       = "signozApiUrl"
+	armParamSignozIngestionURL = "signozIngestionUrl"
+	armParamSignozIngestionKey = "signozIngestionKey"
+	armParamAccountID          = "signozIntegrationAccountId"
+	armParamAgentVersion       = "signozIntegrationAgentVersion"
+	armParamRgName             = "rgName"
+	armParamContainerEnvName   = "containerEnvName"
+	armParamDeploymentEnv      = "deploymentEnv"
+
+	// command templates.
+	azureCLITemplate        = template.Must(template.New("azureCLI").Parse(azureCLITemplateStr()))
+	azurePowerShellTemplate = template.Must(template.New("azurePS").Parse(azurePowerShellTemplateStr()))
+)
+
 type AzureAccountConfig struct {
 	DeploymentRegion string   `json:"deploymentRegion" required:"true"`
 	ResourceGroups   []string `json:"resourceGroups" required:"true" nullable:"false"`
@@ -51,6 +85,36 @@ type AzureIntegrationConfig struct {
 	TelemetryCollectionStrategy []*AzureTelemetryCollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
 
+// azureTemplateData is the data struct passed to both command templates.
+// All fields are exported so text/template can access them.
+type azureTemplateData struct {
+	// Deploy parameter values.
+	TemplateURL        string
+	Location           string
+	SignozAPIKey       string
+	SignozAPIUrl       string
+	SignozIngestionURL string
+	SignozIngestionKey string
+	AccountID          string
+	AgentVersion       string
+	// ARM parameter key names (from package-level vars).
+	StackName               string
+	ParamLocation           string
+	ParamSignozAPIKey       string
+	ParamSignozAPIUrl       string
+	ParamSignozIngestionURL string
+	ParamSignozIngestionKey string
+	ParamAccountID          string
+	ParamAgentVersion       string
+	ParamRgName             string
+	ParamContainerEnvName   string
+	ParamDeploymentEnv      string
+	// Fixed default values.
+	DefaultRgName           string
+	DefaultContainerEnvName string
+	DefaultDeploymentEnv    string
+}
+
 func NewAzureIntegrationConfig(
 	deploymentRegion string,
 	resourceGroups []string,
@@ -61,4 +125,106 @@ func NewAzureIntegrationConfig(
 		ResourceGroups:              resourceGroups,
 		TelemetryCollectionStrategy: strategies,
 	}
+}
+
+func NewAzureConnectionArtifact(
+	accountID valuer.UUID,
+	agentVersion string,
+	creds *Credentials,
+	cfg *AzurePostableAccountConfig,
+) (*AzureConnectionArtifact, error) {
+	data := azureTemplateData{
+		TemplateURL:             fmt.Sprintf(AgentArmTemplateStorePath, agentVersion),
+		Location:                cfg.DeploymentRegion,
+		SignozAPIKey:            creds.SigNozAPIKey,
+		SignozAPIUrl:            creds.SigNozAPIURL,
+		SignozIngestionURL:      creds.IngestionURL,
+		SignozIngestionKey:      creds.IngestionKey,
+		AccountID:               accountID.StringValue(),
+		AgentVersion:            agentVersion,
+		StackName:               AgentDeploymentStackName,
+		ParamLocation:           armParamLocation,
+		ParamSignozAPIKey:       armParamSignozAPIKey,
+		ParamSignozAPIUrl:       armParamSignozAPIUrl,
+		ParamSignozIngestionURL: armParamSignozIngestionURL,
+		ParamSignozIngestionKey: armParamSignozIngestionKey,
+		ParamAccountID:          armParamAccountID,
+		ParamAgentVersion:       armParamAgentVersion,
+		ParamRgName:             armParamRgName,
+		ParamContainerEnvName:   armParamContainerEnvName,
+		ParamDeploymentEnv:      armParamDeploymentEnv,
+		DefaultRgName:           armDefaultRgName,
+		DefaultContainerEnvName: armDefaultContainerEnvName,
+		DefaultDeploymentEnv:    armDefaultDeploymentEnv,
+	}
+
+	cliCommand, err := newAzureConnectionCLICommand(data)
+	if err != nil {
+		return nil, err
+	}
+
+	psCommand, err := newAzureConnectionPowerShellCommand(data)
+	if err != nil {
+		return nil, err
+	}
+	return &AzureConnectionArtifact{
+		CLICommand:             cliCommand,
+		CloudPowerShellCommand: psCommand,
+	}, nil
+}
+
+func newAzureConnectionCLICommand(data azureTemplateData) (string, error) {
+	var buf bytes.Buffer
+	err := azureCLITemplate.Execute(&buf, data)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func newAzureConnectionPowerShellCommand(data azureTemplateData) (string, error) {
+	var buf bytes.Buffer
+	err := azurePowerShellTemplate.Execute(&buf, data)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
+}
+
+func azureCLITemplateStr() string {
+	return `az stack sub create \
+  --name {{.StackName}} \
+  --location {{.Location}} \
+  --template-uri {{.TemplateURL}} \
+  --parameters \
+    {{.ParamLocation}}='{{.Location}}' \
+    {{.ParamSignozAPIKey}}='{{.SignozAPIKey}}' \
+    {{.ParamSignozAPIUrl}}='{{.SignozAPIUrl}}' \
+    {{.ParamSignozIngestionURL}}='{{.SignozIngestionURL}}' \
+    {{.ParamSignozIngestionKey}}='{{.SignozIngestionKey}}' \
+    {{.ParamAccountID}}='{{.AccountID}}' \
+    {{.ParamAgentVersion}}='{{.AgentVersion}}' \
+  --action-on-unmanage deleteAll \
+  --deny-settings-mode denyDelete`
+}
+
+func azurePowerShellTemplateStr() string {
+	return "New-AzSubscriptionDeploymentStack `\n" +
+		"  -Name \"{{.StackName}}\" `\n" +
+		"  -Location \"{{.Location}}\" `\n" +
+		"  -TemplateUri \"{{.TemplateURL}}\" `\n" +
+		"  -TemplateParameterObject @{\n" +
+		"    {{.ParamLocation}} = \"{{.Location}}\"\n" +
+		"    {{.ParamSignozAPIKey}} = \"{{.SignozAPIKey}}\"\n" +
+		"    {{.ParamSignozAPIUrl}} = \"{{.SignozAPIUrl}}\"\n" +
+		"    {{.ParamSignozIngestionURL}} = \"{{.SignozIngestionURL}}\"\n" +
+		"    {{.ParamSignozIngestionKey}} = \"{{.SignozIngestionKey}}\"\n" +
+		"    {{.ParamAccountID}} = \"{{.AccountID}}\"\n" +
+		"    {{.ParamAgentVersion}} = \"{{.AgentVersion}}\"\n" +
+		"    {{.ParamRgName}} = \"{{.DefaultRgName}}\"\n" +
+		"    {{.ParamContainerEnvName}} = \"{{.DefaultContainerEnvName}}\"\n" +
+		"    {{.ParamDeploymentEnv}} = \"{{.DefaultDeploymentEnv}}\"\n" +
+		"  } `\n" +
+		"  -ActionOnUnmanage \"deleteAll\" `\n" +
+		"  -DenySettingsMode \"denyDelete\""
 }

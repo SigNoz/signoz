@@ -3125,12 +3125,17 @@ export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
 	 */
-	external_url?: string;
+	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;
 	/**
 	 * @type string
 	 */
-	ingestion_url?: string;
+	ingestion_url: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	mcp_url: string | null;
 }
 
 export interface GlobaltypesIdentNConfigDTO {
@@ -3860,10 +3865,7 @@ export interface PromotetypesPromotePathDTO {
 }
 
 export interface PromotetypesWrappedIndexDTO {
-	/**
-	 * @type string
-	 */
-	column_type?: string;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type integer
 	 */

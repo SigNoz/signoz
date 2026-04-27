@@ -19,26 +19,21 @@ export default function Legend({
 	config,
 	averageLegendWidth = MAX_LEGEND_WIDTH,
 }: LegendProps): JSX.Element {
-	const {
-		legendItemsMap,
-		focusedSeriesIndex,
-		setFocusedSeriesIndex,
-	} = useLegendsSync({ config });
-	const {
-		onLegendClick,
-		onLegendMouseMove,
-		onLegendMouseLeave,
-	} = useLegendActions({
-		setFocusedSeriesIndex,
-		focusedSeriesIndex,
-	});
+	const { legendItemsMap, focusedSeriesIndex, setFocusedSeriesIndex } =
+		useLegendsSync({ config });
+	const { onLegendClick, onLegendMouseMove, onLegendMouseLeave } =
+		useLegendActions({
+			setFocusedSeriesIndex,
+			focusedSeriesIndex,
+		});
 	const legendContainerRef = useRef<HTMLDivElement | null>(null);
 	const [legendSearchQuery, setLegendSearchQuery] = useState('');
 	const { copyToClipboard, id: copiedId } = useCopyToClipboard();
 
-	const legendItems = useMemo(() => Object.values(legendItemsMap), [
-		legendItemsMap,
-	]);
+	const legendItems = useMemo(
+		() => Object.values(legendItemsMap),
+		[legendItemsMap],
+	);
 
 	const isSingleRow = useMemo(() => {
 		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {

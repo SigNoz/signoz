@@ -35,9 +35,8 @@ export default function Function({
 	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
-	const { showInput, disabled } = queryFunctionsTypesConfig[
-		normalizedFunctionName
-	];
+	const { showInput, disabled } =
+		queryFunctionsTypesConfig[normalizedFunctionName];
 
 	let functionValue;
 

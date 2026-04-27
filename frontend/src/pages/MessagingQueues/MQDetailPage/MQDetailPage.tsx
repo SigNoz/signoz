@@ -25,17 +25,13 @@ import '../MessagingQueues.styles.scss';
 
 function MQDetailPage(): JSX.Element {
 	const history = useHistory();
-	const [
-		selectedView,
-		setSelectedView,
-	] = useState<MessagingQueuesViewTypeOptions>(
-		MessagingQueuesViewType.consumerLag.value,
-	);
+	const [selectedView, setSelectedView] =
+		useState<MessagingQueuesViewTypeOptions>(
+			MessagingQueuesViewType.consumerLag.value,
+		);
 
-	const [
-		producerLatencyOption,
-		setproducerLatencyOption,
-	] = useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
+	const [producerLatencyOption, setproducerLatencyOption] =
+		useState<ProducerLatencyOptions>(ProducerLatencyOptions.Producers);
 
 	const mqServiceView = useUrlQuery().get(
 		QueryParams.mqServiceView,

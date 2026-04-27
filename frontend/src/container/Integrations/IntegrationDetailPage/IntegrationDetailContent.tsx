@@ -19,12 +19,8 @@ interface IntegrationDetailContentProps {
 function IntegrationDetailContent(
 	props: IntegrationDetailContentProps,
 ): JSX.Element {
-	const {
-		activeDetailTab,
-		integrationData,
-		integrationId,
-		setActiveDetailTab,
-	} = props;
+	const { activeDetailTab, integrationData, integrationId, setActiveDetailTab } =
+		props;
 	const items: TabsProps['items'] = [
 		{
 			key: 'overview',

@@ -40,28 +40,26 @@ const useQuickFilterSettings = ({
 	const [addedFilters, setAddedFilters] = useState<FilterType[]>(customFilters);
 	const { notifications } = useNotifications();
 
-	const {
-		mutate: updateCustomFilters,
-		isLoading: isUpdatingCustomFilters,
-	} = useMutation(updateCustomFiltersAPI, {
-		onSuccess: () => {
-			setIsSettingsOpen(false);
-			refetchCustomFilters();
-			logEvent('Quick Filters Settings: changes saved', {
-				addedFilters,
-			});
-			notifications.success({
-				message: 'Quick filters updated successfully',
-				placement: 'bottomRight',
-			});
-		},
-		onError: (error: AxiosError) => {
-			notifications.error({
-				message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
-				placement: 'bottomRight',
-			});
-		},
-	});
+	const { mutate: updateCustomFilters, isLoading: isUpdatingCustomFilters } =
+		useMutation(updateCustomFiltersAPI, {
+			onSuccess: () => {
+				setIsSettingsOpen(false);
+				refetchCustomFilters();
+				logEvent('Quick Filters Settings: changes saved', {
+					addedFilters,
+				});
+				notifications.success({
+					message: 'Quick filters updated successfully',
+					placement: 'bottomRight',
+				});
+			},
+			onError: (error: AxiosError) => {
+				notifications.error({
+					message: axios.isAxiosError(error) ? error.message : SOMETHING_WENT_WRONG,
+					placement: 'bottomRight',
+				});
+			},
+		});
 	const debouncedUpdate = useDebouncedFn((value) => {
 		setDebouncedInputValue(value as string);
 	}, 400);

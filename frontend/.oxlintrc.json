@@ -9,7 +9,6 @@
     "react",
     "react-perf",
     "typescript",
-    "unicorn",
     "jsx-a11y",
     "import",
     "jest",
@@ -206,6 +205,8 @@
     "@typescript-eslint/explicit-function-return-type": "error",
     // Requires explicit return types on functions
     "@typescript-eslint/no-var-requires": "error",
+    "@typescript-eslint/no-useless-default-assignment": "off", // provide unsafe fixes in our codebase due to bad typing
+    "@typescript-eslint/no-duplicate-type-constituents": "off", // provide fixes that breaks some assumptions, eg: type A = L, B = L, C = A | B (removes B)
     // Disallows require() in TypeScript (use import instead)
     // Disabled - using TypeScript instead
     "react/jsx-props-no-spreading": "off",
@@ -313,14 +314,6 @@
             "message": "[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
           {
-            "name": "xstate",
-            "message": "[State mgmt] xstate is deprecated. Migrate to Zustand or react-query."
-          },
-          {
-            "name": "@xstate/react",
-            "message": "[State mgmt] @xstate/react is deprecated. Migrate to Zustand or react-query."
-          },
-          {
             "name": "react",
             "importNames": [
               "createContext",
@@ -338,82 +331,6 @@
     "react/no-array-index-key": "warn",
     // TODO: Changed to warn during oxlint migration, should be changed to error,
 
-    "unicorn/error-message": "warn",
-    "unicorn/escape-case": "warn",
-    "unicorn/new-for-builtins": "warn",
-    "unicorn/no-abusive-eslint-disable": "warn",
-    "unicorn/no-console-spaces": "warn",
-    "unicorn/no-instanceof-array": "warn",
-    "unicorn/no-invalid-remove-event-listener": "warn",
-    "unicorn/no-new-array": "warn",
-    "unicorn/no-new-buffer": "warn",
-    "unicorn/no-thenable": "warn",
-    "unicorn/no-unreadable-array-destructuring": "warn",
-    "unicorn/no-useless-fallback-in-spread": "warn",
-    "unicorn/no-useless-length-check": "warn",
-    "unicorn/no-useless-promise-resolve-reject": "warn",
-    "unicorn/no-useless-spread": "warn",
-    "unicorn/no-zero-fractions": "warn",
-    "unicorn/number-literal-case": "warn",
-    "unicorn/prefer-array-find": "warn",
-    "unicorn/prefer-array-flat": "warn",
-    "unicorn/prefer-array-flat-map": "warn",
-    "unicorn/prefer-array-index-of": "warn",
-    "unicorn/prefer-array-some": "warn",
-    "unicorn/prefer-at": "warn",
-    "unicorn/prefer-code-point": "warn",
-    "unicorn/prefer-date-now": "warn",
-    "unicorn/prefer-default-parameters": "warn",
-    "unicorn/prefer-includes": "warn",
-    "unicorn/prefer-modern-math-apis": "warn",
-    "unicorn/prefer-native-coercion-functions": "warn",
-    "unicorn/prefer-node-protocol": "off",
-    "unicorn/prefer-number-properties": "warn",
-    "unicorn/prefer-optional-catch-binding": "warn",
-    "unicorn/prefer-regexp-test": "warn",
-    "unicorn/prefer-set-has": "warn",
-    "unicorn/prefer-string-replace-all": "warn",
-    "unicorn/prefer-string-slice": "warn",
-    "unicorn/prefer-string-starts-ends-with": "warn",
-    "unicorn/prefer-string-trim-start-end": "warn",
-    "unicorn/prefer-type-error": "warn",
-    "unicorn/require-array-join-separator": "warn",
-    "unicorn/require-number-to-fixed-digits-argument": "warn",
-    "unicorn/throw-new-error": "warn",
-    "unicorn/consistent-function-scoping": "warn",
-    "unicorn/explicit-length-check": "warn",
-    "unicorn/filename-case": [
-      "warn",
-      {
-        "case": "kebabCase"
-      }
-    ],
-    "unicorn/no-array-for-each": "warn",
-    "unicorn/no-lonely-if": "warn",
-    "unicorn/no-negated-condition": "warn",
-    "unicorn/no-null": "warn",
-    "unicorn/no-object-as-default-parameter": "warn",
-    "unicorn/no-static-only-class": "warn",
-    "unicorn/no-this-assignment": "warn",
-    "unicorn/no-unreadable-iife": "warn",
-    "unicorn/no-useless-switch-case": "warn",
-    "unicorn/no-useless-undefined": "warn",
-    "unicorn/prefer-add-event-listener": "warn",
-    "unicorn/prefer-dom-node-append": "warn",
-    "unicorn/prefer-dom-node-dataset": "warn",
-    "unicorn/prefer-dom-node-remove": "warn",
-    "unicorn/prefer-dom-node-text-content": "warn",
-    "unicorn/prefer-keyboard-event-key": "warn",
-    "unicorn/prefer-math-trunc": "warn",
-    "unicorn/prefer-modern-dom-apis": "warn",
-    "unicorn/prefer-negative-index": "warn",
-    "unicorn/prefer-prototype-methods": "warn",
-    "unicorn/prefer-query-selector": "warn",
-    "unicorn/prefer-reflect-apply": "warn",
-    "unicorn/prefer-set-size": "warn",
-    "unicorn/prefer-spread": "warn",
-    "unicorn/prefer-ternary": "warn",
-    "unicorn/require-post-message-target-origin": "warn",
     "oxc/bad-array-method-on-arguments": "error",
     "oxc/bad-bitwise-operator": "error",
     "oxc/bad-comparison-sequence": "error",
@@ -538,8 +455,8 @@
     "sonarjs/no-nested-template-literals": "error",
     // Avoids nested template literals
     "sonarjs/no-redundant-boolean": "warn", // TODO: Change to error after migration
-    // Removes redundant boolean literals
-    "sonarjs/no-redundant-jump": "error",
+    // Removes redundant boolean literals - turned off because it clashes with unicorn rules
+    "sonarjs/no-redundant-jump": "off",
     // Removes unnecessary returns/continues
     "sonarjs/no-same-line-conditional": "error",
     // Prevents same-line conditionals
@@ -614,8 +531,9 @@
         "signoz/no-navigator-clipboard": "off",
         // Tests can use navigator.clipboard directly,
         "signoz/no-raw-absolute-path":"off",
-        "no-restricted-globals": "off"
+        "no-restricted-globals": "off",
         // Tests need raw localStorage/sessionStorage to seed DOM state for isolation
+        "signoz/no-zustand-getstate-in-hooks": "off"
       }
     },
     {

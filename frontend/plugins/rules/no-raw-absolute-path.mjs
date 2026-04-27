@@ -56,7 +56,6 @@ function isExternalUrl(node) {
 	return false;
 }
 
-
 // window.open(withBasePath(x)) and window.open(getAbsoluteUrl(x)) are already safe.
 function isSafeHelperCall(node) {
 	return (
@@ -97,18 +96,27 @@ export default {
 					callee.object.type !== 'Identifier' ||
 					callee.object.name !== 'window' ||
 					callee.property.name !== 'open'
-				)
-					{return;}
-				if (args.length === 0) {return;}
-				if (isExternalUrl(args[0])) {return;}
-				if (isSafeHelperCall(args[0])) {return;}
+				) {
+					return;
+				}
+				if (args.length === 0) {
+					return;
+				}
+				if (isExternalUrl(args[0])) {
+					return;
+				}
+				if (isSafeHelperCall(args[0])) {
+					return;
+				}
 
 				context.report({ node, messageId: 'windowOpen' });
 			},
 
 			// window.location.origin + path
 			BinaryExpression(node) {
-				if (node.operator !== '+') {return;}
+				if (node.operator !== '+') {
+					return;
+				}
 				if (isOriginAccess(node.left) || isOriginAccess(node.right)) {
 					context.report({ node, messageId: 'originConcat' });
 				}
@@ -124,26 +132,40 @@ export default {
 			// window.location.origin used directly (not in concatenation)
 			// Catches: frontendBaseUrl: window.location.origin
 			MemberExpression(node) {
-				if (!isOriginAccess(node)) {return;}
+				if (!isOriginAccess(node)) {
+					return;
+				}
 
 				const parent = node.parent;
 				// Skip if parent is BinaryExpression with + (handled by BinaryExpression visitor)
-				if (parent.type === 'BinaryExpression' && parent.operator === '+') {return;}
+				if (parent.type === 'BinaryExpression' && parent.operator === '+') {
+					return;
+				}
 				// Skip if inside TemplateLiteral (handled by TemplateLiteral visitor)
-				if (parent.type === 'TemplateLiteral') {return;}
+				if (parent.type === 'TemplateLiteral') {
+					return;
+				}
 
 				context.report({ node, messageId: 'originDirect' });
 			},
 
 			// window.location.href = path
 			AssignmentExpression(node) {
-				if (node.operator !== '=') {return;}
-				if (!isHrefAccess(node.left)) {return;}
+				if (node.operator !== '=') {
+					return;
+				}
+				if (!isHrefAccess(node.left)) {
+					return;
+				}
 
 				// Allow external URLs
-				if (isExternalUrl(node.right)) {return;}
+				if (isExternalUrl(node.right)) {
+					return;
+				}
 				// Allow safe helper calls
-				if (isSafeHelperCall(node.right)) {return;}
+				if (isSafeHelperCall(node.right)) {
+					return;
+				}
 
 				context.report({ node, messageId: 'hrefAssign' });
 			},

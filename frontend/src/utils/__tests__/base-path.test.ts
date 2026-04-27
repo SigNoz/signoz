@@ -21,7 +21,9 @@ function loadModule(href?: string): BasePath {
 }
 
 afterEach(() => {
-	for (const el of document.head.querySelectorAll('base')) { el.remove(); }
+	for (const el of document.head.querySelectorAll('base')) {
+		el.remove();
+	}
 });
 
 describe('at basePath="/"', () => {

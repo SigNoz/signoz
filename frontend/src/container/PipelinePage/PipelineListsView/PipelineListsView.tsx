@@ -133,15 +133,11 @@ function PipelineListsView({
 		[expandedPipelineId, currPipelineData],
 	);
 
-	const [
-		selectedProcessorData,
-		setSelectedProcessorData,
-	] = useState<ProcessorData>();
+	const [selectedProcessorData, setSelectedProcessorData] =
+		useState<ProcessorData>();
 
-	const [
-		selectedPipelineData,
-		setSelectedPipelineData,
-	] = useState<PipelineData>();
+	const [selectedPipelineData, setSelectedPipelineData] =
+		useState<PipelineData>();
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<Array<string>>();
 	const [showSaveButton, setShowSaveButton] = useState<string>();
@@ -519,7 +515,7 @@ function PipelineListsView({
 		({
 			index,
 			moveRow: movePipelineRow,
-		} as React.HTMLAttributes<unknown>);
+		}) as React.HTMLAttributes<unknown>;
 
 	const expandableConfig: ExpandableConfig<PipelineData> = {
 		expandedRowKeys,

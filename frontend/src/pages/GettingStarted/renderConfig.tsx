@@ -138,8 +138,7 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 				{
 					title: 'Configure alert notification channels',
 					icon: <SoundFilled style={{ fontSize: '3.5rem' }} />,
-					url:
-						'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
+					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
 				},
 			],
 		},

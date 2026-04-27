@@ -440,3 +440,4 @@ func (handler *handler) AgentCheckIn(rw http.ResponseWriter, r *http.Request) {
 
 	render.Success(rw, http.StatusOK, cloudintegrationtypes.NewGettableAgentCheckIn(provider, resp))
 }
+

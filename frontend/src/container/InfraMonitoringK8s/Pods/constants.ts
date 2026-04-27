@@ -32,14 +32,15 @@ export const k8sPodGetSelectedItemFilters = (
 	};
 };
 
-export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sPodsData>[] = [
-	{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-	{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
-];
+export const k8sPodDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sPodsData>[] =
+	[
+		{ label: 'NAMESPACE', getValue: (p): string => p.meta.k8s_namespace_name },
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+		{ label: 'Node', getValue: (p): string => p.meta.k8s_node_name },
+	];
 
 export const k8sPodInitialFilters = [
 	QUERY_KEYS.K8S_POD_NAME,

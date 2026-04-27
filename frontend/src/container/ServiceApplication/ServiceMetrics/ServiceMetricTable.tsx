@@ -26,10 +26,11 @@ function ServiceMetricTable({
 	topLevelOperations,
 	queryRangeRequestData,
 }: ServiceMetricsTableProps): JSX.Element {
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { notifications } = useNotifications();
 	const { t: getText } = useTranslation(['services']);

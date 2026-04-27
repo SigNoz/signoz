@@ -22,10 +22,8 @@ function ClickHouseQueryBuilder({
 	queryIndex,
 	deletable,
 }: IClickHouseQueryBuilderProps): JSX.Element | null {
-	const {
-		handleSetQueryItemData,
-		removeQueryTypeItemByIndex,
-	} = useQueryBuilder();
+	const { handleSetQueryItemData, removeQueryTypeItemByIndex } =
+		useQueryBuilder();
 
 	const handleRemoveQuery = useCallback(() => {
 		removeQueryTypeItemByIndex(EQueryType.CLICKHOUSE, queryIndex);

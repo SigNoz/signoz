@@ -7,10 +7,8 @@ import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
 
 function MultipleNotifications(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 
 	const isAllOptionSelected = useMemo(

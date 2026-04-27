@@ -126,50 +126,48 @@ function AllErrors(): JSX.Element {
 	const setIsFetching = useAllErrorsQueryState((s) => s.setIsFetching);
 	const isCancelled = useAllErrorsQueryState((s) => s.isCancelled);
 
-	const [
-		{ isLoading, isFetching: isErrorsFetching, data },
-		errorCountResponse,
-	] = useQueries([
-		{
-			queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
-			queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
-				getAll({
-					end: maxTime,
-					start: minTime,
-					order: updatedOrder,
-					limit: getUpdatedPageSize,
-					offset: getUpdatedOffset,
-					orderParam: getUpdatedParams,
-					exceptionType: getUpdatedExceptionType,
-					serviceName: getUpdatedServiceName,
-					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters?.items || [],
-					),
-				}),
-			enabled: !loading,
-		},
-		{
-			queryKey: [
-				'getErrorCounts',
-				maxTime,
-				minTime,
-				getUpdatedExceptionType,
-				getUpdatedServiceName,
-				compositeData,
-			],
-			queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
-				getErrorCounts({
-					end: maxTime,
-					start: minTime,
-					exceptionType: getUpdatedExceptionType,
-					serviceName: getUpdatedServiceName,
-					tags: convertCompositeQueryToTraceSelectedTags(
-						compositeData?.builder.queryData?.[0]?.filters?.items || [],
-					),
-				}),
-			enabled: !loading,
-		},
-	]);
+	const [{ isLoading, isFetching: isErrorsFetching, data }, errorCountResponse] =
+		useQueries([
+			{
+				queryKey: ['getAllErrors', updatedPath, maxTime, minTime, compositeData],
+				queryFn: (): Promise<SuccessResponse<PayloadProps> | ErrorResponse> =>
+					getAll({
+						end: maxTime,
+						start: minTime,
+						order: updatedOrder,
+						limit: getUpdatedPageSize,
+						offset: getUpdatedOffset,
+						orderParam: getUpdatedParams,
+						exceptionType: getUpdatedExceptionType,
+						serviceName: getUpdatedServiceName,
+						tags: convertCompositeQueryToTraceSelectedTags(
+							compositeData?.builder.queryData?.[0]?.filters?.items || [],
+						),
+					}),
+				enabled: !loading,
+			},
+			{
+				queryKey: [
+					'getErrorCounts',
+					maxTime,
+					minTime,
+					getUpdatedExceptionType,
+					getUpdatedServiceName,
+					compositeData,
+				],
+				queryFn: (): Promise<ErrorResponse | SuccessResponse<number>> =>
+					getErrorCounts({
+						end: maxTime,
+						start: minTime,
+						exceptionType: getUpdatedExceptionType,
+						serviceName: getUpdatedServiceName,
+						tags: convertCompositeQueryToTraceSelectedTags(
+							compositeData?.builder.queryData?.[0]?.filters?.items || [],
+						),
+					}),
+				enabled: !loading,
+			},
+		]);
 
 	const isFetching = isErrorsFetching || errorCountResponse.isFetching;
 	useEffect(() => {
@@ -208,33 +206,34 @@ function AllErrors(): JSX.Element {
 			confirm: (param?: FilterConfirmProps) => void,
 			filterValue: string,
 			filterKey: string,
-		): VoidFunction => (): void => {
-			const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
-				getUpdatedServiceName || '',
-				getUpdatedExceptionType || '',
-				filterKey,
-				filterValue || '',
-			);
+		): VoidFunction =>
+			(): void => {
+				const { exceptionFilterValue, serviceFilterValue } = getFilterValues(
+					getUpdatedServiceName || '',
+					getUpdatedExceptionType || '',
+					filterKey,
+					filterValue || '',
+				);
 
-			const queryParams: QueryParams = {
-				order: updatedOrder,
-				offset: getUpdatedOffset,
-				orderParam: getUpdatedParams,
-				pageSize: getUpdatedPageSize,
-				compositeQuery: getUpdatedCompositeQuery,
-			};
+				const queryParams: QueryParams = {
+					order: updatedOrder,
+					offset: getUpdatedOffset,
+					orderParam: getUpdatedParams,
+					pageSize: getUpdatedPageSize,
+					compositeQuery: getUpdatedCompositeQuery,
+				};
 
-			if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
-				queryParams.exceptionType = exceptionFilterValue;
-			}
+				if (exceptionFilterValue && exceptionFilterValue !== 'undefined') {
+					queryParams.exceptionType = exceptionFilterValue;
+				}
 
-			if (serviceFilterValue && serviceFilterValue !== 'undefined') {
-				queryParams.serviceName = serviceFilterValue;
-			}
+				if (serviceFilterValue && serviceFilterValue !== 'undefined') {
+					queryParams.serviceName = serviceFilterValue;
+				}
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
-			confirm();
-		},
+				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				confirm();
+			},
 		[
 			getUpdatedExceptionType,
 			getUpdatedOffset,

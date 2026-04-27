@@ -83,7 +83,7 @@ export function toPostableRuleDTO(
 		version: local.version,
 		disabled: local.disabled,
 	};
-	return (payload as unknown) as RuletypesPostableRuleDTO;
+	return payload as unknown as RuletypesPostableRuleDTO;
 }
 
 export function toPostableRuleDTOFromAlertDef(
@@ -103,17 +103,17 @@ export function toPostableRuleDTOFromAlertDef(
 		version: local.version,
 		disabled: local.disabled,
 	};
-	return (payload as unknown) as RuletypesPostableRuleDTO;
+	return payload as unknown as RuletypesPostableRuleDTO;
 }
 
 export function fromRuleDTOToPostableRuleV2(
 	dto: RuletypesRuleDTO,
 ): PostableAlertRuleV2 {
-	return (dto as unknown) as PostableAlertRuleV2;
+	return dto as unknown as PostableAlertRuleV2;
 }
 
 export function fromRuleDTOToAlertDef(dto: RuletypesRuleDTO): AlertDef {
-	return (dto as unknown) as AlertDef;
+	return dto as unknown as AlertDef;
 }
 
 function toEQueryType(queryType: RuletypesQueryTypeDTO): EQueryType {

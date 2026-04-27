@@ -85,14 +85,14 @@ export const useOptions = (
 							label: searchValue,
 							value: searchValue,
 						},
-				  ]
+					]
 				: [
 						{
 							label: searchValue,
 							value: searchValue,
 						},
 						...values,
-				  ];
+					];
 		},
 		[getKeyOpValue, result, variableAsValue],
 	);
@@ -105,7 +105,7 @@ export const useOptions = (
 			const filteredOperators = !isEmpty(partialOperator)
 				? operators?.filter((operator) =>
 						operator.startsWith(partialOperator?.toUpperCase()),
-				  )
+					)
 				: operators;
 			const operatorsOptions = filteredOperators?.map((operator) => ({
 				value: `${partialKey} ${operator} `,
@@ -136,7 +136,7 @@ export const useOptions = (
 							value: `${searchValue} `,
 						},
 						...getOptionsFromKeys(keys),
-				  ]
+					]
 				: getOptionsFromKeys(keys);
 		} else if (key && !operator) {
 			newOptions = getKeyOperatorOptions(key);

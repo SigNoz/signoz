@@ -41,9 +41,10 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
 	const [isHighlighted, setIsHighlighted] = useState<boolean>(isActiveLog);
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const onLogCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {

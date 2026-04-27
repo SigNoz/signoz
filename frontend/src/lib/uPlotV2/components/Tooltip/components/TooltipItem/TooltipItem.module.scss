@@ -3,19 +3,12 @@
 	align-items: center;
 	gap: var(--spacing-2);
 	padding: 6px;
-	cursor: pointer;
 	opacity: 0.7;
 	font-weight: 400;
 
 	&[data-is-active='true'] {
 		opacity: 1;
 		font-weight: 700;
-	}
-
-	&:hover {
-		opacity: 1 !important;
-		background-color: var(--l2-border);
-		border-radius: 4px;
 	}
 }
 
