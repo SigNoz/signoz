@@ -275,7 +275,7 @@ export interface AuthtypesGettableTransactionDTO {
 	 */
 	authorized: boolean;
 	object: CoretypesObjectDTO;
-	relation: CoretypesVerbDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -417,6 +417,14 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+export enum AuthtypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
+}
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -507,7 +515,7 @@ export interface AuthtypesSessionContextDTO {
 
 export interface AuthtypesTransactionDTO {
 	object: CoretypesObjectDTO;
-	relation: CoretypesVerbDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -2738,14 +2746,6 @@ export enum CoretypesTypeDTO {
 	organization = 'organization',
 	metaresource = 'metaresource',
 	metaresources = 'metaresources',
-}
-export enum CoretypesVerbDTO {
-	create = 'create',
-	read = 'read',
-	update = 'update',
-	delete = 'delete',
-	list = 'list',
-	assignee = 'assignee',
 }
 export interface DashboardtypesDashboardDTO {
 	/**

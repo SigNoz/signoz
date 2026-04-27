@@ -1,7 +1,7 @@
 import {
 	AuthtypesTransactionDTO,
 	CoretypesTypeDTO,
-	CoretypesVerbDTO,
+	AuthtypesRelationDTO,
 } from '../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
 import {
@@ -83,7 +83,7 @@ export function permissionToTransactionDto(
 	const directType = resolveType(relation, objectStr);
 	if (directType === 'metaresources') {
 		return {
-			relation: relation as CoretypesVerbDTO,
+			relation: relation as AuthtypesRelationDTO,
 			object: {
 				resource: {
 					kind: objectStr as ResourceName,
@@ -97,7 +97,7 @@ export function permissionToTransactionDto(
 	const type = resolveType(relation, resourceName) ?? 'metaresource';
 
 	return {
-		relation: relation as CoretypesVerbDTO,
+		relation: relation as AuthtypesRelationDTO,
 		object: {
 			resource: {
 				kind: resourceName as ResourceName,
