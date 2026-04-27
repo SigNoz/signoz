@@ -78,89 +78,94 @@ function DashboardsAndAlertsPopover({
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
 
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
+	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
 
-	const handleAlertsClick = (): void => {
-		if (!hasAlerts) return;
+	if (!hasAnyItem && !alertsData.isLoading && !dashboardsData.isLoading) {
+		return null;
+	}
 
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardsClick = (): void => {
-		if (!hasDashboards) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
-
-	const renderContent = (): JSX.Element => {
-		if (alertsData.isLoading || dashboardsData.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsData.isError || dashboardsData.isError) {
-			return (
-				<Typography.Text type="secondary">
-					Failed to load alerts or dashboards.
-				</Typography.Text>
-			);
-		}
-
-		if (!hasAlerts && !hasDashboards) {
-			return (
-				<Typography.Text type="secondary">No alerts or dashboards found.</Typography.Text>
-			);
-		}
-
-		return (
-			<Menu>
-				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={16} />}>
-						<Typography.Text strong>
-							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</Typography.Text>
-					</Menu.Item>
-				)}
-				{hasDashboards && (
-					<Menu.Item
-						key="dashboards"
-						onClick={handleDashboardsClick}
-						icon={<Grid size={16} />}
-					>
-						<Typography.Text strong>
-							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</Typography.Text>
-					</Menu.Item>
-				)}
-			</Menu>
-		);
-	};
-
-	if (!metricName) return null;
+	const menuItems = (
+		<Menu>
+			{totalAlerts > 0 && (
+				<Menu.Item
+					key="alerts"
+					icon={<Bell size={16} />}
+					onClick={() => {
+						openInNewTab(
+							`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
+						);
+					}}
+				>
+					<Typography.Text>
+						{pluralize(totalAlerts, 'alert', 'alerts')} using this metric
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{totalDashboards > 0 && (
+				<Menu.Item
+					key="dashboards"
+					icon={<Grid size={16} />}
+					onClick={() => {
+						openInNewTab(
+							`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+						);
+					}}
+				>
+					<Typography.Text>
+						{pluralize(totalDashboards, 'dashboard', 'dashboards')} using this
+						metric
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{alertsData.isLoading && (
+				<Menu.Item key="loading-alerts">
+					<Skeleton.Input active size="small" />
+				</Menu.Item>
+			)}
+			{dashboardsData.isLoading && (
+				<Menu.Item key="loading-dashboards">
+					<Skeleton.Input active size="small" />
+				</Menu.Item>
+			)}
+		</Menu>
+	);
 
 	return (
-		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
-			<div
+		<Dropdown
+			overlay={menuItems}
+			trigger={['click']}
+			placement="bottomRight"
+			disabled={!hasAnyItem}
+		>
+			<span
 				style={{
-					color: Color.primary.primary,
-					cursor: 'pointer',
+					color: Color.semantic.text.secondary,
+					cursor: hasAnyItem ? 'pointer' : 'not-allowed',
+					fontSize: 12,
 					display: 'flex',
 					alignItems: 'center',
-					gap: '4px',
+					gap: 4,
 				}}
 			>
-				<Typography.Link style={{ fontSize: 12 }}>
-					View in Dashboards & Alerts
-				</Typography.Link>
-			</div>
+				{hasAnyItem ? (
+					<>
+						{totalAlerts > 0 && (
+							<>
+								<Bell size={12} />
+								{totalAlerts}
+							</>
+						)}
+						{totalDashboards > 0 && (
+							<>
+								<Grid size={12} />
+								{totalDashboards}
+							</>
+						)}
+					</>
+				) : (
+					'No references'
+				)}
+			</span>
 		</Dropdown>
 	);
 }
