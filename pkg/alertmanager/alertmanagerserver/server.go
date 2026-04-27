@@ -203,7 +203,11 @@ func New(
 		return nil, err
 	}
 
-	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{}, maintenanceStore, orgID, server.logger)
+	var muter *MaintenanceMuter
+	if maintenanceStore != nil {
+		muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
+	}
+	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{}, muter)
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil

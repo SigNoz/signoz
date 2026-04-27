@@ -26,7 +26,6 @@ package alertmanagerserver
 //	GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
 
 import (
-	"log/slog"
 	"time"
 
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -37,31 +36,23 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 type pipelineBuilder struct {
-	metrics          *notify.Metrics
-	ff               featurecontrol.Flagger
-	maintenanceStore ruletypes.MaintenanceStore
-	orgID            string
-	logger           *slog.Logger
+	metrics *notify.Metrics
+	ff      featurecontrol.Flagger
+	muter   *MaintenanceMuter
 }
 
 func newPipelineBuilder(
 	r prometheus.Registerer,
 	ff featurecontrol.Flagger,
-	maintenanceStore ruletypes.MaintenanceStore,
-	orgID string,
-	logger *slog.Logger,
+	muter *MaintenanceMuter,
 ) *pipelineBuilder {
 	return &pipelineBuilder{
-		metrics:          notify.NewMetrics(r, ff),
-		ff:               ff,
-		maintenanceStore: maintenanceStore,
-		orgID:            orgID,
-		logger:           logger,
+		metrics: notify.NewMetrics(r, ff),
+		ff:      ff,
+		muter:   muter,
 	}
 }
 
@@ -86,17 +77,17 @@ func (pb *pipelineBuilder) New(
 	ss := notify.NewMuteStage(silencer, pb.metrics)
 
 	var mms *maintenanceMuteStage
-	if pb.maintenanceStore != nil {
-		mms = &maintenanceMuteStage{muter: NewMaintenanceMuter(pb.maintenanceStore, pb.orgID, pb.logger)}
+	if pb.muter != nil {
+		mms = &maintenanceMuteStage{muter: pb.muter}
 	}
 
 	for name := range receivers {
-		st := buildReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics)
+		stages := notify.MultiStage{ms, is, tas, tms, ss}
 		if mms != nil {
-			rs[name] = notify.MultiStage{ms, is, tas, tms, ss, mms, st}
-		} else {
-			rs[name] = notify.MultiStage{ms, is, tas, tms, ss, st}
+			stages = append(stages, mms)
 		}
+		stages = append(stages, buildReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics))
+		rs[name] = stages
 	}
 
 	pb.metrics.InitializeFor(receivers)
