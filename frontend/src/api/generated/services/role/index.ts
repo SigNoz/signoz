@@ -18,9 +18,9 @@ import type {
 } from 'react-query';
 
 import type {
-	AuthtypesPatchableObjectsDTO,
 	AuthtypesPatchableRoleDTO,
 	AuthtypesPostableRoleDTO,
+	CoretypesPatchableObjectsDTO,
 	CreateRole201,
 	DeleteRolePathParameters,
 	GetObjects200,
@@ -571,13 +571,13 @@ export const invalidateGetObjects = async (
  */
 export const patchObjects = (
 	{ id, relation }: PatchObjectsPathParameters,
-	authtypesPatchableObjectsDTO: BodyType<AuthtypesPatchableObjectsDTO>,
+	coretypesPatchableObjectsDTO: BodyType<CoretypesPatchableObjectsDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		data: authtypesPatchableObjectsDTO,
+		data: coretypesPatchableObjectsDTO,
 	});
 };
 
@@ -590,7 +590,7 @@ export const getPatchObjectsMutationOptions = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -599,7 +599,7 @@ export const getPatchObjectsMutationOptions = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<AuthtypesPatchableObjectsDTO>;
+		data: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
@@ -616,7 +616,7 @@ export const getPatchObjectsMutationOptions = <
 		Awaited<ReturnType<typeof patchObjects>>,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data: BodyType<CoretypesPatchableObjectsDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -630,7 +630,7 @@ export const getPatchObjectsMutationOptions = <
 export type PatchObjectsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchObjects>>
 >;
-export type PatchObjectsMutationBody = BodyType<AuthtypesPatchableObjectsDTO>;
+export type PatchObjectsMutationBody = BodyType<CoretypesPatchableObjectsDTO>;
 export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -645,7 +645,7 @@ export const usePatchObjects = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<AuthtypesPatchableObjectsDTO>;
+			data: BodyType<CoretypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -654,7 +654,7 @@ export const usePatchObjects = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<AuthtypesPatchableObjectsDTO>;
+		data: BodyType<CoretypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {

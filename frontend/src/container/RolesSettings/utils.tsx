@@ -1,6 +1,9 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui';
-import type { AuthtypesGettableObjectsDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	CoretypesGettableResourceDTO,
+	CoretypesObjectGroupDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
@@ -17,7 +20,7 @@ import {
 } from './RoleDetails/constants';
 
 export type AuthzResources = {
-	resources: ReadonlyArray<{ readonly kind: string; readonly type: string }>;
+	resources: ReadonlyArray<CoretypesGettableResourceDTO>;
 	relations: Readonly<Record<string, ReadonlyArray<string>>>;
 };
 
@@ -74,7 +77,7 @@ export function deriveResourcesForRelation(
 }
 
 export function objectsToPermissionConfig(
-	objects: AuthtypesGettableObjectsDTO[],
+	objects: CoretypesObjectGroupDTO[],
 	resources: ResourceDefinition[],
 ): PermissionConfig {
 	const config: PermissionConfig = {};
@@ -103,14 +106,14 @@ export function buildPatchPayload({
 	resources,
 	authzRes,
 }: PatchPayloadOptions): {
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	deletions: AuthtypesGettableObjectsDTO[] | null;
+	additions: CoretypesObjectGroupDTO[] | null;
+	deletions: CoretypesObjectGroupDTO[] | null;
 } {
 	if (!authzRes) {
 		return { additions: null, deletions: null };
 	}
-	const additions: AuthtypesGettableObjectsDTO[] = [];
-	const deletions: AuthtypesGettableObjectsDTO[] = [];
+	const additions: CoretypesObjectGroupDTO[] = [];
+	const deletions: CoretypesObjectGroupDTO[] = [];
 
 	for (const res of resources) {
 		const initial = initialConfig[res.id];

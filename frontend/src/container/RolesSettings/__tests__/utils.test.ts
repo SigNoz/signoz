@@ -1,4 +1,8 @@
-import type { AuthtypesGettableObjectsDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	CoretypesGettableResourceDTO,
+	CoretypesObjectGroupDTO,
+	CoretypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 import type {
 	PermissionConfig,
@@ -6,7 +10,7 @@ import type {
 } from '../PermissionSidePanel/PermissionSidePanel.types';
 
 type AuthzResources = {
-	resources: { kind: string; type: string }[];
+	resources: CoretypesGettableResourceDTO[];
 	relations: Record<string, string[]>;
 };
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
@@ -37,12 +41,12 @@ jest.mock('../RoleDetails/constants', () => {
 
 const dashboardResource: AuthzResources['resources'][number] = {
 	kind: 'dashboard',
-	type: 'metaresource',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
 const alertResource: AuthzResources['resources'][number] = {
 	kind: 'alert',
-	type: 'metaresource',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
 const baseAuthzResources: AuthzResources = {
@@ -222,7 +226,7 @@ describe('buildPatchPayload', () => {
 
 describe('objectsToPermissionConfig', () => {
 	it('maps a wildcard selector to ALL scope', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: ['*'] },
 		];
 
@@ -235,7 +239,7 @@ describe('objectsToPermissionConfig', () => {
 	});
 
 	it('maps specific selectors to ONLY_SELECTED scope with the IDs', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
 		];
 

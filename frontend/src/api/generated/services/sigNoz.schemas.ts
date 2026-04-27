@@ -250,14 +250,6 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: Date;
 }
 
-export interface AuthtypesGettableObjectsDTO {
-	resource: CoretypesGettableResourceDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -275,15 +267,6 @@ export interface AuthtypesGettableTokenDTO {
 	 * @type string
 	 */
 	tokenType?: string;
-}
-
-export interface AuthtypesGettableTransactionDTO {
-	/**
-	 * @type boolean
-	 */
-	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	relation: CoretypesVerbDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -357,14 +340,6 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
-export interface AuthtypesObjectDTO {
-	resource: CoretypesGettableResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -383,19 +358,6 @@ export interface AuthtypesPasswordAuthNSupportDTO {
 	 * @type string
 	 */
 	provider?: string;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
 export interface AuthtypesPatchableRoleDTO {
@@ -532,11 +494,6 @@ export interface AuthtypesSessionContextDTO {
 	 * @nullable true
 	 */
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
-}
-
-export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	relation: CoretypesVerbDTO;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -2727,12 +2684,61 @@ export interface CoretypesGettableResourceDTO {
 	 * @type string
 	 */
 	kind: string;
+	type: CoretypesTypeDTO;
+}
+
+export interface CoretypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: CoretypesObjectDTO;
+	relation: CoretypesVerbDTO;
+}
+
+export interface CoretypesObjectDTO {
+	resource: CoretypesGettableResourceDTO;
 	/**
 	 * @type string
 	 */
-	type: string;
+	selector: string;
 }
 
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesGettableResourceDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: CoretypesObjectGroupDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export interface CoretypesTransactionDTO {
+	object: CoretypesObjectDTO;
+	relation: CoretypesVerbDTO;
+}
+
+export enum CoretypesTypeDTO {
+	user = 'user',
+	serviceaccount = 'serviceaccount',
+	anonymous = 'anonymous',
+	role = 'role',
+	organization = 'organization',
+	metaresource = 'metaresource',
+	metaresources = 'metaresources',
+}
 export enum CoretypesVerbDTO {
 	create = 'create',
 	read = 'read',
@@ -6330,7 +6336,7 @@ export type AuthzCheck200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableTransactionDTO[];
+	data: CoretypesGettableTransactionDTO[];
 	/**
 	 * @type string
 	 */
@@ -6916,7 +6922,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesObjectGroupDTO[];
 	/**
 	 * @type string
 	 */

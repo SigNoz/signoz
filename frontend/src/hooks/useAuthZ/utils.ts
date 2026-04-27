@@ -1,5 +1,6 @@
 import {
-	AuthtypesTransactionDTO,
+	CoretypesTransactionDTO,
+	CoretypesTypeDTO,
 	CoretypesVerbDTO,
 } from '../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
@@ -36,21 +37,24 @@ export function parsePermission(permission: BrandedPermission): {
 	return { relation: relation as AuthZRelation, object };
 }
 
-const resourceNameToType = permissionsType.data.resources.reduce((acc, r) => {
-	acc[r.kind] = r.type;
-	return acc;
-}, {} as Record<ResourceName, ResourceType>);
+const resourceNameToType = permissionsType.data.resources.reduce(
+	(acc, r) => {
+		acc[r.kind] = r.type;
+		return acc;
+	},
+	{} as Record<ResourceName, ResourceType>,
+);
 
 export function permissionToTransactionDto(
 	permission: BrandedPermission,
-): AuthtypesTransactionDTO {
+): CoretypesTransactionDTO {
 	const { relation, object: objectStr } = parsePermission(permission);
 	const directType = resourceNameToType[objectStr as ResourceName];
 	if (directType === 'metaresources') {
 		return {
 			relation: relation as CoretypesVerbDTO,
 			object: {
-				resource: { kind: objectStr, type: directType },
+				resource: { kind: objectStr, type: directType as CoretypesTypeDTO },
 				selector: '*',
 			},
 		};
@@ -62,14 +66,14 @@ export function permissionToTransactionDto(
 	return {
 		relation: relation as CoretypesVerbDTO,
 		object: {
-			resource: { kind: resourceName, type },
+			resource: { kind: resourceName, type: type as CoretypesTypeDTO },
 			selector: selector || '*',
 		},
 	};
 }
 
 export function gettableTransactionToPermission(
-	item: AuthtypesTransactionDTO,
+	item: CoretypesTransactionDTO,
 ): BrandedPermission {
 	const {
 		relation,

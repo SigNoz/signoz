@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
 import {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
+	CoretypesGettableTransactionDTO,
+	CoretypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
 import { BrandedPermission } from 'hooks/useAuthZ/types';
@@ -16,9 +16,9 @@ const BASE_URL = ENVIRONMENT.baseURL || '';
 const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
 
 function authzMockResponse(
-	payload: AuthtypesTransactionDTO[],
+	payload: CoretypesTransactionDTO[],
 	authorizedByIndex: boolean[],
-): { data: AuthtypesGettableTransactionDTO[]; status: string } {
+): { data: CoretypesGettableTransactionDTO[]; status: string } {
 	return {
 		data: payload.map((txn, i) => ({
 			relation: txn.relation,
