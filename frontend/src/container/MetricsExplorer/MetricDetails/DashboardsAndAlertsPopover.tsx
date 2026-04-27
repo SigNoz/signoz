@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData, isLoading: false, isError: false };
+	return { data: newAlertsData || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,53 +81,141 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData, isLoading: false, isError: false };
+	return { data: newDashboardsData || [], isLoading: false, isError: false };
 }
 
-function DashboardsAndAlertsPopover({
+export function DashboardsAndAlertsPopover({
 	metricName,
+	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const metricAlertsStatus = useMetricAlertsStatus(metricName);
-	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
+	const [open, setOpen] = useState(false);
 
-	if (metricAlertsStatus.isError || metricDashboardsStatus.isError) {
-		return (
-			<Skeleton active loading={false}>
-				<Typography.Text>Error loading data</Typography.Text>
-			</Skeleton>
-		);
-	}
+	const alertsStatus = useMetricAlertsStatus(metricName);
+	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	if (metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading) {
-		return (
-			<Skeleton active loading={true}>
-				<Typography.Text>Loading data...</Typography.Text>
-			</Skeleton>
-		);
-	}
+	const totalItems =
+		(alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
+
+	const handleOpenChange = (visible: boolean): void => {
+		setOpen(visible);
+	};
+
+	const menuItems = useMemo(() => {
+		const items: any[] = [];
+
+		if (alertsStatus.isLoading) {
+			items.push({
+				key: 'alerts-loading',
+				disabled: true,
+				label: (
+					<div className="flex items-center gap-2 px-2 py-1">
+						<Bell size={14} color={Color.text.secondary} />
+						<Skeleton.Input active size="small" style={{ width: 120 }} />
+					</div>
+				),
+			});
+		} else if (alertsStatus.isError) {
+			items.push({
+				key: 'alerts-error',
+				disabled: true,
+				label: (
+					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
+						Failed to load alerts
+					</Typography.Text>
+				),
+			});
+		} else {
+			const alertCount = alertsStatus.data?.length || 0;
+			if (alertCount > 0) {
+				items.push({
+					key: 'alerts',
+					label: (
+						<Typography.Text
+							className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
+							onClick={() => {
+								openInNewTab(
+									`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
+								);
+							}}
+						>
+							<Bell size={14} color={Color.text.secondary} />
+							{alertCount} {pluralize('alert', alertCount)} on this metric
+						</Typography.Text>
+					),
+				});
+			}
+		}
+
+		if (dashboardsStatus.isLoading) {
+			items.push({
+				key: 'dashboards-loading',
+				disabled: true,
+				label: (
+					<div className="flex items-center gap-2 px-2 py-1">
+						<Grid size={14} color={Color.text.secondary} />
+						<Skeleton.Input active size="small" style={{ width: 120 }} />
+					</div>
+				),
+			});
+		} else if (dashboardsStatus.isError) {
+			items.push({
+				key: 'dashboards-error',
+				disabled: true,
+				label: (
+					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
+						Failed to load dashboards
+					</Typography.Text>
+				),
+			});
+		} else {
+			const dashboardCount = dashboardsStatus.data?.length || 0;
+			if (dashboardCount > 0) {
+				items.push({
+					key: 'dashboards',
+					label: (
+						<Typography.Text
+							className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
+							onClick={() => {
+								openInNewTab(
+									`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+								);
+							}}
+						>
+							<Grid size={14} color={Color.text.secondary} />
+							{dashboardCount} {pluralize('dashboard', dashboardCount)} using this
+							metric
+						</Typography.Text>
+					),
+				});
+			}
+		}
+
+		if (items.length === 0) {
+			items.push({
+				key: 'empty',
+				disabled: true,
+				label: (
+					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
+						No dashboards or alerts using this metric
+					</Typography.Text>
+				),
+			});
+		}
+
+		return items;
+	}, [alertsStatus, dashboardsStatus, metricName]);
+
+	const menu = <Menu items={menuItems} />;
 
 	return (
 		<Dropdown
-			overlay={
-				<Menu>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize(metricAlertsStatus.data.length, 'alert')}{' '}
-							{metricName}
-						</Typography.Text>
-					</Menu.Item>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize(metricDashboardsStatus.data.length, 'dashboard')}{' '}
-							{metricName}
-						</Typography.Text>
-					</Menu.Item>
-				</Menu>
-			}
+			overlay={menu}
+			trigger={['click']}
+			placement="bottomRight"
+			open={open}
+			onOpenChange={handleOpenChange}
 		>
-			<Grid size={24} />
+			{children}
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
