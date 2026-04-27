@@ -41,6 +41,7 @@ def migrator_json(
 @pytest.fixture(name="signoz", scope="package")
 def signoz_json_body(
     network: Network,
+    migrator: types.Operation,  # pylint: disable=unused-argument
     zeus: types.TestContainerDocker,
     gateway: types.TestContainerDocker,
     sqlstore: types.TestContainerSQL,

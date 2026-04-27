@@ -284,7 +284,6 @@ def _parse_json_bodies_and_extract_paths(
 @pytest.fixture(name="export_json_types", scope="function")
 def export_json_types(
     clickhouse: types.TestContainerClickhouse,
-    request: pytest.FixtureRequest,  # To access migrator fixture
 ) -> Generator[Callable[[list[JSONPathType] | list[str] | list[Any]], None], Any]:
     """
     Fixture for exporting JSON type metadata to the path_types table.
@@ -311,13 +310,6 @@ def export_json_types(
         # Auto-extract from Logs objects
         export_json_types(logs_list)
     """
-    # Ensure migrator has run to create the table
-    try:
-        request.getfixturevalue("migrator")
-    except Exception:
-        # If migrator fixture is not available, that's okay - table might already exist
-        pass
-
     def _export_json_types(
         data: list[JSONPathType] | list[str] | list[Any],  # List[Logs] but avoiding circular import
     ) -> None:
