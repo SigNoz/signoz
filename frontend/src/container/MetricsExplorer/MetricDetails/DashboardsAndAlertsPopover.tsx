@@ -115,7 +115,8 @@ export function DashboardsAndAlertsPopover({
 	};
 
 	const loading = alertsStatus.isLoading || dashboardsStatus.isLoading;
-	const hasData = totalAlerts > 0 || totalDashboards > 0;
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
 
 	const menu = (
 		<Menu>
@@ -125,34 +126,40 @@ export function DashboardsAndAlertsPopover({
 				</Menu.Item>
 			) : (
 				<>
-					{hasData ? (
-						<>
-							{totalAlerts > 0 && (
-								<Menu.Item key="alerts" onClick={handleAlertsClick}>
-									<div className="flex items-center gap-2">
-										<Bell size={14} color={Color.semantic.warning.border} />
-										<Typography.Text type="warning">
-											{pluralize('Alert', totalAlerts)} ({totalAlerts})
-										</Typography.Text>
-									</div>
-								</Menu.Item>
-							)}
-							{totalDashboards > 0 && (
-								<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
-									<div className="flex items-center gap-2">
-										<Grid size={14} color={Color.primary.text} />
-										<Typography.Text>
-											{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-										</Typography.Text>
-									</div>
-								</Menu.Item>
-							)}
-						</>
-					) : (
-						<Menu.Item key="no-data">
-							<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
-						</Menu.Item>
-					)}
+					<Menu.Item
+						key="alerts"
+						disabled={!hasAlerts}
+						onClick={handleAlertsClick}
+						icon={<Bell size={16} />}
+					>
+						<Typography.Text
+							type="secondary"
+							style={{
+								fontSize: 12,
+								color: hasAlerts ? Color.text['text-2'] : Color.text.disabled,
+							}}
+						>
+							{pluralize('Alert', totalAlerts)} configured
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item
+						key="dashboards"
+						disabled={!hasDashboards}
+						onClick={handleDashboardsClick}
+						icon={<Grid size={16} />}
+					>
+						<Typography.Text
+							type="secondary"
+							style={{
+								fontSize: 12,
+								color: hasDashboards
+									? Color.text['text-2']
+									: Color.text.disabled,
+							}}
+						>
+							{pluralize('Dashboard', totalDashboards)} using this metric
+						</Typography.Text>
+					</Menu.Item>
 				</>
 			)}
 		</Menu>
@@ -162,10 +169,9 @@ export function DashboardsAndAlertsPopover({
 		<Dropdown
 			overlay={menu}
 			trigger={['click']}
+			placement="bottomRight"
 			open={open}
 			onOpenChange={handleOpenChange}
-			placement="bottomRight"
-			destroyPopupOnHide
 		>
 			{children}
 		</Dropdown>
