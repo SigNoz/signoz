@@ -67,9 +67,7 @@ function DashboardsAndAlertsPopover({
 				isError: newIsErrorAlerts,
 			});
 		}
-	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
 
-	useEffect(() => {
 		if (newDashboardsData) {
 			setDashboardsData({
 				data: newDashboardsData.data?.dashboards || [],
@@ -77,70 +75,48 @@ function DashboardsAndAlertsPopover({
 				isError: newIsErrorDashboards,
 			});
 		}
-	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
+	}, [
+		newAlertsData,
+		newDashboardsData,
+		newIsLoadingAlerts,
+		newIsLoadingDashboards,
+		newIsErrorAlerts,
+		newIsErrorDashboards,
+	]);
 
 	return (
 		<Dropdown
 			overlay={
 				<Menu>
-					<Menu.Item key="dashboards">
-						<Typography.Text>
-							{pluralize(dashboardsData.data.length, 'dashboard')}{' '}
-							{dashboardsData.isLoading ? (
-								<Skeleton active paragraph={false} />
-							) : (
-								<a
-									href={generatePath(ROUTES.DASHBOARD_LIST, {
-										metricName,
-									})}
-									target="_blank"
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.DASHBOARD_LIST, {
-											metricName,
-										}));
-									}}
-								>
-									{dashboardsData.data.length > 0 ? (
-										<Grid size={16} />
-									) : (
-										<Skeleton active paragraph={false} />
-									)}
-								</a>
-							)}
-						</Typography.Text>
-					</Menu.Item>
-					<Menu.Item key="alerts">
-						<Typography.Text>
-							{pluralize(alertsData.data.length, 'alert')}{' '}
-							{alertsData.isLoading ? (
-								<Skeleton active paragraph={false} />
-							) : (
-								<a
-									href={generatePath(ROUTES.ALERT_LIST, {
-										metricName,
-									})}
-									target="_blank"
-									onClick={(e) => {
-										e.preventDefault();
-										openInNewTab(generatePath(ROUTES.ALERT_LIST, {
-											metricName,
-										}));
-									}}
-								>
-									{alertsData.data.length > 0 ? (
-										<Bell size={16} />
-									) : (
-										<Skeleton active paragraph={false} />
-									)}
-								</a>
-							)}
-						</Typography.Text>
-					</Menu.Item>
+					{alertsData.data.length > 0 && (
+						<Menu.Item
+							key="alerts"
+							onClick={() => openInNewTab(generatePath(ROUTES.METRIC_ALERTS, { metricName }))}
+						>
+							<Typography.Text>
+								{pluralize(alertsData.data.length, 'alert', 'alerts')}{' '}
+								<Grid size={16} />
+							</Typography.Text>
+						</Menu.Item>
+					)}
+					{dashboardsData.data.length > 0 && (
+						<Menu.Item
+							key="dashboards"
+							onClick={() => openInNewTab(generatePath(ROUTES.METRIC_DASHBOARDS, { metricName }))}
+						>
+							<Typography.Text>
+								{pluralize(dashboardsData.data.length, 'dashboard', 'dashboards')}{' '}
+								<Grid size={16} />
+							</Typography.Text>
+						</Menu.Item>
+					)}
 				</Menu>
 			}
 		>
-			<Typography.Text>Alerts and Dashboards</Typography.Text>
+			<Typography.Text>
+				<Grid size={16} />
+				Alerts and Dashboards
+			</Typography.Text>
 		</Dropdown>
 	);
 }
