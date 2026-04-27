@@ -77,10 +77,10 @@ describe('UPlotConfigBuilder', () => {
 		const setSelectHooks = config.hooks?.setSelect ?? [];
 		expect(setSelectHooks.length).toBe(1);
 
-		const uplotInstance = ({
+		const uplotInstance = {
 			select: { left: 10, width: 0 },
 			posToVal: jest.fn(),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		// Simulate uPlot calling the hook
 		const setSelectHook = setSelectHooks[0];
@@ -105,10 +105,10 @@ describe('UPlotConfigBuilder', () => {
 			// left + width
 			.mockReturnValueOnce(110);
 
-		const uplotInstance = ({
+		const uplotInstance = {
 			select: { left: 50, width: 20 },
 			posToVal,
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const setSelectHook = setSelectHooks[0];
 		expect(setSelectHook).toBeDefined();

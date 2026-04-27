@@ -230,7 +230,7 @@
 			align-items: center;
 			border-radius: 2px 0px 0px 2px;
 			border: 1px solid var(--l1-border);
-			background: var(--l1-border);
+			background: var(--l1-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			padding: 0px;
 
@@ -295,17 +295,6 @@
 				.ant-tag-close-icon {
 					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.query-builder-search-v2 {
-		.qb-search-bar-tokenised-tags {
-			.ant-tag {
-				background: var(--l3-background);
-				border-color: var(--l1-border);
 			}
 		}
 	}

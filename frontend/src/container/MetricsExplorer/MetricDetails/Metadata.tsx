@@ -44,21 +44,17 @@ function Metadata({
 }: MetadataProps): JSX.Element {
 	const [isEditing, setIsEditing] = useState(false);
 
-	const [
-		metricMetadataState,
-		setMetricMetadataState,
-	] = useState<MetricMetadataFormState>({
-		type: MetrictypesTypeDTO.sum,
-		description: '',
-		temporality: MetrictypesTemporalityDTO.unspecified,
-		unit: '',
-		isMonotonic: false,
-	});
+	const [metricMetadataState, setMetricMetadataState] =
+		useState<MetricMetadataFormState>({
+			type: MetrictypesTypeDTO.sum,
+			description: '',
+			temporality: MetrictypesTemporalityDTO.unspecified,
+			unit: '',
+			isMonotonic: false,
+		});
 	const { notifications } = useNotifications();
-	const {
-		mutate: updateMetricMetadata,
-		isLoading: isUpdatingMetricsMetadata,
-	} = useUpdateMetricMetadata();
+	const { mutate: updateMetricMetadata, isLoading: isUpdatingMetricsMetadata } =
+		useUpdateMetricMetadata();
 	const [activeKey, setActiveKey] = useState<string | string[]>(
 		'metric-metadata',
 	);
@@ -86,7 +82,7 @@ function Metadata({
 							value: metadata[key as keyof typeof metadata],
 							key,
 						},
-				  }))
+					}))
 				: [],
 		[metadata],
 	);

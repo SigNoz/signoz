@@ -7,7 +7,9 @@ $light-theme: 'lightMode';
 	margin: 0 auto; // Center the card within the column
 	margin-bottom: 24px;
 	border-radius: 6px;
-	transition: transform 0.3s ease, box-shadow 0.3s ease;
+	transition:
+		transform 0.3s ease,
+		box-shadow 0.3s ease;
 	background-color: var(--card);
 	border: 1px solid var(--l1-border);
 

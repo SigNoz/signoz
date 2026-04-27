@@ -78,10 +78,10 @@ function renderTimeSeries(
 
 describe('TimeSeries', () => {
 	beforeEach(() => {
-		updateMetricMetadataSpy.mockReturnValue(({
+		updateMetricMetadataSpy.mockReturnValue({
 			mutate: mockUpdateMetricMetadata,
 			isLoading: false,
-		} as Partial<UseUpdateMetricMetadataReturnType>) as UseUpdateMetricMetadataReturnType);
+		} as Partial<UseUpdateMetricMetadataReturnType> as UseUpdateMetricMetadataReturnType);
 	});
 
 	it('shows select metric message when no metric is selected', () => {

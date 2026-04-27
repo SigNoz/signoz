@@ -34,7 +34,9 @@ const ruleName = 'local/no-unsupported-asset-url';
  * e.g. "url('/a.svg') url('/b.png') repeat" → ['/a.svg', '/b.png']
  */
 function extractUrlPaths(value) {
-	if (typeof value !== 'string') {return [];}
+	if (typeof value !== 'string') {
+		return [];
+	}
 	const paths = [];
 	const urlPattern = /url\(\s*['"]?([^'")\s]+)['"]?\s*\)/g;
 	let match = urlPattern.exec(value);
@@ -71,7 +73,9 @@ const messages = stylelint.utils.ruleMessages(ruleName, {
  */
 const rule = (primaryOption) => {
 	return (root, result) => {
-		if (!primaryOption) {return;}
+		if (!primaryOption) {
+			return;
+		}
 
 		root.walkDecls((decl) => {
 			const urlPaths = extractUrlPaths(decl.value);

@@ -231,21 +231,19 @@ function ServiceAccountDrawer({
 	}, []);
 
 	const makeRoleRetry = useCallback(
-		(
-			context: string,
-			rawRetry: () => Promise<void>,
-		) => async (): Promise<void> => {
-			try {
-				await rawRetry();
-				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
-			} catch (err) {
-				setSaveErrors((prev) =>
-					prev.map((e) =>
-						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
-					),
-				);
-			}
-		},
+		(context: string, rawRetry: () => Promise<void>) =>
+			async (): Promise<void> => {
+				try {
+					await rawRetry();
+					setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+				} catch (err) {
+					setSaveErrors((prev) =>
+						prev.map((e) =>
+							e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+						),
+					);
+				}
+			},
 		[],
 	);
 
@@ -302,7 +300,7 @@ function ServiceAccountDrawer({
 					? updateMutateAsync({
 							pathParams: { id: account.id },
 							data: { name: localName },
-					  })
+						})
 					: Promise.resolve();
 
 			const [nameResult, rolesResult] = await Promise.allSettled([

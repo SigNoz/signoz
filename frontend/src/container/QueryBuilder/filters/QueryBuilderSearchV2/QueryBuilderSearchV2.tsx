@@ -181,9 +181,10 @@ function QueryBuilderSearchV2(
 
 	const [showAllFilters, setShowAllFilters] = useState<boolean>(false);
 
-	const isLogsDataSource = useMemo(() => query.dataSource === DataSource.LOGS, [
-		query.dataSource,
-	]);
+	const isLogsDataSource = useMemo(
+		() => query.dataSource === DataSource.LOGS,
+		[query.dataSource],
+	);
 
 	const memoizedSearchParams = useMemo(
 		() => [
@@ -278,43 +279,39 @@ function QueryBuilderSearchV2(
 		},
 	);
 
-	const {
-		data: suggestionsData,
-		isFetching: isFetchingSuggestions,
-	} = useGetAttributeSuggestions(
-		{
-			searchText: searchValue?.split(' ')[0],
-			dataSource: query.dataSource,
-			filters: query.filters || { items: [], op: 'AND' },
-		},
-		{
-			queryKey: [suggestionsParams],
-			enabled: isQueryEnabled && isLogsDataSource,
-		},
-	);
+	const { data: suggestionsData, isFetching: isFetchingSuggestions } =
+		useGetAttributeSuggestions(
+			{
+				searchText: searchValue?.split(' ')[0],
+				dataSource: query.dataSource,
+				filters: query.filters || { items: [], op: 'AND' },
+			},
+			{
+				queryKey: [suggestionsParams],
+				enabled: isQueryEnabled && isLogsDataSource,
+			},
+		);
 
-	const {
-		data: attributeValues,
-		isFetching: isFetchingAttributeValues,
-	} = useGetAggregateValues(
-		{
-			aggregateOperator: query.aggregateOperator || '',
-			dataSource: query.dataSource,
-			aggregateAttribute: query.aggregateAttribute?.key || '',
-			attributeKey: currentFilterItem?.key?.key || '',
-			filterAttributeKeyDataType:
-				currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
-			tagType: currentFilterItem?.key?.type ?? '',
-			searchText: isArray(currentFilterItem?.value)
-				? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
-				  ''
-				: currentFilterItem?.value?.toString() || '',
-		},
-		{
-			enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
-			queryKey: [valueParams],
-		},
-	);
+	const { data: attributeValues, isFetching: isFetchingAttributeValues } =
+		useGetAggregateValues(
+			{
+				aggregateOperator: query.aggregateOperator || '',
+				dataSource: query.dataSource,
+				aggregateAttribute: query.aggregateAttribute?.key || '',
+				attributeKey: currentFilterItem?.key?.key || '',
+				filterAttributeKeyDataType:
+					currentFilterItem?.key?.dataType ?? DataTypes.EMPTY,
+				tagType: currentFilterItem?.key?.type ?? '',
+				searchText: isArray(currentFilterItem?.value)
+					? String(currentFilterItem?.value?.[currentFilterItem.value.length - 1]) ||
+						''
+					: currentFilterItem?.value?.toString() || '',
+			},
+			{
+				enabled: currentState === DropdownState.ATTRIBUTE_VALUE,
+				queryKey: [valueParams],
+			},
+		);
 
 	const handleDropdownSelect = useCallback(
 		(value: string) => {
@@ -564,9 +561,10 @@ function QueryBuilderSearchV2(
 		// Case 1 -> when typing an attribute key (not selecting from dropdown)
 		if (tagKey && isUndefined(currentFilterItem?.key)) {
 			let currentRunningAttributeKey;
-			const isSuggestedKeyInAutocomplete = suggestionsData?.payload?.attributes?.some(
-				(value) => value.key === tagKey.split(' ')[0],
-			);
+			const isSuggestedKeyInAutocomplete =
+				suggestionsData?.payload?.attributes?.some(
+					(value) => value.key === tagKey.split(' ')[0],
+				);
 
 			if (isSuggestedKeyInAutocomplete) {
 				const allAttributesMatchingTheKey =
@@ -705,7 +703,7 @@ function QueryBuilderSearchV2(
 										type: '',
 									},
 								},
-						  ]
+							]
 						: []),
 					...(suggestionsData?.payload?.attributes?.map((key) => ({
 						label: key.key,
@@ -738,7 +736,7 @@ function QueryBuilderSearchV2(
 										type: '',
 									},
 								},
-						  ]
+							]
 						: []),
 					// Map existing attribute keys from payload
 					...(data?.payload?.attributeKeys?.map((key) => ({
@@ -857,7 +855,7 @@ function QueryBuilderSearchV2(
 				Array.isArray(tag.value) &&
 				tag.value[tag.value.length - 1] === ''
 					? tag.value?.slice(0, -1)
-					: tag.value ?? '';
+					: (tag.value ?? '');
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,

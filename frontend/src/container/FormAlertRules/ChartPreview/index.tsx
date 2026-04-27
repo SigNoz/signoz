@@ -123,10 +123,11 @@ function ChartPreview({
 	});
 	const { currentQuery } = useQueryBuilder();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { featureFlags } = useAppContext();
 
@@ -221,12 +222,11 @@ function ChartPreview({
 	// Initialize graph visibility from localStorage
 	useEffect(() => {
 		if (queryResponse?.data?.payload?.data?.result) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data.payload.data.result,
-				name: 'alert-chart-preview',
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: queryResponse.data.payload.data.result,
+					name: 'alert-chart-preview',
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 	}, [queryResponse?.data?.payload?.data?.result]);

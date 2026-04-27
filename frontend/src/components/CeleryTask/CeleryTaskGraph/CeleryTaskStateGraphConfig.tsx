@@ -92,10 +92,10 @@ function CeleryTaskStateGraphConfig({
 							{isLoading
 								? '-'
 								: isError
-								? '-'
-								: Number.isNaN(values[index])
-								? '-'
-								: Math.round(Number(values[index]))}
+									? '-'
+									: Number.isNaN(values[index])
+										? '-'
+										: Math.round(Number(values[index]))}
 						</div>
 					</div>
 					{tab.key === barState && <div className="celery-task-states__indicator" />}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
@@ -72,10 +72,12 @@
 					// to that prefix by the React app (see utils/storage.ts getScopedKey).
 					// Read the <base> tag — already populated by the Go template — to derive
 					// the same prefix here, before any JS module has loaded.
-					var basePath = (document.querySelector('base') || {}).getAttribute('href') || '/';
+					var basePath =
+						(document.querySelector('base') || {}).getAttribute('href') || '/';
 					var prefix = basePath === '/' ? '' : basePath;
 					var theme = localStorage.getItem(prefix + 'THEME');
-					var autoSwitch = localStorage.getItem(prefix + 'THEME_AUTO_SWITCH') === 'true';
+					var autoSwitch =
+						localStorage.getItem(prefix + 'THEME_AUTO_SWITCH') === 'true';
 					if (autoSwitch) {
 						theme = window.matchMedia('(prefers-color-scheme: dark)').matches
 							? 'dark'

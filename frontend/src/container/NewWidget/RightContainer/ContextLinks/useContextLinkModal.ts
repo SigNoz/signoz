@@ -16,10 +16,8 @@ const useContextLinkModal = ({
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 }): ContextLinkModalProps => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [
-		selectedContextLink,
-		setSelectedContextLink,
-	] = useState<ContextLinkProps | null>(null);
+	const [selectedContextLink, setSelectedContextLink] =
+		useState<ContextLinkProps | null>(null);
 
 	const handleEditContextLink = (contextLink: ContextLinkProps): void => {
 		setSelectedContextLink(contextLink);

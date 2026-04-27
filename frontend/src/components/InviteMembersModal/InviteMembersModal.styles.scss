@@ -177,7 +177,9 @@
 	color: var(--destructive);
 	opacity: 0.6;
 	padding: 0;
-	transition: background-color 0.2s, opacity 0.2s;
+	transition:
+		background-color 0.2s,
+		opacity 0.2s;
 	box-shadow: none;
 
 	&:hover {

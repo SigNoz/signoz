@@ -174,23 +174,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.dashboard-empty-state {
-		.dashboard-content {
-			.heading {
-				.icons {
-					color: var(--l1-foreground);
-				}
-
-				.welcome {
-					color: var(--l1-foreground);
-				}
-
-				.welcome-info {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-}

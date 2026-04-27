@@ -52,7 +52,7 @@ function ServiceAccountsTable({
 								showSizeChanger: false,
 								onChange: (page: number): void => void setPage(page),
 								className: 'sa-table-pagination',
-						  }
+							}
 						: false
 				}
 				rowClassName={(_, index): string =>

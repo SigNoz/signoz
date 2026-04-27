@@ -99,8 +99,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update form value
@@ -132,8 +132,8 @@ function UpdateContextLinks({
 		const newValue =
 			cursorPosition !== undefined
 				? currentValue.slice(0, cursorPosition) +
-				  variableName +
-				  currentValue.slice(cursorPosition)
+					variableName +
+					currentValue.slice(cursorPosition)
 				: currentValue + variableName;
 
 		// Update the parameter value
@@ -141,7 +141,7 @@ function UpdateContextLinks({
 	};
 
 	useEffect(() => {
-		((window as unknown) as Record<string, unknown>).form = form;
+		(window as unknown as Record<string, unknown>).form = form;
 	}, [form]);
 
 	// Parse URL and update params when URL changes

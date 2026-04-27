@@ -55,13 +55,8 @@ export const useCreateAlertState = (): ICreateAlertContextProps => {
 export function CreateAlertProvider(
 	props: ICreateAlertProviderProps,
 ): JSX.Element {
-	const {
-		children,
-		initialAlertState,
-		isEditMode,
-		ruleId,
-		initialAlertType,
-	} = props;
+	const { children, initialAlertState, isEditMode, ruleId, initialAlertType } =
+		props;
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -214,17 +209,13 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
-	const {
-		mutate: createAlertRule,
-		isLoading: isCreatingAlertRule,
-	} = useCreateRule();
+	const { mutate: createAlertRule, isLoading: isCreatingAlertRule } =
+		useCreateRule();
 
 	const { mutate: testAlertRule, isLoading: isTestingAlertRule } = useTestRule();
 
-	const {
-		mutate: updateAlertRule,
-		isLoading: isUpdatingAlertRule,
-	} = useUpdateRuleByID();
+	const { mutate: updateAlertRule, isLoading: isUpdatingAlertRule } =
+		useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({

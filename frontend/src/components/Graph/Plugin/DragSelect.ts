@@ -55,9 +55,8 @@ function createMousedownHandler(
 			startDragPositionX = right;
 		}
 
-		const startValuePositionX = chart.scales.x.getValueForPixel(
-			startDragPositionX,
-		);
+		const startValuePositionX =
+			chart.scales.x.getValueForPixel(startDragPositionX);
 
 		dragData.onDragStart(startDragPositionX, startValuePositionX);
 	};
@@ -109,9 +108,8 @@ function createMouseupHandler(
 			endRelativePostionX = right;
 		}
 
-		const endValuePositionX = chart.scales.x.getValueForPixel(
-			endRelativePostionX,
-		);
+		const endValuePositionX =
+			chart.scales.x.getValueForPixel(endRelativePostionX);
 
 		dragData.onDragEnd(endRelativePostionX, endValuePositionX);
 

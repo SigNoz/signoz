@@ -97,10 +97,8 @@ export default function ConnectionStatus(): JSX.Element {
 		'query-key-onboarding-status',
 	);
 
-	const [
-		shouldRetryOnboardingCall,
-		setShouldRetryOnboardingCall,
-	] = useState<boolean>(false);
+	const [shouldRetryOnboardingCall, setShouldRetryOnboardingCall] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		// runs only when the caller is coming from 'kafka' i.e. coming from Messaging Queues - setup helper

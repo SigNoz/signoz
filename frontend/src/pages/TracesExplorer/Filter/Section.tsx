@@ -82,7 +82,7 @@ export function Section(props: SectionProps): JSX.Element {
 										/>
 									),
 									label: AllTraceFilterKeyValue[panelName],
-							  }
+								}
 							: {
 									key: panelName,
 									children: (
@@ -94,7 +94,7 @@ export function Section(props: SectionProps): JSX.Element {
 										/>
 									),
 									label: AllTraceFilterKeyValue[panelName],
-							  },
+								},
 					]}
 				/>
 				<Button

@@ -20,10 +20,8 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 	const { user } = useAppContext();
 
 	const { searchQuery, onSearchChange } = props;
-	const [
-		isRequestIntegrationDialogOpen,
-		setIsRequestIntegrationDialogOpen,
-	] = useState(false);
+	const [isRequestIntegrationDialogOpen, setIsRequestIntegrationDialogOpen] =
+		useState(false);
 
 	const [
 		isSubmittingRequestForIntegration,
@@ -32,9 +30,8 @@ function IntegrationsHeader(props: IntegrationsHeaderProps): JSX.Element {
 
 	const [requestedIntegrationName, setRequestedIntegrationName] = useState('');
 
-	const isGetStartedWithCloudAllowed = routePermission.GET_STARTED_WITH_CLOUD.includes(
-		user.role,
-	);
+	const isGetStartedWithCloudAllowed =
+		routePermission.GET_STARTED_WITH_CLOUD.includes(user.role);
 
 	const handleRequestIntegrationSubmit = async (): Promise<void> => {
 		try {

@@ -32,10 +32,8 @@ function TraceDetailsV2(): JSX.Element {
 			isUncollapsed: urlQuery.get('spanId') !== '',
 		}),
 	);
-	const [
-		traceFlamegraphStatsWidth,
-		setTraceFlamegraphStatsWidth,
-	] = useState<number>(450);
+	const [traceFlamegraphStatsWidth, setTraceFlamegraphStatsWidth] =
+		useState<number>(450);
 	const [isSpanDetailsDocked, setIsSpanDetailsDocked] = useState<boolean>(false);
 	const [selectedSpan, setSelectedSpan] = useState<Span>();
 

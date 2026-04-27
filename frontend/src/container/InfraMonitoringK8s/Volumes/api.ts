@@ -109,7 +109,7 @@ export const getK8sVolumesList = async (
 							[] as typeof basePayload.filters.items,
 						),
 					},
-			  }
+				}
 			: basePayload;
 
 		const response = await axios.post('/pvcs/list', requestProps, {

@@ -110,8 +110,8 @@ export class UPlotAxisBuilder extends ConfigBuilder<AxisProps, Axis> {
 		return scaleKey === 'x'
 			? this.buildXAxisValuesFormatter()
 			: scaleKey === 'y'
-			? this.buildYAxisValuesFormatter()
-			: undefined;
+				? this.buildYAxisValuesFormatter()
+				: undefined;
 	}
 
 	/**

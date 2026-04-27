@@ -62,12 +62,10 @@ function GeneralSettings({
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
 
-	const [postApiLoadingMetrics, setPostApiLoadingMetrics] = useState<boolean>(
-		false,
-	);
-	const [postApiLoadingTraces, setPostApiLoadingTraces] = useState<boolean>(
-		false,
-	);
+	const [postApiLoadingMetrics, setPostApiLoadingMetrics] =
+		useState<boolean>(false);
+	const [postApiLoadingTraces, setPostApiLoadingTraces] =
+		useState<boolean>(false);
 	const [postApiLoadingLogs, setPostApiLoadingLogs] = useState<boolean>(false);
 
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
@@ -79,9 +77,8 @@ function GeneralSettings({
 		tracesTtlValuesPayload,
 	);
 
-	const [logsCurrentTTLValues, setLogsCurrentTTLValues] = useState(
-		logsTtlValuesPayload,
-	);
+	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
+		useState(logsTtlValuesPayload);
 
 	const { user, activeLicense } = useAppContext();
 
@@ -90,31 +87,19 @@ function GeneralSettings({
 		user.role,
 	);
 
-	const [
-		metricsTotalRetentionPeriod,
-		setMetricsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		metricsS3RetentionPeriod,
-		setMetricsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesTotalRetentionPeriod,
-		setTracesTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesS3RetentionPeriod,
-		setTracesS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
-	const [
-		logsTotalRetentionPeriod,
-		setLogsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		logsS3RetentionPeriod,
-		setLogsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [logsTotalRetentionPeriod, setLogsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [logsS3RetentionPeriod, setLogsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
 	useEffect(() => {
 		if (metricsCurrentTTLValues) {

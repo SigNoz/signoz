@@ -22,15 +22,8 @@ interface SpanLengthProps {
 }
 
 function Span(props: SpanLengthProps): JSX.Element {
-	const {
-		width,
-		leftOffset,
-		bgColor,
-		inMsCount,
-		startTime,
-		name,
-		globalStart,
-	} = props;
+	const { width, leftOffset, bgColor, inMsCount, startTime, name, globalStart } =
+		props;
 	const isDarkMode = useIsDarkMode();
 	const { time, timeUnitName } = convertTimeToRelevantUnit(inMsCount);
 

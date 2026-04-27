@@ -44,12 +44,8 @@ import {
 import './WorkspaceLocked.styles.scss';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const {
-		user,
-		isFetchingActiveLicense,
-		trialInfo,
-		activeLicense,
-	} = useAppContext();
+	const { user, isFetchingActiveLicense, trialInfo, activeLicense } =
+		useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 	const { safeNavigate } = useSafeNavigate();

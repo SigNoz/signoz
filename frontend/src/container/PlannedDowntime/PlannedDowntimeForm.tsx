@@ -3,7 +3,6 @@ import { CheckOutlined } from '@ant-design/icons';
 import {
 	Button,
 	DatePicker,
-	Divider,
 	Form,
 	FormInstance,
 	Input,
@@ -164,7 +163,7 @@ export function PlannedDowntimeForm(
 									values.timezone,
 									shouldKeepLocalTime,
 								),
-						  )
+							)
 						: undefined,
 					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
@@ -216,7 +215,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
-							  )
+								)
 							: undefined,
 						startTime: handleTimeConversion(
 							values.startTime,
@@ -228,7 +227,7 @@ export function PlannedDowntimeForm(
 							? undefined
 							: values.recurrence?.repeatOn,
 						repeatType: values.recurrence?.repeatType,
-				  };
+					};
 
 		const payloadValues = {
 			...values,
@@ -442,11 +441,9 @@ export function PlannedDowntimeForm(
 			centered
 			open={isOpen}
 			className="createDowntimeModal"
-			width={384}
 			onCancel={handleCancel}
 			footer={null}
 		>
-			<Divider plain />
 			<Form<PlannedDowntimeFormData>
 				name={initialValues.editMode ? 'edit-form' : 'create-form'}
 				form={form}

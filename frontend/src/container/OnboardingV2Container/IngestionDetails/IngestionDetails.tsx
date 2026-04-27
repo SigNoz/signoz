@@ -5,7 +5,8 @@ import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { DOCS_BASE_URL } from 'constants/app';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowUpRight, Copy, Info, Key, TriangleAlert } from 'lucide-react';
 import { withBasePath } from 'utils/basePath';
@@ -39,10 +40,8 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [
-		firstIngestionKey,
-		setFirstIngestionKey,
-	] = useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
+	const [firstIngestionKey, setFirstIngestionKey] =
+		useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
 
 	const {
 		data: ingestionKeys,
@@ -60,6 +59,8 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
 	} = useGetGlobalConfig();
+
+	const globalConfigApiError = convertToApiError(globalConfigError);
 
 	const handleCopyKey = (text: string): void => {
 		handleCopyToClipboard(text);
@@ -157,11 +158,11 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 													title={
 														<div className="ingestion-url-error-content">
 															<Typography.Text className="ingestion-url-error-code">
-																{globalConfigError?.getErrorCode()}
+																{globalConfigApiError?.getErrorCode()}
 															</Typography.Text>
 
 															<Typography.Text className="ingestion-url-error-message">
-																{globalConfigError?.getErrorMessage()}
+																{globalConfigApiError?.getErrorMessage()}
 															</Typography.Text>
 														</div>
 													}

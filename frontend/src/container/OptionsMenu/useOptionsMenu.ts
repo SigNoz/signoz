@@ -74,10 +74,8 @@ const useOptionsMenu = ({
 		[dataSource],
 	);
 
-	const {
-		query: optionsQuery,
-		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const { query: optionsQuery, redirectWithQuery: redirectWithOptionsData } =
+		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 
 	const initialQueriesV5 = useMemo(
 		() =>
@@ -190,15 +188,14 @@ const useOptionsMenu = ({
 		).flat();
 		if (searchedAttributesDataList.length) {
 			if (dataSource === DataSource.LOGS) {
-				const logsSelectedColumns: TelemetryFieldKey[] = defaultLogsSelectedColumns.map(
-					(e) => ({
+				const logsSelectedColumns: TelemetryFieldKey[] =
+					defaultLogsSelectedColumns.map((e) => ({
 						...e,
 						name: e.name,
 						signal: e.signal as SignalType,
 						fieldContext: e.fieldContext as FieldContext,
 						fieldDataType: e.fieldDataType as FieldDataType,
-					}),
-				);
+					}));
 				return [
 					...logsSelectedColumns,
 					...searchedAttributesDataList

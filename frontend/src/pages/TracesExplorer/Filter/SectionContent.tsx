@@ -53,7 +53,11 @@ export function SectionBody(props: SectionBodyProps): JSX.Element {
 		setSearchText(searchText as string);
 	}, 500);
 
-	const { isFetching: fetching, keys, results: res } = useGetAggregateValues({
+	const {
+		isFetching: fetching,
+		keys,
+		results: res,
+	} = useGetAggregateValues({
 		value: type,
 		searchText,
 	});

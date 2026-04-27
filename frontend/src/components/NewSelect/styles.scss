@@ -16,7 +16,7 @@ $custom-border-color: #2c3044;
 	}
 
 	.ant-select-selection-placeholder {
-		color: color-mix(in srgb, var(--border) 45%, transparent);
+		color: color-mix(in srgb, var(--l2-foreground) 45%, transparent);
 	}
 
 	// Base styles are for dark mode
@@ -48,10 +48,6 @@ $custom-border-color: #2c3044;
 			visibility: visible !important;
 			pointer-events: none;
 			z-index: 2;
-
-			.lightMode & {
-				color: rgba(0, 0, 0, 0.85) !important;
-			}
 		}
 
 		&.ant-select-focused .ant-select-selection-placeholder {
@@ -67,10 +63,6 @@ $custom-border-color: #2c3044;
 		color: var(--l2-foreground);
 		z-index: 1;
 		pointer-events: none;
-
-		.lightMode & {
-			color: rgba(0, 0, 0, 0.85);
-		}
 	}
 
 	.ant-select-selector {
@@ -114,7 +106,7 @@ $custom-border-color: #2c3044;
 	}
 
 	.ant-select-selection-placeholder {
-		color: color-mix(in srgb, var(--border) 45%, transparent);
+		color: color-mix(in srgb, var(--l2-foreground) 45%, transparent);
 	}
 
 	// Customize tags in multiselect (dark mode by default)
@@ -180,7 +172,9 @@ $custom-border-color: #2c3044;
 .custom-multiselect-dropdown-container {
 	z-index: 1050 !important;
 	padding: 0;
-	box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.5), 0 6px 16px 0 rgba(0, 0, 0, 0.4),
+	box-shadow:
+		0 3px 6px -4px rgba(0, 0, 0, 0.5),
+		0 6px 16px 0 rgba(0, 0, 0, 0.4),
 		0 9px 28px 8px rgba(0, 0, 0, 0.3);
 	background-color: var(--l2-background);
 	border: 1px solid var(--l1-border);
@@ -215,7 +209,7 @@ $custom-border-color: #2c3044;
 	.empty-message {
 		padding: 12px;
 		text-align: center;
-		color: color-mix(in srgb, var(--border) 45%, transparent);
+		color: color-mix(in srgb, var(--l1-foreground) 45%, transparent);
 	}
 }
 
@@ -573,7 +567,7 @@ $custom-border-color: #2c3044;
 	.empty-message {
 		padding: 12px;
 		text-align: center;
-		color: color-mix(in srgb, var(--border) 45%, transparent);
+		color: color-mix(in srgb, var(--l1-foreground) 45%, transparent);
 	}
 
 	.status-message {
@@ -804,8 +798,10 @@ $custom-border-color: #2c3044;
 	.custom-multiselect-dropdown-container {
 		background-color: var(--l1-background);
 		border: 1px solid var(--l1-border);
-		box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
-			0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+		box-shadow:
+			0 3px 6px -4px rgba(0, 0, 0, 0.12),
+			0 6px 16px 0 rgba(0, 0, 0, 0.08),
+			0 9px 28px 8px rgba(0, 0, 0, 0.05);
 
 		.empty-message {
 			color: var(--l2-foreground);
@@ -976,11 +972,9 @@ $custom-border-color: #2c3044;
 			font-weight: 500;
 			z-index: 2;
 			pointer-events: none;
-			transition: opacity 0.2s ease, visibility 0.2s ease;
-
-			.lightMode & {
-				color: rgba(0, 0, 0, 0.85);
-			}
+			transition:
+				opacity 0.2s ease,
+				visibility 0.2s ease;
 		}
 
 		&:focus-within .all-text {

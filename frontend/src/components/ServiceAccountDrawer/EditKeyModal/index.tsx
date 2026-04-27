@@ -89,31 +89,29 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 		},
 	});
 
-	const {
-		mutate: revokeKey,
-		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Key revoked successfully');
-				setIsRevokeConfirmOpen(false);
-				await setEditKeyId(null);
-				if (selectedAccountId) {
-					await invalidateListServiceAccountKeys(queryClient, {
-						id: selectedAccountId,
-					});
-				}
+	const { mutate: revokeKey, isLoading: isRevoking } =
+		useRevokeServiceAccountKey({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Key revoked successfully');
+					setIsRevokeConfirmOpen(false);
+					await setEditKeyId(null);
+					if (selectedAccountId) {
+						await invalidateListServiceAccountKeys(queryClient, {
+							id: selectedAccountId,
+						});
+					}
+				},
+				// eslint-disable-next-line sonarjs/no-identical-functions
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			// eslint-disable-next-line sonarjs/no-identical-functions
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	function handleClose(): void {
 		setEditKeyId(null);

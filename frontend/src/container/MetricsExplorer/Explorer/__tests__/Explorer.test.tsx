@@ -246,10 +246,10 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
@@ -325,10 +325,10 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
@@ -366,10 +366,10 @@ describe('Explorer', () => {
 			},
 		};
 
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 			...mockUseQueryBuilderData,
 			stagedQuery: mockStagedQueryWithMultipleQueries,
-		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+		} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
@@ -444,7 +444,7 @@ describe('Explorer', () => {
 					},
 				],
 			};
-			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 				...mockUseQueryBuilderData,
 				stagedQuery: {
 					...initialQueriesMap[DataSource.METRICS],
@@ -453,7 +453,7 @@ describe('Explorer', () => {
 						queryData: [mockQueryData],
 					},
 				},
-			} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+			} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 			renderExplorer();
 
@@ -479,7 +479,7 @@ describe('Explorer', () => {
 					key: 'system_cpu_usage',
 				},
 			};
-			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 				...mockUseQueryBuilderData,
 				stagedQuery: {
 					...initialQueriesMap[DataSource.METRICS],
@@ -488,7 +488,7 @@ describe('Explorer', () => {
 						queryData: [mockQueryData],
 					},
 				},
-			} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+			} as Partial<QueryBuilderContextType> as QueryBuilderContextType);
 
 			renderExplorer();
 

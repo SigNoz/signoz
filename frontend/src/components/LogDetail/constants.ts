@@ -5,7 +5,7 @@ export const VIEW_TYPES = {
 	INFRAMETRICS: 'INFRAMETRICS',
 } as const;
 
-export type VIEWS = typeof VIEW_TYPES[keyof typeof VIEW_TYPES];
+export type VIEWS = (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES];
 
 export const RESOURCE_KEYS = {
 	CLUSTER_NAME: 'k8s.cluster.name',
