@@ -157,7 +157,7 @@ function DashboardsAndAlertsPopover({
 					gap: '4px',
 				}}
 			>
-				<Typography.Link>{pluralize('Dashboard & Alert', totalDashboards + totalAlerts)}</Typography.Link>
+				<Typography.Link>{pluralize('Dashboard/Alert', totalAlerts + totalDashboards)}</Typography.Link>
 			</div>
 		</Dropdown>
 	);
