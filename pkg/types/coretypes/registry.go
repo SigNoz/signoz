@@ -2,6 +2,7 @@ package coretypes
 
 import (
 	"slices"
+	"sort"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
@@ -36,6 +37,8 @@ var (
 	ResourceRole                                  = NewResourceRole()
 	ResourceServiceAccount                        = NewResourceServiceAccount()
 	ResourceUser                                  = NewResourceUser()
+	ResourceMetaResourceRole                      = NewResourceMetaResource(KindRole)
+	ResoureceMetaResourcesRole                    = NewResourceMetaResources(KindRole)
 	ResourceMetaResourceDashboard                 = NewResourceMetaResource(KindDashboard)
 	ResourceMetaResourcesDashboard                = NewResourceMetaResources(KindDashboard)
 	ResourceMetaResourcePublicDashboard           = NewResourceMetaResource(KindPublicDashboard)
@@ -59,10 +62,12 @@ var registry = map[Type]map[Kind]Resource{
 		KindUser: ResourceUser,
 	},
 	TypeMetaResource: {
+		KindRole:            ResourceMetaResourceRole,
 		KindDashboard:       ResourceMetaResourceDashboard,
 		KindPublicDashboard: ResourceMetaResourcePublicDashboard,
 	},
 	TypeMetaResources: {
+		KindRole:            ResoureceMetaResourcesRole,
 		KindDashboard:       ResourceMetaResourcesDashboard,
 		KindPublicDashboard: ResourceMetaResourcesPublicDashboard,
 	},
@@ -88,7 +93,8 @@ func MustNewResourceFromTypeAndKind(typed Type, kind Kind) Resource {
 }
 
 // VerbsForTypes returns the inverse of typeToVerbs: verb → list of types that
-// support it. Used by /api/v1/authz/resources to publish the authz schema.
+// support it. Each verb's type list is sorted alphabetically so consumers
+// (notably the `generate authz` command) produce stable output.
 func VerbsForTypes() map[Verb][]Type {
 	out := make(map[Verb][]Type)
 	for typed, verbs := range typeToVerbs {
@@ -96,6 +102,28 @@ func VerbsForTypes() map[Verb][]Type {
 			out[verb] = append(out[verb], typed)
 		}
 	}
+	for _, types := range out {
+		sort.Slice(types, func(i, j int) bool { return types[i].StringValue() < types[j].StringValue() })
+	}
+	return out
+}
+
+// ListResources returns every (Type, Kind) pair declared in the registry,
+// sorted by type then kind. Used by `generate authz` to emit the static
+// authz schema consumed by the frontend.
+func ListResources() []*GettableResource {
+	out := make([]*GettableResource, 0)
+	for typed, kindMap := range registry {
+		for kind := range kindMap {
+			out = append(out, &GettableResource{Type: typed, Kind: kind})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Type != out[j].Type {
+			return out[i].Type.StringValue() < out[j].Type.StringValue()
+		}
+		return out[i].Kind.String() < out[j].Kind.String()
+	})
 	return out
 }
 
