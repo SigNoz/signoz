@@ -3,7 +3,6 @@ import { CheckOutlined } from '@ant-design/icons';
 import {
 	Button,
 	DatePicker,
-	Divider,
 	Form,
 	FormInstance,
 	Input,
@@ -442,11 +441,9 @@ export function PlannedDowntimeForm(
 			centered
 			open={isOpen}
 			className="createDowntimeModal"
-			width={384}
 			onCancel={handleCancel}
 			footer={null}
 		>
-			<Divider plain />
 			<Form<PlannedDowntimeFormData>
 				name={initialValues.editMode ? 'edit-form' : 'create-form'}
 				form={form}

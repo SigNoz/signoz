@@ -147,12 +147,12 @@
 	left: 50%;
 	width: 4px;
 	transform: translateX(-50%);
+	background: var(--l2-background);
 	opacity: 1;
 	pointer-events: none;
 	transition:
 		background 120ms ease,
 		width 120ms ease;
-	background: transparent;
 }
 
 .cursorColResize:hover .tanstackResizeHandleLine {

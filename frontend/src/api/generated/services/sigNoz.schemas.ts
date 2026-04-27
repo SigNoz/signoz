@@ -3701,10 +3701,7 @@ export interface PromotetypesPromotePathDTO {
 }
 
 export interface PromotetypesWrappedIndexDTO {
-	/**
-	 * @type string
-	 */
-	column_type?: string;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type integer
 	 */

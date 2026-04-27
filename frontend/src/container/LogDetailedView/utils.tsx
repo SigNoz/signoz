@@ -1,5 +1,6 @@
 import Convert from 'ansi-to-html';
 import type { DataNode } from 'antd/es/tree';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
@@ -34,13 +35,32 @@ export const recursiveParseJSON = (obj: string): Record<string, unknown> => {
 	}
 };
 
-export const computeDataNode = (
-	key: string,
-	valueIsArray: boolean,
-	value: unknown,
-	nodeKey: string,
-	parentIsArray: boolean,
-): DataNode => ({
+type JsonToDataNodesOptions = {
+	parentKey?: string;
+	parentIsArray?: boolean;
+	isBodyJsonQueryEnabled?: boolean;
+	handleChangeSelectedView?: ChangeViewFunctionType;
+};
+
+type ComputeDataNodeOptions = {
+	key: string;
+	valueIsArray: boolean;
+	value: unknown;
+	nodeKey: string;
+	parentIsArray: boolean;
+	isBodyJsonQueryEnabled?: boolean;
+	handleChangeSelectedView?: ChangeViewFunctionType;
+};
+
+export const computeDataNode = ({
+	key,
+	valueIsArray,
+	value,
+	nodeKey,
+	parentIsArray,
+	isBodyJsonQueryEnabled = false,
+	handleChangeSelectedView,
+}: ComputeDataNodeOptions): DataNode => ({
 	key: uniqueId(),
 	title: (
 		<BodyTitleRenderer
@@ -48,20 +68,30 @@ export const computeDataNode = (
 			nodeKey={nodeKey}
 			value={value}
 			parentIsArray={parentIsArray}
+			handleChangeSelectedView={handleChangeSelectedView}
 		/>
 	),
-	children: jsonToDataNodes(
-		value as Record<string, unknown>,
-		valueIsArray ? `${nodeKey}[*]` : nodeKey,
-		valueIsArray,
-	),
+	children: jsonToDataNodes(value as Record<string, unknown>, {
+		parentKey: valueIsArray
+			? `${nodeKey}${isBodyJsonQueryEnabled ? '[]' : '[*]'}`
+			: nodeKey,
+		parentIsArray: valueIsArray,
+		isBodyJsonQueryEnabled,
+		handleChangeSelectedView,
+	}),
 });
 
 export function jsonToDataNodes(
 	json: Record<string, unknown>,
-	parentKey = '',
-	parentIsArray = false,
+	options: JsonToDataNodesOptions = {},
 ): DataNode[] {
+	const {
+		parentKey = '',
+		parentIsArray = false,
+		isBodyJsonQueryEnabled = false,
+		handleChangeSelectedView,
+	} = options;
+
 	return Object.entries(json).map(([key, value]) => {
 		let nodeKey = parentKey || key;
 		if (parentIsArray) {
@@ -74,7 +104,15 @@ export function jsonToDataNodes(
 
 		if (parentIsArray) {
 			if (typeof value === 'object' && value !== null) {
-				return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
+				return computeDataNode({
+					key,
+					valueIsArray,
+					value,
+					nodeKey,
+					parentIsArray,
+					isBodyJsonQueryEnabled,
+					handleChangeSelectedView,
+				});
 			}
 
 			return {
@@ -85,14 +123,31 @@ export function jsonToDataNodes(
 						nodeKey={nodeKey}
 						value={value}
 						parentIsArray={parentIsArray}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				),
-				children: jsonToDataNodes({}, nodeKey, valueIsArray),
+				children: jsonToDataNodes(
+					{},
+					{
+						parentKey: nodeKey,
+						parentIsArray: valueIsArray,
+						isBodyJsonQueryEnabled,
+						handleChangeSelectedView,
+					},
+				),
 			};
 		}
 
 		if (typeof value === 'object' && value !== null) {
-			return computeDataNode(key, valueIsArray, value, nodeKey, parentIsArray);
+			return computeDataNode({
+				key,
+				valueIsArray,
+				value,
+				nodeKey,
+				parentIsArray,
+				isBodyJsonQueryEnabled,
+				handleChangeSelectedView,
+			});
 		}
 		return {
 			key: uniqueId(),
@@ -102,6 +157,7 @@ export function jsonToDataNodes(
 					nodeKey={nodeKey}
 					value={value}
 					parentIsArray={parentIsArray}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 			),
 		};
@@ -123,6 +179,7 @@ export function flattenObject(obj: AnyObject, prefix = ''): AnyObject {
 export const generateFieldKeyForArray = (
 	fieldKey: string,
 	dataType: DataTypes,
+	isBodyJsonQueryEnabled = false,
 ): string => {
 	let lastDotIndex = fieldKey.lastIndexOf('.');
 	let resultNodeKey = fieldKey;
@@ -137,6 +194,16 @@ export const generateFieldKeyForArray = (
 		if (lastDotIndex !== -1) {
 			newResultNodeKey = resultNodeKey.substring(0, lastDotIndex);
 		}
+	}
+
+	// When filtering for a value inside an array, the query builder expects the
+	// last array segment to be referenced without the trailing `[]`.
+	// Examples:
+	// - has(body.config.features, 'fast_checkout')
+	// - has(body.config.features[].items, 'pen')
+	// - has(body.config.features[].items[].variants, 'ballpen')
+	if (isBodyJsonQueryEnabled && newResultNodeKey.endsWith('[]')) {
+		newResultNodeKey = newResultNodeKey.slice(0, -2);
 	}
 	return `body.${newResultNodeKey}`;
 };

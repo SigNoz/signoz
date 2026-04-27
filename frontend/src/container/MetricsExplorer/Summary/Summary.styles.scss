@@ -230,29 +230,6 @@
 	}
 }
 
-.lightMode {
-	.metrics-table-container {
-		.ant-table {
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
-		}
-
-		.ant-pagination {
-			.ant-pagination-item {
-				&-active {
-					background: var(--primary-background);
-					border-color: var(--bg-robin-500);
-
-					a {
-						color: var(--l1-foreground) !important;
-					}
-				}
-			}
-		}
-	}
-}
-
 .metric-type-renderer {
 	border-radius: 50px;
 	max-height: 24px;

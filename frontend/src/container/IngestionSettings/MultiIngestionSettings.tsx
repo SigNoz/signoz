@@ -48,7 +48,8 @@ import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
@@ -357,6 +358,8 @@ function MultiIngestionSettings(): JSX.Element {
 		isError: isErrorGlobalConfig,
 		error: globalConfigError,
 	} = useGetGlobalConfig();
+
+	const globalConfigApiError = convertToApiError(globalConfigError);
 
 	const { mutate: createIngestionKey, isLoading: isLoadingCreateAPIKey } =
 		useCreateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
@@ -966,7 +969,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 									<div className="ingestion-key-value">
 										<Typography.Text>
-											{APIKey?.value?.substring(0, 2)}********
+											{APIKey?.value?.slice(0, 2)}********
 											{APIKey?.value
 												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
 												?.trim()}
@@ -1604,11 +1607,11 @@ function MultiIngestionSettings(): JSX.Element {
 									title={
 										<div className="ingestion-url-error-content">
 											<Typography.Text className="ingestion-url-error-code">
-												{globalConfigError?.getErrorCode()}
+												{globalConfigApiError?.getErrorCode()}
 											</Typography.Text>
 
 											<Typography.Text className="ingestion-url-error-message">
-												{globalConfigError?.getErrorMessage()}
+												{globalConfigApiError?.getErrorMessage()}
 											</Typography.Text>
 										</div>
 									}
