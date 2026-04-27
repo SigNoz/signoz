@@ -8,7 +8,59 @@ export default {
 				type: 'anonymous',
 			},
 			{
+				kind: 'apdex-setting',
+				type: 'metaresource',
+			},
+			{
+				kind: 'auth-domain',
+				type: 'metaresource',
+			},
+			{
+				kind: 'cloud-integration',
+				type: 'metaresource',
+			},
+			{
+				kind: 'cloud-integration-service',
+				type: 'metaresource',
+			},
+			{
 				kind: 'dashboard',
+				type: 'metaresource',
+			},
+			{
+				kind: 'factor-api-key',
+				type: 'metaresource',
+			},
+			{
+				kind: 'factor-password',
+				type: 'metaresource',
+			},
+			{
+				kind: 'ingestion-key',
+				type: 'metaresource',
+			},
+			{
+				kind: 'ingestion-limit',
+				type: 'metaresource',
+			},
+			{
+				kind: 'license',
+				type: 'metaresource',
+			},
+			{
+				kind: 'notification-channel',
+				type: 'metaresource',
+			},
+			{
+				kind: 'org-preference',
+				type: 'metaresource',
+			},
+			{
+				kind: 'pipeline',
+				type: 'metaresource',
+			},
+			{
+				kind: 'planned-maintenance',
 				type: 'metaresource',
 			},
 			{
@@ -16,11 +68,95 @@ export default {
 				type: 'metaresource',
 			},
 			{
+				kind: 'quick-filter',
+				type: 'metaresource',
+			},
+			{
 				kind: 'role',
 				type: 'metaresource',
 			},
 			{
+				kind: 'route-policy',
+				type: 'metaresource',
+			},
+			{
+				kind: 'rule',
+				type: 'metaresource',
+			},
+			{
+				kind: 'saved-view',
+				type: 'metaresource',
+			},
+			{
+				kind: 'session',
+				type: 'metaresource',
+			},
+			{
+				kind: 'trace-funnel',
+				type: 'metaresource',
+			},
+			{
+				kind: 'ttl-setting',
+				type: 'metaresource',
+			},
+			{
+				kind: 'user-preference',
+				type: 'metaresource',
+			},
+			{
+				kind: 'apdex-setting',
+				type: 'metaresources',
+			},
+			{
+				kind: 'auth-domain',
+				type: 'metaresources',
+			},
+			{
+				kind: 'cloud-integration',
+				type: 'metaresources',
+			},
+			{
+				kind: 'cloud-integration-service',
+				type: 'metaresources',
+			},
+			{
 				kind: 'dashboard',
+				type: 'metaresources',
+			},
+			{
+				kind: 'factor-api-key',
+				type: 'metaresources',
+			},
+			{
+				kind: 'factor-password',
+				type: 'metaresources',
+			},
+			{
+				kind: 'ingestion-key',
+				type: 'metaresources',
+			},
+			{
+				kind: 'ingestion-limit',
+				type: 'metaresources',
+			},
+			{
+				kind: 'license',
+				type: 'metaresources',
+			},
+			{
+				kind: 'notification-channel',
+				type: 'metaresources',
+			},
+			{
+				kind: 'org-preference',
+				type: 'metaresources',
+			},
+			{
+				kind: 'pipeline',
+				type: 'metaresources',
+			},
+			{
+				kind: 'planned-maintenance',
 				type: 'metaresources',
 			},
 			{
@@ -28,7 +164,39 @@ export default {
 				type: 'metaresources',
 			},
 			{
+				kind: 'quick-filter',
+				type: 'metaresources',
+			},
+			{
 				kind: 'role',
+				type: 'metaresources',
+			},
+			{
+				kind: 'route-policy',
+				type: 'metaresources',
+			},
+			{
+				kind: 'rule',
+				type: 'metaresources',
+			},
+			{
+				kind: 'saved-view',
+				type: 'metaresources',
+			},
+			{
+				kind: 'session',
+				type: 'metaresources',
+			},
+			{
+				kind: 'trace-funnel',
+				type: 'metaresources',
+			},
+			{
+				kind: 'ttl-setting',
+				type: 'metaresources',
+			},
+			{
+				kind: 'user-preference',
 				type: 'metaresources',
 			},
 			{
