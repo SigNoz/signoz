@@ -52,9 +52,10 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 		[response],
 	);
 
-	const traceStartTime = useMemo(() => response[0].startTimestampMillis, [
-		response,
-	]);
+	const traceStartTime = useMemo(
+		() => response[0].startTimestampMillis,
+		[response],
+	);
 
 	const traceEndTime = useMemo(() => response[0].endTimestampMillis, [response]);
 

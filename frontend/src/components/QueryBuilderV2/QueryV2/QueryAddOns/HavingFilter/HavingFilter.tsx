@@ -50,8 +50,8 @@ const havingOperators = [
 		value: 'IN',
 	},
 	{
-		label: 'NOT_IN',
-		value: 'NOT_IN',
+		label: 'NOT IN',
+		value: 'NOT IN',
 	},
 ];
 
@@ -129,7 +129,7 @@ function HavingFilter({
 				const operator = havingOperators[j];
 				newOptions.push({
 					label: `${opt.func}(${opt.arg}) ${operator.label}`,
-					value: `${opt.func}(${opt.arg}) ${operator.label} `,
+					value: `${opt.func}(${opt.arg}) ${operator.value} `,
 					apply: (
 						view: EditorView,
 						completion: { label: string; value: string },

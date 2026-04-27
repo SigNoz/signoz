@@ -13,10 +13,8 @@ import { PanelTypesWithData } from './menuItems';
 import './PanelTypeSelectionModal.styles.scss';
 
 function PanelTypeSelectionModal(): JSX.Element {
-	const {
-		isPanelTypeSelectionModalOpen,
-		setIsPanelTypeSelectionModalOpen,
-	} = usePanelTypeSelectionModalStore();
+	const { isPanelTypeSelectionModalOpen, setIsPanelTypeSelectionModalOpen } =
+		usePanelTypeSelectionModalStore();
 
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();

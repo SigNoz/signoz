@@ -36,19 +36,14 @@ function FunnelConfiguration({
 }: FunnelConfigurationProps): JSX.Element {
 	const { hasEditPermission } = useAppContext();
 	const { triggerSave } = useFunnelContext();
-	const {
-		isPopoverOpen,
-		setIsPopoverOpen,
-		steps,
-		isSaving,
-	} = useFunnelConfiguration({
-		funnel,
-		triggerAutoSave: triggerAutoSave || triggerSave,
-		showNotifications: showNotifications || triggerSave,
-	});
-	const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState<boolean>(
-		false,
-	);
+	const { isPopoverOpen, setIsPopoverOpen, steps, isSaving } =
+		useFunnelConfiguration({
+			funnel,
+			triggerAutoSave: triggerAutoSave || triggerSave,
+			showNotifications: showNotifications || triggerSave,
+		});
+	const [isDescriptionModalOpen, setIsDescriptionModalOpen] =
+		useState<boolean>(false);
 
 	const handleDescriptionModalClose = (): void => {
 		setIsDescriptionModalOpen(false);
@@ -67,8 +62,8 @@ function FunnelConfiguration({
 								!hasEditPermission
 									? 'You need editor or admin access to edit funnel description'
 									: funnel?.description
-									? 'Edit funnel description'
-									: 'Add funnel description'
+										? 'Edit funnel description'
+										: 'Add funnel description'
 							}
 						>
 							<Button
@@ -107,6 +102,7 @@ function FunnelConfiguration({
 						)}
 						<div className="funnel-configuration__steps">
 							{!isTraceDetailsPage && <StepsHeader />}
+
 							<StepsContent isTraceDetailsPage={isTraceDetailsPage} span={span} />
 						</div>
 					</>

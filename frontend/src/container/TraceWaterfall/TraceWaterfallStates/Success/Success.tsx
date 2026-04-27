@@ -458,9 +458,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		}
 	};
 
-	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] = useState(
-		false,
-	);
+	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] =
+		useState(false);
 	const [selectedSpanToAddToFunnel, setSelectedSpanToAddToFunnel] = useState<
 		Span | undefined
 	>(undefined);

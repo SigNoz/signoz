@@ -167,7 +167,11 @@
 				color: var(--l1-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+				font-feature-settings:
+					'case' on,
+					'cpsp' on,
+					'dlig' on,
+					'salt' on;
 				font-family: Inter;
 				font-size: 20px;
 				font-style: normal;

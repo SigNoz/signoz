@@ -12,6 +12,7 @@ var (
 	// AWS regions.
 	AWSRegionAFSouth1     = CloudProviderRegion{valuer.NewString("af-south-1")}     // Africa (Cape Town).
 	AWSRegionAPEast1      = CloudProviderRegion{valuer.NewString("ap-east-1")}      // Asia Pacific (Hong Kong).
+	AWSRegionAPEast2      = CloudProviderRegion{valuer.NewString("ap-east-2")}      // Asia Pacific (Taipei).
 	AWSRegionAPNortheast1 = CloudProviderRegion{valuer.NewString("ap-northeast-1")} // Asia Pacific (Tokyo).
 	AWSRegionAPNortheast2 = CloudProviderRegion{valuer.NewString("ap-northeast-2")} // Asia Pacific (Seoul).
 	AWSRegionAPNortheast3 = CloudProviderRegion{valuer.NewString("ap-northeast-3")} // Asia Pacific (Osaka).
@@ -21,6 +22,9 @@ var (
 	AWSRegionAPSoutheast2 = CloudProviderRegion{valuer.NewString("ap-southeast-2")} // Asia Pacific (Sydney).
 	AWSRegionAPSoutheast3 = CloudProviderRegion{valuer.NewString("ap-southeast-3")} // Asia Pacific (Jakarta).
 	AWSRegionAPSoutheast4 = CloudProviderRegion{valuer.NewString("ap-southeast-4")} // Asia Pacific (Melbourne).
+	AWSRegionAPSoutheast5 = CloudProviderRegion{valuer.NewString("ap-southeast-5")} // Asia Pacific (Malaysia).
+	AWSRegionAPSoutheast6 = CloudProviderRegion{valuer.NewString("ap-southeast-6")} // Asia Pacific (New Zealand).
+	AWSRegionAPSoutheast7 = CloudProviderRegion{valuer.NewString("ap-southeast-7")} // Asia Pacific (Thailand).
 	AWSRegionCACentral1   = CloudProviderRegion{valuer.NewString("ca-central-1")}   // Canada (Central).
 	AWSRegionCAWest1      = CloudProviderRegion{valuer.NewString("ca-west-1")}      // Canada West (Calgary).
 	AWSRegionEUCentral1   = CloudProviderRegion{valuer.NewString("eu-central-1")}   // Europe (Frankfurt).
@@ -34,6 +38,7 @@ var (
 	AWSRegionILCentral1   = CloudProviderRegion{valuer.NewString("il-central-1")}   // Israel (Tel Aviv).
 	AWSRegionMECentral1   = CloudProviderRegion{valuer.NewString("me-central-1")}   // Middle East (UAE).
 	AWSRegionMESouth1     = CloudProviderRegion{valuer.NewString("me-south-1")}     // Middle East (Bahrain).
+	AWSRegionMXCentral1   = CloudProviderRegion{valuer.NewString("mx-central-1")}   // Mexico (Central).
 	AWSRegionSAEast1      = CloudProviderRegion{valuer.NewString("sa-east-1")}      // South America (Sao Paulo).
 	AWSRegionUSEast1      = CloudProviderRegion{valuer.NewString("us-east-1")}      // US East (N. Virginia).
 	AWSRegionUSEast2      = CloudProviderRegion{valuer.NewString("us-east-2")}      // US East (Ohio).
@@ -102,11 +107,11 @@ var (
 func Enum() []any {
 	return []any{
 		// AWS regions.
-		AWSRegionAFSouth1, AWSRegionAPEast1, AWSRegionAPNortheast1, AWSRegionAPNortheast2, AWSRegionAPNortheast3,
+		AWSRegionAFSouth1, AWSRegionAPEast1, AWSRegionAPEast2, AWSRegionAPNortheast1, AWSRegionAPNortheast2, AWSRegionAPNortheast3,
 		AWSRegionAPSouth1, AWSRegionAPSouth2, AWSRegionAPSoutheast1, AWSRegionAPSoutheast2, AWSRegionAPSoutheast3,
-		AWSRegionAPSoutheast4, AWSRegionCACentral1, AWSRegionCAWest1, AWSRegionEUCentral1, AWSRegionEUCentral2, AWSRegionEUNorth1,
+		AWSRegionAPSoutheast4, AWSRegionAPSoutheast5, AWSRegionAPSoutheast6, AWSRegionAPSoutheast7, AWSRegionCACentral1, AWSRegionCAWest1, AWSRegionEUCentral1, AWSRegionEUCentral2, AWSRegionEUNorth1,
 		AWSRegionEUSouth1, AWSRegionEUSouth2, AWSRegionEUWest1, AWSRegionEUWest2, AWSRegionEUWest3,
-		AWSRegionILCentral1, AWSRegionMECentral1, AWSRegionMESouth1, AWSRegionSAEast1, AWSRegionUSEast1, AWSRegionUSEast2,
+		AWSRegionILCentral1, AWSRegionMECentral1, AWSRegionMESouth1, AWSRegionMXCentral1, AWSRegionSAEast1, AWSRegionUSEast1, AWSRegionUSEast2,
 		AWSRegionUSWest1, AWSRegionUSWest2,
 		// Azure regions.
 		AzureRegionAustraliaCentral, AzureRegionAustraliaCentral2, AzureRegionAustraliaEast, AzureRegionAustraliaSoutheast,
@@ -127,11 +132,11 @@ func Enum() []any {
 
 var SupportedRegions = map[CloudProviderType][]CloudProviderRegion{
 	CloudProviderTypeAWS: {
-		AWSRegionAFSouth1, AWSRegionAPEast1, AWSRegionAPNortheast1, AWSRegionAPNortheast2, AWSRegionAPNortheast3,
+		AWSRegionAFSouth1, AWSRegionAPEast1, AWSRegionAPEast2, AWSRegionAPNortheast1, AWSRegionAPNortheast2, AWSRegionAPNortheast3,
 		AWSRegionAPSouth1, AWSRegionAPSouth2, AWSRegionAPSoutheast1, AWSRegionAPSoutheast2, AWSRegionAPSoutheast3,
-		AWSRegionAPSoutheast4, AWSRegionCACentral1, AWSRegionCAWest1, AWSRegionEUCentral1, AWSRegionEUCentral2, AWSRegionEUNorth1,
+		AWSRegionAPSoutheast4, AWSRegionAPSoutheast5, AWSRegionAPSoutheast6, AWSRegionAPSoutheast7, AWSRegionCACentral1, AWSRegionCAWest1, AWSRegionEUCentral1, AWSRegionEUCentral2, AWSRegionEUNorth1,
 		AWSRegionEUSouth1, AWSRegionEUSouth2, AWSRegionEUWest1, AWSRegionEUWest2, AWSRegionEUWest3,
-		AWSRegionILCentral1, AWSRegionMECentral1, AWSRegionMESouth1, AWSRegionSAEast1, AWSRegionUSEast1, AWSRegionUSEast2,
+		AWSRegionILCentral1, AWSRegionMECentral1, AWSRegionMESouth1, AWSRegionMXCentral1, AWSRegionSAEast1, AWSRegionUSEast1, AWSRegionUSEast2,
 		AWSRegionUSWest1, AWSRegionUSWest2,
 	},
 	CloudProviderTypeAzure: {
@@ -159,4 +164,14 @@ func validateAWSRegion(region string) error {
 	}
 
 	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid AWS region: %s", region)
+}
+
+func validateAzureRegion(region string) error {
+	for _, r := range SupportedRegions[CloudProviderTypeAzure] {
+		if r.StringValue() == region {
+			return nil
+		}
+	}
+
+	return errors.NewInvalidInputf(ErrCodeInvalidCloudRegion, "invalid Azure region: %s", region)
 }

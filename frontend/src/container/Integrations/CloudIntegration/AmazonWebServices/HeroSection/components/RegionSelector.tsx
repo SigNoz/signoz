@@ -14,15 +14,12 @@ export function RegionSelector({
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
 }): JSX.Element {
-	const {
-		allRegionIds,
-		handleSelectAll,
-		handleRegionSelect,
-	} = useRegionSelection({
-		selectedRegions,
-		setSelectedRegions,
-		setIncludeAllRegions,
-	});
+	const { allRegionIds, handleSelectAll, handleRegionSelect } =
+		useRegionSelection({
+			selectedRegions,
+			setSelectedRegions,
+			setIncludeAllRegions,
+		});
 
 	return (
 		<div className="region-selector">

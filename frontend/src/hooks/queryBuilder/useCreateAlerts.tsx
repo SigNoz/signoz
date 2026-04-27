@@ -21,6 +21,7 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { withBasePath } from 'utils/basePath';
 import { getGraphType } from 'utils/getGraphType';
 
 const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
@@ -33,7 +34,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -49,8 +50,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		if (caller === 'panelView') {
 			logEvent('Panel Edit: Create alert', {
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -58,8 +59,8 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 			logEvent('Dashboard Detail: Panel action', {
 				action: MenuItemKeys.CreateAlerts,
 				panelType: widget.panelTypes,
-				dashboardName: selectedDashboard?.data?.title,
-				dashboardId: selectedDashboard?.id,
+				dashboardName: dashboardData?.data?.title,
+				dashboardId: dashboardData?.id,
 				widgetId: widget.id,
 				queryType: widget.query.queryType,
 			});
@@ -95,7 +96,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 				const url = `${ROUTES.ALERTS_NEW}?${params.toString()}`;
 
-				window.open(url, '_blank', 'noreferrer');
+				window.open(withBasePath(url), '_blank', 'noreferrer');
 			},
 			onError: () => {
 				notifications.error({

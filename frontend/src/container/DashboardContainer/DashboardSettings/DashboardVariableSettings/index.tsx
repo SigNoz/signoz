@@ -87,7 +87,7 @@ function VariablesSettings({
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
+	const { dashboardData, setDashboardData } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	const { notifications } = useNotifications();
@@ -102,10 +102,8 @@ function VariablesSettings({
 		null,
 	);
 
-	const [
-		variableEditData,
-		setVariableEditData,
-	] = useState<null | IDashboardVariable>(null);
+	const [variableEditData, setVariableEditData] =
+		useState<null | IDashboardVariable>(null);
 
 	const onDoneVariableViewMode = (): void => {
 		setVariableViewMode(null);
@@ -173,7 +171,7 @@ function VariablesSettings({
 		widgetIds?: string[],
 		applyToAll?: boolean,
 	): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
@@ -181,16 +179,16 @@ function VariablesSettings({
 			(currentRequestedId &&
 				updatedVariablesData[currentRequestedId || '']?.type === 'DYNAMIC' &&
 				addDynamicVariableToPanels(
-					selectedDashboard,
+					dashboardData,
 					updatedVariablesData[currentRequestedId || ''],
 					widgetIds,
 					applyToAll,
 				)) ||
-			selectedDashboard;
+			dashboardData;
 
 		updateMutation.mutateAsync(
 			{
-				id: selectedDashboard.id,
+				id: dashboardData.id,
 
 				data: {
 					...newDashboard.data,
@@ -200,7 +198,7 @@ function VariablesSettings({
 			{
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
-						setSelectedDashboard(updatedDashboard.data);
+						setDashboardData(updatedDashboard.data);
 						notifications.success({
 							message: t('variable_updated_successfully'),
 						});

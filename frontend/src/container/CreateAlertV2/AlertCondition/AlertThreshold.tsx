@@ -15,8 +15,12 @@ import {
 	THRESHOLD_MATCH_TYPE_OPTIONS,
 	THRESHOLD_OPERATOR_OPTIONS,
 } from '../context/constants';
-import { AlertThresholdMatchType } from '../context/types';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+} from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
+import { normalizeMatchType, normalizeOperator } from '../utils';
 import ThresholdItem from './ThresholdItem';
 import { AnomalyAndThresholdProps, UpdateThreshold } from './types';
 import {
@@ -132,12 +136,15 @@ function AlertThreshold({
 		}
 	};
 
+	const normalizedOperator =
+		normalizeOperator(thresholdState.operator) ?? AlertThresholdOperator.IS_ABOVE;
+
 	const matchTypeOptionsWithTooltips = THRESHOLD_MATCH_TYPE_OPTIONS.map(
 		(option) => ({
 			...option,
 			label: (
 				<Tooltip
-					title={getMatchTypeTooltip(option.value, thresholdState.operator)}
+					title={getMatchTypeTooltip(option.value, normalizedOperator)}
 					placement="left"
 					overlayClassName="copyable-tooltip"
 					overlayStyle={{
@@ -232,7 +239,10 @@ function AlertThreshold({
 					/>
 					<Typography.Text className="sentence-text">is</Typography.Text>
 					<Select
-						value={thresholdState.operator}
+						value={
+							(normalizeOperator(thresholdState.operator) ??
+								thresholdState.operator) as AlertThresholdOperator
+						}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_OPERATOR',
@@ -247,7 +257,10 @@ function AlertThreshold({
 						the threshold(s)
 					</Typography.Text>
 					<Select
-						value={thresholdState.matchType}
+						value={
+							(normalizeMatchType(thresholdState.matchType) ??
+								thresholdState.matchType) as AlertThresholdMatchType
+						}
 						onChange={(value): void => {
 							setThresholdState({
 								type: 'SET_MATCH_TYPE',

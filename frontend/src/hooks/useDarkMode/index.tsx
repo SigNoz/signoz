@@ -118,9 +118,8 @@ interface ThemeMode {
 }
 
 export const useThemeMode = (): ThemeMode => {
-	const { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme } = useContext(
-		ThemeContext,
-	);
+	const { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme } =
+		useContext(ThemeContext);
 
 	return { theme, toggleTheme, autoSwitch, setAutoSwitch, setTheme };
 };

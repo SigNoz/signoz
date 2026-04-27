@@ -12,6 +12,11 @@ import Footer from '../Footer';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
+jest.mock('providers/ErrorModalProvider', () => ({
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: jest.fn(),
+	}),
+}));
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: jest.fn(),
@@ -258,14 +263,12 @@ describe('Footer', () => {
 		const { container } = render(<Footer />);
 
 		// When testing alert rule, the play icon is replaced with a loader icon
-		const playIconForTestNotificationButton = container.querySelector(
-			PLAY_ICON_SELECTOR,
-		);
+		const playIconForTestNotificationButton =
+			container.querySelector(PLAY_ICON_SELECTOR);
 		expect(playIconForTestNotificationButton).not.toBeInTheDocument();
 
-		const loaderIconForTestNotificationButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
+		const loaderIconForTestNotificationButton =
+			container.querySelector(LOADER_ICON_SELECTOR);
 		expect(loaderIconForTestNotificationButton).toBeInTheDocument();
 	});
 
@@ -277,14 +280,12 @@ describe('Footer', () => {
 		const { container } = render(<Footer />);
 
 		// When updating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton = container.querySelector(
-			CHECK_ICON_SELECTOR,
-		);
+		const checkIconForSaveAlertRuleButton =
+			container.querySelector(CHECK_ICON_SELECTOR);
 		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
+		const loaderIconForSaveAlertRuleButton =
+			container.querySelector(LOADER_ICON_SELECTOR);
 		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
 	});
 
@@ -296,14 +297,12 @@ describe('Footer', () => {
 		const { container } = render(<Footer />);
 
 		// When creating alert rule, the check icon is replaced with a loader icon
-		const checkIconForSaveAlertRuleButton = container.querySelector(
-			CHECK_ICON_SELECTOR,
-		);
+		const checkIconForSaveAlertRuleButton =
+			container.querySelector(CHECK_ICON_SELECTOR);
 		expect(checkIconForSaveAlertRuleButton).not.toBeInTheDocument();
 
-		const loaderIconForSaveAlertRuleButton = container.querySelector(
-			LOADER_ICON_SELECTOR,
-		);
+		const loaderIconForSaveAlertRuleButton =
+			container.querySelector(LOADER_ICON_SELECTOR);
 		expect(loaderIconForSaveAlertRuleButton).toBeInTheDocument();
 	});
 });

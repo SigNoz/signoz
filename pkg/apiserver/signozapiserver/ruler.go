@@ -44,6 +44,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates a new alert rule",
 		Request:             new(ruletypes.PostableRule),
 		RequestContentType:  "application/json",
+		RequestExamples:     postableRuleExamples(),
 		Response:            new(ruletypes.Rule),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
@@ -54,27 +55,28 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
-		ID:                  "UpdateRuleByID",
-		Tags:                []string{"rules"},
-		Summary:             "Update alert rule",
-		Description:         "This endpoint updates an alert rule by ID",
-		Request:             new(ruletypes.PostableRule),
-		RequestContentType:  "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		ID:                 "UpdateRuleByID",
+		Tags:               []string{"rules"},
+		Summary:            "Update alert rule",
+		Description:        "This endpoint updates an alert rule by ID",
+		Request:            new(ruletypes.PostableRule),
+		RequestContentType: "application/json",
+		RequestExamples:    postableRuleExamples(),
+		SuccessStatusCode:  http.StatusNoContent,
+		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
+		SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
-		ID:                  "DeleteRuleByID",
-		Tags:                []string{"rules"},
-		Summary:             "Delete alert rule",
-		Description:         "This endpoint deletes an alert rule by ID",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		ID:                "DeleteRuleByID",
+		Tags:              []string{"rules"},
+		Summary:           "Delete alert rule",
+		Description:       "This endpoint deletes an alert rule by ID",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes:  []int{http.StatusNotFound},
+		SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -86,6 +88,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint applies a partial update to an alert rule by ID",
 		Request:             new(ruletypes.PostableRule),
 		RequestContentType:  "application/json",
+		RequestExamples:     postableRuleExamples(),
 		Response:            new(ruletypes.Rule),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
@@ -102,6 +105,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		Description:         "This endpoint fires a test notification for the given rule definition",
 		Request:             new(ruletypes.PostableRule),
 		RequestContentType:  "application/json",
+		RequestExamples:     postableRuleExamples(),
 		Response:            new(ruletypes.GettableTestRule),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
@@ -156,27 +160,27 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateDowntimeScheduleByID), handler.OpenAPIDef{
-		ID:                  "UpdateDowntimeScheduleByID",
-		Tags:                []string{"downtimeschedules"},
-		Summary:             "Update downtime schedule",
-		Description:         "This endpoint updates a downtime schedule by ID",
-		Request:             new(ruletypes.PostablePlannedMaintenance),
-		RequestContentType:  "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		ID:                 "UpdateDowntimeScheduleByID",
+		Tags:               []string{"downtimeschedules"},
+		Summary:            "Update downtime schedule",
+		Description:        "This endpoint updates a downtime schedule by ID",
+		Request:            new(ruletypes.PostablePlannedMaintenance),
+		RequestContentType: "application/json",
+		SuccessStatusCode:  http.StatusNoContent,
+		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
+		SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteDowntimeScheduleByID), handler.OpenAPIDef{
-		ID:                  "DeleteDowntimeScheduleByID",
-		Tags:                []string{"downtimeschedules"},
-		Summary:             "Delete downtime schedule",
-		Description:         "This endpoint deletes a downtime schedule by ID",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		ID:                "DeleteDowntimeScheduleByID",
+		Tags:              []string{"downtimeschedules"},
+		Summary:           "Delete downtime schedule",
+		Description:       "This endpoint deletes a downtime schedule by ID",
+		SuccessStatusCode: http.StatusNoContent,
+		ErrorStatusCodes:  []int{http.StatusNotFound},
+		SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

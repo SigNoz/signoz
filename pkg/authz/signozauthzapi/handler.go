@@ -272,17 +272,11 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
+	results, err := handler.authz.CheckTransactions(ctx, subject, orgID, transactions)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	results, err := handler.authz.BatchCheck(ctx, tuples)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(transactions, results))
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(results))
 }

@@ -196,12 +196,12 @@ describe('Dashboard landing page actions header tests', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 
 		useDashboardStore.setState({
-			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,
+			dashboardData: getDashboardById.data as unknown as Dashboard,
 			layouts: [],
 			panelMap: {},
 			setPanelMap: jest.fn(),
 			setLayouts: jest.fn(),
-			setSelectedDashboard: jest.fn(),
+			setDashboardData: jest.fn(),
 			columnWidths: {},
 		});
 

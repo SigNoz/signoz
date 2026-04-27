@@ -97,7 +97,7 @@ export function AllAttributesValue({
 			allValuesSearch
 				? filterValue.filter((v) =>
 						v.toLowerCase().includes(allValuesSearch.toLowerCase()),
-				  )
+					)
 				: filterValue,
 		[filterValue, allValuesSearch],
 	);

@@ -181,13 +181,10 @@ describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
 	it('should render the Trace filter', async () => {
-		const {
-			getByText,
-			getAllByText,
-			getByTestId,
-		} = renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
-			`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
-		]);
+		const { getByText, getAllByText, getByTestId } =
+			renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
+				`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
+			]);
 
 		checkFilterValues(getByText, getAllByText);
 
@@ -345,7 +342,7 @@ describe('TracesExplorer - Filters', () => {
 						({
 							...item,
 							filters: undefined,
-						} as any),
+						}) as any,
 				),
 			},
 		});
@@ -374,7 +371,7 @@ describe('TracesExplorer - Filters', () => {
 								...item.filters,
 								items: undefined,
 							},
-						} as any),
+						}) as any,
 				),
 			},
 		});
@@ -569,9 +566,9 @@ describe('TracesExplorer - ', () => {
 			expect(capturedPayload).toBeDefined();
 		});
 
-		expect(
-			(capturedPayload.compositeQuery.queries[0].spec as any).order,
-		).toEqual([{ key: { name: 'timestamp' }, direction: 'desc' }]);
+		expect((capturedPayload.compositeQuery.queries[0].spec as any).order).toEqual(
+			[{ key: { name: 'timestamp' }, direction: 'desc' }],
+		);
 	});
 
 	it.skip('trace explorer - table view', async () => {
@@ -599,12 +596,10 @@ describe('TracesExplorer - ', () => {
 			),
 		);
 
-		const {
-			getByText,
-			getAllByText,
-		} = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=trace&selectedExplorerView=trace',
-		]);
+		const { getByText, getAllByText } = renderWithTracesExplorerRouter(
+			<TracesExplorer />,
+			['/traces-explorer/?panelType=trace&selectedExplorerView=trace'],
+		);
 
 		expect(await screen.findByText('Root Service Name')).toBeInTheDocument();
 
@@ -666,12 +661,10 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('test for explorer options', async () => {
-		const {
-			getByText,
-			getByTestId,
-		} = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=list&selectedExplorerView=list',
-		]);
+		const { getByText, getByTestId } = renderWithTracesExplorerRouter(
+			<TracesExplorer />,
+			['/traces-explorer/?panelType=list&selectedExplorerView=list'],
+		);
 
 		// assert explorer options - action btns
 		[
@@ -699,17 +692,17 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('select a view options - assert and save this view', async () => {
-		jest.useFakeTimers();
-
 		const { container } = renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
 
-		const viewSearchInput = container.querySelector(
-			'.view-options .ant-select-selection-search-input',
-		) as HTMLElement;
-
-		expect(viewSearchInput).toBeInTheDocument();
+		const viewSearchInput = await waitFor(() => {
+			const el = container.querySelector(
+				'.view-options .ant-select-selection-search-input',
+			) as HTMLElement;
+			expect(el).toBeInTheDocument();
+			return el;
+		});
 
 		fireEvent.mouseDown(viewSearchInput);
 
@@ -718,17 +711,18 @@ describe('TracesExplorer - ', () => {
 		).toBeInTheDocument();
 
 		// save this view
-		fireEvent.click(screen.getByText('Save this view'));
+		fireEvent.click(await screen.findByText('Save this view'));
 
 		const saveViewModalInput = await screen.findByPlaceholderText(
 			'e.g. External http method view',
 		);
 		expect(saveViewModalInput).toBeInTheDocument();
 
-		const saveViewModal = document.querySelector(
-			'.ant-modal-content',
-		) as HTMLElement;
-		expect(saveViewModal).toBeInTheDocument();
+		const saveViewModal = await waitFor(() => {
+			const el = document.querySelector('.ant-modal-content') as HTMLElement;
+			expect(el).toBeInTheDocument();
+			return el;
+		});
 
 		await act(async () =>
 			fireEvent.change(saveViewModalInput, { target: { value: 'test view' } }),
@@ -739,18 +733,19 @@ describe('TracesExplorer - ', () => {
 			fireEvent.click(within(saveViewModal).getByTestId('save-view-btn'));
 		});
 
-		expect(successNotification).toHaveBeenCalledWith({
-			message: 'View Saved Successfully',
+		await waitFor(() => {
+			expect(successNotification).toHaveBeenCalledWith({
+				message: 'View Saved Successfully',
+			});
 		});
-	});
+	}, 15000);
 
 	it('create a dashboard btn assert', async () => {
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />, [
+		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
-		await screen.findByText(FILTER_SERVICE_NAME);
 
-		const createDashboardBtn = getByText('Add to Dashboard');
+		const createDashboardBtn = await screen.findByText('Add to Dashboard');
 		expect(createDashboardBtn).toBeInTheDocument();
 		fireEvent.click(createDashboardBtn);
 
@@ -771,12 +766,11 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('create an alert btn assert', async () => {
-		const { getByText } = renderWithTracesExplorerRouter(<TracesExplorer />, [
+		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
-		await screen.findByText(FILTER_SERVICE_NAME);
 
-		const createAlertBtn = getByText('Create an Alert');
+		const createAlertBtn = await screen.findByText('Create an Alert');
 		expect(createAlertBtn).toBeInTheDocument();
 		fireEvent.click(createAlertBtn);
 

@@ -81,10 +81,8 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const [
-		currentGraphRef,
-		setCurrentGraphRef,
-	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
+	const [currentGraphRef, setCurrentGraphRef] =
+		useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
 		if (!lineChartRef.current) {
@@ -101,12 +99,8 @@ function WidgetGraphComponent({
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 
-	const {
-		setLayouts,
-		selectedDashboard,
-		setSelectedDashboard,
-		setColumnWidths,
-	} = useDashboardStore();
+	const { setLayouts, dashboardData, setDashboardData, setColumnWidths } =
+		useDashboardStore();
 
 	const onColumnWidthsChange = useCallback(
 		(widths: Record<string, number>) => {
@@ -125,33 +119,33 @@ function WidgetGraphComponent({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const onDeleteHandler = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
-		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
+		const updatedWidgets = dashboardData?.data?.widgets?.filter(
 			(e) => e.id !== widget.id,
 		);
 
 		const updatedLayout =
-			selectedDashboard.data.layout?.filter((e) => e.i !== widget.id) || [];
+			dashboardData.data.layout?.filter((e) => e.i !== widget.id) || [];
 
-		const updatedSelectedDashboard: Props = {
+		const updatedDashboardData: Props = {
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				widgets: updatedWidgets,
 				layout: updatedLayout,
 			},
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 		};
 
-		updateDashboardMutation.mutateAsync(updatedSelectedDashboard, {
+		updateDashboardMutation.mutateAsync(updatedDashboardData, {
 			onSuccess: (updatedDashboard) => {
 				if (setLayouts) {
 					setLayouts(updatedDashboard.data?.data?.layout || []);
 				}
-				if (setSelectedDashboard && updatedDashboard.data) {
-					setSelectedDashboard(updatedDashboard.data);
+				if (setDashboardData && updatedDashboard.data) {
+					setDashboardData(updatedDashboard.data);
 				}
 				setDeleteModal(false);
 			},
@@ -159,35 +153,35 @@ function WidgetGraphComponent({
 	};
 
 	const onCloneHandler = async (): Promise<void> => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		const uuid = v4();
 
 		// this is added to make sure the cloned panel is of the same dimensions as the original one
-		const originalPanelLayout = selectedDashboard.data.layout?.find(
+		const originalPanelLayout = dashboardData.data.layout?.find(
 			(l) => l.i === widget.id,
 		);
 
 		const newLayoutItem = placeWidgetAtBottom(
 			uuid,
-			selectedDashboard?.data.layout || [],
+			dashboardData?.data.layout || [],
 			originalPanelLayout?.w || 6,
 			originalPanelLayout?.h || 6,
 		);
 
-		const layout = [...(selectedDashboard.data.layout || []), newLayoutItem];
+		const layout = [...(dashboardData.data.layout || []), newLayoutItem];
 
 		updateDashboardMutation.mutateAsync(
 			{
-				id: selectedDashboard.id,
+				id: dashboardData.id,
 
 				data: {
-					...selectedDashboard.data,
+					...dashboardData.data,
 					layout,
 					widgets: [
-						...(selectedDashboard.data.widgets || []),
+						...(dashboardData.data.widgets || []),
 						{
 							...{
 								...widget,
@@ -202,8 +196,8 @@ function WidgetGraphComponent({
 					if (setLayouts) {
 						setLayouts(updatedDashboard.data?.data?.layout || []);
 					}
-					if (setSelectedDashboard && updatedDashboard.data) {
-						setSelectedDashboard(updatedDashboard.data);
+					if (setDashboardData && updatedDashboard.data) {
+						setDashboardData(updatedDashboard.data);
 					}
 					notifications.success({
 						message: 'Panel cloned successfully, redirecting to new copy.',
@@ -264,12 +258,11 @@ function WidgetGraphComponent({
 		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data?.payload?.data?.result,
-				name: widget.id,
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: queryResponse.data?.payload?.data?.result,
+					name: widget.id,
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 		safeNavigate({

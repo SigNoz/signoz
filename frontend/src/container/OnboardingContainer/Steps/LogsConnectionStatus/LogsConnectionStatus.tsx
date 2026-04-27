@@ -34,11 +34,8 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
-	const {
-		selectedDataSource,
-		activeStep,
-		selectedEnvironment,
-	} = useOnboardingContext();
+	const { selectedDataSource, activeStep, selectedEnvironment } =
+		useOnboardingContext();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins

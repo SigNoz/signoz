@@ -260,23 +260,28 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	/**
 	 * Separates section and non-section options
 	 */
-	const splitOptions = useCallback((options: OptionData[]): {
-		sectionOptions: OptionData[];
-		nonSectionOptions: OptionData[];
-	} => {
-		const sectionOptions: OptionData[] = [];
-		const nonSectionOptions: OptionData[] = [];
+	const splitOptions = useCallback(
+		(
+			options: OptionData[],
+		): {
+			sectionOptions: OptionData[];
+			nonSectionOptions: OptionData[];
+		} => {
+			const sectionOptions: OptionData[] = [];
+			const nonSectionOptions: OptionData[] = [];
 
-		options.forEach((option) => {
-			if ('options' in option && Array.isArray(option.options)) {
-				sectionOptions.push(option);
-			} else {
-				nonSectionOptions.push(option);
-			}
-		});
+			options.forEach((option) => {
+				if ('options' in option && Array.isArray(option.options)) {
+					sectionOptions.push(option);
+				} else {
+					nonSectionOptions.push(option);
+				}
+			});
 
-		return { sectionOptions, nonSectionOptions };
-	}, []);
+			return { sectionOptions, nonSectionOptions };
+		},
+		[],
+	);
 
 	/**
 	 * Apply search filtering to options
@@ -401,7 +406,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		const textToCopy = selectedTexts.join(', ');
 
-		// eslint-disable-next-line no-restricted-properties
+		// oxlint-disable-next-line signoz/no-navigator-clipboard
 		navigator.clipboard.writeText(textToCopy).catch(console.error);
 	}, [selectedChips, selectedValues]);
 
@@ -1629,7 +1634,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							}}
 							data={enhancedNonSectionOptions}
 							itemContent={(index, item): React.ReactNode =>
-								(mapOptions([item]) as unknown) as React.ReactElement
+								mapOptions([item]) as unknown as React.ReactElement
 							}
 							totalCount={enhancedNonSectionOptions.length}
 							itemSize={(): number => 40}
@@ -1671,7 +1676,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 										}}
 										data={section.options || []}
 										itemContent={(index, item): React.ReactNode =>
-											(mapOptions([item]) as unknown) as React.ReactElement
+											mapOptions([item]) as unknown as React.ReactElement
 										}
 										totalCount={section.options?.length || 0}
 										itemSize={(): number => 40}
@@ -1936,7 +1941,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								? {
 										borderColor: Color.BG_ROBIN_500,
 										backgroundColor: Color.BG_SLATE_400,
-								  }
+									}
 								: undefined
 						}
 					>

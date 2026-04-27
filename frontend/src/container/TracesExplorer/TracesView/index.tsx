@@ -51,10 +51,11 @@ function TracesView({
 }: TracesViewProps): JSX.Element {
 	const { stagedQuery, panelType } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { queryData: paginationQueryData } = useUrlQueryData<Pagination>(
 		QueryParams.pagination,

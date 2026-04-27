@@ -18,17 +18,19 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 export interface ChartPreviewProps {
 	alertDef: AlertDef;
 	source?: YAxisSource;
+	isCancelled?: boolean;
+	onFetchingStateChange?: (isFetching: boolean) => void;
 }
 
-function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
+function ChartPreview({
+	alertDef,
+	source,
+	isCancelled = false,
+	onFetchingStateChange,
+}: ChartPreviewProps): JSX.Element {
 	const { currentQuery, panelType, stagedQuery } = useQueryBuilder();
-	const {
-		alertType,
-		thresholdState,
-		alertState,
-		setAlertState,
-		isEditMode,
-	} = useCreateAlertState();
+	const { alertType, thresholdState, alertState, setAlertState, isEditMode } =
+		useCreateAlertState();
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
 		GlobalReducer
@@ -47,9 +49,8 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 	}, [isEditMode, alertType, source]);
 
 	const selectedQueryName = thresholdState.selectedQuery;
-	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
-		selectedQueryName,
-	);
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
 
 	// Every time a new metric is selected, set the y-axis unit to its unit value if present
 	// Only for metrics-based alerts in create mode
@@ -88,6 +89,8 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 
@@ -102,6 +105,8 @@ function ChartPreview({ alertDef, source }: ChartPreviewProps): JSX.Element {
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
 			additionalThresholds={thresholdState.thresholds}
+			isCancelled={isCancelled}
+			onFetchingStateChange={onFetchingStateChange}
 		/>
 	);
 

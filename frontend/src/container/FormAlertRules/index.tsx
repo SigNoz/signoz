@@ -6,9 +6,15 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
-import saveAlertApi from 'api/alerts/save';
-import testAlertApi from 'api/alerts/testAlert';
 import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import {
+	createRule,
+	testRule,
+	updateRuleByID,
+} from 'api/generated/services/rules';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
@@ -32,13 +38,16 @@ import { isEmpty, isEqual } from 'lodash-es';
 import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { toPostableRuleDTOFromAlertDef } from 'types/api/alerts/convert';
 import {
 	AlertDef,
 	defaultEvalWindow,
 	defaultMatchType,
 } from 'types/api/alerts/def';
+import APIError from 'types/api/error';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
@@ -46,6 +55,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
+import { openInNewTab } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -117,9 +127,8 @@ function FormAlertRules({
 		handleSetConfig,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const { matchType, op, target, targetUnit } = usePrefillAlertConditions(
-		stagedQuery,
-	);
+	const { matchType, op, target, targetUnit } =
+		usePrefillAlertConditions(stagedQuery);
 
 	useEffect(() => {
 		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
@@ -127,6 +136,19 @@ function FormAlertRules({
 
 	// use query client
 	const ruleCache = useQueryClient();
+	const [isChartQueryCancelled, setIsChartQueryCancelled] = useState(false);
+	const [isLoadingAlertQuery, setIsLoadingAlertQuery] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingAlertQuery) {
+			setIsChartQueryCancelled(false);
+		}
+	}, [isLoadingAlertQuery]);
+
+	const handleCancelAlertQuery = useCallback(() => {
+		ruleCache.cancelQueries(REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW);
+		setIsChartQueryCancelled(true);
+	}, [ruleCache]);
 
 	const isNewRule = !ruleId || isEmpty(ruleId);
 
@@ -149,9 +171,10 @@ function FormAlertRules({
 	}, [currentQuery.unit]);
 
 	// initQuery contains initial query when component was mounted
-	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
-		initialValue,
-	]);
+	const initQuery = useMemo(
+		() => initialValue.condition.compositeQuery,
+		[initialValue],
+	);
 
 	const queryOptions = useMemo(() => {
 		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
@@ -368,6 +391,7 @@ function FormAlertRules({
 		redirectWithQueryBuilderData(query);
 	};
 	const { notifications } = useNotifications();
+	const { showErrorModal } = useErrorModal();
 
 	const validatePromParams = useCallback((): boolean => {
 		let retval = true;
@@ -533,59 +557,47 @@ function FormAlertRules({
 		};
 
 		try {
-			const apiReq =
-				ruleId && !isEmpty(ruleId)
-					? { data: postableAlert, id: ruleId }
-					: { data: postableAlert };
-
-			const response = await saveAlertApi(apiReq);
-
-			if (response.statusCode === 200) {
-				logData = {
-					status: 'success',
-					statusMessage: isNewRule ? t('rule_created') : t('rule_edited'),
-				};
-
-				notifications.success({
-					message: 'Success',
-					description: logData.statusMessage,
-				});
-
-				// invalidate rule in cache
-				ruleCache.invalidateQueries([
-					REACT_QUERY_KEY.ALERT_RULE_DETAILS,
-					`${ruleId}`,
-				]);
-
-				// eslint-disable-next-line sonarjs/no-identical-functions
-				setTimeout(() => {
-					urlQuery.delete(QueryParams.compositeQuery);
-					urlQuery.delete(QueryParams.panelTypes);
-					urlQuery.delete(QueryParams.ruleId);
-					urlQuery.delete(QueryParams.relativeTime);
-					safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
-				}, 2000);
+			if (ruleId && !isEmpty(ruleId)) {
+				await updateRuleByID(
+					{ id: ruleId },
+					toPostableRuleDTOFromAlertDef(postableAlert),
+				);
 			} else {
-				logData = {
-					status: 'error',
-					statusMessage: response.error || t('unexpected_error'),
-				};
-
-				notifications.error({
-					message: 'Error',
-					description: logData.statusMessage,
-				});
+				await createRule(toPostableRuleDTOFromAlertDef(postableAlert));
 			}
-		} catch (e) {
+
 			logData = {
-				status: 'error',
-				statusMessage: t('unexpected_error'),
+				status: 'success',
+				statusMessage: isNewRule ? t('rule_created') : t('rule_edited'),
 			};
 
-			notifications.error({
-				message: 'Error',
+			notifications.success({
+				message: 'Success',
 				description: logData.statusMessage,
 			});
+
+			// invalidate rule in cache
+			ruleCache.invalidateQueries([
+				REACT_QUERY_KEY.ALERT_RULE_DETAILS,
+				`${ruleId}`,
+			]);
+
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setTimeout(() => {
+				urlQuery.delete(QueryParams.compositeQuery);
+				urlQuery.delete(QueryParams.panelTypes);
+				urlQuery.delete(QueryParams.ruleId);
+				urlQuery.delete(QueryParams.relativeTime);
+				safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
+			}, 2000);
+		} catch (e) {
+			const apiError = convertToApiError(e as AxiosError<RenderErrorResponseDTO>);
+			logData = {
+				status: 'error',
+				statusMessage: apiError?.getErrorMessage() || t('unexpected_error'),
+			};
+
+			showErrorModal(apiError as APIError);
 		}
 
 		setLoading(false);
@@ -641,39 +653,30 @@ function FormAlertRules({
 		let statusResponse = { status: 'failed', message: '' };
 		setLoading(true);
 		try {
-			const response = await testAlertApi({ data: postableAlert });
+			const response = await testRule(
+				toPostableRuleDTOFromAlertDef(postableAlert),
+			);
 
-			if (response.statusCode === 200) {
-				const { payload } = response;
-				if (payload?.alertCount === 0) {
-					notifications.error({
-						message: 'Error',
-						description: t('no_alerts_found'),
-					});
-					statusResponse = { status: 'failed', message: t('no_alerts_found') };
-				} else {
-					notifications.success({
-						message: 'Success',
-						description: t('rule_test_fired'),
-					});
-					statusResponse = { status: 'success', message: t('rule_test_fired') };
-				}
-			} else {
+			if (response.data?.alertCount === 0) {
 				notifications.error({
 					message: 'Error',
-					description: response.error || t('unexpected_error'),
+					description: t('no_alerts_found'),
 				});
-				statusResponse = {
-					status: 'failed',
-					message: response.error || t('unexpected_error'),
-				};
+				statusResponse = { status: 'failed', message: t('no_alerts_found') };
+			} else {
+				notifications.success({
+					message: 'Success',
+					description: t('rule_test_fired'),
+				});
+				statusResponse = { status: 'success', message: t('rule_test_fired') };
 			}
 		} catch (e) {
-			notifications.error({
-				message: 'Error',
-				description: t('unexpected_error'),
-			});
-			statusResponse = { status: 'failed', message: t('unexpected_error') };
+			const apiError = convertToApiError(e as AxiosError<RenderErrorResponseDTO>);
+			statusResponse = {
+				status: 'failed',
+				message: apiError?.getErrorMessage() || t('unexpected_error'),
+			};
+			showErrorModal(apiError as APIError);
 		}
 		setLoading(false);
 		logEvent('Alert: Test notification', {
@@ -713,6 +716,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -731,6 +736,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -771,7 +778,7 @@ function FormAlertRules({
 				queryType: currentQuery.queryType,
 				link: url,
 			});
-			window.open(url, '_blank');
+			openInNewTab(url);
 		}
 	}
 
@@ -801,9 +808,10 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
 
 	// Only update automatically when creating a new metrics-based alert rule
 	const shouldUpdateYAxisUnit = useMemo(() => {
@@ -913,11 +921,22 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={(): void => handleRunQuery()}
+							runQuery={(): void => {
+								setIsChartQueryCancelled(false);
+								ruleCache.invalidateQueries([
+									REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
+								]);
+								handleRunQuery();
+							}}
+							isLoadingQueries={isLoadingAlertQuery}
+							handleCancelQuery={handleCancelAlertQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}
 							ruleId={ruleId}
+							isAnomalyDetection={
+								alertDef.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT
+							}
 						/>
 
 						<RuleOptions

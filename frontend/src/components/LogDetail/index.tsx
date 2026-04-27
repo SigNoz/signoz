@@ -3,7 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui';
+import { Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -284,7 +285,7 @@ function LogDetailInner({
 											...query.filter,
 											expression: value,
 										},
-								  }
+									}
 								: query,
 						),
 					},
@@ -387,7 +388,9 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									icon={<ChevronUp size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<ChevronUp size={14} />}
 									className="log-arrow-btn log-arrow-btn-up"
 									disabled={isPrevDisabled}
 									onClick={(): void => handleNavigateLog({ direction: 'previous' })}
@@ -399,7 +402,9 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									icon={<ChevronDown size={14} />}
+									variant="outlined"
+									color="secondary"
+									prefix={<ChevronDown size={14} />}
 									className="log-arrow-btn log-arrow-btn-down"
 									disabled={isNextDisabled}
 									onClick={(): void => handleNavigateLog({ direction: 'next' })}
@@ -409,8 +414,10 @@ function LogDetailInner({
 						{showOpenInExplorerBtn && (
 							<div>
 								<Button
+									variant="outlined"
+									color="secondary"
+									prefix={<Compass size={16} />}
 									className="open-in-explorer-btn"
-									icon={<Compass size={16} />}
 									onClick={handleOpenInExplorer}
 								>
 									Open in Explorer
@@ -506,8 +513,10 @@ function LogDetailInner({
 								mouseLeaveDelay={0}
 							>
 								<Button
-									className="action-btn"
-									icon={<Filter size={16} />}
+									variant="link"
+									color="secondary"
+									size="sm"
+									prefix={<Filter size={12} />}
 									onClick={handleFilterVisible}
 								/>
 							</Tooltip>
@@ -522,8 +531,10 @@ function LogDetailInner({
 							mouseLeaveDelay={0}
 						>
 							<Button
-								className="action-btn"
-								icon={<Copy size={16} />}
+								variant="link"
+								color="secondary"
+								size="sm"
+								prefix={<Copy size={12} />}
 								onClick={selectedView === VIEW_TYPES.JSON ? handleJSONCopy : onLogCopy}
 							/>
 						</Tooltip>

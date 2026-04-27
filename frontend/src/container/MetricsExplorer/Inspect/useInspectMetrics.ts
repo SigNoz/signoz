@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useQuery } from 'react-query';
 import { inspectMetrics } from 'api/generated/services/metrics';
+import { isAxiosError } from 'axios';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
@@ -107,7 +110,7 @@ export function useInspectMetrics(
 		isRefetching: isInspectMetricsRefetching,
 	} = useQuery({
 		queryKey: [
-			'inspectMetrics',
+			REACT_QUERY_KEY.GET_INSPECT_METRICS_DETAILS,
 			metricName,
 			start,
 			end,
@@ -127,6 +130,12 @@ export function useInspectMetrics(
 			),
 		enabled: !!metricName,
 		keepPreviousData: true,
+		retry: (failureCount: number, error: Error): boolean => {
+			if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+				return false;
+			}
+			return failureCount < MAX_QUERY_RETRIES;
+		},
 	});
 
 	const inspectMetricsData = useMemo(
@@ -219,13 +228,11 @@ export function useInspectMetrics(
 			metricInspectionOptions.appliedOptions.timeAggregationOption &&
 			metricInspectionOptions.appliedOptions.timeAggregationInterval
 		) {
-			const {
-				timeAggregatedSeries,
-				timeAggregatedSeriesMap,
-			} = applyTimeAggregation(
-				inspectMetricsTimeSeries,
-				metricInspectionOptions.appliedOptions,
-			);
+			const { timeAggregatedSeries, timeAggregatedSeriesMap } =
+				applyTimeAggregation(
+					inspectMetricsTimeSeries,
+					metricInspectionOptions.appliedOptions,
+				);
 			timeSeries = timeAggregatedSeries;
 			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
 			setAggregatedTimeSeries(timeSeries);

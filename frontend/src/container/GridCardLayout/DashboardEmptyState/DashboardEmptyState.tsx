@@ -27,13 +27,12 @@ export default function DashboardEmptyState(): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard } = useDashboardStore();
+	const { dashboardData } = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
-		false,
-	);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
+		useState<boolean>(false);
 
 	const { user } = useAppContext();
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -43,7 +42,7 @@ export default function DashboardEmptyState(): JSX.Element {
 	}
 
 	const userRole: ROLES | null =
-		selectedDashboard?.createdBy === user?.email
+		dashboardData?.createdBy === user?.email
 			? (USER_ROLES.AUTHOR as ROLES)
 			: user.role;
 
@@ -52,9 +51,9 @@ export default function DashboardEmptyState(): JSX.Element {
 	const onEmptyWidgetHandler = useCallback(() => {
 		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
-			dashboardId: selectedDashboard?.id,
-			dashboardName: selectedDashboard?.data.title,
-			numberOfPanels: selectedDashboard?.data.widgets?.length,
+			dashboardId: dashboardData?.id,
+			dashboardName: dashboardData?.data.title,
+			numberOfPanels: dashboardData?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setIsPanelTypeSelectionModalOpen]);
@@ -104,7 +103,7 @@ export default function DashboardEmptyState(): JSX.Element {
 								Give it a name, add description, tags and variables
 							</Typography.Text>
 						</div>
-						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the 
+						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the
 						whole dashboard page instead of confined to this Empty State */}
 						<Button
 							type="text"

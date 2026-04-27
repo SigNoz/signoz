@@ -41,7 +41,7 @@ const DASHBOARD_VARIABLES_WARNING =
 // Use wildcard pattern to match both relative and absolute URLs in MSW
 const publicDashboardURL = `*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`;
 
-const mockSelectedDashboard = {
+const mockDashboardData = {
 	id: MOCK_DASHBOARD_ID,
 	data: {
 		title: 'Test Dashboard',
@@ -69,15 +69,15 @@ beforeEach(() => {
 	window.open = jest.fn();
 
 	// Mock useDashboardStore
-	mockUseDashboard.mockReturnValue(({
-		selectedDashboard: mockSelectedDashboard,
-	} as unknown) as ReturnType<typeof useDashboardStore>);
+	mockUseDashboard.mockReturnValue({
+		dashboardData: mockDashboardData,
+	} as unknown as ReturnType<typeof useDashboardStore>);
 
 	// Mock useCopyToClipboard
-	mockUseCopyToClipboard.mockReturnValue(([
+	mockUseCopyToClipboard.mockReturnValue([
 		undefined,
 		mockSetCopyPublicDashboardURL,
-	] as unknown) as ReturnType<typeof useCopyToClipboard>);
+	] as unknown as ReturnType<typeof useCopyToClipboard>);
 });
 
 afterEach(() => {

@@ -97,6 +97,7 @@
 			}
 
 			.steps-content {
+				padding: 0 16px;
 				max-height: 500px;
 			}
 		}
@@ -233,65 +234,6 @@
 		}
 		.funnel-item__actions-popover {
 			display: none;
-		}
-	}
-}
-
-// Light mode styles
-.lightMode {
-	.add-span-to-funnel-modal-container {
-		.ant-modal {
-			&-content,
-			&-header {
-				background: var(--l1-foreground);
-			}
-
-			&-title {
-				color: var(--l1-background);
-			}
-
-			&-footer {
-				border-top-color: var(--l1-border);
-				background: var(--l1-foreground);
-				.add-span-to-funnel-modal__discard-button {
-					background: var(--l2-background);
-					color: var(--l1-background);
-				}
-			}
-		}
-	}
-
-	.add-span-to-funnel-modal {
-		&__search-input {
-			background: var(--l1-foreground);
-			border: 1px solid var(--l1-border);
-			color: var(--l1-background);
-
-			input {
-				color: var(--l1-background);
-				background: var(--l1-foreground);
-
-				&::placeholder {
-					color: var(--l2-background);
-				}
-			}
-		}
-
-		&__create-button {
-			background: var(--l3-background);
-			color: var(--l2-background);
-		}
-
-		&__back-button {
-			color: var(--l1-background);
-
-			&:hover {
-				color: var(--l2-background);
-			}
-		}
-
-		&__details h3 {
-			color: var(--l1-background);
 		}
 	}
 }

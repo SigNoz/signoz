@@ -35,7 +35,7 @@ describe('useGetQueryLabels', () => {
 				queryType: EQueryType.QUERY_BUILDER,
 				builder: {
 					queryData: [],
-					queryFormulas: (undefined as unknown) as IBuilderFormula[],
+					queryFormulas: undefined as unknown as IBuilderFormula[],
 					queryTraceOperator: [],
 				},
 			});
@@ -51,8 +51,8 @@ describe('useGetQueryLabels', () => {
 				builder: {
 					queryData: [],
 					queryFormulas: [
-						({ queryName: 'F1' } as unknown) as IBuilderFormula,
-						({ queryName: 'F2' } as unknown) as IBuilderFormula,
+						{ queryName: 'F1' } as unknown as IBuilderFormula,
+						{ queryName: 'F2' } as unknown as IBuilderFormula,
 					],
 					queryTraceOperator: [],
 				},
@@ -71,7 +71,7 @@ describe('useGetQueryLabels', () => {
 		it('returns empty array when clickhouse_sql is undefined', () => {
 			const query = buildQuery({
 				queryType: EQueryType.CLICKHOUSE,
-				clickhouse_sql: (undefined as unknown) as IClickHouseQuery[],
+				clickhouse_sql: undefined as unknown as IClickHouseQuery[],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
@@ -83,8 +83,8 @@ describe('useGetQueryLabels', () => {
 			const query = buildQuery({
 				queryType: EQueryType.CLICKHOUSE,
 				clickhouse_sql: [
-					({ name: 'query_a' } as unknown) as IClickHouseQuery,
-					({ name: 'query_b' } as unknown) as IClickHouseQuery,
+					{ name: 'query_a' } as unknown as IClickHouseQuery,
+					{ name: 'query_b' } as unknown as IClickHouseQuery,
 				],
 			});
 
@@ -101,7 +101,7 @@ describe('useGetQueryLabels', () => {
 		it('returns empty array when promql is undefined', () => {
 			const query = buildQuery({
 				queryType: EQueryType.PROM,
-				promql: (undefined as unknown) as IPromQLQuery[],
+				promql: undefined as unknown as IPromQLQuery[],
 			});
 
 			const { result } = renderHook(() => useGetQueryLabels(query));
@@ -113,8 +113,8 @@ describe('useGetQueryLabels', () => {
 			const query = buildQuery({
 				queryType: EQueryType.PROM,
 				promql: [
-					({ name: 'prom_1' } as unknown) as IPromQLQuery,
-					({ name: 'prom_2' } as unknown) as IPromQLQuery,
+					{ name: 'prom_1' } as unknown as IPromQLQuery,
+					{ name: 'prom_2' } as unknown as IPromQLQuery,
 				],
 			});
 

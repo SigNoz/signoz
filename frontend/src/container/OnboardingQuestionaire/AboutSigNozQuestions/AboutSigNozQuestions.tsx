@@ -65,11 +65,11 @@ export function AboutSigNozQuestions({
 		}
 	};
 
-	const createInterestChangeHandler = (option: string) => (
-		checked: boolean,
-	): void => {
-		handleInterestChange(option, Boolean(checked));
-	};
+	const createInterestChangeHandler =
+		(option: string) =>
+		(checked: boolean): void => {
+			handleInterestChange(option, Boolean(checked));
+		};
 
 	const handleOnNext = (): void => {
 		setSignozDetails({

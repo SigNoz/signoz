@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -37,6 +38,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		providerSettings.MeterProvider,
 		client.WithRequestResponseLog(true),
 		client.WithRetryCount(3),
+		client.WithTimeout(30*time.Second),
 	)
 	if err != nil {
 		return nil, err

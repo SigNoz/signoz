@@ -15,7 +15,7 @@ import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
@@ -163,9 +163,8 @@ function OnboardingAddDataSource(): JSX.Element {
 	const question3Ref = useRef<HTMLDivElement | null>(null);
 	const configureProdRef = useRef<HTMLDivElement | null>(null);
 
-	const [showConfigureProduct, setShowConfigureProduct] = useState<boolean>(
-		false,
-	);
+	const [showConfigureProduct, setShowConfigureProduct] =
+		useState<boolean>(false);
 
 	const [currentStep, setCurrentStep] = useState(1);
 
@@ -173,15 +172,11 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(true);
 
-	const [
-		showRequestDataSourceModal,
-		setShowRequestDataSourceModal,
-	] = useState<boolean>(false);
+	const [showRequestDataSourceModal, setShowRequestDataSourceModal] =
+		useState<boolean>(false);
 
-	const [
-		showInviteTeamMembersModal,
-		setShowInviteTeamMembersModal,
-	] = useState<boolean>(false);
+	const [showInviteTeamMembersModal, setShowInviteTeamMembersModal] =
+		useState<boolean>(false);
 
 	const [docsUrl, setDocsUrl] = useState<string>(
 		`${DOCS_BASE_URL}/docs/instrumentation/`,
@@ -201,10 +196,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 	const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-	const [
-		dataSourceRequestSubmitted,
-		setDataSourceRequestSubmitted,
-	] = useState<boolean>(false);
+	const [dataSourceRequestSubmitted, setDataSourceRequestSubmitted] =
+		useState<boolean>(false);
 
 	const handleScrollToStep = (ref: React.RefObject<HTMLDivElement>): void => {
 		setTimeout(() => {

@@ -8,7 +8,6 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { ProcessorFormField } from '../../../AddNewProcessor/config';
 import { formValidationRules } from '../../../config';
 import LogsFilterPreview from '../../../Preview/LogsFilterPreview';
-import { FormLabelStyle } from '../../styles';
 
 import './styles.scss';
 
@@ -68,7 +67,7 @@ function FilterInput({ fieldData }: FilterInputProps): JSX.Element {
 	return (
 		<Form.Item
 			required={false}
-			label={<FormLabelStyle>{fieldData.fieldName}</FormLabelStyle>}
+			label={fieldData.fieldName}
 			key={fieldData.id}
 			rules={formValidationRules}
 			name={fieldData.name}

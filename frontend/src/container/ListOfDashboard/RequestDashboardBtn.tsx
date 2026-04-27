@@ -9,10 +9,8 @@ import { Check } from 'lucide-react';
 import '../Integrations/Integrations.styles.scss';
 
 export function RequestDashboardBtn(): JSX.Element {
-	const [
-		isSubmittingRequestForDashboard,
-		setIsSubmittingRequestForDashboard,
-	] = useState(false);
+	const [isSubmittingRequestForDashboard, setIsSubmittingRequestForDashboard] =
+		useState(false);
 
 	const [requestedDashboardName, setRequestedDashboardName] = useState('');
 

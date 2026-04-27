@@ -41,7 +41,7 @@ const getAxes = ({
 		...(PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT.includes(panelType)
 			? {
 					values: uPlotXAxisValuesFormat,
-			  }
+				}
 			: {}),
 		gap: 5,
 	},

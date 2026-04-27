@@ -62,6 +62,7 @@ export interface TooltipRenderArgs {
 
 export interface BaseTooltipProps {
 	showTooltipHeader?: boolean;
+	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
@@ -69,16 +70,14 @@ export interface BaseTooltipProps {
 }
 
 export interface TimeSeriesTooltipProps
-	extends BaseTooltipProps,
-		TooltipRenderArgs {}
+	extends BaseTooltipProps, TooltipRenderArgs {}
 
 export interface BarTooltipProps extends BaseTooltipProps, TooltipRenderArgs {
 	isStackedBarChart?: boolean;
 }
 
 export interface HistogramTooltipProps
-	extends BaseTooltipProps,
-		TooltipRenderArgs {}
+	extends BaseTooltipProps, TooltipRenderArgs {}
 
 export type TooltipProps =
 	| TimeSeriesTooltipProps

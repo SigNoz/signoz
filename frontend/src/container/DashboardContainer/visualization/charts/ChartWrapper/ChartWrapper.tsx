@@ -14,7 +14,7 @@ import uPlot from 'uplot';
 import { ChartProps } from '../types';
 
 const TOOLTIP_WIDTH_PADDING = 120;
-const TOOLTIP_MIN_WIDTH = 200;
+const TOOLTIP_MIN_WIDTH = 300;
 
 export default function ChartWrapper({
 	legendConfig = { position: LegendPosition.BOTTOM },
@@ -25,6 +25,8 @@ export default function ChartWrapper({
 	showTooltip = true,
 	showLegend = true,
 	canPinTooltip = false,
+	pinKey,
+	onClick,
 	syncMode,
 	syncKey,
 	onDestroy = noop,
@@ -101,6 +103,8 @@ export default function ChartWrapper({
 							<TooltipPlugin
 								config={config}
 								canPinTooltip={canPinTooltip}
+								pinKey={pinKey}
+								onClick={onClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,

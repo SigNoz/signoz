@@ -71,7 +71,7 @@ export function getIntervals(
 		intervalSpread < 1.0
 			? intervalSpread
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
-			  10 ** (integerPartLength - 1);
+				10 ** (integerPartLength - 1);
 
 	let intervalUnit = INTERVAL_UNITS[0];
 	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {

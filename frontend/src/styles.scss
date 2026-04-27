@@ -739,14 +739,6 @@ notifications	-  2050
 	letter-spacing: 0.025em;
 }
 
-// Light mode styling for legend tooltip
-.lightMode .legend-tooltip {
-	background: var(--card);
-	color: var(--l1-foreground);
-	border: 1px solid var(--l1-border);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
 .metrics-application-container,
 .service-metric-table-container,
 .service-traces-table-container {

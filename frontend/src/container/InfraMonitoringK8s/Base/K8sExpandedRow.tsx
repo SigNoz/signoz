@@ -68,10 +68,8 @@ export function K8sExpandedRow<T>({
 	const [queryFilters, setFilters] = useInfraMonitoringFilters();
 	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
-	const [
-		columnsDefinitions,
-		columnsHidden,
-	] = useInfraMonitoringTableColumnsForPage(entity);
+	const [columnsDefinitions, columnsHidden] =
+		useInfraMonitoringTableColumnsForPage(entity);
 
 	const hiddenColumnIdsForNested = useMemo(
 		() =>
@@ -160,17 +158,15 @@ export function K8sExpandedRow<T>({
 
 		// Without handling duplicated keys, the table became unpredictable/unstable
 		const keyCount = new Map<string, number>();
-		return rows.map(
-			(row): K8sRenderedRowData => {
-				const count = keyCount.get(row.key) || 0;
-				keyCount.set(row.key, count + 1);
+		return rows.map((row): K8sRenderedRowData => {
+			const count = keyCount.get(row.key) || 0;
+			keyCount.set(row.key, count + 1);
 
-				if (count > 0) {
-					return { ...row, key: `${row.key}-${count}` };
-				}
-				return row;
-			},
-		);
+			if (count > 0) {
+				return { ...row, key: `${row.key}-${count}` };
+			}
+			return row;
+		});
 	}, [data?.data, renderRowData, groupBy]);
 
 	const openRecordInNewTab = (rowRecord: K8sRenderedRowData): void => {

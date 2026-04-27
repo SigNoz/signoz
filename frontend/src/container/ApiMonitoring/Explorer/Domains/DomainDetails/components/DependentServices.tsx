@@ -9,6 +9,7 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
+import { openInNewTab } from 'utils/navigation';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
@@ -28,13 +29,8 @@ function DependentServices({
 	dependentServicesQuery,
 	timeRange,
 }: DependentServicesProps): JSX.Element {
-	const {
-		data,
-		refetch,
-		isError,
-		isLoading,
-		isRefetching,
-	} = dependentServicesQuery;
+	const { data, refetch, isError, isLoading, isRefetching } =
+		dependentServicesQuery;
 
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
@@ -94,20 +90,14 @@ function DependentServices({
 					}}
 					onRow={(record): { onClick: () => void; className: string } => ({
 						onClick: (): void => {
-							const url = new URL(
-								`/services/${
-									record.serviceData.serviceName &&
-									record.serviceData.serviceName !== '-'
-										? record.serviceData.serviceName
-										: ''
-								}`,
-								window.location.origin,
-							);
+							const serviceName =
+								record.serviceData.serviceName && record.serviceData.serviceName !== '-'
+									? record.serviceData.serviceName
+									: '';
 							const urlQuery = new URLSearchParams();
 							urlQuery.set(QueryParams.startTime, timeRange.startTime.toString());
 							urlQuery.set(QueryParams.endTime, timeRange.endTime.toString());
-							url.search = urlQuery.toString();
-							window.open(url.toString(), '_blank');
+							openInNewTab(`/services/${serviceName}?${urlQuery.toString()}`);
 						},
 						className: 'clickable-row',
 					})}

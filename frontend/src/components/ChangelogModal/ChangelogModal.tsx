@@ -37,9 +37,8 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 			preference.name === USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
 	)?.value as string;
 
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-	);
+	const { mutate: updateUserPreferenceMutation } =
+		useMutation(updateUserPreference);
 
 	useEffect(() => {
 		// Update the seen version
@@ -60,11 +59,8 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 
 	const checkScroll = useCallback((): void => {
 		if (changelogContentSectionRef.current) {
-			const {
-				scrollHeight,
-				clientHeight,
-				scrollTop,
-			} = changelogContentSectionRef.current;
+			const { scrollHeight, clientHeight, scrollTop } =
+				changelogContentSectionRef.current;
 			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
 			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
 		}

@@ -382,81 +382,6 @@
 	}
 }
 
-.lightMode {
-	.metric-details-header {
-		.ant-btn {
-			background-color: var(--bg-white-400);
-		}
-	}
-
-	.metric-details-content {
-		.metrics-accordion {
-			.metrics-accordion-header {
-				.action-menu {
-					.action-button {
-						.ant-typography {
-							color: var(--l1-border);
-						}
-					}
-				}
-			}
-
-			.metrics-accordion-content {
-				.metric-metadata-key {
-					.field-renderer-container {
-						.label {
-							color: var(--l2-foreground);
-						}
-					}
-
-					.all-attributes-key {
-						.all-attributes-contribution {
-							color: var(--l1-border);
-						}
-					}
-				}
-
-				.metric-metadata-value {
-					background-color: var(--l3-background);
-					.all-attributes-value {
-						.ant-btn {
-							background-color: var(--l2-foreground);
-							.ant-typography {
-								color: var(--l1-border);
-							}
-							&:hover {
-								background-color: var(--l1-foreground);
-							}
-						}
-					}
-
-					.field-renderer-container {
-						.label {
-							color: var(--l1-border);
-						}
-					}
-				}
-			}
-		}
-	}
-	.top-attributes-content {
-		.top-attributes-item-progress {
-			.top-attributes-item-progress-bar {
-				background-color: var(--bg-robin-400);
-			}
-
-			.top-attributes-item-count {
-				background-color: var(--bg-robin-300);
-			}
-
-			.top-attributes-item-key,
-			.top-attributes-item-count {
-				color: var(--l1-border);
-			}
-		}
-	}
-}
-
 .metric-metadata-value {
 	.y-axis-unit-selector-component {
 		.ant-select {
@@ -583,24 +508,6 @@
 
 .all-values-button {
 	color: var(--bg-robin-400) !important;
-}
-
-.lightMode {
-	.attribute-key-popover-overlay,
-	.all-values-popover-overlay {
-		.ant-popover-inner {
-			border: 1px solid var(--l2-foreground);
-			background: var(--l1-foreground) !important;
-		}
-	}
-
-	.all-values-popover {
-		.all-values-item {
-			&:hover {
-				background: rgba(0, 0, 0, 0.04);
-			}
-		}
-	}
 }
 
 @keyframes fade-in-out {

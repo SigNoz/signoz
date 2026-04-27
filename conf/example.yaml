@@ -11,6 +11,8 @@ global:
   external_url: <unset>
   # the url where the SigNoz backend receives telemetry data (traces, metrics, logs) from instrumented applications.
   ingestion_url: <unset>
+  # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
+  # mcp_url: <unset>
 
 ##################### Version #####################
 version:
@@ -407,3 +409,21 @@ cloudintegration:
   agent:
     # The version of the cloud integration agent.
     version: v0.0.8
+
+##################### Trace Detail #####################
+tracedetail:
+  waterfall:
+    # Number of spans returned per request when the trace is too large to show all at once.
+    span_page_size: 500
+    # Maximum depth of descendents to auto-expand for the selected span.
+    max_depth_to_auto_expand: 5
+    # Threshold below which all spans are returned without windowing.
+    max_limit_to_select_all_spans: 10000
+
+##################### Authz #################################
+authz:
+  # Specifies the authz provider to use.
+  provider: openfga
+  openfga:
+    # maximum tuples allowed per openfga write operation.
+    max_tuples_per_write: 100

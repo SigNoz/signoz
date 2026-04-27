@@ -37,7 +37,7 @@ export const getIntervalSpread = ({
 		intervalSpread < 1.0
 			? intervalSpread
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
-			  10 ** (integerPartLength - 1);
+				10 ** (integerPartLength - 1);
 	return {
 		baseInterval,
 		baseSpread,

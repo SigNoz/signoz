@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlertV2/context/constants';
 import { Threshold } from 'container/CreateAlertV2/context/types';
@@ -69,6 +71,8 @@ export interface ChartPreviewProps {
 	setQueryStatus?: (status: string) => void;
 	showSideLegend?: boolean;
 	additionalThresholds?: Threshold[];
+	isCancelled?: boolean;
+	onFetchingStateChange?: (isFetching: boolean) => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -86,6 +90,8 @@ function ChartPreview({
 	setQueryStatus,
 	showSideLegend = false,
 	additionalThresholds,
+	isCancelled = false,
+	onFetchingStateChange,
 }: ChartPreviewProps): JSX.Element | null {
 	const { t } = useTranslation('alerts');
 	const dispatch = useDispatch();
@@ -117,10 +123,11 @@ function ChartPreview({
 	});
 	const { currentQuery } = useQueryBuilder();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const { featureFlags } = useAppContext();
 
@@ -185,7 +192,7 @@ function ChartPreview({
 		ENTITY_VERSION_V5,
 		{
 			queryKey: [
-				'chartPreview',
+				REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
 				userQueryKey || JSON.stringify(query),
 				selectedInterval,
 				minTime,
@@ -193,8 +200,13 @@ function ChartPreview({
 				alertDef?.ruleType,
 			],
 			enabled: canQuery,
+			keepPreviousData: true,
 		},
 	);
+
+	useEffect(() => {
+		onFetchingStateChange?.(queryResponse.isFetching);
+	}, [queryResponse.isFetching, onFetchingStateChange]);
 
 	const graphRef = useRef<HTMLDivElement>(null);
 
@@ -210,12 +222,11 @@ function ChartPreview({
 	// Initialize graph visibility from localStorage
 	useEffect(() => {
 		if (queryResponse?.data?.payload?.data?.result) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data.payload.data.result,
-				name: 'alert-chart-preview',
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: queryResponse.data.payload.data.result,
+					name: 'alert-chart-preview',
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 	}, [queryResponse?.data?.payload?.data?.result]);
@@ -334,11 +345,16 @@ function ChartPreview({
 
 	const chartData = getUPlotChartData(queryResponse?.data?.payload);
 
+	const hasResultData = !!queryResponse?.data?.payload?.data?.result?.length;
+
 	const isAnomalyDetectionAlert =
 		alertDef?.ruleType === AlertDetectionTypes.ANOMALY_DETECTION_ALERT;
 
 	const chartDataAvailable =
-		chartData && !queryResponse.isError && !queryResponse.isLoading;
+		chartData &&
+		hasResultData &&
+		!queryResponse.isLoading &&
+		(!queryResponse.isError || isCancelled);
 
 	const isAnomalyDetectionEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
@@ -359,8 +375,12 @@ function ChartPreview({
 					{queryResponse.isLoading && (
 						<Spinner size="large" tip="Loading..." height="100%" />
 					)}
-					{(queryResponse?.isError || queryResponse?.error) && (
+					{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
 						<ErrorInPlace error={queryResponse.error as APIError} />
+					)}
+
+					{isCancelled && !queryResponse.isLoading && !hasResultData && (
+						<QueryCancelledPlaceholder subText='Click "Run Query" to load the chart preview.' />
 					)}
 
 					{chartDataAvailable && !isAnomalyDetectionAlert && (
@@ -403,6 +423,8 @@ ChartPreview.defaultProps = {
 	setQueryStatus: (): void => {},
 	showSideLegend: false,
 	additionalThresholds: undefined,
+	isCancelled: false,
+	onFetchingStateChange: undefined,
 };
 
 export default ChartPreview;
