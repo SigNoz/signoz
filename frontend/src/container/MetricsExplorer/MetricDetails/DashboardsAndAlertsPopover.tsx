@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData || [], isLoading: false, isError: false };
+	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,138 +81,103 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData || [], isLoading: false, isError: false };
+	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
 }
 
 export function DashboardsAndAlertsPopover({
 	metricName,
 	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const [open, setOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
+	const { data: alerts, isLoading: isLoadingAlerts, isError: isErrorAlerts } =
+		useMemo(() => useMetricAlertsStatus(metricName), [metricName]);
 
-	const totalItems =
-		(alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
+	const { data: dashboards, isLoading: isLoadingDashboards, isError: isErrorDashboards } =
+		useMemo(() => useMetricDashboardsStatus(metricName), [metricName]);
 
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
+	const totalAlerts = alerts.length;
+	const totalDashboards = dashboards.length;
+
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
+
+	const handleOpenChange = (open: boolean): void => {
+		setIsOpen(open);
 	};
 
-	const menuItems = useMemo(() => {
-		const items: any[] = [];
+	const handleAlertClick = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.LIST_ALERTS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
+	};
 
-		if (alertsStatus.isLoading) {
-			items.push({
-				key: 'alerts-loading',
-				disabled: true,
-				label: (
-					<div className="flex items-center gap-2 px-2 py-1">
-						<Bell size={14} color={Color.text.secondary} />
-						<Skeleton.Input active size="small" style={{ width: 120 }} />
-					</div>
-				),
-			});
-		} else if (alertsStatus.isError) {
-			items.push({
-				key: 'alerts-error',
-				disabled: true,
-				label: (
-					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
-						Failed to load alerts
-					</Typography.Text>
-				),
-			});
-		} else {
-			const alertCount = alertsStatus.data?.length || 0;
-			if (alertCount > 0) {
-				items.push({
-					key: 'alerts',
-					label: (
-						<Typography.Text
-							className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
-							onClick={() => {
-								openInNewTab(
-									`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
-								);
-							}}
-						>
-							<Bell size={14} color={Color.text.secondary} />
-							{alertCount} {pluralize('alert', alertCount)} on this metric
+	const handleDashboardClick = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.LIST_DASHBOARDS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
+	};
+
+	const renderContent = (): JSX.Element => {
+		if (isLoadingAlerts || isLoadingDashboards) {
+			return <Skeleton active paragraph={{ rows: 2 }} />;
+		}
+
+		if (isErrorAlerts || isErrorDashboards) {
+			return (
+				<Typography.Text type="secondary">
+					Failed to load related resources.
+				</Typography.Text>
+			);
+		}
+
+		if (!hasAlerts && !hasDashboards) {
+			return (
+				<Typography.Text type="secondary">
+					No dashboards or alerts using this metric.
+				</Typography.Text>
+			);
+		}
+
+		return (
+			<Menu>
+				{hasAlerts && (
+					<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
+						<Typography.Text>
+							{pluralize('alert', totalAlerts)} triggered by this metric
 						</Typography.Text>
-					),
-				});
-			}
-		}
-
-		if (dashboardsStatus.isLoading) {
-			items.push({
-				key: 'dashboards-loading',
-				disabled: true,
-				label: (
-					<div className="flex items-center gap-2 px-2 py-1">
-						<Grid size={14} color={Color.text.secondary} />
-						<Skeleton.Input active size="small" style={{ width: 120 }} />
-					</div>
-				),
-			});
-		} else if (dashboardsStatus.isError) {
-			items.push({
-				key: 'dashboards-error',
-				disabled: true,
-				label: (
-					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
-						Failed to load dashboards
-					</Typography.Text>
-				),
-			});
-		} else {
-			const dashboardCount = dashboardsStatus.data?.length || 0;
-			if (dashboardCount > 0) {
-				items.push({
-					key: 'dashboards',
-					label: (
-						<Typography.Text
-							className="flex cursor-pointer items-center gap-2 px-2 py-1 text-xs"
-							onClick={() => {
-								openInNewTab(
-									`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
-								);
-							}}
-						>
-							<Grid size={14} color={Color.text.secondary} />
-							{dashboardCount} {pluralize('dashboard', dashboardCount)} using this
-							metric
+						<Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+							{totalAlerts}
 						</Typography.Text>
-					),
-				});
-			}
-		}
-
-		if (items.length === 0) {
-			items.push({
-				key: 'empty',
-				disabled: true,
-				label: (
-					<Typography.Text type="secondary" className="px-2 py-1 text-xs">
-						No dashboards or alerts using this metric
-					</Typography.Text>
-				),
-			});
-		}
-
-		return items;
-	}, [alertsStatus, dashboardsStatus, metricName]);
-
-	const menu = <Menu items={menuItems} />;
+					</Menu.Item>
+				)}
+				{hasDashboards && (
+					<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
+						<Typography.Text>
+							{pluralize('dashboard', totalDashboards)} using this metric
+						</Typography.Text>
+						<Typography.Text type="secondary" style={{ marginLeft: 8 }}>
+							{totalDashboards}
+						</Typography.Text>
+					</Menu.Item>
+				)}
+			</Menu>
+		);
+	};
 
 	return (
 		<Dropdown
-			overlay={menu}
+			menu={{ items: [] }}
+			overlay={renderContent()}
 			trigger={['click']}
 			placement="bottomRight"
-			open={open}
+			open={isOpen}
 			onOpenChange={handleOpenChange}
 		>
 			{children}
