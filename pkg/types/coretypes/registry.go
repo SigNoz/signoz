@@ -12,6 +12,32 @@ var (
 	ErrCodeInvalidVerbForType = errors.MustNewCode("invalid_verb")
 )
 
+const (
+	SigNozAdminRoleName     = "signoz-admin"
+	SigNozEditorRoleName    = "signoz-editor"
+	SigNozViewerRoleName    = "signoz-viewer"
+	SigNozAnonymousRoleName = "signoz-anonymous"
+)
+
+// ManagedPermission is a (verb, resource) tuple granted to a managed role.
+// All managed permissions are wildcard — they apply to every instance of the type.
+type ManagedPermission struct {
+	Verb     Verb
+	Resource GettableResource
+}
+
+var managedRolePermissions = map[string][]ManagedPermission{
+	SigNozAnonymousRoleName: {
+		{Verb: VerbRead, Resource: GettableResource{Type: TypeMetaResource, Kind: KindPublicDashboard}},
+	},
+}
+
+// ManagedRolePermissions returns the static map of managed-role names to the
+// (verb, resource) tuples granted to each role. All permissions are wildcard.
+func ManagedRolePermissions() map[string][]ManagedPermission {
+	return managedRolePermissions
+}
+
 var typeToVerbs = map[Type][]Verb{
 	TypeUser:           {VerbRead, VerbUpdate, VerbDelete},
 	TypeServiceAccount: {VerbRead, VerbUpdate, VerbDelete},

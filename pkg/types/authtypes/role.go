@@ -35,13 +35,13 @@ var (
 )
 
 var (
-	SigNozAnonymousRoleName        = "signoz-anonymous"
+	SigNozAnonymousRoleName        = coretypes.SigNozAnonymousRoleName
 	SigNozAnonymousRoleDescription = "Role assigned to anonymous users for access to public resources."
-	SigNozAdminRoleName            = "signoz-admin"
+	SigNozAdminRoleName            = coretypes.SigNozAdminRoleName
 	SigNozAdminRoleDescription     = "Role assigned to users who have full administrative access to SigNoz resources."
-	SigNozEditorRoleName           = "signoz-editor"
+	SigNozEditorRoleName           = coretypes.SigNozEditorRoleName
 	SigNozEditorRoleDescription    = "Role assigned to users who can create, edit, and manage SigNoz resources but do not have full administrative privileges."
-	SigNozViewerRoleName           = "signoz-viewer"
+	SigNozViewerRoleName           = coretypes.SigNozViewerRoleName
 	SigNozViewerRoleDescription    = "Role assigned to users who have read-only access to SigNoz resources."
 )
 
