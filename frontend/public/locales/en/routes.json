@@ -16,5 +16,6 @@
 	"roles": "Roles",
 	"role_details": "Role Details",
 	"members": "Members",
-	"service_accounts": "Service Accounts"
+	"service_accounts": "Service Accounts",
+	"mcp_server": "MCP Server"
 }

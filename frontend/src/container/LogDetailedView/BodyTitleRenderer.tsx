@@ -8,8 +8,19 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
+import { FeatureKeys } from 'constants/features';
+import { QueryParams } from 'constants/query';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useGetSearchQueryParam } from 'hooks/queryBuilder/useGetSearchQueryParam';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { useAppContext } from 'providers/App/App';
+import {
+	BaseAutocompleteData,
+	DataTypes,
+} from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { TitleWrapper } from './BodyTitleRenderer.styles';
 import { DROPDOWN_KEY } from './constant';
@@ -25,17 +36,32 @@ function BodyTitleRenderer({
 	parentIsArray = false,
 	nodeKey,
 	value,
+	handleChangeSelectedView,
 }: BodyTitleRendererProps): JSX.Element {
 	const { onAddToQuery } = useActiveLog();
+	const { stagedQuery, updateQueriesData } = useQueryBuilder();
+
+	const { featureFlags } = useAppContext();
 	const [, setCopy] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const viewName = useGetSearchQueryParam(QueryParams.viewName) || '';
+
+	const cleanedNodeKey = removeObjectFromString(nodeKey);
+	const isBodyJsonQueryEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
+			?.active || false;
+
+	// Group by is supported only for body json query enabled and not for array elements
+	const isGroupBySupported =
+		isBodyJsonQueryEnabled && !cleanedNodeKey.includes('[]');
 
 	const filterHandler = (isFilterIn: boolean) => (): void => {
 		if (parentIsArray) {
 			onAddToQuery(
 				generateFieldKeyForArray(
-					removeObjectFromString(nodeKey),
+					cleanedNodeKey,
 					getDataTypes(value),
+					isBodyJsonQueryEnabled,
 				),
 				`${value}`,
 				isFilterIn
@@ -45,7 +71,7 @@ function BodyTitleRenderer({
 			);
 		} else {
 			onAddToQuery(
-				`body.${removeObjectFromString(nodeKey)}`,
+				`body.${cleanedNodeKey}`,
 				`${value}`,
 				isFilterIn ? OPERATORS['='] : OPERATORS['!='],
 				getDataTypes(value),
@@ -53,10 +79,67 @@ function BodyTitleRenderer({
 		}
 	};
 
+	const groupByHandler = useCallback((): void => {
+		if (!stagedQuery) {
+			return;
+		}
+
+		const groupByKey = parentIsArray
+			? generateFieldKeyForArray(
+					cleanedNodeKey,
+					getDataTypes(value),
+					isBodyJsonQueryEnabled,
+				)
+			: `body.${cleanedNodeKey}`;
+
+		const fieldDataType = getDataTypes(value);
+		const normalizedDataType: DataTypes | undefined = Object.values(
+			DataTypes,
+		).includes(fieldDataType as DataTypes)
+			? (fieldDataType as DataTypes)
+			: undefined;
+
+		const updatedQuery = updateQueriesData(
+			stagedQuery,
+			'queryData',
+			(item, index) => {
+				if (index === 0) {
+					const newGroupByItem: BaseAutocompleteData = {
+						key: groupByKey,
+						type: '',
+						dataType: normalizedDataType,
+					};
+
+					return { ...item, groupBy: [...(item.groupBy || []), newGroupByItem] };
+				}
+
+				return item;
+			},
+		);
+
+		const queryData: ICurrentQueryData = {
+			name: viewName,
+			id: updatedQuery.id,
+			query: updatedQuery,
+		};
+
+		handleChangeSelectedView?.(ExplorerViews.TIMESERIES, queryData);
+	}, [
+		cleanedNodeKey,
+		handleChangeSelectedView,
+		isBodyJsonQueryEnabled,
+		parentIsArray,
+		stagedQuery,
+		updateQueriesData,
+		value,
+		viewName,
+	]);
+
 	const onClickHandler: MenuProps['onClick'] = (props): void => {
 		const mapper = {
 			[DROPDOWN_KEY.FILTER_IN]: filterHandler(true),
 			[DROPDOWN_KEY.FILTER_OUT]: filterHandler(false),
+			[DROPDOWN_KEY.GROUP_BY]: groupByHandler,
 		};
 
 		const handler = mapper[props.key];
@@ -76,6 +159,14 @@ function BodyTitleRenderer({
 				key: DROPDOWN_KEY.FILTER_OUT,
 				label: `Filter out ${value}`,
 			},
+			...(isGroupBySupported
+				? [
+						{
+							key: DROPDOWN_KEY.GROUP_BY,
+							label: `Group by ${nodeKey}`,
+						},
+					]
+				: []),
 		],
 		onClick: onClickHandler,
 	};
@@ -84,7 +175,6 @@ function BodyTitleRenderer({
 		(e: React.MouseEvent): void => {
 			// Prevent tree node expansion/collapse
 			e.stopPropagation();
-			const cleanedKey = removeObjectFromString(nodeKey);
 			let copyText: string;
 
 			// Check if value is an object or array
@@ -106,8 +196,8 @@ function BodyTitleRenderer({
 
 			if (copyText) {
 				const notificationMessage = isObject
-					? `${cleanedKey} object copied to clipboard`
-					: `${cleanedKey} copied to clipboard`;
+					? `${cleanedNodeKey} object copied to clipboard`
+					: `${cleanedNodeKey} copied to clipboard`;
 
 				notifications.success({
 					message: notificationMessage,
@@ -115,7 +205,7 @@ function BodyTitleRenderer({
 				});
 			}
 		},
-		[nodeKey, parentIsArray, setCopy, value, notifications],
+		[cleanedNodeKey, parentIsArray, setCopy, value, notifications],
 	);
 
 	return (

@@ -74,7 +74,7 @@
 	width: 100%;
 	height: 100%;
 
-	background: radial-gradient(circle, #fff 10%, transparent 0);
+	background: radial-gradient(circle, var(--l1-foreground) 10%, transparent 0);
 	background-size: 12px 12px;
 	opacity: 1;
 
