@@ -118,7 +118,7 @@ export default function TooltipPlugin({
 
 			removeSyncDisplayHook = config.addHook(
 				'setCursor',
-				createSyncDisplayHook(syncKey, syncMetadata, controller, syncMode),
+				createSyncDisplayHook(syncKey, syncMetadata, controller),
 			);
 		}
 
