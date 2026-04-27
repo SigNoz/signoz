@@ -44,11 +44,12 @@ export interface IGlobalTimeStoreActions {
 	) => void;
 
 	/**
-	 * Get the current min/max time values parsed from selectedTime.
-	 * For durations, computes fresh values based on Date.now().
-	 * For custom ranges, extracts the stored values.
+	 * Get the current min/max time values.
+	 * - Custom time ranges: returns exact parsed values
+	 * - isRefreshEnabled true: computes 5s-rounded values and updates store
+	 * - isRefreshEnabled false: returns lastComputedMinMax
 	 */
-	getMinMaxTime: (selectedItem?: GlobalTimeSelectedTime) => ParsedTimeRange;
+	getMinMaxTime: () => ParsedTimeRange;
 }
 
 export interface GlobalTimeProviderOptions {
@@ -83,7 +84,7 @@ export interface GlobalTimeActions {
 		refreshInterval?: number,
 	) => void;
 	setRefreshInterval: (interval: number) => void;
-	getMinMaxTime: (selectedTime?: GlobalTimeSelectedTime) => ParsedTimeRange;
+	getMinMaxTime: () => ParsedTimeRange;
 	/**
 	 * Compute fresh rounded min/max values, store them, and update refresh timestamp.
 	 * Call this before invalidating queries to ensure all queries use the same time values.

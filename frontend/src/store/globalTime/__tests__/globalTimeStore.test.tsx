@@ -154,20 +154,16 @@ describe('globalTimeStore', () => {
 			});
 		});
 
-		it('should reset lastComputedMinMax when selectedTime changes', () => {
+		it('should compute and store lastComputedMinMax when selectedTime changes', () => {
 			const wrapper = createIsolatedWrapper({
 				selectedTime: '15m',
 				refreshInterval: 5000,
 			});
 			const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-			// Compute and store initial values
-			act(() => {
-				result.current.computeAndStoreMinMax();
-			});
-
-			// Verify we have cached values
-			expect(result.current.lastComputedMinMax.maxTime).toBeGreaterThan(0);
+			// setSelectedTime computes values on init (createIsolatedWrapper uses createGlobalTimeStore)
+			// But initial store state has minTime/maxTime as 0 until first setSelectedTime is called
+			const initialMinMax = { ...result.current.lastComputedMinMax };
 
 			// Now switch to a custom time range
 			const customTime = createCustomTimeRange(1000000000, 2000000000);
@@ -175,11 +171,12 @@ describe('globalTimeStore', () => {
 				result.current.setSelectedTime(customTime);
 			});
 
-			// lastComputedMinMax should be reset
+			// lastComputedMinMax should be updated to the custom range values
 			expect(result.current.lastComputedMinMax).toStrictEqual({
-				minTime: 0,
-				maxTime: 0,
+				minTime: 1000000000,
+				maxTime: 2000000000,
 			});
+			expect(result.current.lastComputedMinMax).not.toStrictEqual(initialMinMax);
 		});
 
 		it('should return fresh custom time values after switching from relative time', () => {
@@ -278,40 +275,6 @@ describe('globalTimeStore', () => {
 			expect(maxTime).not.toBe(maxTimeRounded);
 		});
 
-		it('should NOT round custom time range passed as parameter', () => {
-			const { result } = renderHook(() => useGlobalTimeStore());
-			// Store is set to relative time
-			act(() => {
-				result.current.setSelectedTime('15m');
-			});
-
-			// Use timestamps that are NOT on minute boundaries
-			const minTimeWithSeconds =
-				new Date('2024-01-15T12:15:45.123Z').getTime() * NANO_SECOND_MULTIPLIER;
-			const maxTimeWithSeconds =
-				new Date('2024-01-15T12:30:45.123Z').getTime() * NANO_SECOND_MULTIPLIER;
-
-			// What the values would be if rounded down to minute boundary
-			const minTimeRounded =
-				new Date('2024-01-15T12:15:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
-			const maxTimeRounded =
-				new Date('2024-01-15T12:30:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
-
-			const customTime = createCustomTimeRange(
-				minTimeWithSeconds,
-				maxTimeWithSeconds,
-			);
-
-			// Pass custom time as parameter (different from store's selectedTime)
-			const { minTime, maxTime } = result.current.getMinMaxTime(customTime);
-
-			// Should return exact values, NOT rounded values
-			expect(minTime).toBe(minTimeWithSeconds);
-			expect(maxTime).toBe(maxTimeWithSeconds);
-			expect(minTime).not.toBe(minTimeRounded);
-			expect(maxTime).not.toBe(maxTimeRounded);
-		});
-
 		it('should compute fresh min/max time for relative time', () => {
 			const { result } = renderHook(() => useGlobalTimeStore());
 
@@ -327,11 +290,11 @@ describe('globalTimeStore', () => {
 			expect(minTime).toBe(now - fifteenMinutesNs);
 		});
 
-		it('should return same values on subsequent calls for relative time under a minute', () => {
+		it('should return same values on subsequent calls when refresh disabled (under minute boundary)', () => {
 			const { result } = renderHook(() => useGlobalTimeStore());
 
 			act(() => {
-				result.current.setSelectedTime('15m');
+				result.current.setSelectedTime('15m', 0); // refresh disabled
 			});
 
 			const first = result.current.getMinMaxTime();
@@ -342,15 +305,16 @@ describe('globalTimeStore', () => {
 
 			const second = result.current.getMinMaxTime();
 
+			// With refresh disabled, should return cached lastComputedMinMax
 			expect(second.maxTime).toBe(first.maxTime);
 			expect(second.minTime).toBe(first.minTime);
 		});
 
-		it('should return different values on subsequent calls for relative time only after a minute', () => {
+		it('should return different values on subsequent calls when refresh disabled after minute boundary', () => {
 			const { result } = renderHook(() => useGlobalTimeStore());
 
 			act(() => {
-				result.current.setSelectedTime('15m');
+				result.current.setSelectedTime('15m', 0); // refresh disabled
 			});
 
 			const first = result.current.getMinMaxTime();
@@ -359,10 +323,19 @@ describe('globalTimeStore', () => {
 				jest.advanceTimersByTime(60000);
 			});
 
+			// Without refresh enabled, getMinMaxTime returns cached values
+			// Need to call computeAndStoreMinMax to get new values
 			const second = result.current.getMinMaxTime();
+			expect(second.maxTime).toBe(first.maxTime);
 
-			expect(second.maxTime).toBe(first.maxTime + 60000 * NANO_SECOND_MULTIPLIER);
-			expect(second.minTime).toBe(first.minTime + 60000 * NANO_SECOND_MULTIPLIER);
+			// After computing, values should update
+			act(() => {
+				result.current.computeAndStoreMinMax();
+			});
+
+			const third = result.current.getMinMaxTime();
+			expect(third.maxTime).toBe(first.maxTime + 60000 * NANO_SECOND_MULTIPLIER);
+			expect(third.minTime).toBe(first.minTime + 60000 * NANO_SECOND_MULTIPLIER);
 		});
 
 		it('should return stored lastComputedMinMax when available', () => {
@@ -385,100 +358,50 @@ describe('globalTimeStore', () => {
 			expect(returned).toStrictEqual(stored);
 		});
 
-		it('should compute fresh values when different selectedTime is provided', () => {
-			const { result } = renderHook(() => useGlobalTimeStore());
-
-			act(() => {
-				result.current.setSelectedTime('15m');
-				result.current.computeAndStoreMinMax();
-			});
-
-			const stored = { ...result.current.lastComputedMinMax };
-
-			// Request time for a different selectedTime
-			const freshValues = result.current.getMinMaxTime('1h');
-
-			// Should NOT equal stored values (different duration)
-			expect(freshValues).not.toStrictEqual(stored);
-		});
-
-		it('should behave same as no-param call when selectedTime matches state', () => {
-			// This tests the pattern used in K8sBaseDetails:
-			// getMinMaxTime(selectedTime) where selectedTime === state.selectedTime
-			const wrapper = createIsolatedWrapper({
-				selectedTime: '15m',
-				refreshInterval: 5000, // isRefreshEnabled = true
-			});
-			const { result } = renderHook(() => useGlobalTime(), { wrapper });
-
-			act(() => {
-				result.current.computeAndStoreMinMax();
-			});
-
-			const initialMinMax = { ...result.current.lastComputedMinMax };
-
-			// Advance time past minute boundary
-			act(() => {
-				jest.advanceTimersByTime(60000);
-			});
-
-			// Call with selectedTime parameter that matches state.selectedTime
-			// Should behave the same as calling without parameter
-			const withParam = result.current.getMinMaxTime('15m');
-			const withoutParam = result.current.getMinMaxTime();
-
-			expect(withParam).toStrictEqual(withoutParam);
-			expect(withParam.maxTime).toBe(
-				initialMinMax.maxTime + 60000 * NANO_SECOND_MULTIPLIER,
-			);
-		});
-
 		describe('with isRefreshEnabled (isolated store)', () => {
-			it('should compute fresh values when isRefreshEnabled is true', () => {
+			it('should compute fresh values when isRefreshEnabled is true (5s rounding)', () => {
+				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
 					refreshInterval: 5000,
 				});
 				const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-				act(() => {
-					result.current.computeAndStoreMinMax();
-				});
+				// getMinMaxTime computes 5s-rounded values when refresh enabled
+				const initialMinMax = result.current.getMinMaxTime();
 
-				const initialMinMax = { ...result.current.lastComputedMinMax };
-
-				// Advance time past minute boundary
+				// Advance time by 5 seconds to cross 5s boundary
 				act(() => {
-					jest.advanceTimersByTime(60000);
+					jest.advanceTimersByTime(5000);
 				});
 
 				// getMinMaxTime should return fresh values, not cached
 				const freshValues = result.current.getMinMaxTime();
 
 				expect(freshValues.maxTime).toBe(
-					initialMinMax.maxTime + 60000 * NANO_SECOND_MULTIPLIER,
+					initialMinMax.maxTime + 5000 * NANO_SECOND_MULTIPLIER,
 				);
 				expect(freshValues.minTime).toBe(
-					initialMinMax.minTime + 60000 * NANO_SECOND_MULTIPLIER,
+					initialMinMax.minTime + 5000 * NANO_SECOND_MULTIPLIER,
 				);
 			});
 
-			it('should update lastComputedMinMax when values change', () => {
+			it('should update lastComputedMinMax when values change (5s rounding)', () => {
+				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
 					refreshInterval: 5000,
 				});
 				const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-				act(() => {
-					result.current.computeAndStoreMinMax();
-				});
+				// Get initial values (uses 5s rounding when refresh enabled)
+				const initialMinMax = result.current.getMinMaxTime();
 
-				const initialMinMax = { ...result.current.lastComputedMinMax };
-
-				// Advance time past minute boundary
+				// Advance time by 5 seconds to cross 5s boundary
 				act(() => {
-					jest.advanceTimersByTime(60000);
+					jest.advanceTimersByTime(5000);
 				});
 
 				// Call getMinMaxTime - should update lastComputedMinMax
@@ -487,10 +410,10 @@ describe('globalTimeStore', () => {
 				});
 
 				expect(result.current.lastComputedMinMax.maxTime).toBe(
-					initialMinMax.maxTime + 60000 * NANO_SECOND_MULTIPLIER,
+					initialMinMax.maxTime + 5000 * NANO_SECOND_MULTIPLIER,
 				);
 				expect(result.current.lastComputedMinMax.minTime).toBe(
-					initialMinMax.minTime + 60000 * NANO_SECOND_MULTIPLIER,
+					initialMinMax.minTime + 5000 * NANO_SECOND_MULTIPLIER,
 				);
 			});
 
@@ -522,26 +445,27 @@ describe('globalTimeStore', () => {
 				);
 			});
 
-			it('should NOT update lastComputedMinMax when values have not changed (same minute)', () => {
+			it('should NOT update lastComputedMinMax when values have not changed (same 5s window)', () => {
+				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
 					refreshInterval: 5000,
 				});
 				const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-				act(() => {
-					result.current.computeAndStoreMinMax();
-				});
+				// Get initial values (triggers computation for 5s-rounded values)
+				result.current.getMinMaxTime();
 
 				const initialMinMax = { ...result.current.lastComputedMinMax };
 				const initialTimestamp = result.current.lastRefreshTimestamp;
 
-				// Advance time but stay within same minute
+				// Advance time but stay within same 5-second window
 				act(() => {
-					jest.advanceTimersByTime(30000);
+					jest.advanceTimersByTime(4000);
 				});
 
-				// Call getMinMaxTime - should NOT update store (same minute boundary)
+				// Call getMinMaxTime - should NOT update store (same 5s boundary)
 				act(() => {
 					result.current.getMinMaxTime();
 				});
@@ -606,23 +530,22 @@ describe('globalTimeStore', () => {
 				expect(second.maxTime).toBe(maxTime);
 			});
 
-			it('should handle multiple consecutive refetch intervals correctly', () => {
+			it('should handle multiple consecutive refetch intervals correctly (5s rounding)', () => {
+				jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z')); // Start at 5s boundary
+
 				const wrapper = createIsolatedWrapper({
 					selectedTime: '15m',
 					refreshInterval: 5000,
 				});
 				const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-				act(() => {
-					result.current.computeAndStoreMinMax();
-				});
+				// Get initial values
+				const initialMinMax = result.current.getMinMaxTime();
 
-				const initialMinMax = { ...result.current.lastComputedMinMax };
-
-				// Simulate 3 refetch intervals crossing minute boundaries
+				// Simulate 3 refetch intervals crossing 5-second boundaries
 				for (let i = 1; i <= 3; i++) {
 					act(() => {
-						jest.advanceTimersByTime(60000);
+						jest.advanceTimersByTime(5000);
 					});
 
 					act(() => {
@@ -630,7 +553,7 @@ describe('globalTimeStore', () => {
 					});
 
 					expect(result.current.lastComputedMinMax.maxTime).toBe(
-						initialMinMax.maxTime + i * 60000 * NANO_SECOND_MULTIPLIER,
+						initialMinMax.maxTime + i * 5000 * NANO_SECOND_MULTIPLIER,
 					);
 				}
 			});
@@ -647,7 +570,7 @@ describe('globalTimeStore', () => {
 			jest.useRealTimers();
 		});
 
-		it('should compute and store rounded min/max values', () => {
+		it('should compute and store min/max values', () => {
 			const { result } = renderHook(() => useGlobalTimeStore());
 
 			act(() => {
@@ -658,9 +581,9 @@ describe('globalTimeStore', () => {
 				result.current.computeAndStoreMinMax();
 			});
 
-			// maxTime should be rounded to 12:30:00.000
+			// maxTime should be the current time (no rounding when refresh disabled)
 			const expectedMaxTime =
-				new Date('2024-01-15T12:30:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
+				new Date('2024-01-15T12:30:45.123Z').getTime() * NANO_SECOND_MULTIPLIER;
 			const fifteenMinutesNs = 15 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
 
 			expect(result.current.lastComputedMinMax.maxTime).toBe(expectedMaxTime);
@@ -784,6 +707,162 @@ describe('globalTimeStore', () => {
 			expect(result2.current.selectedTime).toBe('1h');
 			expect(result2.current.refreshInterval).toBe(10000);
 			expect(result2.current.isRefreshEnabled).toBe(true);
+		});
+	});
+
+	describe('setSelectedTime (min/max computation)', () => {
+		beforeEach(() => {
+			jest.useFakeTimers();
+			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+		});
+
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('should compute and store min/max for relative time on setSelectedTime', () => {
+			const wrapper = createIsolatedWrapper();
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			// Initial state has 0 values
+			expect(result.current.lastComputedMinMax.maxTime).toBe(0);
+
+			act(() => {
+				result.current.setSelectedTime('15m');
+			});
+
+			// Should have computed values immediately
+			const expectedMaxTime =
+				new Date('2024-01-15T12:00:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
+			const fifteenMinutesNs = 15 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
+
+			expect(result.current.lastComputedMinMax.maxTime).toBe(expectedMaxTime);
+			expect(result.current.lastComputedMinMax.minTime).toBe(
+				expectedMaxTime - fifteenMinutesNs,
+			);
+		});
+
+		it('should compute and store min/max for custom time on setSelectedTime', () => {
+			const wrapper = createIsolatedWrapper();
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			const minTime = 1000000000;
+			const maxTime = 2000000000;
+			const customTime = createCustomTimeRange(minTime, maxTime);
+
+			act(() => {
+				result.current.setSelectedTime(customTime);
+			});
+
+			expect(result.current.lastComputedMinMax.minTime).toBe(minTime);
+			expect(result.current.lastComputedMinMax.maxTime).toBe(maxTime);
+		});
+
+		it('should update lastRefreshTimestamp on setSelectedTime', () => {
+			const wrapper = createIsolatedWrapper();
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			expect(result.current.lastRefreshTimestamp).toBe(0);
+
+			act(() => {
+				result.current.setSelectedTime('15m');
+			});
+
+			expect(result.current.lastRefreshTimestamp).toBe(Date.now());
+		});
+
+		it('should skip update when same selectedTime and refreshInterval', () => {
+			const wrapper = createIsolatedWrapper({
+				selectedTime: '15m',
+				refreshInterval: 5000,
+			});
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			// Set initial values
+			act(() => {
+				result.current.setSelectedTime('15m', 5000);
+			});
+
+			const initialTimestamp = result.current.lastRefreshTimestamp;
+
+			// Advance time
+			act(() => {
+				jest.advanceTimersByTime(1000);
+			});
+
+			// Try to set same values again
+			act(() => {
+				result.current.setSelectedTime('15m', 5000);
+			});
+
+			// Should not have updated timestamp (no state change)
+			expect(result.current.lastRefreshTimestamp).toBe(initialTimestamp);
+		});
+	});
+
+	describe('computeAndStoreMinMax (refresh behavior)', () => {
+		beforeEach(() => {
+			jest.useFakeTimers();
+			jest.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+		});
+
+		afterEach(() => {
+			jest.useRealTimers();
+		});
+
+		it('should skip computation and return lastComputedMinMax when refresh is enabled', () => {
+			const wrapper = createIsolatedWrapper({
+				selectedTime: '15m',
+				refreshInterval: 5000,
+			});
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			// Get initial values via getMinMaxTime (which computes for refresh enabled)
+			const initialMinMax = result.current.getMinMaxTime();
+
+			// Advance time
+			act(() => {
+				jest.advanceTimersByTime(60000);
+			});
+
+			// computeAndStoreMinMax should skip computation when refresh is enabled
+			let returnedValue: { minTime: number; maxTime: number } | undefined;
+			act(() => {
+				returnedValue = result.current.computeAndStoreMinMax();
+			});
+
+			// Should return the current lastComputedMinMax, not fresh computation
+			expect(returnedValue).toStrictEqual(initialMinMax);
+		});
+
+		it('should compute fresh values when refresh is disabled', () => {
+			const wrapper = createIsolatedWrapper({
+				selectedTime: '15m',
+				refreshInterval: 0, // Disabled
+			});
+			const { result } = renderHook(() => useGlobalTime(), { wrapper });
+
+			// Get initial values
+			act(() => {
+				result.current.computeAndStoreMinMax();
+			});
+			const initialMinMax = { ...result.current.lastComputedMinMax };
+
+			// Advance time past minute boundary
+			act(() => {
+				jest.advanceTimersByTime(60000);
+			});
+
+			// computeAndStoreMinMax should compute fresh values
+			let returnedValue: { minTime: number; maxTime: number } | undefined;
+			act(() => {
+				returnedValue = result.current.computeAndStoreMinMax();
+			});
+
+			// Should return new values
+			expect(returnedValue?.maxTime).toBe(
+				initialMinMax.maxTime + 60000 * NANO_SECOND_MULTIPLIER,
+			);
 		});
 	});
 });

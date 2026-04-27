@@ -8,7 +8,7 @@ import {
 	ParsedTimeRange,
 } from './types';
 import {
-	computeRoundedMinMax,
+	computeRounded5sMinMax,
 	isCustomTimeRange,
 	parseSelectedTime,
 } from './utils';
@@ -43,15 +43,21 @@ export function createGlobalTimeStore(
 			time: GlobalTimeSelectedTime,
 			newRefreshInterval?: number,
 		): void => {
-			set((state) => {
-				const interval = newRefreshInterval ?? state.refreshInterval;
-				return {
-					selectedTime: time,
-					refreshInterval: interval,
-					isRefreshEnabled: computeIsRefreshEnabled(time, interval),
-					// Reset cached values so getMinMaxTime computes fresh values for the new selection
-					lastComputedMinMax: { minTime: 0, maxTime: 0 },
-				};
+			const state = get();
+			const interval = newRefreshInterval ?? state.refreshInterval;
+
+			if (time === state.selectedTime && interval === state.refreshInterval) {
+				return;
+			}
+
+			const computedMinMax = parseSelectedTime(time);
+
+			set({
+				selectedTime: time,
+				refreshInterval: interval,
+				isRefreshEnabled: computeIsRefreshEnabled(time, interval),
+				lastComputedMinMax: computedMinMax,
+				lastRefreshTimestamp: Date.now(),
 			});
 		},
 
@@ -62,61 +68,42 @@ export function createGlobalTimeStore(
 			}));
 		},
 
-		getMinMaxTime: (selectedTime?: GlobalTimeSelectedTime): ParsedTimeRange => {
+		getMinMaxTime: (): ParsedTimeRange => {
 			const state = get();
-			const timeToUse = selectedTime ?? state.selectedTime;
 
-			// For custom time ranges, return exact values without rounding
-			if (isCustomTimeRange(timeToUse)) {
-				return parseSelectedTime(timeToUse);
+			if (isCustomTimeRange(state.selectedTime)) {
+				return parseSelectedTime(state.selectedTime);
 			}
 
-			if (selectedTime && selectedTime !== state.selectedTime) {
-				return computeRoundedMinMax(selectedTime);
-			}
-
-			// When auto-refresh is enabled, compute fresh values and update store
-			// This ensures time moves forward on each refetchInterval cycle
-			// Note: computeRoundedMinMax rounds to minute boundaries, so all queries
-			// calling getMinMaxTime within the same minute get consistent values
 			if (state.isRefreshEnabled) {
-				const freshMinMax = computeRoundedMinMax(state.selectedTime);
+				const freshMinMax = computeRounded5sMinMax(state.selectedTime);
 
-				// Only update store if values changed (avoids unnecessary re-renders)
 				if (
 					freshMinMax.minTime !== state.lastComputedMinMax.minTime ||
 					freshMinMax.maxTime !== state.lastComputedMinMax.maxTime
 				) {
-					set({
-						lastComputedMinMax: freshMinMax,
-						lastRefreshTimestamp: Date.now(),
-					});
+					set({ lastComputedMinMax: freshMinMax, lastRefreshTimestamp: Date.now() });
 				}
 
 				return freshMinMax;
 			}
 
-			// Return stored values if they exist (set by computeAndStoreMinMax)
-			// This ensures all callers get the same values within a refresh cycle
-			if (state.lastComputedMinMax.maxTime > 0) {
-				return state.lastComputedMinMax;
-			}
-
-			return computeRoundedMinMax(state.selectedTime);
+			return state.lastComputedMinMax;
 		},
 
 		computeAndStoreMinMax: (): ParsedTimeRange => {
-			const { selectedTime } = get();
-			// For custom time ranges, use exact values without rounding
-			const computedMinMax = isCustomTimeRange(selectedTime)
-				? parseSelectedTime(selectedTime)
-				: computeRoundedMinMax(selectedTime);
+			const state = get();
+
+			if (state.isRefreshEnabled) {
+				return state.lastComputedMinMax;
+			}
+
+			const computedMinMax = parseSelectedTime(state.selectedTime);
 
 			set({
 				lastComputedMinMax: computedMinMax,
 				lastRefreshTimestamp: Date.now(),
 			});
-
 			return computedMinMax;
 		},
 

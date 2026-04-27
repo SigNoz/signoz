@@ -1,7 +1,7 @@
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 import {
-	computeRoundedMinMax,
+	computeRounded5sMinMax,
 	createCustomTimeRange,
 	CUSTOM_TIME_SEPARATOR,
 	getAutoRefreshQueryKey,
@@ -9,7 +9,7 @@ import {
 	NANO_SECOND_MULTIPLIER,
 	parseCustomTimeRange,
 	parseSelectedTime,
-	roundDownToMinute,
+	roundDownTo5Seconds,
 } from '../utils';
 
 describe('globalTime/utils', () => {
@@ -142,54 +142,69 @@ describe('globalTime/utils', () => {
 		});
 	});
 
-	describe('roundDownToMinute', () => {
-		it('should round down timestamp to minute boundary', () => {
-			// 2024-01-15T12:30:45.123Z -> 2024-01-15T12:30:00.000Z
-			const inputNano = 1705321845123 * NANO_SECOND_MULTIPLIER; // 12:30:45.123
-			const expectedNano = 1705321800000 * NANO_SECOND_MULTIPLIER; // 12:30:00.000
+	describe('roundDownTo5Seconds', () => {
+		it('should round down timestamp to 5-second boundary', () => {
+			// 12:30:47.123Z -> 12:30:45.000Z
+			const inputNano = 1705321847123 * NANO_SECOND_MULTIPLIER;
+			const expectedNano = 1705321845000 * NANO_SECOND_MULTIPLIER;
 
-			expect(roundDownToMinute(inputNano)).toBe(expectedNano);
+			expect(roundDownTo5Seconds(inputNano)).toBe(expectedNano);
 		});
 
-		it('should not change timestamp already at minute boundary', () => {
-			const inputNano = 1705321800000 * NANO_SECOND_MULTIPLIER; // 12:30:00.000
+		it('should not change timestamp already at 5-second boundary', () => {
+			const inputNano = 1705321845000 * NANO_SECOND_MULTIPLIER; // 12:30:45.000
 
-			expect(roundDownToMinute(inputNano)).toBe(inputNano);
+			expect(roundDownTo5Seconds(inputNano)).toBe(inputNano);
 		});
 
-		it('should handle timestamp at 59 seconds', () => {
-			// 2024-01-15T12:30:59.999Z -> 2024-01-15T12:30:00.000Z
-			const inputNano = 1705321859999 * NANO_SECOND_MULTIPLIER;
+		it('should round 12:30:04.999 down to 12:30:00.000', () => {
+			const inputNano = 1705321804999 * NANO_SECOND_MULTIPLIER;
 			const expectedNano = 1705321800000 * NANO_SECOND_MULTIPLIER;
 
-			expect(roundDownToMinute(inputNano)).toBe(expectedNano);
+			expect(roundDownTo5Seconds(inputNano)).toBe(expectedNano);
+		});
+
+		it('should round 12:30:09.999 down to 12:30:05.000', () => {
+			const inputNano = 1705321809999 * NANO_SECOND_MULTIPLIER;
+			const expectedNano = 1705321805000 * NANO_SECOND_MULTIPLIER;
+
+			expect(roundDownTo5Seconds(inputNano)).toBe(expectedNano);
+		});
+
+		it('should handle timestamp at exact 5-second intervals', () => {
+			// Test 5, 10, 15, 20, 25... second marks
+			const base = 1705321800000; // 12:30:00
+			for (let sec = 0; sec < 60; sec += 5) {
+				const inputNano = (base + sec * 1000) * NANO_SECOND_MULTIPLIER;
+				expect(roundDownTo5Seconds(inputNano)).toBe(inputNano);
+			}
 		});
 	});
 
-	describe('computeRoundedMinMax', () => {
+	describe('computeRounded5sMinMax', () => {
 		beforeEach(() => {
 			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+			jest.setSystemTime(new Date('2024-01-15T12:30:47.123Z'));
 		});
 
 		afterEach(() => {
 			jest.useRealTimers();
 		});
 
-		it('should return rounded maxTime for relative time', () => {
-			const result = computeRoundedMinMax('15m');
+		it('should return maxTime rounded to 5-second boundary for relative time', () => {
+			const result = computeRounded5sMinMax('15m');
 
-			// maxTime should be rounded down to 12:30:00.000
+			// maxTime should be rounded down to 12:30:45.000
 			const expectedMaxTime =
-				new Date('2024-01-15T12:30:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
+				new Date('2024-01-15T12:30:45.000Z').getTime() * NANO_SECOND_MULTIPLIER;
 			expect(result.maxTime).toBe(expectedMaxTime);
 		});
 
-		it('should compute minTime based on rounded maxTime', () => {
-			const result = computeRoundedMinMax('15m');
+		it('should compute minTime based on 5s-rounded maxTime', () => {
+			const result = computeRounded5sMinMax('15m');
 
 			const expectedMaxTime =
-				new Date('2024-01-15T12:30:00.000Z').getTime() * NANO_SECOND_MULTIPLIER;
+				new Date('2024-01-15T12:30:45.000Z').getTime() * NANO_SECOND_MULTIPLIER;
 			const fifteenMinutesNs = 15 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
 
 			expect(result.minTime).toBe(expectedMaxTime - fifteenMinutesNs);
@@ -200,23 +215,19 @@ describe('globalTime/utils', () => {
 			const maxTime = 2000000000;
 			const customTime = createCustomTimeRange(minTime, maxTime);
 
-			const result = computeRoundedMinMax(customTime);
+			const result = computeRounded5sMinMax(customTime);
 
 			expect(result.minTime).toBe(minTime);
 			expect(result.maxTime).toBe(maxTime);
 		});
 
-		it('should return fallback for invalid custom time range', () => {
-			jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+		it('should preserve duration for 1h relative time', () => {
+			const result = computeRounded5sMinMax('1h');
 
-			const invalidCustom = `invalid${CUSTOM_TIME_SEPARATOR}values`;
-			const result = computeRoundedMinMax(invalidCustom);
+			const oneHourNs = 60 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
+			const duration = result.maxTime - result.minTime;
 
-			const now = Date.now() * NANO_SECOND_MULTIPLIER;
-			const fallbackDuration = 30 * 1000 * NANO_SECOND_MULTIPLIER;
-
-			expect(result.maxTime).toBe(now);
-			expect(result.minTime).toBe(now - fallbackDuration);
+			expect(duration).toBe(oneHourNs);
 		});
 	});
 

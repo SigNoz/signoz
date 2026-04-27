@@ -19,6 +19,7 @@ export function useGlobalTimeQueryInvalidate(): () => Promise<void> {
 	return useCallback(async () => {
 		// Compute fresh time values BEFORE invalidating
 		// This ensures all queries that re-run will use the same time values
+		// If refresh is enabled, this will just be skipped
 		computeAndStoreMinMax();
 
 		return await queryClient.invalidateQueries({

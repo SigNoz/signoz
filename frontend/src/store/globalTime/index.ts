@@ -133,10 +133,10 @@
  *
  * `getMinMaxTime()` ensures all queries use consistent timestamps:
  * - When auto-refresh is **disabled**: returns cached values from `computeAndStoreMinMax()`
- * - When auto-refresh is **enabled**: computes fresh values (rounded to minute boundaries)
+ * - When auto-refresh is **enabled**: computes fresh values (rounded to 5-second boundaries)
  *
- * Since values are rounded to minute boundaries, all queries calling `getMinMaxTime()`
- * within the same minute get identical timestamps.
+ * Since values are rounded to 5-second boundaries, all queries calling `getMinMaxTime()`
+ * within the same 5-second window get identical timestamps.
  *
  * ```tsx
  * // GOOD - all queries get same time
@@ -157,9 +157,9 @@
  *
  * **Auto-refresh (when `isRefreshEnabled = true`):**
  * 1. React-query's `refetchInterval` triggers query re-execution
- * 2. `getMinMaxTime()` computes fresh values (rounded to minute)
+ * 2. `getMinMaxTime()` computes fresh values (rounded to 5 seconds)
  * 3. If values changed, updates `lastComputedMinMax` cache
- * 4. All queries within same minute get consistent values
+ * 4. All queries within same 5-second window get consistent values
  *
  * ## Auto-Refresh Setup
  *
@@ -511,7 +511,6 @@ export type {
 
 // Utilities
 export {
-	computeRoundedMinMax,
 	createCustomTimeRange,
 	CUSTOM_TIME_SEPARATOR,
 	getAutoRefreshQueryKey,
@@ -519,7 +518,6 @@ export {
 	NANO_SECOND_MULTIPLIER,
 	parseCustomTimeRange,
 	parseSelectedTime,
-	roundDownToMinute,
 } from './utils';
 
 // Internal hooks (for advanced use cases)

@@ -190,16 +190,16 @@ function K8sBaseDetails<T>({
 	);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
 
-	const { startMs, endMs } = useMemo(() => {
-		const { minTime: startNs, maxTime: endNs } = getMinMaxTime(selectedTime);
-
-		return {
-			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
-			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
-		};
-	}, [getMinMaxTime, selectedTime]);
+	const { startMs, endMs } = useMemo(
+		() => ({
+			startMs: Math.floor(lastComputedMinMax.minTime / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(lastComputedMinMax.maxTime / NANO_SECOND_MULTIPLIER),
+		}),
+		[lastComputedMinMax],
+	);
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,

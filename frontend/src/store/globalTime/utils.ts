@@ -89,43 +89,34 @@ export function getAutoRefreshQueryKey(
 }
 
 /**
- * Round timestamp down to the nearest minute boundary.
- * Used to ensure consistent time values across multiple consumers within the same minute.
+ * Round timestamp down to the nearest 5-second boundary.
+ * Used for tighter sync during auto-refresh scenarios.
  *
  * @param timestampNano - Timestamp in nanoseconds
- * @returns Timestamp rounded down to minute boundary in nanoseconds
+ * @returns Timestamp rounded down to 5-second boundary in nanoseconds
  */
-export function roundDownToMinute(timestampNano: number): number {
-	const msPerMinute = 60 * 1000;
+export function roundDownTo5Seconds(timestampNano: number): number {
+	const msPerInterval = 5 * 1000;
 	const timestampMs = Math.floor(timestampNano / NANO_SECOND_MULTIPLIER);
-	const roundedMs = Math.floor(timestampMs / msPerMinute) * msPerMinute;
+	const roundedMs = Math.floor(timestampMs / msPerInterval) * msPerInterval;
 	return roundedMs * NANO_SECOND_MULTIPLIER;
 }
 
 /**
- * Compute min/max time with maxTime rounded down to minute boundary.
- * For relative times, this ensures all calls within the same minute return identical values.
- * For custom time ranges, returns the stored values unchanged.
+ * Compute min/max time with maxTime rounded down to 5-second boundary.
+ * Used when isRefreshEnabled is true for tighter time sync.
  *
  * @param selectedTime - The selected time (relative like '15m' or custom range)
- * @returns ParsedTimeRange with rounded maxTime for relative times
+ * @returns ParsedTimeRange with 5-second rounded maxTime for relative times
  */
-export function computeRoundedMinMax(selectedTime: string): ParsedTimeRange {
+export function computeRounded5sMinMax(selectedTime: string): ParsedTimeRange {
 	if (isCustomTimeRange(selectedTime)) {
-		const parsed = parseCustomTimeRange(selectedTime);
-		if (parsed) {
-			return parsed;
-		}
-		// Fallback if parsing fails
-		const now = Date.now() * NANO_SECOND_MULTIPLIER;
-		return { minTime: now - fallbackDurationInNanoSeconds, maxTime: now };
+		return parseSelectedTime(selectedTime);
 	}
 
-	// For relative time, compute with rounded maxTime
 	const nowNano = Date.now() * NANO_SECOND_MULTIPLIER;
-	const roundedMaxTime = roundDownToMinute(nowNano);
+	const roundedMaxTime = roundDownTo5Seconds(nowNano);
 
-	// Get the duration from the relative time
 	const { minTime: originalMin, maxTime: originalMax } =
 		getMinMaxForSelectedTime(selectedTime as Time, 0, 0);
 	const durationNano = originalMax - originalMin;

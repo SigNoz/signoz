@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 
 import { GlobalTimeStoreApi } from './globalTimeStore';
 import { GlobalTimeProviderOptions } from './types';
@@ -67,7 +68,10 @@ export function useUrlSync(
 				endTime * NANO_SECOND_MULTIPLIER,
 			);
 			store.getState().setSelectedTime(customTime);
-		} else if (relativeTime) {
+		} else if (
+			typeof relativeTime === 'string' &&
+			isValidShortHandDateTimeFormat(relativeTime)
+		) {
 			store.getState().setSelectedTime(relativeTime as Time);
 		}
 	}, [

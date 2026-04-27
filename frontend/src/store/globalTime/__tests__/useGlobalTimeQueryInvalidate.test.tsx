@@ -59,9 +59,9 @@ describe('useGlobalTimeQueryInvalidate', () => {
 		expect(typeof result.current).toBe('function');
 	});
 
-	it('should call computeAndStoreMinMax before invalidating queries', async () => {
+	it('should call computeAndStoreMinMax before invalidating queries (refresh disabled)', async () => {
 		const wrapper = createWrapper(
-			{ initialTime: '15m', refreshInterval: 5000 },
+			{ initialTime: '15m', refreshInterval: 0 }, // refresh disabled so computeAndStoreMinMax computes fresh values
 			queryClient,
 		);
 		const { result } = renderHook(
@@ -72,7 +72,10 @@ describe('useGlobalTimeQueryInvalidate', () => {
 			{ wrapper },
 		);
 
-		// Initial computation
+		// Initial computation - need to call computeAndStoreMinMax first
+		act(() => {
+			result.current.globalTime.computeAndStoreMinMax();
+		});
 		const initialMinMax = { ...result.current.globalTime.lastComputedMinMax };
 
 		// Advance time past minute boundary
@@ -80,7 +83,7 @@ describe('useGlobalTimeQueryInvalidate', () => {
 			jest.advanceTimersByTime(60000);
 		});
 
-		// Call invalidate
+		// Call invalidate - should compute fresh values when refresh is disabled
 		await act(async () => {
 			await result.current.invalidate();
 		});

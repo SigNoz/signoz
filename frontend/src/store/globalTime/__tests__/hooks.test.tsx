@@ -9,6 +9,7 @@ import {
 	useIsCustomTimeRange,
 	useLastComputedMinMax,
 } from '../hooks';
+import { useComputedMinMaxSync } from '../useComputedMinMaxSync';
 import { createCustomTimeRange } from '../utils';
 
 describe('useGlobalTime', () => {
@@ -120,5 +121,70 @@ describe('useLastComputedMinMax', () => {
 		expect(result.current).not.toStrictEqual(firstValue);
 
 		jest.useRealTimers();
+	});
+});
+
+describe('useComputedMinMaxSync', () => {
+	beforeEach(() => {
+		jest.useFakeTimers();
+		jest.setSystemTime(new Date('2024-01-15T12:30:45.123Z'));
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	it('should compute min/max on mount when store has zero values', () => {
+		const contextStore = createGlobalTimeStore({ selectedTime: '15m' });
+
+		expect(contextStore.getState().lastComputedMinMax).toStrictEqual({
+			minTime: 0,
+			maxTime: 0,
+		});
+
+		renderHook(() => useComputedMinMaxSync(contextStore));
+
+		// Should have computed values now
+		expect(contextStore.getState().lastComputedMinMax.maxTime).toBeGreaterThan(0);
+		expect(contextStore.getState().lastComputedMinMax.minTime).toBeGreaterThan(0);
+	});
+
+	it('should NOT recompute when store already has values', () => {
+		const contextStore = createGlobalTimeStore({ selectedTime: '15m' });
+
+		contextStore.getState().computeAndStoreMinMax();
+		const initialMinMax = { ...contextStore.getState().lastComputedMinMax };
+		const initialTimestamp = contextStore.getState().lastRefreshTimestamp;
+
+		jest.advanceTimersByTime(60000);
+
+		renderHook(() => useComputedMinMaxSync(contextStore));
+
+		// Should NOT have recomputed - values should be unchanged
+		expect(contextStore.getState().lastComputedMinMax).toStrictEqual(
+			initialMinMax,
+		);
+		expect(contextStore.getState().lastRefreshTimestamp).toBe(initialTimestamp);
+	});
+
+	it('should only compute on mount, not on re-renders', () => {
+		const contextStore = createGlobalTimeStore({ selectedTime: '15m' });
+
+		const { rerender } = renderHook(() => useComputedMinMaxSync(contextStore));
+
+		const afterMountMinMax = { ...contextStore.getState().lastComputedMinMax };
+		const afterMountTimestamp = contextStore.getState().lastRefreshTimestamp;
+
+		jest.advanceTimersByTime(60000);
+
+		rerender();
+
+		// Should NOT have recomputed on re-render
+		expect(contextStore.getState().lastComputedMinMax).toStrictEqual(
+			afterMountMinMax,
+		);
+		expect(contextStore.getState().lastRefreshTimestamp).toBe(
+			afterMountTimestamp,
+		);
 	});
 });
