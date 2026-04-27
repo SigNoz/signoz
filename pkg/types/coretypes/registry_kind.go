@@ -36,6 +36,8 @@ var Kinds = []Kind{
 	KindMetrics,
 	KindAuditLogs,
 	KindMeterMetrics,
+	KindLogsField,
+	KindTracesField,
 }
 
 var (
@@ -74,4 +76,6 @@ var (
 	KindMetrics                      = MustNewKind("metrics")
 	KindAuditLogs                    = MustNewKind("audit-logs")
 	KindMeterMetrics                 = MustNewKind("meter-metrics")
+	KindLogsField                    = MustNewKind("logs-field")
+	KindTracesField                  = MustNewKind("traces-field")
 )

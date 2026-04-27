@@ -52,6 +52,10 @@ export default {
 				type: 'metaresource',
 			},
 			{
+				kind: 'logs-field',
+				type: 'metaresource',
+			},
+			{
 				kind: 'notification-channel',
 				type: 'metaresource',
 			},
@@ -101,6 +105,10 @@ export default {
 			},
 			{
 				kind: 'trace-funnel',
+				type: 'metaresource',
+			},
+			{
+				kind: 'traces-field',
 				type: 'metaresource',
 			},
 			{
@@ -156,6 +164,10 @@ export default {
 				type: 'metaresources',
 			},
 			{
+				kind: 'logs-field',
+				type: 'metaresources',
+			},
+			{
 				kind: 'notification-channel',
 				type: 'metaresources',
 			},
@@ -205,6 +217,10 @@ export default {
 			},
 			{
 				kind: 'trace-funnel',
+				type: 'metaresources',
+			},
+			{
+				kind: 'traces-field',
 				type: 'metaresources',
 			},
 			{

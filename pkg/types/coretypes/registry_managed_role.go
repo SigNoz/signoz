@@ -199,6 +199,14 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// widen to viewer/editor only on explicit ask (compliance/auditor flow).
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindAuditLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMeterMetrics}, WildCardSelectorString)},
+		// logs-field — editor+admin update (POST overwrites field config), viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindLogsField}, WildCardSelectorString)},
+		// traces-field — editor+admin update, viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// dashboard — full CRUD
@@ -278,6 +286,14 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
+		// logs-field — editor reads+updates
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindLogsField}, WildCardSelectorString)},
+		// traces-field — editor reads+updates
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// dashboard — read only
@@ -327,6 +343,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
+		// logs-field — viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindLogsField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindLogsField}, WildCardSelectorString)},
+		// traces-field — viewer reads
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTracesField}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTracesField}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
 		// public-dashboard — anonymous read
