@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
+	return { data: newAlertsData, isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,108 +81,62 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
+	return { data: newDashboardsData, isLoading: false, isError: false };
 }
 
-export function DashboardsAndAlertsPopover({
-	metricName,
-}: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const [open, setOpen] = useState(false);
+function useMetricDetailsStatus(metricName: string): Status {
+	const metricAlertsStatus = useMetricAlertsStatus(metricName);
+	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
-
-	const isLoading = alertsStatus.isLoading || dashboardsStatus.isLoading;
-	const isError = alertsStatus.isError || dashboardsStatus.isError;
-
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
-
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
+	return {
+		data: { ...metricAlertsStatus.data, ...metricDashboardsStatus.data },
+		isLoading: metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading,
+		isError: metricAlertsStatus.isError || metricDashboardsStatus.isError,
+		error: metricAlertsStatus.error || metricDashboardsStatus.error,
 	};
+}
 
-	const handleViewAllAlerts = (): void => {
-		openInNewTab(
-			`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
-		);
-	};
+function DashboardsAndAlertsPopover({ metricName }: DashboardsAndAlertsPopoverProps) {
+	const status = useMetricDetailsStatus(metricName);
 
-	const handleViewAllDashboards = (): void => {
-		openInNewTab(
-			`${ROUTES.DASHBOARDS_BUILDER}?${QueryParams.search}=${metricName}`,
-		);
-	};
-
-	const renderContent = (): JSX.Element => {
-		if (isError) {
-			return (
-				<div style={{ padding: '8px 12px' }}>
-					<Typography.Text type="danger">Failed to load data</Typography.Text>
-				</div>
-			);
-		}
-
-		if (isLoading) {
-			return (
-				<div style={{ padding: '8px 12px', minWidth: 150 }}>
-					<Skeleton active paragraph={{ rows: 2 }} />
-				</div>
-			);
-		}
-
-		if (totalAlerts === 0 && totalDashboards === 0) {
-			return (
-				<div style={{ padding: '8px 12px' }}>
-					<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
-				</div>
-			);
-		}
-
+	if (status.isError) {
 		return (
-			<Menu style={{ minWidth: 200 }} onClick={(e) => e.domEvent.stopPropagation()}>
-				{totalAlerts > 0 && (
-					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
-						<span>
-							<Bell size={14} style={{ marginRight: 8 }} color={Color.text.danger} />
-							{pluralize('alert', totalAlerts)} ({totalAlerts})
-						</span>
-					</Menu.Item>
-				)}
-				{totalDashboards > 0 && (
-					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
-						<span>
-							<Grid size={14} style={{ marginRight: 8 }} color={Color.text.link} />
-							{pluralize('dashboard', totalDashboards)} ({totalDashboards})
-						</span>
-					</Menu.Item>
-				)}
-			</Menu>
+			<Skeleton active>
+				<Typography.Text>
+					{pluralize('Error', status.error.message)}
+				</Typography.Text>
+			</Skeleton>
 		);
-	};
+	}
+
+	if (status.isLoading) {
+		return (
+			<Skeleton active>
+				<Typography.Text>Loading...</Typography.Text>
+			</Skeleton>
+		);
+	}
 
 	return (
 		<Dropdown
-			overlay={renderContent()}
-			trigger={['click']}
-			open={open}
-			onOpenChange={handleOpenChange}
-			destroyPopupOnHide
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize('Dashboard', status.data.dashboards.length)}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize('Alert', status.data.alerts.length)}
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
 		>
-			<span
-				style={{
-					color: Color.text.secondary,
-					cursor: 'pointer',
-					fontSize: 12,
-					display: 'flex',
-					alignItems: 'center',
-					gap: 4,
-				}}
-				onClick={(e) => e.stopPropagation()}
-			>
-				<Grid size={12} />
-				Dashboards & Alerts
-			</span>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
