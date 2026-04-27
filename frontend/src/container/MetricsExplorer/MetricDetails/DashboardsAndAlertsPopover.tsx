@@ -75,72 +75,118 @@ function DashboardsAndAlertsPopover({
 		});
 	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
+	if (!metricName) return null;
+
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
+	const hasAny = totalAlerts > 0 || totalDashboards > 0;
 
-	const hasAnyData = totalAlerts > 0 || totalDashboards > 0;
-
-	if (!hasAnyData && !alertsData.isLoading && !dashboardsData.isLoading) {
-		return null;
+	if (!hasAny && (alertsData.isLoading || dashboardsData.isLoading)) {
+		return (
+			<Skeleton.Input
+				style={{
+					width: '120px',
+					height: '20px',
+				}}
+				size="small"
+			/>
+		);
 	}
 
-	const handleAlertClick = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
+	const menuItems = [];
+
+	if (totalAlerts > 0) {
+		menuItems.push({
+			key: 'alerts',
+			label: (
+				<Typography.Text
+					strong
+					style={{
+						color: Color.semantic.warning,
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+					}}
+				>
+					<Bell size={16} />
+					{pluralize(totalAlerts, 'alert', 'alerts')} firing
+				</Typography.Text>
+			),
+			onClick: (e): void => {
+				e.domEvent.preventDefault();
+				openInNewTab(
+					`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
+				);
+			},
 		});
+	}
 
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardClick = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
+	if (totalDashboards > 0) {
+		menuItems.push({
+			key: 'dashboards',
+			label: (
+				<Typography.Text
+					strong
+					style={{
+						color: Color.primary.primary900,
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+					}}
+				>
+					<Grid size={16} />
+					Show in {pluralize(totalDashboards, 'dashboard', 'dashboards')}
+				</Typography.Text>
+			),
+			onClick: (e): void => {
+				e.domEvent.preventDefault();
+				openInNewTab(
+					`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+				);
+			},
 		});
+	}
 
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
-
-	const menu = (
-		<Menu>
-			{totalAlerts > 0 && (
-				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
-					<Typography.Text strong>{totalAlerts}</Typography.Text>{' '}
-					{pluralize('alert', totalAlerts)} using this metric
-				</Menu.Item>
-			)}
-			{totalDashboards > 0 && (
-				<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
-					<Typography.Text strong>{totalDashboards}</Typography.Text>{' '}
-					{pluralize('dashboard', totalDashboards)} using this metric
-				</Menu.Item>
-			)}
-			{alertsData.isLoading && (
-				<Menu.Item key="loading-alerts">
-					<Skeleton.Input active size="small" style={{ width: '100%' }} />
-				</Menu.Item>
-			)}
-			{dashboardsData.isLoading && (
-				<Menu.Item key="loading-dashboards">
-					<Skeleton.Input active size="small" style={{ width: '100%' }} />
-				</Menu.Item>
-			)}
-		</Menu>
-	);
-
-	return (
-		<Dropdown overlay={menu} trigger={['hover']} placement="bottomRight">
-			<div
+	if (!hasAny) {
+		return (
+			<Typography.Text
+				type="secondary"
 				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '4px',
-					color: Color.primary.primary,
-					cursor: 'pointer',
+					fontSize: '12px',
 				}}
 			>
-				<Bell size={14} />
-				<Grid size={14} />
-			</div>
+				No dashboards or alerts
+			</Typography.Text>
+		);
+	}
+
+	return (
+		<Dropdown
+			menu={{ items: menuItems }}
+			trigger={['click']}
+			placement="bottomLeft"
+		>
+			<Typography.Link
+				style={{
+					fontSize: '12px',
+					cursor: 'pointer',
+				}}
+				onClick={(e): void => {
+					e.preventDefault();
+				}}
+			>
+				{totalAlerts > 0
+					? `${totalAlerts} ${pluralize(
+							totalAlerts,
+							'alert',
+							'alerts',
+					  )} firing`
+					: `${totalDashboards} ${pluralize(
+							totalDashboards,
+							'dashboard',
+							'dashboards',
+					  )}`}
+			</Typography.Link>
 		</Dropdown>
 	);
 }
