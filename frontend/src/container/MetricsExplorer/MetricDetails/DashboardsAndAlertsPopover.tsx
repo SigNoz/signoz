@@ -80,89 +80,65 @@ function DashboardsAndAlertsPopover({
 
 	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
 
-	if (!hasAnyItem && (alertsData.isLoading || dashboardsData.isLoading)) {
-		return (
-			<div style={{ padding: '8px 12px', minWidth: 150 }}>
-				<Skeleton.Input active size="small" />
-			</div>
-		);
-	}
-
-	if (!hasAnyItem) {
+	if (!hasAnyItem && !alertsData.isLoading && !dashboardsData.isLoading) {
 		return null;
 	}
 
-	const menuItems = [
-		...(totalAlerts > 0
-			? [
-					{
-						key: 'alerts',
-						label: (
-							<Typography.Text
-								strong
-								style={{ color: Color.text['info'], display: 'flex', alignItems: 'center', gap: 8 }}
-							>
-								<Bell size={16} />
-								{pluralize('Alert', totalAlerts)} ({totalAlerts})
-							</Typography.Text>
-						),
-						onClick: () => {
-							openInNewTab(
-								`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.searchQuery}=${metricName}`,
-							);
-						},
-					},
-			  ]
-			: []),
-		...(totalDashboards > 0
-			? [
-					{
-						key: 'dashboards',
-						label: (
-							<Typography.Text
-								strong
-								style={{ color: Color.text['success'], display: 'flex', alignItems: 'center', gap: 8 }}
-							>
-								<Grid size={16} />
-								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-							</Typography.Text>
-						),
-						onClick: () => {
-							openInNewTab(
-								`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.searchQuery}=${metricName}`,
-							);
-						},
-					},
-			  ]
-			: []),
-	];
+	const handleAlertClick = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
+	};
 
-	const menu = <Menu items={menuItems} />;
+	const handleDashboardClick = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
+	};
+
+	const menu = (
+		<Menu>
+			{totalAlerts > 0 && (
+				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
+					<Typography.Text>
+						{pluralize('alert', totalAlerts)} on {totalAlerts} {pluralize('resource', totalAlerts)}
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{totalDashboards > 0 && (
+				<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
+					<Typography.Text>
+						{pluralize('dashboard', totalDashboards)} on {totalDashboards} {pluralize('resource', totalDashboards)}
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{alertsData.isLoading && (
+				<Menu.Item key="loading-alerts">
+					<Skeleton.Input active size="small" />
+				</Menu.Item>
+			)}
+			{dashboardsData.isLoading && (
+				<Menu.Item key="loading-dashboards">
+					<Skeleton.Input active size="small" />
+				</Menu.Item>
+			)}
+		</Menu>
+	);
 
 	return (
-		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-			<div
+		<Dropdown overlay={menu} trigger={['hover']} placement="bottomRight">
+			<span
 				style={{
+					color: Color.primary.primary,
 					cursor: 'pointer',
-					padding: '4px 8px',
-					borderRadius: 4,
-					backgroundColor: Color.bg['hover'],
-					display: 'inline-flex',
-					alignItems: 'center',
-					gap: 4,
+					fontWeight: 500,
 				}}
-				onClick={(e) => e.stopPropagation()}
 			>
-				{totalAlerts > 0 && (
-					<Bell size={14} style={{ color: Color.text['info'] }} />
-				)}
-				{totalDashboards > 0 && (
-					<Grid size={14} style={{ color: Color.text['success'] }} />
-				)}
-				<Typography.Text type="secondary" style={{ fontSize: 12 }}>
-					{totalAlerts + totalDashboards}
-				</Typography.Text>
-			</div>
+				View in {hasAnyItem ? totalAlerts + totalDashboards : ''}{' '}
+				{hasAnyItem ? pluralize('resource', totalAlerts + totalDashboards) : 'resources'}
+			</span>
 		</Dropdown>
 	);
 }
