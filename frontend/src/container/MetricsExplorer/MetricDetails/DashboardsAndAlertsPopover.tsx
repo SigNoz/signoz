@@ -86,11 +86,15 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
+	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
+
+	const isLoading = alertsStatus.isLoading || dashboardsStatus.isLoading;
+	const isError = alertsStatus.isError || dashboardsStatus.isError;
 
 	const totalAlerts = alertsStatus.data.length;
 	const totalDashboards = dashboardsStatus.data.length;
@@ -99,77 +103,90 @@ export function DashboardsAndAlertsPopover({
 		setOpen(visible);
 	};
 
-	const handleAlertClick = (): void => {
-		openInNewTab(
-			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
-		);
+	const handleViewAllAlerts = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		}).toString();
+
+		openInNewTab(`${ROUTES.LIST_ALERTS}?${searchParams}`);
 	};
 
-	const handleDashboardClick = (): void => {
-		openInNewTab(
-			`${ROUTES.DASHBOARD_LIST}?${QueryParams.search}=${metricName}`,
-		);
+	const handleViewAllDashboards = (): void => {
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		}).toString();
+
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams}`);
 	};
 
-	const renderContent = (): JSX.Element => {
-		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsStatus.isError || dashboardsStatus.isError) {
-			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
-			);
-		}
-
-		if (totalAlerts === 0 && totalDashboards === 0) {
-			return (
-				<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
-			);
-		}
-
-		return (
+	const menu = useMemo(
+		() => (
 			<Menu>
-				{totalAlerts > 0 && (
-					<Menu.Item key="alerts" onClick={handleAlertClick} icon={<Bell size={16} />}>
-						<Typography.Text>
-							{pluralize(totalAlerts, 'alert', 'alerts')}
-						</Typography.Text>
+				{isLoading ? (
+					<Menu.Item key="loading">
+						<Skeleton.Input active size="small" />
 					</Menu.Item>
-				)}
-				{totalDashboards > 0 && (
-					<Menu.Item
-						key="dashboards"
-						onClick={handleDashboardClick}
-						icon={<Grid size={16} />}
-					>
-						<Typography.Text>
-							{pluralize(totalDashboards, 'dashboard', 'dashboards')}
-						</Typography.Text>
+				) : isError ? (
+					<Menu.Item key="error" disabled>
+						<Typography.Text type="danger">Failed to load data</Typography.Text>
 					</Menu.Item>
+				) : (
+					<>
+						<Menu.Item
+							key="alerts"
+							icon={<Bell size={16} />}
+							disabled={totalAlerts === 0}
+							onClick={handleViewAllAlerts}
+						>
+							<Typography.Text
+								style={{
+									color:
+										totalAlerts === 0
+											? Color.text.disabled
+											: Color.text.secondary,
+								}}
+							>
+								{pluralize('Alert', totalAlerts)} ({totalAlerts})
+							</Typography.Text>
+						</Menu.Item>
+						<Menu.Item
+							key="dashboards"
+							icon={<Grid size={16} />}
+							disabled={totalDashboards === 0}
+							onClick={handleViewAllDashboards}
+						>
+							<Typography.Text
+								style={{
+									color:
+										totalDashboards === 0
+											? Color.text.disabled
+											: Color.text.secondary,
+								}}
+							>
+								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+							</Typography.Text>
+						</Menu.Item>
+					</>
 				)}
 			</Menu>
-		);
-	};
+		),
+		[
+			isLoading,
+			isError,
+			totalAlerts,
+			totalDashboards,
+			metricName,
+		],
+	);
 
 	return (
 		<Dropdown
-			menu={{ items: [] }}
+			overlay={menu}
+			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			overlay={renderContent()}
-			trigger={['click']}
-			placement="bottomRight"
 		>
-			<Typography.Link
-				onClick={(e) => {
-					e.preventDefault();
-					setOpen(true);
-				}}
-				style={{ color: Color.text.accent, fontSize: '12px' }}
-			>
-				View in dashboards & alerts
-			</Typography.Link>
+			{children}
 		</Dropdown>
 	);
 }
