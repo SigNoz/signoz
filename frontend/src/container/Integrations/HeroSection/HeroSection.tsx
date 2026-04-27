@@ -6,9 +6,11 @@ import { getIntegrationMetadata } from '../CloudIntegration/utils';
 import './HeroSection.style.scss';
 
 function HeroSection({ type }: { type: IntegrationType }): JSX.Element {
-	const { title, description, logo: integrationLogo } = getIntegrationMetadata(
-		type,
-	);
+	const {
+		title,
+		description,
+		logo: integrationLogo,
+	} = getIntegrationMetadata(type);
 
 	return (
 		<div className="hero-section">

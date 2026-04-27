@@ -100,19 +100,17 @@ export function useIntegrationModal({
 	const { mutate: createAccount } = useCreateAccount();
 	const handleError = useAxiosError();
 
-	const {
-		data: connectionParams,
-		isLoading: isConnectionParamsLoading,
-	} = useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
-		{
-			cloudProvider: INTEGRATION_TYPES.AZURE,
-		},
-		{
-			query: {
-				onError: handleError,
+	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
+		useGetConnectionCredentials<GetConnectionCredentialsQueryResult>(
+			{
+				cloudProvider: INTEGRATION_TYPES.AZURE,
 			},
-		},
-	);
+			{
+				query: {
+					onError: handleError,
+				},
+			},
+		);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {

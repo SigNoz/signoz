@@ -168,10 +168,8 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 		[accounts, urlQuery],
 	);
 
-	const [
-		activeAccount,
-		setActiveAccount,
-	] = useState<IntegrationCloudAccount | null>(initialAccount);
+	const [activeAccount, setActiveAccount] =
+		useState<IntegrationCloudAccount | null>(initialAccount);
 
 	// Update state when initial value changes
 	useEffect(() => {
@@ -197,9 +195,8 @@ function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 		logEvent(`${type} Integration: Account connection attempt started`, {});
 	};
 
-	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] = useState(
-		false,
-	);
+	const [isAccountSettingsModalOpen, setIsAccountSettingsModalOpen] =
+		useState(false);
 	const openAccountSettings = (): void => {
 		setIsAccountSettingsModalOpen(true);
 		logEvent(`${type} Integration: Account settings viewed`, {
