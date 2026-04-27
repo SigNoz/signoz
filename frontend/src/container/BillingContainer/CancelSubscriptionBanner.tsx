@@ -4,7 +4,7 @@ import { Button, DialogWrapper } from '@signozhq/ui';
 import { useAppContext } from 'providers/App/App';
 import { getBaseUrl } from 'utils/basePath';
 
-import './CancelSubscriptionBanner.styles.scss';
+import styles from './CancelSubscriptionBanner.module.scss';
 
 function CancelSubscriptionBanner(): JSX.Element {
 	const [open, setOpen] = useState(false);
@@ -58,14 +58,10 @@ function CancelSubscriptionBanner(): JSX.Element {
 
 	return (
 		<>
-			<div className="cancel-subscription-banner">
-				<div className="cancel-subscription-banner__info">
-					<span className="cancel-subscription-banner__title">
-						Cancel Subscription
-					</span>
-					<span className="cancel-subscription-banner__subtitle">
-						Cancel your SigNoz subscription.
-					</span>
+			<div className={styles.banner}>
+				<div className={styles.info}>
+					<span className={styles.title}>Cancel Subscription</span>
+					<span className={styles.subtitle}>Cancel your SigNoz subscription.</span>
 				</div>
 				<Button
 					variant="solid"
@@ -84,7 +80,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 				showCloseButton
 				footer={footer}
 			>
-				<p className="cancel-subscription-dialog__body">
+				<p className={styles.dialogBody}>
 					To cancel your SigNoz subscription, please reach out to our support team.
 					We&apos;ll be happy to assist you.
 				</p>
