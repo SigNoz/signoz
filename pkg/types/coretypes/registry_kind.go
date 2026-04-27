@@ -6,16 +6,58 @@ var Kinds = []Kind{
 	KindRole,
 	KindServiceAccount,
 	KindUser,
+	KindNotificationChannel,
+	KindRoutePolicy,
+	KindApdexSetting,
+	KindAuthDomain,
+	KindSession,
+	KindCloudIntegration,
+	KindCloudIntegrationService,
 	KindDashboard,
 	KindPublicDashboard,
+	KindIngestionKey,
+	KindIngestionLimit,
+	KindPipeline,
+	KindUserPreference,
+	KindOrgPreference,
+	KindQuickFilter,
+	KindTTLSetting,
+	KindRule,
+	KindPlannedMaintenance,
+	KindSavedView,
+	KindTraceFunnel,
+	KindFactorPassword,
+	KindFactorAPIKey,
+	KindLicense,
 }
 
 var (
-	KindAnonymous       Kind = MustNewKind("anonymous")
-	KindOrganization         = MustNewKind("organization")
-	KindRole                 = MustNewKind("role")
-	KindServiceAccount       = MustNewKind("serviceaccount")
-	KindUser                 = MustNewKind("user")
-	KindDashboard            = MustNewKind("dashboard")
-	KindPublicDashboard      = MustNewKind("public-dashboard")
+	KindAnonymous               Kind = MustNewKind("anonymous")
+	KindOrganization                 = MustNewKind("organization")
+	KindRole                         = MustNewKind("role")
+	KindServiceAccount               = MustNewKind("serviceaccount")
+	KindUser                         = MustNewKind("user")
+	KindNotificationChannel          = MustNewKind("notification-channel")
+	KindRoutePolicy                  = MustNewKind("route-policy")
+	KindApdexSetting                 = MustNewKind("apdex-setting")
+	KindAuthDomain                   = MustNewKind("auth-domain")
+	KindSession                      = MustNewKind("session")
+	KindCloudIntegration             = MustNewKind("cloud-integration")
+	KindCloudIntegrationService      = MustNewKind("cloud-integration-service")
+	KindDashboard                    = MustNewKind("dashboard")
+	KindPublicDashboard              = MustNewKind("public-dashboard")
+	KindIngestionKey                 = MustNewKind("ingestion-key")
+	KindIngestionLimit               = MustNewKind("ingestion-limit")
+	KindPipeline                     = MustNewKind("pipeline")
+	KindUserPreference               = MustNewKind("user-preference")
+	KindOrgPreference                = MustNewKind("org-preference")
+	KindQuickFilter                  = MustNewKind("quick-filter")
+	KindTTLSetting                   = MustNewKind("ttl-setting")
+	KindRule                         = MustNewKind("rule")
+	KindPlannedMaintenance           = MustNewKind("planned-maintenance")
+	KindSavedView                    = MustNewKind("saved-view")
+	KindTraceFunnel                  = MustNewKind("trace-funnel")
+	KindFactorPassword               = MustNewKind("factor-password")
+	KindFactorAPIKey                 = MustNewKind("factor-api-key")
+	KindLicense                      = MustNewKind("license")
 )
