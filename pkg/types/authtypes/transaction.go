@@ -9,12 +9,12 @@ import (
 
 type Transaction struct {
 	ID       valuer.UUID      `json:"-"`
-	Relation coretypes.Verb   `json:"relation" required:"true"`
+	Relation Relation         `json:"relation" required:"true"`
 	Object   coretypes.Object `json:"object" required:"true"`
 }
 
 type GettableTransaction struct {
-	Relation   coretypes.Verb   `json:"relation" required:"true"`
+	Relation   Relation         `json:"relation" required:"true"`
 	Object     coretypes.Object `json:"object" required:"true"`
 	Authorized bool             `json:"authorized" required:"true"`
 }
@@ -24,8 +24,8 @@ type TransactionWithAuthorization struct {
 	Authorized  bool
 }
 
-func NewTransaction(relation coretypes.Verb, object coretypes.Object) (*Transaction, error) {
-	if err := coretypes.ErrIfVerbNotValidForType(relation, object.Resource.Type); err != nil {
+func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, error) {
+	if err := coretypes.ErrIfVerbNotValidForType(relation.Verb, object.Resource.Type); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +47,7 @@ func NewGettableTransaction(results []*TransactionWithAuthorization) []*Gettable
 
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
-		Relation coretypes.Verb
+		Relation Relation
 		Object   coretypes.Object
 	}{}
 

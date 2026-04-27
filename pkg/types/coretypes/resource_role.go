@@ -8,7 +8,7 @@ type resourceRole struct {
 	kind Kind
 }
 
-func NewResourceRole() *resourceRole {
+func NewResourceRole() Resource {
 	return &resourceRole{
 		kind: KindRole,
 	}

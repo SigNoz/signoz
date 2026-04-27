@@ -8,26 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-var Kinds = []Kind{
-	KindAnonymous,
-	KindOrganization,
-	KindRole,
-	KindServiceAccount,
-	KindUser,
-	KindDashboard,
-	KindPublicDashboard,
-}
-
-var (
-	KindAnonymous       Kind = MustNewKind("anonymous")
-	KindOrganization         = MustNewKind("organization")
-	KindRole                 = MustNewKind("role")
-	KindServiceAccount       = MustNewKind("serviceaccount")
-	KindUser                 = MustNewKind("user")
-	KindDashboard            = MustNewKind("dashboard")
-	KindPublicDashboard      = MustNewKind("public-dashboard")
-)
-
 var (
 	kindRegex = regexp.MustCompile("^[a-z-]{1,50}$")
 )

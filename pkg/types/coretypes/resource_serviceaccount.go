@@ -8,7 +8,7 @@ type resourceServiceAccount struct {
 	kind Kind
 }
 
-func NewResourceServiceAccount() *resourceServiceAccount {
+func NewResourceServiceAccount() Resource {
 	return &resourceServiceAccount{
 		kind: KindServiceAccount,
 	}

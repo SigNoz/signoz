@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -83,7 +84,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
-		coretypes.VerbRead,
+		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
@@ -111,7 +112,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		coretypes.VerbRead,
+		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])

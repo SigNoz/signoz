@@ -168,7 +168,7 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Verb, additions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
@@ -192,7 +192,7 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Verb, 
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation coretypes.Verb, deletions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deletions []*coretypes.Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {

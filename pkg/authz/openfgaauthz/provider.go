@@ -59,11 +59,11 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*o
 	return provider.server.BatchCheck(ctx, tupleReq)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.server.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.server.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
@@ -75,7 +75,7 @@ func (provider *provider) ReadTuples(ctx context.Context, tupleKey *openfgav1.Re
 	return provider.server.ReadTuples(ctx, tupleKey)
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*coretypes.Object, error) {
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	return provider.server.ListObjects(ctx, subject, relation, objectType)
 }
 
@@ -105,7 +105,7 @@ func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []
 		selectors[idx] = coretypes.TypeRole.MustSelector(name)
 	}
 
-	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, coretypes.VerbAssignee, selectors, orgID)
+	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, selectors, orgID)
 
 	err := provider.Write(ctx, tuples, nil)
 	if err != nil {
@@ -135,7 +135,7 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names [
 		selectors[idx] = coretypes.TypeRole.MustSelector(name)
 	}
 
-	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, coretypes.VerbAssignee, selectors, orgID)
+	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, selectors, orgID)
 
 	err := provider.Write(ctx, nil, tuples)
 	if err != nil {
@@ -176,7 +176,7 @@ func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *autht
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*coretypes.Object, error) {
+func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -184,7 +184,7 @@ func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *authtypes.R
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ coretypes.Verb, _, _ []*coretypes.Object) error {
+func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*coretypes.Object) error {
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -213,4 +213,3 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 
 	return authtypes.NewTransactionWithAuthorizationFromBatchResults(transactions, batchResults, preResolved, roleCorrelations), nil
 }
-

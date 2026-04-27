@@ -98,13 +98,14 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
+
 	relation, err := coretypes.NewVerb(relationStr)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
+	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, authtypes.Relation{relation})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -214,7 +215,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, additions, deletions)
+	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, authtypes.Relation{relation}, additions, deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return

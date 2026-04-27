@@ -69,15 +69,10 @@ func (registry *Registry) ManagedRoleTransactions() map[string][]Transaction {
 	return ManagedRoleToTransactions
 }
 
-// ResourceRefs returns every (Type, Kind) pair in the registry, sorted by
-// type then kind. Used by the `generate authz` command to emit a stable
-// schema.
 func (registry *Registry) ResourceRefs() []ResourceRef {
 	return registry.resourceRefs
 }
 
-// TypesByVerb is the inverse of Type.AllowedVerbs: for each verb, the list
-// of types that allow it. Each list is sorted so the output is stable.
 func (registry *Registry) TypesByVerb() map[Verb][]Type {
 	return registry.typesByVerb
 }
@@ -107,11 +102,4 @@ func buildTypesByVerb(types []Type) map[Verb][]Type {
 		sort.Slice(ts, func(i, j int) bool { return ts[i].StringValue() < ts[j].StringValue() })
 	}
 	return out
-}
-
-func ErrIfVerbNotValidForType(verb Verb, typed Type) error {
-	if !typed.IsValidVerb(verb) {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for type %s", verb.StringValue(), typed.StringValue())
-	}
-	return nil
 }

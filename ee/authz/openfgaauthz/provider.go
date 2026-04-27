@@ -74,11 +74,11 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.openfgaServer.Stop(ctx)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
@@ -108,7 +108,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	return results, nil
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*coretypes.Object, error) {
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	return provider.openfgaServer.ListObjects(ctx, subject, relation, objectType)
 }
 
@@ -208,7 +208,7 @@ func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, ro
 	return role, nil
 }
 
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*coretypes.Object, error) {
+func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -221,7 +221,7 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 
 	objects := make([]*coretypes.Object, 0)
 	for _, objectType := range provider.registry.Types() {
-		if coretypes.ErrIfVerbNotValidForType(relation, objectType) != nil {
+		if coretypes.ErrIfVerbNotValidForType(relation.Verb, objectType) != nil {
 			continue
 		}
 
@@ -251,7 +251,7 @@ func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *au
 	return provider.store.Update(ctx, orgID, role)
 }
 
-func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation coretypes.Verb, additions, deletions []*coretypes.Object) error {
+func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation authtypes.Relation, additions, deletions []*coretypes.Object) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -312,7 +312,7 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 	adminTuple := authtypes.NewTuples(
 		coretypes.NewResourceRole(),
 		adminSubject,
-		coretypes.VerbAssignee,
+		authtypes.Relation{Verb: coretypes.VerbAssignee},
 		[]coretypes.Selector{coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName)},
 		orgID,
 	)
@@ -323,7 +323,7 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 	anonymousTuple := authtypes.NewTuples(
 		coretypes.NewResourceRole(),
 		anonymousSubject,
-		coretypes.VerbAssignee,
+		authtypes.Relation{Verb: coretypes.VerbAssignee},
 		[]coretypes.Selector{coretypes.TypeRole.MustSelector(authtypes.SigNozAnonymousRoleName)},
 		orgID,
 	)
@@ -389,4 +389,3 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 
 	return nil
 }
-

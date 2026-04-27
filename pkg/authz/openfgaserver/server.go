@@ -142,7 +142,7 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	return response, nil
 }
 
-func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ coretypes.Verb, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, _ authtypes.Relation, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	subject := ""
 	switch claims.Principal {
 	case authtypes.PrincipalUser:
@@ -161,7 +161,7 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 		subject = serviceAccount
 	}
 
-	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, coretypes.VerbAssignee, roleSelectors, orgID)
+	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, roleSelectors, orgID)
 
 	// Convert slice to map with generated IDs for internal use
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
@@ -183,13 +183,13 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ coretypes.Verb, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
+func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, _ authtypes.Relation, _ coretypes.Resource, _ []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	subject, err := authtypes.NewSubject(coretypes.NewResourceAnonymous(), coretypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
 	}
 
-	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, coretypes.VerbAssignee, roleSelectors, orgID)
+	tupleSlice := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, roleSelectors, orgID)
 
 	// Convert slice to map with generated IDs for internal use
 	tuples := make(map[string]*openfgav1.TupleKey, len(tupleSlice))
@@ -288,7 +288,7 @@ func (server *Server) ReadTuples(ctx context.Context, tupleKey *openfgav1.ReadRe
 	return tuples, nil
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*coretypes.Object, error) {
+func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	storeID, modelID := server.getStoreIDandModelID()
 	response, err := server.openfgaServer.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeID,

@@ -54,7 +54,7 @@ func buildManagedRoleTransactions(input map[string][]coretypes.Transaction) map[
 	for roleName, txns := range input {
 		converted := make([]*Transaction, 0, len(txns))
 		for _, txn := range txns {
-			authzTxn, err := NewTransaction(txn.Verb, txn.Object)
+			authzTxn, err := NewTransaction(Relation{Verb: txn.Verb}, txn.Object)
 			if err != nil {
 				panic(err)
 			}

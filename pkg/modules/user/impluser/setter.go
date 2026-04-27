@@ -244,7 +244,7 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.VerbAssignee,
+			authtypes.Relation{Verb: coretypes.VerbAssignee},
 			coretypes.NewResourceRole(),
 			selectors,
 			selectors,

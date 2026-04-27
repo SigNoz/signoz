@@ -10,7 +10,7 @@ type resourceOrganization struct {
 	kind Kind
 }
 
-func NewResourceOrganization() *resourceOrganization {
+func NewResourceOrganization() Resource {
 	return &resourceOrganization{
 		kind: KindOrganization,
 	}

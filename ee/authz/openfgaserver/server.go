@@ -34,7 +34,7 @@ func (server *Server) Stop(ctx context.Context) error {
 	return server.pkgAuthzService.Stop(ctx)
 }
 
-func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
+func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
 	subject := ""
 	switch claims.Principal {
 	case authtypes.PrincipalUser:
@@ -74,7 +74,7 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 	return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "subjects are not authorized for requested access")
 }
 
-func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
+func (server *Server) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, _ []coretypes.Selector) error {
 	subject, err := authtypes.NewSubject(coretypes.NewResourceAnonymous(), coretypes.AnonymousUser.String(), orgID, nil)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	return server.pkgAuthzService.BatchCheck(ctx, tupleReq)
 }
 
-func (server *Server) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*coretypes.Object, error) {
+func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	return server.pkgAuthzService.ListObjects(ctx, subject, relation, objectType)
 }
 

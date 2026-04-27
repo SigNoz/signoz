@@ -15,10 +15,10 @@ type AuthZ interface {
 	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, coretypes.Verb, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
 
 	// CheckWithTupleCreationWithoutClaims checks permissions for anonymous users.
-	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, coretypes.Verb, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
+	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, authtypes.Relation, coretypes.Resource, []coretypes.Selector, []coretypes.Selector) error
 
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
 	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
@@ -27,12 +27,11 @@ type AuthZ interface {
 	// Returns results in the same order as the input transactions.
 	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error)
 
-
 	// Write accepts the insertion tuples and the deletion tuples.
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, coretypes.Verb, coretypes.Type) ([]*coretypes.Object, error)
+	ListObjects(context.Context, string, authtypes.Relation, coretypes.Type) ([]*coretypes.Object, error)
 
 	// Creates the role.
 	Create(context.Context, valuer.UUID, *authtypes.Role) error
@@ -41,13 +40,13 @@ type AuthZ interface {
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
 	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, coretypes.Verb) ([]*coretypes.Object, error)
+	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*coretypes.Object, error)
 
 	// Patches the role.
 	Patch(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, coretypes.Verb, []*coretypes.Object, []*coretypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*coretypes.Object, []*coretypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error

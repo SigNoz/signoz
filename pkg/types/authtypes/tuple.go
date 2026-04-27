@@ -25,12 +25,12 @@ type TupleKeyAuthorization struct {
 	Authorized bool
 }
 
-func NewTuples(resource coretypes.Resource, subject string, verb coretypes.Verb, selectors []coretypes.Selector, orgID valuer.UUID) []*openfgav1.TupleKey {
+func NewTuples(resource coretypes.Resource, subject string, relation Relation, selectors []coretypes.Selector, orgID valuer.UUID) []*openfgav1.TupleKey {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, selector := range selectors {
 		object := resource.Object(orgID, selector.String())
-		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: verb.StringValue(), Object: object})
+		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.Verb.StringValue(), Object: object})
 	}
 
 	return tuples
@@ -70,7 +70,7 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	for _, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
-		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation == coretypes.VerbAssignee {
+		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation.Verb == coretypes.VerbAssignee {
 			resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			if err != nil {
 				return nil, nil, nil, err
@@ -90,7 +90,7 @@ func NewTuplesFromTransactionsWithManagedRoles(
 
 		for _, roleName := range roleNames {
 			roleSelector := coretypes.TypeRole.MustSelector(roleName)
-			roleTuples := NewTuples(coretypes.ResourceRole, subject, coretypes.VerbAssignee, []coretypes.Selector{roleSelector}, orgID)
+			roleTuples := NewTuples(coretypes.ResourceRole, subject, Relation{Verb: coretypes.VerbAssignee}, []coretypes.Selector{roleSelector}, orgID)
 
 			correlationID := valuer.GenerateUUID().StringValue()
 			tuples[correlationID] = roleTuples[0]
@@ -123,7 +123,7 @@ func NewTransactionWithAuthorizationFromBatchResults(
 			continue
 		}
 
-		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation == coretypes.VerbAssignee {
+		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation.Verb == coretypes.VerbAssignee {
 			output[i] = &TransactionWithAuthorization{
 				Transaction: txn,
 				Authorized:  batchResults[txnID].Authorized,
