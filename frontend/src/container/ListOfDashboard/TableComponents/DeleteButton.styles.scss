@@ -7,9 +7,3 @@
 .delete-btn:hover {
 	background-color: color-mix(in srgb, var(--l1-foreground) 12%, transparent);
 }
-
-.lightMode {
-	.delete-btn:hover {
-		background-color: rgba(0, 0, 0, 0.06) !important;
-	}
-}
