@@ -65,104 +65,59 @@ function DashboardsAndAlertsPopover({
 			isLoading: newIsLoadingAlerts,
 			isError: newIsErrorAlerts,
 		});
-	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
 
-	useMemo(() => {
 		setDashboardsData({
 			data: newDashboardsData?.data?.dashboards || [],
 			isLoading: newIsLoadingDashboards,
 			isError: newIsErrorDashboards,
 		});
-	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
+	}, [
+		newAlertsData,
+		newIsLoadingAlerts,
+		newIsErrorAlerts,
+		newDashboardsData,
+		newIsLoadingDashboards,
+		newIsErrorDashboards,
+	]);
 
-	const totalAlerts = alertsData.data.length;
-	const totalDashboards = dashboardsData.data.length;
-
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
-
-	const handleAlertsClick = (): void => {
-		if (!hasAlerts) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardsClick = (): void => {
-		if (!hasDashboards) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
-
-	if (!metricName) return null;
-
-	if (
-		(alertsData.isLoading && !alertsData.data.length) ||
-		(dashboardsData.isLoading && !dashboardsData.data.length)
-	) {
+	if (newIsLoadingAlerts || newIsLoadingDashboards) {
 		return (
-			<Skeleton
-				paragraph={{ rows: 2 }}
-				style={{ padding: '8px 0', width: '160px' }}
-			/>
+			<Skeleton active={true} paragraph={false} />
 		);
 	}
 
-	const menuItems = [
-		{
-			key: 'alerts',
-			disabled: !hasAlerts,
-			label: (
-				<Typography.Text
-					type="secondary"
-					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-					onClick={handleAlertsClick}
-				>
-					<Bell size={14} color={Color.semantic.warning.border} />
-					{pluralize('Alert', totalAlerts)} ({totalAlerts})
-				</Typography.Text>
-			),
-		},
-		{
-			key: 'dashboards',
-			disabled: !hasDashboards,
-			label: (
-				<Typography.Text
-					type="secondary"
-					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-					onClick={handleDashboardsClick}
-				>
-					<Grid size={14} color={Color.primary[500]} />
-					{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-				</Typography.Text>
-			),
-		},
-	];
+	if (newIsErrorAlerts || newIsErrorDashboards) {
+		return (
+			<Typography.Text type="danger">
+				Failed to load alerts and dashboards.
+			</Typography.Text>
+		);
+	}
 
 	return (
 		<Dropdown
-			menu={{ items: menuItems }}
-			trigger={['hover']}
-			placement="bottomLeft"
+			overlay={
+				<Menu>
+					<Menu.Item key="alerts">
+						<Typography.Text>
+							{pluralize(newAlertsData.data.alerts.length, 'alert')}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item key="dashboards">
+						<Typography.Text>
+							{pluralize(newDashboardsData.data.dashboards.length, 'dashboard')}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item key="open-in-new-tab">
+						<Typography.Text>
+							Open in new tab
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
+			trigger={['click']}
 		>
-			<Typography.Link
-				style={{
-					fontSize: '12px',
-					pointerEvents: hasAlerts || hasDashboards ? 'auto' : 'none',
-					opacity: hasAlerts || hasDashboards ? 1 : 0.5,
-				}}
-			>
-				View in {hasDashboards ? 'Dashboard' : 'Alert'} {hasAlerts && 'and Alert'}
-			</Typography.Link>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
