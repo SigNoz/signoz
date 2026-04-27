@@ -18,32 +18,47 @@ const GraphControlsPanel: React.FC<GraphControlsPanelProps> = ({
   onViewTracesClick,
   onViewMetricsClick,
 }) => {
+  const handleViewLogsClick = (e: React.MouseEvent) => {
+    if (onViewLogsClick) {
+      onViewLogsClick(e);
+    }
+  };
+
+  const handleViewTracesClick = (e: React.MouseEvent) => {
+    if (onViewTracesClick) {
+      onViewTracesClick(e);
+    }
+  };
+
+  const handleViewMetricsClick = (e: React.MouseEvent) => {
+    if (onViewMetricsClick) {
+      onViewMetricsClick(e);
+    }
+  };
+
   return (
     <div className="graph-controls-panel" data-testid={`graph-controls-panel-${id}`}>
       <Button
         type="text"
         icon={<Binoculars size={16} />}
-        onClick={onViewLogsClick}
+        onClick={handleViewLogsClick}
         data-testid={`view-logs-btn-${id}`}
-        disabled={!onViewLogsClick}
       >
         Logs
       </Button>
       <Button
         type="text"
         icon={<DraftingCompass size={16} />}
-        onClick={onViewTracesClick}
+        onClick={handleViewTracesClick}
         data-testid={`view-traces-btn-${id}`}
-        disabled={!onViewTracesClick}
       >
         Traces
       </Button>
       <Button
         type="text"
         icon={<ScrollText size={16} />}
-        onClick={onViewMetricsClick}
+        onClick={handleViewMetricsClick}
         data-testid={`view-metrics-btn-${id}`}
-        disabled={!onViewMetricsClick}
       >
         Metrics
       </Button>
