@@ -1,4 +1,3 @@
-from typing import Optional
 
 import docker
 import pytest
@@ -16,7 +15,7 @@ def create_migrator(
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
     cache_key: str = "migrator",
-    env_overrides: Optional[dict] = None,
+    env_overrides: dict | None = None,
 ) -> types.Operation:
     """
     Factory function for running schema migrations.

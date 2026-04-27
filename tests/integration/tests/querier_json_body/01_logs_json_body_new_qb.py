@@ -1,6 +1,7 @@
 import json
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import requests
 
@@ -17,11 +18,12 @@ from fixtures.querier import (
     make_query_request,
 )
 
-def _get_bodies(response: requests.Response) -> List[Dict[str, Any]]:
+
+def _get_bodies(response: requests.Response) -> list[dict[str, Any]]:
     return [json.loads(row["data"]["body"]) for row in get_rows(response)]
 
 def _run_query_case(
-    signoz: types.SigNoz, token: str, now: datetime, case: Dict[str, Any]
+    signoz: types.SigNoz, token: str, now: datetime, case: dict[str, Any]
 ) -> None:
     start_ms = case.get(
         "startMs", int((now - timedelta(seconds=10)).timestamp() * 1000)
@@ -91,10 +93,10 @@ def test_primitive_path_operations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # log1: auth-service — full structure
     log1 = json.dumps(
@@ -412,12 +414,12 @@ def test_indexed_paths(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
-    create_json_index: Callable[[str, List[Dict[str, Any]]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
+    create_json_index: Callable[[str, list[dict[str, Any]]], None],
     check_query_log: Callable[[datetime, str, Callable[[str], bool]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     log1 = json.dumps({"user": {"raw-data": {"name": "alice", "age": 25, "active": True}}})
     log2 = json.dumps({"user": {"raw-data": {"name": "bob", "age": 30, "active": False}}})
@@ -572,7 +574,7 @@ def test_indexed_paths(
     for case in cases:
         case.setdefault("groupBy", None)
         case.setdefault("stepInterval", None)
-        before = datetime.now(tz=timezone.utc)
+        before = datetime.now(tz=UTC)
         _run_query_case(signoz, token, now, case)
         if "check_query" in case:
             check_query_log(
@@ -595,10 +597,10 @@ def test_select_order_by(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     log1 = json.dumps(
         {
@@ -667,7 +669,7 @@ def test_select_order_by(
     start_ms = int((now - timedelta(seconds=10)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
-    def _run(case: Dict[str, Any]) -> None:
+    def _run(case: dict[str, Any]) -> None:
         query = build_scalar_query(
             name=case["name"],
             signal="logs",
@@ -696,7 +698,7 @@ def test_select_order_by(
     # which map to statuses 200/404/500/201 respectively.
     # When ordered by body.status ASC (200→201→404→500) the row timestamps follow
     # the pattern: ts[0] < ts[2] < ts[3] < ts[1]  (i.e. -4s, -3s, -2s, -1s reordered).
-    def _ts(r: requests.Response) -> List[int]:
+    def _ts(r: requests.Response) -> list[int]:
         return [row["data"]["timestamp"] for row in get_rows(r)]
 
     cases = [
@@ -760,10 +762,10 @@ def test_array_path_operations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # log1: university-service — rich, multi-entry education with deep nesting
     log1 = json.dumps(
@@ -1106,10 +1108,10 @@ def test_array_membership_operations(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # log1: full structure
     log1 = json.dumps(
@@ -1273,10 +1275,10 @@ def test_message_searches(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # Plain-text → normalized to {"message": "Payment processed successfully"}
     text_log = Logs(
@@ -1317,7 +1319,7 @@ def test_message_searches(
     insert_logs(logs_list)
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
-    def _body_messages(response: requests.Response) -> List[str]:
+    def _body_messages(response: requests.Response) -> list[str]:
         return [
             json.loads(row["data"]["body"]).get("message", "")
             for row in get_rows(response)
@@ -1410,10 +1412,10 @@ def test_polluted_data(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # Clean baseline — no attribute pollution
     log_clean = json.dumps({"user": {"name": "alice"}})
@@ -1565,10 +1567,10 @@ def test_groupby_scalar(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    insert_logs: Callable[[List[Logs]], None],
-    export_json_types: Callable[[List[Logs]], None],
+    insert_logs: Callable[[list[Logs]], None],
+    export_json_types: Callable[[list[Logs]], None],
 ) -> None:
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     logs_data = [
         {"user": {"name": "alice", "age": 25}, "status": 200},

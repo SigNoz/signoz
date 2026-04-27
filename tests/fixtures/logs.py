@@ -3,7 +3,7 @@ import json
 from abc import ABC
 from collections.abc import Callable, Generator
 from http import HTTPStatus
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -121,8 +121,8 @@ class Logs(ABC):
         resources: dict[str, Any] = {},
         attributes: dict[str, Any] = {},
         body: str = "default body",
-        body_v2: Optional[str] = None,
-        body_promoted: Optional[str] = None,
+        body_v2: str | None = None,
+        body_promoted: str | None = None,
         severity_text: str = "INFO",
         trace_id: str = "",
         span_id: str = "",

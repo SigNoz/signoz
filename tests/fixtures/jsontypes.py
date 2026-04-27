@@ -7,16 +7,10 @@ and extracting all paths with their types, similar to how the real metadataexpor
 import datetime
 import json
 from abc import ABC
+from collections.abc import Callable, Generator
 from http import HTTPStatus
 from typing import (
     Any,
-    Callable,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Set,
-    Union,
 )
 
 import numpy as np
@@ -39,7 +33,7 @@ class JSONPathType(ABC):
         self,
         field_name: str,
         field_data_type: str,
-        last_seen: Optional[datetime.datetime] = None,
+        last_seen: datetime.datetime | None = None,
     ) -> None:
         self.field_name = field_name
         self.field_data_type = field_data_type
@@ -59,7 +53,7 @@ ARRAY_SEPARATOR = "[]."  # Used in paths like "education[].name"
 ARRAY_SUFFIX = "[]"  # Used when traversing into array element objects
 
 
-def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
+def _infer_array_type_from_type_strings(types: list[str]) -> str | None:
     """
     Infer array type from a list of pre-classified type strings.
     Matches metadataexporter's inferArrayMask logic.
@@ -104,7 +98,7 @@ def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
     return "[]dynamic"
 
 
-def _infer_array_type(elements: List[Any]) -> Optional[str]:
+def _infer_array_type(elements: list[Any]) -> str | None:
     """
     Infer array type from raw Python list elements.
     Classifies each element then delegates to _infer_array_type_from_type_strings.
@@ -157,9 +151,9 @@ def _python_type_to_clickhouse_type(value: Any) -> str:
 def _extract_json_paths(
     obj: Any,
     current_path: str = "",
-    path_types: Optional[Dict[str, Set[str]]] = None,
+    path_types: dict[str, set[str]] | None = None,
     level: int = 0,
-) -> Dict[str, Set[str]]:
+) -> dict[str, set[str]]:
     """
     Recursively extract all paths and their types from a JSON object.
     Matches metadataexporter's analyzePValue logic.
@@ -238,21 +232,20 @@ def _extract_json_paths(
                     path_types[current_path] = set()
                 path_types[current_path].add(array_type)
 
-    else:
-        # Primitive value (string, number, bool)
-        if current_path:
-            if current_path not in path_types:
-                path_types[current_path] = set()
-            obj_type = _python_type_to_clickhouse_type(obj)
-            path_types[current_path].add(obj_type)
+    # Primitive value (string, number, bool)
+    elif current_path:
+        if current_path not in path_types:
+            path_types[current_path] = set()
+        obj_type = _python_type_to_clickhouse_type(obj)
+        path_types[current_path].add(obj_type)
 
     return path_types
 
 
 def _parse_json_bodies_and_extract_paths(
-    json_bodies: List[str],
-    timestamp: Optional[datetime.datetime] = None,
-) -> List[JSONPathType]:
+    json_bodies: list[str],
+    timestamp: datetime.datetime | None = None,
+) -> list[JSONPathType]:
     """
     Parse JSON bodies and extract all paths with their types.
     This mimics the behavior of metadataexporter.
@@ -268,7 +261,7 @@ def _parse_json_bodies_and_extract_paths(
         timestamp = datetime.datetime.now()
 
     # Aggregate all paths and their types across all JSON bodies
-    all_path_types: Dict[str, Set[str]] = {}
+    all_path_types: dict[str, set[str]] = {}
 
     for json_body in json_bodies:
         try:
@@ -280,7 +273,7 @@ def _parse_json_bodies_and_extract_paths(
 
     # Convert to list of JSONPathType objects
     # Each path can have multiple types, so we create one JSONPathType per type
-    path_type_objects: List[JSONPathType] = []
+    path_type_objects: list[JSONPathType] = []
     for path, types_set in all_path_types.items():
         for type_str in types_set:
             path_type_objects.append(
@@ -294,9 +287,7 @@ def _parse_json_bodies_and_extract_paths(
 def export_json_types(
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,  # To access migrator fixture
-) -> Generator[
-    Callable[[Union[List[JSONPathType], List[str], List[Any]]], None], Any, None
-]:
+) -> Generator[Callable[[list[JSONPathType] | list[str] | list[Any]], None], Any]:
     """
     Fixture for exporting JSON type metadata to the path_types table.
     This is a simpler version of metadataexporter for test fixtures.
@@ -330,15 +321,13 @@ def export_json_types(
         pass
 
     def _export_json_types(
-        data: Union[
-            List[JSONPathType], List[str], List[Any]
-        ],  # List[Logs] but avoiding circular import
+        data: list[JSONPathType] | list[str] | list[Any],  # List[Logs] but avoiding circular import
     ) -> None:
         """
         Export JSON type metadata to signoz_metadata.distributed_field_keys table.
         This table stores signal, context, path, and type information for body JSON fields.
         """
-        path_types: List[JSONPathType] = []
+        path_types: list[JSONPathType] = []
 
         if len(data) == 0:
             return
@@ -354,7 +343,7 @@ def export_json_types(
             path_types = _parse_json_bodies_and_extract_paths(data)  # type: ignore
         else:
             # Assume it's a list of Logs objects - extract body_v2
-            json_bodies: List[str] = []
+            json_bodies: list[str] = []
             for log in data:  # type: ignore
                 # Try to get body_v2 attribute
                 if hasattr(log, "body_v2") and log.body_v2:
@@ -397,7 +386,7 @@ def export_json_types(
 @pytest.fixture(name="create_json_index", scope="function")
 def create_json_index(
     signoz: types.SigNoz,
-) -> Generator[Callable[[str, List[Dict[str, Any]]], None], None, None]:
+) -> Generator[Callable[[str, list[dict[str, Any]]], None]]:
     """
     Create ClickHouse data-skipping indexes on body_v2 JSON sub-columns via
     POST /api/v1/logs/promote_paths.
@@ -433,9 +422,9 @@ def create_json_index(
             ])
             insert_logs(logs_list)   # data inserted after index exists — index is built automatically
     """
-    created_paths: List[str] = []
+    created_paths: list[str] = []
 
-    def _create_json_body_index(token: str, paths: List[Dict[str, Any]]) -> None:
+    def _create_json_body_index(token: str, paths: list[dict[str, Any]]) -> None:
         response = requests.post(
             signoz.self.host_configs["8080"].get("/api/v1/logs/promote_paths"),
             headers={"authorization": f"Bearer {token}"},
