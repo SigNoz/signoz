@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/expr-lang/expr"
 	"github.com/uptrace/bun"
 )
 
@@ -54,34 +55,37 @@ type StorablePlannedMaintenance struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name        string    `bun:"name,type:text,notnull"`
-	Description string    `bun:"description,type:text"`
-	Schedule    *Schedule `bun:"schedule,type:text,notnull"`
-	OrgID       string    `bun:"org_id,type:text"`
+	Name            string    `bun:"name,type:text,notnull"`
+	Description     string    `bun:"description,type:text"`
+	Schedule        *Schedule `bun:"schedule,type:text,notnull"`
+	OrgID           string    `bun:"org_id,type:text"`
+	LabelExpression string    `bun:"label_expression,type:text"`
 }
 
 type PlannedMaintenance struct {
-	ID          valuer.UUID       `json:"id" required:"true"`
-	Name        string            `json:"name" required:"true"`
-	Description string            `json:"description"`
-	Schedule    *Schedule         `json:"schedule" required:"true"`
-	RuleIDs     []string          `json:"alertIds"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	CreatedBy   string            `json:"createdBy"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
-	UpdatedBy   string            `json:"updatedBy"`
-	Status      MaintenanceStatus `json:"status" required:"true"`
-	Kind        MaintenanceKind   `json:"kind" required:"true"`
+	ID              valuer.UUID       `json:"id" required:"true"`
+	Name            string            `json:"name" required:"true"`
+	Description     string            `json:"description"`
+	Schedule        *Schedule         `json:"schedule" required:"true"`
+	RuleIDs         []string          `json:"alertIds"`
+	LabelExpression string            `json:"labelExpression,omitempty"`
+	CreatedAt       time.Time         `json:"createdAt"`
+	CreatedBy       string            `json:"createdBy"`
+	UpdatedAt       time.Time         `json:"updatedAt"`
+	UpdatedBy       string            `json:"updatedBy"`
+	Status          MaintenanceStatus `json:"status" required:"true"`
+	Kind            MaintenanceKind   `json:"kind" required:"true"`
 }
 
 // PostablePlannedMaintenance is the input payload for creating or updating a
 // planned maintenance. Server-owned fields (id, timestamps, audit users,
 // derived status / kind) are deliberately not accepted from the client.
 type PostablePlannedMaintenance struct {
-	Name        string    `json:"name" required:"true"`
-	Description string    `json:"description"`
-	Schedule    *Schedule `json:"schedule" required:"true"`
-	AlertIds    []string  `json:"alertIds"`
+	Name            string    `json:"name" required:"true"`
+	Description     string    `json:"description"`
+	Schedule        *Schedule `json:"schedule" required:"true"`
+	AlertIds        []string  `json:"alertIds"`
+	LabelExpression string    `json:"labelExpression"`
 }
 
 func (p *PostablePlannedMaintenance) Validate() error {
@@ -114,6 +118,11 @@ func (p *PostablePlannedMaintenance) Validate() error {
 		}
 		if p.Schedule.Recurrence.EndTime != nil && p.Schedule.Recurrence.EndTime.Before(p.Schedule.Recurrence.StartTime) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "end time cannot be before start time")
+		}
+	}
+	if p.LabelExpression != "" {
+		if _, err := expr.Compile(p.LabelExpression, expr.AllowUndefinedVariables(), expr.AsBool()); err != nil {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidPlannedMaintenancePayload, "invalid label expression: %v", err)
 		}
 	}
 	return nil
@@ -384,29 +393,31 @@ func (m PlannedMaintenance) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(struct {
-		ID          valuer.UUID       `json:"id" db:"id"`
-		Name        string            `json:"name" db:"name"`
-		Description string            `json:"description" db:"description"`
-		Schedule    *Schedule         `json:"schedule" db:"schedule"`
-		AlertIds    []string          `json:"alertIds" db:"alert_ids"`
-		CreatedAt   time.Time         `json:"createdAt" db:"created_at"`
-		CreatedBy   string            `json:"createdBy" db:"created_by"`
-		UpdatedAt   time.Time         `json:"updatedAt" db:"updated_at"`
-		UpdatedBy   string            `json:"updatedBy" db:"updated_by"`
-		Status      MaintenanceStatus `json:"status"`
-		Kind        MaintenanceKind   `json:"kind"`
+		ID              valuer.UUID       `json:"id" db:"id"`
+		Name            string            `json:"name" db:"name"`
+		Description     string            `json:"description" db:"description"`
+		Schedule        *Schedule         `json:"schedule" db:"schedule"`
+		AlertIds        []string          `json:"alertIds" db:"alert_ids"`
+		LabelExpression string            `json:"labelExpression,omitempty" db:"label_expression"`
+		CreatedAt       time.Time         `json:"createdAt" db:"created_at"`
+		CreatedBy       string            `json:"createdBy" db:"created_by"`
+		UpdatedAt       time.Time         `json:"updatedAt" db:"updated_at"`
+		UpdatedBy       string            `json:"updatedBy" db:"updated_by"`
+		Status          MaintenanceStatus `json:"status"`
+		Kind            MaintenanceKind   `json:"kind"`
 	}{
-		ID:          m.ID,
-		Name:        m.Name,
-		Description: m.Description,
-		Schedule:    m.Schedule,
-		AlertIds:    m.RuleIDs,
-		CreatedAt:   m.CreatedAt,
-		CreatedBy:   m.CreatedBy,
-		UpdatedAt:   m.UpdatedAt,
-		UpdatedBy:   m.UpdatedBy,
-		Status:      status,
-		Kind:        kind,
+		ID:              m.ID,
+		Name:            m.Name,
+		Description:     m.Description,
+		Schedule:        m.Schedule,
+		AlertIds:        m.RuleIDs,
+		LabelExpression: m.LabelExpression,
+		CreatedAt:       m.CreatedAt,
+		CreatedBy:       m.CreatedBy,
+		UpdatedAt:       m.UpdatedAt,
+		UpdatedBy:       m.UpdatedBy,
+		Status:          status,
+		Kind:            kind,
 	})
 }
 
@@ -419,15 +430,16 @@ func (m *PlannedMaintenanceWithRules) ToPlannedMaintenance() *PlannedMaintenance
 	}
 
 	return &PlannedMaintenance{
-		ID:          m.ID,
-		Name:        m.Name,
-		Description: m.Description,
-		Schedule:    m.Schedule,
-		RuleIDs:     ruleIDs,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		CreatedBy:   m.CreatedBy,
-		UpdatedBy:   m.UpdatedBy,
+		ID:              m.ID,
+		Name:            m.Name,
+		Description:     m.Description,
+		Schedule:        m.Schedule,
+		RuleIDs:         ruleIDs,
+		LabelExpression: m.LabelExpression,
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
+		CreatedBy:       m.CreatedBy,
+		UpdatedBy:       m.UpdatedBy,
 	}
 }
 

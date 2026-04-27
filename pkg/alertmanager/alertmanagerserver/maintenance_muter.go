@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/expr-lang/expr"
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -42,9 +43,15 @@ func (m *MaintenanceMuter) Mutes(ctx context.Context, lset model.LabelSet) bool 
 	}
 	now := time.Now()
 	for _, mw := range m.getMaintenances(ctx) {
-		if mw.ShouldSkip(ruleID, now) {
-			return true
+		if !mw.ShouldSkip(ruleID, now) {
+			continue
 		}
+		if mw.LabelExpression != "" {
+			if !evaluateLabelExpression(ctx, mw.LabelExpression, lset, m.logger) {
+				continue
+			}
+		}
+		return true
 	}
 	return false
 }
@@ -64,8 +71,49 @@ func (m *MaintenanceMuter) MutedBy(ctx context.Context, lset model.LabelSet) []s
 		if mw.ShouldSkip(ruleID, now) {
 			ids = append(ids, mw.ID.String())
 		}
+		if mw.LabelExpression != "" {
+			if !evaluateLabelExpression(ctx, mw.LabelExpression, lset, m.logger) {
+				continue
+			}
+		}
 	}
 	return ids
+}
+
+// evaluateLabelExpression compiles and runs a boolean expression against the alert's
+// label set. Returns false on any error (safety-first: don't suppress on bad expressions).
+func evaluateLabelExpression(ctx context.Context, expression string, lset model.LabelSet, logger *slog.Logger) bool {
+	env := make(map[string]interface{}, len(lset))
+	for k, v := range lset {
+		env[string(k)] = string(v)
+	}
+
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
+	if err != nil {
+		logger.WarnContext(ctx, "maintenance label expression compile error; passing alert through",
+			slog.String("expr", expression),
+			slog.String("err", err.Error()),
+		)
+		return false
+	}
+
+	output, err := expr.Run(program, env)
+	if err != nil {
+		logger.WarnContext(ctx, "maintenance label expression run error; passing alert through",
+			slog.String("expr", expression),
+			slog.String("err", err.Error()),
+		)
+		return false
+	}
+
+	result, ok := output.(bool)
+	if !ok {
+		logger.WarnContext(ctx, "maintenance label expression did not return bool; passing alert through",
+			slog.String("expr", expression),
+		)
+		return false
+	}
+	return result
 }
 
 func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*alertmanagertypes.PlannedMaintenance {

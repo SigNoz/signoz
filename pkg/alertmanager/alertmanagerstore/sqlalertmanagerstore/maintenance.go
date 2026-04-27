@@ -85,10 +85,11 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 			CreatedBy: claims.Email,
 			UpdatedBy: claims.Email,
 		},
-		Name:        maintenance.Name,
-		Description: maintenance.Description,
-		Schedule:    maintenance.Schedule,
-		OrgID:       claims.OrgID,
+		Name:            maintenance.Name,
+		Description:     maintenance.Description,
+		Schedule:        maintenance.Schedule,
+		OrgID:           claims.OrgID,
+		LabelExpression: maintenance.LabelExpression,
 	}
 
 	maintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -123,7 +124,6 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 				NewInsert().
 				Model(&maintenanceRules).
 				Exec(ctx)
-
 			if err != nil {
 				return err
 			}
@@ -136,15 +136,16 @@ func (r *maintenance) CreatePlannedMaintenance(ctx context.Context, maintenance 
 	}
 
 	return &alertmanagertypes.PlannedMaintenance{
-		ID:          storablePlannedMaintenance.ID,
-		Name:        storablePlannedMaintenance.Name,
-		Description: storablePlannedMaintenance.Description,
-		Schedule:    storablePlannedMaintenance.Schedule,
-		RuleIDs:     maintenance.AlertIds,
-		CreatedAt:   storablePlannedMaintenance.CreatedAt,
-		CreatedBy:   storablePlannedMaintenance.CreatedBy,
-		UpdatedAt:   storablePlannedMaintenance.UpdatedAt,
-		UpdatedBy:   storablePlannedMaintenance.UpdatedBy,
+		ID:              storablePlannedMaintenance.ID,
+		Name:            storablePlannedMaintenance.Name,
+		Description:     storablePlannedMaintenance.Description,
+		Schedule:        storablePlannedMaintenance.Schedule,
+		RuleIDs:         maintenance.AlertIds,
+		LabelExpression: maintenance.LabelExpression,
+		CreatedAt:       storablePlannedMaintenance.CreatedAt,
+		CreatedBy:       storablePlannedMaintenance.CreatedBy,
+		UpdatedAt:       storablePlannedMaintenance.UpdatedAt,
+		UpdatedBy:       storablePlannedMaintenance.UpdatedBy,
 	}, nil
 }
 
@@ -185,10 +186,11 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 			CreatedBy: existing.CreatedBy,
 			UpdatedBy: claims.Email,
 		},
-		Name:        maintenance.Name,
-		Description: maintenance.Description,
-		Schedule:    maintenance.Schedule,
-		OrgID:       claims.OrgID,
+		Name:            maintenance.Name,
+		Description:     maintenance.Description,
+		Schedule:        maintenance.Schedule,
+		OrgID:           claims.OrgID,
+		LabelExpression: maintenance.LabelExpression,
 	}
 
 	storablePlannedMaintenanceRules := make([]*alertmanagertypes.StorablePlannedMaintenanceRule, 0)
@@ -224,7 +226,6 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 			Model(new(alertmanagertypes.StorablePlannedMaintenanceRule)).
 			Where("planned_maintenance_id = ?", storablePlannedMaintenance.ID.StringValue()).
 			Exec(ctx)
-
 		if err != nil {
 			return err
 		}
@@ -241,7 +242,6 @@ func (r *maintenance) UpdatePlannedMaintenance(ctx context.Context, maintenance 
 		}
 
 		return nil
-
 	})
 	if err != nil {
 		return err
