@@ -5,7 +5,8 @@
 	border-radius: 3px;
 	border: 1px solid var(--l1-border);
 	table {
-		background: linear-gradient(
+		background:
+			linear-gradient(
 				0deg,
 				color-mix(in srgb, var(--bg-robin-200) 1%, transparent) 0%,
 				color-mix(in srgb, var(--bg-robin-200) 1%, transparent) 100%
@@ -89,7 +90,9 @@
 
 		.ant-table-thead
 			> tr
-			> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+			> th:not(:last-child):not(.ant-table-selection-column):not(
+				.ant-table-row-expand-icon-cell
+			):not([colspan])::before {
 			background-color: transparent;
 		}
 

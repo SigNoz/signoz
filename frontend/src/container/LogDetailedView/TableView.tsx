@@ -136,21 +136,23 @@ function TableView({
 		}
 	};
 
-	const onClickHandler = (
-		operator: string,
-		fieldKey: string,
-		fieldValue: string,
-		dataType: string | undefined,
-		fieldType: MetricsType | undefined,
-	) => (): void => {
-		handleClick(operator, fieldKey, fieldValue, dataType, fieldType);
-		if (operator === OPERATORS['=']) {
-			setIsFilterInLoading(true);
-		}
-		if (operator === OPERATORS['!=']) {
-			setIsFilterOutLoading(true);
-		}
-	};
+	const onClickHandler =
+		(
+			operator: string,
+			fieldKey: string,
+			fieldValue: string,
+			dataType: string | undefined,
+			fieldType: MetricsType | undefined,
+		) =>
+		(): void => {
+			handleClick(operator, fieldKey, fieldValue, dataType, fieldType);
+			if (operator === OPERATORS['=']) {
+				setIsFilterInLoading(true);
+			}
+			if (operator === OPERATORS['!=']) {
+				setIsFilterOutLoading(true);
+			}
+		};
 
 	if (logData === null) {
 		return null;

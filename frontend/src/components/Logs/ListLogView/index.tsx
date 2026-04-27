@@ -104,7 +104,7 @@ type ListLogViewProps = {
 	selectedFields: IField[];
 	onSetActiveLog: (
 		log: ILog,
-		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+		selectedTab?: (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES],
 	) => void;
 	onAddToQuery: AddToQueryHOCProps['onAddToQuery'];
 	activeLog?: ILog | null;
@@ -166,11 +166,11 @@ function ListLogView({
 				? formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp,
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-				  )
+					)
 				: formatTimezoneAdjustedTimestamp(
 						flattenLogData.timestamp / 1e6,
 						DATE_TIME_FORMATS.ISO_DATETIME_MS,
-				  ),
+					),
 		[flattenLogData.timestamp, formatTimezoneAdjustedTimestamp],
 	);
 

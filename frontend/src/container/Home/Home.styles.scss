@@ -227,7 +227,9 @@
 		.ant-typography {
 			color: var(--l2-foreground);
 			font-variant-numeric: lining-nums tabular-nums slashed-zero;
-			font-feature-settings: 'dlig' on, 'salt' on;
+			font-feature-settings:
+				'dlig' on,
+				'salt' on;
 			font-family: Inter;
 			font-size: 11px !important;
 			font-style: normal;
@@ -480,10 +482,10 @@
 					border-radius: 2px;
 					border: 1px solid var(--l1-border);
 					background: var(--l2-background);
-					box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 					&.selected {
-						background: var(--l2-background);
+						background: var(--l3-background);
+						color: var(--primary);
 					}
 				}
 			}

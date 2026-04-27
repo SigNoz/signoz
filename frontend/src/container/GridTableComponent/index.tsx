@@ -58,7 +58,7 @@ function GridTableComponent({
 	// create columns and dataSource in the ui friendly structure
 	// use the query from the widget here to extract the legend information
 	const { columns: allColumns, dataSource: originalDataSource } = useMemo(
-		() => createColumnsAndDataSource((data as unknown) as TableData, query),
+		() => createColumnsAndDataSource(data as unknown as TableData, query),
 		[query, data],
 	);
 
@@ -96,39 +96,37 @@ function GridTableComponent({
 				return mutateDataSource;
 			}
 
-			mutateDataSource = mutateDataSource.map(
-				(val): RowData => {
-					const newValue = { ...val };
-					Object.keys(val).forEach((k) => {
-						const unit = getColumnUnit(k, columnUnits);
+			mutateDataSource = mutateDataSource.map((val): RowData => {
+				const newValue = { ...val };
+				Object.keys(val).forEach((k) => {
+					const unit = getColumnUnit(k, columnUnits);
 
-						if (unit) {
-							// the check below takes care of not adding units for rows that have n/a or null values
-							if (val[k] !== 'n/a' && val[k] !== null) {
-								newValue[k] = getYAxisFormattedValue(
-									String(val[k]),
-									unit,
-									decimalPrecision,
-								);
-							} else if (val[k] === null) {
-								newValue[k] = 'n/a';
-							}
-							newValue[`${k}_without_unit`] = val[k];
+					if (unit) {
+						// the check below takes care of not adding units for rows that have n/a or null values
+						if (val[k] !== 'n/a' && val[k] !== null) {
+							newValue[k] = getYAxisFormattedValue(
+								String(val[k]),
+								unit,
+								decimalPrecision,
+							);
+						} else if (val[k] === null) {
+							newValue[k] = 'n/a';
 						}
-					});
-					return newValue;
-				},
-			);
+						newValue[`${k}_without_unit`] = val[k];
+					}
+				});
+				return newValue;
+			});
 
 			return mutateDataSource;
 		},
 		[columnUnits, decimalPrecision],
 	);
 
-	const dataSource = useMemo(() => applyColumnUnits(originalDataSource), [
-		applyColumnUnits,
-		originalDataSource,
-	]);
+	const dataSource = useMemo(
+		() => applyColumnUnits(originalDataSource),
+		[applyColumnUnits, originalDataSource],
+	);
 
 	useEffect(() => {
 		if (tableProcessedDataRef) {
@@ -299,7 +297,7 @@ function GridTableComponent({
 									}
 									customOnRowClick?.(record);
 								},
-						  })
+							})
 						: undefined
 				}
 				{...props}

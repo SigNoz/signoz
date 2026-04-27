@@ -32,9 +32,8 @@ function LiveLogsContainer({
 	const location = useLocation();
 	const [logs, setLogs] = useState<ILiveLogsLog[]>([]);
 	const { currentQuery, stagedQuery } = useQueryBuilder();
-	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] = useState(
-		true,
-	);
+	const [showLiveLogsFrequencyChart, setShowLiveLogsFrequencyChart] =
+		useState(true);
 
 	const listQuery = useMemo(() => {
 		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {

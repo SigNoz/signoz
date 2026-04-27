@@ -76,10 +76,10 @@ function EntityMetrics<T>({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const {
-		visibilities,
-		setElement,
-	} = useMultiIntersectionObserver(entityWidgetInfo.length, { threshold: 0.1 });
+	const { visibilities, setElement } = useMultiIntersectionObserver(
+		entityWidgetInfo.length,
+		{ threshold: 0.1 },
+	);
 
 	const queryPayloads = useMemo(
 		() =>

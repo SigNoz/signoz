@@ -98,9 +98,7 @@ export function createTraceOperatorContext(
 }
 
 // Helper to determine token context
-function determineTraceTokenContext(
-	token: IToken,
-): {
+function determineTraceTokenContext(token: IToken): {
 	isInAtom: boolean;
 	isInOperator: boolean;
 	isInParenthesis: boolean;

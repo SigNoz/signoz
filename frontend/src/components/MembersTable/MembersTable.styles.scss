@@ -196,17 +196,3 @@
 		opacity: 0.5;
 	}
 }
-
-.lightMode {
-	.members-table {
-		.ant-table-tbody {
-			> tr.members-table-row--tinted > td {
-				background: rgba(0, 0, 0, 0.015);
-			}
-
-			> tr:hover > td {
-				background: rgba(0, 0, 0, 0.03) !important;
-			}
-		}
-	}
-}

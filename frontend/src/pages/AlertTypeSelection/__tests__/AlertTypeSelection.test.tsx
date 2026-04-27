@@ -23,11 +23,11 @@ describe('AlertTypeSelection', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		useAppContextSpy.mockReturnValue(getAppContextMockState());
-		useUrlQuerySpy.mockReturnValue(({
+		useUrlQuerySpy.mockReturnValue({
 			set: mockSetUrlQuery,
 			toString: mockToString,
 			get: mockGetUrlQuery,
-		} as Partial<URLSearchParams>) as URLSearchParams);
+		} as Partial<URLSearchParams> as URLSearchParams);
 		useSafeNavigateSpy.mockReturnValue({
 			safeNavigate: mockSafeNavigate,
 		});
@@ -158,7 +158,7 @@ describe('AlertTypeSelection', () => {
 	});
 
 	it('should navigate to classic create alerts page with correct params if showClassicCreateAlertsPage is true', () => {
-		useUrlQuerySpy.mockReturnValue(({
+		useUrlQuerySpy.mockReturnValue({
 			set: mockSetUrlQuery,
 			toString: mockToString,
 			get: mockGetUrlQuery.mockImplementation((key: string) => {
@@ -167,7 +167,7 @@ describe('AlertTypeSelection', () => {
 				}
 				return null;
 			}),
-		} as Partial<URLSearchParams>) as URLSearchParams);
+		} as Partial<URLSearchParams> as URLSearchParams);
 
 		render(<AlertTypeSelection />);
 		fireEvent.click(screen.getByText('metric_based_alert'));

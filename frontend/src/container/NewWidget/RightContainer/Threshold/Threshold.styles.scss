@@ -20,7 +20,7 @@
 		flex-shrink: 0;
 		padding: 12px;
 		border-radius: 2px;
-		border: 1px solid var(--l1-border);
+		border: 1px solid var(--l2-border);
 		background: var(--l2-background);
 
 		.edit-action-btns {
@@ -38,11 +38,11 @@
 				align-items: center;
 				gap: 10px;
 				flex-shrink: 0;
-				background: var(--l1-border);
+				background: var(--l2-background);
 			}
 
 			.ant-btn + .ant-btn {
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 			}
 
 			.edit-btn {
@@ -57,7 +57,7 @@
 		.time-series-alerts {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--l1-border);
+			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			width: 100%;
@@ -81,7 +81,7 @@
 				width: 80%;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 				color: var(--l1-foreground);
@@ -139,7 +139,7 @@
 		.threshold-units-selector {
 			display: flex;
 			border-radius: 2px 2px 0px 0px;
-			border: 1px solid var(--l1-border);
+			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			height: 32px;
@@ -161,7 +161,7 @@
 			.unit-selection {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
@@ -188,14 +188,14 @@
 			.unit-selection-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--l2-background);
+				background: var(--l1-background);
 			}
 		}
 
@@ -203,9 +203,9 @@
 			display: flex;
 			align-items: center;
 			border-radius: 0px 0px 2px 2px;
-			border: 1px solid var(--l1-border);
+			border: 1px solid var(--l2-border);
 			border-top: none;
-			background: var(--l2-background);
+			background: var(--l1-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			height: 32px;
 			flex-shrink: 0;
@@ -220,7 +220,7 @@
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--l2-background);
+				background: var(--l1-background);
 
 				.ant-btn {
 					box-shadow: none;
@@ -230,8 +230,9 @@
 			.color-format {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 				color: var(--l1-foreground);
+				background: var(--l1-background);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -247,21 +248,21 @@
 					font-style: normal;
 					font-weight: 400;
 					line-height: 16px; /* 133.333% */
-					background-color: unset;
+					background: var(--l1-background);
 				}
 			}
 
 			.color-format-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l1-border);
+				border-left: 1px solid var(--l2-border);
 				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
 				font-style: normal;
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
-				background: var(--l2-background);
+				background: var(--l1-background);
 			}
 		}
 
@@ -281,8 +282,8 @@
 				gap: 6px;
 				flex: 1 0 0;
 				border-radius: 2px;
-				border: 1px solid var(--l1-border);
-				background: var(--l1-border);
+				border: 1px solid var(--l2-border);
+				background: var(--l2-background);
 				box-shadow: none;
 			}
 
@@ -316,126 +317,6 @@
 	.threshold-card-container:hover {
 		.edit-action-btns {
 			display: flex;
-		}
-	}
-}
-
-.lightMode {
-	.operator-input-root {
-		color: var(--l2-background);
-	}
-	.threshold-container {
-		.threshold-card-container {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-foreground);
-
-			.edit-action-btns {
-				.ant-btn {
-					background: var(--l3-background);
-				}
-
-				.ant-btn + .ant-btn {
-					border-left: 1px solid var(--l1-foreground);
-				}
-			}
-
-			.time-series-alerts {
-				border: 1px solid var(--l1-border);
-				background: var(--l1-foreground);
-
-				.label {
-					color: var(--l2-background);
-				}
-
-				.label-input {
-					border-left: 1px solid var(--l1-border);
-					background: var(--l3-background);
-					color: var(--l3-background);
-					border: 1px solid var(--l1-border);
-					box-shadow: none;
-				}
-			}
-
-			.value-table-alerts {
-				.operator-input {
-					.ant-select-selector {
-						background-color: var(--l3-background) !important;
-						color: var(--l3-background);
-					}
-				}
-
-				.typography {
-					color: var(--l2-background);
-				}
-				.typography-preview {
-					color: var(--l2-background);
-					border: 1px solid var(--l1-border);
-					background-color: var(--l3-background) !important;
-				}
-			}
-			.threshold-units-selector {
-				border: 1px solid var(--l1-border);
-				background: var(--l3-background);
-
-				.unit-input {
-					color: var(--l2-background);
-					background: var(--l3-background);
-				}
-
-				.unit-selection {
-					border-left: 1px solid var(--l1-foreground);
-					color: var(--l2-background);
-
-					.ant-select-selector {
-						background-color: var(--l3-background);
-						color: var(--l2-background);
-					}
-				}
-
-				.unit-selection-prev {
-					border-left: 1px solid var(--l1-foreground);
-					color: var(--l2-background);
-					background: var(--l3-background);
-				}
-			}
-
-			.thresholds-color-selector {
-				border: 1px solid var(--l1-border);
-				border-top: 1px solid var(--l1-foreground);
-				background: var(--l3-background);
-
-				.color-selector {
-					color: var(--l3-background);
-					background: var(--l3-background);
-					border: 1px solid var(--l1-border);
-					border-top: 1px solid var(--l1-foreground);
-				}
-				.color-format {
-					border-left: 1px solid var(--l1-foreground);
-					color: var(--l3-background);
-
-					.ant-select-selector {
-						color: var(--l2-background);
-					}
-				}
-
-				.color-format-prev {
-					border-left: 1px solid var(--l1-foreground);
-					color: var(--l3-background);
-					background: var(--l3-background);
-				}
-			}
-
-			.threshold-action-button {
-				.discard-btn {
-					border: 1px solid var(--l1-border);
-					background: var(--l3-background);
-				}
-
-				.save-changes {
-					color: var(--l1-foreground);
-				}
-			}
 		}
 	}
 }

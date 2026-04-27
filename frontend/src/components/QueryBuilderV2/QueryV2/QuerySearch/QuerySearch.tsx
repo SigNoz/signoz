@@ -194,10 +194,8 @@ function QuerySearch({
 
 	const [cursorPos, setCursorPos] = useState({ line: 0, ch: 0 });
 
-	const [
-		isFetchingCompleteValuesList,
-		setIsFetchingCompleteValuesList,
-	] = useState<boolean>(false);
+	const [isFetchingCompleteValuesList, setIsFetchingCompleteValuesList] =
+		useState<boolean>(false);
 
 	const lastPosRef = useRef<{ line: number; ch: number }>({ line: 0, ch: 0 });
 

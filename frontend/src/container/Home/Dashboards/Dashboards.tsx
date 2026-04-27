@@ -130,7 +130,7 @@ export default function Dashboards({
 							onClick={onClickHandler}
 							onKeyDown={(e): void => {
 								if (e.key === 'Enter') {
-									onClickHandler((e as unknown) as React.MouseEvent<HTMLElement>);
+									onClickHandler(e as unknown as React.MouseEvent<HTMLElement>);
 								}
 							}}
 						>

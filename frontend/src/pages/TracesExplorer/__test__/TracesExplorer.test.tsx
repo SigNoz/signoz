@@ -181,13 +181,10 @@ describe('TracesExplorer - Filters', () => {
 	// Initial filter panel rendering
 	// Test the initial state like which filters section are opened, default state of duration slider, etc.
 	it('should render the Trace filter', async () => {
-		const {
-			getByText,
-			getAllByText,
-			getByTestId,
-		} = renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
-			`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
-		]);
+		const { getByText, getAllByText, getByTestId } =
+			renderWithTracesExplorerRouter(<Filter setOpen={jest.fn()} />, [
+				`${process.env.FRONTEND_API_ENDPOINT}${ROUTES.TRACES_EXPLORER}/?panelType=list&selectedExplorerView=list`,
+			]);
 
 		checkFilterValues(getByText, getAllByText);
 
@@ -345,7 +342,7 @@ describe('TracesExplorer - Filters', () => {
 						({
 							...item,
 							filters: undefined,
-						} as any),
+						}) as any,
 				),
 			},
 		});
@@ -374,7 +371,7 @@ describe('TracesExplorer - Filters', () => {
 								...item.filters,
 								items: undefined,
 							},
-						} as any),
+						}) as any,
 				),
 			},
 		});
@@ -569,9 +566,9 @@ describe('TracesExplorer - ', () => {
 			expect(capturedPayload).toBeDefined();
 		});
 
-		expect(
-			(capturedPayload.compositeQuery.queries[0].spec as any).order,
-		).toEqual([{ key: { name: 'timestamp' }, direction: 'desc' }]);
+		expect((capturedPayload.compositeQuery.queries[0].spec as any).order).toEqual(
+			[{ key: { name: 'timestamp' }, direction: 'desc' }],
+		);
 	});
 
 	it.skip('trace explorer - table view', async () => {
@@ -599,12 +596,10 @@ describe('TracesExplorer - ', () => {
 			),
 		);
 
-		const {
-			getByText,
-			getAllByText,
-		} = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=trace&selectedExplorerView=trace',
-		]);
+		const { getByText, getAllByText } = renderWithTracesExplorerRouter(
+			<TracesExplorer />,
+			['/traces-explorer/?panelType=trace&selectedExplorerView=trace'],
+		);
 
 		expect(await screen.findByText('Root Service Name')).toBeInTheDocument();
 
@@ -666,12 +661,10 @@ describe('TracesExplorer - ', () => {
 	});
 
 	it('test for explorer options', async () => {
-		const {
-			getByText,
-			getByTestId,
-		} = renderWithTracesExplorerRouter(<TracesExplorer />, [
-			'/traces-explorer/?panelType=list&selectedExplorerView=list',
-		]);
+		const { getByText, getByTestId } = renderWithTracesExplorerRouter(
+			<TracesExplorer />,
+			['/traces-explorer/?panelType=list&selectedExplorerView=list'],
+		);
 
 		// assert explorer options - action btns
 		[

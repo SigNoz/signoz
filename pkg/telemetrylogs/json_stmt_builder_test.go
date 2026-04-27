@@ -1127,9 +1127,12 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 					return entry.Path == path && entry.Type == jsonType
 				})
 				if idx >= 0 {
-					key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
-						Type:             jsonType,
-						ColumnExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
+					key.Indexes = append(key.Indexes, telemetrytypes.TelemetryFieldKeySkipIndex{
+						Name:            path,
+						FieldContext:    telemetrytypes.FieldContextBody,
+						FieldDataType:   fdt,
+						BaseColumn:      LogsV2BodyV2Column,
+						IndexExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
 					})
 				}
 			}

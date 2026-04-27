@@ -72,33 +72,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.span-logs {
-		&-empty-content {
-			.description {
-				.no-data-text-1 {
-					color: var(--l2-background);
-
-					.no-data-text-2 {
-						color: var(--l2-background);
-					}
-				}
-			}
-
-			.action-section {
-				.action-btn {
-					border: 1px solid var(--l1-border);
-					background: var(--l3-background);
-					color: var(--l2-background);
-
-					&:hover {
-						border-color: var(--l1-border);
-						background: var(--l2-background);
-						color: var(--l1-background);
-					}
-				}
-			}
-		}
-	}
-}

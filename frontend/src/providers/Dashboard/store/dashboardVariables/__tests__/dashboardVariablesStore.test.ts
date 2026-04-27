@@ -123,11 +123,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				variableTypes,
-				dynamicVariableOrder,
-				dependencyData,
-			} = getVariableDependencyContext();
+			const { variableTypes, dynamicVariableOrder, dependencyData } =
+				getVariableDependencyContext();
 
 			expect(variableTypes).toEqual({ env: 'QUERY' });
 			expect(dynamicVariableOrder).toEqual([]);
@@ -153,9 +150,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -178,9 +174,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
 		});
 
@@ -210,9 +205,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -229,9 +223,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -258,9 +251,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -286,9 +278,8 @@ describe('dashboardVariablesStore', () => {
 					},
 				});
 
-				const {
-					doAllQueryVariablesHaveValuesSelected,
-				} = getVariableDependencyContext();
+				const { doAllQueryVariablesHaveValuesSelected } =
+					getVariableDependencyContext();
 				expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
 			},
 		);

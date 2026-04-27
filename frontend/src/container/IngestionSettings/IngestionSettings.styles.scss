@@ -202,7 +202,11 @@
 							letter-spacing: -0.07px;
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 						}
 					}
 
@@ -251,7 +255,11 @@
 			> a {
 				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'case' on,
+					'cpsp' on;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -765,206 +773,6 @@
 	box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 }
 
-.lightMode {
-	.ingestion-key-container {
-		.ingestion-key-content {
-			.title {
-				color: var(--l1-foreground);
-			}
-
-			.ant-table-row {
-				.ant-table-cell {
-					background: var(--l1-background);
-				}
-
-				&:hover {
-					.ant-table-cell {
-						background: var(--l1-background) !important;
-					}
-				}
-
-				.column-render {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-
-					.ant-collapse {
-						border: none;
-
-						.ant-collapse-header {
-							background: var(--l1-background);
-						}
-
-						.ant-collapse-content {
-							border-top: 1px solid var(--l1-border);
-						}
-					}
-
-					.title-with-action {
-						.ingestion-key-title {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.ingestion-key-value {
-							background: var(--l3-background);
-
-							.ant-typography {
-								color: var(--l2-foreground);
-							}
-
-							.copy-key-btn {
-								cursor: pointer;
-							}
-						}
-
-						.action-btn {
-							.ant-typography {
-								color: var(--l2-foreground);
-							}
-						}
-					}
-
-					.ingestion-key-details {
-						border-top: 1px solid var(--l1-border);
-
-						.ingestion-key-tag {
-							background: var(--l3-background);
-
-							.tag-text {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.ingestion-key-created-by {
-							color: var(--l2-foreground);
-						}
-
-						.ingestion-key-last-used-at {
-							.ant-typography {
-								color: var(--l2-foreground);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.delete-ingestion-key-modal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-
-			.ant-modal-header {
-				background: var(--l1-background);
-
-				.title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l2-foreground);
-				}
-
-				.ingestion-key-input {
-					.ant-input {
-						background: var(--l3-background);
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-
-	.ingestion-key-info-container {
-		.user-email {
-			background: var(--l3-background);
-		}
-
-		.limits-data {
-			border: 1px solid var(--l1-border);
-		}
-	}
-
-	.ingestion-key-modal {
-		.ant-modal-content {
-			border-radius: 4px;
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-			padding: 0;
-
-			.ant-modal-header {
-				background: none;
-				border-bottom: 1px solid var(--l1-border);
-				padding: 16px;
-			}
-		}
-	}
-
-	.ingestion-key-access-role {
-		.ant-radio-button-wrapper {
-			&.ant-radio-button-wrapper-checked {
-				color: var(--l1-foreground);
-				background: var(--l3-background);
-				border-color: var(--l1-border);
-
-				&:hover {
-					color: var(--l1-foreground);
-					background: var(--l3-background);
-					border-color: var(--l1-border);
-
-					&::before {
-						background-color: var(--l3-background);
-					}
-				}
-
-				&:focus {
-					color: var(--l1-foreground);
-					background: var(--l3-background);
-					border-color: var(--l1-border);
-				}
-			}
-		}
-
-		.tab {
-			border: 1px solid var(--l1-border);
-
-			&::before {
-				background: var(--l3-background);
-			}
-
-			&.selected {
-				background: var(--l3-background);
-			}
-		}
-	}
-
-	.copyable-text {
-		background: var(--l3-background);
-	}
-
-	.ingestion-key-expires-at {
-		border: 1px solid var(--l1-border);
-		background: var(--l1-background);
-		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-	}
-
-	.expires-at .ant-picker {
-		border-color: var(--l1-border) !important;
-	}
-}
-
 .mt-8 {
 	margin-top: 8px;
 }
@@ -1075,28 +883,5 @@
 		font-size: 12px;
 		font-weight: 400;
 		color: var(--l2-foreground);
-	}
-}
-
-.lightMode {
-	.ingestion-setup-details-links {
-		background: color-mix(in srgb, var(--primary-background) 10%, transparent);
-		color: var(--accent-primary);
-
-		.learn-more {
-			color: var(--accent-primary);
-		}
-	}
-
-	.ingestion-url-error-tooltip {
-		.ingestion-url-error-content {
-			.ingestion-url-error-code {
-				color: var(--bg-amber-500);
-			}
-		}
-
-		.ingestion-url-error-message {
-			color: var(--l1-foreground);
-		}
 	}
 }

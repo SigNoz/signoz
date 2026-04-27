@@ -122,36 +122,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.query-functions-container {
-		.add-function-btn {
-			background-color: var(--l3-background) !important;
-		}
-	}
-
-	.query-functions-list {
-		.query-function {
-			border: 1px solid var(--l1-border);
-			.query-function-name-selector {
-				.ant-select-selector {
-					background: var(--l3-background);
-				}
-			}
-
-			.query-function-value {
-				background: var(--l3-background);
-
-				&:focus {
-					border-color: transparent !important;
-				}
-			}
-
-			&::before,
-			&::after {
-				color: var(--l3-background);
-				background-color: var(--l3-background);
-			}
-		}
-	}
-}

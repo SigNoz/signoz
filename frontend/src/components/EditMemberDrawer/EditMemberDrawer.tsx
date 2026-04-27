@@ -158,10 +158,8 @@ function EditMemberDrawer({
 		new Date(String(existingToken.expiresAt)) < new Date();
 
 	// Create/regenerate token mutation
-	const {
-		mutateAsync: createTokenMutation,
-		isLoading: isGeneratingLink,
-	} = useCreateResetPasswordToken();
+	const { mutateAsync: createTokenMutation, isLoading: isGeneratingLink } =
+		useCreateResetPasswordToken();
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
@@ -221,22 +219,20 @@ function EditMemberDrawer({
 	});
 
 	const makeRoleRetry = useCallback(
-		(
-			context: string,
-			rawRetry: () => Promise<void>,
-		) => async (): Promise<void> => {
-			try {
-				await rawRetry();
-				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
-				refetchUser();
-			} catch (err) {
-				setSaveErrors((prev) =>
-					prev.map((e) =>
-						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
-					),
-				);
-			}
-		},
+		(context: string, rawRetry: () => Promise<void>) =>
+			async (): Promise<void> => {
+				try {
+					await rawRetry();
+					setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+					refetchUser();
+				} catch (err) {
+					setSaveErrors((prev) =>
+						prev.map((e) =>
+							e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+						),
+					);
+				}
+			},
 		[refetchUser],
 	);
 
@@ -280,7 +276,7 @@ function EditMemberDrawer({
 					: updateUser({
 							pathParams: { id: member.id },
 							data: { displayName: localDisplayName },
-					  })
+						})
 				: Promise.resolve();
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
@@ -389,7 +385,7 @@ function EditMemberDrawer({
 						? formatTimezoneAdjustedTimestamp(
 								String(response.data.expiresAt),
 								DATE_TIME_FORMATS.DASH_DATETIME,
-						  )
+							)
 						: null,
 				);
 				setHasCopiedResetLink(false);
@@ -498,8 +494,8 @@ function EditMemberDrawer({
 							isRootUser
 								? ROOT_USER_TOOLTIP
 								: isDeleted
-								? undefined
-								: 'You cannot modify your own role'
+									? undefined
+									: 'You cannot modify your own role'
 						}
 					>
 						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
@@ -622,13 +618,13 @@ function EditMemberDrawer({
 									{isGeneratingLink
 										? 'Generating...'
 										: isInvited
-										? getInviteButtonLabel(
-												isLoadingTokenStatus,
-												existingToken,
-												isTokenExpired,
-												tokenNotFound,
-										  )
-										: 'Generate Password Reset Link'}
+											? getInviteButtonLabel(
+													isLoadingTokenStatus,
+													existingToken,
+													isTokenExpired,
+													tokenNotFound,
+												)
+											: 'Generate Password Reset Link'}
 								</Button>
 							</span>
 						</Tooltip>

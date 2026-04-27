@@ -59,10 +59,8 @@ function BasicInfo({
 		user.role,
 	);
 
-	const [
-		shouldBroadCastToAllChannels,
-		setShouldBroadCastToAllChannels,
-	] = useState(false);
+	const [shouldBroadCastToAllChannels, setShouldBroadCastToAllChannels] =
+		useState(false);
 
 	useEffect(() => {
 		const hasPreferredChannels =

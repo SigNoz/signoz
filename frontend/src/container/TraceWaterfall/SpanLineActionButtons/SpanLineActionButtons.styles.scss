@@ -26,14 +26,3 @@
 		border-color: var(--l1-border) !important;
 	}
 }
-
-.lightMode {
-	.span-line-action-buttons {
-		border: 1px solid var(--l2-foreground);
-		background: var(--l2-foreground);
-
-		.copy-span-btn {
-			border-color: var(--l2-foreground) !important;
-		}
-	}
-}

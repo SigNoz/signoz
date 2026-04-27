@@ -34,27 +34,25 @@ function InviteUserModal(props: InviteUserModalProps): JSX.Element {
 		async (values: InviteMemberFormValues): Promise<void> => {
 			try {
 				setIsInvitingMembers?.(true);
-				values?.members?.forEach(
-					async (member): Promise<void> => {
-						try {
-							await sendInvite({
-								email: member.email,
-								name: member?.name,
-								role: member.role,
-								frontendBaseUrl: getBaseUrl(),
-							});
+				values?.members?.forEach(async (member): Promise<void> => {
+					try {
+						await sendInvite({
+							email: member.email,
+							name: member?.name,
+							role: member.role,
+							frontendBaseUrl: getBaseUrl(),
+						});
 
-							notifications.success({
-								message: 'Invite sent successfully',
-							});
-						} catch (error) {
-							notifications.error({
-								message: (error as APIError).getErrorCode(),
-								description: (error as APIError).getErrorMessage(),
-							});
-						}
-					},
-				);
+						notifications.success({
+							message: 'Invite sent successfully',
+						});
+					} catch (error) {
+						notifications.error({
+							message: (error as APIError).getErrorCode(),
+							description: (error as APIError).getErrorMessage(),
+						});
+					}
+				});
 
 				setTimeout(async () => {
 					onClose();

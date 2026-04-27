@@ -47,13 +47,13 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 		} else if (q.type === 'builder_formula') {
 			if (spec.name) {
 				builderQueries[spec.name] = convertQueryBuilderFormulaToIBuilderFormula(
-					(spec as unknown) as QueryBuilderFormula,
+					spec as unknown as QueryBuilderFormula,
 				);
 				builderQueryTypes[spec.name] = 'builder_formula';
 			}
 		} else if (q.type === 'builder_trace_operator') {
 			if (spec.name) {
-				builderQueries[spec.name] = (spec as unknown) as IBuilderTraceOperator;
+				builderQueries[spec.name] = spec as unknown as IBuilderTraceOperator;
 				builderQueryTypes[spec.name] = 'builder_trace_operator';
 			}
 		} else if (q.type === 'promql') {
@@ -93,7 +93,7 @@ const mapQueryFromV3 = (compositeQuery: ICompositeMetricQuery): Query => {
 		? Object.keys(compositeQuery.promQueries).map((key) => ({
 				...compositeQuery.promQueries?.[key],
 				name: key,
-		  }))
+			}))
 		: initialQueryState.promql;
 
 	const clickhouseSql = compositeQuery.chQueries
@@ -101,7 +101,7 @@ const mapQueryFromV3 = (compositeQuery: ICompositeMetricQuery): Query => {
 				...compositeQuery.chQueries?.[key],
 				name: key,
 				query: compositeQuery.chQueries?.[key]?.query || '',
-		  }))
+			}))
 		: initialQueryState.clickhouse_sql;
 
 	return {

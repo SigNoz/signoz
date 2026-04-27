@@ -87,23 +87,3 @@
 	background: var(--l3-background);
 	flex-shrink: 0;
 }
-
-.lightMode {
-	.auth-footer-content {
-		box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
-	}
-
-	.auth-footer-icon {
-		filter: brightness(0) saturate(100%) invert(25%) sepia(8%) saturate(518%)
-			hue-rotate(192deg) brightness(80%) contrast(95%);
-		opacity: 0.9;
-	}
-
-	.auth-footer-text {
-		color: var(--text-neutral-light-200);
-	}
-
-	.auth-footer-link-icon {
-		color: var(--text-neutral-light-100);
-	}
-}

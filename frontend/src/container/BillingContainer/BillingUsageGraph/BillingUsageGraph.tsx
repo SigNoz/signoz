@@ -82,9 +82,10 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
 
-	const { startTime, endTime } = useMemo(() => calculateStartEndTime(data), [
-		data,
-	]);
+	const { startTime, endTime } = useMemo(
+		() => calculateStartEndTime(data),
+		[data],
+	);
 
 	const getGraphSeries = (color: string, label: string): any => ({
 		drawStyle: 'bars',

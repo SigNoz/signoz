@@ -22,9 +22,8 @@ import './ResetPassword.styles.scss';
 type FormValues = { password: string; confirmPassword: string };
 
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
+	const [confirmPasswordError, setConfirmPasswordError] =
+		useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<APIError | null>();
 
