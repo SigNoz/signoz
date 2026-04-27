@@ -1,7 +1,7 @@
 // File: frontend/src/container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover.tsx
 import { Dropdown, Menu, Skeleton, Typography } from 'antd';
 import { Bell, Grid } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -59,109 +59,88 @@ function DashboardsAndAlertsPopover({
 		},
 	);
 
-	useMemo(() => {
-		setAlertsData({
-			data: newAlertsData?.data?.alerts || [],
-			isLoading: newIsLoadingAlerts,
-			isError: newIsErrorAlerts,
-		});
+	useEffect(() => {
+		if (newAlertsData) {
+			setAlertsData({
+				data: newAlertsData.data?.alerts || [],
+				isLoading: newIsLoadingAlerts,
+				isError: newIsErrorAlerts,
+			});
+		}
 	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
 
-	useMemo(() => {
-		setDashboardsData({
-			data: newDashboardsData?.data?.dashboards || [],
-			isLoading: newIsLoadingDashboards,
-			isError: newIsErrorDashboards,
-		});
+	useEffect(() => {
+		if (newDashboardsData) {
+			setDashboardsData({
+				data: newDashboardsData.data?.dashboards || [],
+				isLoading: newIsLoadingDashboards,
+				isError: newIsErrorDashboards,
+			});
+		}
 	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
-	const totalAlerts = alertsData.data.length;
-	const totalDashboards = dashboardsData.data.length;
-
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
-
-	const handleAlertsClick = (): void => {
-		if (!hasAlerts) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.searchText]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardsClick = (): void => {
-		if (!hasDashboards) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.searchText]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
-
-	const renderContent = (): JSX.Element => {
-		if (alertsData.isLoading || dashboardsData.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsData.isError || dashboardsData.isError) {
-			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
-			);
-		}
-
-		if (!hasAlerts && !hasDashboards) {
-			return (
-				<Typography.Text type="secondary">
-					No dashboards or alerts using this metric
-				</Typography.Text>
-			);
-		}
-
-		return (
-			<Menu>
-				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick}>
-						<span>
-							<Bell size={16} color={Color.primary[500]} />
-							<Typography.Text className="ml-2">
-								{pluralize('Alert', totalAlerts)} ({totalAlerts})
-							</Typography.Text>
-						</span>
-					</Menu.Item>
-				)}
-				{hasDashboards && (
-					<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
-						<span>
-							<Grid size={16} color={Color.primary[500]} />
-							<Typography.Text className="ml-2">
-								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-							</Typography.Text>
-						</span>
-					</Menu.Item>
-				)}
-			</Menu>
-		);
-	};
-
-	if (!metricName) return null;
-
 	return (
-		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
-			<span
-				style={{
-					color: Color.primary[500],
-					cursor: 'pointer',
-					fontSize: '14px',
-				}}
-			>
-				{pluralize('Dashboard', totalDashboards)} & {pluralize('Alert', totalAlerts)}{' '}
-				({totalDashboards + totalAlerts})
-			</span>
+		<Dropdown
+			overlay={
+				<Menu>
+					<Menu.Item key="dashboards">
+						<Typography.Text>
+							{pluralize(dashboardsData.data.length, 'dashboard')}{' '}
+							{dashboardsData.isLoading ? (
+								<Skeleton active paragraph={false} />
+							) : (
+								<a
+									href={generatePath(ROUTES.DASHBOARD_LIST, {
+										metricName,
+									})}
+									target="_blank"
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.DASHBOARD_LIST, {
+											metricName,
+										}));
+									}}
+								>
+									{dashboardsData.data.length > 0 ? (
+										<Grid size={16} />
+									) : (
+										<Skeleton active paragraph={false} />
+									)}
+								</a>
+							)}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item key="alerts">
+						<Typography.Text>
+							{pluralize(alertsData.data.length, 'alert')}{' '}
+							{alertsData.isLoading ? (
+								<Skeleton active paragraph={false} />
+							) : (
+								<a
+									href={generatePath(ROUTES.ALERT_LIST, {
+										metricName,
+									})}
+									target="_blank"
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.ALERT_LIST, {
+											metricName,
+										}));
+									}}
+								>
+									{alertsData.data.length > 0 ? (
+										<Bell size={16} />
+									) : (
+										<Skeleton active paragraph={false} />
+									)}
+								</a>
+							)}
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
+		>
+			<Typography.Text>Alerts and Dashboards</Typography.Text>
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
