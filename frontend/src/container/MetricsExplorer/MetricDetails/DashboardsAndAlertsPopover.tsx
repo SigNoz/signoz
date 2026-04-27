@@ -1,15 +1,15 @@
 // File: frontend/src/container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover.tsx
+import { Dropdown, Skeleton, Typography } from 'antd';
+import { Bell, Grid } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Skeleton, Typography } from 'antd';
 import {
 	useGetMetricAlerts,
 	useGetMetricDashboards,
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { Bell, Grid } from 'lucide-react';
 import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
@@ -59,27 +59,34 @@ function DashboardsAndAlertsPopover({
 		},
 	);
 
-	useEffect(() => {
+	useMemo(() => {
 		if (!newIsErrorAlerts && !newIsErrorDashboards) {
 			setAlertsData({
-				data: newAlertsData?.data.alerts ?? [],
+				data: newAlertsData?.data?.alerts || [],
 				isLoading: newIsLoadingAlerts,
 				isError: newIsErrorAlerts,
 			});
 			setDashboardsData({
-				data: newDashboardsData?.data.dashboards ?? [],
+				data: newDashboardsData?.data?.dashboards || [],
 				isLoading: newIsLoadingDashboards,
 				isError: newIsErrorDashboards,
 			});
 		}
-	}, [newAlertsData, newDashboardsData, newIsErrorAlerts, newIsErrorDashboards, newIsLoadingAlerts, newIsLoadingDashboards]);
+	}, [
+		newAlertsData,
+		newDashboardsData,
+		newIsErrorAlerts,
+		newIsErrorDashboards,
+		newIsLoadingAlerts,
+		newIsLoadingDashboards,
+	]);
 
 	const alerts = useMemo(() => {
-		return alertsData.data.alerts ?? [];
+		return alertsData.data || [];
 	}, [alertsData]);
 
 	const dashboards = useMemo(() => {
-		return dashboardsData.data.dashboards ?? [];
+		return dashboardsData.data || [];
 	}, [dashboardsData]);
 
 	if (alertsData.isError || dashboardsData.isError) {
@@ -98,56 +105,79 @@ function DashboardsAndAlertsPopover({
 	const hasDashboards = dashboards.length > 0;
 
 	if (!hasAlerts && !hasDashboards) {
-		return null;
+		return (
+			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+				No dashboards or alerts found
+			</Typography.Text>
+		);
 	}
 
-	const dropdownItems = [
+	const menuItems = [
+		...(hasAlerts
+			? [
+					{
+						key: 'alerts',
+						label: (
+							<Typography.Text
+								style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+								onClick={(): void => {
+									openInNewTab(
+										`${ROUTES.ALERTS}?${QueryParams.searchKeyword}=${metricName}`,
+									);
+								}}
+							>
+								<Bell size={14} color={Color.primary['500']} />
+								{pluralize('alert', alerts.length, true)} on this metric
+							</Typography.Text>
+						),
+					},
+			  ]
+			: []),
 		...(hasDashboards
 			? [
 					{
 						key: 'dashboards',
 						label: (
-							<Typography.Text style={{ fontSize: '12px' }}>
-								{pluralize('dashboard', dashboards.length, true)}
-							</Typography.Text>
-						),
-						icon: <Grid size={12} style={{ color: Color.BG_VANILLA_100 }} />,
-						disabled: true,
-					},
-					...dashboards.map((dashboard) => ({
-						key: `dashboard-${dashboard.uuid}`,
-						label: (
 							<Typography.Text
-								style={{ fontSize: '12px', color: Color.BG_VANILLA_100 }}
+								style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+								onClick={(): void => {
+									openInNewTab(
+										`${ROUTES.DASHBOARDS}?${QueryParams.searchKeyword}=${metricName}`,
+									);
+								}}
 							>
-								{dashboard.title}
+								<Grid size={14} color={Color.primary['500']} />
+								{pluralize('dashboard', dashboards.length, true)} using this metric
 							</Typography.Text>
 						),
-						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARD, {
-								dashboardUuid: dashboard.uuid,
-							});
-							openInNewTab(path);
-						},
-					})),
+					},
 			  ]
 			: []),
 	];
 
 	return (
 		<Dropdown
-			overlay={
-				<Dropdown.Menu>
-					{dropdownItems.map((item) => (
-						<Dropdown.Item key={item.key} onClick={item.onClick}>
-							{item.label}
-						</Dropdown.Item>
-					))}
-				</Dropdown.Menu>
-			}
-			placement="bottomCenter"
+			menu={{ items: menuItems }}
+			trigger={['click']}
+			placement="bottom"
+			disabled={!hasAlerts && !hasDashboards}
 		>
-			<Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />
+			<Typography.Text
+				style={{
+					color: Color.primary['500'],
+					cursor: 'pointer',
+					fontSize: '12px',
+					textDecoration: 'underline',
+				}}
+			>
+				{[hasAlerts ? pluralize('alert', alerts.length, true) : null]
+					.concat(
+						hasDashboards ? pluralize('dashboard', dashboards.length, true) : null,
+					)
+					.filter(Boolean)
+					.join(' and ')}{' '}
+				found
+			</Typography.Text>
 		</Dropdown>
 	);
 }
