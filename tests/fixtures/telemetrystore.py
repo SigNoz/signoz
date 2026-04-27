@@ -69,19 +69,11 @@ def check_query_log_fixture(
 
         where = " AND ".join(conditions)
         result = conn.query(
-            f"SELECT query FROM system.query_log"
-            f" WHERE {where}"
-            f" ORDER BY event_time_microseconds DESC LIMIT {limit}",
+            f"SELECT query FROM system.query_log WHERE {where} ORDER BY event_time_microseconds DESC LIMIT {limit}",
             parameters=params,
         )
         queries = [row[0] for row in result.result_rows]
-        assert queries, (
-            f"No matching SELECT in system.query_log for case '{case_name}'"
-        )
-        assert all(check_fn(q) for q in queries), (
-            f"query_log check failed for case '{case_name}'.\n"
-            + "Queries:\n"
-            + "\n---\n".join(queries)
-        )
+        assert queries, f"No matching SELECT in system.query_log for case '{case_name}'"
+        assert all(check_fn(q) for q in queries), f"query_log check failed for case '{case_name}'.\n" + "Queries:\n" + "\n---\n".join(queries)
 
     return _check

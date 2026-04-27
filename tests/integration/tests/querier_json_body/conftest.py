@@ -8,14 +8,10 @@ from fixtures.signoz import create_signoz
 UNSUPPORTED_CLICKHOUSE_VERSIONS = {"25.5.6"}
 
 
-def pytest_collection_modifyitems(
-    config: pytest.Config, items: list[pytest.Item]
-) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     version = config.getoption("--clickhouse-version")
     if version in UNSUPPORTED_CLICKHOUSE_VERSIONS:
-        skip = pytest.mark.skip(
-            reason=f"JSON body QB tests require ClickHouse > {version}"
-        )
+        skip = pytest.mark.skip(reason=f"JSON body QB tests require ClickHouse > {version}")
         for item in items:
             item.add_marker(skip)
 

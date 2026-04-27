@@ -491,9 +491,7 @@ def insert_logs_to_clickhouse(conn, logs: list[Logs]) -> None:
         "resource",
     ]
 
-    result = conn.query(
-        "SELECT count() FROM system.columns WHERE database = 'signoz_logs' AND table = 'logs_v2' AND name = 'body_v2'"
-    )
+    result = conn.query("SELECT count() FROM system.columns WHERE database = 'signoz_logs' AND table = 'logs_v2' AND name = 'body_v2'")
     has_json_body = result.result_rows[0][0] > 0
 
     if has_json_body:
@@ -501,9 +499,7 @@ def insert_logs_to_clickhouse(conn, logs: list[Logs]) -> None:
         data = [log.np_arr() for log in logs]
     else:
         json_body_cols = {"body_v2", "body_promoted"}
-        keep_indices = [
-            i for i, c in enumerate(all_column_names) if c not in json_body_cols
-        ]
+        keep_indices = [i for i, c in enumerate(all_column_names) if c not in json_body_cols]
         column_names = [all_column_names[i] for i in keep_indices]
         data = [log.np_arr()[keep_indices] for log in logs]
 

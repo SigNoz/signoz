@@ -1,4 +1,3 @@
-
 import docker
 import pytest
 from testcontainers.core.container import Network

@@ -276,9 +276,7 @@ def _parse_json_bodies_and_extract_paths(
     path_type_objects: list[JSONPathType] = []
     for path, types_set in all_path_types.items():
         for type_str in types_set:
-            path_type_objects.append(
-                JSONPathType(field_name=path, field_data_type=type_str, last_seen=timestamp)
-            )
+            path_type_objects.append(JSONPathType(field_name=path, field_data_type=type_str, last_seen=timestamp))
 
     return path_type_objects
 
@@ -379,9 +377,8 @@ def export_json_types(
     yield _export_json_types
 
     # Cleanup - truncate the local table after tests (following pattern from logs fixture)
-    clickhouse.conn.query(
-        f"TRUNCATE TABLE signoz_metadata.field_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
-    )
+    clickhouse.conn.query(f"TRUNCATE TABLE signoz_metadata.field_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC")
+
 
 @pytest.fixture(name="create_json_index", scope="function")
 def create_json_index(
@@ -431,10 +428,7 @@ def create_json_index(
             json=paths,
             timeout=30,
         )
-        assert response.status_code == HTTPStatus.CREATED, (
-            f"Failed to create JSON body indexes: "
-            f"{response.status_code} {response.text}"
-        )
+        assert response.status_code == HTTPStatus.CREATED, f"Failed to create JSON body indexes: {response.status_code} {response.text}"
         for path in paths:
             # The API strips the "body." prefix before storing — mirror that here
             # so our cleanup query uses the bare path (e.g. "user.name").
@@ -449,14 +443,6 @@ def create_json_index(
 
     cluster = signoz.telemetrystore.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER"]
     for path in created_paths:
-        result = signoz.telemetrystore.conn.query(
-            "SELECT name FROM system.data_skipping_indices "
-            "WHERE database = 'signoz_logs' AND table = 'logs_v2' "
-            f"AND expr LIKE '%{path}%'"
-        )
+        result = signoz.telemetrystore.conn.query(f"SELECT name FROM system.data_skipping_indices WHERE database = 'signoz_logs' AND table = 'logs_v2' AND expr LIKE '%{path}%'")
         for (index_name,) in result.result_rows:
-            signoz.telemetrystore.conn.query(
-                f"ALTER TABLE signoz_logs.logs_v2 "
-                f"ON CLUSTER '{cluster}' "
-                f"DROP INDEX IF EXISTS `{index_name}`"
-            )
+            signoz.telemetrystore.conn.query(f"ALTER TABLE signoz_logs.logs_v2 ON CLUSTER '{cluster}' DROP INDEX IF EXISTS `{index_name}`")
