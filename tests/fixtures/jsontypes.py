@@ -310,6 +310,7 @@ def export_json_types(
         # Auto-extract from Logs objects
         export_json_types(logs_list)
     """
+
     def _export_json_types(
         data: list[JSONPathType] | list[str] | list[Any],  # List[Logs] but avoiding circular import
     ) -> None:
