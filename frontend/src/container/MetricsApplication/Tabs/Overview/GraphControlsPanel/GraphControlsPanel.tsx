@@ -18,6 +18,18 @@ const GraphControlsPanel = ({
   onViewLogsClick,
   onViewAPIMonitoringClick,
 }: GraphControlsPanelProps): JSX.Element => {
+  const handleViewTracesClick = (e: React.MouseEvent) => {
+    onViewTracesClick && onViewTracesClick(e);
+  };
+
+  const handleViewLogsClick = (e: React.MouseEvent) => {
+    onViewLogsClick && onViewLogsClick(e);
+  };
+
+  const handleViewAPIMonitoringClick = (e: React.MouseEvent) => {
+    onViewAPIMonitoringClick && onViewAPIMonitoringClick(e);
+  };
+
   return (
     <div id={id} className="graph-controls-panel">
       {onViewTracesClick && (
@@ -25,7 +37,7 @@ const GraphControlsPanel = ({
           type="link"
           icon={<DraftingCompass size={14} />}
           size="small"
-          onClick={onViewTracesClick}
+          onClick={handleViewTracesClick}
           data-testid="view-traces-button"
           className="graph-controls-panel__button"
         >
@@ -37,7 +49,7 @@ const GraphControlsPanel = ({
           type="link"
           icon={<ScrollText size={14} />}
           size="small"
-          onClick={onViewLogsClick}
+          onClick={handleViewLogsClick}
           data-testid="view-logs-button"
           className="graph-controls-panel__button"
         >
@@ -49,7 +61,7 @@ const GraphControlsPanel = ({
           type="link"
           icon={<Binoculars size={14} />}
           size="small"
-          onClick={onViewAPIMonitoringClick}
+          onClick={handleViewAPIMonitoringClick}
           data-testid="view-api-monitoring-button"
           className="graph-controls-panel__button"
         >
