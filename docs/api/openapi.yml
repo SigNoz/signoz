@@ -222,7 +222,7 @@ components:
         object:
           $ref: '#/components/schemas/CoretypesObject'
         relation:
-          $ref: '#/components/schemas/CoretypesVerb'
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
@@ -323,6 +323,15 @@ components:
         refreshToken:
           type: string
       type: object
+    AuthtypesRelation:
+      enum:
+      - create
+      - read
+      - update
+      - delete
+      - list
+      - assignee
+      type: string
     AuthtypesRole:
       properties:
         createdAt:
@@ -388,7 +397,7 @@ components:
         object:
           $ref: '#/components/schemas/CoretypesObject'
         relation:
-          $ref: '#/components/schemas/CoretypesVerb'
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
@@ -2080,15 +2089,6 @@ components:
       - organization
       - metaresource
       - metaresources
-      type: string
-    CoretypesVerb:
-      enum:
-      - create
-      - read
-      - update
-      - delete
-      - list
-      - assignee
       type: string
     DashboardtypesDashboard:
       properties:
