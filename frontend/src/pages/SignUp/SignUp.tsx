@@ -87,6 +87,11 @@ function SignUp(): JSX.Element {
 	const handleValuesChange: (changedValues: Partial<FormValues>) => void = (
 		changedValues,
 	) => {
+		// Clear backend error on any change
+		if (formError) {
+			setFormError(null);
+		}
+
 		// Clear error if passwords match while typing (but don't set error until blur)
 		if ('password' in changedValues || 'confirmPassword' in changedValues) {
 			const { password, confirmPassword } = form.getFieldsValue();
@@ -117,11 +122,12 @@ function SignUp(): JSX.Element {
 	const isValidForm = useMemo(
 		(): boolean =>
 			!loading &&
+			!formError &&
 			Boolean(email?.trim()) &&
 			Boolean(password?.trim()) &&
 			Boolean(confirmPassword?.trim()) &&
 			!confirmPasswordError,
-		[loading, email, password, confirmPassword, confirmPasswordError],
+		[loading, email, password, confirmPassword, confirmPasswordError, formError],
 	);
 
 	return (
