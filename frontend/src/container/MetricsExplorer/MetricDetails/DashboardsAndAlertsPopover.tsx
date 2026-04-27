@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
+	return { data: newAlertsData, isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,99 +81,53 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
+	return { data: newDashboardsData, isLoading: false, isError: false };
 }
 
-export function DashboardsAndAlertsPopover({
+function DashboardsAndAlertsPopover({
 	metricName,
-	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const [open, setOpen] = useState(false);
+	const metricAlertsStatus = useMetricAlertsStatus(metricName);
+	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
-
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
-
-	const handleOpenChange = (visible: boolean) => {
-		setOpen(visible);
-	};
-
-	const handleAlertsClick = () => {
-		openInNewTab(
-			`${ROUTES.LIST_ALL_ALERTS}?${QueryParams.search}=${metricName}`,
+	if (metricAlertsStatus.isError || metricDashboardsStatus.isError) {
+		return (
+			<Skeleton active>
+				<Typography.Text>Error loading data</Typography.Text>
+			</Skeleton>
 		);
-		setOpen(false);
-	};
+	}
 
-	const handleDashboardsClick = () => {
-		openInNewTab(
-			`${ROUTES.LIST_ALL_DASHBOARDS}?${QueryParams.search}=${metricName}`,
+	if (metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading) {
+		return (
+			<Skeleton active>
+				<Typography.Text>Loading data...</Typography.Text>
+			</Skeleton>
 		);
-		setOpen(false);
-	};
-
-	const loading = alertsStatus.isLoading || dashboardsStatus.isLoading;
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
-
-	const menu = (
-		<Menu>
-			{loading ? (
-				<Menu.Item key="loading">
-					<Skeleton.Input active size="small" style={{ width: '100%' }} />
-				</Menu.Item>
-			) : (
-				<>
-					<Menu.Item
-						key="alerts"
-						disabled={!hasAlerts}
-						onClick={handleAlertsClick}
-						icon={<Bell size={16} />}
-					>
-						<Typography.Text
-							type="secondary"
-							style={{
-								fontSize: 12,
-								color: hasAlerts ? Color.text['text-2'] : Color.text.disabled,
-							}}
-						>
-							{pluralize('Alert', totalAlerts)} configured
-						</Typography.Text>
-					</Menu.Item>
-					<Menu.Item
-						key="dashboards"
-						disabled={!hasDashboards}
-						onClick={handleDashboardsClick}
-						icon={<Grid size={16} />}
-					>
-						<Typography.Text
-							type="secondary"
-							style={{
-								fontSize: 12,
-								color: hasDashboards
-									? Color.text['text-2']
-									: Color.text.disabled,
-							}}
-						>
-							{pluralize('Dashboard', totalDashboards)} using this metric
-						</Typography.Text>
-					</Menu.Item>
-				</>
-			)}
-		</Menu>
-	);
+	}
 
 	return (
 		<Dropdown
-			overlay={menu}
-			trigger={['click']}
-			placement="bottomRight"
-			open={open}
-			onOpenChange={handleOpenChange}
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(metricAlertsStatus.data.length, 'alert')}{' '}
+							{metricName}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(metricDashboardsStatus.data.length, 'dashboard')}{' '}
+							{metricName}
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
 		>
-			{children}
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
