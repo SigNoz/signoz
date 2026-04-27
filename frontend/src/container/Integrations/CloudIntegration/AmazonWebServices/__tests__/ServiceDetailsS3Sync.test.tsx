@@ -29,7 +29,7 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 	MarkdownRenderer: (): JSX.Element => <div data-testid="markdown-renderer" />,
 }));
 jest.mock(
-	'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards',
+	'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards',
 	() => ({
 		__esModule: true,
 		default: (): JSX.Element => <div data-testid="service-dashboards" />,
