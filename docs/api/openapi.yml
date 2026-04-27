@@ -207,7 +207,7 @@ components:
     AuthtypesGettableObjects:
       properties:
         resource:
-          $ref: '#/components/schemas/AuthtypesResource'
+          $ref: '#/components/schemas/CoretypesGettableResource'
         selectors:
           items:
             type: string
@@ -227,7 +227,7 @@ components:
           type: object
         resources:
           items:
-            $ref: '#/components/schemas/AuthtypesResource'
+            $ref: '#/components/schemas/CoretypesGettableResource'
           type: array
       required:
       - resources
@@ -251,7 +251,7 @@ components:
         object:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
-          $ref: '#/components/schemas/CoretypesRelation'
+          $ref: '#/components/schemas/CoretypesVerb'
       required:
       - relation
       - object
@@ -302,7 +302,7 @@ components:
     AuthtypesObject:
       properties:
         resource:
-          $ref: '#/components/schemas/AuthtypesResource'
+          $ref: '#/components/schemas/CoretypesGettableResource'
         selector:
           type: string
       required:
@@ -378,16 +378,6 @@ components:
         refreshToken:
           type: string
       type: object
-    AuthtypesResource:
-      properties:
-        kind:
-          type: string
-        type:
-          type: string
-      required:
-      - type
-      - kind
-      type: object
     AuthtypesRole:
       properties:
         createdAt:
@@ -453,7 +443,7 @@ components:
         object:
           $ref: '#/components/schemas/AuthtypesObject'
         relation:
-          $ref: '#/components/schemas/CoretypesRelation'
+          $ref: '#/components/schemas/CoretypesVerb'
       required:
       - relation
       - object
@@ -2088,7 +2078,17 @@ components:
         to_user:
           type: string
       type: object
-    CoretypesRelation:
+    CoretypesGettableResource:
+      properties:
+        kind:
+          type: string
+        type:
+          type: string
+      required:
+      - type
+      - kind
+      type: object
+    CoretypesVerb:
       enum:
       - create
       - read
