@@ -99,89 +99,83 @@ export function DashboardsAndAlertsPopover({
 		setOpen(visible);
 	};
 
-	const handleClickAlert = (e: React.MouseEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-		const path = generatePath(ROUTES.LIST_ALERTS, {
-			[QueryParams.tab]: 'metrics',
-		});
-		openInNewTab(path);
+	const handleViewAllAlerts = (): void => {
+		openInNewTab(
+			`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
-	const handleClickDashboard = (e: React.MouseEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-		const path = generatePath(ROUTES.LIST_DASHBOARDS, {
-			[QueryParams.tab]: 'metrics',
-		});
-		openInNewTab(path);
+	const handleViewAllDashboards = (): void => {
+		openInNewTab(
+			`${ROUTES.DASHBOARDS_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
 	const renderContent = (): JSX.Element => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return (
-				<div style={{ padding: '8px 12px', minWidth: 150 }}>
-					<Skeleton.Input active size="small" style={{ width: '100%' }} />
-				</div>
-			);
+			return <Skeleton active paragraph={{ rows: 2 }} />;
 		}
 
 		if (alertsStatus.isError || dashboardsStatus.isError) {
 			return (
-				<div style={{ padding: '8px 12px', color: Color.semantic.error[500] }}>
-					Failed to load data
-				</div>
+				<Typography.Text type="danger">Failed to load data</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu style={{ minWidth: 200 }}>
-				<Menu.Item key="alerts" onClick={handleClickAlert} icon={<Bell size={16} />}>
-					<Typography.Text strong>
-						{pluralize('Alert', totalAlerts)} ({totalAlerts})
-					</Typography.Text>
-				</Menu.Item>
-				<Menu.Item
-					key="dashboards"
-					onClick={handleClickDashboard}
-					icon={<Grid size={16} />}
-				>
-					<Typography.Text strong>
-						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-					</Typography.Text>
-				</Menu.Item>
+			<Menu>
+				{totalAlerts > 0 && (
+					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
+						<div className="flex items-center gap-2">
+							<Bell size={16} color={Color.semantic.warning} />
+							<Typography.Text>
+								{pluralize('alert', totalAlerts, 's')} on this metric
+							</Typography.Text>
+						</div>
+					</Menu.Item>
+				)}
+				{totalDashboards > 0 && (
+					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
+						<div className="flex items-center gap-2">
+							<Grid size={16} color={Color.primary[500]} />
+							<Typography.Text>
+								{pluralize('dashboard', totalDashboards, 's')} using this metric
+							</Typography.Text>
+						</div>
+					</Menu.Item>
+				)}
+				{totalAlerts === 0 && totalDashboards === 0 && (
+					<Menu.Item key="empty">
+						<Typography.Text type="secondary">
+							No alerts or dashboards using this metric
+						</Typography.Text>
+					</Menu.Item>
+				)}
 			</Menu>
 		);
 	};
 
 	return (
 		<Dropdown
-			overlay={renderContent()}
-			trigger={['click']}
+			menu={{ items: [] }}
 			open={open}
 			onOpenChange={handleOpenChange}
-			destroyPopupOnHide
+			overlay={renderContent()}
+			trigger={['click']}
+			placement="bottomRight"
 		>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: 4,
-					cursor: 'pointer',
-					color: Color.text.secondary,
-					fontSize: 12,
-					opacity: 0,
-					transition: 'opacity 0.2s',
-				}}
-				onMouseEnter={(e) => {
-					e.currentTarget.style.opacity = '1';
-				}}
-				onMouseLeave={(e) => {
-					e.currentTarget.style.opacity = '0';
-				}}
-			>
-				<Grid size={12} />
-				<span>{totalDashboards + totalAlerts}</span>
+			<div className="flex cursor-pointer items-center gap-1 px-2 py-1 hover:bg-gray-100">
+				{totalAlerts > 0 && (
+					<Bell size={14} color={Color.semantic.warning} />
+				)}
+				{totalDashboards > 0 && (
+					<Grid size={14} color={Color.primary[500]} />
+				)}
+				{(totalAlerts > 0 || totalDashboards > 0) && (
+					<Typography.Text type="secondary" className="text-xs">
+						{totalAlerts + totalDashboards}
+					</Typography.Text>
+				)}
 			</div>
 		</Dropdown>
 	);
