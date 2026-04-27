@@ -34,6 +34,8 @@ export function useQueryCacheSync(store: GlobalTimeStoreApi): void {
 				return;
 			}
 
+			// this is created by getAutoRefreshQueryKey inside the store,
+			// to track usages of global time store and autoRefresh
 			if (queryKey[0] !== REACT_QUERY_KEY.AUTO_REFRESH_QUERY) {
 				return;
 			}
