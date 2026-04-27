@@ -86,80 +86,114 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
-	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const totalAssociatedItems =
-		(alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
+	const totalAlerts = alertsStatus.data.length;
+	const totalDashboards = dashboardsStatus.data.length;
 
 	const handleOpenChange = (visible: boolean): void => {
 		setOpen(visible);
 	};
 
-	const handleAlertClick = (): void => {
-		const path = generatePath(ROUTES.LIST_ALERTS, {
-			[QueryParams.tab]: 'metrics',
-		});
-		openInNewTab(path);
+	const handleViewAllAlerts = (): void => {
+		openInNewTab(
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
-	const handleDashboardClick = (): void => {
-		const path = generatePath(ROUTES.DASHBOARDS);
-		openInNewTab(path);
+	const handleViewAllDashboards = (): void => {
+		openInNewTab(
+			`${ROUTES.DASHBOARDS_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
 	const renderContent = (): JSX.Element => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
+			return <Skeleton active paragraph={{ rows: 2 }} />;
+		}
+
+		if (alertsStatus.isError || dashboardsStatus.isError) {
 			return (
-				<div style={{ padding: '8px 12px', minWidth: 150 }}>
-					<Skeleton.Input active size="small" block />
-				</div>
+				<Typography.Text type="danger">Failed to load data</Typography.Text>
 			);
 		}
 
-		if (totalAssociatedItems === 0) {
+		if (totalAlerts === 0 && totalDashboards === 0) {
 			return (
-				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
-					No dashboards or alerts using this metric
-				</Typography.Text>
+				<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu>
-				{alertsStatus.data.length > 0 && (
-					<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
-						<Typography.Text strong>
-							{pluralize('Alert', alertsStatus.data.length)} (
-							{alertsStatus.data.length})
+			<div style={{ minWidth: 200 }}>
+				{totalAlerts > 0 && (
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginBottom: 8,
+						}}
+					>
+						<Typography.Text>
+							<Bell size={14} style={{ marginRight: 8, color: Color.text.accent }} />
+							{pluralize('Alert', totalAlerts)}
 						</Typography.Text>
-					</Menu.Item>
+						<Typography.Link
+							onClick={handleViewAllAlerts}
+							style={{ fontSize: 12 }}
+						>
+							View all
+						</Typography.Link>
+					</div>
 				)}
-				{dashboardsStatus.data.length > 0 && (
-					<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
-						<Typography.Text strong>
-							{pluralize('Dashboard', dashboardsStatus.data.length)} (
-							{dashboardsStatus.data.length})
+				{totalDashboards > 0 && (
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+						}}
+					>
+						<Typography.Text>
+							<Grid size={14} style={{ marginRight: 8, color: Color.text.accent }} />
+							{pluralize('Dashboard', totalDashboards)}
 						</Typography.Text>
-					</Menu.Item>
+						<Typography.Link
+							onClick={handleViewAllDashboards}
+							style={{ fontSize: 12 }}
+						>
+							View all
+						</Typography.Link>
+					</div>
 				)}
-			</Menu>
+			</div>
 		);
 	};
 
+	const menu = <Menu>{renderContent()}</Menu>;
+
 	return (
 		<Dropdown
-			overlay={renderContent()}
+			overlay={menu}
 			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			destroyPopupOnHide
+			placement="bottomRight"
 		>
-			{children}
+			<Typography.Link
+				onClick={(e) => {
+					e.preventDefault();
+					setOpen(!open);
+				}}
+				style={{ fontSize: 12 }}
+			>
+				View in context
+			</Typography.Link>
 		</Dropdown>
 	);
 }
