@@ -127,3 +127,10 @@ func (typed Type) IsValidVerb(verb Verb) bool {
 func (typed Type) AllowedVerbs() []Verb {
 	return typed.allowedVerbs
 }
+
+// Equals reports whether two Type values name the same type. Type embeds a
+// []Verb so the struct itself is not == comparable; callers compare via the
+// embedded valuer.String, which is comparable.
+func (typed Type) Equals(other Type) bool {
+	return typed.String == other.String
+}

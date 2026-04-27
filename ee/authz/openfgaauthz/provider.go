@@ -220,7 +220,7 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 	}
 
 	objects := make([]*coretypes.Object, 0)
-	for _, objectType := range provider.getUniqueTypes() {
+	for _, objectType := range provider.registry.Types() {
 		if coretypes.ErrIfVerbNotValidForType(relation, objectType) != nil {
 			continue
 		}
@@ -360,7 +360,7 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 	subject := authtypes.MustNewSubject(coretypes.NewResourceRole(), roleName, orgID, &coretypes.VerbAssignee)
 
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for _, objectType := range provider.getUniqueTypes() {
+	for _, objectType := range provider.registry.Types() {
 		typeTuples, err := provider.ReadTuples(ctx, &openfgav1.ReadRequestTupleKey{
 			User:   subject,
 			Object: objectType.StringValue() + ":",
@@ -390,17 +390,3 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 	return nil
 }
 
-func (provider *provider) getUniqueTypes() []coretypes.Type {
-	seen := make(map[string]struct{})
-	uniqueTypes := make([]coretypes.Type, 0)
-	for _, resource := range coretypes.Resources {
-		typeKey := resource.Type().StringValue()
-		if _, ok := seen[typeKey]; ok {
-			continue
-		}
-		seen[typeKey] = struct{}{}
-		uniqueTypes = append(uniqueTypes, resource.Type())
-	}
-
-	return uniqueTypes
-}

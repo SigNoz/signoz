@@ -2,8 +2,11 @@ package coretypes
 
 var (
 	ManagedRoleToTransactions = map[string][]Transaction{
-		SigNozAdminRoleName: {
-			{Verb: VerbCreate, Object: Object{Resource: ResourceRef{Type: TypeUser}}},
+		SigNozAnonymousRoleName: {
+			{
+				Verb:   VerbRead,
+				Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}, WildCardSelectorString),
+			},
 		},
 	}
 )

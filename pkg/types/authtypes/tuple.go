@@ -70,7 +70,7 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	for _, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
-		if txn.Object.Resource.Type.StringValue() == coretypes.TypeRole.StringValue() && txn.Relation == coretypes.VerbAssignee {
+		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation == coretypes.VerbAssignee {
 			resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			if err != nil {
 				return nil, nil, nil, err
@@ -123,7 +123,7 @@ func NewTransactionWithAuthorizationFromBatchResults(
 			continue
 		}
 
-		if txn.Object.Resource.Type.StringValue() == coretypes.TypeRole.StringValue() && txn.Relation == coretypes.VerbAssignee {
+		if txn.Object.Resource.Type.Equals(coretypes.TypeRole) && txn.Relation == coretypes.VerbAssignee {
 			output[i] = &TransactionWithAuthorization{
 				Transaction: txn,
 				Authorized:  batchResults[txnID].Authorized,

@@ -65,8 +65,9 @@ func registerGenerateAuthz(parentCmd *cobra.Command) {
 func runGenerateAuthz(_ context.Context) error {
 	registry := coretypes.NewRegistry()
 
-	resources := make([]permissionsTypeResource, 0, len(registry.ResourceRefs()))
-	for _, ref := range registry.ResourceRefs() {
+	refs := registry.ResourceRefs()
+	resources := make([]permissionsTypeResource, 0, len(refs))
+	for _, ref := range refs {
 		resources = append(resources, permissionsTypeResource{
 			Kind: ref.Kind.String(),
 			Type: ref.Type.StringValue(),

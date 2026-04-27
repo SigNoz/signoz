@@ -11,13 +11,19 @@ var (
 	ErrCodeResourceNotFound   = errors.MustNewCode("resource_not_found")
 )
 
+var resourcesByRef = func() map[string]Resource {
+	out := make(map[string]Resource, len(Resources))
+	for _, r := range Resources {
+		out[ResourceRef{Type: r.Type(), Kind: r.Kind()}.String()] = r
+	}
+	return out
+}()
+
 // NewResourceFromTypeAndKind looks up the canonical Resource for a (Type, Kind)
 // pair from the static Resources slice. Returns an error if no match exists.
 func NewResourceFromTypeAndKind(typed Type, kind Kind) (Resource, error) {
-	for _, resource := range Resources {
-		if resource.Type().StringValue() == typed.StringValue() && resource.Kind().String() == kind.String() {
-			return resource, nil
-		}
+	if resource, ok := resourcesByRef[ResourceRef{Type: typed, Kind: kind}.String()]; ok {
+		return resource, nil
 	}
 	return nil, errors.Newf(errors.TypeNotFound, ErrCodeResourceNotFound, "no resource found for type %s and kind %s", typed.StringValue(), kind.String())
 }
@@ -30,45 +36,37 @@ func MustNewResourceFromTypeAndKind(typed Type, kind Kind) Resource {
 	return resource
 }
 
-// Registry exposes the static authz schema declared in this package: the
-// list of types, resources, managed roles, and the per-role transaction
-// policy. It also pre-computes the derived views (sorted ResourceRefs and
-// the verb→types inverse) once at construction so consumers can read them
-// directly.
+// Registry exposes the static authz schema declared in this package and the
+// derived views (sorted ResourceRefs and the verb→types inverse) computed
+// once at construction. Direct package-level data (Types, Resources,
+// ManagedRoles, ManagedRoleToTransactions) is read straight from this
+// struct.
 type Registry struct {
-	types        []Type
-	resources    []Resource
 	resourceRefs []ResourceRef
 	typesByVerb  map[Verb][]Type
-	managedRoles []string
-	transactions map[string][]Transaction
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		types:        Types,
-		resources:    Resources,
 		resourceRefs: buildResourceRefs(Resources),
 		typesByVerb:  buildTypesByVerb(Types),
-		managedRoles: ManagedRoles,
-		transactions: ManagedRoleToTransactions,
 	}
 }
 
 func (registry *Registry) Types() []Type {
-	return registry.types
+	return Types
 }
 
 func (registry *Registry) Resources() []Resource {
-	return registry.resources
+	return Resources
 }
 
 func (registry *Registry) ManagedRoles() []string {
-	return registry.managedRoles
+	return ManagedRoles
 }
 
 func (registry *Registry) ManagedRoleTransactions() map[string][]Transaction {
-	return registry.transactions
+	return ManagedRoleToTransactions
 }
 
 // ResourceRefs returns every (Type, Kind) pair in the registry, sorted by

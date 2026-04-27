@@ -25,12 +25,11 @@ type TransactionWithAuthorization struct {
 }
 
 func NewTransaction(relation coretypes.Verb, object coretypes.Object) (*Transaction, error) {
-	transaction, err := coretypes.NewTransaction(relation, object)
-	if err != nil {
+	if err := coretypes.ErrIfVerbNotValidForType(relation, object.Resource.Type); err != nil {
 		return nil, err
 	}
 
-	return &Transaction{ID: valuer.GenerateUUID(), Relation: transaction.Verb, Object: transaction.Object}, nil
+	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
 func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
@@ -69,5 +68,3 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 func (transaction *Transaction) TransactionKey() string {
 	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
 }
-
-// build the registry from the coretypes registry.
