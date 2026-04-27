@@ -19,31 +19,27 @@ import (
 )
 
 type provider struct {
-	server                    *openfgaserver.Server
-	store                     authtypes.RoleStore
-	registry                  []authz.RegisterTypeable
-	managedRolesByTransaction map[string][]string
+	server   *openfgaserver.Server
+	store    authtypes.RoleStore
+	registry *coretypes.Registry
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *coretypes.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
 		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *coretypes.Registry) (authz.AuthZ, error) {
 	server, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema, openfgaDataStore)
 	if err != nil {
 		return nil, err
 	}
 
-	managedRolesByTransaction := buildManagedRolesByTransaction(registry)
-
 	return &provider{
-		server:                    server,
-		store:                     sqlauthzstore.NewSqlAuthzStore(sqlstore),
-		registry:                  registry,
-		managedRolesByTransaction: managedRolesByTransaction,
+		server:   server,
+		store:    sqlauthzstore.NewSqlAuthzStore(sqlstore),
+		registry: registry,
 	}, nil
 }
 
@@ -201,7 +197,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return make([]*coretypes.TransactionWithAuthorization, 0), nil
 	}
 
-	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.managedRolesByTransaction)
+	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.registry.GetManagedRolesByTransaction())
 	if err != nil {
 		return nil, err
 	}
@@ -216,19 +212,5 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	}
 
 	return authtypes.NewTransactionWithAuthorizationFromBatchResults(transactions, batchResults, preResolved, roleCorrelations), nil
-}
-
-func buildManagedRolesByTransaction(registry []authz.RegisterTypeable) map[string][]string {
-	managedRolesByTransaction := make(map[string][]string)
-	for _, register := range registry {
-		for roleName, transactions := range register.MustGetManagedRoleTransactions() {
-			for _, txn := range transactions {
-				key := txn.TransactionKey()
-				managedRolesByTransaction[key] = append(managedRolesByTransaction[key], roleName)
-			}
-		}
-	}
-
-	return managedRolesByTransaction
 }
 

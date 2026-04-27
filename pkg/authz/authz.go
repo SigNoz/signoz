@@ -89,10 +89,6 @@ type AuthZ interface {
 // OnBeforeRoleDelete is a callback invoked before a role is deleted.
 type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
 
-type RegisterTypeable interface {
-	MustGetManagedRoleTransactions() map[string][]*coretypes.Transaction
-}
-
 type Handler interface {
 	Create(http.ResponseWriter, *http.Request)
 

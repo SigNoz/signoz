@@ -25,19 +25,19 @@ type provider struct {
 	openfgaServer      *openfgaserver.Server
 	licensing          licensing.Licensing
 	store              authtypes.RoleStore
-	registry           []authz.RegisterTypeable
+	registry           *coretypes.Registry
 	settings           factory.ScopedProviderSettings
 	onBeforeRoleDelete []authz.OnBeforeRoleDelete
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry *coretypes.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
 		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, licensing, onBeforeRoleDelete, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
-	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, openfgaDataStore)
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, registry *coretypes.Registry) (authz.AuthZ, error) {
+	pkgOpenfgaAuthzProvider := pkgopenfgaauthz.NewProviderFactory(sqlstore, openfgaSchema, openfgaDataStore, registry)
 	pkgAuthzService, err := pkgOpenfgaAuthzProvider.New(ctx, settings, config)
 	if err != nil {
 		return nil, err
@@ -333,15 +333,8 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 }
 
 func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
-	transactionsByRole := make(map[string][]*coretypes.Transaction)
-	for _, register := range provider.registry {
-		for roleName, txns := range register.MustGetManagedRoleTransactions() {
-			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
-		}
-	}
-
 	tuples := make([]*openfgav1.TupleKey, 0)
-	for roleName, transactions := range transactionsByRole {
+	for roleName, transactions := range provider.registry.GetManagedRoleTransactions() {
 		for _, txn := range transactions {
 			resource := coretypes.MustNewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			txnTuples := authtypes.NewTuples(

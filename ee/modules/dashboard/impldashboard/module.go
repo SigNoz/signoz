@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -216,24 +215,6 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
-}
-
-func (module *module) MustGetManagedRoleTransactions() map[string][]*coretypes.Transaction {
-	return map[string][]*coretypes.Transaction{
-		authtypes.SigNozAnonymousRoleName: {
-			{
-				ID:       valuer.GenerateUUID(),
-				Relation: coretypes.VerbRead,
-				Object: *coretypes.MustNewObject(
-					coretypes.GettableResource{
-						Type: coretypes.TypeMetaResource,
-						Kind: coretypes.ResourceMetaResourcePublicDashboard.Kind(),
-					},
-					"*",
-				),
-			},
-		},
-	}
 }
 
 func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {
