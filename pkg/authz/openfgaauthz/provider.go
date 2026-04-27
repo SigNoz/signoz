@@ -180,10 +180,6 @@ func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *autht
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) GetResources(_ context.Context) []*coretypes.GettableResource {
-	return []*coretypes.GettableResource{}
-}
-
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*authtypes.Object, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
@@ -236,6 +232,3 @@ func buildManagedRolesByTransaction(registry []authz.RegisterTypeable) map[strin
 	return managedRolesByTransaction
 }
 
-func (provider *provider) MustGetTypeables() []coretypes.Resource {
-	return nil
-}

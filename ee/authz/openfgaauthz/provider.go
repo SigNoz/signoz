@@ -208,20 +208,6 @@ func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, ro
 	return role, nil
 }
 
-func (provider *provider) GetResources(_ context.Context) []*coretypes.GettableResource {
-	resources := make([]*coretypes.GettableResource, 0)
-	for _, register := range provider.registry {
-		for _, typeable := range register.MustGetTypeables() {
-			resources = append(resources, &coretypes.GettableResource{Kind: typeable.Kind(), Type: typeable.Type()})
-		}
-	}
-	for _, typeable := range provider.MustGetTypeables() {
-		resources = append(resources, &coretypes.GettableResource{Kind: typeable.Kind(), Type: typeable.Type()})
-	}
-
-	return resources
-}
-
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*authtypes.Object, error) {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -316,10 +302,6 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	return provider.store.Delete(ctx, orgID, id)
-}
-
-func (provider *provider) MustGetTypeables() []coretypes.Resource {
-	return []coretypes.Resource{coretypes.NewResourceRole(), coretypes.NewResourceMetaResources(coretypes.MustNewKind("roles"))}
 }
 
 func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) ([]*openfgav1.TupleKey, error) {
@@ -418,23 +400,13 @@ func (provider *provider) deleteTuples(ctx context.Context, roleName string, org
 func (provider *provider) getUniqueTypes() []coretypes.Type {
 	seen := make(map[string]struct{})
 	uniqueTypes := make([]coretypes.Type, 0)
-	for _, register := range provider.registry {
-		for _, typeable := range register.MustGetTypeables() {
-			typeKey := typeable.Type().StringValue()
-			if _, ok := seen[typeKey]; ok {
-				continue
-			}
-			seen[typeKey] = struct{}{}
-			uniqueTypes = append(uniqueTypes, typeable.Type())
-		}
-	}
-	for _, typeable := range provider.MustGetTypeables() {
-		typeKey := typeable.Type().StringValue()
+	for _, resource := range coretypes.ListResources() {
+		typeKey := resource.Type.StringValue()
 		if _, ok := seen[typeKey]; ok {
 			continue
 		}
 		seen[typeKey] = struct{}{}
-		uniqueTypes = append(uniqueTypes, typeable.Type())
+		uniqueTypes = append(uniqueTypes, resource.Type)
 	}
 
 	return uniqueTypes

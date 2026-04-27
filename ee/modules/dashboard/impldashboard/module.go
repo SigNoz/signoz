@@ -218,10 +218,6 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetTypeables() []coretypes.Resource {
-	return module.pkgDashboardModule.MustGetTypeables()
-}
-
 func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
 	return map[string][]*authtypes.Transaction{
 		authtypes.SigNozAnonymousRoleName: {

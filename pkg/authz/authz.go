@@ -42,9 +42,6 @@ type AuthZ interface {
 	// Gets the objects associated with the given role and relation.
 	GetObjects(context.Context, valuer.UUID, valuer.UUID, coretypes.Verb) ([]*authtypes.Object, error)
 
-	// Gets all the typeable resources registered from role registry.
-	GetResources(context.Context) []*coretypes.GettableResource
-
 	// Patches the role.
 	Patch(context.Context, valuer.UUID, *authtypes.Role) error
 
@@ -92,8 +89,6 @@ type AuthZ interface {
 type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
 
 type RegisterTypeable interface {
-	MustGetTypeables() []coretypes.Resource
-
 	MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction
 }
 
@@ -103,8 +98,6 @@ type Handler interface {
 	Get(http.ResponseWriter, *http.Request)
 
 	GetObjects(http.ResponseWriter, *http.Request)
-
-	GetResources(http.ResponseWriter, *http.Request)
 
 	List(http.ResponseWriter, *http.Request)
 

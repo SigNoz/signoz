@@ -216,23 +216,6 @@ components:
       - resource
       - selectors
       type: object
-    AuthtypesGettableResources:
-      properties:
-        relations:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          nullable: true
-          type: object
-        resources:
-          items:
-            $ref: '#/components/schemas/CoretypesGettableResource'
-          type: array
-      required:
-      - resources
-      - relations
-      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -5277,35 +5260,6 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Check permissions
-      tags:
-      - authz
-  /api/v1/authz/resources:
-    get:
-      deprecated: false
-      description: Gets all the available resources
-      operationId: AuthzResources
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableResources'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get resources
       tags:
       - authz
   /api/v1/channels:

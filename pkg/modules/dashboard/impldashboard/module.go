@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -201,10 +200,6 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	}
 
 	return dashboardtypes.NewStatsFromStorableDashboards(dashboards), nil
-}
-
-func (module *module) MustGetTypeables() []coretypes.Resource {
-	return []coretypes.Resource{coretypes.ResourceMetaResourceDashboard, coretypes.ResourceMetaResourcesDashboard}
 }
 
 func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {

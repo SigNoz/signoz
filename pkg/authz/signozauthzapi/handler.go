@@ -113,12 +113,6 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, authtypes.NewGettableObjects(objects))
 }
 
-func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
-	resources := handler.authz.GetResources(r.Context())
-
-	render.Success(rw, http.StatusOK, authtypes.NewGettableResources(resources))
-}
-
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)

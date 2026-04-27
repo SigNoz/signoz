@@ -8,18 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
-type GettableResources struct {
-	Resources []*coretypes.GettableResource       `json:"resources" required:"true" nullable:"false"`
-	Relations map[coretypes.Verb][]coretypes.Type `json:"relations" required:"true"`
-}
-
-func NewGettableResources(resources []*coretypes.GettableResource) *GettableResources {
-	return &GettableResources{
-		Resources: resources,
-		Relations: coretypes.VerbsForTypes(),
-	}
-}
-
 type Object struct {
 	Resource coretypes.GettableResource `json:"resource" required:"true"`
 	Selector Selector                   `json:"selector" required:"true"`
