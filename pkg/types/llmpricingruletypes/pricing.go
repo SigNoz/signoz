@@ -41,7 +41,7 @@ var (
 // It is compatible with both SQLite and PostgreSQL.
 type StringSlice []string
 
-// LLMRulePricing is the per-rule pricing shape, persisted as a single JSON
+// LLMRulePricing is the per-rule pricing shape, persisted as a single JSON.
 type LLMRulePricing struct {
 	Input  float64               `json:"input" required:"true"`
 	Output float64               `json:"output" required:"true"`
