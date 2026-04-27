@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -86,7 +85,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		provider.dashboardHandler.GetPublicData,
 		coretypes.VerbRead,
 		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
 				return nil, valuer.UUID{}, err
@@ -114,7 +113,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
 		coretypes.VerbRead,
 		coretypes.ResourceMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
 				return nil, valuer.UUID{}, err

@@ -89,7 +89,7 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
 		orgIDs[idx] = org.ID.StringValue()
@@ -100,9 +100,9 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 		return nil, valuer.UUID{}, err
 	}
 
-	return []authtypes.Selector{
-		authtypes.MustNewSelector(coretypes.TypeMetaResource, id.StringValue()),
-		authtypes.MustNewSelector(coretypes.TypeMetaResource, authtypes.WildCardSelectorString),
+	return []coretypes.Selector{
+		coretypes.TypeMetaResource.MustSelector(id.StringValue()),
+		coretypes.TypeMetaResource.MustSelector(coretypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -218,18 +218,18 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return map[string][]*authtypes.Transaction{
+func (module *module) MustGetManagedRoleTransactions() map[string][]*coretypes.Transaction {
+	return map[string][]*coretypes.Transaction{
 		authtypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
 				Relation: coretypes.VerbRead,
-				Object: *authtypes.MustNewObject(
+				Object: *coretypes.MustNewObject(
 					coretypes.GettableResource{
 						Type: coretypes.TypeMetaResource,
 						Kind: coretypes.ResourceMetaResourcePublicDashboard.Kind(),
 					},
-					authtypes.MustNewSelector(coretypes.TypeMetaResource, "*"),
+					"*",
 				),
 			},
 		},

@@ -237,8 +237,8 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 	roleChange := user.Role != "" && user.Role != existingUser.Role
 
 	if roleChange {
-		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAdminRoleName),
+		selectors := []coretypes.Selector{
+			coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
 		}
 		err = module.authz.CheckWithTupleCreation(
 			ctx,

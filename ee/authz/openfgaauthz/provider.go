@@ -74,11 +74,11 @@ func (provider *provider) Stop(ctx context.Context) error {
 	return provider.openfgaServer.Stop(ctx)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation coretypes.Verb, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.openfgaServer.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
@@ -86,7 +86,7 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*o
 	return provider.openfgaServer.BatchCheck(ctx, tupleReq)
 }
 
-func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error) {
+func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*coretypes.Transaction) ([]*coretypes.TransactionWithAuthorization, error) {
 	tuples, err := authtypes.NewTuplesFromTransactions(transactions, subject, orgID)
 	if err != nil {
 		return nil, err
@@ -97,10 +97,10 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return nil, err
 	}
 
-	results := make([]*authtypes.TransactionWithAuthorization, len(transactions))
+	results := make([]*coretypes.TransactionWithAuthorization, len(transactions))
 	for i, txn := range transactions {
 		result := batchResults[txn.ID.StringValue()]
-		results[i] = &authtypes.TransactionWithAuthorization{
+		results[i] = &coretypes.TransactionWithAuthorization{
 			Transaction: txn,
 			Authorized:  result.Authorized,
 		}
@@ -108,7 +108,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	return results, nil
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*authtypes.Object, error) {
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation coretypes.Verb, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	return provider.openfgaServer.ListObjects(ctx, subject, relation, objectType)
 }
 
@@ -208,7 +208,7 @@ func (provider *provider) GetOrCreate(ctx context.Context, orgID valuer.UUID, ro
 	return role, nil
 }
 
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*authtypes.Object, error) {
+func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation coretypes.Verb) ([]*coretypes.Object, error) {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -219,7 +219,7 @@ func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id 
 		return nil, err
 	}
 
-	objects := make([]*authtypes.Object, 0)
+	objects := make([]*coretypes.Object, 0)
 	for _, objectType := range provider.getUniqueTypes() {
 		if coretypes.ErrIfVerbNotValidForType(relation, objectType) != nil {
 			continue
@@ -251,7 +251,7 @@ func (provider *provider) Patch(ctx context.Context, orgID valuer.UUID, role *au
 	return provider.store.Update(ctx, orgID, role)
 }
 
-func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation coretypes.Verb, additions, deletions []*authtypes.Object) error {
+func (provider *provider) PatchObjects(ctx context.Context, orgID valuer.UUID, name string, relation coretypes.Verb, additions, deletions []*coretypes.Object) error {
 	_, err := provider.licensing.GetActive(ctx, orgID)
 	if err != nil {
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
@@ -313,7 +313,7 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 		coretypes.NewResourceRole(),
 		adminSubject,
 		coretypes.VerbAssignee,
-		[]authtypes.Selector{authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAdminRoleName)},
+		[]coretypes.Selector{coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName)},
 		orgID,
 	)
 	tuples = append(tuples, adminTuple...)
@@ -324,7 +324,7 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 		coretypes.NewResourceRole(),
 		anonymousSubject,
 		coretypes.VerbAssignee,
-		[]authtypes.Selector{authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAnonymousRoleName)},
+		[]coretypes.Selector{coretypes.TypeRole.MustSelector(authtypes.SigNozAnonymousRoleName)},
 		orgID,
 	)
 	tuples = append(tuples, anonymousTuple...)
@@ -333,7 +333,7 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 }
 
 func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
-	transactionsByRole := make(map[string][]*authtypes.Transaction)
+	transactionsByRole := make(map[string][]*coretypes.Transaction)
 	for _, register := range provider.registry {
 		for roleName, txns := range register.MustGetManagedRoleTransactions() {
 			transactionsByRole[roleName] = append(transactionsByRole[roleName], txns...)
@@ -353,7 +353,7 @@ func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]
 					&coretypes.VerbAssignee,
 				),
 				txn.Relation,
-				[]authtypes.Selector{txn.Object.Selector},
+				[]coretypes.Selector{txn.Object.Selector},
 				orgID,
 			)
 			tuples = append(tuples, txnTuples...)

@@ -110,7 +110,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableObjects(objects))
+	render.Success(rw, http.StatusOK, coretypes.NewObjectGroupsFromObjects(objects))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -202,13 +202,13 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PatchableObjects)
+	req := new(coretypes.PatchableObjects)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	additions, deletions, err := authtypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	additions, deletions, err := coretypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -254,7 +254,7 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactions := make([]*authtypes.Transaction, 0)
+	transactions := make([]*coretypes.Transaction, 0)
 	if err := binding.JSON.BindBody(r.Body, &transactions); err != nil {
 		render.Error(rw, err)
 		return
@@ -273,5 +273,5 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(results))
+	render.Success(rw, http.StatusOK, coretypes.NewGettableTransaction(results))
 }

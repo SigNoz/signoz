@@ -159,8 +159,8 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	isAdmin := false
-	selectors := []authtypes.Selector{
-		authtypes.MustNewSelector(coretypes.TypeRole, authtypes.SigNozAdminRoleName),
+	selectors := []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName),
 	}
 	err = handler.authz.CheckWithTupleCreation(
 		ctx,

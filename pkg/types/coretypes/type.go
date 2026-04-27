@@ -2,36 +2,32 @@ package coretypes
 
 import (
 	"encoding/json"
+	"regexp"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
-	ErrCodeInvalidType = errors.MustNewCode("invalid_type")
+	ErrCodeInvalidType     = errors.MustNewCode("invalid_type")
+	ErrCodeInvalidSelector = errors.MustNewCode("invalid_selector")
 )
 
 var (
-	TypeUser           = Type{valuer.NewString("user")}
-	TypeServiceAccount = Type{valuer.NewString("serviceaccount")}
-	TypeAnonymous      = Type{valuer.NewString("anonymous")}
-	TypeRole           = Type{valuer.NewString("role")}
-	TypeOrganization   = Type{valuer.NewString("organization")}
-	TypeMetaResource   = Type{valuer.NewString("metaresource")}
-	TypeMetaResources  = Type{valuer.NewString("metaresources")}
+	TypeUser           = Type{valuer.NewString("user"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
+	TypeServiceAccount = Type{valuer.NewString("serviceaccount"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
+	TypeAnonymous      = Type{valuer.NewString("anonymous"), regexp.MustCompile(`^\*$`)}
+	TypeRole           = Type{valuer.NewString("role"), regexp.MustCompile(`^([a-z-]{1,50}|\*)$`)}
+	TypeOrganization   = Type{valuer.NewString("organization"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
+	TypeMetaResource   = Type{valuer.NewString("metaresource"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
+	TypeMetaResources  = Type{valuer.NewString("metaresources"), regexp.MustCompile(`^\*$`)}
 )
 
 // Represents a type of entity in the system.
 // These types are fundamental/core entities in the system.
-type Type struct{ valuer.String }
-
-func MustNewType(input string) Type {
-	typed, err := NewType(input)
-	if err != nil {
-		panic(err)
-	}
-
-	return typed
+type Type struct {
+	valuer.String
+	selectorRegex *regexp.Regexp
 }
 
 func NewType(input string) (Type, error) {
@@ -53,6 +49,15 @@ func NewType(input string) (Type, error) {
 	}
 }
 
+func MustNewType(input string) Type {
+	typed, err := NewType(input)
+	if err != nil {
+		panic(err)
+	}
+
+	return typed
+}
+
 func (typed *Type) UnmarshalJSON(data []byte) error {
 	str := ""
 	err := json.Unmarshal(data, &str)
@@ -67,4 +72,33 @@ func (typed *Type) UnmarshalJSON(data []byte) error {
 
 	*typed = alias
 	return nil
+}
+
+func (typed Type) Enum() []any {
+	return []any{
+		TypeUser,
+		TypeServiceAccount,
+		TypeAnonymous,
+		TypeRole,
+		TypeOrganization,
+		TypeMetaResource,
+		TypeMetaResources,
+	}
+}
+
+func (typed Type) Selector(input string) (Selector, error) {
+	if !typed.selectorRegex.MatchString(input) {
+		return Selector{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidSelector, "invalid selector for type %s: %s", typed.StringValue(), input)
+	}
+
+	return Selector{val: input}, nil
+}
+
+func (typed Type) MustSelector(input string) Selector {
+	selector, err := typed.Selector(input)
+	if err != nil {
+		panic(err)
+	}
+
+	return selector
 }
