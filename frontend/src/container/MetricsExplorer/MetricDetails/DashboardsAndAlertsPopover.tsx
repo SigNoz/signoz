@@ -145,8 +145,9 @@ function DashboardsAndAlertsPopover({
 			placement="bottomLeft"
 		>
 			<Typography.Link style={{ fontSize: '12px' }}>
-				{[...((hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : [])),
-				...((hasAlerts ? [pluralize('alert', alerts.length, true)] : []))].join(', ')}
+				{[...(hasDashboards ? [pluralize('dashboard', dashboards.length, true)] : []), ...(hasAlerts ? [pluralize('alert', alerts.length, true)] : [])].join(
+					', ',
+				)}
 			</Typography.Link>
 		</Dropdown>
 	);
