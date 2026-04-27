@@ -1,5 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Button, DrawerWrapper } from '@signozhq/ui';
 import { Alert, Form, Select, Spin, Typography } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
@@ -45,6 +46,8 @@ function CloudAccountSetupModal({
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
 	const errorTimeout = 10 * 60 * 1000;
+
+	const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
 	useGetAccount(
 		{
@@ -161,6 +164,85 @@ function CloudAccountSetupModal({
 					{renderAlert()}
 
 					<div className="cloud-account-setup-form__content">
+						<div className="cloud-account-setup-prerequisites">
+							<div className="cloud-account-setup-prerequisites__title">
+								Prerequisites
+							</div>
+
+							<ul className="cloud-account-setup-prerequisites__list">
+								<li className="cloud-account-setup-prerequisites__list-item">
+									<span className="cloud-account-setup-prerequisites__list-item-bullet">
+										—
+									</span>{' '}
+									<span className="cloud-account-setup-prerequisites__list-item-text">
+										Ensure that you&apos;re logged in to the Azure workspace which you
+										want to monitor.
+									</span>
+								</li>
+								<li className="cloud-account-setup-prerequisites__list-item">
+									<span className="cloud-account-setup-prerequisites__list-item-bullet">
+										—
+									</span>{' '}
+									<span className="cloud-account-setup-prerequisites__list-item-text">
+										Ensure that you either have the{' '}
+										<span className="cloud-account-setup-prerequisites__list-item-highlight">
+											Owner
+										</span>{' '}
+										role OR
+									</span>
+								</li>
+								<li className="cloud-account-setup-prerequisites__list-item">
+									<span className="cloud-account-setup-prerequisites__list-item-bullet">
+										—
+									</span>{' '}
+									<span className="cloud-account-setup-prerequisites__list-item-text">
+										Both the{' '}
+										<span className="cloud-account-setup-prerequisites__list-item-highlight">
+											Contributor
+										</span>{' '}
+										and{' '}
+										<span className="cloud-account-setup-prerequisites__list-item-highlight">
+											user access admin
+										</span>{' '}
+										roles
+									</span>
+								</li>
+							</ul>
+						</div>
+
+						<div className="cloud-account-setup-how-it-works-accordion">
+							<div
+								className={`cloud-account-setup-how-it-works-accordion__title ${
+									isHowItWorksOpen ? 'open' : ''
+								}`}
+							>
+								<Button
+									variant="link"
+									color="secondary"
+									onClick={(): void => setIsHowItWorksOpen(!isHowItWorksOpen)}
+									prefix={isHowItWorksOpen ? <ChevronDown /> : <ChevronRight />}
+								/>
+
+								<span className="cloud-account-setup-how-it-works-accordion__title-text">
+									How it works?
+								</span>
+							</div>
+							{isHowItWorksOpen && (
+								<div className="cloud-account-setup-how-it-works-accordion__description">
+									<div className="cloud-account-setup-how-it-works-accordion__description-item">
+										SigNoz will create new resource-group to manage the resources required
+										for this integration. The following steps will create a User-Assigned
+										Managed Identity with the necessary permissions and follows the
+										Principle of Least Privilege.
+									</div>
+									<div className="cloud-account-setup-how-it-works__description-item">
+										Once the Integration template is deployed, you can enable the services
+										you want to monitor right here in Signoz dashboard.
+									</div>
+								</div>
+							)}
+						</div>
+
 						<div className="cloud-account-setup-form__form-group">
 							<div className="cloud-account-setup-form__title">
 								Where should we deploy the SigNoz collector resources?

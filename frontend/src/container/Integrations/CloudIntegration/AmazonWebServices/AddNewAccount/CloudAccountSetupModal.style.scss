@@ -17,9 +17,141 @@
 		overflow-y: auto;
 		min-height: 0;
 		scrollbar-width: thin;
+		margin-right: 8px;
 
-		&::-webkit-scrollbar {
-			width: 2px;
+		&::-webkit-scrollbar-thumb {
+			background: var(--l1-border);
+		}
+
+		&::-webkit-scrollbar-track {
+			background: var(--l1-background);
+		}
+
+		scrollbar-width: thin;
+		scrollbar-color: var(--l3-background) var(--l1-background);
+	}
+
+	.cloud-account-setup-prerequisites {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+
+		&__title {
+			color: var(--l1-foreground);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+		}
+
+		&__list {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+
+		&__list-item {
+			color: var(--l2-foreground);
+			font-size: 13px;
+			line-height: 18px;
+			letter-spacing: -0.06px;
+
+			display: flex;
+			align-items: center;
+			gap: 16px;
+
+			&-bullet {
+				color: var(--primary);
+				font-weight: 500;
+			}
+
+			&-text {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+		}
+
+		&__list-item-highlight {
+			color: var(--l1-foreground);
+			font-weight: 500;
+		}
+	}
+
+	.cloud-account-setup-how-it-works-accordion {
+		display: flex;
+		flex-direction: column;
+
+		&__title {
+			display: flex;
+			align-items: center;
+
+			color: var(--l1-foreground);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 20px;
+			letter-spacing: -0.07px;
+
+			border-radius: 4px;
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
+			padding: 4px 16px 4px 0px;
+
+			&.open {
+				border-bottom-left-radius: 0;
+				border-bottom-right-radius: 0;
+			}
+		}
+
+		&__description {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			padding: 16px;
+			opacity: 0;
+			transform: translateY(-8px);
+			animation: cloud-account-setup-accordion-reveal 220ms ease-out forwards;
+
+			border-radius: 4px;
+
+			border-top: none;
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
+
+			&-item {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+
+				color: var(--l1-foreground);
+				font-size: 13px;
+				line-height: 18px;
+				letter-spacing: -0.06px;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				animation: none;
+				opacity: 1;
+				transform: none;
+			}
+		}
+	}
+
+	@keyframes cloud-account-setup-accordion-reveal {
+		from {
+			opacity: 0;
+			transform: translateY(-8px);
+		}
+
+		to {
+			opacity: 1;
+			transform: translateY(0);
 		}
 	}
 
