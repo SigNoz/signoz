@@ -65,59 +65,113 @@ function DashboardsAndAlertsPopover({
 			isLoading: newIsLoadingAlerts,
 			isError: newIsErrorAlerts,
 		});
+	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
 
+	useMemo(() => {
 		setDashboardsData({
 			data: newDashboardsData?.data?.dashboards || [],
 			isLoading: newIsLoadingDashboards,
 			isError: newIsErrorDashboards,
 		});
-	}, [
-		newAlertsData,
-		newIsLoadingAlerts,
-		newIsErrorAlerts,
-		newDashboardsData,
-		newIsLoadingDashboards,
-		newIsErrorDashboards,
-	]);
+	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
-	if (newIsLoadingAlerts || newIsLoadingDashboards) {
+	const totalAlerts = alertsData.data.length;
+	const totalDashboards = dashboardsData.data.length;
+
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
+
+	const handleAlertsClick = (): void => {
+		if (!hasAlerts) return;
+		openInNewTab(
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+		);
+	};
+
+	const handleDashboardsClick = (): void => {
+		if (!hasDashboards) return;
+		openInNewTab(
+			`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
+	};
+
+	if (!metricName) return null;
+
+	const loading = alertsData.isLoading || dashboardsData.isLoading;
+	const error = alertsData.isError || dashboardsData.isError;
+
+	if (loading) {
 		return (
-			<Skeleton active={true} paragraph={false} />
+			<div>
+				<Skeleton.Input active size="small" />
+			</div>
 		);
 	}
 
-	if (newIsErrorAlerts || newIsErrorDashboards) {
+	if (error) {
 		return (
-			<Typography.Text type="danger">
-				Failed to load alerts and dashboards.
+			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+				Failed to load alerts or dashboards
 			</Typography.Text>
 		);
 	}
 
+	if (!hasAlerts && !hasDashboards) {
+		return (
+			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
+				No alerts or dashboards using this metric
+			</Typography.Text>
+		);
+	}
+
+	const menu = (
+		<Menu>
+			{hasAlerts && (
+				<Menu.Item key="alerts" onClick={handleAlertsClick}>
+					<span>
+						<Bell size={14} style={{ marginRight: '8px', color: Color.semantic.warning.border }} />
+						{pluralize('alert', totalAlerts)} ({totalAlerts})
+					</span>
+				</Menu.Item>
+			)}
+			{hasDashboards && (
+				<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
+					<span>
+						<Grid size={14} style={{ marginRight: '8px', color: Color.primary.border }} />
+						{pluralize('dashboard', totalDashboards)} ({totalDashboards})
+					</span>
+				</Menu.Item>
+			)}
+		</Menu>
+	);
+
 	return (
-		<Dropdown
-			overlay={
-				<Menu>
-					<Menu.Item key="alerts">
-						<Typography.Text>
-							{pluralize(newAlertsData.data.alerts.length, 'alert')}
-						</Typography.Text>
-					</Menu.Item>
-					<Menu.Item key="dashboards">
-						<Typography.Text>
-							{pluralize(newDashboardsData.data.dashboards.length, 'dashboard')}
-						</Typography.Text>
-					</Menu.Item>
-					<Menu.Item key="open-in-new-tab">
-						<Typography.Text>
-							Open in new tab
-						</Typography.Text>
-					</Menu.Item>
-				</Menu>
-			}
-			trigger={['click']}
-		>
-			<Grid size={24} />
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomLeft">
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '4px',
+					cursor: 'pointer',
+					color: Color.text.secondary,
+					fontSize: '12px',
+				}}
+			>
+				{hasAlerts && (
+					<span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+						<Bell size={12} color={Color.semantic.warning.border} />
+						{totalAlerts}
+					</span>
+				)}
+				{hasDashboards && (
+					<span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+						<Grid size={12} color={Color.primary.border} />
+						{totalDashboards}
+					</span>
+				)}
+			</div>
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
