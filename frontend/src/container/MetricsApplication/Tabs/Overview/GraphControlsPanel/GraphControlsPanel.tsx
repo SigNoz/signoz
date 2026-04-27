@@ -25,6 +25,7 @@ const GraphControlsPanel: React.FC<GraphControlsPanelProps> = ({
         icon={<Binoculars size={16} />}
         onClick={onViewLogsClick}
         data-testid={`view-logs-btn-${id}`}
+        disabled={!onViewLogsClick}
       >
         Logs
       </Button>
@@ -33,6 +34,7 @@ const GraphControlsPanel: React.FC<GraphControlsPanelProps> = ({
         icon={<DraftingCompass size={16} />}
         onClick={onViewTracesClick}
         data-testid={`view-traces-btn-${id}`}
+        disabled={!onViewTracesClick}
       >
         Traces
       </Button>
@@ -41,6 +43,7 @@ const GraphControlsPanel: React.FC<GraphControlsPanelProps> = ({
         icon={<ScrollText size={16} />}
         onClick={onViewMetricsClick}
         data-testid={`view-metrics-btn-${id}`}
+        disabled={!onViewMetricsClick}
       >
         Metrics
       </Button>
