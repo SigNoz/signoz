@@ -1,8 +1,8 @@
 import { ReactElement } from 'react';
 import type { RouteComponentProps } from 'react-router-dom';
 import {
-	CoretypesGettableTransactionDTO,
-	CoretypesTransactionDTO,
+	AuthtypesGettableTransactionDTO,
+	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
@@ -15,9 +15,9 @@ const BASE_URL = ENVIRONMENT.baseURL || '';
 const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
 
 function authzMockResponse(
-	payload: CoretypesTransactionDTO[],
+	payload: AuthtypesTransactionDTO[],
 	authorizedByIndex: boolean[],
-): { data: CoretypesGettableTransactionDTO[]; status: string } {
+): { data: AuthtypesGettableTransactionDTO[]; status: string } {
 	return {
 		data: payload.map((txn, i) => ({
 			relation: txn.relation,
@@ -106,9 +106,9 @@ describe('createGuardedRoute', () => {
 	it('should handle multiple route parameters', async () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
-				const payload = (await req.json()) as CoretypesTransactionDTO[];
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
 				const txn = payload[0];
-				const responseData: CoretypesGettableTransactionDTO[] = [
+				const responseData: AuthtypesGettableTransactionDTO[] = [
 					{
 						relation: txn.relation,
 						object: {
@@ -368,7 +368,7 @@ describe('createGuardedRoute', () => {
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
 				requestCount++;
-				const payload = (await req.json()) as CoretypesTransactionDTO[];
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
 				const obj = payload[0]?.object;
 				const kind = obj?.resource?.kind;
 				const selector = obj?.selector ?? '*';

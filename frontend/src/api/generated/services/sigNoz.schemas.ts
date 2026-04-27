@@ -269,6 +269,15 @@ export interface AuthtypesGettableTokenDTO {
 	tokenType?: string;
 }
 
+export interface AuthtypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: CoretypesObjectDTO;
+	relation: CoretypesVerbDTO;
+}
+
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
 	[key: string]: string;
 };
@@ -494,6 +503,11 @@ export interface AuthtypesSessionContextDTO {
 	 * @nullable true
 	 */
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
+}
+
+export interface AuthtypesTransactionDTO {
+	object: CoretypesObjectDTO;
+	relation: CoretypesVerbDTO;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -2679,15 +2693,6 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
-export interface CoretypesGettableTransactionDTO {
-	/**
-	 * @type boolean
-	 */
-	authorized: boolean;
-	object: CoretypesObjectDTO;
-	relation: CoretypesVerbDTO;
-}
-
 export interface CoretypesObjectDTO {
 	resource: CoretypesResourceRefDTO;
 	/**
@@ -2723,11 +2728,6 @@ export interface CoretypesResourceRefDTO {
 	 */
 	kind: string;
 	type: CoretypesTypeDTO;
-}
-
-export interface CoretypesTransactionDTO {
-	object: CoretypesObjectDTO;
-	relation: CoretypesVerbDTO;
 }
 
 export enum CoretypesTypeDTO {
@@ -6336,7 +6336,7 @@ export type AuthzCheck200 = {
 	/**
 	 * @type array
 	 */
-	data: CoretypesGettableTransactionDTO[];
+	data: AuthtypesGettableTransactionDTO[];
 	/**
 	 * @type string
 	 */

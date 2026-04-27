@@ -3,7 +3,7 @@ import { useQueries } from 'react-query';
 import { authzCheck } from 'api/generated/services/authz';
 import type {
 	CoretypesObjectDTO,
-	CoretypesTransactionDTO,
+	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
@@ -48,7 +48,7 @@ function dispatchPermission(
 async function fetchManyPermissions(
 	permissions: BrandedPermission[],
 ): Promise<AuthZCheckResponse> {
-	const payload: CoretypesTransactionDTO[] = permissions.map((permission) => {
+	const payload: AuthtypesTransactionDTO[] = permissions.map((permission) => {
 		const dto = permissionToTransactionDto(permission);
 		const object: CoretypesObjectDTO = {
 			resource: {

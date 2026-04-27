@@ -1,5 +1,5 @@
 import {
-	CoretypesTransactionDTO,
+	AuthtypesTransactionDTO,
 	CoretypesTypeDTO,
 	CoretypesVerbDTO,
 } from '../../api/generated/services/sigNoz.schemas';
@@ -47,7 +47,7 @@ const resourceNameToType = permissionsType.data.resources.reduce(
 
 export function permissionToTransactionDto(
 	permission: BrandedPermission,
-): CoretypesTransactionDTO {
+): AuthtypesTransactionDTO {
 	const { relation, object: objectStr } = parsePermission(permission);
 	const directType = resourceNameToType[objectStr as ResourceName];
 	if (directType === 'metaresources') {
@@ -73,7 +73,7 @@ export function permissionToTransactionDto(
 }
 
 export function gettableTransactionToPermission(
-	item: CoretypesTransactionDTO,
+	item: AuthtypesTransactionDTO,
 ): BrandedPermission {
 	const {
 		relation,
