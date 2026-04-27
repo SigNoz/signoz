@@ -1,6 +1,5 @@
 // File: frontend/src/container/MetricsApplication/Tabs/Overview/GraphControlsPanel/GraphControlsPanel.tsx
 import React from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { Binoculars, DraftingCompass, ScrollText } from 'lucide-react';
 
@@ -62,4 +61,3 @@ const GraphControlsPanel = ({
 };
 
 export default GraphControlsPanel;
-```
