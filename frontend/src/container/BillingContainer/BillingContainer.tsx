@@ -39,6 +39,7 @@ import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
 import './BillingContainer.styles.scss';
+import { LicenseState } from 'types/api/licensesV3/getActive';
 
 interface DataType {
 	key: string;
@@ -318,7 +319,7 @@ export default function BillingContainer(): JSX.Element {
 
 	const handleBilling = useCallback(async () => {
 		if (!trialInfo?.trialConvertedToSubscription) {
-			logEvent('Billing : Upgrade Plan', {
+			void logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -327,7 +328,7 @@ export default function BillingContainer(): JSX.Element {
 				url: getBaseUrl(),
 			});
 		} else {
-			logEvent('Billing : Manage Billing', {
+			void logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
@@ -536,7 +537,9 @@ export default function BillingContainer(): JSX.Element {
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
 
-			{trialInfo?.trialConvertedToSubscription && <CancelSubscriptionBanner />}
+			{isCloudUserVal && activeLicense?.state === LicenseState.ACTIVATED && (
+				<CancelSubscriptionBanner />
+			)}
 
 			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">

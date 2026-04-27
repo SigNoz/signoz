@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X } from '@signozhq/icons';
 import { Button, DialogWrapper } from '@signozhq/ui';
+import logEvent from 'api/common/logEvent';
+import { pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { getBaseUrl } from 'utils/basePath';
 
@@ -10,7 +12,19 @@ function CancelSubscriptionBanner(): JSX.Element {
 	const [open, setOpen] = useState(false);
 	const { user, org } = useAppContext();
 
+	const handleOpenCancelDialog = (): void => {
+		void logEvent('Billing : Cancel Subscription Clicked', {
+			user: pick(user, ['email', 'displayName', 'role', 'organization']),
+			role: user?.role,
+		});
+		setOpen(true);
+	};
+
 	const handleContactSupport = (): void => {
+		void logEvent('Billing : Cancel Subscription Confirmed', {
+			user: pick(user, ['email', 'displayName', 'role', 'organization']),
+			role: user?.role,
+		});
 		const subject = encodeURIComponent('Cancel My SigNoz Subscription');
 		const orgName = org?.[0]?.displayName ?? '';
 		const body = encodeURIComponent(
@@ -67,7 +81,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 					variant="solid"
 					color="destructive"
 					prefix={<X size={12} />}
-					onClick={(): void => setOpen(true)}
+					onClick={handleOpenCancelDialog}
 				>
 					Cancel Subscription
 				</Button>
