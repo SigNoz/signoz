@@ -582,6 +582,8 @@ def test_indexed_paths(
                 case["name"],
                 case["check_query"],
                 tables=["signoz_logs.distributed_logs_v2"],
+                must_contain=["body_v2"],
+                limit=1,
             )
 
 

@@ -78,7 +78,7 @@ def check_query_log_fixture(
         assert queries, (
             f"No matching SELECT in system.query_log for case '{case_name}'"
         )
-        assert any(check_fn(q) for q in queries), (
+        assert all(check_fn(q) for q in queries), (
             f"query_log check failed for case '{case_name}'.\n"
             + "Queries:\n"
             + "\n---\n".join(queries)
