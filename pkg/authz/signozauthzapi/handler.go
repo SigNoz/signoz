@@ -105,7 +105,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, authtypes.Relation{relation})
+	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, authtypes.Relation{Verb: relation})
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -215,7 +215,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, authtypes.Relation{relation}, additions, deletions)
+	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, authtypes.Relation{Verb: relation}, additions, deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return

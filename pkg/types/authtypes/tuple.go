@@ -30,7 +30,7 @@ func NewTuples(resource coretypes.Resource, subject string, relation Relation, s
 
 	for _, selector := range selectors {
 		object := resource.Object(orgID, selector.String())
-		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.Verb.StringValue(), Object: object})
+		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: relation.StringValue(), Object: object})
 	}
 
 	return tuples
