@@ -159,16 +159,10 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, orgID valuer.U
 func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
-	grantTuples, err := provider.getManagedRoleGrantTuples(orgID, userID)
-	if err != nil {
-		return err
-	}
+	grantTuples := provider.getManagedRoleGrantTuples(orgID, userID)
 	tuples = append(tuples, grantTuples...)
 
-	managedRoleTuples, err := provider.getManagedRoleTransactionTuples(orgID)
-	if err != nil {
-		return err
-	}
+	managedRoleTuples := provider.getManagedRoleTransactionTuples(orgID)
 	tuples = append(tuples, managedRoleTuples...)
 
 	return provider.Write(ctx, tuples, nil)
@@ -304,7 +298,7 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	return provider.store.Delete(ctx, orgID, id)
 }
 
-func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID valuer.UUID) []*openfgav1.TupleKey {
 	tuples := []*openfgav1.TupleKey{}
 
 	// Grant the admin role to the user
@@ -329,10 +323,10 @@ func (provider *provider) getManagedRoleGrantTuples(orgID valuer.UUID, userID va
 	)
 	tuples = append(tuples, anonymousTuple...)
 
-	return tuples, nil
+	return tuples
 }
 
-func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]*openfgav1.TupleKey, error) {
+func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) []*openfgav1.TupleKey {
 	tuples := make([]*openfgav1.TupleKey, 0)
 	for roleName, transactions := range provider.registry.ManagedRoleTransactions() {
 		for _, txn := range transactions {
@@ -353,7 +347,7 @@ func (provider *provider) getManagedRoleTransactionTuples(orgID valuer.UUID) ([]
 		}
 	}
 
-	return tuples, nil
+	return tuples
 }
 
 func (provider *provider) deleteTuples(ctx context.Context, roleName string, orgID valuer.UUID) error {
