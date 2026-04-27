@@ -84,25 +84,30 @@ function useMetricDashboardsStatus(metricName: string): Status {
 	return { data: newDashboardsData, isLoading: false, isError: false };
 }
 
-function useMetricStatus(metricName: string): Status {
+function useMetricDetailsStatus(metricName: string): Status {
 	const metricAlertsStatus = useMetricAlertsStatus(metricName);
 	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	return { ...metricAlertsStatus, ...metricDashboardsStatus };
+	return {
+		data: { ...metricAlertsStatus.data, ...metricDashboardsStatus.data },
+		isLoading: metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading,
+		isError: metricAlertsStatus.isError || metricDashboardsStatus.isError,
+		error: metricAlertsStatus.error || metricDashboardsStatus.error,
+	};
 }
 
 function DashboardsAndAlertsPopover({ metricName }: DashboardsAndAlertsPopoverProps) {
-	const metricStatus = useMetricStatus(metricName);
+	const status = useMetricDetailsStatus(metricName);
 
-	if (metricStatus.isError) {
+	if (status.isError) {
 		return (
-			<Typography.Text>
-				{metricStatus.error.message}
-			</Typography.Text>
+			<Skeleton active>
+				<Typography.Text>Error: {status.error.message}</Typography.Text>
+			</Skeleton>
 		);
 	}
 
-	if (metricStatus.isLoading) {
+	if (status.isLoading) {
 		return <Skeleton active />;
 	}
 
@@ -110,28 +115,24 @@ function DashboardsAndAlertsPopover({ metricName }: DashboardsAndAlertsPopoverPr
 		<Dropdown
 			overlay={
 				<Menu>
-					<Menu.Item>
-						<a
-							onClick={() => openInNewTab(generatePath(ROUTES.DASHBOARD, { metricName }))}
-						>
-							<Grid />
-							{pluralize(metricStatus.data.length, 'dashboard')}
-						</a>
+					<Menu.Item key="dashboards">
+						<Typography.Text>
+							{pluralize(status.data.dashboards.length, 'dashboard')}{' '}
+							{pluralize(status.data.dashboards.length, 's')}{' '}
+							{ROUTES.DASHBOARD}
+						</Typography.Text>
 					</Menu.Item>
-					<Menu.Item>
-						<a
-							onClick={() => openInNewTab(generatePath(ROUTES.ALERTS, { metricName }))}
-						>
-							<Bell />
-							{pluralize(metricStatus.data.length, 'alert')}
-						</a>
+					<Menu.Item key="alerts">
+						<Typography.Text>
+							{pluralize(status.data.alerts.length, 'alert')}{' '}
+							{pluralize(status.data.alerts.length, 's')}{' '}
+							{ROUTES.ALERT}
+						</Typography.Text>
 					</Menu.Item>
 				</Menu>
 			}
 		>
-			<Typography.Text>
-				Dashboards and Alerts
-			</Typography.Text>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
