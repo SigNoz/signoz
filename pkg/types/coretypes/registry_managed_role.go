@@ -190,6 +190,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindUserPreference}, WildCardSelectorString)},
+		// telemetry — read on each signal (logs/traces/metrics); schema permits read only
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// dashboard — full CRUD
@@ -265,6 +269,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindUserPreference}, WildCardSelectorString)},
+		// telemetry — read on each signal
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
 	},
 	SigNozViewerRoleName: {
 		// dashboard — read only
@@ -310,6 +318,10 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUserPreference}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindUserPreference}, WildCardSelectorString)},
+		// telemetry — read on each signal
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
 	},
 	SigNozAnonymousRoleName: {
 		// public-dashboard — anonymous read

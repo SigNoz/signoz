@@ -58,6 +58,9 @@ var Resources = []Resource{
 	ResourceMetaResourcesLicense,
 	ResourceMetaResourceSubscription,
 	ResourceMetaResourcesSubscription,
+	ResourceTelemetryResourceLogs,
+	ResourceTelemetryResourceTraces,
+	ResourceTelemetryResourceMetrics,
 }
 
 var (
@@ -118,4 +121,7 @@ var (
 	ResourceMetaResourcesLicense                          = NewResourceMetaResources(KindLicense)
 	ResourceMetaResourceSubscription                      = NewResourceMetaResource(KindSubscription)
 	ResourceMetaResourcesSubscription                     = NewResourceMetaResources(KindSubscription)
+	ResourceTelemetryResourceLogs                         = NewResourceTelemetryResource(KindLogs)
+	ResourceTelemetryResourceTraces                       = NewResourceTelemetryResource(KindTraces)
+	ResourceTelemetryResourceMetrics                      = NewResourceTelemetryResource(KindMetrics)
 )

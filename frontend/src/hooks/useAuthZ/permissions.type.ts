@@ -228,6 +228,18 @@ export default {
 				type: 'serviceaccount',
 			},
 			{
+				kind: 'logs',
+				type: 'telemetryresource',
+			},
+			{
+				kind: 'metrics',
+				type: 'telemetryresource',
+			},
+			{
+				kind: 'traces',
+				type: 'telemetryresource',
+			},
+			{
 				kind: 'user',
 				type: 'user',
 			},
@@ -237,7 +249,14 @@ export default {
 			create: ['metaresources'],
 			delete: ['metaresource', 'organization', 'role', 'serviceaccount', 'user'],
 			list: ['metaresources'],
-			read: ['metaresource', 'organization', 'role', 'serviceaccount', 'user'],
+			read: [
+				'metaresource',
+				'organization',
+				'role',
+				'serviceaccount',
+				'telemetryresource',
+				'user',
+			],
 			update: ['metaresource', 'organization', 'role', 'serviceaccount', 'user'],
 		},
 	},
