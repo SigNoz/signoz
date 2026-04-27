@@ -251,30 +251,11 @@ export interface AuthtypesGettableAuthDomainDTO {
 }
 
 export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
+	resource: CoretypesGettableResourceDTO;
 	/**
 	 * @type array
 	 */
 	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: AuthtypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 */
-	resources: AuthtypesResourceDTO[];
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -302,7 +283,7 @@ export interface AuthtypesGettableTransactionDTO {
 	 */
 	authorized: boolean;
 	object: AuthtypesObjectDTO;
-	relation: CoretypesRelationDTO;
+	relation: CoretypesVerbDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -377,7 +358,7 @@ export interface AuthtypesOIDCConfigDTO {
 }
 
 export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
+	resource: CoretypesGettableResourceDTO;
 	/**
 	 * @type string
 	 */
@@ -463,17 +444,6 @@ export interface AuthtypesPostableRotateTokenDTO {
 	 * @type string
 	 */
 	refreshToken?: string;
-}
-
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	kind: string;
-	/**
-	 * @type string
-	 */
-	type: string;
 }
 
 export interface AuthtypesRoleDTO {
@@ -566,7 +536,7 @@ export interface AuthtypesSessionContextDTO {
 
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
-	relation: CoretypesRelationDTO;
+	relation: CoretypesVerbDTO;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -2752,7 +2722,18 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
-export enum CoretypesRelationDTO {
+export interface CoretypesGettableResourceDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+}
+
+export enum CoretypesVerbDTO {
 	create = 'create',
 	read = 'read',
 	update = 'update',
@@ -6350,14 +6331,6 @@ export type AuthzCheck200 = {
 	 * @type array
 	 */
 	data: AuthtypesGettableTransactionDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
 	/**
 	 * @type string
 	 */
