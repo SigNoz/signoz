@@ -12,12 +12,12 @@ var (
 )
 
 type Object struct {
-	Resource GettableResource `json:"resource" required:"true"`
+	Resource ResourceRef `json:"resource" required:"true"`
 	Selector Selector         `json:"selector" required:"true"`
 }
 
 type ObjectGroup struct {
-	Resource  GettableResource `json:"resource" required:"true"`
+	Resource  ResourceRef `json:"resource" required:"true"`
 	Selectors []Selector       `json:"selectors" required:"true" nullable:"false"`
 }
 
@@ -26,7 +26,7 @@ type PatchableObjects struct {
 	Deletions []*ObjectGroup `json:"deletions" required:"true" nullable:"true"`
 }
 
-func NewObject(resource GettableResource, inputSelector string) (*Object, error) {
+func NewObject(resource ResourceRef, inputSelector string) (*Object, error) {
 	selector, err := resource.Type.Selector(inputSelector)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func NewObject(resource GettableResource, inputSelector string) (*Object, error)
 	return &Object{Resource: resource, Selector: selector}, nil
 }
 
-func MustNewObject(resource GettableResource, inputSelector string) *Object {
+func MustNewObject(resource ResourceRef, inputSelector string) *Object {
 	object, err := NewObject(resource, inputSelector)
 	if err != nil {
 		panic(err)
@@ -55,7 +55,7 @@ func MustNewObjectFromString(input string) *Object {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
 	}
 
-	resource := GettableResource{
+	resource := ResourceRef{
 		Type: MustNewType(typeParts[0]),
 		Kind: MustNewKind(parts[2]),
 	}
@@ -104,7 +104,7 @@ func NewObjectsFromObjectGroups(objectGroups []*ObjectGroup) ([]*Object, error) 
 }
 
 func NewObjectGroupsFromObjects(objects []*Object) []*ObjectGroup {
-	grouped := make(map[GettableResource][]Selector)
+	grouped := make(map[ResourceRef][]Selector)
 	for _, obj := range objects {
 		key := obj.Resource
 		if _, ok := grouped[key]; !ok {
@@ -157,7 +157,7 @@ func NewPatchableObjects(additions []*ObjectGroup, deletions []*ObjectGroup, ver
 
 func (object *Object) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
-		Resource GettableResource
+		Resource ResourceRef
 		Selector Selector
 	}{}
 

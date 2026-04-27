@@ -2679,14 +2679,6 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
-export interface CoretypesGettableResourceDTO {
-	/**
-	 * @type string
-	 */
-	kind: string;
-	type: CoretypesTypeDTO;
-}
-
 export interface CoretypesGettableTransactionDTO {
 	/**
 	 * @type boolean
@@ -2697,7 +2689,7 @@ export interface CoretypesGettableTransactionDTO {
 }
 
 export interface CoretypesObjectDTO {
-	resource: CoretypesGettableResourceDTO;
+	resource: CoretypesResourceRefDTO;
 	/**
 	 * @type string
 	 */
@@ -2705,7 +2697,7 @@ export interface CoretypesObjectDTO {
 }
 
 export interface CoretypesObjectGroupDTO {
-	resource: CoretypesGettableResourceDTO;
+	resource: CoretypesResourceRefDTO;
 	/**
 	 * @type array
 	 */
@@ -2723,6 +2715,14 @@ export interface CoretypesPatchableObjectsDTO {
 	 * @nullable true
 	 */
 	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export interface CoretypesResourceRefDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	type: CoretypesTypeDTO;
 }
 
 export interface CoretypesTransactionDTO {

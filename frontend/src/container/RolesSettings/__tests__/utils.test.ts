@@ -1,5 +1,5 @@
 import type {
-	CoretypesGettableResourceDTO,
+	CoretypesResourceRefDTO,
 	CoretypesObjectGroupDTO,
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -10,7 +10,7 @@ import type {
 } from '../PermissionSidePanel/PermissionSidePanel.types';
 
 type AuthzResources = {
-	resources: CoretypesGettableResourceDTO[];
+	resources: CoretypesResourceRefDTO[];
 	relations: Record<string, string[]>;
 };
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';

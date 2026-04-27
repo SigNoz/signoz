@@ -23,12 +23,12 @@ const (
 // All managed permissions are wildcard — they apply to every instance of the type.
 type ManagedPermission struct {
 	Verb     Verb
-	Resource GettableResource
+	Resource ResourceRef
 }
 
 var managedRolePermissions = map[string][]ManagedPermission{
 	SigNozAnonymousRoleName: {
-		{Verb: VerbRead, Resource: GettableResource{Type: TypeMetaResource, Kind: KindPublicDashboard}},
+		{Verb: VerbRead, Resource: ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}},
 	},
 }
 
@@ -137,11 +137,11 @@ func VerbsForTypes() map[Verb][]Type {
 // ListResources returns every (Type, Kind) pair declared in the registry,
 // sorted by type then kind. Used by `generate authz` to emit the static
 // authz schema consumed by the frontend.
-func ListResources() []*GettableResource {
-	out := make([]*GettableResource, 0)
+func ListResources() []*ResourceRef {
+	out := make([]*ResourceRef, 0)
 	for typed, kindMap := range registry {
 		for kind := range kindMap {
-			out = append(out, &GettableResource{Type: typed, Kind: kind})
+			out = append(out, &ResourceRef{Type: typed, Kind: kind})
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -157,7 +157,7 @@ func ListResources() []*GettableResource {
 // (Type, Kind) resources, the unique Type list, and the managed-role
 // transaction policy expanded into concrete *Transaction objects.
 type Registry struct {
-	resources                 []*GettableResource
+	resources                 []*ResourceRef
 	uniqueTypes               []Type
 	transactions              map[string][]*Transaction
 	managedRolesByTransaction map[string][]string
@@ -175,7 +175,7 @@ func NewRegistry() *Registry {
 	}
 }
 
-func (registry *Registry) GetResources() []*GettableResource {
+func (registry *Registry) GetResources() []*ResourceRef {
 	return registry.resources
 }
 
@@ -206,7 +206,7 @@ func buildManagedRoleTransactions() map[string][]*Transaction {
 	return out
 }
 
-func buildUniqueTypes(resources []*GettableResource) []Type {
+func buildUniqueTypes(resources []*ResourceRef) []Type {
 	seen := make(map[Type]struct{})
 	out := make([]Type, 0)
 	for _, resource := range resources {

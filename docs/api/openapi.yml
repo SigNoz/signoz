@@ -2000,16 +2000,6 @@ components:
         to_user:
           type: string
       type: object
-    CoretypesGettableResource:
-      properties:
-        kind:
-          type: string
-        type:
-          $ref: '#/components/schemas/CoretypesType'
-      required:
-      - type
-      - kind
-      type: object
     CoretypesGettableTransaction:
       properties:
         authorized:
@@ -2026,7 +2016,7 @@ components:
     CoretypesObject:
       properties:
         resource:
-          $ref: '#/components/schemas/CoretypesGettableResource'
+          $ref: '#/components/schemas/CoretypesResourceRef'
         selector:
           type: string
       required:
@@ -2036,7 +2026,7 @@ components:
     CoretypesObjectGroup:
       properties:
         resource:
-          $ref: '#/components/schemas/CoretypesGettableResource'
+          $ref: '#/components/schemas/CoretypesResourceRef'
         selectors:
           items:
             type: string
@@ -2060,6 +2050,16 @@ components:
       required:
       - additions
       - deletions
+      type: object
+    CoretypesResourceRef:
+      properties:
+        kind:
+          type: string
+        type:
+          $ref: '#/components/schemas/CoretypesType'
+      required:
+      - type
+      - kind
       type: object
     CoretypesTransaction:
       properties:

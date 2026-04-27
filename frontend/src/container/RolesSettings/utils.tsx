@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui';
 import type {
-	CoretypesGettableResourceDTO,
+	CoretypesResourceRefDTO,
 	CoretypesObjectGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -20,7 +20,7 @@ import {
 } from './RoleDetails/constants';
 
 export type AuthzResources = {
-	resources: ReadonlyArray<CoretypesGettableResourceDTO>;
+	resources: ReadonlyArray<CoretypesResourceRefDTO>;
 	relations: Readonly<Record<string, ReadonlyArray<string>>>;
 };
 

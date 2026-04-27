@@ -4,7 +4,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type GettableResource struct {
+type ResourceRef struct {
 	Type Type `json:"type" required:"true"`
 	Kind Kind `json:"kind" required:"true"`
 }
@@ -26,8 +26,8 @@ type Resource interface {
 	Scope(verb Verb) string
 }
 
-func NewGettableResource(resource Resource) *GettableResource {
-	return &GettableResource{
+func NewResourceRef(resource Resource) *ResourceRef {
+	return &ResourceRef{
 		Type: resource.Type(),
 		Kind: resource.Kind(),
 	}
