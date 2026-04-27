@@ -92,6 +92,9 @@ export function DashboardsAndAlertsPopover({
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
+	const isLoading = alertsStatus.isLoading || dashboardsStatus.isLoading;
+	const isError = alertsStatus.isError || dashboardsStatus.isError;
+
 	const totalAlerts = alertsStatus.data.length;
 	const totalDashboards = dashboardsStatus.data.length;
 
@@ -112,94 +115,74 @@ export function DashboardsAndAlertsPopover({
 	};
 
 	const renderContent = (): JSX.Element => {
-		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
+		if (isError) {
+			return (
+				<div style={{ padding: '8px 12px' }}>
+					<Typography.Text type="danger">Failed to load data</Typography.Text>
+				</div>
+			);
 		}
 
-		if (alertsStatus.isError || dashboardsStatus.isError) {
+		if (isLoading) {
 			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
+				<div style={{ padding: '8px 12px', minWidth: 150 }}>
+					<Skeleton active paragraph={{ rows: 2 }} />
+				</div>
 			);
 		}
 
 		if (totalAlerts === 0 && totalDashboards === 0) {
 			return (
-				<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
+				<div style={{ padding: '8px 12px' }}>
+					<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
+				</div>
 			);
 		}
 
 		return (
-			<div style={{ minWidth: 200 }}>
+			<Menu style={{ minWidth: 200 }} onClick={(e) => e.domEvent.stopPropagation()}>
 				{totalAlerts > 0 && (
-					<div
-						style={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-							marginBottom: 8,
-						}}
-					>
-						<Typography.Text>
-							<Bell size={14} style={{ marginRight: 8, color: Color.text.accent }} />
-							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</Typography.Text>
-						<Typography.Link
-							onClick={handleViewAllAlerts}
-							style={{ fontSize: 12 }}
-						>
-							View all
-						</Typography.Link>
-					</div>
+					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
+						<span>
+							<Bell size={14} style={{ marginRight: 8 }} color={Color.text.danger} />
+							{pluralize('alert', totalAlerts)} ({totalAlerts})
+						</span>
+					</Menu.Item>
 				)}
 				{totalDashboards > 0 && (
-					<div
-						style={{
-							display: 'flex',
-							justifyContent: 'space-between',
-							alignItems: 'center',
-						}}
-					>
-						<Typography.Text>
-							<Grid size={14} style={{ marginRight: 8, color: Color.text.accent }} />
-							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</Typography.Text>
-						<Typography.Link
-							onClick={handleViewAllDashboards}
-							style={{ fontSize: 12 }}
-						>
-							View all
-						</Typography.Link>
-					</div>
+					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
+						<span>
+							<Grid size={14} style={{ marginRight: 8 }} color={Color.text.link} />
+							{pluralize('dashboard', totalDashboards)} ({totalDashboards})
+						</span>
+					</Menu.Item>
 				)}
-			</div>
+			</Menu>
 		);
 	};
 
-	const menu = (
-		<Menu>
-			<Menu.Item key="content" disabled>
-				{renderContent()}
-			</Menu.Item>
-		</Menu>
-	);
-
 	return (
 		<Dropdown
-			overlay={menu}
+			overlay={renderContent()}
 			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			placement="bottomRight"
+			destroyPopupOnHide
 		>
-			<Typography.Link
-				onClick={(e) => {
-					e.preventDefault();
-					setOpen(!open);
+			<span
+				style={{
+					color: Color.text.secondary,
+					cursor: 'pointer',
+					fontSize: 12,
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
 				}}
-				style={{ fontSize: 12 }}
+				onClick={(e) => e.stopPropagation()}
 			>
-				View in dashboards & alerts
-			</Typography.Link>
+				<Grid size={12} />
+				Dashboards & Alerts
+			</span>
 		</Dropdown>
 	);
 }
