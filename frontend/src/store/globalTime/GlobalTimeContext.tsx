@@ -25,6 +25,7 @@ export const GlobalTimeContext = createContext<GlobalTimeStoreApi | null>(null);
 
 export function GlobalTimeProvider({
 	children,
+	name,
 	inheritGlobalTime = false,
 	initialTime,
 	enableUrlParams = false,
@@ -51,6 +52,7 @@ export function GlobalTimeProvider({
 	// Create isolated store (stable reference)
 	const [store] = useState(() =>
 		createGlobalTimeStore({
+			name,
 			selectedTime: resolveInitialTime(),
 			refreshInterval: initialRefreshInterval ?? 0,
 		}),

@@ -279,4 +279,103 @@ describe('useGlobalTimeQueryInvalidate', () => {
 			expect(queryFn3).toHaveBeenCalledTimes(2);
 		});
 	});
+
+	describe('scoped invalidation with store name', () => {
+		it('should only invalidate queries matching store name', async () => {
+			const namedQueryFn = jest.fn().mockResolvedValue({ data: 'named' });
+			const unnamedQueryFn = jest.fn().mockResolvedValue({ data: 'unnamed' });
+
+			const wrapper = createWrapper(
+				{ name: 'drawer', initialTime: '15m' },
+				queryClient,
+			);
+
+			// Query with matching name
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'drawer', 'named-query'],
+						queryFn: namedQueryFn,
+					}),
+				{ wrapper },
+			);
+
+			// Query without name (different store)
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'unnamed-query'],
+						queryFn: unnamedQueryFn,
+					}),
+				{ wrapper },
+			);
+
+			await waitFor(() => {
+				expect(namedQueryFn).toHaveBeenCalledTimes(1);
+				expect(unnamedQueryFn).toHaveBeenCalledTimes(1);
+			});
+
+			// Call invalidate
+			const { result } = renderHook(() => useGlobalTimeQueryInvalidate(), {
+				wrapper,
+			});
+
+			await act(async () => {
+				await result.current();
+			});
+
+			// Only named query should be refetched
+			await waitFor(() => {
+				expect(namedQueryFn).toHaveBeenCalledTimes(2);
+			});
+
+			// Unnamed query should NOT be refetched
+			expect(unnamedQueryFn).toHaveBeenCalledTimes(1);
+		});
+
+		it('should invalidate all queries for unnamed store (backward compatible)', async () => {
+			const queryFn1 = jest.fn().mockResolvedValue({ data: 'query1' });
+			const queryFn2 = jest.fn().mockResolvedValue({ data: 'query2' });
+
+			// Unnamed store (no name prop)
+			const wrapper = createWrapper({ initialTime: '15m' }, queryClient);
+
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'query1'],
+						queryFn: queryFn1,
+					}),
+				{ wrapper },
+			);
+
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'query2'],
+						queryFn: queryFn2,
+					}),
+				{ wrapper },
+			);
+
+			await waitFor(() => {
+				expect(queryFn1).toHaveBeenCalledTimes(1);
+				expect(queryFn2).toHaveBeenCalledTimes(1);
+			});
+
+			const { result } = renderHook(() => useGlobalTimeQueryInvalidate(), {
+				wrapper,
+			});
+
+			await act(async () => {
+				await result.current();
+			});
+
+			// Both should be refetched
+			await waitFor(() => {
+				expect(queryFn1).toHaveBeenCalledTimes(2);
+				expect(queryFn2).toHaveBeenCalledTimes(2);
+			});
+		});
+	});
 });

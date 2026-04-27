@@ -1,9 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import { ReactNode } from 'react';
 
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
+import { GlobalTimeProvider } from '../GlobalTimeContext';
+import { GlobalTimeProviderOptions } from '../types';
 import { useIsGlobalTimeQueryRefreshing } from '../useIsGlobalTimeQueryRefreshing';
 
 const createTestQueryClient = (): QueryClient =>
@@ -21,6 +24,21 @@ const createWrapper = (
 	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 		return (
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+		);
+	};
+};
+
+const createProviderWrapper = (
+	providerProps: GlobalTimeProviderOptions,
+	queryClient: QueryClient,
+): (({ children }: { children: ReactNode }) => JSX.Element) => {
+	return function Wrapper({ children }: { children: ReactNode }): JSX.Element {
+		return (
+			<QueryClientProvider client={queryClient}>
+				<NuqsTestingAdapter>
+					<GlobalTimeProvider {...providerProps}>{children}</GlobalTimeProvider>
+				</NuqsTestingAdapter>
+			</QueryClientProvider>
 		);
 	};
 };
@@ -224,6 +242,82 @@ describe('useIsGlobalTimeQueryRefreshing', () => {
 		// Cleanup
 		act(() => {
 			resolveRegular({ data: 'done' });
+		});
+	});
+
+	describe('scoped refreshing check with store name', () => {
+		it('should return true only for queries matching store name', async () => {
+			let resolveNamedQuery: (value: unknown) => void;
+			const namedQueryPromise = new Promise((resolve) => {
+				resolveNamedQuery = resolve;
+			});
+
+			const wrapper = createProviderWrapper(
+				{ name: 'drawer', initialTime: '15m' },
+				queryClient,
+			);
+
+			// Start query with matching name
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'drawer', 'test'],
+						queryFn: () => namedQueryPromise,
+					}),
+				{ wrapper },
+			);
+
+			// Check refreshing status
+			const { result } = renderHook(() => useIsGlobalTimeQueryRefreshing(), {
+				wrapper,
+			});
+
+			// Should be true - named query is fetching
+			expect(result.current).toBe(true);
+
+			// Resolve the query
+			act(() => {
+				resolveNamedQuery({ data: 'done' });
+			});
+
+			await waitFor(() => {
+				expect(result.current).toBe(false);
+			});
+		});
+
+		it('should return false when only different store queries are fetching', async () => {
+			let resolveOtherQuery: (value: unknown) => void;
+			const otherQueryPromise = new Promise((resolve) => {
+				resolveOtherQuery = resolve;
+			});
+
+			const wrapper = createProviderWrapper(
+				{ name: 'drawer', initialTime: '15m' },
+				queryClient,
+			);
+
+			// Start query with different name (belongs to different store)
+			renderHook(
+				() =>
+					useQuery({
+						queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'other-store', 'test'],
+						queryFn: () => otherQueryPromise,
+					}),
+				{ wrapper },
+			);
+
+			// Check refreshing status for 'drawer' store
+			const { result } = renderHook(() => useIsGlobalTimeQueryRefreshing(), {
+				wrapper,
+			});
+
+			// Should be false - the fetching query belongs to 'other-store', not 'drawer'
+			expect(result.current).toBe(false);
+
+			// Cleanup
+			act(() => {
+				resolveOtherQuery({ data: 'done' });
+			});
 		});
 	});
 });

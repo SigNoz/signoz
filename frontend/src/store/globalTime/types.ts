@@ -53,6 +53,12 @@ export interface IGlobalTimeStoreActions {
 }
 
 export interface GlobalTimeProviderOptions {
+	/**
+	 * Optional name for the store instance.
+	 * Used to scope query keys - only queries with this store's prefix
+	 * will be tracked/invalidated by this store's hooks.
+	 */
+	name?: string;
 	/** Initialize from parent/global time */
 	inheritGlobalTime?: boolean;
 	/** Initial time if not inheriting */
@@ -71,6 +77,12 @@ export interface GlobalTimeProviderOptions {
 }
 
 export interface GlobalTimeState {
+	/**
+	 * Optional name for the store instance.
+	 * Used to scope query keys for auto-refresh queries.
+	 * Unnamed stores use the default prefix without a name.
+	 */
+	name?: string;
 	selectedTime: GlobalTimeSelectedTime;
 	refreshInterval: number;
 	isRefreshEnabled: boolean;
@@ -97,6 +109,15 @@ export interface GlobalTimeActions {
 	 * Called by QueryCache listener when auto-refresh queries complete.
 	 */
 	updateRefreshTimestamp: () => void;
+	/**
+	 * Build query key for auto-refresh queries scoped to this store.
+	 * Named stores: ['AUTO_REFRESH_QUERY', name, ...parts, selectedTime]
+	 * Unnamed stores: ['AUTO_REFRESH_QUERY', ...parts, selectedTime]
+	 */
+	getAutoRefreshQueryKey: (
+		selectedTime: GlobalTimeSelectedTime,
+		...queryParts: unknown[]
+	) => unknown[];
 }
 
 export type GlobalTimeStore = GlobalTimeState & GlobalTimeActions;

@@ -39,6 +39,28 @@ const createWrapper = (
 };
 
 describe('GlobalTimeProvider', () => {
+	describe('name prop', () => {
+		it('should pass name to store when provided', () => {
+			const wrapper = createWrapper({ name: 'test-drawer' });
+
+			const { result } = renderHook(() => useGlobalTime((s) => s.name), {
+				wrapper,
+			});
+
+			expect(result.current).toBe('test-drawer');
+		});
+
+		it('should have undefined name when not provided', () => {
+			const wrapper = createWrapper({});
+
+			const { result } = renderHook(() => useGlobalTime((s) => s.name), {
+				wrapper,
+			});
+
+			expect(result.current).toBeUndefined();
+		});
+	});
+
 	describe('store isolation', () => {
 		it('should create isolated store for each provider', () => {
 			const wrapper1 = createWrapper({ initialTime: '1h' });

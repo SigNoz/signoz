@@ -1,4 +1,5 @@
 import { act } from '@testing-library/react';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import {
@@ -81,6 +82,67 @@ describe('createGlobalTimeStore', () => {
 
 			expect(store.getState().refreshInterval).toBe(10000);
 			expect(store.getState().isRefreshEnabled).toBe(false);
+		});
+	});
+
+	describe('store name', () => {
+		it('should store name when provided', () => {
+			const store = createGlobalTimeStore({ name: 'drawer' });
+			expect(store.getState().name).toBe('drawer');
+		});
+
+		it('should have undefined name when not provided', () => {
+			const store = createGlobalTimeStore();
+			expect(store.getState().name).toBeUndefined();
+		});
+	});
+
+	describe('getAutoRefreshQueryKey', () => {
+		it('should generate key without name for unnamed store', () => {
+			const store = createGlobalTimeStore();
+			const key = store
+				.getState()
+				.getAutoRefreshQueryKey('15m', 'MY_QUERY', 'param1');
+
+			expect(key).toStrictEqual([
+				REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+				'MY_QUERY',
+				'param1',
+				'15m',
+			]);
+		});
+
+		it('should generate key with name for named store', () => {
+			const store = createGlobalTimeStore({ name: 'drawer' });
+			const key = store
+				.getState()
+				.getAutoRefreshQueryKey('15m', 'MY_QUERY', 'param1');
+
+			expect(key).toStrictEqual([
+				REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+				'drawer',
+				'MY_QUERY',
+				'param1',
+				'15m',
+			]);
+		});
+
+		it('should handle no query parts for named store', () => {
+			const store = createGlobalTimeStore({ name: 'test' });
+			const key = store.getState().getAutoRefreshQueryKey('1h');
+
+			expect(key).toStrictEqual([
+				REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+				'test',
+				'1h',
+			]);
+		});
+
+		it('should handle no query parts for unnamed store', () => {
+			const store = createGlobalTimeStore();
+			const key = store.getState().getAutoRefreshQueryKey('1h');
+
+			expect(key).toStrictEqual([REACT_QUERY_KEY.AUTO_REFRESH_QUERY, '1h']);
 		});
 	});
 });

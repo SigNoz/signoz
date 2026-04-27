@@ -97,4 +97,94 @@ describe('useQueryCacheSync', () => {
 
 		expect(store.getState().lastRefreshTimestamp).toBe(initialTimestamp);
 	});
+
+	describe('store name filtering', () => {
+		it('should update timestamp for named store when matching query succeeds', async () => {
+			const store = createGlobalTimeStore({ name: 'drawer' });
+
+			act(() => {
+				store.getState().computeAndStoreMinMax();
+			});
+
+			const initialTimestamp = store.getState().lastRefreshTimestamp;
+
+			act(() => {
+				jest.advanceTimersByTime(5000);
+			});
+
+			renderHook(() => useQueryCacheSync(store), {
+				wrapper: createWrapper(queryClient),
+			});
+
+			// Query with matching name
+			await act(async () => {
+				await queryClient.fetchQuery({
+					queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'drawer', 'test'],
+					queryFn: () => Promise.resolve({ data: 'test' }),
+				});
+			});
+
+			await waitFor(() => {
+				expect(store.getState().lastRefreshTimestamp).toBeGreaterThan(
+					initialTimestamp,
+				);
+			});
+		});
+
+		it('should NOT update timestamp for named store when different name query succeeds', async () => {
+			const store = createGlobalTimeStore({ name: 'drawer' });
+
+			act(() => {
+				store.getState().computeAndStoreMinMax();
+			});
+
+			const initialTimestamp = store.getState().lastRefreshTimestamp;
+
+			act(() => {
+				jest.advanceTimersByTime(5000);
+			});
+
+			renderHook(() => useQueryCacheSync(store), {
+				wrapper: createWrapper(queryClient),
+			});
+
+			// Query with different name
+			await act(async () => {
+				await queryClient.fetchQuery({
+					queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'other-store', 'test'],
+					queryFn: () => Promise.resolve({ data: 'test' }),
+				});
+			});
+
+			expect(store.getState().lastRefreshTimestamp).toBe(initialTimestamp);
+		});
+
+		it('should NOT update timestamp for named store when unnamed query succeeds', async () => {
+			const store = createGlobalTimeStore({ name: 'drawer' });
+
+			act(() => {
+				store.getState().computeAndStoreMinMax();
+			});
+
+			const initialTimestamp = store.getState().lastRefreshTimestamp;
+
+			act(() => {
+				jest.advanceTimersByTime(5000);
+			});
+
+			renderHook(() => useQueryCacheSync(store), {
+				wrapper: createWrapper(queryClient),
+			});
+
+			// Query without name (unnamed store format)
+			await act(async () => {
+				await queryClient.fetchQuery({
+					queryKey: [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, 'test-query'],
+					queryFn: () => Promise.resolve({ data: 'test' }),
+				});
+			});
+
+			expect(store.getState().lastRefreshTimestamp).toBe(initialTimestamp);
+		});
+	});
 });

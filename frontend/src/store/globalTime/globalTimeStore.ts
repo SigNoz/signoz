@@ -1,4 +1,5 @@
 import { createStore, StoreApi, useStore } from 'zustand';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import {
@@ -31,8 +32,10 @@ export function createGlobalTimeStore(
 ): GlobalTimeStoreApi {
 	const selectedTime = initialState?.selectedTime ?? DEFAULT_TIME_RANGE;
 	const refreshInterval = initialState?.refreshInterval ?? 0;
+	const name = initialState?.name;
 
 	return createStore<GlobalTimeStore>((set, get) => ({
+		name,
 		selectedTime,
 		refreshInterval,
 		isRefreshEnabled: computeIsRefreshEnabled(selectedTime, refreshInterval),
@@ -109,6 +112,22 @@ export function createGlobalTimeStore(
 
 		updateRefreshTimestamp: (): void => {
 			set({ lastRefreshTimestamp: Date.now() });
+		},
+
+		getAutoRefreshQueryKey: (
+			selectedTime: GlobalTimeSelectedTime,
+			...queryParts: unknown[]
+		): unknown[] => {
+			const storeName = get().name;
+			if (storeName) {
+				return [
+					REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+					storeName,
+					...queryParts,
+					selectedTime,
+				];
+			}
+			return [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, ...queryParts, selectedTime];
 		},
 	}));
 }

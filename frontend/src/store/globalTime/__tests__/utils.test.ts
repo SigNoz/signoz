@@ -278,4 +278,47 @@ describe('globalTime/utils', () => {
 			]);
 		});
 	});
+
+	describe('getAutoRefreshQueryKey deprecation', () => {
+		const originalEnv = process.env.NODE_ENV;
+		const originalWarn = console.warn;
+
+		beforeEach(() => {
+			console.warn = jest.fn();
+		});
+
+		afterEach(() => {
+			process.env.NODE_ENV = originalEnv;
+			console.warn = originalWarn;
+		});
+
+		it('should log deprecation warning in development', () => {
+			process.env.NODE_ENV = 'development';
+
+			getAutoRefreshQueryKey('15m', 'TEST');
+
+			expect(console.warn).toHaveBeenCalledWith(
+				expect.stringContaining('deprecated'),
+			);
+		});
+
+		it('should NOT log deprecation warning in production', () => {
+			process.env.NODE_ENV = 'production';
+
+			getAutoRefreshQueryKey('15m', 'TEST');
+
+			expect(console.warn).not.toHaveBeenCalled();
+		});
+
+		it('should still return correct query key format', () => {
+			const result = getAutoRefreshQueryKey('15m', 'MY_QUERY', 'param1');
+
+			expect(result).toStrictEqual([
+				REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+				'MY_QUERY',
+				'param1',
+				'15m',
+			]);
+		});
+	});
 });

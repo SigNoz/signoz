@@ -79,12 +79,22 @@ export function parseSelectedTime(selectedTime: string): ParsedTimeRange {
 }
 
 /**
- * Use to build your react-query key for auto-refresh queries
+ * @deprecated Use store.getAutoRefreshQueryKey() instead.
+ * Access via: const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
+ *
+ * This function only works with the default (unnamed) store prefix.
+ * For named stores, use the store method to get properly scoped query keys.
  */
 export function getAutoRefreshQueryKey(
 	selectedTime: GlobalTimeSelectedTime,
 	...queryParts: unknown[]
 ): unknown[] {
+	if (process.env.NODE_ENV === 'development') {
+		console.warn(
+			'[globalTime] getAutoRefreshQueryKey from utils is deprecated. ' +
+				'Use useGlobalTime((s) => s.getAutoRefreshQueryKey) instead.',
+		);
+	}
 	return [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, ...queryParts, selectedTime];
 }
 
