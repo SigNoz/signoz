@@ -161,7 +161,9 @@ function DateTimeSelection({
 			const startDate = dayjs(
 				new Date(Number.parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endDate = dayjs(new Date(Number.parseInt(getTimeString(searchEndTime), 10)));
+			const endDate = dayjs(
+				new Date(Number.parseInt(getTimeString(searchEndTime), 10)),
+			);
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
