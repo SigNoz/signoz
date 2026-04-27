@@ -37,36 +37,72 @@ export function parsePermission(permission: BrandedPermission): {
 	return { relation: relation as AuthZRelation, object };
 }
 
-const resourceNameToType = permissionsType.data.resources.reduce(
+const kindsByType = permissionsType.data.resources.reduce(
 	(acc, r) => {
-		acc[r.kind] = r.type;
+		if (!acc[r.type]) {
+			acc[r.type] = new Set();
+		}
+		acc[r.type].add(r.kind);
 		return acc;
 	},
-	{} as Record<ResourceName, ResourceType>,
+	{} as Record<string, Set<string>>,
 );
+
+function resolveType(
+	relation: AuthZRelation,
+	kind: string,
+): ResourceType | undefined {
+	const candidates: readonly string[] =
+		permissionsType.data.relations[relation] ?? [];
+	for (const t of candidates) {
+		if (kindsByType[t]?.has(kind)) {
+			return t as ResourceType;
+		}
+	}
+	return undefined;
+}
+
+function splitObjectString(objectStr: string): {
+	resourceName: string;
+	selector: string;
+} {
+	const idx = objectStr.indexOf(ObjectSeparator);
+	if (idx === -1) {
+		return { resourceName: objectStr, selector: '' };
+	}
+	return {
+		resourceName: objectStr.slice(0, idx),
+		selector: objectStr.slice(idx + 1),
+	};
+}
 
 export function permissionToTransactionDto(
 	permission: BrandedPermission,
 ): AuthtypesTransactionDTO {
 	const { relation, object: objectStr } = parsePermission(permission);
-	const directType = resourceNameToType[objectStr as ResourceName];
+	const directType = resolveType(relation, objectStr);
 	if (directType === 'metaresources') {
 		return {
 			relation: relation as CoretypesVerbDTO,
 			object: {
-				resource: { kind: objectStr, type: directType as CoretypesTypeDTO },
+				resource: {
+					kind: objectStr as ResourceName,
+					type: directType as CoretypesTypeDTO,
+				},
 				selector: '*',
 			},
 		};
 	}
-	const [resourceName, selector] = objectStr.split(ObjectSeparator);
-	const type =
-		resourceNameToType[resourceName as ResourceName] ?? 'metaresource';
+	const { resourceName, selector } = splitObjectString(objectStr);
+	const type = resolveType(relation, resourceName) ?? 'metaresource';
 
 	return {
 		relation: relation as CoretypesVerbDTO,
 		object: {
-			resource: { kind: resourceName, type: type as CoretypesTypeDTO },
+			resource: {
+				kind: resourceName as ResourceName,
+				type: type as CoretypesTypeDTO,
+			},
 			selector: selector || '*',
 		},
 	};

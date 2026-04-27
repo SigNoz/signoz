@@ -244,14 +244,14 @@ describe('useAuthZ', () => {
 		expect(receivedPayload[0]).toMatchObject({
 			relation: 'read',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'dashboard', type: 'metaresource' },
 				selector: '*',
 			},
 		});
 		expect(receivedPayload[1]).toMatchObject({
 			relation: 'update',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'dashboard', type: 'metaresource' },
 				selector: '123',
 			},
 		});
@@ -304,17 +304,17 @@ describe('useAuthZ', () => {
 		expect(receivedPayloads[0][0]).toMatchObject({
 			relation: 'read',
 			object: {
-				resource: { name: 'dashboard', type: 'metaresource' },
+				resource: { kind: 'dashboard', type: 'metaresource' },
 				selector: '*',
 			},
 		});
 		expect(receivedPayloads[0][1]).toMatchObject({
 			relation: 'update',
-			object: { resource: { name: 'dashboard' }, selector: '123' },
+			object: { resource: { kind: 'dashboard' }, selector: '123' },
 		});
 		expect(receivedPayloads[0][2]).toMatchObject({
 			relation: 'delete',
-			object: { resource: { name: 'dashboard' }, selector: '456' },
+			object: { resource: { kind: 'dashboard' }, selector: '456' },
 		});
 
 		expect(result1.current.permissions).toEqual({
@@ -386,11 +386,11 @@ describe('useAuthZ', () => {
 		expect(receivedPayloads[1]).toHaveLength(2);
 		expect(receivedPayloads[1][0]).toMatchObject({
 			relation: 'update',
-			object: { resource: { name: 'dashboard' }, selector: '123' },
+			object: { resource: { kind: 'dashboard' }, selector: '123' },
 		});
 		expect(receivedPayloads[1][1]).toMatchObject({
 			relation: 'delete',
-			object: { resource: { name: 'dashboard' }, selector: '456' },
+			object: { resource: { kind: 'dashboard' }, selector: '456' },
 		});
 	});
 
