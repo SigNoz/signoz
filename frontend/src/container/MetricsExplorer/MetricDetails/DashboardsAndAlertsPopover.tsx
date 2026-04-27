@@ -75,118 +75,110 @@ function DashboardsAndAlertsPopover({
 		});
 	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
-	if (!metricName) return null;
-
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
-	const hasAny = totalAlerts > 0 || totalDashboards > 0;
 
-	if (!hasAny && (alertsData.isLoading || dashboardsData.isLoading)) {
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
+
+	const handleAlertsClick = (): void => {
+		if (!hasAlerts) return;
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
+	};
+
+	const handleDashboardsClick = (): void => {
+		if (!hasDashboards) return;
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.search]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
+	};
+
+	if (!metricName) return null;
+
+	const loading = alertsData.isLoading || dashboardsData.isLoading;
+
+	if (loading) {
 		return (
-			<Skeleton.Input
-				style={{
-					width: '120px',
-					height: '20px',
-				}}
-				size="small"
-			/>
+			<div>
+				<Skeleton.Input active size="small" style={{ width: 120 }} />
+			</div>
 		);
 	}
 
-	const menuItems = [];
-
-	if (totalAlerts > 0) {
-		menuItems.push({
-			key: 'alerts',
-			label: (
-				<Typography.Text
-					strong
-					style={{
-						color: Color.semantic.warning,
-						display: 'flex',
-						alignItems: 'center',
-						gap: '8px',
-					}}
-				>
-					<Bell size={16} />
-					{pluralize(totalAlerts, 'alert', 'alerts')} firing
-				</Typography.Text>
-			),
-			onClick: (e): void => {
-				e.domEvent.preventDefault();
-				openInNewTab(
-					`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
-				);
-			},
-		});
-	}
-
-	if (totalDashboards > 0) {
-		menuItems.push({
-			key: 'dashboards',
-			label: (
-				<Typography.Text
-					strong
-					style={{
-						color: Color.primary.primary900,
-						display: 'flex',
-						alignItems: 'center',
-						gap: '8px',
-					}}
-				>
-					<Grid size={16} />
-					Show in {pluralize(totalDashboards, 'dashboard', 'dashboards')}
-				</Typography.Text>
-			),
-			onClick: (e): void => {
-				e.domEvent.preventDefault();
-				openInNewTab(
-					`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
-				);
-			},
-		});
-	}
-
-	if (!hasAny) {
+	if (alertsData.isError || dashboardsData.isError) {
 		return (
-			<Typography.Text
-				type="secondary"
-				style={{
-					fontSize: '12px',
-				}}
-			>
-				No dashboards or alerts
+			<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+				Failed to load dashboards and alerts
 			</Typography.Text>
 		);
 	}
 
+	const menu = (
+		<Menu>
+			{hasAlerts && (
+				<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={14} />}>
+					<Typography.Text style={{ fontSize: 12 }}>
+						{pluralize('Alert', totalAlerts)} ({totalAlerts})
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{hasDashboards && (
+				<Menu.Item
+					key="dashboards"
+					onClick={handleDashboardsClick}
+					icon={<Grid size={14} />}
+				>
+					<Typography.Text style={{ fontSize: 12 }}>
+						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+					</Typography.Text>
+				</Menu.Item>
+			)}
+			{!hasAlerts && !hasDashboards && (
+				<Menu.Item key="empty" disabled>
+					<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+						No dashboards or alerts using this metric
+					</Typography.Text>
+				</Menu.Item>
+			)}
+		</Menu>
+	);
+
 	return (
-		<Dropdown
-			menu={{ items: menuItems }}
-			trigger={['click']}
-			placement="bottomLeft"
-		>
-			<Typography.Link
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+			<div
 				style={{
-					fontSize: '12px',
+					color: Color.primary[500],
 					cursor: 'pointer',
-				}}
-				onClick={(e): void => {
-					e.preventDefault();
+					fontSize: 12,
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
 				}}
 			>
-				{totalAlerts > 0
-					? `${totalAlerts} ${pluralize(
-							totalAlerts,
-							'alert',
-							'alerts',
-					  )} firing`
-					: `${totalDashboards} ${pluralize(
-							totalDashboards,
-							'dashboard',
-							'dashboards',
-					  )}`}
-			</Typography.Link>
+				{hasAlerts && (
+					<>
+						<Bell size={12} />
+						<span>{totalAlerts}</span>
+					</>
+				)}
+				{hasDashboards && (
+					<>
+						<Grid size={12} />
+						<span>{totalDashboards}</span>
+					</>
+				)}
+				{!hasAlerts && !hasDashboards && (
+					<Typography.Text type="secondary">No references</Typography.Text>
+				)}
+			</div>
 		</Dropdown>
 	);
 }
