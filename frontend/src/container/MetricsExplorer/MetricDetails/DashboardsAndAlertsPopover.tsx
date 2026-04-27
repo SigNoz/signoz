@@ -57,11 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return {
-		data: newAlertsData?.data || [],
-		isLoading: false,
-		isError: false,
-	};
+	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -85,16 +81,12 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return {
-		data: newDashboardsData?.data || [],
-		isLoading: false,
-		isError: false,
-	};
+	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
 }
 
-const DashboardsAndAlertsPopover = ({
+export function DashboardsAndAlertsPopover({
 	metricName,
-}: DashboardsAndAlertsPopoverProps): JSX.Element => {
+}: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
@@ -103,57 +95,56 @@ const DashboardsAndAlertsPopover = ({
 	const totalAlerts = alertsStatus.data.length;
 	const totalDashboards = dashboardsStatus.data.length;
 
-	const isEmpty = totalAlerts === 0 && totalDashboards === 0;
-
 	const handleOpenChange = (visible: boolean): void => {
 		setOpen(visible);
 	};
 
 	const handleViewAllAlerts = (): void => {
 		openInNewTab(
-			`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
 		);
 	};
 
 	const handleViewAllDashboards = (): void => {
 		openInNewTab(
-			`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+			`${ROUTES.DASHBOARD_LIST}?${QueryParams.search}=${metricName}`,
 		);
 	};
 
 	const renderContent = (): JSX.Element => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
+			return <Skeleton paragraph={{ rows: 2 }} />;
 		}
 
-		if (isEmpty) {
+		if (alertsStatus.isError || dashboardsStatus.isError) {
 			return (
-				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
-					No dashboards or alerts found for this metric
-				</Typography.Text>
+				<Typography.Text type="danger">Failed to load data</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu style={{ minWidth: 220 }}>
+			<Menu>
 				{totalAlerts > 0 && (
 					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<Bell size={16} color={Color.semantic.warning} />
-							<span>
-								{pluralize('Alert', totalAlerts)} ({totalAlerts})
-							</span>
-						</div>
+						<span>
+							<Bell size={16} color={Color.primary[500]} />{' '}
+							{pluralize('Alert', totalAlerts)} ({totalAlerts})
+						</span>
 					</Menu.Item>
 				)}
 				{totalDashboards > 0 && (
 					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
-						<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-							<Grid size={16} color={Color.primary.primary} />
-							<span>
-								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-							</span>
-						</div>
+						<span>
+							<Grid size={16} color={Color.primary[500]} />{' '}
+							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+						</span>
+					</Menu.Item>
+				)}
+				{totalAlerts === 0 && totalDashboards === 0 && (
+					<Menu.Item key="empty" disabled>
+						<Typography.Text type="secondary">
+							No dashboards or alerts using this metric
+						</Typography.Text>
 					</Menu.Item>
 				)}
 			</Menu>
@@ -162,26 +153,23 @@ const DashboardsAndAlertsPopover = ({
 
 	return (
 		<Dropdown
+			menu={{ items: [] }}
+			overlay={renderContent}
+			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			overlay={renderContent()}
-			trigger={['click']}
 			placement="bottomRight"
 			destroyPopupOnHide
 		>
-			<div
+			<span
 				style={{
+					color: Color.primary[500],
 					cursor: 'pointer',
-					color: Color.primary.primary,
-					fontWeight: 500,
 					fontSize: '14px',
 				}}
-				onClick={(e) => e.stopPropagation()}
 			>
 				View in Dashboards & Alerts
-			</div>
+			</span>
 		</Dropdown>
 	);
-};
-
-export default DashboardsAndAlertsPopover;
+}
