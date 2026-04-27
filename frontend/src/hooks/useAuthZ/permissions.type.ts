@@ -228,7 +228,15 @@ export default {
 				type: 'serviceaccount',
 			},
 			{
+				kind: 'audit-logs',
+				type: 'telemetryresource',
+			},
+			{
 				kind: 'logs',
+				type: 'telemetryresource',
+			},
+			{
+				kind: 'meter-metrics',
 				type: 'telemetryresource',
 			},
 			{

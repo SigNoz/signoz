@@ -61,6 +61,8 @@ var Resources = []Resource{
 	ResourceTelemetryResourceLogs,
 	ResourceTelemetryResourceTraces,
 	ResourceTelemetryResourceMetrics,
+	ResourceTelemetryResourceAuditLogs,
+	ResourceTelemetryResourceMeterMetrics,
 }
 
 var (
@@ -124,4 +126,6 @@ var (
 	ResourceTelemetryResourceLogs                         = NewResourceTelemetryResource(KindLogs)
 	ResourceTelemetryResourceTraces                       = NewResourceTelemetryResource(KindTraces)
 	ResourceTelemetryResourceMetrics                      = NewResourceTelemetryResource(KindMetrics)
+	ResourceTelemetryResourceAuditLogs                    = NewResourceTelemetryResource(KindAuditLogs)
+	ResourceTelemetryResourceMeterMetrics                 = NewResourceTelemetryResource(KindMeterMetrics)
 )

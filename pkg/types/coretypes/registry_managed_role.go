@@ -194,6 +194,11 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindLogs}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindTraces}, WildCardSelectorString)},
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMetrics}, WildCardSelectorString)},
+		// audit-logs and meter-metrics — admin-only read; sensitive source-qualified streams
+		// (signal=logs source=audit; signal=metrics source=meter). Start admin-only;
+		// widen to viewer/editor only on explicit ask (compliance/auditor flow).
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindAuditLogs}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeTelemetryResource, Kind: KindMeterMetrics}, WildCardSelectorString)},
 	},
 	SigNozEditorRoleName: {
 		// dashboard — full CRUD
