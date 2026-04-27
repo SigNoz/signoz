@@ -8,6 +8,7 @@ import apiGatewayUrl from '@/assets/Logos/api-gateway.svg';
 import argocdUrl from '@/assets/Logos/argocd.svg';
 import autogenUrl from '@/assets/Logos/autogen.svg';
 import awsAlbUrl from '@/assets/Logos/aws-alb.svg';
+import basetenUrl from '@/assets/Logos/baseten.svg';
 import azureAppServiceUrl from '@/assets/Logos/azure-app-service.svg';
 import azureBlobStorageUrl from '@/assets/Logos/azure-blob-storage.svg';
 import azureContainerAppsUrl from '@/assets/Logos/azure-container-apps.svg';
@@ -27,6 +28,7 @@ import cppUrl from '@/assets/Logos/cpp.svg';
 import crewAiUrl from '@/assets/Logos/crew-ai.svg';
 import dashboardsUrl from '@/assets/Logos/dashboards.svg';
 import datadogUrl from '@/assets/Logos/datadog.svg';
+import dbosUrl from '@/assets/Logos/dbos.svg';
 import deepseekUrl from '@/assets/Logos/deepseek.svg';
 import denoUrl from '@/assets/Logos/deno.svg';
 import dockerUrl from '@/assets/Logos/docker.svg';
@@ -105,6 +107,7 @@ import nvidiaDcgmUrl from '@/assets/Logos/nvidia-dcgm.svg';
 import ollamaUrl from '@/assets/Logos/ollama.svg';
 import openaiUrl from '@/assets/Logos/openai.svg';
 import openclawUrl from '@/assets/Logos/openclaw.svg';
+import opencodeUrl from '@/assets/Logos/opencode.svg';
 import openlitUrl from '@/assets/Logos/openlit.svg';
 import openrouterUrl from '@/assets/Logos/openrouter.svg';
 import opentelemetryUrl from '@/assets/Logos/opentelemetry.svg';
@@ -5167,6 +5170,79 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'hasura',
 		link: '/docs/integrations/opentelemetry-hasura/',
+	},
+	{
+		dataSource: 'opencode-observability',
+		label: 'OpenCode',
+		imgUrl: opencodeUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'ai coding',
+			'ai editor',
+			'code editor',
+			'llm',
+			'llm monitoring',
+			'monitoring',
+			'observability',
+			'opencode',
+			'opencode logs',
+			'opencode metrics',
+			'opencode monitoring',
+			'opencode observability',
+			'opencode traces',
+			'opentelemetry opencode',
+		],
+		id: 'opencode-observability',
+		link: '/docs/opencode-observability/',
+	},
+	{
+		dataSource: 'baseten-monitoring',
+		label: 'Baseten',
+		imgUrl: basetenUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'baseten',
+			'baseten logs',
+			'baseten metrics',
+			'baseten monitoring',
+			'baseten observability',
+			'baseten traces',
+			'llm',
+			'llm monitoring',
+			'ml model serving',
+			'model inference',
+			'monitoring',
+			'observability',
+			'opentelemetry baseten',
+		],
+		id: 'baseten-monitoring',
+		link: '/docs/baseten-monitoring/',
+	},
+	{
+		dataSource: 'dbos',
+		label: 'DBOS',
+		imgUrl: dbosUrl,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'database oriented',
+			'dbos',
+			'dbos instrumentation',
+			'dbos logs',
+			'dbos metrics',
+			'dbos monitoring',
+			'dbos observability',
+			'dbos traces',
+			'monitoring',
+			'observability',
+			'opentelemetry dbos',
+			'transactional runtime',
+			'workflow monitoring',
+		],
+		id: 'dbos',
+		link: '/docs/integrations/opentelemetry-dbos/',
 	},
 	{
 		dataSource: 'supabase',
