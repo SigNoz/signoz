@@ -6,15 +6,12 @@
  * ## Quick Start
  *
  * ```tsx
- * import {
- *   useGlobalTime,
- *   getAutoRefreshQueryKey,
- *   NANO_SECOND_MULTIPLIER,
- * } from 'store/globalTime';
+ * import { useGlobalTime, NANO_SECOND_MULTIPLIER } from 'store/globalTime';
  *
  * function MyComponent() {
  *   const selectedTime = useGlobalTime((s) => s.selectedTime);
  *   const getMinMaxTime = useGlobalTime((s) => s.getMinMaxTime);
+ *   const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
  *   const isRefreshEnabled = useGlobalTime((s) => s.isRefreshEnabled);
  *   const refreshInterval = useGlobalTime((s) => s.refreshInterval);
  *
@@ -64,18 +61,23 @@
  *
  * ### Step 2: Build Query Key
  *
- * Always use `getAutoRefreshQueryKey` to enable auto-refresh:
+ * Use the store's `getAutoRefreshQueryKey` to enable auto-refresh:
  *
  * ```tsx
+ * const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
+ *
  * const queryKey = useMemo(
  *   () => getAutoRefreshQueryKey(
  *     selectedTime,      // Required - triggers invalidation
  *     'UNIQUE_KEY',      // Your query identifier
  *     ...otherParams     // Additional cache-busting params
  *   ),
- *   [selectedTime, ...deps]
+ *   [getAutoRefreshQueryKey, selectedTime, ...deps]
  * );
  * ```
+ *
+ * **Note:** For named providers (with `name` prop), query keys are automatically
+ * scoped to that store, enabling isolated invalidation and refresh tracking.
  *
  * ### Step 3: Fetch Data
  *
@@ -169,6 +171,8 @@
  *
  * ```tsx
  * // Auto-refresh configuration
+ * const selectedTime = useGlobalTime((s) => s.selectedTime);
+ * const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
  * const isRefreshEnabled = useGlobalTime((s) => s.isRefreshEnabled);
  * const refreshInterval = useGlobalTime((s) => s.refreshInterval);
  *
@@ -201,12 +205,13 @@
  * | `setRefreshInterval(ms)` | Set auto-refresh interval |
  * | `getMinMaxTime(time?)` | Get min/max (fresh if auto-refresh enabled, cached otherwise) |
  * | `computeAndStoreMinMax()` | Compute fresh values and cache them |
+ * | `getAutoRefreshQueryKey(time, ...parts)` | Build scoped query key for this store instance |
  *
  * ### Utilities
  *
  * | Function | Description |
  * |----------|-------------|
- * | `getAutoRefreshQueryKey(time, ...parts)` | Build query key with auto-refresh support |
+ * | `getAutoRefreshQueryKey(time, ...parts)` | **@deprecated** Use store action instead |
  * | `parseSelectedTime(time)` | Parse time string to min/max (fresh computation) |
  * | `isCustomTimeRange(time)` | Check if time is custom range format |
  * | `createCustomTimeRange(min, max)` | Create custom range string |
@@ -229,6 +234,7 @@
  *
  * | Option | Type | Description |
  * |--------|------|-------------|
+ * | `name` | `string` | Scope query keys to this store (enables isolated invalidation) |
  * | `inheritGlobalTime` | `boolean` | Initialize with parent/global time value |
  * | `initialTime` | `string` | Initial time if not inheriting |
  * | `enableUrlParams` | `boolean \| object` | Sync time to URL query params |
@@ -311,6 +317,7 @@
  *   return (
  *     <Drawer open onClose={onClose}>
  *       <GlobalTimeProvider
+ *         name="pod-drawer"          // Scopes queries - only this drawer's queries are invalidated
  *         inheritGlobalTime          // Start with list's time
  *         removeQueryParamsOnUnmount // Clean up URL when drawer closes
  *         enableUrlParams={{
@@ -427,28 +434,55 @@
  *                 |-- NestedChart (uses store B)
  * ```
  *
+ * ### Scoped Query Keys with `name`
+ *
+ * The `name` prop enables isolated query invalidation. When a provider has a name,
+ * its queries are prefixed with that name, so invalidation only affects that store:
+ *
+ * ```tsx
+ * // Main page - unnamed store
+ * // Query keys: ['AUTO_REFRESH_QUERY', 'METRICS', ...]
+ * function MainDashboard() {
+ *   const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
+ *   // ...
+ * }
+ *
+ * // Drawer - named store
+ * // Query keys: ['AUTO_REFRESH_QUERY', 'drawer', 'METRICS', ...]
+ * function DetailDrawer() {
+ *   return (
+ *     <GlobalTimeProvider name="drawer" inheritGlobalTime>
+ *       <DrawerContent />
+ *     </GlobalTimeProvider>
+ *   );
+ * }
+ *
+ * function DrawerContent() {
+ *   const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
+ *   const invalidate = useGlobalTimeQueryInvalidate();
+ *   // invalidate() only refreshes queries with 'drawer' prefix
+ * }
+ * ```
+ *
  * ## Complete Example
  *
  * ```tsx
  * import { useMemo } from 'react';
  * import { useQuery } from 'react-query';
- * import {
- *   useGlobalTime,
- *   getAutoRefreshQueryKey,
- *   NANO_SECOND_MULTIPLIER,
- * } from 'store/globalTime';
+ * import { useGlobalTime, NANO_SECOND_MULTIPLIER } from 'store/globalTime';
  *
  * function MetricsPanel({ entityId }: { entityId: string }) {
  *   // 1. Get store state with selectors
  *   const selectedTime = useGlobalTime((s) => s.selectedTime);
  *   const getMinMaxTime = useGlobalTime((s) => s.getMinMaxTime);
+ *   const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
  *   const isRefreshEnabled = useGlobalTime((s) => s.isRefreshEnabled);
  *   const refreshInterval = useGlobalTime((s) => s.refreshInterval);
  *
- *   // 2. Build query key (memoized)
+ *   // 2. Build query key (memoized) - automatically scoped if using named provider
  *   const queryKey = useMemo(
  *     () => getAutoRefreshQueryKey(selectedTime, 'METRICS', entityId),
- *     [selectedTime, entityId]
+ *     [getAutoRefreshQueryKey, selectedTime, entityId]
  *   );
  *
  *   // 3. Query with auto-refresh
