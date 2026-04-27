@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui';
 import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { TableColumnDef } from 'components/TanStackTableView';
 import { InfraMonitoringEvents } from 'constants/events';
 import { FeatureKeys } from 'constants/features';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -19,27 +20,31 @@ import {
 	InfraMonitoringEntity,
 } from '../constants';
 import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
+	useInfraMonitoringPageListing,
 } from '../hooks';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel';
 
 import styles from './K8sHeader.module.scss';
 
-interface K8sHeaderProps {
+interface K8sHeaderProps<TData> {
 	controlListPrefix?: React.ReactNode;
 	entity: InfraMonitoringEntity;
 	showAutoRefresh: boolean;
+	columns: TableColumnDef<TData>[];
+	columnStorageKey: string;
 }
 
-function K8sHeader({
+function K8sHeader<TData>({
 	controlListPrefix,
 	entity,
 	showAutoRefresh,
-}: K8sHeaderProps): JSX.Element {
+	columns,
+	columnStorageKey,
+}: K8sHeaderProps<TData>): JSX.Element {
 	const [isFiltersSidePanelOpen, setIsFiltersSidePanelOpen] = useState(false);
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 
 	const currentQuery = initialQueriesMap[DataSource.METRICS];
 
@@ -77,7 +82,7 @@ function K8sHeader({
 		entityVersion: '',
 	});
 
-	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
 	const handleChangeTagFilters = useCallback(
 		(value: IBuilderQuery['filters']) => {
 			setUrlFilters(value || null);
@@ -207,7 +212,6 @@ function K8sHeader({
 					variant="ghost"
 					size="icon"
 					color="none"
-					disabled={groupBy?.length > 0}
 					data-testid="k8s-list-filters-button"
 					onClick={(): void => setIsFiltersSidePanelOpen(true)}
 				>
@@ -217,7 +221,8 @@ function K8sHeader({
 
 			<K8sFiltersSidePanel
 				open={isFiltersSidePanelOpen}
-				entity={entity}
+				columns={columns}
+				storageKey={columnStorageKey}
 				onClose={onClickOutside}
 			/>
 		</div>

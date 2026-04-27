@@ -90,6 +90,7 @@ function TanStackTableInner<TData>(
 		skeletonRowCount = 10,
 		enableQueryParams,
 		pagination,
+		paginationClassname,
 		onEndReached,
 		getRowKey,
 		getItemKey,
@@ -112,6 +113,7 @@ function TanStackTableInner<TData>(
 		testId,
 		prefixPaginationContent,
 		suffixPaginationContent,
+		enableAlternatingRowColors,
 	}: TanStackTableProps<TData>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
@@ -221,6 +223,15 @@ function TanStackTableInner<TData>(
 		[getRowCanExpand],
 	);
 
+	const isExpandEnabled = Boolean(renderExpandedRow);
+	useEffect(() => {
+		const hasExpanded =
+			typeof expanded === 'boolean' ? expanded : Object.keys(expanded).length > 0;
+		if (!isExpandEnabled && hasExpanded) {
+			setExpanded({});
+		}
+	}, [isExpandEnabled, expanded, setExpanded]);
+
 	const table = useReactTable({
 		data: effectiveData,
 		columns: tanstackColumns,
@@ -229,7 +240,7 @@ function TanStackTableInner<TData>(
 		columnResizeMode: 'onChange',
 		getCoreRowModel: getCoreRowModel(),
 		getRowId,
-		enableExpanding: Boolean(renderExpandedRow),
+		enableExpanding: isExpandEnabled,
 		getRowCanExpand: renderExpandedRow ? tableGetRowCanExpand : undefined,
 		onColumnSizingChange: handleColumnSizingChange,
 		onColumnVisibilityChange: noopColumnVisibility,
@@ -333,6 +344,7 @@ function TanStackTableInner<TData>(
 			hasSingleColumn,
 			columnOrderKey,
 			columnVisibilityKey,
+			enableAlternatingRowColors,
 		}),
 		[
 			getRowStyle,
@@ -350,6 +362,7 @@ function TanStackTableInner<TData>(
 			hasSingleColumn,
 			columnOrderKey,
 			columnVisibilityKey,
+			enableAlternatingRowColors,
 		],
 	);
 
@@ -534,7 +547,7 @@ function TanStackTableInner<TData>(
 						</div>
 					)}
 					{showPagination && pagination && (
-						<div className={viewStyles.paginationContainer}>
+						<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
 							{prefixPaginationContent}
 							<Pagination
 								current={page}

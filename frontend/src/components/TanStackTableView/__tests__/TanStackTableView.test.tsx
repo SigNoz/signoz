@@ -389,6 +389,26 @@ describe('TanStackTableView Integration', () => {
 			// by checking the table renders without errors
 			expect(screen.getByRole('table')).toBeInTheDocument();
 		});
+
+		it('renders without errors when expanded state exists but expansion is disabled', async () => {
+			// This tests that the table handles the case where URL has expanded state
+			// but renderExpandedRow is undefined (expansion disabled).
+			// The table's useEffect should reset expanded state automatically.
+			renderTanStackTable({
+				props: {
+					enableQueryParams: true,
+					// renderExpandedRow is undefined - expansion disabled
+				},
+				queryParams: { expanded: '["1"]' },
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			// Table should render without any expanded rows
+			expect(screen.queryByTestId('expanded-content')).not.toBeInTheDocument();
+		});
 	});
 
 	describe('infinite scroll', () => {

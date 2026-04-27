@@ -1,28 +1,25 @@
-.expandedClickableRow {
-	cursor: pointer;
+.expandedTableContainer {
+	overflow-x: auto;
+	padding-bottom: var(--spacing-8);
+	min-height: 360px;
 }
 
-.expandedTableContainer {
-	border: 1px solid var(--l1-border);
-	overflow-x: auto;
-	padding-left: 48px;
+.expandedTable {
+	min-height: 340px;
 
-	:global(.ant-table-tbody > tr:hover > td) {
-		background: none !important;
-	}
+	--tanstack-first-column-bg: var(--l1-background);
+	--tanstack-first-column-header-bg: var(--l1-background);
 }
 
 .expandedTableFooter {
 	display: flex;
 	justify-content: flex-start;
-	gap: 8px;
-	padding: 8px;
-	padding-left: 42px;
-	margin-top: 8px;
+	gap: var(--spacing-4);
+	margin-top: var(--spacing-4);
 }
 
 .viewAllButton {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-2);
+	margin-right: var(--spacing-8);
 }

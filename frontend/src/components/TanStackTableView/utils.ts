@@ -35,7 +35,10 @@ export const getColumnWidthStyle = <TData>(
 ): CSSProperties => {
 	// Last column always fills remaining space
 	if (isLastColumn) {
-		return { width: '100%' };
+		return {
+			width: '100%',
+			minWidth: persistedWidth ?? column?.width?.min,
+		};
 	}
 
 	const { width } = column;
