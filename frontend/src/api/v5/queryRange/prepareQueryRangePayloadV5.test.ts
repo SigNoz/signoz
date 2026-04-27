@@ -170,9 +170,9 @@ describe('prepareQueryRangePayloadV5', () => {
 
 		// Variables mapped as { key: { value } }
 		expect(payload.variables).toStrictEqual({
-			svc: { value: 'api' },
-			count: { value: 5 },
-			flag: { value: true },
+			svc: { value: 'api', type: undefined },
+			count: { value: 5, type: undefined },
+			flag: { value: true, type: undefined },
 		});
 
 		// Queries include one builder_query and one builder_formula

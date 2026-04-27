@@ -830,6 +830,8 @@ describe('convertAggregationToExpression', () => {
 		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'count',
 				spaceAggregation: 'count',
 			},
@@ -846,6 +848,8 @@ describe('convertAggregationToExpression', () => {
 		expect(result).toStrictEqual([
 			{
 				metricName: '',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'sum',
 				spaceAggregation: 'sum',
 			},
@@ -922,6 +926,8 @@ describe('convertAggregationToExpression', () => {
 		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'max',
 				spaceAggregation: 'max',
 			},
