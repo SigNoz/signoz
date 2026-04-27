@@ -89,15 +89,15 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Text
 						strong
-						style={{ color: Color.text['active'], display: 'block' }}
+						style={{ display: 'flex', alignItems: 'center', gap: 8 }}
 					>
+						<Bell size={16} color={Color.semantic.warning} />
 						{pluralize('Alert', totalAlerts)} ({totalAlerts})
 					</Typography.Text>
 				),
-				icon: <Bell size={16} />,
 				onClick: () => {
 					openInNewTab(
-						`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+						`/${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
 					);
 				},
 			});
@@ -109,15 +109,15 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Text
 						strong
-						style={{ color: Color.text['active'], display: 'block' }}
+						style={{ display: 'flex', alignItems: 'center', gap: 8 }}
 					>
+						<Grid size={16} color={Color.primary[500]} />
 						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
 					</Typography.Text>
 				),
-				icon: <Grid size={16} />,
 				onClick: () => {
 					openInNewTab(
-						`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+						`/${ROUTES.DASHBOARD}?${QueryParams.search}=${metricName}`,
 					);
 				},
 			});
@@ -126,36 +126,39 @@ function DashboardsAndAlertsPopover({
 		return items;
 	}, [totalAlerts, totalDashboards, metricName]);
 
-	if (!metricName) return null;
-
-	if (!hasAnyData && (alertsData.isLoading || dashboardsData.isLoading)) {
-		return (
-			<Dropdown
-				overlay={<Menu items={[]} />}
-				trigger={['click']}
-				disabled
-			>
-				<Skeleton.Input size="small" style={{ width: 120 }} active />
-			</Dropdown>
-		);
+	if (!hasAnyData) {
+		return null;
 	}
-
-	if (!hasAnyData) return null;
 
 	return (
 		<Dropdown
-			overlay={<Menu items={menuItems} />}
+			menu={{ items: menuItems }}
 			trigger={['click']}
+			placement="bottomRight"
 		>
-			<Typography.Link>
-				{totalAlerts > 0
-					? `${totalAlerts} ${pluralize('Alert', totalAlerts)}`
-					: null}
-				{totalAlerts > 0 && totalDashboards > 0 ? ' • ' : null}
-				{totalDashboards > 0
-					? `${totalDashboards} ${pluralize('Dashboard', totalDashboards)}`
-					: null}
-			</Typography.Link>
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
+					cursor: 'pointer',
+					color: Color.text.accent,
+					fontWeight: 500,
+				}}
+			>
+				{totalAlerts > 0 && (
+					<>
+						<Bell size={14} color={Color.semantic.warning} />
+						<span>{totalAlerts}</span>
+					</>
+				)}
+				{totalDashboards > 0 && (
+					<>
+						<Grid size={14} color={Color.primary[500]} />
+						<span>{totalDashboards}</span>
+					</>
+				)}
+			</div>
 		</Dropdown>
 	);
 }
