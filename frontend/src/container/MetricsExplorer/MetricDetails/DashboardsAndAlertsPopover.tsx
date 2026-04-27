@@ -78,101 +78,68 @@ function DashboardsAndAlertsPopover({
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
 
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
+	const hasAnyData = totalAlerts > 0 || totalDashboards > 0;
 
-	const handleAlertsClick = (): void => {
+	if (!hasAnyData && !alertsData.isLoading && !dashboardsData.isLoading) {
+		return null;
+	}
+
+	const handleAlertClick = (): void => {
 		const searchParams = new URLSearchParams({
 			[QueryParams.search]: metricName,
 		});
+
 		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
 	};
 
-	const handleDashboardsClick = (): void => {
+	const handleDashboardClick = (): void => {
 		const searchParams = new URLSearchParams({
 			[QueryParams.search]: metricName,
 		});
+
 		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
 	};
 
-	if (!metricName) return null;
-
-	const loading = alertsData.isLoading || dashboardsData.isLoading;
-
-	if (loading) {
-		return (
-			<div>
-				<Skeleton.Input active size="small" />
-			</div>
-		);
-	}
-
-	if (alertsData.isError || dashboardsData.isError) {
-		return (
-			<Typography.Text type="secondary">Failed to load data</Typography.Text>
-		);
-	}
-
 	const menu = (
 		<Menu>
-			{hasAlerts && (
-				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertsClick}>
-					<Typography.Text strong>
-						{totalAlerts} {pluralize('alert', totalAlerts)} using this metric
-					</Typography.Text>
+			{totalAlerts > 0 && (
+				<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
+					<Typography.Text strong>{totalAlerts}</Typography.Text>{' '}
+					{pluralize('alert', totalAlerts)} using this metric
 				</Menu.Item>
 			)}
-			{hasDashboards && (
-				<Menu.Item
-					key="dashboards"
-					icon={<Grid size={16} />}
-					onClick={handleDashboardsClick}
-				>
-					<Typography.Text strong>
-						{totalDashboards} {pluralize('dashboard', totalDashboards)} using this metric
-					</Typography.Text>
+			{totalDashboards > 0 && (
+				<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
+					<Typography.Text strong>{totalDashboards}</Typography.Text>{' '}
+					{pluralize('dashboard', totalDashboards)} using this metric
 				</Menu.Item>
 			)}
-			{!hasAlerts && !hasDashboards && (
-				<Menu.Item key="empty" disabled>
-					<Typography.Text type="secondary">
-						No alerts or dashboards using this metric
-					</Typography.Text>
+			{alertsData.isLoading && (
+				<Menu.Item key="loading-alerts">
+					<Skeleton.Input active size="small" style={{ width: '100%' }} />
+				</Menu.Item>
+			)}
+			{dashboardsData.isLoading && (
+				<Menu.Item key="loading-dashboards">
+					<Skeleton.Input active size="small" style={{ width: '100%' }} />
 				</Menu.Item>
 			)}
 		</Menu>
 	);
 
 	return (
-		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+		<Dropdown overlay={menu} trigger={['hover']} placement="bottomRight">
 			<div
 				style={{
-					color: Color.semantic.text.secondary,
-					cursor: 'pointer',
-					fontSize: 12,
 					display: 'flex',
 					alignItems: 'center',
-					gap: 4,
+					gap: '4px',
+					color: Color.primary.primary,
+					cursor: 'pointer',
 				}}
 			>
-				{hasAlerts && (
-					<span>
-						<Bell size={12} style={{ color: Color.semantic.warning.border }} />
-					</span>
-				)}
-				{hasDashboards && (
-					<span>
-						<Grid size={12} style={{ color: Color.semantic.info.border }} />
-					</span>
-				)}
-				{totalAlerts + totalDashboards > 0 ? (
-					<Typography.Text type="secondary">
-						{totalAlerts + totalDashboards} {pluralize('item', totalAlerts + totalDashboards)}{' '}
-						using
-					</Typography.Text>
-				) : (
-					<Typography.Text type="secondary">No usage</Typography.Text>
-				)}
+				<Bell size={14} />
+				<Grid size={14} />
 			</div>
 		</Dropdown>
 	);
