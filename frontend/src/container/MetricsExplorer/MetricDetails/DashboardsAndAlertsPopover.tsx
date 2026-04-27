@@ -57,7 +57,11 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
+	return {
+		data: newAlertsData?.data || [],
+		isLoading: false,
+		isError: false,
+	};
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,112 +85,180 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
+	return {
+		data: newDashboardsData?.data || [],
+		isLoading: false,
+		isError: false,
+	};
+}
+
+function getAlertsMenuItems(handleAlertClick: (id: string) => void, alerts: any[]) {
+	return alerts.map((alert) => ({
+		key: alert.id,
+		label: (
+			<Typography.Text
+				ellipsis
+				style={{ maxWidth: 200 }}
+				onClick={() => handleAlertClick(alert.id)}
+			>
+				{alert.name}
+			</Typography.Text>
+		),
+	}));
+}
+
+function getDashboardsMenuItems(
+	handleDashboardClick: (uid: string) => void,
+	dashboards: any[],
+) {
+	return dashboards.map((dashboard) => ({
+		key: dashboard.uid,
+		label: (
+			<Typography.Text
+				ellipsis
+				style={{ maxWidth: 200 }}
+				onClick={() => handleDashboardClick(dashboard.uid)}
+			>
+				{dashboard.title}
+			</Typography.Text>
+		),
+	}));
 }
 
 export function DashboardsAndAlertsPopover({
 	metricName,
-	children,
-}: DashboardsAndAlertsPopoverProps): JSX.Element {
+}: DashboardsAndAlertsPopoverProps) {
 	const [open, setOpen] = useState(false);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
+	const { data: alerts, isLoading: isLoadingAlerts, isError: isErrorAlerts } =
+		useMetricAlertsStatus(metricName);
+	const {
+		data: dashboards,
+		isLoading: isLoadingDashboards,
+		isError: isErrorDashboards,
+	} = useMetricDashboardsStatus(metricName);
 
-	const isLoading = alertsStatus.isLoading || dashboardsStatus.isLoading;
-	const isError = alertsStatus.isError || dashboardsStatus.isError;
+	const totalItems = alerts.length + dashboards.length;
 
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
+	const isLoading = isLoadingAlerts || isLoadingDashboards;
+	const isError = isErrorAlerts || isErrorDashboards;
 
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
+	const handleAlertClick = (id: string) => {
+		const path = generatePath(ROUTES.ALERT_DETAIL, {
+			[QueryParams.alertId]: id,
+		});
+		openInNewTab(path);
 	};
 
-	const handleViewAllAlerts = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		}).toString();
-
-		openInNewTab(`${ROUTES.LIST_ALERTS}?${searchParams}`);
+	const handleDashboardClick = (uid: string) => {
+		const path = generatePath(ROUTES.APPLICATION, {
+			[QueryParams.dashboardUid]: uid,
+		});
+		openInNewTab(path);
 	};
 
-	const handleViewAllDashboards = (): void => {
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		}).toString();
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams}`);
-	};
-
-	const menu = useMemo(
-		() => (
-			<Menu>
-				{isLoading ? (
-					<Menu.Item key="loading">
-						<Skeleton.Input active size="small" />
-					</Menu.Item>
-				) : isError ? (
-					<Menu.Item key="error" disabled>
-						<Typography.Text type="danger">Failed to load data</Typography.Text>
-					</Menu.Item>
-				) : (
-					<>
-						<Menu.Item
-							key="alerts"
-							icon={<Bell size={16} />}
-							disabled={totalAlerts === 0}
-							onClick={handleViewAllAlerts}
-						>
-							<Typography.Text
-								style={{
-									color:
-										totalAlerts === 0
-											? Color.text.disabled
-											: Color.text.secondary,
-								}}
-							>
-								{pluralize('Alert', totalAlerts)} ({totalAlerts})
-							</Typography.Text>
-						</Menu.Item>
-						<Menu.Item
-							key="dashboards"
-							icon={<Grid size={16} />}
-							disabled={totalDashboards === 0}
-							onClick={handleViewAllDashboards}
-						>
-							<Typography.Text
-								style={{
-									color:
-										totalDashboards === 0
-											? Color.text.disabled
-											: Color.text.secondary,
-								}}
-							>
-								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-							</Typography.Text>
-						</Menu.Item>
-					</>
-				)}
-			</Menu>
-		),
-		[
-			isLoading,
-			isError,
-			totalAlerts,
-			totalDashboards,
-			metricName,
-		],
+	const alertsMenuItems = useMemo(
+		() => getAlertsMenuItems(handleAlertClick, alerts),
+		[alerts, handleAlertClick],
 	);
+
+	const dashboardsMenuItems = useMemo(
+		() => getDashboardsMenuItems(handleDashboardClick, dashboards),
+		[dashboards, handleDashboardClick],
+	);
+
+	const menuItems = [
+		...(alertsMenuItems.length > 0
+			? [
+					{
+						type: 'group' as const,
+						label: (
+							<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+								{pluralize('Alert', alerts.length)} ({alerts.length})
+							</Typography.Text>
+						),
+						children: alertsMenuItems,
+					},
+			  ]
+			: []),
+		...(dashboardsMenuItems.length > 0
+			? [
+					{
+						type: 'group' as const,
+						label: (
+							<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+								{pluralize('Dashboard', dashboards.length)} ({dashboards.length})
+							</Typography.Text>
+						),
+						children: dashboardsMenuItems,
+					},
+			  ]
+			: []),
+	];
+
+	const content = useMemo(() => {
+		if (isLoading) {
+			return <Skeleton active paragraph={{ rows: 2 }} />;
+		}
+
+		if (isError || totalItems === 0) {
+			return (
+				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
+					No dashboards or alerts found
+				</Typography.Text>
+			);
+		}
+
+		return (
+			<Menu
+				items={menuItems}
+				style={{ maxHeight: 300, overflowY: 'auto', minWidth: 200 }}
+				role="listbox"
+			/>
+		);
+	}, [isLoading, isError, totalItems, menuItems]);
 
 	return (
 		<Dropdown
-			overlay={menu}
+			menu={{ items: menuItems }}
+			overlayStyle={{ minWidth: 220 }}
+			placement="bottomRight"
 			trigger={['click']}
 			open={open}
-			onOpenChange={handleOpenChange}
+			onOpenChange={setOpen}
 		>
-			{children}
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
+					color: Color.primary.primary,
+					cursor: 'pointer',
+					fontSize: 14,
+					padding: '2px 6px',
+					borderRadius: 4,
+					transition: 'all 0.2s',
+				}}
+				onMouseEnter={(e) => {
+					e.currentTarget.style.backgroundColor = Color.bg.hover;
+				}}
+				onMouseLeave={(e) => {
+					e.currentTarget.style.backgroundColor = 'transparent';
+				}}
+			>
+				<Grid size={14} />
+				{totalItems > 0 && (
+					<Typography.Text
+						style={{
+							color: Color.text['text-warning'],
+							fontSize: 10,
+							fontWeight: 600,
+						}}
+					>
+						{totalItems}
+					</Typography.Text>
+				)}
+			</div>
 		</Dropdown>
 	);
 }
