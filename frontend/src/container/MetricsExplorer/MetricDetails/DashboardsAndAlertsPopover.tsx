@@ -124,52 +124,82 @@ export function DashboardsAndAlertsPopover({
 
 		if (totalAlerts === 0 && totalDashboards === 0) {
 			return (
-				<Typography.Text type="secondary">
-					No dashboards or alerts found for this metric
-				</Typography.Text>
+				<Typography.Text type="secondary">No dashboards or alerts</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu>
+			<div style={{ minWidth: 200 }}>
 				{totalAlerts > 0 && (
-					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
-						<span>
-							<Bell size={16} color={Color.semantic.warning} />{' '}
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+							marginBottom: 8,
+						}}
+					>
+						<Typography.Text>
+							<Bell size={14} style={{ marginRight: 8, color: Color.text.accent }} />
 							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</span>
-					</Menu.Item>
+						</Typography.Text>
+						<Typography.Link
+							onClick={handleViewAllAlerts}
+							style={{ fontSize: 12 }}
+						>
+							View all
+						</Typography.Link>
+					</div>
 				)}
 				{totalDashboards > 0 && (
-					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
-						<span>
-							<Grid size={16} color={Color.primary} />{' '}
+					<div
+						style={{
+							display: 'flex',
+							justifyContent: 'space-between',
+							alignItems: 'center',
+						}}
+					>
+						<Typography.Text>
+							<Grid size={14} style={{ marginRight: 8, color: Color.text.accent }} />
 							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</span>
-					</Menu.Item>
+						</Typography.Text>
+						<Typography.Link
+							onClick={handleViewAllDashboards}
+							style={{ fontSize: 12 }}
+						>
+							View all
+						</Typography.Link>
+					</div>
 				)}
-			</Menu>
+			</div>
 		);
 	};
 
+	const menu = (
+		<Menu>
+			<Menu.Item key="content" disabled>
+				{renderContent()}
+			</Menu.Item>
+		</Menu>
+	);
+
 	return (
 		<Dropdown
-			menu={{ items: [] }}
+			overlay={menu}
+			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			overlay={renderContent()}
-			trigger={['click']}
 			placement="bottomRight"
 		>
-			<span
-				style={{
-					color: Color.primary,
-					cursor: 'pointer',
-					fontWeight: 500,
+			<Typography.Link
+				onClick={(e) => {
+					e.preventDefault();
+					setOpen(!open);
 				}}
+				style={{ fontSize: 12 }}
 			>
-				View in Dashboards & Alerts
-			</span>
+				View in dashboards & alerts
+			</Typography.Link>
 		</Dropdown>
 	);
 }
