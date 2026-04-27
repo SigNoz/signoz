@@ -57,11 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return {
-		data: newAlertsData?.data || [],
-		isLoading: false,
-		isError: false,
-	};
+	return { data: newAlertsData, isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -85,180 +81,96 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
+	return { data: newDashboardsData, isLoading: false, isError: false };
+}
+
+function useMetricStatus(metricName: string): Status {
 	return {
-		data: newDashboardsData?.data || [],
-		isLoading: false,
-		isError: false,
+		alerts: useMetricAlertsStatus(metricName),
+		dashboards: useMetricDashboardsStatus(metricName),
 	};
 }
 
-function getAlertsMenuItems(handleAlertClick: (id: string) => void, alerts: any[]) {
-	return alerts.map((alert) => ({
-		key: alert.id,
-		label: (
-			<Typography.Text
-				ellipsis
-				style={{ maxWidth: 200 }}
-				onClick={() => handleAlertClick(alert.id)}
-			>
-				{alert.name}
-			</Typography.Text>
-		),
-	}));
-}
-
-function getDashboardsMenuItems(
-	handleDashboardClick: (uid: string) => void,
-	dashboards: any[],
-) {
-	return dashboards.map((dashboard) => ({
-		key: dashboard.uid,
-		label: (
-			<Typography.Text
-				ellipsis
-				style={{ maxWidth: 200 }}
-				onClick={() => handleDashboardClick(dashboard.uid)}
-			>
-				{dashboard.title}
-			</Typography.Text>
-		),
-	}));
-}
-
-export function DashboardsAndAlertsPopover({
+function DashboardsAndAlertsPopover({
 	metricName,
-}: DashboardsAndAlertsPopoverProps) {
-	const [open, setOpen] = useState(false);
+}: DashboardsAndAlertsPopoverProps): JSX.Element {
+	const { alerts, dashboards } = useMetricStatus(metricName);
 
-	const { data: alerts, isLoading: isLoadingAlerts, isError: isErrorAlerts } =
-		useMetricAlertsStatus(metricName);
-	const {
-		data: dashboards,
-		isLoading: isLoadingDashboards,
-		isError: isErrorDashboards,
-	} = useMetricDashboardsStatus(metricName);
-
-	const totalItems = alerts.length + dashboards.length;
-
-	const isLoading = isLoadingAlerts || isLoadingDashboards;
-	const isError = isErrorAlerts || isErrorDashboards;
-
-	const handleAlertClick = (id: string) => {
-		const path = generatePath(ROUTES.ALERT_DETAIL, {
-			[QueryParams.alertId]: id,
-		});
-		openInNewTab(path);
-	};
-
-	const handleDashboardClick = (uid: string) => {
-		const path = generatePath(ROUTES.APPLICATION, {
-			[QueryParams.dashboardUid]: uid,
-		});
-		openInNewTab(path);
-	};
-
-	const alertsMenuItems = useMemo(
-		() => getAlertsMenuItems(handleAlertClick, alerts),
-		[alerts, handleAlertClick],
-	);
-
-	const dashboardsMenuItems = useMemo(
-		() => getDashboardsMenuItems(handleDashboardClick, dashboards),
-		[dashboards, handleDashboardClick],
-	);
-
-	const menuItems = [
-		...(alertsMenuItems.length > 0
-			? [
-					{
-						type: 'group' as const,
-						label: (
-							<Typography.Text type="secondary" style={{ fontSize: 12 }}>
-								{pluralize('Alert', alerts.length)} ({alerts.length})
-							</Typography.Text>
-						),
-						children: alertsMenuItems,
-					},
-			  ]
-			: []),
-		...(dashboardsMenuItems.length > 0
-			? [
-					{
-						type: 'group' as const,
-						label: (
-							<Typography.Text type="secondary" style={{ fontSize: 12 }}>
-								{pluralize('Dashboard', dashboards.length)} ({dashboards.length})
-							</Typography.Text>
-						),
-						children: dashboardsMenuItems,
-					},
-			  ]
-			: []),
-	];
-
-	const content = useMemo(() => {
-		if (isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (isError || totalItems === 0) {
-			return (
-				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
-					No dashboards or alerts found
-				</Typography.Text>
-			);
-		}
-
+	if (alerts.isError || dashboards.isError) {
 		return (
-			<Menu
-				items={menuItems}
-				style={{ maxHeight: 300, overflowY: 'auto', minWidth: 200 }}
-				role="listbox"
-			/>
+			<Skeleton active>
+				<Typography.Text>Error loading data</Typography.Text>
+			</Skeleton>
 		);
-	}, [isLoading, isError, totalItems, menuItems]);
+	}
+
+	if (alerts.isLoading || dashboards.isLoading) {
+		return (
+			<Skeleton active>
+				<Typography.Text>Loading data...</Typography.Text>
+			</Skeleton>
+		);
+	}
 
 	return (
 		<Dropdown
-			menu={{ items: menuItems }}
-			overlayStyle={{ minWidth: 220 }}
-			placement="bottomRight"
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(alerts.data.length, 'alert')}{' '}
+							{pluralize(dashboards.data.length, 'dashboard')}
+						</Typography.Text>
+					</Menu.Item>
+					{alerts.data.map((alert) => (
+						<Menu.Item key={alert.id}>
+							<Typography.Text>
+								<a
+									href={generatePath(ROUTES.METRIC_ALERTS, {
+										metricName,
+										alertId: alert.id,
+									})}
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.METRIC_ALERTS, {
+											metricName,
+											alertId: alert.id,
+										}));
+									}}
+								>
+									{alert.name}
+								</a>
+							</Typography.Text>
+						</Menu.Item>
+					))}
+					{dashboards.data.map((dashboard) => (
+						<Menu.Item key={dashboard.id}>
+							<Typography.Text>
+								<a
+									href={generatePath(ROUTES.METRIC_DASHBOARD, {
+										metricName,
+										dashboardId: dashboard.id,
+									})}
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.METRIC_DASHBOARD, {
+											metricName,
+											dashboardId: dashboard.id,
+										}));
+									}}
+								>
+									{dashboard.name}
+								</a>
+							</Typography.Text>
+						</Menu.Item>
+					))}
+				</Menu>
+			}
 			trigger={['click']}
-			open={open}
-			onOpenChange={setOpen}
 		>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: 4,
-					color: Color.primary.primary,
-					cursor: 'pointer',
-					fontSize: 14,
-					padding: '2px 6px',
-					borderRadius: 4,
-					transition: 'all 0.2s',
-				}}
-				onMouseEnter={(e) => {
-					e.currentTarget.style.backgroundColor = Color.bg.hover;
-				}}
-				onMouseLeave={(e) => {
-					e.currentTarget.style.backgroundColor = 'transparent';
-				}}
-			>
-				<Grid size={14} />
-				{totalItems > 0 && (
-					<Typography.Text
-						style={{
-							color: Color.text['text-warning'],
-							fontSize: 10,
-							fontWeight: 600,
-						}}
-					>
-						{totalItems}
-					</Typography.Text>
-				)}
-			</div>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
