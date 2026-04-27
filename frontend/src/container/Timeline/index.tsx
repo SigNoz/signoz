@@ -23,14 +23,11 @@ function Timeline({
 	const [intervals, setIntervals] = useState<Interval[] | null>(null);
 
 	useEffect(() => {
-		const {
-			baseInterval,
-			baseSpread,
-			intervalSpreadNormalized,
-		} = getIntervalSpread({
-			globalTraceMetadata,
-			localTraceMetaData: traceMetaData,
-		});
+		const { baseInterval, baseSpread, intervalSpreadNormalized } =
+			getIntervalSpread({
+				globalTraceMetadata,
+				localTraceMetaData: traceMetaData,
+			});
 
 		let intervalUnit = INTERVAL_UNITS[0];
 		for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {

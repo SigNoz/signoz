@@ -72,12 +72,13 @@ function TracesTableComponent({
 
 	const queryTableDataResult =
 		queryResponse.data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const transformedQueryTableData = useMemo(
-		() => ((transformDataWithDate(queryTableData) || []) as unknown) as RowData[],
+		() => (transformDataWithDate(queryTableData) || []) as unknown as RowData[],
 		[queryTableData],
 	);
 

@@ -307,15 +307,13 @@ export default function BillingContainer(): JSX.Element {
 		},
 	);
 
-	const {
-		mutate: manageCreditCard,
-		isLoading: isLoadingManageBilling,
-	} = useMutation(manageCreditCardApi, {
-		onSuccess: (data) => {
-			handleBillingOnSuccess(data);
-		},
-		onError: handleBillingOnError,
-	});
+	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
+		useMutation(manageCreditCardApi, {
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		});
 
 	const handleBilling = useCallback(async () => {
 		if (!trialInfo?.trialConvertedToSubscription) {
@@ -487,7 +485,7 @@ export default function BillingContainer(): JSX.Element {
 								showIcon
 								style={{ marginTop: 12 }}
 							/>
-					  )
+						)
 					: null}
 
 				{isLoading || isFetchingBillingData ? (

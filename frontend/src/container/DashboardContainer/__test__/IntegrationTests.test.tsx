@@ -53,7 +53,8 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
 		dashboardData: mockDashboard,
 		setDashboardData: mockSetDashboardData,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+		updateLocalStorageDashboardVariables:
+			mockUpdateLocalStorageDashboardVariables,
 	}),
 }));
 

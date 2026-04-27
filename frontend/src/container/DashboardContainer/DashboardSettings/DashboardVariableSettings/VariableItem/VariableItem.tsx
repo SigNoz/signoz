@@ -84,10 +84,8 @@ function VariableItem({
 	const [variableName, setVariableName] = useState<string>(
 		variableData.name || '',
 	);
-	const [
-		hasUserManuallyChangedName,
-		setHasUserManuallyChangedName,
-	] = useState<boolean>(false);
+	const [hasUserManuallyChangedName, setHasUserManuallyChangedName] =
+		useState<boolean>(false);
 	const [variableDescription, setVariableDescription] = useState<string>(
 		variableData.description || '',
 	);
@@ -103,12 +101,10 @@ function VariableItem({
 	const [variableTextboxValue, setVariableTextboxValue] = useState<string>(
 		variableData.textboxValue || '',
 	);
-	const [
-		variableSortType,
-		setVariableSortType,
-	] = useState<TSortVariableValuesType>(
-		variableData.sort || VariableSortTypeArr[0],
-	);
+	const [variableSortType, setVariableSortType] =
+		useState<TSortVariableValuesType>(
+			variableData.sort || VariableSortTypeArr[0],
+		);
 	const [variableMultiSelect, setVariableMultiSelect] = useState<boolean>(
 		variableData.multiSelect || false,
 	);
@@ -122,19 +118,15 @@ function VariableItem({
 
 	const isDarkMode = useIsDarkMode();
 
-	const [
-		dynamicVariablesSelectedValue,
-		setDynamicVariablesSelectedValue,
-	] = useState<{ name: string; value: string }>();
+	const [dynamicVariablesSelectedValue, setDynamicVariablesSelectedValue] =
+		useState<{ name: string; value: string }>();
 
 	// Error messages
 	const [errorName, setErrorName] = useState<boolean>(false);
 	const [errorNameMessage, setErrorNameMessage] = useState<string>('');
 	const [errorAttributeKey, setErrorAttributeKey] = useState<boolean>(false);
-	const [
-		errorAttributeKeyMessage,
-		setErrorAttributeKeyMessage,
-	] = useState<string>('');
+	const [errorAttributeKeyMessage, setErrorAttributeKeyMessage] =
+		useState<string>('');
 	const [errorPreview, setErrorPreview] = useState<string | null>(null);
 
 	useEffect(() => {

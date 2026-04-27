@@ -89,23 +89,18 @@ const logsQueryServerRequest = (): void =>
 
 describe('Logs Explorer Tests', () => {
 	test('Logs Explorer default view test without data', async () => {
-		const {
-			getByRole,
-			queryByText,
-			getByTestId,
-			queryByTestId,
-			container,
-		} = render(
-			<MemoryRouter
-				initialEntries={[
-					'/logs-explorer/?panelType=list&selectedExplorerView=list',
-				]}
-			>
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>
-			</MemoryRouter>,
-		);
+		const { getByRole, queryByText, getByTestId, queryByTestId, container } =
+			render(
+				<MemoryRouter
+					initialEntries={[
+						'/logs-explorer/?panelType=list&selectedExplorerView=list',
+					]}
+				>
+					<PreferenceContextProvider>
+						<LogsExplorer />
+					</PreferenceContextProvider>
+				</MemoryRouter>,
+			);
 
 		// by default is hidden, toggle the chart and check it's visibility
 		const histogramToggle = getByRole('switch');

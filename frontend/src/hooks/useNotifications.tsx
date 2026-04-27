@@ -23,9 +23,8 @@ const defaultNotification: Notification = {
 	},
 };
 
-export const NotificationContext = createContext<Notification>(
-	defaultNotification,
-);
+export const NotificationContext =
+	createContext<Notification>(defaultNotification);
 
 export function NotificationProvider({
 	children,
@@ -33,9 +32,10 @@ export function NotificationProvider({
 	children: JSX.Element;
 }): JSX.Element {
 	const [notificationApi, NotificationElement] = notification.useNotification();
-	const notifications = useMemo(() => ({ notifications: notificationApi }), [
-		notificationApi,
-	]);
+	const notifications = useMemo(
+		() => ({ notifications: notificationApi }),
+		[notificationApi],
+	);
 
 	return (
 		<NotificationContext.Provider value={notifications}>

@@ -36,10 +36,8 @@ function AuthDomain(): JSX.Element {
 	const [record, setRecord] = useState<AuthtypesGettableAuthDomainDTO>();
 	const [addDomain, setAddDomain] = useState<boolean>(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [
-		activeDomain,
-		setActiveDomain,
-	] = useState<AuthtypesGettableAuthDomainDTO | null>(null);
+	const [activeDomain, setActiveDomain] =
+		useState<AuthtypesGettableAuthDomainDTO | null>(null);
 
 	const { showErrorModal } = useErrorModal();
 
@@ -51,9 +49,8 @@ function AuthDomain(): JSX.Element {
 		refetch: refetchAuthDomainListResponse,
 	} = useListAuthDomains();
 
-	const { mutate: deleteAuthDomain, isLoading } = useDeleteAuthDomain<
-		AxiosError<RenderErrorResponseDTO>
-	>();
+	const { mutate: deleteAuthDomain, isLoading } =
+		useDeleteAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	const showDeleteModal = useCallback(
 		(domain: AuthtypesGettableAuthDomainDTO): void => {

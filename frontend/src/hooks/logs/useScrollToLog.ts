@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import type { VirtuosoHandle } from 'react-virtuoso';
 
+type ScrollToIndexHandle = Pick<VirtuosoHandle, 'scrollToIndex'>;
+
 type UseScrollToLogParams = {
 	logs: Array<{ id: string }>;
-	virtuosoRef: React.RefObject<VirtuosoHandle | null>;
+	virtuosoRef: React.RefObject<ScrollToIndexHandle | null>;
 };
 
 function useScrollToLog({

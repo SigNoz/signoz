@@ -12,9 +12,10 @@ jest.mock('../utils', () => ({
 	})),
 }));
 
-const mockGetBackgroundColorAndThresholdCheck = getBackgroundColorAndThresholdCheck as jest.MockedFunction<
-	typeof getBackgroundColorAndThresholdCheck
->;
+const mockGetBackgroundColorAndThresholdCheck =
+	getBackgroundColorAndThresholdCheck as jest.MockedFunction<
+		typeof getBackgroundColorAndThresholdCheck
+	>;
 
 const TEST_ID_VALUE_GRAPH_TEXT = 'value-graph-text';
 const TEST_ID_VALUE_GRAPH_PREFIX_UNIT = 'value-graph-prefix-unit';

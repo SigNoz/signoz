@@ -20,7 +20,7 @@ describe('traces/getTreeLevelsCount', () => {
 
 	test('should return 0 for empty tree', () => {
 		const emptyTree = null;
-		expect(getTreeLevelsCount((emptyTree as unknown) as ITraceTree)).toBe(0);
+		expect(getTreeLevelsCount(emptyTree as unknown as ITraceTree)).toBe(0);
 	});
 
 	test('should return 1 for a tree with a single node', () => {

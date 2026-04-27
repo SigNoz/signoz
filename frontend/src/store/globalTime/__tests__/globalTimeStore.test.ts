@@ -142,10 +142,8 @@ describe('globalTimeStore', () => {
 				result.current.setSelectedTime(customTime);
 			});
 
-			const {
-				minTime: resultMin,
-				maxTime: resultMax,
-			} = result.current.getMinMaxTime();
+			const { minTime: resultMin, maxTime: resultMax } =
+				result.current.getMinMaxTime();
 			expect(resultMin).toBe(minTime);
 			expect(resultMax).toBe(maxTime);
 		});

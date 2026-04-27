@@ -49,7 +49,7 @@ beforeAll(() => {
 
 		const mockRange = {
 			// CodeMirror uses these for text measurement
-			getClientRects: (): DOMRectList => (rectList as unknown) as DOMRectList,
+			getClientRects: (): DOMRectList => rectList as unknown as DOMRectList,
 			getBoundingClientRect: (): DOMRect => mockRect,
 			// CodeMirror calls these to set up text ranges
 			setStart: (node: Node, offset: number): void => {
@@ -78,7 +78,7 @@ beforeAll(() => {
 			},
 			commonAncestorContainer: document.body,
 		};
-		return (mockRange as unknown) as Range;
+		return mockRange as unknown as Range;
 	};
 
 	// Mock document.createRange to return a new Range instance each time
@@ -155,7 +155,7 @@ const createMockQuery = (filterExpression?: string): Query => ({
 				filter: filterExpression
 					? {
 							expression: filterExpression,
-					  }
+						}
 					: undefined,
 				functions: [],
 				groupBy: [

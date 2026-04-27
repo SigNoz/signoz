@@ -45,20 +45,18 @@ function ResizeTable({
 	}, [onColumnWidthsChange]);
 
 	const handleResize = useCallback(
-		(index: number) => (
-			e: SyntheticEvent<Element>,
-			{ size }: ResizeCallbackData,
-		): void => {
-			e.preventDefault();
-			e.stopPropagation();
+		(index: number) =>
+			(e: SyntheticEvent<Element>, { size }: ResizeCallbackData): void => {
+				e.preventDefault();
+				e.stopPropagation();
 
-			const newColumns = [...columnsData];
-			newColumns[index] = {
-				...newColumns[index],
-				width: size.width,
-			};
-			setColumns(newColumns);
-		},
+				const newColumns = [...columnsData];
+				newColumns[index] = {
+					...newColumns[index],
+					width: size.width,
+				};
+				setColumns(newColumns);
+			},
 		[columnsData],
 	);
 

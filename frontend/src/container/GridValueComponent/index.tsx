@@ -106,7 +106,7 @@ function GridValueComponent({
 									String(value),
 									yAxisUnit,
 									widget?.decimalPrecision,
-							  )
+								)
 							: value.toString()
 					}
 				/>

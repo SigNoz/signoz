@@ -19,9 +19,8 @@ export type ResourcesForRelation<R extends RelationName> = Extract<
 	{ type: RelationsByType[R][number] }
 >['name'];
 
-type IsPluralResource<
-	R extends ResourceName
-> = ResourceTypeMap[R] extends 'metaresources' ? true : false;
+type IsPluralResource<R extends ResourceName> =
+	ResourceTypeMap[R] extends 'metaresources' ? true : false;
 
 type ObjectForResource<R extends ResourceName> = R extends infer U
 	? U extends ResourceName

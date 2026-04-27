@@ -53,7 +53,7 @@ describe('MetricsTable', () => {
 			} as any);
 	});
 
-	jest.spyOn(metricsGeneratedAPI, 'useListMetrics').mockReturnValue(({
+	jest.spyOn(metricsGeneratedAPI, 'useListMetrics').mockReturnValue({
 		data: {
 			data: {
 				metrics: [
@@ -79,7 +79,7 @@ describe('MetricsTable', () => {
 		},
 		isLoading: false,
 		isError: false,
-	} as unknown) as ReturnType<typeof metricsGeneratedAPI.useListMetrics>);
+	} as unknown as ReturnType<typeof metricsGeneratedAPI.useListMetrics>);
 
 	it('renders table with data correctly', () => {
 		render(

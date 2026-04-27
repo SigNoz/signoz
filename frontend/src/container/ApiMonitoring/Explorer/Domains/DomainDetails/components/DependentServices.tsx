@@ -29,13 +29,8 @@ function DependentServices({
 	dependentServicesQuery,
 	timeRange,
 }: DependentServicesProps): JSX.Element {
-	const {
-		data,
-		refetch,
-		isError,
-		isLoading,
-		isRefetching,
-	} = dependentServicesQuery;
+	const { data, refetch, isError, isLoading, isRefetching } =
+		dependentServicesQuery;
 
 	const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
