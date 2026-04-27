@@ -1,5 +1,5 @@
 // File: frontend/src/container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover.tsx
-import { Dropdown, Skeleton, Typography } from 'antd';
+import { Dropdown, Menu, Skeleton, Typography } from 'antd';
 import { Bell, Grid } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { generatePath } from 'react-router-dom';
@@ -60,124 +60,95 @@ function DashboardsAndAlertsPopover({
 	);
 
 	useMemo(() => {
-		if (!newIsErrorAlerts && !newIsErrorDashboards) {
-			setAlertsData({
-				data: newAlertsData?.data?.alerts || [],
-				isLoading: newIsLoadingAlerts,
-				isError: newIsErrorAlerts,
-			});
-			setDashboardsData({
-				data: newDashboardsData?.data?.dashboards || [],
-				isLoading: newIsLoadingDashboards,
-				isError: newIsErrorDashboards,
-			});
-		}
-	}, [
-		newAlertsData,
-		newDashboardsData,
-		newIsErrorAlerts,
-		newIsErrorDashboards,
-		newIsLoadingAlerts,
-		newIsLoadingDashboards,
-	]);
+		setAlertsData({
+			data: newAlertsData?.data?.alerts || [],
+			isLoading: newIsLoadingAlerts,
+			isError: newIsErrorAlerts,
+		});
+	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
 
-	const alerts = useMemo(() => {
-		return alertsData.data || [];
-	}, [alertsData]);
+	useMemo(() => {
+		setDashboardsData({
+			data: newDashboardsData?.data?.dashboards || [],
+			isLoading: newIsLoadingDashboards,
+			isError: newIsErrorDashboards,
+		});
+	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
-	const dashboards = useMemo(() => {
-		return dashboardsData.data || [];
-	}, [dashboardsData]);
+	const totalAlerts = alertsData.data.length;
+	const totalDashboards = dashboardsData.data.length;
 
-	if (alertsData.isError || dashboardsData.isError) {
+	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
+
+	if (!hasAnyItem && (alertsData.isLoading || dashboardsData.isLoading)) {
 		return (
-			<Typography.Text type="danger" style={{ fontSize: '12px' }}>
-				Failed to load dashboards or alerts
-			</Typography.Text>
+			<div className="flex items-center gap-2 px-3 py-1.5">
+				<Skeleton.Input active size="small" />
+			</div>
 		);
 	}
 
-	if (alertsData.isLoading || dashboardsData.isLoading) {
-		return <Skeleton.Input size="small" style={{ width: '120px' }} />;
+	if (!hasAnyItem) {
+		return null;
 	}
 
-	const hasAlerts = alerts.length > 0;
-	const hasDashboards = dashboards.length > 0;
+	const menuItems = [];
 
-	if (!hasAlerts && !hasDashboards) {
-		return (
-			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-				No dashboards or alerts found
-			</Typography.Text>
-		);
+	if (totalDashboards > 0) {
+		menuItems.push({
+			key: 'dashboards',
+			label: (
+				<Typography.Text
+					className="flex cursor-pointer items-center gap-2"
+					onClick={() => {
+						openInNewTab(
+							`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
+						);
+					}}
+				>
+					<Grid size={14} color={Color.text.secondary} />
+					{pluralize(totalDashboards, 'Dashboard', 'Dashboards')} using this metric
+				</Typography.Text>
+			),
+		});
 	}
 
-	const menuItems = [
-		...(hasAlerts
-			? [
-					{
-						key: 'alerts',
-						label: (
-							<Typography.Text
-								style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-								onClick={(): void => {
-									openInNewTab(
-										`${ROUTES.ALERTS}?${QueryParams.searchKeyword}=${metricName}`,
-									);
-								}}
-							>
-								<Bell size={14} color={Color.primary['500']} />
-								{pluralize('alert', alerts.length, true)} on this metric
-							</Typography.Text>
-						),
-					},
-			  ]
-			: []),
-		...(hasDashboards
-			? [
-					{
-						key: 'dashboards',
-						label: (
-							<Typography.Text
-								style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-								onClick={(): void => {
-									openInNewTab(
-										`${ROUTES.DASHBOARDS}?${QueryParams.searchKeyword}=${metricName}`,
-									);
-								}}
-							>
-								<Grid size={14} color={Color.primary['500']} />
-								{pluralize('dashboard', dashboards.length, true)} using this metric
-							</Typography.Text>
-						),
-					},
-			  ]
-			: []),
-	];
+	if (totalAlerts > 0) {
+		menuItems.push({
+			key: 'alerts',
+			label: (
+				<Typography.Text
+					className="flex cursor-pointer items-center gap-2"
+					onClick={() => {
+						openInNewTab(
+							`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
+						);
+					}}
+				>
+					<Bell size={14} color={Color.text.secondary} />
+					{pluralize(totalAlerts, 'Alert', 'Alerts')} on this metric
+				</Typography.Text>
+			),
+		});
+	}
 
 	return (
 		<Dropdown
 			menu={{ items: menuItems }}
 			trigger={['click']}
-			placement="bottom"
-			disabled={!hasAlerts && !hasDashboards}
+			placement="bottomRight"
 		>
-			<Typography.Text
-				style={{
-					color: Color.primary['500'],
-					cursor: 'pointer',
-					fontSize: '12px',
-					textDecoration: 'underline',
-				}}
-			>
-				{[hasAlerts ? pluralize('alert', alerts.length, true) : null]
-					.concat(
-						hasDashboards ? pluralize('dashboard', dashboards.length, true) : null,
-					)
-					.filter(Boolean)
-					.join(' and ')}{' '}
-				found
-			</Typography.Text>
+			<div className="flex cursor-pointer items-center gap-1 px-2 py-1.5 hover:bg-gray-100">
+				{totalDashboards > 0 && (
+					<Grid size={14} color={Color.text.secondary} />
+				)}
+				{totalAlerts > 0 && (
+					<Bell size={14} color={Color.text.secondary} />
+				)}
+				<Typography.Text type="secondary" className="text-xs">
+					{totalAlerts + totalDashboards}
+				</Typography.Text>
+			</div>
 		</Dropdown>
 	);
 }
