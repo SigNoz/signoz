@@ -57,11 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return {
-		data: newAlertsData?.data || [],
-		isLoading: false,
-		isError: false,
-	};
+	return { data: newAlertsData, isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -85,109 +81,53 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return {
-		data: newDashboardsData?.data || [],
-		isLoading: false,
-		isError: false,
-	};
+	return { data: newDashboardsData, isLoading: false, isError: false };
 }
 
-export default function DashboardsAndAlertsPopover({
+function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const [open, setOpen] = useState(false);
+	const metricAlertsStatus = useMetricAlertsStatus(metricName);
+	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const alertsStatus = useMetricAlertsStatus(metricName);
-	const dashboardsStatus = useMetricDashboardsStatus(metricName);
-
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
-
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
-	};
-
-	const handleAlertsClick = (): void => {
-		openInNewTab(
-			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
-		);
-	};
-
-	const handleDashboardsClick = (): void => {
-		openInNewTab(
-			`${ROUTES.DASHBOARD_LIST}?${QueryParams.search}=${metricName}`,
-		);
-	};
-
-	const renderContent = (): JSX.Element => {
-		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsStatus.isError || dashboardsStatus.isError) {
-			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
-			);
-		}
-
+	if (metricAlertsStatus.isError || metricDashboardsStatus.isError) {
 		return (
-			<Menu>
-				<Menu.Item
-					key="alerts"
-					icon={<Bell size={16} />}
-					onClick={handleAlertsClick}
-					disabled={totalAlerts === 0}
-				>
-					<Typography.Text
-						style={{
-							color:
-								totalAlerts === 0
-									? Color.text['text-tertiary']
-									: Color.text['text-primary'],
-						}}
-					>
-						{pluralize(totalAlerts, 'Alert', 'Alerts')}
-					</Typography.Text>
-				</Menu.Item>
-				<Menu.Item
-					key="dashboards"
-					icon={<Grid size={16} />}
-					onClick={handleDashboardsClick}
-					disabled={totalDashboards === 0}
-				>
-					<Typography.Text
-						style={{
-							color:
-								totalDashboards === 0
-									? Color.text['text-tertiary']
-									: Color.text['text-primary'],
-						}}
-					>
-						{pluralize(totalDashboards, 'Dashboard', 'Dashboards')}
-					</Typography.Text>
-				</Menu.Item>
-			</Menu>
+			<Skeleton active loading={false}>
+				<Typography.Text>Error loading data</Typography.Text>
+			</Skeleton>
 		);
-	};
+	}
+
+	if (metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading) {
+		return (
+			<Skeleton active loading={true}>
+				<Typography.Text>Loading data...</Typography.Text>
+			</Skeleton>
+		);
+	}
 
 	return (
 		<Dropdown
-			menu={{ items: [] }}
-			open={open}
-			onOpenChange={handleOpenChange}
-			overlay={renderContent()}
-			trigger={['click']}
-			placement="bottomRight"
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(metricAlertsStatus.data.length, 'alert')}{' '}
+							{metricName}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(metricDashboardsStatus.data.length, 'dashboard')}{' '}
+							{metricName}
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
 		>
-			<Typography.Link
-				onClick={(e) => {
-					e.preventDefault();
-					setOpen(true);
-				}}
-				style={{ fontSize: 12 }}
-			>
-				View in Dashboards & Alerts
-			</Typography.Link>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
+
+export default DashboardsAndAlertsPopover;
