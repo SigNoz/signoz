@@ -101,64 +101,66 @@ function DashboardsAndAlertsPopover({
 		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
 	};
 
-	const renderContent = (): JSX.Element => {
-		if (alertsData.isLoading || dashboardsData.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsData.isError || dashboardsData.isError) {
-			return (
-				<Typography.Text type="secondary">
-					Failed to load dashboards or alerts.
-				</Typography.Text>
-			);
-		}
-
-		if (!hasAlerts && !hasDashboards) {
-			return (
-				<Typography.Text type="secondary">No dashboards or alerts.</Typography.Text>
-			);
-		}
-
-		return (
-			<Menu>
-				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={16} />}>
-						<Typography.Text strong>
-							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</Typography.Text>
-					</Menu.Item>
-				)}
-				{hasDashboards && (
-					<Menu.Item
-						key="dashboards"
-						onClick={handleDashboardsClick}
-						icon={<Grid size={16} />}
-					>
-						<Typography.Text strong>
-							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</Typography.Text>
-					</Menu.Item>
-				)}
-			</Menu>
-		);
-	};
-
 	if (!metricName) return null;
 
+	if (
+		(alertsData.isLoading && !alertsData.data.length) ||
+		(dashboardsData.isLoading && !dashboardsData.data.length)
+	) {
+		return (
+			<Skeleton
+				paragraph={{ rows: 2 }}
+				style={{ padding: '8px 0', width: '160px' }}
+			/>
+		);
+	}
+
+	const menuItems = [
+		{
+			key: 'alerts',
+			disabled: !hasAlerts,
+			label: (
+				<Typography.Text
+					type="secondary"
+					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+					onClick={handleAlertsClick}
+				>
+					<Bell size={14} color={Color.semantic.warning.border} />
+					{pluralize('Alert', totalAlerts)} ({totalAlerts})
+				</Typography.Text>
+			),
+		},
+		{
+			key: 'dashboards',
+			disabled: !hasDashboards,
+			label: (
+				<Typography.Text
+					type="secondary"
+					style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+					onClick={handleDashboardsClick}
+				>
+					<Grid size={14} color={Color.primary[500]} />
+					{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+				</Typography.Text>
+			),
+		},
+	];
+
 	return (
-		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
-			<div
+		<Dropdown
+			menu={{ items: menuItems }}
+			trigger={['hover']}
+			placement="bottomLeft"
+		>
+			<Typography.Link
 				style={{
-					color: Color.primary.primary,
-					cursor: 'pointer',
-					display: 'flex',
-					alignItems: 'center',
-					gap: '4px',
+					fontSize: '12px',
+					pointerEvents: hasAlerts || hasDashboards ? 'auto' : 'none',
+					opacity: hasAlerts || hasDashboards ? 1 : 0.5,
 				}}
 			>
-				<Typography.Link>{pluralize('Dashboard/Alert', totalAlerts + totalDashboards)}</Typography.Link>
-			</div>
+				View in {hasDashboards ? 'Dashboard' : 'Alert'} {hasAlerts && 'and Alert'}
+			</Typography.Link>
 		</Dropdown>
 	);
 }
