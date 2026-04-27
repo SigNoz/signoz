@@ -81,77 +81,97 @@ function DashboardsAndAlertsPopover({
 	const hasAlerts = totalAlerts > 0;
 	const hasDashboards = totalDashboards > 0;
 
-	const handleAlertsClick = (): void => {
-		if (!hasAlerts) return;
+	const loading = alertsData.isLoading || dashboardsData.isLoading;
+	const error = alertsData.isError || dashboardsData.isError;
 
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardsClick = (): void => {
-		if (!hasDashboards) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
+	if (!metricName) return null;
 
 	const renderContent = (): JSX.Element => {
-		if (alertsData.isLoading || dashboardsData.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
+		if (error) {
+			return (
+				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
+					Failed to load alerts and dashboards.
+				</Typography.Text>
+			);
 		}
 
-		if (alertsData.isError || dashboardsData.isError) {
+		if (loading) {
 			return (
-				<Typography.Text type="secondary">
-					Failed to load dashboards or alerts.
-				</Typography.Text>
+				<div style={{ padding: '8px 12px', minWidth: 150 }}>
+					<Skeleton active paragraph={{ rows: 2 }} />
+				</div>
 			);
 		}
 
 		if (!hasAlerts && !hasDashboards) {
 			return (
-				<Typography.Text type="secondary">No dashboards or alerts.</Typography.Text>
+				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
+					No alerts or dashboards using this metric.
+				</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu>
+			<Menu style={{ minWidth: 200 }} selectable={false}>
 				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick} icon={<Bell size={16} />}>
-						<Typography.Text style={{ color: Color.text.main }}>
-							{pluralize('Alert', totalAlerts)} ({totalAlerts})
-						</Typography.Text>
+					<Menu.Item
+						key="alerts"
+						icon={<Bell size={16} />}
+						onClick={(e): void => {
+							e.domEvent.preventDefault();
+							openInNewTab(
+								`${ROUTES.ALERTS}?${QueryParams.search}=${encodeURIComponent(
+									`metricName:${metricName}`,
+								)}`,
+							);
+						}}
+					>
+						<Typography.Text strong>{totalAlerts}</Typography.Text>{' '}
+						{pluralize('alert', totalAlerts)} using this metric
 					</Menu.Item>
 				)}
 				{hasDashboards && (
 					<Menu.Item
 						key="dashboards"
-						onClick={handleDashboardsClick}
 						icon={<Grid size={16} />}
+						onClick={(e): void => {
+							e.domEvent.preventDefault();
+							openInNewTab(
+								`${ROUTES.DASHBOARDS}?${QueryParams.search}=${encodeURIComponent(
+									metricName,
+								)}`,
+							);
+						}}
 					>
-						<Typography.Text style={{ color: Color.text.main }}>
-							{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-						</Typography.Text>
+						<Typography.Text strong>{totalDashboards}</Typography.Text>{' '}
+						{pluralize('dashboard', totalDashboards)} using this metric
 					</Menu.Item>
 				)}
 			</Menu>
 		);
 	};
 
-	if (!metricName) return null;
-
 	return (
 		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
-			<div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-				<Typography.Link>
-					{pluralize('Dashboard', totalDashboards)} & {pluralize('Alert', totalAlerts)}
-				</Typography.Link>
+			<div
+				style={{
+					color: Color.semantic.text.secondary,
+					cursor: 'pointer',
+					fontSize: 14,
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
+				}}
+				onClick={(e): void => e.stopPropagation()}
+			>
+				{loading ? (
+					<Skeleton.Input active size="small" style={{ width: 80 }} />
+				) : (
+					<>
+						{totalAlerts + totalDashboards} {pluralize('item', totalAlerts + totalDashboards)}{' '}
+						using this metric
+					</>
+				)}
 			</div>
 		</Dropdown>
 	);
