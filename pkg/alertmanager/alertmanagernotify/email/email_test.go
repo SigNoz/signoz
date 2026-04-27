@@ -206,6 +206,21 @@ func prepare(cfg *config.EmailConfig) (*template.Template, *types.Alert, error) 
 	return tmpl, firingAlert, nil
 }
 
+func TestNewInitializesHeadersWhenNil(t *testing.T) {
+	cfg := &config.EmailConfig{
+		To:   emailTo,
+		From: emailFrom,
+	}
+
+	require.NotPanics(t, func() {
+		_ = New(cfg, &template.Template{}, promslog.NewNopLogger())
+	})
+	require.NotNil(t, cfg.Headers)
+	assert.Equal(t, config.DefaultEmailSubject, cfg.Headers["Subject"])
+	assert.Equal(t, cfg.To, cfg.Headers["To"])
+	assert.Equal(t, cfg.From, cfg.Headers["From"])
+}
+
 // TestEmailNotifyWithErrors tries to send emails with buggy inputs.
 func TestEmailNotifyWithErrors(t *testing.T) {
 	cfgFile := os.Getenv(emailNoAuthConfigVar)
