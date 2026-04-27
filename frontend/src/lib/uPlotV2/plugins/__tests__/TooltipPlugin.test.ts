@@ -391,8 +391,7 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				screen
-					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Simulate data update – should dismiss the pinned tooltip.
@@ -442,8 +441,7 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				screen
-					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Click outside the tooltip container.
@@ -496,8 +494,7 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				screen
-					.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Press Escape to release.
@@ -538,8 +535,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				expect(
-					screen
-						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -599,8 +595,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				expect(
-					screen
-						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -614,8 +609,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				expect(
-					screen
-						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 
@@ -717,8 +711,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				expect(
-					screen
-						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(false);
 			});
 
@@ -731,8 +724,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				expect(
-					screen
-						.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 				).toBe(true);
 			});
 		});

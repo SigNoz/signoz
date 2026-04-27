@@ -113,9 +113,7 @@ export default function TooltipPlugin({
 				sync: {
 					key: syncKey,
 					scales:
-						syncMode === DashboardCursorSync.Crosshair
-							? ['x', 'y']
-							: ['x', null],
+						syncMode === DashboardCursorSync.Crosshair ? ['x', 'y'] : ['x', null],
 				},
 			});
 

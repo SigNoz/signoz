@@ -17,7 +17,12 @@ function getCommonGroupByKeys(
 	a: TooltipSyncMetadata['groupBy'],
 	b: TooltipSyncMetadata['groupBy'],
 ): string[] {
-	if (!Array.isArray(a) || a.length === 0 || !Array.isArray(b) || b.length === 0) {
+	if (
+		!Array.isArray(a) ||
+		a.length === 0 ||
+		!Array.isArray(b) ||
+		b.length === 0
+	) {
 		return [];
 	}
 	const bKeys = new Set(b.map((g) => g.key));
@@ -34,7 +39,9 @@ function findMatchingSeriesIndexes(
 	commonKeys: string[],
 ): number[] {
 	return series.reduce<number[]>((acc, s, i) => {
-		if (i === 0) {return acc;}
+		if (i === 0) {
+			return acc;
+		}
 		const metric = (s as ExtendedSeries).metric;
 		if (
 			metric != null &&
@@ -62,7 +69,10 @@ function applySourceSync({
 		focusedSeriesIndex != null
 			? (uPlotInstance.series[focusedSeriesIndex] as ExtendedSeries)
 			: null;
-	syncCursorRegistry.setActiveSeriesMetric(syncKey, focusedSeries?.metric ?? null);
+	syncCursorRegistry.setActiveSeriesMetric(
+		syncKey,
+		focusedSeries?.metric ?? null,
+	);
 }
 
 /**
