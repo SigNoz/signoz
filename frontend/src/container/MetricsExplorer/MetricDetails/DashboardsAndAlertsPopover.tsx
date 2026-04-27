@@ -86,84 +86,80 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
-}: DashboardsAndAlertsPopoverProps) {
+	children,
+}: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
+	const totalAssociatedItems =
+		(alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
 
-	const handleOpenChange = (visible: boolean) => {
+	const handleOpenChange = (visible: boolean): void => {
 		setOpen(visible);
 	};
 
-	const handleAlertsClick = () => {
-		openInNewTab(
-			`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
-		);
+	const handleAlertClick = (): void => {
+		const path = generatePath(ROUTES.LIST_ALERTS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
 	};
 
-	const handleDashboardsClick = () => {
-		openInNewTab(
-			`${ROUTES.DASHBOARD_LIST}?${QueryParams.search}=${metricName}`,
-		);
+	const handleDashboardClick = (): void => {
+		const path = generatePath(ROUTES.DASHBOARDS);
+		openInNewTab(path);
 	};
 
-	const renderContent = () => {
+	const renderContent = (): JSX.Element => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
 			return (
-				<div style={{ width: 200 }}>
-					<Skeleton active paragraph={{ rows: 2 }} />
+				<div style={{ padding: '8px 12px', minWidth: 150 }}>
+					<Skeleton.Input active size="small" block />
 				</div>
 			);
 		}
 
-		if (alertsStatus.isError || dashboardsStatus.isError) {
+		if (totalAssociatedItems === 0) {
 			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
+				<Typography.Text type="secondary" style={{ padding: '8px 12px', display: 'block' }}>
+					No dashboards or alerts using this metric
+				</Typography.Text>
 			);
 		}
 
 		return (
 			<Menu>
-				<Menu.Item
-					key="alerts"
-					icon={<Bell size={16} />}
-					onClick={handleAlertsClick}
-				>
-					<Typography.Text strong>
-						{pluralize('Alert', totalAlerts)} ({totalAlerts})
-					</Typography.Text>
-				</Menu.Item>
-				<Menu.Item
-					key="dashboards"
-					icon={<Grid size={16} />}
-					onClick={handleDashboardsClick}
-				>
-					<Typography.Text strong>
-						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-					</Typography.Text>
-				</Menu.Item>
+				{alertsStatus.data.length > 0 && (
+					<Menu.Item key="alerts" icon={<Bell size={16} />} onClick={handleAlertClick}>
+						<Typography.Text strong>
+							{pluralize('Alert', alertsStatus.data.length)} (
+							{alertsStatus.data.length})
+						</Typography.Text>
+					</Menu.Item>
+				)}
+				{dashboardsStatus.data.length > 0 && (
+					<Menu.Item key="dashboards" icon={<Grid size={16} />} onClick={handleDashboardClick}>
+						<Typography.Text strong>
+							{pluralize('Dashboard', dashboardsStatus.data.length)} (
+							{dashboardsStatus.data.length})
+						</Typography.Text>
+					</Menu.Item>
+				)}
 			</Menu>
 		);
 	};
 
 	return (
 		<Dropdown
-			menu={{ items: [] }}
-			overlay={renderContent}
+			overlay={renderContent()}
 			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
+			destroyPopupOnHide
 		>
-			<Typography.Link
-				onClick={(e) => e.preventDefault()}
-				style={{ color: Color.primary[500] }}
-			>
-				View in Dashboards & Alerts
-			</Typography.Link>
+			{children}
 		</Dropdown>
 	);
 }
