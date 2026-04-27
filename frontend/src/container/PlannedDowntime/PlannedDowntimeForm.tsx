@@ -148,7 +148,7 @@ export function PlannedDowntimeForm(
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
-				labelExpression: values.labelExpression || undefined,
+				labelExpression: values.labelExpression,
 				schedule: {
 					startTime: new Date(
 						handleTimeConversion(
