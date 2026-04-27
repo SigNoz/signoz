@@ -86,74 +86,79 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
-	trigger,
+	children,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const totalItems = (alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
+	const isLoading = alertsStatus.isLoading || dashboardsStatus.isLoading;
+	const isError = alertsStatus.isError || dashboardsStatus.isError;
 
-	const handleOpenChange = (newOpen: boolean): void => {
-		setOpen(newOpen);
+	const totalAlerts = alertsStatus.data.length;
+	const totalDashboards = dashboardsStatus.data.length;
+
+	const handleOpenChange = (visible: boolean): void => {
+		setOpen(visible);
 	};
 
-	const handleAlertClick = (e: React.MouseEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-		const path = generatePath(ROUTES.LIST_ALERTS, {
-			[QueryParams.tab]: 'metrics',
-		});
-		openInNewTab(path);
+	const handleViewAllAlerts = (): void => {
+		openInNewTab(
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
-	const handleDashboardClick = (e: React.MouseEvent): void => {
-		e.preventDefault();
-		e.stopPropagation();
-		const path = generatePath(ROUTES.DASHBOARDS);
-		openInNewTab(path);
+	const handleViewAllDashboards = (): void => {
+		openInNewTab(
+			`${ROUTES.DASHBOARDS_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
 	};
 
 	const renderContent = (): JSX.Element => {
-		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
+		if (isLoading) {
 			return (
-				<div style={{ padding: '8px 12px', minWidth: 150 }}>
-					<Skeleton.Input active size="small" block />
+				<div style={{ width: 200 }}>
+					<Skeleton active paragraph={{ rows: 2 }} />
 				</div>
 			);
 		}
 
-		if (alertsStatus.isError || dashboardsStatus.isError) {
+		if (isError) {
 			return (
-				<div style={{ padding: '8px 12px', color: Color.semantic.error }}>
+				<Typography.Text type="danger" style={{ padding: '8px 12px' }}>
 					Failed to load data
-				</div>
+				</Typography.Text>
 			);
 		}
 
-		if (totalItems === 0) {
+		if (totalAlerts === 0 && totalDashboards === 0) {
 			return (
-				<div style={{ padding: '8px 12px', color: Color.text.disabled }}>
-					No dashboards or alerts
-				</div>
+				<Typography.Text
+					type="secondary"
+					style={{ padding: '8px 12px', display: 'block' }}
+				>
+					No dashboards or alerts using this metric
+				</Typography.Text>
 			);
 		}
 
 		return (
-			<Menu style={{ minWidth: 200, padding: '4px 0' }}>
-				{alertsStatus.data.length > 0 && (
-					<Menu.Item key="alerts" onClick={handleAlertClick} icon={<Bell size={16} />}>
-						<Typography.Text style={{ fontSize: 14 }}>
-							{pluralize('alert', alertsStatus.data.length, true)} on this metric
-						</Typography.Text>
+			<Menu style={{ minWidth: 200 }}>
+				{totalAlerts > 0 && (
+					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
+						<span>
+							<Bell size={14} style={{ marginRight: 8 }} />
+							{pluralize('alert', totalAlerts)} ({totalAlerts})
+						</span>
 					</Menu.Item>
 				)}
-				{dashboardsStatus.data.length > 0 && (
-					<Menu.Item key="dashboards" onClick={handleDashboardClick} icon={<Grid size={16} />}>
-						<Typography.Text style={{ fontSize: 14 }}>
-							{pluralize('dashboard', dashboardsStatus.data.length, true)} using this metric
-						</Typography.Text>
+				{totalDashboards > 0 && (
+					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
+						<span>
+							<Grid size={14} style={{ marginRight: 8 }} />
+							{pluralize('dashboard', totalDashboards)} ({totalDashboards})
+						</span>
 					</Menu.Item>
 				)}
 			</Menu>
@@ -162,13 +167,13 @@ export function DashboardsAndAlertsPopover({
 
 	return (
 		<Dropdown
+			overlay={renderContent()}
+			trigger={['click']}
 			open={open}
 			onOpenChange={handleOpenChange}
-			overlay={renderContent()}
-			trigger={trigger}
-			placement="bottomRight"
+			destroyPopupOnHide
 		>
-			<div style={{ cursor: 'pointer', display: 'inline-block' }} />
+			{children}
 		</Dropdown>
 	);
 }
