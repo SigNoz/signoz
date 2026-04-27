@@ -1,5 +1,5 @@
 // File: frontend/src/container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover.tsx
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Skeleton, Typography } from 'antd';
@@ -18,10 +18,21 @@ import { DashboardsAndAlertsPopoverProps } from './types';
 function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
+	const [alertsData, setAlertsData] = useState({
+		data: [],
+		isLoading: false,
+		isError: false,
+	});
+	const [dashboardsData, setDashboardsData] = useState({
+		data: [],
+		isLoading: false,
+		isError: false,
+	});
+
 	const {
-		data: alertsData,
-		isLoading: isLoadingAlerts,
-		isError: isErrorAlerts,
+		data: newAlertsData,
+		isLoading: newIsLoadingAlerts,
+		isError: newIsErrorAlerts,
 	} = useGetMetricAlerts(
 		{
 			metricName,
@@ -34,9 +45,9 @@ function DashboardsAndAlertsPopover({
 	);
 
 	const {
-		data: dashboardsData,
-		isLoading: isLoadingDashboards,
-		isError: isErrorDashboards,
+		data: newDashboardsData,
+		isLoading: newIsLoadingDashboards,
+		isError: newIsErrorDashboards,
 	} = useGetMetricDashboards(
 		{
 			metricName,
@@ -48,15 +59,30 @@ function DashboardsAndAlertsPopover({
 		},
 	);
 
+	useEffect(() => {
+		if (!newIsErrorAlerts && !newIsErrorDashboards) {
+			setAlertsData({
+				data: newAlertsData?.data.alerts ?? [],
+				isLoading: newIsLoadingAlerts,
+				isError: newIsErrorAlerts,
+			});
+			setDashboardsData({
+				data: newDashboardsData?.data.dashboards ?? [],
+				isLoading: newIsLoadingDashboards,
+				isError: newIsErrorDashboards,
+			});
+		}
+	}, [newAlertsData, newDashboardsData, newIsErrorAlerts, newIsErrorDashboards, newIsLoadingAlerts, newIsLoadingDashboards]);
+
 	const alerts = useMemo(() => {
-		return alertsData?.data.alerts ?? [];
+		return alertsData.data.alerts ?? [];
 	}, [alertsData]);
 
 	const dashboards = useMemo(() => {
-		return dashboardsData?.data.dashboards ?? [];
+		return dashboardsData.data.dashboards ?? [];
 	}, [dashboardsData]);
 
-	if (isErrorAlerts || isErrorDashboards) {
+	if (alertsData.isError || dashboardsData.isError) {
 		return (
 			<Typography.Text type="danger" style={{ fontSize: '12px' }}>
 				Failed to load dashboards or alerts
@@ -64,7 +90,7 @@ function DashboardsAndAlertsPopover({
 		);
 	}
 
-	if (isLoadingAlerts || isLoadingDashboards) {
+	if (alertsData.isLoading || dashboardsData.isLoading) {
 		return <Skeleton.Input size="small" style={{ width: '120px' }} />;
 	}
 
@@ -98,38 +124,8 @@ function DashboardsAndAlertsPopover({
 							</Typography.Text>
 						),
 						onClick: (): void => {
-							const path = generatePath(ROUTES.DASHBOARDS_DETAIL, {
-								dashboardId: dashboard.uuid,
-							});
-							openInNewTab(`${path}?${QueryParams.graphTitle}=${metricName}`);
-						},
-					})),
-			  ]
-			: []),
-		...(hasAlerts
-			? [
-					{
-						key: 'alerts',
-						label: (
-							<Typography.Text style={{ fontSize: '12px' }}>
-								{pluralize('alert', alerts.length, true)}
-							</Typography.Text>
-						),
-						icon: <Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />,
-						disabled: true,
-					},
-					...alerts.map((alert) => ({
-						key: `alert-${alert.id}`,
-						label: (
-							<Typography.Text
-								style={{ fontSize: '12px', color: Color.BG_VANILLA_100 }}
-							>
-								{alert.name}
-							</Typography.Text>
-						),
-						onClick: (): void => {
-							const path = generatePath(ROUTES.ALERTS_EDIT, {
-								id: alert.id,
+							const path = generatePath(ROUTES.DASHBOARD, {
+								dashboardUuid: dashboard.uuid,
 							});
 							openInNewTab(path);
 						},
@@ -140,19 +136,18 @@ function DashboardsAndAlertsPopover({
 
 	return (
 		<Dropdown
-			menu={{ items: dropdownItems }}
-			trigger={['hover']}
-			placement="bottomLeft"
+			overlay={
+				<Dropdown.Menu>
+					{dropdownItems.map((item) => (
+						<Dropdown.Item key={item.key} onClick={item.onClick}>
+							{item.label}
+						</Dropdown.Item>
+					))}
+				</Dropdown.Menu>
+			}
+			placement="bottomCenter"
 		>
-			<Typography.Link
-				style={{
-					fontSize: '12px',
-					color: Color.TEXT_DISABLED,
-				}}
-			>
-				{pluralize('dashboard', dashboards.length, true)} •{' '}
-				{pluralize('alert', alerts.length, true)}
-			</Typography.Link>
+			<Bell size={12} style={{ color: Color.BG_VANILLA_100 }} />
 		</Dropdown>
 	);
 }
