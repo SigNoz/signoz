@@ -29,6 +29,7 @@ const GraphControlsPanel = ({
 					onClick={onViewTracesClick}
 					data-testid="view-traces-button"
 					aria-label="View traces"
+					className="graph-controls-panel__button"
 				>
 					View traces
 				</Button>
@@ -41,6 +42,7 @@ const GraphControlsPanel = ({
 					onClick={onViewLogsClick}
 					data-testid="view-logs-button"
 					aria-label="View logs"
+					className="graph-controls-panel__button"
 				>
 					View logs
 				</Button>
@@ -53,6 +55,7 @@ const GraphControlsPanel = ({
 					onClick={onViewAPIMonitoringClick}
 					data-testid="view-api-monitoring-button"
 					aria-label="View API monitoring"
+					className="graph-controls-panel__button"
 				>
 					View API monitoring
 				</Button>
