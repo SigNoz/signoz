@@ -75,111 +75,88 @@ function DashboardsAndAlertsPopover({
 		});
 	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
 
-	const totalItems = alertsData.data.length + dashboardsData.data.length;
+	const totalAlerts = alertsData.data.length;
+	const totalDashboards = dashboardsData.data.length;
 
-	if (!metricName || totalItems === 0) {
-		return null;
+	const hasAlerts = totalAlerts > 0;
+	const hasDashboards = totalDashboards > 0;
+
+	const handleAlertsClick = (): void => {
+		if (!hasAlerts) return;
+		openInNewTab(
+			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+		);
+	};
+
+	const handleDashboardsClick = (): void => {
+		if (!hasDashboards) return;
+		openInNewTab(
+			`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+		);
+	};
+
+	if (!metricName) return null;
+
+	const loading = alertsData.isLoading || dashboardsData.isLoading;
+	const error = alertsData.isError || dashboardsData.isError;
+
+	if (loading) {
+		return (
+			<div>
+				<Skeleton.Input active size="small" />
+			</div>
+		);
 	}
 
-	const menuItems = [
-		...(alertsData.data.length > 0
-			? [
-					{
-						key: 'alerts',
-						label: (
-							<Typography.Text
-								strong
-								style={{ color: Color.text['info'] }}
-							>
-								{pluralize('Alert', alertsData.data.length)} (
-								{alertsData.data.length})
-							</Typography.Text>
-						),
-						icon: <Bell size={14} color={Color.icon['info']} />,
-						disabled: true,
-					},
-					...alertsData.data.map((alert: any) => ({
-						key: `alert-${alert.id}`,
-						label: (
-							<Typography.Text
-								style={{ cursor: 'pointer' }}
-								onClick={() =>
-									openInNewTab(
-										generatePath(ROUTES.ALERTS_EDIT, {
-											[QueryParams.alertId]: alert.id,
-										}),
-									)
-								}
-							>
-								{alert.name}
-							</Typography.Text>
-						),
-					})),
-			  ]
-			: []),
-		...(dashboardsData.data.length > 0
-			? [
-					{
-						key: 'dashboards',
-						label: (
-							<Typography.Text
-								strong
-								style={{ color: Color.text['info'] }}
-							>
-								{pluralize('Dashboard', dashboardsData.data.length)}{' '}
-								({dashboardsData.data.length})
-							</Typography.Text>
-						),
-						icon: <Grid size={14} color={Color.icon['info']} />,
-						disabled: true,
-					},
-					...dashboardsData.data.map((dashboard: any) => ({
-						key: `dashboard-${dashboard.dashboardId}`,
-						label: (
-							<Typography.Text
-								style={{ cursor: 'pointer' }}
-								onClick={() =>
-									openInNewTab(
-										generatePath(ROUTES.APPLICATION, {
-											[QueryParams.dashboardId]:
-												dashboard.dashboardId,
-										}),
-									)
-								}
-							>
-								{dashboard.title}
-							</Typography.Text>
-						),
-					})),
-			  ]
-			: []),
-	];
-
-	if (menuItems.length === 0) {
-		return null;
+	if (error) {
+		return (
+			<Typography.Text type="secondary">
+				Failed to load alerts or dashboards
+			</Typography.Text>
+		);
 	}
 
-	const loading =
-		alertsData.isLoading ||
-		dashboardsData.isLoading ||
-		newIsLoadingAlerts ||
-		newIsLoadingDashboards;
+	if (!hasAlerts && !hasDashboards) {
+		return (
+			<Typography.Text type="secondary">No alerts or dashboards found</Typography.Text>
+		);
+	}
+
+	const menu = (
+		<Menu>
+			{hasAlerts && (
+				<Menu.Item key="alerts" onClick={handleAlertsClick}>
+					<span>
+						<Bell size={14} color={Color.text.accent} style={{ marginRight: 8 }} />
+						{pluralize('alert', totalAlerts)} ({totalAlerts})
+					</span>
+				</Menu.Item>
+			)}
+			{hasDashboards && (
+				<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
+					<span>
+						<Grid size={14} color={Color.text.accent} style={{ marginRight: 8 }} />
+						{pluralize('dashboard', totalDashboards)} ({totalDashboards})
+					</span>
+				</Menu.Item>
+			)}
+		</Menu>
+	);
 
 	return (
-		<Dropdown
-			overlay={
-				<Menu items={menuItems} style={{ maxHeight: 400, overflowY: 'auto' }} />
-			}
-			trigger={['click']}
-			disabled={loading}
-		>
-			<Typography.Link disabled={loading}>
-				{loading ? (
-					<Skeleton.Input size="small" style={{ width: 80 }} />
-				) : (
-					`${totalItems} ${pluralize('item', totalItems)} found`
-				)}
-			</Typography.Link>
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+			<span
+				style={{
+					color: Color.text.accent,
+					cursor: 'pointer',
+					fontSize: 12,
+					display: 'flex',
+					alignItems: 'center',
+				}}
+			>
+				<Bell size={12} style={{ marginRight: 4 }} />
+				<Grid size={12} />
+			</span>
 		</Dropdown>
 	);
 }
