@@ -34,6 +34,7 @@ import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
+import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
@@ -534,6 +535,8 @@ export default function BillingContainer(): JSX.Element {
 
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
+
+			{trialInfo?.trialConvertedToSubscription && <CancelSubscriptionBanner />}
 
 			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">

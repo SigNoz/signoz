@@ -1,0 +1,35 @@
+.cancel-subscription-banner {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--padding-4);
+	border-radius: 4px;
+	border: 1px solid var(--callout-error-border);
+	background-color: var(--callout-error-background);
+	margin: var(--spacing-4) 0 var(--spacing-12);
+
+	&__info {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
+	}
+
+	&__title {
+		font-size: var(--font-size-sm);
+		font-weight: var(--font-weight-medium);
+		color: var(--bg-cherry-50);
+	}
+
+	&__subtitle {
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		line-height: var(--paragraph-base-400-line-height);
+		color: var(--bg-cherry-300);
+	}
+}
+
+.cancel-subscription-dialog__body {
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-relaxed);
+	color: var(--l2-foreground);
+}
