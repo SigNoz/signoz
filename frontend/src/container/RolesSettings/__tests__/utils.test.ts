@@ -1,12 +1,14 @@
-import type {
-	AuthtypesGettableObjectsDTO,
-	AuthtypesGettableResourcesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableObjectsDTO } from 'api/generated/services/sigNoz.schemas';
 
 import type {
 	PermissionConfig,
 	ResourceDefinition,
 } from '../PermissionSidePanel/PermissionSidePanel.types';
+
+type AuthzResources = {
+	resources: { kind: string; type: string }[];
+	relations: Record<string, string[]>;
+};
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
 import {
 	buildConfig,
@@ -33,17 +35,17 @@ jest.mock('../RoleDetails/constants', () => {
 	};
 });
 
-const dashboardResource: AuthtypesGettableResourcesDTO['resources'][number] = {
+const dashboardResource: AuthzResources['resources'][number] = {
 	kind: 'dashboard',
 	type: 'metaresource',
 };
 
-const alertResource: AuthtypesGettableResourcesDTO['resources'][number] = {
+const alertResource: AuthzResources['resources'][number] = {
 	kind: 'alert',
 	type: 'metaresource',
 };
 
-const baseAuthzResources: AuthtypesGettableResourcesDTO = {
+const baseAuthzResources: AuthzResources = {
 	resources: [dashboardResource, alertResource],
 	relations: {
 		create: ['metaresource'],
@@ -338,7 +340,7 @@ describe('buildConfig', () => {
 
 describe('derivePermissionTypes', () => {
 	it('derives one PermissionType per relation key with correct key and capitalised label', () => {
-		const relations: AuthtypesGettableResourcesDTO['relations'] = {
+		const relations: AuthzResources['relations'] = {
 			create: ['metaresource'],
 			read: ['metaresource'],
 			delete: ['metaresource'],

@@ -1,5 +1,6 @@
 import permissionsType from './permissions.type';
-import { ObjectSeparator } from './utils';
+
+const ObjectSeparator = ':';
 
 type PermissionsData = typeof permissionsType.data;
 export type Resource = PermissionsData['resources'][number];

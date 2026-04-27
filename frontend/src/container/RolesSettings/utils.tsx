@@ -1,9 +1,6 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui';
-import type {
-	AuthtypesGettableObjectsDTO,
-	AuthtypesGettableResourcesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableObjectsDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
@@ -19,6 +16,11 @@ import {
 	PERMISSION_ICON_MAP,
 } from './RoleDetails/constants';
 
+export type AuthzResources = {
+	resources: ReadonlyArray<{ readonly kind: string; readonly type: string }>;
+	relations: Readonly<Record<string, ReadonlyArray<string>>>;
+};
+
 export interface PermissionType {
 	key: string;
 	label: string;
@@ -29,11 +31,11 @@ export interface PatchPayloadOptions {
 	newConfig: PermissionConfig;
 	initialConfig: PermissionConfig;
 	resources: ResourceDefinition[];
-	authzRes: AuthtypesGettableResourcesDTO;
+	authzRes: AuthzResources;
 }
 
 export function derivePermissionTypes(
-	relations: AuthtypesGettableResourcesDTO['relations'] | null,
+	relations: AuthzResources['relations'] | null,
 ): PermissionType[] {
 	const iconSize = { size: 14 };
 
@@ -55,7 +57,7 @@ export function derivePermissionTypes(
 }
 
 export function deriveResourcesForRelation(
-	authzResources: AuthtypesGettableResourcesDTO | null,
+	authzResources: AuthzResources | null,
 	relation: string,
 ): ResourceDefinition[] {
 	if (!authzResources?.relations) {
@@ -66,7 +68,7 @@ export function deriveResourcesForRelation(
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
 			id: r.kind,
-			label: capitalize(r.kind).replaceAll(/_/g, ' '),
+			label: capitalize(r.kind).replaceAll('_', ' '),
 			options: [],
 		}));
 }
