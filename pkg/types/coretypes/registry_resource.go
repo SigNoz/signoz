@@ -22,6 +22,8 @@ var Resources = []Resource{
 	ResourceMetaResourcesCloudIntegration,
 	ResourceMetaResourceCloudIntegrationService,
 	ResourceMetaResourcesCloudIntegrationService,
+	ResourceMetaResourceIntegration,
+	ResourceMetaResourcesIntegration,
 	ResourceMetaResourceDashboard,
 	ResourceMetaResourcesDashboard,
 	ResourceMetaResourcePublicDashboard,
@@ -78,6 +80,8 @@ var (
 	ResourceMetaResourcesCloudIntegration                 = NewResourceMetaResources(KindCloudIntegration)
 	ResourceMetaResourceCloudIntegrationService           = NewResourceMetaResource(KindCloudIntegrationService)
 	ResourceMetaResourcesCloudIntegrationService          = NewResourceMetaResources(KindCloudIntegrationService)
+	ResourceMetaResourceIntegration                       = NewResourceMetaResource(KindIntegration)
+	ResourceMetaResourcesIntegration                      = NewResourceMetaResources(KindIntegration)
 	ResourceMetaResourceDashboard                         = NewResourceMetaResource(KindDashboard)
 	ResourceMetaResourcesDashboard                        = NewResourceMetaResources(KindDashboard)
 	ResourceMetaResourcePublicDashboard                   = NewResourceMetaResource(KindPublicDashboard)

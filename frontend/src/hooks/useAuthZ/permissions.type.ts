@@ -44,6 +44,10 @@ export default {
 				type: 'metaresource',
 			},
 			{
+				kind: 'integration',
+				type: 'metaresource',
+			},
+			{
 				kind: 'license',
 				type: 'metaresource',
 			},
@@ -137,6 +141,10 @@ export default {
 			},
 			{
 				kind: 'ingestion-limit',
+				type: 'metaresources',
+			},
+			{
+				kind: 'integration',
 				type: 'metaresources',
 			},
 			{

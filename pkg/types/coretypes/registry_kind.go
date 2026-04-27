@@ -13,6 +13,7 @@ var Kinds = []Kind{
 	KindSession,
 	KindCloudIntegration,
 	KindCloudIntegrationService,
+	KindIntegration,
 	KindDashboard,
 	KindPublicDashboard,
 	KindIngestionKey,
@@ -44,6 +45,7 @@ var (
 	KindSession                      = MustNewKind("session")
 	KindCloudIntegration             = MustNewKind("cloud-integration")
 	KindCloudIntegrationService      = MustNewKind("cloud-integration-service")
+	KindIntegration                  = MustNewKind("integration")
 	KindDashboard                    = MustNewKind("dashboard")
 	KindPublicDashboard              = MustNewKind("public-dashboard")
 	KindIngestionKey                 = MustNewKind("ingestion-key")

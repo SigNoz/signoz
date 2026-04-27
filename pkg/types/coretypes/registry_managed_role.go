@@ -36,6 +36,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindCloudIntegrationService}, WildCardSelectorString)},
+		// integration — viewer/editor/admin (install/uninstall via ViewAccess)
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
 		// factor-api-key — admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindFactorAPIKey}, WildCardSelectorString)},
@@ -206,6 +212,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTraceFunnel}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTraceFunnel}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTraceFunnel}, WildCardSelectorString)},
+		// integration — viewer/editor/admin
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
 		// ingestion-key — editor+admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIngestionKey}, WildCardSelectorString)},
@@ -257,6 +269,12 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		// trace-funnel — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindTraceFunnel}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindTraceFunnel}, WildCardSelectorString)},
+		// integration — viewer/editor/admin (install/uninstall via ViewAccess)
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
+		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindIntegration}, WildCardSelectorString)},
 		// notification-channel — read only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindNotificationChannel}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindNotificationChannel}, WildCardSelectorString)},
