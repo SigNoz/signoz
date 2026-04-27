@@ -83,93 +83,83 @@ function DashboardsAndAlertsPopover({
 
 	const handleAlertsClick = (): void => {
 		if (!hasAlerts) return;
-		openInNewTab(
-			`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
-		);
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.searchText]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
 	};
 
 	const handleDashboardsClick = (): void => {
 		if (!hasDashboards) return;
-		openInNewTab(
-			`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+
+		const searchParams = new URLSearchParams({
+			[QueryParams.searchText]: metricName,
+		});
+
+		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
+	};
+
+	const renderContent = (): JSX.Element => {
+		if (alertsData.isLoading || dashboardsData.isLoading) {
+			return <Skeleton active paragraph={{ rows: 2 }} />;
+		}
+
+		if (alertsData.isError || dashboardsData.isError) {
+			return (
+				<Typography.Text type="danger">Failed to load data</Typography.Text>
+			);
+		}
+
+		if (!hasAlerts && !hasDashboards) {
+			return (
+				<Typography.Text type="secondary">
+					No dashboards or alerts using this metric
+				</Typography.Text>
+			);
+		}
+
+		return (
+			<Menu>
+				{hasAlerts && (
+					<Menu.Item key="alerts" onClick={handleAlertsClick}>
+						<span>
+							<Bell size={16} color={Color.primary[500]} />
+							<Typography.Text className="ml-2">
+								{pluralize('Alert', totalAlerts)} ({totalAlerts})
+							</Typography.Text>
+						</span>
+					</Menu.Item>
+				)}
+				{hasDashboards && (
+					<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
+						<span>
+							<Grid size={16} color={Color.primary[500]} />
+							<Typography.Text className="ml-2">
+								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+							</Typography.Text>
+						</span>
+					</Menu.Item>
+				)}
+			</Menu>
 		);
 	};
 
 	if (!metricName) return null;
 
-	const loading = alertsData.isLoading || dashboardsData.isLoading;
-	const error = alertsData.isError || dashboardsData.isError;
-
-	if (loading) {
-		return (
-			<div>
-				<Skeleton.Input active size="small" />
-			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-				Failed to load alerts or dashboards
-			</Typography.Text>
-		);
-	}
-
-	if (!hasAlerts && !hasDashboards) {
-		return (
-			<Typography.Text type="secondary" style={{ fontSize: '12px' }}>
-				No alerts or dashboards using this metric
-			</Typography.Text>
-		);
-	}
-
-	const menu = (
-		<Menu>
-			{hasAlerts && (
-				<Menu.Item key="alerts" onClick={handleAlertsClick}>
-					<span>
-						<Bell size={14} style={{ marginRight: '8px', color: Color.semantic.warning.border }} />
-						{pluralize('alert', totalAlerts)} ({totalAlerts})
-					</span>
-				</Menu.Item>
-			)}
-			{hasDashboards && (
-				<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
-					<span>
-						<Grid size={14} style={{ marginRight: '8px', color: Color.primary.border }} />
-						{pluralize('dashboard', totalDashboards)} ({totalDashboards})
-					</span>
-				</Menu.Item>
-			)}
-		</Menu>
-	);
-
 	return (
-		<Dropdown overlay={menu} trigger={['click']} placement="bottomLeft">
-			<div
+		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
+			<span
 				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: '4px',
+					color: Color.primary[500],
 					cursor: 'pointer',
-					color: Color.text.secondary,
-					fontSize: '12px',
+					fontSize: '14px',
 				}}
 			>
-				{hasAlerts && (
-					<span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-						<Bell size={12} color={Color.semantic.warning.border} />
-						{totalAlerts}
-					</span>
-				)}
-				{hasDashboards && (
-					<span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-						<Grid size={12} color={Color.primary.border} />
-						{totalDashboards}
-					</span>
-				)}
-			</div>
+				{pluralize('Dashboard', totalDashboards)} & {pluralize('Alert', totalAlerts)}{' '}
+				({totalDashboards + totalAlerts})
+			</span>
 		</Dropdown>
 	);
 }
