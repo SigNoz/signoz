@@ -11,23 +11,26 @@ type TupleKeyAuthorization struct {
 	Authorized bool
 }
 
-// TransactionKey returns a composite key for matching transactions to managed roles.
-func (transaction *Transaction) TransactionKey() string {
-	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
+func NewTuples(resource coretypes.Resource, subject string, verb coretypes.Verb, selectors []Selector, orgID valuer.UUID) []*openfgav1.TupleKey {
+	tuples := make([]*openfgav1.TupleKey, 0)
+
+	for _, selector := range selectors {
+		object := resource.Object(orgID, selector.String())
+		tuples = append(tuples, &openfgav1.TupleKey{User: subject, Relation: verb.StringValue(), Object: object})
+	}
+
+	return tuples
 }
 
 func NewTuplesFromTransactions(transactions []*Transaction, subject string, orgID valuer.UUID) (map[string]*openfgav1.TupleKey, error) {
 	tuples := make(map[string]*openfgav1.TupleKey, len(transactions))
 	for _, txn := range transactions {
-		typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Kind)
+		resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 		if err != nil {
 			return nil, err
 		}
 
-		txnTuples, err := typeable.Tuples(subject, txn.Relation, []Selector{txn.Object.Selector}, orgID)
-		if err != nil {
-			return nil, err
-		}
+		txnTuples := NewTuples(resource, subject, txn.Relation, []Selector{txn.Object.Selector}, orgID)
 
 		// Each transaction produces one tuple, keyed by transaction ID
 		tuples[txn.ID.StringValue()] = txnTuples[0]
@@ -53,16 +56,13 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	for _, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
-		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.RelationAssignee {
-			typeable, err := NewTypeableFromType(txn.Object.Resource.Type, txn.Object.Resource.Kind)
+		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.VerbAssignee {
+			resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 
-			txnTuples, err := typeable.Tuples(subject, txn.Relation, []Selector{txn.Object.Selector}, orgID)
-			if err != nil {
-				return nil, nil, nil, err
-			}
+			txnTuples := NewTuples(resource, subject, txn.Relation, []Selector{txn.Object.Selector}, orgID)
 
 			tuples[txnID] = txnTuples[0]
 			continue
@@ -76,10 +76,7 @@ func NewTuplesFromTransactionsWithManagedRoles(
 
 		for _, roleName := range roleNames {
 			roleSelector := MustNewSelector(coretypes.TypeRole, roleName)
-			roleTuples, err := NewTypeableRole().Tuples(subject, coretypes.RelationAssignee, []Selector{roleSelector}, orgID)
-			if err != nil {
-				return nil, nil, nil, err
-			}
+			roleTuples := NewTuples(coretypes.ResourceRole, subject, coretypes.VerbAssignee, []Selector{roleSelector}, orgID)
 
 			correlationID := valuer.GenerateUUID().StringValue()
 			tuples[correlationID] = roleTuples[0]

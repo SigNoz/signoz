@@ -9,17 +9,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
-)
-
-var (
-	TypeableMetaResourceDashboard       = authtypes.MustNewTypeableMetaResource(coretypes.MustNewKind("dashboard"))
-	TypeableMetaResourcePublicDashboard = authtypes.MustNewTypeableMetaResource(coretypes.MustNewKind("public-dashboard"))
-	TypeableMetaResourcesDashboards     = authtypes.MustNewTypeableMetaResources(coretypes.MustNewKind("dashboards"))
 )
 
 var (

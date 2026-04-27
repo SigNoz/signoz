@@ -10,7 +10,7 @@ type Option func(*handler)
 
 type AuditDef struct {
 	ResourceKind    coretypes.Kind            //  Typeable.Kind() value, e.g. "dashboard", "user".
-	Action          coretypes.Relation        // create, update, delete, etc.
+	Action          coretypes.Verb            // create, update, delete, etc.
 	Category        audittypes.ActionCategory // access_control, configuration_change, etc.
 	ResourceIDParam string                    // Gorilla mux path param name for the resource ID.
 }

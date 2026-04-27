@@ -13,10 +13,9 @@ type EventName struct {
 //
 // Examples:
 //
-//	NewEventName("dashboard", coretypes.RelationCreate)  → "dashboard.created"
-//	NewEventName("dashboard", coretypes.RelationUpdate)  → "dashboard.updated"
-//	NewEventName("user.role", coretypes.RelationUpdate)  → "user.role.updated"
-func NewEventName(resourceKind coretypes.Kind, action coretypes.Relation) EventName {
+//	NewEventName("dashboard", coretypes.VerbCreate)  → "dashboard.created"
+//	NewEventName("dashboard", coretypes.VerbUpdate)  → "dashboard.updated"
+func NewEventName(resourceKind coretypes.Kind, action coretypes.Verb) EventName {
 	return EventName{s: resourceKind.String() + "." + action.PastTense()}
 }
 

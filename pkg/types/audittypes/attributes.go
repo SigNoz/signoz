@@ -13,13 +13,13 @@ import (
 
 // Audit attributes — Action (What).
 type AuditAttributes struct {
-	Action         coretypes.Relation // guaranteed to be present
-	ActionCategory ActionCategory     // guaranteed to be present
-	Outcome        Outcome            // guaranteed to be present
+	Action         coretypes.Verb // guaranteed to be present
+	ActionCategory ActionCategory // guaranteed to be present
+	Outcome        Outcome        // guaranteed to be present
 	IdentNProvider authtypes.IdentNProvider
 }
 
-func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Relation, category ActionCategory, claims authtypes.Claims) AuditAttributes {
+func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category ActionCategory, claims authtypes.Claims) AuditAttributes {
 	outcome := OutcomeFailure
 	if statusCode >= 200 && statusCode < 400 {
 		outcome = OutcomeSuccess

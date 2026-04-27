@@ -218,7 +218,7 @@ func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valu
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
 }
 
-func (module *module) MustGetTypeables() []authtypes.Typeable {
+func (module *module) MustGetTypeables() []coretypes.Resource {
 	return module.pkgDashboardModule.MustGetTypeables()
 }
 
@@ -227,11 +227,11 @@ func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.T
 		authtypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
-				Relation: coretypes.RelationRead,
+				Relation: coretypes.VerbRead,
 				Object: *authtypes.MustNewObject(
-					authtypes.Resource{
+					coretypes.GettableResource{
 						Type: coretypes.TypeMetaResource,
-						Kind: dashboardtypes.TypeableMetaResourcePublicDashboard.Kind(),
+						Kind: coretypes.ResourceMetaResourcePublicDashboard.Kind(),
 					},
 					authtypes.MustNewSelector(coretypes.TypeMetaResource, "*"),
 				),

@@ -50,7 +50,7 @@ func NewAuditEventFromHTTPRequest(
 	statusCode int,
 	traceID oteltrace.TraceID,
 	spanID oteltrace.SpanID,
-	action coretypes.Relation,
+	action coretypes.Verb,
 	actionCategory ActionCategory,
 	claims authtypes.Claims,
 	resourceID string,

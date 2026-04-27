@@ -84,8 +84,8 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
-		coretypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
+		coretypes.VerbRead,
+		coretypes.ResourceMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
@@ -105,15 +105,15 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(coretypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		coretypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
+		coretypes.VerbRead,
+		coretypes.ResourceMetaResourcePublicDashboard,
 		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
@@ -133,7 +133,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(coretypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

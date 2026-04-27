@@ -166,8 +166,8 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 		ctx,
 		claims,
 		valuer.MustNewUUID(claims.OrgID),
-		coretypes.RelationAssignee,
-		authtypes.NewTypeableRole(),
+		coretypes.VerbAssignee,
+		coretypes.NewResourceRole(),
 		selectors,
 		selectors,
 	)

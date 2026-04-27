@@ -51,8 +51,8 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.RelationAssignee,
-			authtypes.NewTypeableRole(),
+			coretypes.VerbAssignee,
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -89,8 +89,8 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.RelationAssignee,
-			authtypes.NewTypeableRole(),
+			coretypes.VerbAssignee,
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -126,8 +126,8 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.RelationAssignee,
-			authtypes.NewTypeableRole(),
+			coretypes.VerbAssignee,
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -162,8 +162,8 @@ func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
 			req.Context(),
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.RelationAssignee,
-			authtypes.NewTypeableRole(),
+			coretypes.VerbAssignee,
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -186,7 +186,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation coretypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation coretypes.Verb, typeable coretypes.Resource, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		claims, err := authtypes.ClaimsFromContext(ctx)
@@ -216,7 +216,7 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation coretypes.Relatio
 	})
 }
 
-func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation coretypes.Relation, typeable authtypes.Typeable, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation coretypes.Verb, typeable coretypes.Resource, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)

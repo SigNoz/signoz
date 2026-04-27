@@ -5,16 +5,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-func NewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *coretypes.Relation) (string, error) {
+func NewSubject(resource coretypes.Resource, selector string, orgID valuer.UUID, relation *coretypes.Verb) (string, error) {
 	if relation == nil {
-		return subjectType.Prefix(orgID) + "/" + selector, nil
+		return resource.Prefix(orgID) + "/" + selector, nil
 	}
 
-	return subjectType.Prefix(orgID) + "/" + selector + "#" + relation.StringValue(), nil
+	return resource.Prefix(orgID) + "/" + selector + "#" + relation.StringValue(), nil
 }
 
-func MustNewSubject(subjectType Typeable, selector string, orgID valuer.UUID, relation *coretypes.Relation) string {
-	subject, err := NewSubject(subjectType, selector, orgID, relation)
+func MustNewSubject(resource coretypes.Resource, selector string, orgID valuer.UUID, relation *coretypes.Verb) string {
+	subject, err := NewSubject(resource, selector, orgID, relation)
 	if err != nil {
 		panic(err)
 	}

@@ -168,25 +168,23 @@ func (role *PatchableRole) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Relation, additions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Verb, additions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range additions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Kind)
-		transactionTuples, err := typeable.Tuples(
+		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
+		transactionTuples := NewTuples(
+			resource,
 			MustNewSubject(
-				NewTypeableRole(),
+				resource,
 				name,
 				orgID,
-				&coretypes.RelationAssignee,
+				&coretypes.VerbAssignee,
 			),
 			relation,
 			[]Selector{object.Selector},
 			orgID,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		tuples = append(tuples, transactionTuples...)
 	}
@@ -194,25 +192,23 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation coretypes.Relati
 	return tuples, nil
 }
 
-func GetDeletionTuples(name string, orgID valuer.UUID, relation coretypes.Relation, deletions []*Object) ([]*openfgav1.TupleKey, error) {
+func GetDeletionTuples(name string, orgID valuer.UUID, relation coretypes.Verb, deletions []*Object) ([]*openfgav1.TupleKey, error) {
 	tuples := make([]*openfgav1.TupleKey, 0)
 
 	for _, object := range deletions {
-		typeable := MustNewTypeableFromType(object.Resource.Type, object.Resource.Kind)
-		transactionTuples, err := typeable.Tuples(
+		resource := coretypes.MustNewResourceFromTypeAndKind(object.Resource.Type, object.Resource.Kind)
+		transactionTuples := NewTuples(
+			resource,
 			MustNewSubject(
-				NewTypeableRole(),
+				resource,
 				name,
 				orgID,
-				&coretypes.RelationAssignee,
+				&coretypes.VerbAssignee,
 			),
 			relation,
 			[]Selector{object.Selector},
 			orgID,
 		)
-		if err != nil {
-			return nil, err
-		}
 
 		tuples = append(tuples, transactionTuples...)
 	}

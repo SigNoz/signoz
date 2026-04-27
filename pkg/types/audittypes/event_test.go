@@ -25,7 +25,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		path            string
 		route           string
 		statusCode      int
-		action          coretypes.Relation
+		action          coretypes.Verb
 		category        ActionCategory
 		claims          authtypes.Claims
 		resourceID      string
@@ -41,7 +41,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards",
 			route:           "/api/v1/dashboards",
 			statusCode:      http.StatusOK,
-			action:          coretypes.RelationCreate,
+			action:          coretypes.VerbCreate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
@@ -55,7 +55,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards/019b-5678-efgh-9012",
 			route:           "/api/v1/dashboards/{id}",
 			statusCode:      http.StatusForbidden,
-			action:          coretypes.RelationUpdate,
+			action:          coretypes.VerbUpdate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
@@ -103,7 +103,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 	}
 }
 
-func newTestEvent(resourceKind coretypes.Kind, resourceID string, action coretypes.Relation) AuditEvent {
+func newTestEvent(resourceKind coretypes.Kind, resourceID string, action coretypes.Verb) AuditEvent {
 	return AuditEvent{
 		Body:      resourceKind.String() + "." + action.PastTense(),
 		EventName: NewEventName(resourceKind, action),
@@ -136,7 +136,7 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SingleEvent",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationCreate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -146,9 +146,9 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameResource_MultipleEvents",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationCreate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationUpdate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    1,
 			expectedResourceKinds:   []string{"dashboard"},
@@ -158,8 +158,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "DifferentResources_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationUpdate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.RelationDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},
@@ -169,8 +169,8 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "SameKind_DifferentIDs_SeparateGroups",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationUpdate),
-				newTestEvent(testDashboardKind, "d-002", coretypes.RelationDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-002", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "dashboard"},
@@ -180,11 +180,11 @@ func TestNewPLogsFromAuditEvents(t *testing.T) {
 		{
 			name: "InterleavedResources_GroupedCorrectly",
 			events: []AuditEvent{
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationCreate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.RelationUpdate),
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationUpdate),
-				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.RelationDelete),
-				newTestEvent(testDashboardKind, "d-001", coretypes.RelationDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbCreate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbUpdate),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbUpdate),
+				newTestEvent(coretypes.MustNewKind("user"), "u-001", coretypes.VerbDelete),
+				newTestEvent(testDashboardKind, "d-001", coretypes.VerbDelete),
 			},
 			expectedResourceLogs:    2,
 			expectedResourceKinds:   []string{"dashboard", "user"},

@@ -98,7 +98,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
-	relation, err := coretypes.NewRelation(relationStr)
+	relation, err := coretypes.NewVerb(relationStr)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -191,7 +191,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relation, err := coretypes.NewRelation(mux.Vars(r)["relation"])
+	relation, err := coretypes.NewVerb(mux.Vars(r)["relation"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -267,7 +267,7 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	subject, err := authtypes.NewSubject(authtypes.NewTypeableUser(), claims.UserID, orgID, nil)
+	subject, err := authtypes.NewSubject(coretypes.NewResourceUser(), claims.UserID, orgID, nil)
 	if err != nil {
 		render.Error(rw, err)
 		return

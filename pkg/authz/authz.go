@@ -15,10 +15,10 @@ type AuthZ interface {
 	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
-	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, coretypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, coretypes.Verb, coretypes.Resource, []authtypes.Selector, []authtypes.Selector) error
 
 	// CheckWithTupleCreationWithoutClaims checks permissions for anonymous users.
-	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, coretypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
+	CheckWithTupleCreationWithoutClaims(context.Context, valuer.UUID, coretypes.Verb, coretypes.Resource, []authtypes.Selector, []authtypes.Selector) error
 
 	// BatchCheck accepts a map of ID → tuple and returns a map of ID → authorization result.
 	BatchCheck(context.Context, map[string]*openfgav1.TupleKey) (map[string]*authtypes.TupleKeyAuthorization, error)
@@ -31,7 +31,7 @@ type AuthZ interface {
 	Write(context.Context, []*openfgav1.TupleKey, []*openfgav1.TupleKey) error
 
 	// Lists the selectors for objects assigned to subject (s) with relation (r) on resource (s)
-	ListObjects(context.Context, string, coretypes.Relation, coretypes.Type) ([]*authtypes.Object, error)
+	ListObjects(context.Context, string, coretypes.Verb, coretypes.Type) ([]*authtypes.Object, error)
 
 	// Creates the role.
 	Create(context.Context, valuer.UUID, *authtypes.Role) error
@@ -40,16 +40,16 @@ type AuthZ interface {
 	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
 	// Gets the objects associated with the given role and relation.
-	GetObjects(context.Context, valuer.UUID, valuer.UUID, coretypes.Relation) ([]*authtypes.Object, error)
+	GetObjects(context.Context, valuer.UUID, valuer.UUID, coretypes.Verb) ([]*authtypes.Object, error)
 
 	// Gets all the typeable resources registered from role registry.
-	GetResources(context.Context) []*authtypes.Resource
+	GetResources(context.Context) []*coretypes.GettableResource
 
 	// Patches the role.
 	Patch(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
-	PatchObjects(context.Context, valuer.UUID, string, coretypes.Relation, []*authtypes.Object, []*authtypes.Object) error
+	PatchObjects(context.Context, valuer.UUID, string, coretypes.Verb, []*authtypes.Object, []*authtypes.Object) error
 
 	// Deletes the role and tuples in authorization server.
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -92,7 +92,7 @@ type AuthZ interface {
 type OnBeforeRoleDelete func(context.Context, valuer.UUID, valuer.UUID) error
 
 type RegisterTypeable interface {
-	MustGetTypeables() []authtypes.Typeable
+	MustGetTypeables() []coretypes.Resource
 
 	MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction
 }

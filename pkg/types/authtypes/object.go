@@ -2,31 +2,32 @@ package authtypes
 
 import (
 	"encoding/json"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
-type Resource struct {
-	Type coretypes.Type `json:"type" required:"true"`
-	Kind coretypes.Kind `json:"kind" required:"true"`
+type GettableResources struct {
+	Resources []*coretypes.GettableResource       `json:"resources" required:"true" nullable:"false"`
+	Relations map[coretypes.Verb][]coretypes.Type `json:"relations" required:"true"`
 }
 
-type GettableResources struct {
-	Resources []*Resource                             `json:"resources" required:"true" nullable:"false"`
-	Relations map[coretypes.Relation][]coretypes.Type `json:"relations" required:"true"`
+func NewGettableResources(resources []*coretypes.GettableResource) *GettableResources {
+	return &GettableResources{
+		Resources: resources,
+		Relations: coretypes.VerbsForTypes(),
+	}
 }
 
 type Object struct {
-	Resource Resource `json:"resource" required:"true"`
-	Selector Selector `json:"selector" required:"true"`
+	Resource coretypes.GettableResource `json:"resource" required:"true"`
+	Selector Selector                   `json:"selector" required:"true"`
 }
 
 type GettableObjects struct {
-	Resource  Resource   `json:"resource" required:"true"`
-	Selectors []Selector `json:"selectors" required:"true" nullable:"false"`
+	Resource  coretypes.GettableResource `json:"resource" required:"true"`
+	Selectors []Selector                 `json:"selectors" required:"true" nullable:"false"`
 }
 
 type PatchableObjects struct {
@@ -34,7 +35,7 @@ type PatchableObjects struct {
 	Deletions []*GettableObjects `json:"deletions" required:"true" nullable:"true"`
 }
 
-func NewObject(resource Resource, selector Selector) (*Object, error) {
+func NewObject(resource coretypes.GettableResource, selector Selector) (*Object, error) {
 	err := IsValidSelector(resource.Type, selector.String())
 	if err != nil {
 		return nil, err
@@ -60,20 +61,20 @@ func NewObjectsFromGettableObjects(patchableObjects []*GettableObjects) ([]*Obje
 	return objects, nil
 }
 
-func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObjects, relation coretypes.Relation) ([]*Object, []*Object, error) {
+func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObjects, relation coretypes.Verb) ([]*Object, []*Object, error) {
 	if len(additions) == 0 && len(deletions) == 0 {
 		return nil, nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidPatchObject, "empty object patch request received, at least one of additions or deletions must be present")
 	}
 
 	for _, object := range additions {
-		if !slices.Contains(coretypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+		if err := coretypes.ErrIfVerbNotValidForType(relation, object.Resource.Type); err != nil {
+			return nil, nil, err
 		}
 	}
 
 	for _, object := range deletions {
-		if !slices.Contains(coretypes.TypeableRelations[object.Resource.Type], relation) {
-			return nil, nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "relation %s is invalid for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+		if err := coretypes.ErrIfVerbNotValidForType(relation, object.Resource.Type); err != nil {
+			return nil, nil, err
 		}
 	}
 
@@ -90,15 +91,8 @@ func NewPatchableObjects(additions []*GettableObjects, deletions []*GettableObje
 	return additionObjects, deletionsObjects, nil
 }
 
-func NewGettableResources(resources []*Resource) *GettableResources {
-	return &GettableResources{
-		Resources: resources,
-		Relations: coretypes.RelationsTypeable,
-	}
-}
-
 func NewGettableObjects(objects []*Object) []*GettableObjects {
-	grouped := make(map[Resource][]Selector)
+	grouped := make(map[coretypes.GettableResource][]Selector)
 	for _, obj := range objects {
 		key := obj.Resource
 		if _, ok := grouped[key]; !ok {
@@ -119,7 +113,7 @@ func NewGettableObjects(objects []*Object) []*GettableObjects {
 	return gettableObjects
 }
 
-func MustNewObject(resource Resource, selector Selector) *Object {
+func MustNewObject(resource coretypes.GettableResource, selector Selector) *Object {
 	object, err := NewObject(resource, selector)
 	if err != nil {
 		panic(err)
@@ -139,7 +133,7 @@ func MustNewObjectFromString(input string) *Object {
 		panic(errors.Newf(errors.TypeInternal, errors.CodeInternal, "invalid type format: %s", parts[0]))
 	}
 
-	resource := Resource{
+	resource := coretypes.GettableResource{
 		Type: coretypes.MustNewType(typeParts[0]),
 		Kind: coretypes.MustNewKind(parts[2]),
 	}
@@ -159,7 +153,7 @@ func MustNewObjectsFromStringSlice(input []string) []*Object {
 
 func (object *Object) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
-		Resource Resource
+		Resource coretypes.GettableResource
 		Selector Selector
 	}{}
 

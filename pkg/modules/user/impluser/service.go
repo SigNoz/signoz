@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -148,7 +149,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			orgID,
 			existingUserRoleNames,
 			[]string{authtypes.SigNozAdminRoleName},
-			authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), orgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), orgID, nil),
 		); err != nil {
 			return err
 		}

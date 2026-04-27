@@ -177,7 +177,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -244,8 +244,8 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 			ctx,
 			claims,
 			valuer.MustNewUUID(claims.OrgID),
-			coretypes.RelationAssignee,
-			authtypes.NewTypeableRole(),
+			coretypes.VerbAssignee,
+			coretypes.NewResourceRole(),
 			selectors,
 			selectors,
 		)
@@ -265,7 +265,7 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 			orgID,
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
-			authtypes.MustNewSubject(authtypes.NewTypeableUser(), id, orgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), id, orgID, nil),
 		)
 		if err != nil {
 			return nil, err
@@ -401,7 +401,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		ctx,
 		orgID,
 		roleNames,
-		authtypes.MustNewSubject(authtypes.NewTypeableUser(), id, orgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), id, orgID, nil),
 	)
 	if err != nil {
 		return err
@@ -587,7 +587,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 			ctx,
 			user.OrgID,
 			roleNames,
-			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		); err != nil {
 			return err
 		}
@@ -797,7 +797,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 			ctx,
 			user.OrgID,
 			createUserOpts.RoleNames,
-			authtypes.MustNewSubject(authtypes.NewTypeableUser(), user.ID.StringValue(), user.OrgID, nil),
+			authtypes.MustNewSubject(coretypes.NewResourceUser(), user.ID.StringValue(), user.OrgID, nil),
 		)
 		if err != nil {
 			return err
@@ -891,7 +891,7 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 		orgID,
 		existingRoles,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
@@ -954,7 +954,7 @@ func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.U
 		ctx,
 		orgID,
 		[]string{roleName},
-		authtypes.MustNewSubject(authtypes.NewTypeableUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
+		authtypes.MustNewSubject(coretypes.NewResourceUser(), existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
 		return err
 	}
