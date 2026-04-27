@@ -23,7 +23,7 @@ pytest_plugins = [
     "fixtures.notification_channel",
     "fixtures.alerts",
     "fixtures.cloudintegrations",
-    "fixtures.jsontypeexporter",
+    "fixtures.jsontypes",
     "fixtures.seeder",
     "fixtures.telemetrystore",
 ]

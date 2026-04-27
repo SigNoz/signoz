@@ -1,7 +1,7 @@
 """
-Simpler version of jsontypeexporter for test fixtures.
+Simpler version of metadataexporter for exporting jsontypes for test fixtures.
 This exports JSON type metadata to the path_types table by parsing JSON bodies
-and extracting all paths with their types, similar to how the real jsontypeexporter works.
+and extracting all paths with their types, similar to how the real metadataexporter works.
 """
 
 import datetime
@@ -54,7 +54,7 @@ class JSONPathType(ABC):
         return np.array([self.signal, self.field_context, self.field_name, self.field_data_type, self.last_seen])
 
 
-# Constants matching jsontypeexporter
+# Constants matching metadataexporter
 ARRAY_SEPARATOR = "[]."  # Used in paths like "education[].name"
 ARRAY_SUFFIX = "[]"  # Used when traversing into array element objects
 
@@ -162,7 +162,7 @@ def _extract_json_paths(
 ) -> Dict[str, Set[str]]:
     """
     Recursively extract all paths and their types from a JSON object.
-    Matches jsontypeexporter's analyzePValue logic.
+    Matches metadataexporter's analyzePValue logic.
 
     Args:
         obj: The JSON object to traverse
@@ -255,7 +255,7 @@ def _parse_json_bodies_and_extract_paths(
 ) -> List[JSONPathType]:
     """
     Parse JSON bodies and extract all paths with their types.
-    This mimics the behavior of jsontypeexporter.
+    This mimics the behavior of metadataexporter.
 
     Args:
         json_bodies: List of JSON body strings to parse
@@ -299,7 +299,7 @@ def export_json_types(
 ]:
     """
     Fixture for exporting JSON type metadata to the path_types table.
-    This is a simpler version of jsontypeexporter for test fixtures.
+    This is a simpler version of metadataexporter for test fixtures.
 
     The function can accept:
     1. List of JSONPathType objects (manual specification)
