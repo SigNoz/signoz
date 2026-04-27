@@ -89,18 +89,17 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Text
 						strong
-						onClick={(e): void => {
-							e.stopPropagation();
-							openInNewTab(
-								`${ROUTES.ALERTS}?${QueryParams.search}=${metricName}`,
-							);
-						}}
-						style={{ display: 'block', color: Color.text.primary }}
+						style={{ color: Color.text['active'], display: 'block' }}
 					>
 						{pluralize('Alert', totalAlerts)} ({totalAlerts})
 					</Typography.Text>
 				),
 				icon: <Bell size={16} />,
+				onClick: () => {
+					openInNewTab(
+						`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
+					);
+				},
 			});
 		}
 
@@ -110,18 +109,17 @@ function DashboardsAndAlertsPopover({
 				label: (
 					<Typography.Text
 						strong
-						onClick={(e): void => {
-							e.stopPropagation();
-							openInNewTab(
-								`${ROUTES.DASHBOARDS}?${QueryParams.search}=${metricName}`,
-							);
-						}}
-						style={{ display: 'block', color: Color.text.primary }}
+						style={{ color: Color.text['active'], display: 'block' }}
 					>
 						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
 					</Typography.Text>
 				),
 				icon: <Grid size={16} />,
+				onClick: () => {
+					openInNewTab(
+						`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.search}=${metricName}`,
+					);
+				},
 			});
 		}
 
@@ -136,9 +134,8 @@ function DashboardsAndAlertsPopover({
 				overlay={<Menu items={[]} />}
 				trigger={['click']}
 				disabled
-				overlayStyle={{ minWidth: 200 }}
 			>
-				<Skeleton.Input active size="small" style={{ width: 120 }} />
+				<Skeleton.Input size="small" style={{ width: 120 }} active />
 			</Dropdown>
 		);
 	}
@@ -149,16 +146,15 @@ function DashboardsAndAlertsPopover({
 		<Dropdown
 			overlay={<Menu items={menuItems} />}
 			trigger={['click']}
-			overlayStyle={{ minWidth: 200 }}
 		>
-			<Typography.Link
-				onClick={(e): void => {
-					e.preventDefault();
-				}}
-				style={{ fontSize: 12 }}
-			>
-				View in {totalDashboards > 0 ? 'Dashboard' : 'Alert'}{' '}
-				{totalDashboards > 1 || totalAlerts > 1 ? '(s)' : ''}
+			<Typography.Link>
+				{totalAlerts > 0
+					? `${totalAlerts} ${pluralize('Alert', totalAlerts)}`
+					: null}
+				{totalAlerts > 0 && totalDashboards > 0 ? ' • ' : null}
+				{totalDashboards > 0
+					? `${totalDashboards} ${pluralize('Dashboard', totalDashboards)}`
+					: null}
 			</Typography.Link>
 		</Dropdown>
 	);
