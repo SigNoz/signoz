@@ -15,6 +15,17 @@ import { pluralize } from 'utils/pluralize';
 
 import { DashboardsAndAlertsPopoverProps } from './types';
 
+function getErrorStatus(isError: boolean, error: any): { data: any[]; isLoading: boolean; isError: boolean } {
+	if (isError) {
+		return { data: [], isLoading: false, isError: true, error };
+	}
+	return { data: [], isLoading: false, isError: false };
+}
+
+function getLoadingStatus(isLoading: boolean): { data: any[]; isLoading: boolean; isError: boolean } {
+	return { data: [], isLoading, isError: false };
+}
+
 function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
@@ -33,6 +44,7 @@ function DashboardsAndAlertsPopover({
 		data: newAlertsData,
 		isLoading: newIsLoadingAlerts,
 		isError: newIsErrorAlerts,
+		error: newErrorAlerts,
 	} = useGetMetricAlerts(
 		{
 			metricName,
@@ -48,6 +60,7 @@ function DashboardsAndAlertsPopover({
 		data: newDashboardsData,
 		isLoading: newIsLoadingDashboards,
 		isError: newIsErrorDashboards,
+		error: newErrorDashboards,
 	} = useGetMetricDashboards(
 		{
 			metricName,
@@ -60,37 +73,14 @@ function DashboardsAndAlertsPopover({
 	);
 
 	useEffect(() => {
-		if (newIsErrorAlerts || newIsErrorDashboards) {
-			setAlertsData({
-				data: [],
-				isLoading: false,
-				isError: true,
-			});
-			setDashboardsData({
-				data: [],
-				isLoading: false,
-				isError: true,
-			});
-		} else {
-			setAlertsData({
-				data: newAlertsData?.data?.alerts || [],
-				isLoading: newIsLoadingAlerts,
-				isError: newIsErrorAlerts,
-			});
-			setDashboardsData({
-				data: newDashboardsData?.data?.dashboards || [],
-				isLoading: newIsLoadingDashboards,
-				isError: newIsErrorDashboards,
-			});
-		}
-	}, [
-		newAlertsData,
-		newIsLoadingAlerts,
-		newIsErrorAlerts,
-		newDashboardsData,
-		newIsLoadingDashboards,
-		newIsErrorDashboards,
-	]);
+		const alertsStatus = getErrorStatus(newIsErrorAlerts, newErrorAlerts);
+		const dashboardsStatus = getErrorStatus(newIsErrorDashboards, newErrorDashboards);
+		const alertsLoadingStatus = getLoadingStatus(newIsLoadingAlerts);
+		const dashboardsLoadingStatus = getLoadingStatus(newIsLoadingDashboards);
+
+		setAlertsData(alertsStatus);
+		setDashboardsData(dashboardsStatus);
+	}, [newIsErrorAlerts, newIsErrorDashboards, newIsLoadingAlerts, newIsLoadingDashboards, newErrorAlerts, newErrorDashboards]);
 
 	return (
 		<Dropdown
@@ -98,7 +88,7 @@ function DashboardsAndAlertsPopover({
 				<Menu>
 					<Menu.Item>
 						<Typography.Text>
-							{pluralize(alertsData.data.length, 'alert', 'alerts')}{' '}
+							{pluralize(alertsData.data.length, 'Alert')}{' '}
 							{newIsLoadingAlerts ? (
 								<Skeleton active paragraph={false} />
 							) : (
@@ -106,8 +96,12 @@ function DashboardsAndAlertsPopover({
 									href={generatePath(ROUTES.METRIC_ALERTS, {
 										metricName,
 									})}
-									target="_blank"
-									rel="noopener noreferrer"
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.METRIC_ALERTS, {
+											metricName,
+										}));
+									}}
 								>
 									{ROUTES.METRIC_ALERTS}
 								</a>
@@ -116,7 +110,7 @@ function DashboardsAndAlertsPopover({
 					</Menu.Item>
 					<Menu.Item>
 						<Typography.Text>
-							{pluralize(dashboardsData.data.length, 'dashboard', 'dashboards')}{' '}
+							{pluralize(dashboardsData.data.length, 'Dashboard')}{' '}
 							{newIsLoadingDashboards ? (
 								<Skeleton active paragraph={false} />
 							) : (
@@ -124,8 +118,12 @@ function DashboardsAndAlertsPopover({
 									href={generatePath(ROUTES.METRIC_DASHBOARDS, {
 										metricName,
 									})}
-									target="_blank"
-									rel="noopener noreferrer"
+									onClick={(e) => {
+										e.preventDefault();
+										openInNewTab(generatePath(ROUTES.METRIC_DASHBOARDS, {
+											metricName,
+										}));
+									}}
 								>
 									{ROUTES.METRIC_DASHBOARDS}
 								</a>
