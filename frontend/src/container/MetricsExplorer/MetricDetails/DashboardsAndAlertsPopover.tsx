@@ -92,16 +92,20 @@ function DashboardsAndAlertsPopover({
 
 	if (metricAlertsStatus.isError || metricDashboardsStatus.isError) {
 		return (
-			<Skeleton active>
-				<Typography.Text>Error loading data</Typography.Text>
+			<Skeleton active loading={false}>
+				<Typography.Text>
+					{metricAlertsStatus.error?.message ||
+						metricDashboardsStatus.error?.message ||
+						'Error loading dashboards and alerts'}
+				</Typography.Text>
 			</Skeleton>
 		);
 	}
 
 	if (metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading) {
 		return (
-			<Skeleton active>
-				<Typography.Text>Loading data...</Typography.Text>
+			<Skeleton active loading={true}>
+				<Typography.Text>Loading...</Typography.Text>
 			</Skeleton>
 		);
 	}
@@ -110,22 +114,46 @@ function DashboardsAndAlertsPopover({
 		<Dropdown
 			overlay={
 				<Menu>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize(metricAlertsStatus.data.length, 'alert')}{' '}
-							{metricName}
-						</Typography.Text>
+					<Menu.Item key="dashboards">
+						<a
+							onClick={() =>
+								openInNewTab(
+									generatePath(ROUTES.DASHBOARD_LIST, {
+										metricName,
+									}),
+								)
+							}
+						>
+							<Grid />
+							<Typography.Text>
+								{pluralize('dashboard', metricDashboardsStatus.data.length)}
+							</Typography.Text>
+						</a>
 					</Menu.Item>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize(metricDashboardsStatus.data.length, 'dashboard')}{' '}
-							{metricName}
-						</Typography.Text>
+					<Menu.Item key="alerts">
+						<a
+							onClick={() =>
+								openInNewTab(
+									generatePath(ROUTES.ALERT_LIST, {
+										metricName,
+									}),
+								)
+							}
+						>
+							<Bell />
+							<Typography.Text>
+								{pluralize('alert', metricAlertsStatus.data.length)}
+							</Typography.Text>
+						</a>
 					</Menu.Item>
 				</Menu>
 			}
 		>
-			<Grid size={24} />
+			<Typography.Text>
+				{metricDashboardsStatus.data.length +
+					metricAlertsStatus.data.length}{' '}
+				{pluralize('item', metricDashboardsStatus.data.length + metricAlertsStatus.data.length)}
+			</Typography.Text>
 		</Dropdown>
 	);
 }
