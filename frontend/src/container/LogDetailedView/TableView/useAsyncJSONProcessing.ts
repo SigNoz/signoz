@@ -31,7 +31,7 @@ const useAsyncJSONProcessing = (
 	const processingRef = useRef<boolean>(false);
 	const { featureFlags } = useAppContext();
 	const isBodyJsonQueryEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ENABLE_BODY_JSON_QUERY)
+		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
 			?.active || false;
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity

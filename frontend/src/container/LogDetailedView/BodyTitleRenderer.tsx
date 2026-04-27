@@ -48,7 +48,7 @@ function BodyTitleRenderer({
 
 	const cleanedNodeKey = removeObjectFromString(nodeKey);
 	const isBodyJsonQueryEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.ENABLE_BODY_JSON_QUERY)
+		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
 			?.active || false;
 
 	// Group by is supported only for body json query enabled and not for array elements
@@ -89,7 +89,7 @@ function BodyTitleRenderer({
 					cleanedNodeKey,
 					getDataTypes(value),
 					isBodyJsonQueryEnabled,
-			  )
+				)
 			: `body.${cleanedNodeKey}`;
 
 		const fieldDataType = getDataTypes(value);
@@ -165,7 +165,7 @@ function BodyTitleRenderer({
 							key: DROPDOWN_KEY.GROUP_BY,
 							label: `Group by ${nodeKey}`,
 						},
-				  ]
+					]
 				: []),
 		],
 		onClick: onClickHandler,
