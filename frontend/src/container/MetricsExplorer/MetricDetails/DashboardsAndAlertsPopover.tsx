@@ -78,83 +78,91 @@ function DashboardsAndAlertsPopover({
 	const totalAlerts = alertsData.data.length;
 	const totalDashboards = dashboardsData.data.length;
 
-	const hasAlerts = totalAlerts > 0;
-	const hasDashboards = totalDashboards > 0;
+	const hasAnyItem = totalAlerts > 0 || totalDashboards > 0;
 
-	const handleAlertsClick = (): void => {
-		if (!hasAlerts) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.ALERTS}?${searchParams.toString()}`);
-	};
-
-	const handleDashboardsClick = (): void => {
-		if (!hasDashboards) return;
-
-		const searchParams = new URLSearchParams({
-			[QueryParams.search]: metricName,
-		});
-
-		openInNewTab(`${ROUTES.DASHBOARDS}?${searchParams.toString()}`);
-	};
-
-	const renderContent = (): JSX.Element => {
-		if (alertsData.isLoading || dashboardsData.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
-		}
-
-		if (alertsData.isError || dashboardsData.isError) {
-			return (
-				<Typography.Text type="secondary">
-					Failed to load alerts or dashboards.
-				</Typography.Text>
-			);
-		}
-
-		if (!hasAlerts && !hasDashboards) {
-			return (
-				<Typography.Text type="secondary">No alerts or dashboards.</Typography.Text>
-			);
-		}
-
+	if (!hasAnyItem && (alertsData.isLoading || dashboardsData.isLoading)) {
 		return (
-			<Menu>
-				{hasAlerts && (
-					<Menu.Item key="alerts" onClick={handleAlertsClick}>
-						<span>
-							<Bell size={16} color={Color.primary['500']} />{' '}
-							{pluralize('alert', totalAlerts)} found
-						</span>
-					</Menu.Item>
-				)}
-				{hasDashboards && (
-					<Menu.Item key="dashboards" onClick={handleDashboardsClick}>
-						<span>
-							<Grid size={16} color={Color.primary['500']} />{' '}
-							{pluralize('dashboard', totalDashboards)} found
-						</span>
-					</Menu.Item>
-				)}
-			</Menu>
+			<div style={{ padding: '8px 12px', minWidth: 150 }}>
+				<Skeleton.Input active size="small" />
+			</div>
 		);
-	};
+	}
 
-	if (!metricName) return null;
+	if (!hasAnyItem) {
+		return null;
+	}
+
+	const menuItems = [
+		...(totalAlerts > 0
+			? [
+					{
+						key: 'alerts',
+						label: (
+							<Typography.Text
+								strong
+								style={{ color: Color.text['info'], display: 'flex', alignItems: 'center', gap: 8 }}
+							>
+								<Bell size={16} />
+								{pluralize('Alert', totalAlerts)} ({totalAlerts})
+							</Typography.Text>
+						),
+						onClick: () => {
+							openInNewTab(
+								`${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.searchQuery}=${metricName}`,
+							);
+						},
+					},
+			  ]
+			: []),
+		...(totalDashboards > 0
+			? [
+					{
+						key: 'dashboards',
+						label: (
+							<Typography.Text
+								strong
+								style={{ color: Color.text['success'], display: 'flex', alignItems: 'center', gap: 8 }}
+							>
+								<Grid size={16} />
+								{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+							</Typography.Text>
+						),
+						onClick: () => {
+							openInNewTab(
+								`${ROUTES.DASHBOARD_BUILDER}?${QueryParams.searchQuery}=${metricName}`,
+							);
+						},
+					},
+			  ]
+			: []),
+	];
+
+	const menu = <Menu items={menuItems} />;
 
 	return (
-		<Dropdown overlay={renderContent} trigger={['click']} placement="bottomRight">
-			<span
+		<Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+			<div
 				style={{
-					color: Color.primary['500'],
 					cursor: 'pointer',
-					fontSize: '14px',
+					padding: '4px 8px',
+					borderRadius: 4,
+					backgroundColor: Color.bg['hover'],
+					display: 'inline-flex',
+					alignItems: 'center',
+					gap: 4,
 				}}
+				onClick={(e) => e.stopPropagation()}
 			>
-				View in context
-			</span>
+				{totalAlerts > 0 && (
+					<Bell size={14} style={{ color: Color.text['info'] }} />
+				)}
+				{totalDashboards > 0 && (
+					<Grid size={14} style={{ color: Color.text['success'] }} />
+				)}
+				<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+					{totalAlerts + totalDashboards}
+				</Typography.Text>
+			</div>
 		</Dropdown>
 	);
 }
