@@ -3,7 +3,7 @@ import { render, screen } from 'tests/test-utils';
 import Metrics from '.';
 
 describe('Services', () => {
-	test('Should render the component', () => {
+	it('Should render the component', () => {
 		render(<Metrics />);
 
 		const inputBox = screen.getByTestId('resource-attributes-filter');

@@ -20,7 +20,7 @@ window.ResizeObserver =
 describe('BillingContainer', () => {
 	jest.setTimeout(30000);
 
-	test('Component should render', async () => {
+	it('Component should render', async () => {
 		render(<BillingContainer />);
 
 		const dataInjection = screen.getByRole('columnheader', {
@@ -61,7 +61,7 @@ describe('BillingContainer', () => {
 			jest.useRealTimers();
 		});
 
-		test('OnTrail', async () => {
+		it('OnTrail', async () => {
 			// Pin "now" so trial end (20 Oct 2023) is tomorrow => "1 days_remaining"
 
 			render(
@@ -73,17 +73,19 @@ describe('BillingContainer', () => {
 			// If the component schedules any setTimeout on mount, flush them:
 			jest.runOnlyPendingTimers();
 
-			expect(await screen.findByText('Free Trial')).toBeInTheDocument();
-			expect(await screen.findByText('billing')).toBeInTheDocument();
-			expect(await screen.findByText(/\$0/i)).toBeInTheDocument();
+			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();
+			await expect(screen.findByText(/\$0/i)).resolves.toBeInTheDocument();
 
-			expect(
-				await screen.findByText(
+			await expect(
+				screen.findByText(
 					/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
 				),
-			).toBeInTheDocument();
+			).resolves.toBeInTheDocument();
 
-			expect(await screen.findByText(/1 days_remaining/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/1 days_remaining/i),
+			).resolves.toBeInTheDocument();
 
 			const upgradeButtons = await screen.findAllByRole('button', {
 				name: /upgrade_plan/i,
@@ -91,13 +93,15 @@ describe('BillingContainer', () => {
 			expect(upgradeButtons).toHaveLength(2);
 			expect(upgradeButtons[1]).toBeInTheDocument();
 
-			expect(await screen.findByText(/checkout_plans/i)).toBeInTheDocument();
-			expect(
-				await screen.findByRole('link', { name: /here/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/checkout_plans/i),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByRole('link', { name: /here/i }),
+			).resolves.toBeInTheDocument();
 		});
 
-		test('OnTrail but trialConvertedToSubscription', async () => {
+		it('OnTrail but trialConvertedToSubscription', async () => {
 			await act(async () => {
 				render(
 					<BillingContainer />,
@@ -137,7 +141,7 @@ describe('BillingContainer', () => {
 		});
 	});
 
-	test('Not on ontrail', async () => {
+	it('Not on ontrail', async () => {
 		const { findByText } = render(
 			<BillingContainer />,
 			{},

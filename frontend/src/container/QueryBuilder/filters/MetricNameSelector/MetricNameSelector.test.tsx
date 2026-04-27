@@ -350,8 +350,11 @@ describe('selecting a metric type updates the aggregation options', () => {
 		fireEvent.change(input, { target: { value: 'http_requests_total' } });
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual(['Rate', 'Increase']);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
+			'Rate',
+			'Increase',
+		]);
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',
 			'Avg',
 			'Min',
@@ -373,7 +376,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 		fireEvent.change(input, { target: { value: 'cpu_usage_percent' } });
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
 			'Latest',
 			'Sum',
 			'Avg',
@@ -382,7 +385,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 			'Count',
 			'Count Distinct',
 		]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',
 			'Avg',
 			'Min',
@@ -407,7 +410,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 		});
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
 			'Latest',
 			'Sum',
 			'Avg',
@@ -416,7 +419,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 			'Count',
 			'Count Distinct',
 		]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',
 			'Avg',
 			'Min',
@@ -440,8 +443,8 @@ describe('selecting a metric type updates the aggregation options', () => {
 		});
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([]);
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'P50',
 			'P75',
 			'P90',
@@ -466,8 +469,8 @@ describe('selecting a metric type updates the aggregation options', () => {
 		});
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([]);
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'P50',
 			'P75',
 			'P90',
@@ -485,7 +488,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 		fireEvent.change(input, { target: { value: 'unknown_metric' } });
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
 			'Max',
 			'Min',
 			'Sum',
@@ -494,7 +497,7 @@ describe('selecting a metric type updates the aggregation options', () => {
 			'Rate',
 			'Increase',
 		]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',
 			'Avg',
 			'Min',
@@ -970,7 +973,7 @@ describe('Summary metric type is treated as Gauge', () => {
 		});
 		fireEvent.blur(input);
 
-		expect(getOptionLabels('time-agg-options')).toEqual([
+		expect(getOptionLabels('time-agg-options')).toStrictEqual([
 			'Latest',
 			'Sum',
 			'Avg',
@@ -979,7 +982,7 @@ describe('Summary metric type is treated as Gauge', () => {
 			'Count',
 			'Count Distinct',
 		]);
-		expect(getOptionLabels('space-agg-options')).toEqual([
+		expect(getOptionLabels('space-agg-options')).toStrictEqual([
 			'Sum',
 			'Avg',
 			'Min',

@@ -61,24 +61,24 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 		expect(result).toHaveLength(4);
 		// Verify query 1 has the correct data
 		expect(result[0].builder.queryData).toHaveLength(1);
-		expect(result[0].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_1);
+		expect(result[0].builder.queryData[0]).toStrictEqual(MOCK_QUERY_DATA_1);
 		expect(result[0].builder.queryFormulas).toHaveLength(0);
 		expect(result[0].unit).toBeUndefined();
 		// Verify query 2 has the correct data
 		expect(result[1].builder.queryData).toHaveLength(1);
-		expect(result[1].builder.queryData[0]).toEqual(MOCK_QUERY_DATA_2);
+		expect(result[1].builder.queryData[0]).toStrictEqual(MOCK_QUERY_DATA_2);
 		expect(result[1].builder.queryFormulas).toHaveLength(0);
 		expect(result[1].unit).toBe('unit2');
 		// Verify query 3 has the correct data
 		expect(result[2].builder.queryFormulas).toHaveLength(1);
-		expect(result[2].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);
+		expect(result[2].builder.queryFormulas[0]).toStrictEqual(MOCK_FORMULA_DATA);
 		expect(result[2].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[2].builder.queryData[0].disabled).toBe(true);
 		expect(result[2].builder.queryData[1].disabled).toBe(true);
 		expect(result[2].unit).toBe('');
 		// Verify query 4 has the correct data
 		expect(result[3].builder.queryFormulas).toHaveLength(1);
-		expect(result[3].builder.queryFormulas[0]).toEqual(MOCK_FORMULA_DATA);
+		expect(result[3].builder.queryFormulas[0]).toStrictEqual(MOCK_FORMULA_DATA);
 		expect(result[3].builder.queryData).toHaveLength(2); // 2 disabled queries
 		expect(result[3].builder.queryData[0].disabled).toBe(true);
 		expect(result[3].builder.queryData[1].disabled).toBe(true);
@@ -106,7 +106,7 @@ describe('useGetMetrics', () => {
 		const { result } = renderHook(() => useGetMetrics(['metric1']));
 		expect(result.current.metrics).toHaveLength(1);
 		expect(result.current.metrics[0]).toBeDefined();
-		expect(result.current.metrics[0]).toEqual(MOCK_METRIC_METADATA);
+		expect(result.current.metrics[0]).toStrictEqual(MOCK_METRIC_METADATA);
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.isError).toBe(false);
 	});
@@ -131,7 +131,7 @@ describe('getMetricUnits', () => {
 	it('should return the same unit for units that are not known to the universal unit mapper', () => {
 		const result = getMetricUnits([MOCK_METRIC_METADATA]);
 		expect(result).toHaveLength(1);
-		expect(result[0]).toEqual(MOCK_METRIC_METADATA.unit);
+		expect(result[0]).toStrictEqual(MOCK_METRIC_METADATA.unit);
 	});
 
 	it('should return universal unit for units that are known to the universal unit mapper', () => {

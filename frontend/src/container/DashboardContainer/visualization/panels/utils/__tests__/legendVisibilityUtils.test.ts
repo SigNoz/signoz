@@ -62,7 +62,7 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).not.toBeNull();
-			expect(result).toEqual([
+			expect(result).toStrictEqual([
 				{ label: 'CPU', show: true },
 				{ label: 'Memory', show: false },
 			]);
@@ -85,7 +85,7 @@ describe('legendVisibilityUtils', () => {
 			const result = getStoredSeriesVisibility('widget-1');
 
 			expect(result).not.toBeNull();
-			expect(result).toEqual([
+			expect(result).toStrictEqual([
 				{ label: 'CPU', show: true },
 				{ label: 'CPU', show: false },
 				{ label: 'Memory', show: false },
@@ -128,7 +128,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual([
+			expect(stored).toStrictEqual([
 				{ label: 'CPU', show: true },
 				{ label: 'Memory', show: false },
 			]);
@@ -150,7 +150,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-new');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual([{ label: 'CPU', show: false }]);
+			expect(stored).toStrictEqual([{ label: 'CPU', show: false }]);
 		});
 
 		it('updates existing widget visibility when entry already exists', () => {
@@ -176,7 +176,7 @@ describe('legendVisibilityUtils', () => {
 			const stored = getStoredSeriesVisibility('widget-1');
 
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual([
+			expect(stored).toStrictEqual([
 				{ label: 'CPU', show: false },
 				{ label: 'Memory', show: true },
 			]);
@@ -202,7 +202,7 @@ describe('legendVisibilityUtils', () => {
 
 			const stored = getStoredSeriesVisibility('widget-1');
 			expect(stored).not.toBeNull();
-			expect(stored).toEqual([
+			expect(stored).toStrictEqual([
 				{ label: 'x-axis', show: true },
 				{ label: 'CPU', show: false },
 			]);
@@ -232,10 +232,10 @@ describe('legendVisibilityUtils', () => {
 				{ label: 'B', show: true },
 			]);
 
-			expect(getStoredSeriesVisibility('widget-a')).toEqual([
+			expect(getStoredSeriesVisibility('widget-a')).toStrictEqual([
 				{ label: 'A', show: true },
 			]);
-			expect(getStoredSeriesVisibility('widget-b')).toEqual([
+			expect(getStoredSeriesVisibility('widget-b')).toStrictEqual([
 				{ label: 'B', show: true },
 			]);
 		});
@@ -252,7 +252,7 @@ describe('legendVisibilityUtils', () => {
 			);
 			const [_, value] = (localStorage.setItem as jest.Mock).mock.calls[0];
 			expect((): void => JSON.parse(value)).not.toThrow();
-			expect(JSON.parse(value)).toEqual([
+			expect(JSON.parse(value)).toStrictEqual([
 				{ name: 'widget-1', dataIndex: [{ label: 'CPU', show: true }] },
 			]);
 		});
@@ -263,7 +263,7 @@ describe('legendVisibilityUtils', () => {
 			const raw = localStorage.getItem(storageKey);
 			expect(raw).not.toBeNull();
 			const parsed = JSON.parse(raw ?? '[]');
-			expect(parsed).toEqual([{ name: 'widget-1', dataIndex: [] }]);
+			expect(parsed).toStrictEqual([{ name: 'widget-1', dataIndex: [] }]);
 			expect(getStoredSeriesVisibility('widget-1')).toBeNull();
 		});
 	});
