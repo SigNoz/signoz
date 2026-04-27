@@ -10,6 +10,7 @@ import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
+import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -46,6 +47,7 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -79,6 +81,10 @@ function LogDetailInner({
 	const [selectedView, setSelectedView] = useState<VIEWS>(selectedTab);
 
 	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
+	const { featureFlags } = useAppContext();
+	const isBodyJsonQueryEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
+			?.active || false;
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);
 	const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -208,11 +214,29 @@ function LogDetailInner({
 		}
 	};
 
+	const logBody = useMemo(() => {
+		if (!isBodyJsonQueryEnabled) {
+			return log?.body || '';
+		}
+
+		try {
+			const json = JSON.parse(log?.body || '');
+
+			if (typeof json?.message === 'string' && json.message !== '') {
+				return json.message;
+			}
+
+			return log?.body || '';
+		} catch (error) {
+			return log?.body || '';
+		}
+	}, [isBodyJsonQueryEnabled, log?.body]);
+
 	const htmlBody = useMemo(
 		() => ({
-			__html: getSanitizedLogBody(log?.body || '', { shouldEscapeHtml: true }),
+			__html: getSanitizedLogBody(logBody || '', { shouldEscapeHtml: true }),
 		}),
-		[log?.body],
+		[logBody],
 	);
 
 	const handleJSONCopy = (): void => {
@@ -418,7 +442,7 @@ function LogDetailInner({
 				<div className="log-detail-drawer__log">
 					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
 					<Tooltip
-						title={removeEscapeCharacters(log?.body)}
+						title={removeEscapeCharacters(logBody)}
 						placement="left"
 						mouseLeaveDelay={0}
 					>

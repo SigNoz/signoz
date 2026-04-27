@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Popover, Spin, Tooltip, Tree } from 'antd';
+import type { DataNode } from 'antd/es/tree';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
@@ -57,7 +58,7 @@ interface ITableViewActionsProps {
 }
 
 // Memoized Tree Component
-const MemoizedTree = React.memo<{ treeData: any[] }>(({ treeData }) => (
+const MemoizedTree = React.memo<{ treeData: DataNode[] }>(({ treeData }) => (
 	<Tree
 		defaultExpandAll
 		showLine
@@ -74,50 +75,54 @@ const BodyContent: React.FC<{
 	record: DataType;
 	bodyHtml: { __html: string };
 	textToCopy: string;
-}> = React.memo(({ fieldData, record, bodyHtml, textToCopy }) => {
-	const { isLoading, treeData, error } = useAsyncJSONProcessing(
-		fieldData.value,
-		record.field === 'body',
-	);
-
-	// Show JSON tree if available, otherwise show HTML content
-	if (record.field === 'body' && treeData) {
-		return <MemoizedTree treeData={treeData} />;
-	}
-
-	if (record.field === 'body' && isLoading) {
-		return (
-			<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-				<Spin size="small" />
-				<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
-			</div>
+	handleChangeSelectedView?: ChangeViewFunctionType;
+}> = React.memo(
+	({ fieldData, record, bodyHtml, textToCopy, handleChangeSelectedView }) => {
+		const { isLoading, treeData, error } = useAsyncJSONProcessing(
+			fieldData.value,
+			record.field === 'body',
+			handleChangeSelectedView,
 		);
-	}
 
-	if (record.field === 'body' && error) {
-		return (
-			<span
-				style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
-			>
-				Error parsing Body JSON
-			</span>
-		);
-	}
+		// Show JSON tree if available, otherwise show HTML content
+		if (record.field === 'body' && treeData) {
+			return <MemoizedTree treeData={treeData} />;
+		}
 
-	if (record.field === 'body') {
-		return (
-			<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+		if (record.field === 'body' && isLoading) {
+			return (
+				<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+					<Spin size="small" />
+					<span style={{ color: Color.BG_SIENNA_400 }}>Processing JSON...</span>
+				</div>
+			);
+		}
+
+		if (record.field === 'body' && error) {
+			return (
 				<span
 					style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
 				>
-					<span dangerouslySetInnerHTML={bodyHtml} />
+					Error parsing Body JSON
 				</span>
-			</CopyClipboardHOC>
-		);
-	}
+			);
+		}
 
-	return null;
-});
+		if (record.field === 'body') {
+			return (
+				<CopyClipboardHOC entityKey="body" textToCopy={textToCopy}>
+					<span
+						style={{ color: Color.BG_SIENNA_400, whiteSpace: 'pre-wrap', tabSize: 4 }}
+					>
+						<span dangerouslySetInnerHTML={bodyHtml} />
+					</span>
+				</CopyClipboardHOC>
+			);
+		}
+
+		return null;
+	},
+);
 
 BodyContent.displayName = 'BodyContent';
 
@@ -319,6 +324,7 @@ export default function TableViewActions(
 						record={record}
 						bodyHtml={bodyHtml}
 						textToCopy={textToCopy}
+						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				);
 
@@ -342,6 +348,7 @@ export default function TableViewActions(
 		fieldData,
 		bodyHtml,
 		textToCopy,
+		handleChangeSelectedView,
 		formatTimezoneAdjustedTimestamp,
 		cleanTimestamp,
 	]);
@@ -355,6 +362,7 @@ export default function TableViewActions(
 					record={record}
 					bodyHtml={bodyHtml}
 					textToCopy={textToCopy}
+					handleChangeSelectedView={handleChangeSelectedView}
 				/>
 				{!isListViewPanel &&
 					!RESTRICTED_SELECTED_FIELDS.includes(fieldFilterKey) && (
