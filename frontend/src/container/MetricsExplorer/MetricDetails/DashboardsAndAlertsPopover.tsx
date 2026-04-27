@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData, isLoading: false, isError: false };
+	return { data: newAlertsData?.data || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,101 +81,108 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData, isLoading: false, isError: false };
+	return { data: newDashboardsData?.data || [], isLoading: false, isError: false };
 }
 
-function useMetricDetailsStatus(metricName: string): Status {
-	const metricAlertsStatus = useMetricAlertsStatus(metricName);
-	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
-
-	return {
-		metricAlerts: metricAlertsStatus,
-		metricDashboards: metricDashboardsStatus,
-	};
-}
-
-function DashboardsAndAlertsPopover({
+export function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
-	const { metricAlerts, metricDashboards } = useMetricDetailsStatus(metricName);
+	const [open, setOpen] = useState(false);
 
-	if (metricAlerts.isError || metricDashboards.isError) {
-		return (
-			<Skeleton active loading={metricAlerts.isLoading || metricDashboards.isLoading}>
-				<Typography.Text>Error loading metric details</Typography.Text>
-			</Skeleton>
-		);
-	}
+	const alertsStatus = useMetricAlertsStatus(metricName);
+	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	if (metricAlerts.isLoading || metricDashboards.isLoading) {
+	const totalAlerts = alertsStatus.data.length;
+	const totalDashboards = dashboardsStatus.data.length;
+
+	const handleOpenChange = (visible: boolean): void => {
+		setOpen(visible);
+	};
+
+	const handleClickAlert = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.LIST_ALERTS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
+	};
+
+	const handleClickDashboard = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.LIST_DASHBOARDS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
+	};
+
+	const renderContent = (): JSX.Element => {
+		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
+			return (
+				<div style={{ padding: '8px 12px', minWidth: 150 }}>
+					<Skeleton.Input active size="small" style={{ width: '100%' }} />
+				</div>
+			);
+		}
+
+		if (alertsStatus.isError || dashboardsStatus.isError) {
+			return (
+				<div style={{ padding: '8px 12px', color: Color.semantic.error[500] }}>
+					Failed to load data
+				</div>
+			);
+		}
+
 		return (
-			<Skeleton active loading={metricAlerts.isLoading || metricDashboards.isLoading}>
-				<Typography.Text>Loading metric details</Typography.Text>
-			</Skeleton>
+			<Menu style={{ minWidth: 200 }}>
+				<Menu.Item key="alerts" onClick={handleClickAlert} icon={<Bell size={16} />}>
+					<Typography.Text strong>
+						{pluralize('Alert', totalAlerts)} ({totalAlerts})
+					</Typography.Text>
+				</Menu.Item>
+				<Menu.Item
+					key="dashboards"
+					onClick={handleClickDashboard}
+					icon={<Grid size={16} />}
+				>
+					<Typography.Text strong>
+						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
+					</Typography.Text>
+				</Menu.Item>
+			</Menu>
 		);
-	}
+	};
 
 	return (
 		<Dropdown
-			overlay={
-				<Menu>
-					<Menu.Item key="dashboards">
-						<Typography.Text>
-							{pluralize(metricDashboards.data.length, 'dashboard')}{' '}
-							{metricDashboards.data.length > 1 ? 's' : ''}
-						</Typography.Text>
-						{metricDashboards.data.map((dashboard) => (
-							<Menu.Item key={dashboard.id}>
-								<Typography.Text>
-									<a
-										href={generatePath(ROUTES.DASHBOARD, {
-											dashboardId: dashboard.id,
-										})}
-										onClick={(e) => {
-											e.preventDefault();
-											openInNewTab(generatePath(ROUTES.DASHBOARD, {
-												dashboardId: dashboard.id,
-											}));
-										}}
-									>
-										{dashboard.name}
-									</a>
-								</Typography.Text>
-							</Menu.Item>
-						))}
-					</Menu.Item>
-					<Menu.Item key="alerts">
-						<Typography.Text>
-							{pluralize(metricAlerts.data.length, 'alert')}{' '}
-							{metricAlerts.data.length > 1 ? 's' : ''}
-						</Typography.Text>
-						{metricAlerts.data.map((alert) => (
-							<Menu.Item key={alert.id}>
-								<Typography.Text>
-									<a
-										href={generatePath(ROUTES.ALERT, {
-											alertId: alert.id,
-										})}
-										onClick={(e) => {
-											e.preventDefault();
-											openInNewTab(generatePath(ROUTES.ALERT, {
-												alertId: alert.id,
-											}));
-										}}
-									>
-										{alert.name}
-									</a>
-								</Typography.Text>
-							</Menu.Item>
-						))}
-					</Menu.Item>
-				</Menu>
-			}
+			overlay={renderContent()}
 			trigger={['click']}
+			open={open}
+			onOpenChange={handleOpenChange}
+			destroyPopupOnHide
 		>
-			<Grid size={24} />
+			<div
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 4,
+					cursor: 'pointer',
+					color: Color.text.secondary,
+					fontSize: 12,
+					opacity: 0,
+					transition: 'opacity 0.2s',
+				}}
+				onMouseEnter={(e) => {
+					e.currentTarget.style.opacity = '1';
+				}}
+				onMouseLeave={(e) => {
+					e.currentTarget.style.opacity = '0';
+				}}
+			>
+				<Grid size={12} />
+				<span>{totalDashboards + totalAlerts}</span>
+			</div>
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
