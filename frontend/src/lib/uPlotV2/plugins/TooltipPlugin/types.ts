@@ -97,6 +97,11 @@ export interface TooltipControllerState {
 	verticalOffset: number;
 	seriesIndexes: Array<number | null>;
 	focusedSeriesIndex: number | null;
+	/** Receiver-side series filtering for Tooltip sync mode.
+	 * null  = no filtering (source panel or no groupBy configured)
+	 * []    = no matching series found → hide the synced tooltip
+	 * [...] = only these 1-based series indexes should appear in the synced tooltip */
+	syncedSeriesIndexes: number[] | null;
 	cursorDrivenBySync: boolean;
 	plotWithinViewport: boolean;
 	windowWidth: number;

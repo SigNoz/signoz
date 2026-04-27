@@ -107,7 +107,13 @@ export default function TooltipPlugin({
 		let removeSyncDisplayHook: (() => void) | null = null;
 		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
 			config.setCursor({
-				sync: { key: syncKey, scales: ['x', 'y'] },
+				sync: {
+					key: syncKey,
+					scales:
+						syncMode === DashboardCursorSync.Crosshair
+							? ['x', 'y']
+							: ['x', null],
+				},
 			});
 
 			removeSyncDisplayHook = config.addHook(
@@ -121,7 +127,12 @@ export default function TooltipPlugin({
 		const onOutsideInteraction = (event: Event): void => {
 			const target = event.target as Node;
 			if (!containerRef.current?.contains(target)) {
-				dismissTooltip();
+				// Don't dismiss if the click landed inside any other pinned tooltip.
+				const isInsideAnyPinnedTooltip =
+					(target as Element).closest?.('[data-pinned="true"]') != null;
+				if (!isInsideAnyPinnedTooltip) {
+					dismissTooltip();
+				}
 			}
 		};
 
@@ -140,7 +151,7 @@ export default function TooltipPlugin({
 		function updateCursorLock(): void {
 			const plot = getPlot(controller);
 			if (plot) {
-				// @ts-ignore uPlot cursor lock is not working as expected
+				// @ts-expect-error uPlot cursor lock is not working as expected
 				plot.cursor._lock = controller.pinned;
 			}
 		}
@@ -187,6 +198,16 @@ export default function TooltipPlugin({
 			if (!controller.hoverActive || !plot) {
 				return null;
 			}
+			// In Tooltip sync mode, suppress the receiver tooltip entirely when
+			// no receiver series match the source panel's focused series.
+			if (
+				syncTooltipWithDashboard &&
+				controller.cursorDrivenBySync &&
+				Array.isArray(controller.syncedSeriesIndexes) &&
+				controller.syncedSeriesIndexes.length === 0
+			) {
+				return null;
+			}
 			return renderRef.current({
 				uPlotInstance: plot,
 				dataIndexes: controller.seriesIndexes,
@@ -194,6 +215,7 @@ export default function TooltipPlugin({
 				isPinned: controller.pinned,
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
+				syncedSeriesIndexes: controller.syncedSeriesIndexes,
 			});
 		}
 
@@ -478,7 +500,7 @@ export default function TooltipPlugin({
 		isHovering,
 		contents,
 	]);
-	const isTooltipVisible = isHovering || tooltipBody != null;
+	const isTooltipVisible = tooltipBody != null;
 
 	if (!hasPlot) {
 		return null;
