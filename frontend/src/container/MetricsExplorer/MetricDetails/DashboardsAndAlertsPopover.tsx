@@ -60,107 +60,82 @@ function DashboardsAndAlertsPopover({
 	);
 
 	useEffect(() => {
-		setAlertsData({
-			data: newAlertsData?.data?.alerts || [],
-			isLoading: newIsLoadingAlerts,
-			isError: newIsErrorAlerts,
-		});
-	}, [newAlertsData, newIsLoadingAlerts, newIsErrorAlerts]);
-
-	useEffect(() => {
-		setDashboardsData({
-			data: newDashboardsData?.data?.dashboards || [],
-			isLoading: newIsLoadingDashboards,
-			isError: newIsErrorDashboards,
-		});
-	}, [newDashboardsData, newIsLoadingDashboards, newIsErrorDashboards]);
-
-	const totalAlerts = alertsData.data.length;
-	const totalDashboards = dashboardsData.data.length;
-
-	const hasAnyData = totalAlerts > 0 || totalDashboards > 0;
-
-	const menuItems = useMemo(() => {
-		const items = [];
-
-		if (totalAlerts > 0) {
-			items.push({
-				key: 'alerts',
-				label: (
-					<Typography.Text
-						strong
-						style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-					>
-						<Bell size={16} color={Color.semantic.warning} />
-						{pluralize('Alert', totalAlerts)} ({totalAlerts})
-					</Typography.Text>
-				),
-				onClick: () => {
-					openInNewTab(
-						`/${ROUTES.ALERTS_MANAGEMENT}?${QueryParams.search}=${metricName}`,
-					);
-				},
+		if (newIsErrorAlerts || newIsErrorDashboards) {
+			setAlertsData({
+				data: [],
+				isLoading: false,
+				isError: true,
+			});
+			setDashboardsData({
+				data: [],
+				isLoading: false,
+				isError: true,
+			});
+		} else {
+			setAlertsData({
+				data: newAlertsData?.data?.alerts || [],
+				isLoading: newIsLoadingAlerts,
+				isError: newIsErrorAlerts,
+			});
+			setDashboardsData({
+				data: newDashboardsData?.data?.dashboards || [],
+				isLoading: newIsLoadingDashboards,
+				isError: newIsErrorDashboards,
 			});
 		}
-
-		if (totalDashboards > 0) {
-			items.push({
-				key: 'dashboards',
-				label: (
-					<Typography.Text
-						strong
-						style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-					>
-						<Grid size={16} color={Color.primary[500]} />
-						{pluralize('Dashboard', totalDashboards)} ({totalDashboards})
-					</Typography.Text>
-				),
-				onClick: () => {
-					openInNewTab(
-						`/${ROUTES.DASHBOARD}?${QueryParams.search}=${metricName}`,
-					);
-				},
-			});
-		}
-
-		return items;
-	}, [totalAlerts, totalDashboards, metricName]);
-
-	if (!hasAnyData) {
-		return null;
-	}
+	}, [
+		newAlertsData,
+		newIsLoadingAlerts,
+		newIsErrorAlerts,
+		newDashboardsData,
+		newIsLoadingDashboards,
+		newIsErrorDashboards,
+	]);
 
 	return (
 		<Dropdown
-			menu={{ items: menuItems }}
-			trigger={['click']}
-			placement="bottomRight"
+			overlay={
+				<Menu>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(alertsData.data.length, 'alert', 'alerts')}{' '}
+							{newIsLoadingAlerts ? (
+								<Skeleton active paragraph={false} />
+							) : (
+								<a
+									href={generatePath(ROUTES.METRIC_ALERTS, {
+										metricName,
+									})}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{ROUTES.METRIC_ALERTS}
+								</a>
+							)}
+						</Typography.Text>
+					</Menu.Item>
+					<Menu.Item>
+						<Typography.Text>
+							{pluralize(dashboardsData.data.length, 'dashboard', 'dashboards')}{' '}
+							{newIsLoadingDashboards ? (
+								<Skeleton active paragraph={false} />
+							) : (
+								<a
+									href={generatePath(ROUTES.METRIC_DASHBOARDS, {
+										metricName,
+									})}
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{ROUTES.METRIC_DASHBOARDS}
+								</a>
+							)}
+						</Typography.Text>
+					</Menu.Item>
+				</Menu>
+			}
 		>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'center',
-					gap: 4,
-					cursor: 'pointer',
-					color: Color.text.accent,
-					fontWeight: 500,
-				}}
-			>
-				{totalAlerts > 0 && (
-					<>
-						<Bell size={14} color={Color.semantic.warning} />
-						<span>{totalAlerts}</span>
-					</>
-				)}
-				{totalDashboards > 0 && (
-					<>
-						<Grid size={14} color={Color.primary[500]} />
-						<span>{totalDashboards}</span>
-					</>
-				)}
-			</div>
+			<Grid size={24} />
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
