@@ -167,7 +167,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			if err != nil {
 				return nil, err
 			}
-			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
+			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider(defStore)
 			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
 				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
 				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,

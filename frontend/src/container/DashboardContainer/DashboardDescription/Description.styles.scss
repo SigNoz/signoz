@@ -28,7 +28,7 @@
 			}
 
 			.dashboard-title {
-				color: #fff;
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 16px;
 				font-style: normal;
@@ -457,138 +457,6 @@
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
-					}
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.dashboard-description-container {
-		color: var(--l1-foreground);
-
-		.dashboard-details {
-			.left-section {
-				.dashboard-title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.right-section {
-				.icons {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-					color: var(--l1-foreground);
-				}
-
-				.configure-button {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-					color: var(--l1-foreground);
-				}
-			}
-		}
-
-		.dashboard-description-section {
-			color: var(--l1-foreground);
-		}
-	}
-	.dashboard-settings {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background) !important;
-		}
-
-		.menu-content {
-			display: flex;
-			flex-direction: column;
-
-			.section-1 {
-				border-bottom: 1px solid var(--l1-border);
-
-				.ant-btn {
-					color: var(--l1-foreground);
-				}
-			}
-			.section-2 {
-				border-bottom: 1px solid var(--l1-border);
-
-				.ant-btn {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-
-	.rename-dashboard {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-
-			.ant-modal-header {
-				background: var(--l1-background);
-				border-bottom: 1px solid var(--l1-border);
-
-				.ant-modal-title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.dashboard-content {
-					.name-text {
-						color: var(--l1-foreground);
-					}
-
-					.dashboard-name-input {
-						border: 1px solid var(--l1-border);
-						background: var(--l1-background);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.dashboard-rename {
-					.cancel-btn {
-						background: var(--l3-background);
-					}
-				}
-			}
-		}
-	}
-
-	.section-naming {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-
-			.ant-modal-header {
-				background: var(--l1-background);
-				border-bottom: 1px solid var(--l1-border);
-
-				.ant-modal-title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.section-naming-content {
-					.name-text {
-						color: var(--l1-foreground);
-					}
-
-					.section-name-input {
-						border: 1px solid var(--l1-border);
-						background: var(--l1-background);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.dashboard-rename {
-					.cancel-btn {
-						background: var(--l3-background);
 					}
 				}
 			}

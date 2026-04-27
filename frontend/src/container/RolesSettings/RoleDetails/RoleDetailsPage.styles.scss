@@ -373,15 +373,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.role-details-page {
-		.role-details-permission-item {
-			background: rgba(0, 0, 0, 0.04);
-
-			&:hover {
-				background: rgba(0, 0, 0, 0.07);
-			}
-		}
-	}
-}
