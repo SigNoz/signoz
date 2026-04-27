@@ -153,6 +153,83 @@ func ListResources() []*GettableResource {
 	return out
 }
 
+// Registry is the assembled view over the static authz schema: the set of
+// (Type, Kind) resources, the unique Type list, and the managed-role
+// transaction policy expanded into concrete *Transaction objects.
+type Registry struct {
+	resources                 []*GettableResource
+	uniqueTypes               []Type
+	transactions              map[string][]*Transaction
+	managedRolesByTransaction map[string][]string
+}
+
+func NewRegistry() *Registry {
+	resources := ListResources()
+	transactions := buildManagedRoleTransactions()
+
+	return &Registry{
+		resources:                 resources,
+		uniqueTypes:               buildUniqueTypes(resources),
+		transactions:              transactions,
+		managedRolesByTransaction: buildManagedRolesByTransaction(transactions),
+	}
+}
+
+func (registry *Registry) GetResources() []*GettableResource {
+	return registry.resources
+}
+
+func (registry *Registry) GetUniqueTypes() []Type {
+	return registry.uniqueTypes
+}
+
+func (registry *Registry) GetManagedRoleTransactions() map[string][]*Transaction {
+	return registry.transactions
+}
+
+func (registry *Registry) GetManagedRolesByTransaction() map[string][]string {
+	return registry.managedRolesByTransaction
+}
+
+func buildManagedRoleTransactions() map[string][]*Transaction {
+	out := make(map[string][]*Transaction)
+	for roleName, perms := range managedRolePermissions {
+		for _, perm := range perms {
+			object := *MustNewObject(perm.Resource, WildCardSelectorString)
+			txn, err := NewTransaction(perm.Verb, object)
+			if err != nil {
+				panic(err)
+			}
+			out[roleName] = append(out[roleName], txn)
+		}
+	}
+	return out
+}
+
+func buildUniqueTypes(resources []*GettableResource) []Type {
+	seen := make(map[Type]struct{})
+	out := make([]Type, 0)
+	for _, resource := range resources {
+		if _, ok := seen[resource.Type]; ok {
+			continue
+		}
+		seen[resource.Type] = struct{}{}
+		out = append(out, resource.Type)
+	}
+	return out
+}
+
+func buildManagedRolesByTransaction(transactions map[string][]*Transaction) map[string][]string {
+	out := make(map[string][]string)
+	for roleName, txns := range transactions {
+		for _, txn := range txns {
+			key := txn.TransactionKey()
+			out[key] = append(out[key], roleName)
+		}
+	}
+	return out
+}
+
 func ErrIfVerbNotValidForType(verb Verb, typed Type) error {
 	if validVerbs, ok := typeToVerbs[typed]; ok {
 		if !slices.Contains(validVerbs, verb) {
