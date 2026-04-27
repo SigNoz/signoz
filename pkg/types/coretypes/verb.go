@@ -5,6 +5,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+var Verbs = []Verb{
+	VerbCreate,
+	VerbRead,
+	VerbUpdate,
+	VerbDelete,
+	VerbList,
+	VerbAssignee,
+}
+
 var (
 	ErrCodeInvalidVerb = errors.MustNewCode("invalid_verb")
 )

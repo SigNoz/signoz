@@ -1,111 +1,24 @@
 package coretypes
 
 import (
-	"slices"
 	"sort"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 var (
-	ErrCodeResourceNotFound   = errors.MustNewCode("resource_not_found")
 	ErrCodeInvalidVerbForType = errors.MustNewCode("invalid_verb")
+	ErrCodeResourceNotFound   = errors.MustNewCode("resource_not_found")
 )
 
-const (
-	SigNozAdminRoleName     = "signoz-admin"
-	SigNozEditorRoleName    = "signoz-editor"
-	SigNozViewerRoleName    = "signoz-viewer"
-	SigNozAnonymousRoleName = "signoz-anonymous"
-)
-
-// ManagedPermission is a (verb, resource) tuple granted to a managed role.
-// All managed permissions are wildcard — they apply to every instance of the type.
-type ManagedPermission struct {
-	Verb     Verb
-	Resource ResourceRef
-}
-
-var managedRolePermissions = map[string][]ManagedPermission{
-	SigNozAnonymousRoleName: {
-		{Verb: VerbRead, Resource: ResourceRef{Type: TypeMetaResource, Kind: KindPublicDashboard}},
-	},
-}
-
-// ManagedRolePermissions returns the static map of managed-role names to the
-// (verb, resource) tuples granted to each role. All permissions are wildcard.
-func ManagedRolePermissions() map[string][]ManagedPermission {
-	return managedRolePermissions
-}
-
-var typeToVerbs = map[Type][]Verb{
-	TypeUser:           {VerbRead, VerbUpdate, VerbDelete},
-	TypeServiceAccount: {VerbRead, VerbUpdate, VerbDelete},
-	TypeRole:           {VerbAssignee, VerbRead, VerbUpdate, VerbDelete},
-	TypeOrganization:   {VerbRead, VerbUpdate, VerbDelete},
-	TypeMetaResource:   {VerbRead, VerbUpdate, VerbDelete},
-	TypeMetaResources:  {VerbCreate, VerbList},
-}
-
-var (
-	KindAnonymous       Kind = MustNewKind("anonymous")
-	KindOrganization         = MustNewKind("organization")
-	KindRole                 = MustNewKind("role")
-	KindServiceAccount       = MustNewKind("serviceaccount")
-	KindUser                 = MustNewKind("user")
-	KindDashboard            = MustNewKind("dashboard")
-	KindPublicDashboard      = MustNewKind("public-dashboard")
-)
-
-var (
-	ResourceAnonymous                    Resource = NewResourceAnonymous()
-	ResourceOrganization                          = NewResourceOrganization()
-	ResourceRole                                  = NewResourceRole()
-	ResourceServiceAccount                        = NewResourceServiceAccount()
-	ResourceUser                                  = NewResourceUser()
-	ResourceMetaResourceRole                      = NewResourceMetaResource(KindRole)
-	ResoureceMetaResourcesRole                    = NewResourceMetaResources(KindRole)
-	ResourceMetaResourceDashboard                 = NewResourceMetaResource(KindDashboard)
-	ResourceMetaResourcesDashboard                = NewResourceMetaResources(KindDashboard)
-	ResourceMetaResourcePublicDashboard           = NewResourceMetaResource(KindPublicDashboard)
-	ResourceMetaResourcesPublicDashboard          = NewResourceMetaResources(KindPublicDashboard)
-)
-
-var registry = map[Type]map[Kind]Resource{
-	TypeAnonymous: {
-		KindAnonymous: ResourceAnonymous,
-	},
-	TypeOrganization: {
-		KindOrganization: ResourceOrganization,
-	},
-	TypeRole: {
-		KindRole: ResourceRole,
-	},
-	TypeServiceAccount: {
-		KindServiceAccount: ResourceServiceAccount,
-	},
-	TypeUser: {
-		KindUser: ResourceUser,
-	},
-	TypeMetaResource: {
-		KindRole:            ResourceMetaResourceRole,
-		KindDashboard:       ResourceMetaResourceDashboard,
-		KindPublicDashboard: ResourceMetaResourcePublicDashboard,
-	},
-	TypeMetaResources: {
-		KindRole:            ResoureceMetaResourcesRole,
-		KindDashboard:       ResourceMetaResourcesDashboard,
-		KindPublicDashboard: ResourceMetaResourcesPublicDashboard,
-	},
-}
-
+// NewResourceFromTypeAndKind looks up the canonical Resource for a (Type, Kind)
+// pair from the static Resources slice. Returns an error if no match exists.
 func NewResourceFromTypeAndKind(typed Type, kind Kind) (Resource, error) {
-	if kindMap, ok := registry[typed]; ok {
-		if resource, ok := kindMap[kind]; ok {
+	for _, resource := range Resources {
+		if resource.Type().StringValue() == typed.StringValue() && resource.Kind().String() == kind.String() {
 			return resource, nil
 		}
 	}
-
 	return nil, errors.Newf(errors.TypeNotFound, ErrCodeResourceNotFound, "no resource found for type %s and kind %s", typed.StringValue(), kind.String())
 }
 
@@ -114,38 +27,70 @@ func MustNewResourceFromTypeAndKind(typed Type, kind Kind) Resource {
 	if err != nil {
 		panic(err)
 	}
-
 	return resource
 }
 
-// VerbsForTypes returns the inverse of typeToVerbs: verb → list of types that
-// support it. Each verb's type list is sorted alphabetically so consumers
-// (notably the `generate authz` command) produce stable output.
-func VerbsForTypes() map[Verb][]Type {
-	out := make(map[Verb][]Type)
-	for typed, verbs := range typeToVerbs {
-		for _, verb := range verbs {
-			out[verb] = append(out[verb], typed)
-		}
-	}
-	for _, types := range out {
-		sort.Slice(types, func(i, j int) bool { return types[i].StringValue() < types[j].StringValue() })
-	}
-	return out
+// Registry exposes the static authz schema declared in this package: the
+// list of types, resources, managed roles, and the per-role transaction
+// policy. It also pre-computes the derived views (sorted ResourceRefs and
+// the verb→types inverse) once at construction so consumers can read them
+// directly.
+type Registry struct {
+	types        []Type
+	resources    []Resource
+	resourceRefs []ResourceRef
+	typesByVerb  map[Verb][]Type
+	managedRoles []string
+	transactions map[string][]Transaction
 }
 
-// ListResources returns every (Type, Kind) pair declared in the registry,
-// sorted by type then kind. Used by `generate authz` to emit the static
-// authz schema consumed by the frontend.
-func ListResources() []*ResourceRef {
-	out := make([]*ResourceRef, 0)
-	for typed, kindMap := range registry {
-		for kind := range kindMap {
-			out = append(out, &ResourceRef{Type: typed, Kind: kind})
-		}
+func NewRegistry() *Registry {
+	return &Registry{
+		types:        Types,
+		resources:    Resources,
+		resourceRefs: buildResourceRefs(Resources),
+		typesByVerb:  buildTypesByVerb(Types),
+		managedRoles: ManagedRoles,
+		transactions: ManagedRoleToTransactions,
+	}
+}
+
+func (registry *Registry) Types() []Type {
+	return registry.types
+}
+
+func (registry *Registry) Resources() []Resource {
+	return registry.resources
+}
+
+func (registry *Registry) ManagedRoles() []string {
+	return registry.managedRoles
+}
+
+func (registry *Registry) ManagedRoleTransactions() map[string][]Transaction {
+	return registry.transactions
+}
+
+// ResourceRefs returns every (Type, Kind) pair in the registry, sorted by
+// type then kind. Used by the `generate authz` command to emit a stable
+// schema.
+func (registry *Registry) ResourceRefs() []ResourceRef {
+	return registry.resourceRefs
+}
+
+// TypesByVerb is the inverse of Type.AllowedVerbs: for each verb, the list
+// of types that allow it. Each list is sorted so the output is stable.
+func (registry *Registry) TypesByVerb() map[Verb][]Type {
+	return registry.typesByVerb
+}
+
+func buildResourceRefs(resources []Resource) []ResourceRef {
+	out := make([]ResourceRef, 0, len(resources))
+	for _, r := range resources {
+		out = append(out, ResourceRef{Type: r.Type(), Kind: r.Kind()})
 	}
 	sort.Slice(out, func(i, j int) bool {
-		if out[i].Type != out[j].Type {
+		if out[i].Type.StringValue() != out[j].Type.StringValue() {
 			return out[i].Type.StringValue() < out[j].Type.StringValue()
 		}
 		return out[i].Kind.String() < out[j].Kind.String()
@@ -153,89 +98,22 @@ func ListResources() []*ResourceRef {
 	return out
 }
 
-// Registry is the assembled view over the static authz schema: the set of
-// (Type, Kind) resources, the unique Type list, and the managed-role
-// transaction policy expanded into concrete *Transaction objects.
-type Registry struct {
-	resources                 []*ResourceRef
-	uniqueTypes               []Type
-	transactions              map[string][]*Transaction
-	managedRolesByTransaction map[string][]string
-}
-
-func NewRegistry() *Registry {
-	resources := ListResources()
-	transactions := buildManagedRoleTransactions()
-
-	return &Registry{
-		resources:                 resources,
-		uniqueTypes:               buildUniqueTypes(resources),
-		transactions:              transactions,
-		managedRolesByTransaction: buildManagedRolesByTransaction(transactions),
-	}
-}
-
-func (registry *Registry) GetResources() []*ResourceRef {
-	return registry.resources
-}
-
-func (registry *Registry) GetUniqueTypes() []Type {
-	return registry.uniqueTypes
-}
-
-func (registry *Registry) GetManagedRoleTransactions() map[string][]*Transaction {
-	return registry.transactions
-}
-
-func (registry *Registry) GetManagedRolesByTransaction() map[string][]string {
-	return registry.managedRolesByTransaction
-}
-
-func buildManagedRoleTransactions() map[string][]*Transaction {
-	out := make(map[string][]*Transaction)
-	for roleName, perms := range managedRolePermissions {
-		for _, perm := range perms {
-			object := *MustNewObject(perm.Resource, WildCardSelectorString)
-			txn, err := NewTransaction(perm.Verb, object)
-			if err != nil {
-				panic(err)
-			}
-			out[roleName] = append(out[roleName], txn)
+func buildTypesByVerb(types []Type) map[Verb][]Type {
+	out := make(map[Verb][]Type)
+	for _, t := range types {
+		for _, v := range t.AllowedVerbs() {
+			out[v] = append(out[v], t)
 		}
 	}
-	return out
-}
-
-func buildUniqueTypes(resources []*ResourceRef) []Type {
-	seen := make(map[Type]struct{})
-	out := make([]Type, 0)
-	for _, resource := range resources {
-		if _, ok := seen[resource.Type]; ok {
-			continue
-		}
-		seen[resource.Type] = struct{}{}
-		out = append(out, resource.Type)
-	}
-	return out
-}
-
-func buildManagedRolesByTransaction(transactions map[string][]*Transaction) map[string][]string {
-	out := make(map[string][]string)
-	for roleName, txns := range transactions {
-		for _, txn := range txns {
-			key := txn.TransactionKey()
-			out[key] = append(out[key], roleName)
-		}
+	for _, ts := range out {
+		sort.Slice(ts, func(i, j int) bool { return ts[i].StringValue() < ts[j].StringValue() })
 	}
 	return out
 }
 
 func ErrIfVerbNotValidForType(verb Verb, typed Type) error {
-	if validVerbs, ok := typeToVerbs[typed]; ok {
-		if !slices.Contains(validVerbs, verb) {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for type %s, valid verbs are: %s", verb.StringValue(), typed.StringValue(), validVerbs)
-		}
+	if !typed.IsValidVerb(verb) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidVerbForType, "verb %s is not valid for type %s", verb.StringValue(), typed.StringValue())
 	}
-
 	return nil
 }

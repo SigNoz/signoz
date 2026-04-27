@@ -63,40 +63,37 @@ func registerGenerateAuthz(parentCmd *cobra.Command) {
 }
 
 func runGenerateAuthz(_ context.Context) error {
-	resources := coretypes.ListResources()
-	verbsForTypes := coretypes.VerbsForTypes()
+	registry := coretypes.NewRegistry()
 
-	data := permissionsTypeData{
-		Resources: make([]permissionsTypeResource, 0, len(resources)),
-		Relations: make([]permissionsTypeRelation, 0, len(verbsForTypes)),
-	}
-
-	for _, r := range resources {
-		data.Resources = append(data.Resources, permissionsTypeResource{
-			Kind: r.Kind.String(),
-			Type: r.Type.StringValue(),
+	resources := make([]permissionsTypeResource, 0, len(registry.ResourceRefs()))
+	for _, ref := range registry.ResourceRefs() {
+		resources = append(resources, permissionsTypeResource{
+			Kind: ref.Kind.String(),
+			Type: ref.Type.StringValue(),
 		})
 	}
 
-	verbs := make([]coretypes.Verb, 0, len(verbsForTypes))
-	for verb := range verbsForTypes {
+	typesByVerb := registry.TypesByVerb()
+	verbs := make([]coretypes.Verb, 0, len(typesByVerb))
+	for verb := range typesByVerb {
 		verbs = append(verbs, verb)
 	}
 	sort.Slice(verbs, func(i, j int) bool { return verbs[i].StringValue() < verbs[j].StringValue() })
 
+	relations := make([]permissionsTypeRelation, 0, len(verbs))
 	for _, verb := range verbs {
-		types := make([]string, 0, len(verbsForTypes[verb]))
-		for _, t := range verbsForTypes[verb] {
+		types := make([]string, 0, len(typesByVerb[verb]))
+		for _, t := range typesByVerb[verb] {
 			types = append(types, t.StringValue())
 		}
-		data.Relations = append(data.Relations, permissionsTypeRelation{
+		relations = append(relations, permissionsTypeRelation{
 			Verb:  verb.StringValue(),
 			Types: types,
 		})
 	}
 
 	var buf bytes.Buffer
-	if err := permissionsTypeTemplate.Execute(&buf, data); err != nil {
+	if err := permissionsTypeTemplate.Execute(&buf, permissionsTypeData{Resources: resources, Relations: relations}); err != nil {
 		return err
 	}
 

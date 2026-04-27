@@ -8,19 +8,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+var Types = []Type{
+	TypeUser,
+	TypeServiceAccount,
+	TypeAnonymous,
+	TypeRole,
+	TypeOrganization,
+	TypeMetaResource,
+	TypeMetaResources,
+}
+
 var (
 	ErrCodeInvalidType     = errors.MustNewCode("invalid_type")
 	ErrCodeInvalidSelector = errors.MustNewCode("invalid_selector")
 )
 
 var (
-	TypeUser           = Type{valuer.NewString("user"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
-	TypeServiceAccount = Type{valuer.NewString("serviceaccount"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
-	TypeAnonymous      = Type{valuer.NewString("anonymous"), regexp.MustCompile(`^\*$`)}
-	TypeRole           = Type{valuer.NewString("role"), regexp.MustCompile(`^([a-z-]{1,50}|\*)$`)}
-	TypeOrganization   = Type{valuer.NewString("organization"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
-	TypeMetaResource   = Type{valuer.NewString("metaresource"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)}
-	TypeMetaResources  = Type{valuer.NewString("metaresources"), regexp.MustCompile(`^\*$`)}
+	TypeUser           = Type{valuer.NewString("user"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbRead, VerbUpdate, VerbDelete}}
+	TypeServiceAccount = Type{valuer.NewString("serviceaccount"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbRead, VerbUpdate, VerbDelete}}
+	TypeAnonymous      = Type{valuer.NewString("anonymous"), regexp.MustCompile(`^\*$`), []Verb{}}
+	TypeRole           = Type{valuer.NewString("role"), regexp.MustCompile(`^([a-z-]{1,50}|\*)$`), []Verb{VerbAssignee, VerbRead, VerbUpdate, VerbDelete}}
+	TypeOrganization   = Type{valuer.NewString("organization"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbRead, VerbUpdate, VerbDelete}}
+	TypeMetaResource   = Type{valuer.NewString("metaresource"), regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`), []Verb{VerbRead, VerbUpdate, VerbDelete}}
+	TypeMetaResources  = Type{valuer.NewString("metaresources"), regexp.MustCompile(`^\*$`), []Verb{VerbCreate, VerbList}}
 )
 
 // Represents a type of entity in the system.
@@ -28,6 +38,7 @@ var (
 type Type struct {
 	valuer.String
 	selectorRegex *regexp.Regexp
+	allowedVerbs  []Verb
 }
 
 func NewType(input string) (Type, error) {
@@ -101,4 +112,18 @@ func (typed Type) MustSelector(input string) Selector {
 	}
 
 	return selector
+}
+
+func (typed Type) IsValidVerb(verb Verb) bool {
+	for _, allowedVerb := range typed.allowedVerbs {
+		if verb == allowedVerb {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (typed Type) AllowedVerbs() []Verb {
+	return typed.allowedVerbs
 }

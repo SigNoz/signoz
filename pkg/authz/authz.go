@@ -25,7 +25,7 @@ type AuthZ interface {
 
 	// CheckTransactions checks whether the given subject is authorized for the given transactions.
 	// Returns results in the same order as the input transactions.
-	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*coretypes.Transaction) ([]*coretypes.TransactionWithAuthorization, error)
+	CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error)
 
 
 	// Write accepts the insertion tuples and the deletion tuples.

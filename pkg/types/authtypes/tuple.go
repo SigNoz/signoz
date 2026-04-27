@@ -36,7 +36,7 @@ func NewTuples(resource coretypes.Resource, subject string, verb coretypes.Verb,
 	return tuples
 }
 
-func NewTuplesFromTransactions(transactions []*coretypes.Transaction, subject string, orgID valuer.UUID) (map[string]*openfgav1.TupleKey, error) {
+func NewTuplesFromTransactions(transactions []*Transaction, subject string, orgID valuer.UUID) (map[string]*openfgav1.TupleKey, error) {
 	tuples := make(map[string]*openfgav1.TupleKey, len(transactions))
 	for _, txn := range transactions {
 		resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
@@ -58,7 +58,7 @@ func NewTuplesFromTransactions(transactions []*coretypes.Transaction, subject st
 // Other transactions are expanded via managedRolesByTransaction into role-assignee checks, keyed by "txnID:roleName".
 // Transactions with no managed role mapping are marked as pre-resolved (false) in the returned map.
 func NewTuplesFromTransactionsWithManagedRoles(
-	transactions []*coretypes.Transaction,
+	transactions []*Transaction,
 	subject string,
 	orgID valuer.UUID,
 	managedRolesByTransaction map[string][]string,
@@ -70,7 +70,7 @@ func NewTuplesFromTransactionsWithManagedRoles(
 	for _, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
-		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.VerbAssignee {
+		if txn.Object.Resource.Type.StringValue() == coretypes.TypeRole.StringValue() && txn.Relation == coretypes.VerbAssignee {
 			resource, err := coretypes.NewResourceFromTypeAndKind(txn.Object.Resource.Type, txn.Object.Resource.Kind)
 			if err != nil {
 				return nil, nil, nil, err
@@ -106,25 +106,25 @@ func NewTuplesFromTransactionsWithManagedRoles(
 // preResolved contains txn IDs whose authorization was determined without BatchCheck.
 // roleCorrelations maps txn IDs to correlation IDs used for managed role checks.
 func NewTransactionWithAuthorizationFromBatchResults(
-	transactions []*coretypes.Transaction,
+	transactions []*Transaction,
 	batchResults map[string]*TupleKeyAuthorization,
 	preResolved map[string]bool,
 	roleCorrelations map[string][]string,
-) []*coretypes.TransactionWithAuthorization {
-	output := make([]*coretypes.TransactionWithAuthorization, len(transactions))
+) []*TransactionWithAuthorization {
+	output := make([]*TransactionWithAuthorization, len(transactions))
 	for i, txn := range transactions {
 		txnID := txn.ID.StringValue()
 
 		if authorized, ok := preResolved[txnID]; ok {
-			output[i] = &coretypes.TransactionWithAuthorization{
+			output[i] = &TransactionWithAuthorization{
 				Transaction: txn,
 				Authorized:  authorized,
 			}
 			continue
 		}
 
-		if txn.Object.Resource.Type == coretypes.TypeRole && txn.Relation == coretypes.VerbAssignee {
-			output[i] = &coretypes.TransactionWithAuthorization{
+		if txn.Object.Resource.Type.StringValue() == coretypes.TypeRole.StringValue() && txn.Relation == coretypes.VerbAssignee {
+			output[i] = &TransactionWithAuthorization{
 				Transaction: txn,
 				Authorized:  batchResults[txnID].Authorized,
 			}
@@ -140,7 +140,7 @@ func NewTransactionWithAuthorizationFromBatchResults(
 			}
 		}
 
-		output[i] = &coretypes.TransactionWithAuthorization{
+		output[i] = &TransactionWithAuthorization{
 			Transaction: txn,
 			Authorized:  authorized,
 		}

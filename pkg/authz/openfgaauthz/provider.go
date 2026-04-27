@@ -21,16 +21,16 @@ import (
 type provider struct {
 	server   *openfgaserver.Server
 	store    authtypes.RoleStore
-	registry *coretypes.Registry
+	registry *authtypes.Registry
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *coretypes.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *authtypes.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
 		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *coretypes.Registry) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *authtypes.Registry) (authz.AuthZ, error) {
 	server, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema, openfgaDataStore)
 	if err != nil {
 		return nil, err
@@ -192,12 +192,12 @@ func (provider *provider) Delete(_ context.Context, _ valuer.UUID, _ valuer.UUID
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*coretypes.Transaction) ([]*coretypes.TransactionWithAuthorization, error) {
+func (provider *provider) CheckTransactions(ctx context.Context, subject string, orgID valuer.UUID, transactions []*authtypes.Transaction) ([]*authtypes.TransactionWithAuthorization, error) {
 	if len(transactions) == 0 {
-		return make([]*coretypes.TransactionWithAuthorization, 0), nil
+		return make([]*authtypes.TransactionWithAuthorization, 0), nil
 	}
 
-	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.registry.GetManagedRolesByTransaction())
+	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.registry.ManagedRolesByTransaction())
 	if err != nil {
 		return nil, err
 	}

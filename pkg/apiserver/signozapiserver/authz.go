@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/gorilla/mux"
 )
 
@@ -14,9 +14,9 @@ func (provider *provider) addAuthzRoutes(router *mux.Router) error {
 		Tags:                []string{"authz"},
 		Summary:             "Check permissions",
 		Description:         "Checks if the authenticated user has permissions for given transactions",
-		Request:             make([]*coretypes.Transaction, 0),
+		Request:             make([]*authtypes.Transaction, 0),
 		RequestContentType:  "",
-		Response:            make([]*coretypes.GettableTransaction, 0),
+		Response:            make([]*authtypes.GettableTransaction, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

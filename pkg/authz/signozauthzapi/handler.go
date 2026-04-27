@@ -254,7 +254,7 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactions := make([]*coretypes.Transaction, 0)
+	transactions := make([]*authtypes.Transaction, 0)
 	if err := binding.JSON.BindBody(r.Body, &transactions); err != nil {
 		render.Error(rw, err)
 		return
@@ -273,5 +273,5 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(rw, http.StatusOK, coretypes.NewGettableTransaction(results))
+	render.Success(rw, http.StatusOK, authtypes.NewGettableTransaction(results))
 }

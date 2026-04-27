@@ -13,12 +13,12 @@ var (
 
 type Object struct {
 	Resource ResourceRef `json:"resource" required:"true"`
-	Selector Selector         `json:"selector" required:"true"`
+	Selector Selector    `json:"selector" required:"true"`
 }
 
 type ObjectGroup struct {
 	Resource  ResourceRef `json:"resource" required:"true"`
-	Selectors []Selector       `json:"selectors" required:"true" nullable:"false"`
+	Selectors []Selector  `json:"selectors" required:"true" nullable:"false"`
 }
 
 type PatchableObjects struct {
@@ -104,22 +104,20 @@ func NewObjectsFromObjectGroups(objectGroups []*ObjectGroup) ([]*Object, error) 
 }
 
 func NewObjectGroupsFromObjects(objects []*Object) []*ObjectGroup {
-	grouped := make(map[ResourceRef][]Selector)
+	grouped := make(map[string]*ObjectGroup)
+	order := make([]string, 0)
 	for _, obj := range objects {
-		key := obj.Resource
+		key := obj.Resource.String()
 		if _, ok := grouped[key]; !ok {
-			grouped[key] = make([]Selector, 0)
+			grouped[key] = &ObjectGroup{Resource: obj.Resource, Selectors: make([]Selector, 0)}
+			order = append(order, key)
 		}
-
-		grouped[key] = append(grouped[key], obj.Selector)
+		grouped[key].Selectors = append(grouped[key].Selectors, obj.Selector)
 	}
 
-	objectGroups := make([]*ObjectGroup, 0, len(grouped))
-	for resource, selectors := range grouped {
-		objectGroups = append(objectGroups, &ObjectGroup{
-			Resource:  resource,
-			Selectors: selectors,
-		})
+	objectGroups := make([]*ObjectGroup, 0, len(order))
+	for _, key := range order {
+		objectGroups = append(objectGroups, grouped[key])
 	}
 
 	return objectGroups
