@@ -86,68 +86,73 @@ function useMetricDashboardsStatus(metricName: string): Status {
 
 export function DashboardsAndAlertsPopover({
 	metricName,
+	trigger,
 }: DashboardsAndAlertsPopoverProps): JSX.Element {
 	const [open, setOpen] = useState(false);
 
 	const alertsStatus = useMetricAlertsStatus(metricName);
 	const dashboardsStatus = useMetricDashboardsStatus(metricName);
 
-	const totalAlerts = alertsStatus.data.length;
-	const totalDashboards = dashboardsStatus.data.length;
+	const totalItems = (alertsStatus.data?.length || 0) + (dashboardsStatus.data?.length || 0);
 
-	const handleOpenChange = (visible: boolean): void => {
-		setOpen(visible);
+	const handleOpenChange = (newOpen: boolean): void => {
+		setOpen(newOpen);
 	};
 
-	const handleViewAllAlerts = (): void => {
-		openInNewTab(
-			`${ROUTES.LIST_ALERTS}?${QueryParams.search}=${metricName}`,
-		);
+	const handleAlertClick = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.LIST_ALERTS, {
+			[QueryParams.tab]: 'metrics',
+		});
+		openInNewTab(path);
 	};
 
-	const handleViewAllDashboards = (): void => {
-		openInNewTab(
-			`${ROUTES.DASHBOARDS_BUILDER}?${QueryParams.search}=${metricName}`,
-		);
+	const handleDashboardClick = (e: React.MouseEvent): void => {
+		e.preventDefault();
+		e.stopPropagation();
+		const path = generatePath(ROUTES.DASHBOARDS);
+		openInNewTab(path);
 	};
 
 	const renderContent = (): JSX.Element => {
 		if (alertsStatus.isLoading || dashboardsStatus.isLoading) {
-			return <Skeleton active paragraph={{ rows: 2 }} />;
+			return (
+				<div style={{ padding: '8px 12px', minWidth: 150 }}>
+					<Skeleton.Input active size="small" block />
+				</div>
+			);
 		}
 
 		if (alertsStatus.isError || dashboardsStatus.isError) {
 			return (
-				<Typography.Text type="danger">Failed to load data</Typography.Text>
+				<div style={{ padding: '8px 12px', color: Color.semantic.error }}>
+					Failed to load data
+				</div>
+			);
+		}
+
+		if (totalItems === 0) {
+			return (
+				<div style={{ padding: '8px 12px', color: Color.text.disabled }}>
+					No dashboards or alerts
+				</div>
 			);
 		}
 
 		return (
-			<Menu>
-				{totalAlerts > 0 && (
-					<Menu.Item key="alerts" onClick={handleViewAllAlerts}>
-						<div className="flex items-center gap-2">
-							<Bell size={16} color={Color.semantic.warning} />
-							<Typography.Text>
-								{pluralize('alert', totalAlerts, 's')} on this metric
-							</Typography.Text>
-						</div>
+			<Menu style={{ minWidth: 200, padding: '4px 0' }}>
+				{alertsStatus.data.length > 0 && (
+					<Menu.Item key="alerts" onClick={handleAlertClick} icon={<Bell size={16} />}>
+						<Typography.Text style={{ fontSize: 14 }}>
+							{pluralize('alert', alertsStatus.data.length, true)} on this metric
+						</Typography.Text>
 					</Menu.Item>
 				)}
-				{totalDashboards > 0 && (
-					<Menu.Item key="dashboards" onClick={handleViewAllDashboards}>
-						<div className="flex items-center gap-2">
-							<Grid size={16} color={Color.primary[500]} />
-							<Typography.Text>
-								{pluralize('dashboard', totalDashboards, 's')} using this metric
-							</Typography.Text>
-						</div>
-					</Menu.Item>
-				)}
-				{totalAlerts === 0 && totalDashboards === 0 && (
-					<Menu.Item key="empty">
-						<Typography.Text type="secondary">
-							No alerts or dashboards using this metric
+				{dashboardsStatus.data.length > 0 && (
+					<Menu.Item key="dashboards" onClick={handleDashboardClick} icon={<Grid size={16} />}>
+						<Typography.Text style={{ fontSize: 14 }}>
+							{pluralize('dashboard', dashboardsStatus.data.length, true)} using this metric
 						</Typography.Text>
 					</Menu.Item>
 				)}
@@ -157,26 +162,13 @@ export function DashboardsAndAlertsPopover({
 
 	return (
 		<Dropdown
-			menu={{ items: [] }}
 			open={open}
 			onOpenChange={handleOpenChange}
 			overlay={renderContent()}
-			trigger={['click']}
+			trigger={trigger}
 			placement="bottomRight"
 		>
-			<div className="flex cursor-pointer items-center gap-1 px-2 py-1 hover:bg-gray-100">
-				{totalAlerts > 0 && (
-					<Bell size={14} color={Color.semantic.warning} />
-				)}
-				{totalDashboards > 0 && (
-					<Grid size={14} color={Color.primary[500]} />
-				)}
-				{(totalAlerts > 0 || totalDashboards > 0) && (
-					<Typography.Text type="secondary" className="text-xs">
-						{totalAlerts + totalDashboards}
-					</Typography.Text>
-				)}
-			</div>
+			<div style={{ cursor: 'pointer', display: 'inline-block' }} />
 		</Dropdown>
 	);
 }
