@@ -57,7 +57,7 @@ function useMetricAlertsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingAlerts);
 	}
 
-	return { data: newAlertsData, isLoading: false, isError: false };
+	return { data: newAlertsData || [], isLoading: false, isError: false };
 }
 
 function useMetricDashboardsStatus(metricName: string): Status {
@@ -81,62 +81,149 @@ function useMetricDashboardsStatus(metricName: string): Status {
 		return getLoadingStatus(newIsLoadingDashboards);
 	}
 
-	return { data: newDashboardsData, isLoading: false, isError: false };
+	return { data: newDashboardsData || [], isLoading: false, isError: false };
 }
 
-function useMetricDetailsStatus(metricName: string): Status {
-	const metricAlertsStatus = useMetricAlertsStatus(metricName);
-	const metricDashboardsStatus = useMetricDashboardsStatus(metricName);
+function getAlertsMenuItems(alerts: any[], metricName: string) {
+	if (alerts.length === 0) {
+		return [
+			{
+				key: 'no-alerts',
+				label: (
+					<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+						No alerts configured
+					</Typography.Text>
+				),
+				disabled: true,
+			},
+		];
+	}
 
-	return {
-		data: { ...metricAlertsStatus.data, ...metricDashboardsStatus.data },
-		isLoading: metricAlertsStatus.isLoading || metricDashboardsStatus.isLoading,
-		isError: metricAlertsStatus.isError || metricDashboardsStatus.isError,
-		error: metricAlertsStatus.error || metricDashboardsStatus.error,
-	};
+	return alerts.map((alert) => ({
+		key: alert.uuid,
+		label: (
+			<Typography.Text
+				ellipsis
+				style={{ maxWidth: 200, fontSize: 12, color: Color.text.primary }}
+			>
+				{alert.name}
+			</Typography.Text>
+		),
+		onClick: () => {
+			const path = generatePath(ROUTES.LIST_ALERTS);
+			openInNewTab(`${path}?${QueryParams.alertId}=${alert.uuid}`);
+		},
+	}));
 }
 
-function DashboardsAndAlertsPopover({ metricName }: DashboardsAndAlertsPopoverProps) {
-	const status = useMetricDetailsStatus(metricName);
-
-	if (status.isError) {
-		return (
-			<Skeleton active>
-				<Typography.Text>
-					{pluralize('Error', status.error.message)}
-				</Typography.Text>
-			</Skeleton>
-		);
+function getDashboardsMenuItems(dashboards: any[], metricName: string) {
+	if (dashboards.length === 0) {
+		return [
+			{
+				key: 'no-dashboards',
+				label: (
+					<Typography.Text type="secondary" style={{ fontSize: 12 }}>
+						No dashboards using this metric
+					</Typography.Text>
+				),
+				disabled: true,
+			},
+		];
 	}
 
-	if (status.isLoading) {
-		return (
-			<Skeleton active>
-				<Typography.Text>Loading...</Typography.Text>
-			</Skeleton>
-		);
-	}
+	return dashboards.map((dashboard) => ({
+		key: dashboard.dashboardId,
+		label: (
+			<Typography.Text
+				ellipsis
+				style={{ maxWidth: 200, fontSize: 12, color: Color.text.primary }}
+			>
+				{dashboard.dashboardName}
+			</Typography.Text>
+		),
+		onClick: () => {
+			const path = generatePath(ROUTES.APPLICATION, {
+				dashboardId: dashboard.dashboardId,
+			});
+			openInNewTab(path);
+		},
+	}));
+}
 
-	return (
-		<Dropdown
-			overlay={
-				<Menu>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize('Dashboard', status.data.dashboards.length)}
-						</Typography.Text>
+export function DashboardsAndAlertsPopover({
+	metricName,
+	children,
+}: DashboardsAndAlertsPopoverProps) {
+	const { data: alerts, isLoading: isLoadingAlerts, isError: isErrorAlerts } =
+		useMetricAlertsStatus(metricName);
+	const {
+		data: dashboards,
+		isLoading: isLoadingDashboards,
+		isError: isErrorDashboards,
+	} = useMetricDashboardsStatus(metricName);
+
+	const isLoading = isLoadingAlerts || isLoadingDashboards;
+	const isError = isErrorAlerts || isErrorDashboards;
+
+	const menu = useMemo(() => {
+		if (isLoading) {
+			return (
+				<Menu style={{ width: 200 }}>
+					<Menu.Item key="loading" disabled>
+						<Skeleton.Input active size="small" block />
 					</Menu.Item>
-					<Menu.Item>
-						<Typography.Text>
-							{pluralize('Alert', status.data.alerts.length)}
+				</Menu>
+			);
+		}
+
+		if (isError) {
+			return (
+				<Menu style={{ width: 200 }}>
+					<Menu.Item key="error" disabled>
+						<Typography.Text type="danger" style={{ fontSize: 12 }}>
+							Failed to load data
 						</Typography.Text>
 					</Menu.Item>
 				</Menu>
-			}
-		>
-			<Grid size={24} />
+			);
+		}
+
+		return (
+			<Menu
+				style={{ minWidth: 200 }}
+				items={[
+					{
+						key: 'alerts',
+						icon: <Bell size={12} />,
+						label: (
+							<Typography.Text strong style={{ fontSize: 12 }}>
+								Alerts ({alerts.length})
+							</Typography.Text>
+						),
+						children: getAlertsMenuItems(alerts, metricName),
+					},
+					{
+						key: 'dashboards',
+						icon: <Grid size={12} />,
+						label: (
+							<Typography.Text strong style={{ fontSize: 12 }}>
+								Dashboards ({dashboards.length})
+							</Typography.Text>
+						),
+						children: getDashboardsMenuItems(dashboards, metricName),
+					},
+				]}
+			/>
+		);
+	}, [alerts, dashboards, isLoading, isError, metricName]);
+
+	if (!metricName) {
+		return <>{children}</>;
+	}
+
+	return (
+		<Dropdown overlay={menu} trigger={['hover']} placement="bottomRight">
+			{children}
 		</Dropdown>
 	);
 }
-
-export default DashboardsAndAlertsPopover;
