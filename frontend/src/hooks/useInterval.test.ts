@@ -5,7 +5,7 @@ import useInterval from './useInterval';
 jest.useFakeTimers();
 
 describe('useInterval', () => {
-	test('calls the callback with a given delay', () => {
+	it('calls the callback with a given delay', () => {
 		const callback = jest.fn();
 		const delay = 1000;
 
@@ -26,7 +26,7 @@ describe('useInterval', () => {
 		expect(callback).toHaveBeenCalledTimes(2);
 	});
 
-	test('does not call the callback if not enabled', () => {
+	it('does not call the callback if not enabled', () => {
 		const callback = jest.fn();
 		const delay = 1000;
 		const enabled = false;
@@ -40,7 +40,7 @@ describe('useInterval', () => {
 		expect(callback).toHaveBeenCalledTimes(0);
 	});
 
-	test('cleans up the interval when unmounted', () => {
+	it('cleans up the interval when unmounted', () => {
 		const callback = jest.fn();
 		const delay = 1000;
 
@@ -61,7 +61,7 @@ describe('useInterval', () => {
 		expect(callback).toHaveBeenCalledTimes(1);
 	});
 
-	test('updates the interval when delay changes', () => {
+	it('updates the interval when delay changes', () => {
 		const callback = jest.fn();
 		const initialDelay = 1000;
 		const newDelay = 2000;

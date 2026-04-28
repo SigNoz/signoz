@@ -21,8 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
-	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -74,6 +75,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},
 		struct{ rulestatehistory.Handler }{},
+		struct{ spanmapper.Handler }{},
 		struct{ alertmanager.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},

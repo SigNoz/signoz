@@ -36,7 +36,7 @@ export const convertVariablesToDbFormat = (
 	variblesArr.reduce((result, obj: IDashboardVariable) => {
 		const { id } = obj;
 
-		// @ts-ignore
+		// @ts-expect-error
 		result[id] = obj;
 		return result;
 	}, {});

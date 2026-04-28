@@ -174,9 +174,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 			}),
 		);
 
-		expect(
-			await screen.findByRole('button', { name: /Delete Service Account/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('button', { name: /Delete Service Account/i }),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('saving changes in the drawer refetches the list', async () => {
@@ -250,10 +250,10 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		expect(
-			await screen.findByText(
+		await expect(
+			screen.findByText(
 				/An unexpected error occurred while fetching service accounts/i,
 			),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 });

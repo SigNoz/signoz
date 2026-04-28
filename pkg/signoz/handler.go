@@ -36,6 +36,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -71,6 +73,7 @@ type Handlers struct {
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 	RuleStateHistory        rulestatehistory.Handler
+	SpanMapperHandler       spanmapper.Handler
 	AlertmanagerHandler     alertmanager.Handler
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
@@ -114,6 +117,7 @@ func NewHandlers(
 		RegistryHandler:         registryHandler,
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
+		SpanMapperHandler:       implspanmapper.NewHandler(nil, providerSettings), // todo(nitya): will update this in future PR
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),

@@ -124,7 +124,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 						columns={columns}
 						bordered
 						title={(): string => 'Top Level Operations'}
-						// @ts-ignore
+						// @ts-expect-error
 						dataSource={topLevelOperations}
 						loading={isLoading}
 						showHeader={false}

@@ -99,7 +99,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const q = result.payload.data.result[0];
 		expect(q.queryName).toBe('A');
 		expect(q.legend).toBe('{{service.name}}');
-		expect(q.series?.[0]).toEqual(
+		expect(q.series?.[0]).toStrictEqual(
 			expect.objectContaining({
 				labels: { 'service.name': 'adservice' },
 				values: [
@@ -186,7 +186,7 @@ describe('convertV5ResponseToLegacy', () => {
 
 		expect(result.payload.data.resultType).toBe('scalar');
 		const [tableEntry] = result.payload.data.result;
-		expect(tableEntry.table?.columns).toEqual([
+		expect(tableEntry.table?.columns).toStrictEqual([
 			{
 				name: 'service.name',
 				queryName: 'A',
@@ -202,7 +202,7 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 			{ name: 'F1', queryName: 'F1', isValueColumn: true, id: 'F1' },
 		]);
-		expect(tableEntry.table?.rows?.[0]).toEqual({
+		expect(tableEntry.table?.rows?.[0]).toStrictEqual({
 			data: {
 				'service.name': 'adservice',
 				'A.count()': 606,
@@ -257,7 +257,7 @@ describe('convertV5ResponseToLegacy', () => {
 
 		expect(result.payload.data.resultType).toBe('scalar');
 		const [tableEntry] = result.payload.data.result;
-		expect(tableEntry.table?.columns).toEqual([
+		expect(tableEntry.table?.columns).toStrictEqual([
 			{
 				name: 'service.name',
 				queryName: 'A',
@@ -267,7 +267,7 @@ describe('convertV5ResponseToLegacy', () => {
 			// Single aggregation: name resolves to legend, id resolves to queryName
 			{ name: '{{service.name}}', queryName: 'A', isValueColumn: true, id: 'A' },
 		]);
-		expect(tableEntry.table?.rows?.[0]).toEqual({
+		expect(tableEntry.table?.rows?.[0]).toStrictEqual({
 			data: {
 				'service.name': 'adservice',
 				A: 580,

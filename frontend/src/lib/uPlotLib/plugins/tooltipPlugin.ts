@@ -182,7 +182,7 @@ const generateTooltipContent = (
 						show: item.show || false,
 						color,
 						label,
-						// @ts-ignore
+						// @ts-expect-error
 						focus: item?._focus || false,
 						value,
 						tooltipValue,

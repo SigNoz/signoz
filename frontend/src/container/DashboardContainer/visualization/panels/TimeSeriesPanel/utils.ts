@@ -131,6 +131,7 @@ export const prepareUPlotConfig = ({
 			pointSize: 5,
 			fillMode: widget.fillMode || FillMode.None,
 			isDarkMode,
+			metric: series.metric,
 		});
 	});
 
