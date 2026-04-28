@@ -124,13 +124,13 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(&struct {
 		Timezone   string      `json:"timezone"`
-		StartTime  string      `json:"startTime"`
-		EndTime    string      `json:"endTime"`
+		StartTime  time.Time   `json:"startTime,omitzero"`
+		EndTime    time.Time   `json:"endTime,omitzero"`
 		Recurrence *Recurrence `json:"recurrence,omitempty"`
 	}{
 		Timezone:   s.Timezone,
-		StartTime:  startTime.Format(time.RFC3339),
-		EndTime:    endTime.Format(time.RFC3339),
+		StartTime:  startTime,
+		EndTime:    endTime,
 		Recurrence: recurrence,
 	})
 }
@@ -152,7 +152,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	}
 
 	var startTime time.Time
-	if aux.StartTime != "" {
+	if aux.Recurrence == nil && aux.StartTime != "" {
 		startTime, err = time.Parse(time.RFC3339, aux.StartTime)
 		if err != nil {
 			return err
@@ -161,7 +161,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	}
 
 	var endTime time.Time
-	if aux.EndTime != "" {
+	if aux.Recurrence == nil && aux.EndTime != "" {
 		endTime, err = time.Parse(time.RFC3339, aux.EndTime)
 		if err != nil {
 			return err
