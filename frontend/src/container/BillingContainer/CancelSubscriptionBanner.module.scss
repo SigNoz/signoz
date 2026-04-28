@@ -1,0 +1,35 @@
+.banner {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: var(--padding-4);
+	border-radius: 4px;
+	border: 1px solid var(--callout-error-border);
+	background-color: var(--callout-error-background);
+	margin: var(--spacing-4) 0 var(--spacing-12);
+}
+
+.info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.title {
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	color: var(--callout-error-title);
+}
+
+.subtitle {
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	line-height: var(--paragraph-base-400-line-height);
+	color: var(--callout-error-icon);
+}
+
+.dialogBody {
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-relaxed);
+	color: var(--l2-foreground);
+}

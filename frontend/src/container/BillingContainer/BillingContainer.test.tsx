@@ -4,7 +4,13 @@ import {
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
-import { act, render, screen } from 'tests/test-utils';
+import { act, render, screen, getAppContextMock } from 'tests/test-utils';
+import APIError from 'types/api/error';
+import {
+	LicensePlatform,
+	LicenseResModel,
+	LicenseState,
+} from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
@@ -99,6 +105,10 @@ describe('BillingContainer', () => {
 			await expect(
 				screen.findByRole('link', { name: /here/i }),
 			).resolves.toBeInTheDocument();
+
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('OnTrail but trialConvertedToSubscription', async () => {
@@ -138,6 +148,85 @@ describe('BillingContainer', () => {
 			const dayRemainingInBillingPeriod =
 				await screen.findByText(/1 days_remaining/i);
 			expect(dayRemainingInBillingPeriod).toBeInTheDocument();
+
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
+		});
+	});
+
+	describe('CancelSubscriptionBanner visibility', () => {
+		const baseActiveLicense = getAppContextMock('ADMIN')
+			.activeLicense as LicenseResModel;
+
+		it('should render when license is ACTIVATED and platform is CLOUD', async () => {
+			render(<BillingContainer />);
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
+		});
+
+		it.each([
+			['EXPIRED', LicenseState.EXPIRED],
+			['TERMINATED', LicenseState.TERMINATED],
+			['CANCELLED', LicenseState.CANCELLED],
+			['EVALUATION_EXPIRED', LicenseState.EVALUATION_EXPIRED],
+			['DEFAULTED', LicenseState.DEFAULTED],
+			['ISSUED', LicenseState.ISSUED],
+			['EVALUATING', LicenseState.EVALUATING],
+		])('should not render when license state is %s', async (_, state) => {
+			render(
+				<BillingContainer />,
+				{},
+				{
+					appContextOverrides: {
+						activeLicense: { ...baseActiveLicense, state },
+					},
+				},
+			);
+			await screen.findByText('billing');
+			expect(
+				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+			).not.toBeInTheDocument();
+		});
+
+		const makeAPIError = (statusCode: number): APIError =>
+			new APIError({
+				httpStatusCode: statusCode as any,
+				error: { code: 'error', message: 'error', url: '', errors: [] },
+			});
+
+		it.each([
+			[
+				'Self-Hosted platform',
+				{
+					activeLicense: {
+						...baseActiveLicense,
+						platform: LicensePlatform.SELF_HOSTED,
+					},
+					activeLicenseFetchError: null,
+				},
+			],
+			[
+				'Community Enterprise user (license API 404)',
+				{
+					activeLicense: null,
+					activeLicenseFetchError: makeAPIError(404),
+				},
+			],
+			[
+				'Community user (license API 501)',
+				{
+					activeLicense: null,
+					activeLicenseFetchError: makeAPIError(501),
+				},
+			],
+		])('should not render for %s', async (_, overrides) => {
+			render(<BillingContainer />, {}, { appContextOverrides: overrides });
+			await screen.findByText('billing');
+			expect(
+				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+			).not.toBeInTheDocument();
 		});
 	});
 
