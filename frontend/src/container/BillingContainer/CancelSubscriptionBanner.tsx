@@ -35,9 +35,9 @@ function CancelSubscriptionBanner(): JSX.Element {
 				'Please find my account details below.',
 				'',
 				'Account Details:',
-				`  • SigNoz URL:      ${getBaseUrl()}`,
-				...(orgName ? [`  • Organization:   ${orgName}`] : []),
-				`  • Account Email:  ${user?.email ?? ''}`,
+				`  • SigNoz URL: ${getBaseUrl()}`,
+				...(orgName ? [`  • Organization: ${orgName}`] : []),
+				`  • Account Email: ${user?.email ?? ''}`,
 				'',
 				'Reason for Cancellation:',
 				'[Please share the reason for cancellation]',
@@ -91,7 +91,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 				onOpenChange={setOpen}
 				title="Cancel your subscription"
 				width="narrow"
-				showCloseButton
+				showCloseButton={false}
 				footer={footer}
 			>
 				<p className={styles.dialogBody}>
