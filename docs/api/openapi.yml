@@ -5296,7 +5296,12 @@ components:
       scheme: bearer
       type: http
 info:
+  contact:
+    email: support@signoz.io
+    name: SigNoz Support
+    url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  termsOfService: https://signoz.io/terms-of-service/
   title: SigNoz
   version: ""
 openapi: 3.0.3
