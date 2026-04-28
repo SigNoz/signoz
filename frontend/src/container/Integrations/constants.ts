@@ -81,6 +81,7 @@ export const AZURE_REGIONS: AzureRegion[] = [
 	{ label: 'Central India', value: 'centralindia', geography: 'India' },
 	{ label: 'Central US', value: 'centralus', geography: 'United States' },
 	{ label: 'Chile Central', value: 'chilecentral', geography: 'Chile' },
+	{ label: 'Denmark East', value: 'denmarkeast', geography: 'Denmark' },
 	{ label: 'East Asia', value: 'eastasia', geography: 'Asia Pacific' },
 	{ label: 'East US', value: 'eastus', geography: 'United States' },
 	{ label: 'East US 2', value: 'eastus2', geography: 'United States' },

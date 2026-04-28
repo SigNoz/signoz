@@ -22,6 +22,11 @@ import RenderConnectionFields from '../../AmazonWebServices/RegionForm/RenderCon
 
 import '../../AmazonWebServices/AddNewAccount/CloudAccountSetupModal.style.scss';
 
+const AZURE_CLI_DESC =
+	'Paste the following command if you have Azure CLI setup locally on your machine or use BASH CloudShell on Azure portal with above mentioned permissions.';
+const AZURE_POWERSHELL_DESC =
+	'Paste the following command in PowerShell CloudShell on Azure portal, you can switch to PowerShell on Azure portal.';
+
 function CloudAccountSetupModal({
 	onClose,
 }: IntegrationModalProps): JSX.Element {
@@ -305,7 +310,7 @@ function CloudAccountSetupModal({
 										Deploy Agent
 									</div>
 									<div className="cloud-account-setup-form__code-block-tabs-header-description">
-										Copy the command and then use it to create the deployment stack.
+										{activeTab === 'cli' ? AZURE_CLI_DESC : AZURE_POWERSHELL_DESC}
 									</div>
 								</div>
 								<Tabs
