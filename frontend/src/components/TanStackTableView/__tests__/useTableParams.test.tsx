@@ -80,7 +80,10 @@ describe('useTableParams (local mode — enableQueryParams not set)', () => {
 		act(() => {
 			result.current.setOrderBy({ columnName: 'cpu', order: 'desc' });
 		});
-		expect(result.current.orderBy).toEqual({ columnName: 'cpu', order: 'desc' });
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'cpu',
+			order: 'desc',
+		});
 	});
 });
 
@@ -143,7 +146,10 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		const orderBy = JSON.stringify({ columnName: 'name', order: 'desc' });
 		const wrapper = createNuqsWrapper({ order_by: orderBy });
 		const { result } = renderHook(() => useTableParams(true), { wrapper });
-		expect(result.current.orderBy).toEqual({ columnName: 'name', order: 'desc' });
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'name',
+			order: 'desc',
+		});
 	});
 
 	it('updates URL when setPage is called', () => {
@@ -178,7 +184,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 			.filter(Boolean)
 			.pop();
 		expect(lastOrderBy).toBeDefined();
-		expect(JSON.parse(lastOrderBy!)).toEqual({
+		expect(JSON.parse(lastOrderBy!)).toStrictEqual({
 			columnName: 'value',
 			order: 'asc',
 		});
@@ -207,7 +213,7 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 			result.current.setExpanded({ 'row-1': true });
 		});
 
-		expect(result.current.expanded).toEqual({ 'row-1': true });
+		expect(result.current.expanded).toStrictEqual({ 'row-1': true });
 	});
 
 	it('toggles sort order correctly: null → asc → desc → null', () => {
@@ -222,13 +228,19 @@ describe('useTableParams (URL mode — enableQueryParams set)', () => {
 		act(() => {
 			result.current.setOrderBy({ columnName: 'id', order: 'asc' });
 		});
-		expect(result.current.orderBy).toEqual({ columnName: 'id', order: 'asc' });
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'id',
+			order: 'asc',
+		});
 
 		// Second click: asc → desc
 		act(() => {
 			result.current.setOrderBy({ columnName: 'id', order: 'desc' });
 		});
-		expect(result.current.orderBy).toEqual({ columnName: 'id', order: 'desc' });
+		expect(result.current.orderBy).toStrictEqual({
+			columnName: 'id',
+			order: 'desc',
+		});
 
 		// Third click: desc → null
 		act(() => {

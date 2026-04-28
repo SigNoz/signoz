@@ -70,9 +70,9 @@ describe('EditKeyModal (URL-controlled)', () => {
 	it('renders key data from prop when edit-key param is set', async () => {
 		renderModal();
 
-		expect(
-			await screen.findByDisplayValue('Original Key Name'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('Original Key Name'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
 
@@ -111,7 +111,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 
 		const latestUrlUpdate =
 			onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1]?.[0];
-		expect(latestUrlUpdate).toEqual(
+		expect(latestUrlUpdate).toStrictEqual(
 			expect.objectContaining({
 				queryString: expect.any(String),
 			}),
@@ -134,9 +134,9 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await user.click(screen.getByRole('button', { name: /Revoke Key/i }));
 
 		// Same dialog, now showing revoke confirmation
-		expect(
-			await screen.findByRole('dialog', { name: /Revoke Original Key Name/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('dialog', { name: /Revoke Original Key Name/i }),
+		).resolves.toBeInTheDocument();
 		expect(
 			screen.getByText(/Revoking this key will permanently invalidate it/i),
 		).toBeInTheDocument();

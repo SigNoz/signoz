@@ -213,7 +213,7 @@ describe.each([
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
 			expect(query.spec.groupBy).toBeUndefined();
-			expect(query.spec.having).toEqual({ expression: '' });
+			expect(query.spec.having).toStrictEqual({ expression: '' });
 		});
 	});
 
@@ -238,7 +238,7 @@ describe.each([
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
-			expect(query.spec.selectFields).toEqual([
+			expect(query.spec.selectFields).toStrictEqual([
 				expect.objectContaining({
 					name: 'http.status',
 					fieldDataType: 'int64',

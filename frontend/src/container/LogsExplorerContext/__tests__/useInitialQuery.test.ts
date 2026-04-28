@@ -350,7 +350,7 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 			const serviceItems = calledWith.items.filter(
 				(item: TagFilterItem) => item.key?.key === 'service.name',
 			);
-			expect(serviceItems.length).toBe(1);
+			expect(serviceItems).toHaveLength(1);
 
 			// Verify no priority items (k8s, cloud, host, container) are included
 			const priorityItems = calledWith.items.filter(

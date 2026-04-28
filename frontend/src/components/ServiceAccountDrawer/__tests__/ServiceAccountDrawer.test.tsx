@@ -104,7 +104,9 @@ describe('ServiceAccountDrawer', () => {
 	it('renders Overview tab by default: editable name input, locked email, Save disabled when not dirty', async () => {
 		renderDrawer();
 
-		expect(await screen.findByDisplayValue('CI Bot')).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('CI Bot'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
@@ -272,11 +274,11 @@ describe('ServiceAccountDrawer', () => {
 
 		renderDrawer();
 
-		expect(
-			await screen.findByText(
+		await expect(
+			screen.findByText(
 				/An unexpected error occurred while fetching service account details/i,
 			),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 });
 
@@ -349,11 +351,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
-		expect(
-			await screen.findByText(/Name update.*name update failed/i, undefined, {
+		await expect(
+			screen.findByText(/Name update.*name update failed/i, undefined, {
 				timeout: 5000,
 			}),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 
 	it('role add failure shows SaveErrorItem with the role name context', async () => {
@@ -385,15 +387,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
-		expect(
-			await screen.findByText(
-				/Role 'signoz-viewer'.*role assign failed/i,
-				undefined,
-				{
-					timeout: 5000,
-				},
-			),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Role 'signoz-viewer'.*role assign failed/i, undefined, {
+				timeout: 5000,
+			}),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('role add retries on 429 then succeeds without showing an error', async () => {

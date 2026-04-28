@@ -59,7 +59,7 @@ describe('globalTime/utils', () => {
 			const maxTime = 2000000000;
 			const timeString = `${minTime}${CUSTOM_TIME_SEPARATOR}${maxTime}`;
 			const result = parseCustomTimeRange(timeString);
-			expect(result).toEqual({ minTime, maxTime });
+			expect(result).toStrictEqual({ minTime, maxTime });
 		});
 
 		it('should return null for non-custom time range strings', () => {
@@ -75,7 +75,7 @@ describe('globalTime/utils', () => {
 
 		it('should handle zero values', () => {
 			const result = parseCustomTimeRange(`0${CUSTOM_TIME_SEPARATOR}0`);
-			expect(result).toEqual({ minTime: 0, maxTime: 0 });
+			expect(result).toStrictEqual({ minTime: 0, maxTime: 0 });
 		});
 	});
 
@@ -94,7 +94,7 @@ describe('globalTime/utils', () => {
 			const maxTime = 2000000000;
 			const timeString = createCustomTimeRange(minTime, maxTime);
 			const result = parseSelectedTime(timeString);
-			expect(result).toEqual({ minTime, maxTime });
+			expect(result).toStrictEqual({ minTime, maxTime });
 		});
 
 		it('should return fallback for invalid custom time range', () => {

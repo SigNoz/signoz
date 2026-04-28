@@ -109,11 +109,13 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			expect(
-				await screen.findByRole('checkbox', { name: /enable time range/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByRole('checkbox', { name: /enable time range/i }),
+			).resolves.toBeInTheDocument();
 
-			expect(await screen.findByText(/default time range/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/default time range/i),
+			).resolves.toBeInTheDocument();
 
 			expect(screen.getByText(/Last 30 minutes/i)).toBeInTheDocument();
 
@@ -123,9 +125,9 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			expect(
-				await screen.findByRole('button', { name: /publish dashboard/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByRole('button', { name: /publish dashboard/i }),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -149,9 +151,9 @@ describe('PublicDashboardSetting', () => {
 				).toBeInTheDocument();
 			});
 
-			expect(
-				await screen.findByRole('checkbox', { name: /enable time range/i }),
-			).toBeChecked();
+			await expect(
+				screen.findByRole('checkbox', { name: /enable time range/i }),
+			).resolves.toBeChecked();
 
 			await waitFor(() => {
 				expect(screen.getByText(/default time range/i)).toBeInTheDocument();
@@ -163,13 +165,13 @@ describe('PublicDashboardSetting', () => {
 				expect(screen.getByText(/Public Dashboard URL/i)).toBeInTheDocument();
 			});
 
-			expect(
-				await screen.findByRole('button', { name: /update published dashboard/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByRole('button', { name: /update published dashboard/i }),
+			).resolves.toBeInTheDocument();
 
-			expect(
-				await screen.findByRole('button', { name: /unpublish dashboard/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByRole('button', { name: /unpublish dashboard/i }),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -249,7 +251,7 @@ describe('PublicDashboardSetting', () => {
 				rest.post(publicDashboardURL, async (req, res, ctx) => {
 					const body = await req.json();
 					createApiCalled = true;
-					expect(body).toEqual({
+					expect(body).toStrictEqual({
 						timeRangeEnabled: true,
 						defaultTimeRange: DEFAULT_TIME_RANGE,
 					});
@@ -318,7 +320,7 @@ describe('PublicDashboardSetting', () => {
 
 			await waitFor(() => {
 				expect(updateApiCalled).toBe(true);
-				expect(capturedRequestBody).toEqual({
+				expect(capturedRequestBody).toStrictEqual({
 					timeRangeEnabled: true,
 					defaultTimeRange: DEFAULT_TIME_RANGE,
 				});
