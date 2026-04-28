@@ -86,7 +86,7 @@ func (pb *pipelineBuilder) New(
 		if mms != nil {
 			stages = append(stages, mms)
 		}
-		stages = append(stages, buildReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics))
+		stages = append(stages, createReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics))
 		rs[name] = stages
 	}
 
@@ -94,8 +94,8 @@ func (pb *pipelineBuilder) New(
 	return rs
 }
 
-// buildReceiverStage is a copy of notify.createReceiverStage (unexported upstream).
-func buildReceiverStage(
+// createReceiverStage is a copy of notify.createReceiverStage (unexported upstream).
+func createReceiverStage(
 	name string,
 	integrations []notify.Integration,
 	wait func() time.Duration,
