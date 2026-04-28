@@ -315,6 +315,18 @@ describe('K8sBaseList', () => {
 
 			// First click - ascending
 			await user.click(sortButton);
+
+			// Wait for the first click's state update to be reflected
+			await waitFor(() => {
+				const orderByAfterFirstClick = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter(Boolean)
+					.pop();
+				expect(orderByAfterFirstClick).toBeDefined();
+				const parsed = JSON.parse(orderByAfterFirstClick as string);
+				expect(parsed.order).toBe('asc');
+			});
+
 			// Second click - descending
 			await user.click(sortButton);
 
