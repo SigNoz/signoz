@@ -4685,8 +4685,8 @@ components:
       type: object
     TracedetailtypesSpanAggregationType:
       enum:
-      - spanCount
-      - executionTimePercentage
+      - span_count
+      - execution_time_percentage
       - duration
       type: string
     TracedetailtypesWaterfallSpan:

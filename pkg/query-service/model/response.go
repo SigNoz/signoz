@@ -320,6 +320,7 @@ type FlamegraphSpan struct {
 }
 
 // SetRequestedFields extracts the requested attribute/resource fields from item into s.
+// This can eventually support missing fieldContext by checking both
 func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetrytypes.TelemetryFieldKey) {
 	for _, field := range fields {
 		switch field.FieldContext {

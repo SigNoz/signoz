@@ -98,6 +98,17 @@ func TestGetSpanAggregation_SpanCount(t *testing.T) {
 			field: fieldServiceName,
 			want:  map[string]uint64{"frontend": 1, "backend": 1},
 		},
+		{
+			// empty string is a valid field value — counted under the "" key, unlike a missing field
+			name: "span with empty service.name is counted under empty string key",
+			trace: buildTraceFromSpans(
+				mkASpan("s1", map[string]string{"service.name": "frontend"}, nil, 0, 10),
+				mkASpan("s2", map[string]string{"service.name": ""}, nil, 10, 5),
+				mkASpan("s3", map[string]string{"service.name": "backend"}, nil, 20, 8),
+			),
+			field: fieldServiceName,
+			want:  map[string]uint64{"frontend": 1, "backend": 1, "": 1},
+		},
 	}
 
 	for _, tc := range tests {

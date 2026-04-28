@@ -343,7 +343,7 @@ type GetFlamegraphSpansForTraceParams struct {
 	Limit           uint                               `json:"limit"`
 	BoundaryStartTS uint64                             `json:"boundaryStartTsMilli"`
 	BoundaryEndTS   uint64                             `json:"boundarEndTsMilli"`
-	RequiredFields  []telemetrytypes.TelemetryFieldKey `json:"requiredFields"`
+	SelectFields    []telemetrytypes.TelemetryFieldKey `json:"selectFields"`
 }
 
 type SpanFilterParams struct {

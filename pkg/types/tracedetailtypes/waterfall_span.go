@@ -185,15 +185,14 @@ func (ws *WaterfallSpan) GetSubtreeNodeCount() uint64 {
 func (ws *WaterfallSpan) FieldValue(field telemetrytypes.TelemetryFieldKey) (string, bool) {
 	switch field.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		v := ws.Resource[field.Name]
-		return v, v != ""
+		v, ok := ws.Resource[field.Name]
+		return v, ok
 	case telemetrytypes.FieldContextAttribute:
 		v, ok := ws.Attributes[field.Name]
 		if !ok {
 			return "", false
 		}
-		str := fmt.Sprintf("%v", v)
-		return str, str != ""
+		return fmt.Sprintf("%v", v), true
 	}
 	return "", false
 }

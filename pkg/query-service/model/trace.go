@@ -32,7 +32,7 @@ type TraceSummary struct {
 
 // AttributeValue looks up an attribute across string, number, and bool maps in priority order.
 func (s SpanItemV2) AttributeValue(name string) any {
-	if v, ok := s.Attributes_string[name]; ok && v != "" {
+	if v, ok := s.Attributes_string[name]; ok {
 		return v
 	}
 	if v, ok := s.Attributes_number[name]; ok {

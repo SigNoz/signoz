@@ -5696,8 +5696,8 @@ export interface TracedetailtypesSpanAggregationResultDTO {
 }
 
 export enum TracedetailtypesSpanAggregationTypeDTO {
-	spanCount = 'spanCount',
-	executionTimePercentage = 'executionTimePercentage',
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
 	duration = 'duration',
 }
 /**
