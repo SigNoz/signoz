@@ -8,6 +8,12 @@ import { SortState, TanstackTableQueryParamsConfig } from './types';
 const NUQS_OPTIONS = { history: 'push' as const };
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 50;
+const URL_KEYS_DEFAULT = {
+	page: 'page',
+	limit: 'limit',
+	orderBy: 'order_by',
+	expanded: 'expanded',
+} as const;
 
 type Defaults = {
 	page?: number;
@@ -70,28 +76,28 @@ export function useTableParams(
 
 	const pageQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_page`
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.page}`
 			: isObjectConfig
-				? (enableQueryParams.page ?? 'page')
-				: 'page';
+				? (enableQueryParams.page ?? URL_KEYS_DEFAULT.page)
+				: URL_KEYS_DEFAULT.page;
 	const limitQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_limit`
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.limit}`
 			: isObjectConfig
-				? (enableQueryParams.limit ?? 'limit')
-				: 'limit';
+				? (enableQueryParams.limit ?? URL_KEYS_DEFAULT.limit)
+				: URL_KEYS_DEFAULT.limit;
 	const orderByQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_order_by`
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.orderBy}`
 			: isObjectConfig
-				? (enableQueryParams.orderBy ?? 'order_by')
-				: 'order_by';
+				? (enableQueryParams.orderBy ?? URL_KEYS_DEFAULT.orderBy)
+				: URL_KEYS_DEFAULT.orderBy;
 	const expandedQueryParam =
 		typeof enableQueryParams === 'string'
-			? `${enableQueryParams}_expanded`
+			? `${enableQueryParams}_${URL_KEYS_DEFAULT.expanded}`
 			: isObjectConfig
-				? (enableQueryParams.expanded ?? 'expanded')
-				: 'expanded';
+				? (enableQueryParams.expanded ?? URL_KEYS_DEFAULT.expanded)
+				: URL_KEYS_DEFAULT.expanded;
 	const pageDefault = defaults?.page ?? DEFAULT_PAGE;
 	const limitDefault = defaults?.limit ?? DEFAULT_LIMIT;
 	const orderByDefault = defaults?.orderBy ?? null;

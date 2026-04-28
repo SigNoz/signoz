@@ -1,4 +1,3 @@
-/* eslint-disable react/no-array-index-key */
 import { Badge } from '@signozhq/ui';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -88,6 +87,7 @@ export function getGroupByEl<T extends { meta?: Record<string, string> }>(
 		<div className={styles.itemDataGroup}>
 			{groupByValues.map((value, index) => (
 				<Badge
+					// oxlint-disable-next-line react/no-array-index-key
 					key={`${index}-${value}`}
 					color="secondary"
 					className={styles.itemDataGroupTagItem}
