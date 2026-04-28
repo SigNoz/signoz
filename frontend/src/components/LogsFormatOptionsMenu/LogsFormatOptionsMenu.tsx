@@ -75,7 +75,7 @@ function OptionsMenu({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		if (addColumn && addColumn?.onSearch) {

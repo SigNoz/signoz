@@ -226,7 +226,7 @@ describe('UPlotSeriesBuilder', () => {
 
 		const config = builder.getConfig();
 
-		expect(config.dash).toEqual([10, 10]);
+		expect(config.dash).toStrictEqual([10, 10]);
 		expect(config.cap).toBe('round');
 	});
 

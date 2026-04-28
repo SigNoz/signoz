@@ -155,7 +155,7 @@ describe('VariableItem Component', () => {
 		jest.clearAllMocks();
 	});
 
-	test('renders without crashing', () => {
+	it('renders without crashing', () => {
 		renderVariableItem();
 
 		expect(screen.getByText(TEXT.ALL_VARIABLES)).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('Variable Name Validation', () => {
-		test('shows error when variable name already exists', () => {
+		it('shows error when variable name already exists', () => {
 			// Set validateName to return false (name exists)
 			const mockValidateName = jest.fn().mockReturnValue(false);
 
@@ -181,7 +181,7 @@ describe('VariableItem Component', () => {
 			// We won't check for button disabled state as it might be inconsistent in tests
 		});
 
-		test('allows save when current variable name is used', () => {
+		it('allows save when current variable name is used', () => {
 			// Mock validate to return false for all other names but true for own name
 			const mockValidateName = jest
 				.fn()
@@ -197,7 +197,7 @@ describe('VariableItem Component', () => {
 			expect(screen.queryByText(TEXT.VARIABLE_EXISTS)).not.toBeInTheDocument();
 		});
 
-		test('shows error when variable name contains whitespace', () => {
+		it('shows error when variable name contains whitespace', () => {
 			renderVariableItem({ ...basicVariableData, name: '' });
 
 			// Enter a name with whitespace
@@ -212,7 +212,7 @@ describe('VariableItem Component', () => {
 			expect(saveButton).toBeDisabled();
 		});
 
-		test('allows variable name without whitespace', () => {
+		it('allows variable name without whitespace', () => {
 			renderVariableItem({ ...basicVariableData, name: '' });
 
 			// Enter a valid name without whitespace
@@ -223,7 +223,7 @@ describe('VariableItem Component', () => {
 			expect(screen.queryByText(TEXT.VARIABLE_WHITESPACE)).not.toBeInTheDocument();
 		});
 
-		test('validates whitespace in auto-generated name for dynamic variables', () => {
+		it('validates whitespace in auto-generated name for dynamic variables', () => {
 			// Create a dynamic variable with empty name
 			const dynamicVariable: IDashboardVariable = {
 				...basicVariableData,
@@ -241,7 +241,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('Dynamic Variable Attribute Key Validation', () => {
-		test('shows error when attribute key already exists', async () => {
+		it('shows error when attribute key already exists', async () => {
 			// Mock validateAttributeKey to return false (attribute key exists)
 			const mockValidateAttributeKey = jest.fn().mockReturnValue(false);
 
@@ -277,7 +277,7 @@ describe('VariableItem Component', () => {
 			expect(saveButton).toBeDisabled();
 		});
 
-		test('allows saving when attribute key is unique', async () => {
+		it('allows saving when attribute key is unique', async () => {
 			// Mock validateAttributeKey to return true (attribute key is unique)
 			const mockValidateAttributeKey = jest.fn().mockReturnValue(true);
 
@@ -315,7 +315,7 @@ describe('VariableItem Component', () => {
 			expect(saveButton).not.toBeDisabled();
 		});
 
-		test('allows same attribute key for current variable being edited', async () => {
+		it('allows same attribute key for current variable being edited', async () => {
 			// Mock validateAttributeKey to return true for same variable
 			const mockValidateAttributeKey = jest.fn().mockImplementation(
 				(attributeKey, currentVariableId) =>
@@ -348,7 +348,7 @@ describe('VariableItem Component', () => {
 			});
 		});
 
-		test('does not validate attribute key for non-dynamic variables', async () => {
+		it('does not validate attribute key for non-dynamic variables', async () => {
 			// Mock validateAttributeKey to return false (would show error for dynamic)
 			const mockValidateAttributeKey = jest.fn().mockReturnValue(false);
 
@@ -377,7 +377,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('Variable Type Switching', () => {
-		test('switches to CUSTOM variable type correctly', () => {
+		it('switches to CUSTOM variable type correctly', () => {
 			renderVariableItem();
 
 			// Find the Query button
@@ -401,7 +401,7 @@ describe('VariableItem Component', () => {
 			expect(screen.getByText(TEXT.OPTIONS)).toBeInTheDocument();
 		});
 
-		test('switches to TEXTBOX variable type correctly', () => {
+		it('switches to TEXTBOX variable type correctly', () => {
 			renderVariableItem();
 
 			// Find and click Textbox button
@@ -424,7 +424,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('MultiSelect and ALL Option', () => {
-		test('enables ALL option only when multiSelect is enabled', async () => {
+		it('enables ALL option only when multiSelect is enabled', async () => {
 			renderVariableItem();
 
 			// Initially, ALL option should not be visible
@@ -457,7 +457,7 @@ describe('VariableItem Component', () => {
 			});
 		});
 
-		test('disables ALL option when multiSelect is disabled', async () => {
+		it('disables ALL option when multiSelect is disabled', async () => {
 			// Create variable with multiSelect and showALLOption both enabled
 			const variable: IDashboardVariable = {
 				...basicVariableData,
@@ -501,7 +501,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('Cancel and Navigation', () => {
-		test('calls onCancel when clicking All Variables button', () => {
+		it('calls onCancel when clicking All Variables button', () => {
 			renderVariableItem();
 
 			// Click All variables button
@@ -511,7 +511,7 @@ describe('VariableItem Component', () => {
 			expect(onCancel).toHaveBeenCalledTimes(1);
 		});
 
-		test('calls onCancel when clicking Discard button', () => {
+		it('calls onCancel when clicking Discard button', () => {
 			renderVariableItem();
 
 			// Click Discard button
@@ -550,7 +550,7 @@ describe('VariableItem Component', () => {
 		};
 
 		// Test for cyclic dependency detection
-		test('detects circular dependency and shows error message', async () => {
+		it('detects circular dependency and shows error message', async () => {
 			// Create variables with circular dependency
 			const variable1 = createVariable(
 				TEST_VAR_IDS.VAR1,
@@ -577,7 +577,7 @@ describe('VariableItem Component', () => {
 		});
 
 		// Test for saving with no circular dependency
-		test('allows saving when no circular dependency exists', async () => {
+		it('allows saving when no circular dependency exists', async () => {
 			// Create variables without circular dependency
 			const variable1 = createVariable(
 				TEST_VAR_IDS.VAR1,
@@ -608,7 +608,7 @@ describe('VariableItem Component', () => {
 		});
 
 		// Test with multiple variable formats in query
-		test('detects circular dependency with different variable formats', async () => {
+		it('detects circular dependency with different variable formats', async () => {
 			// Create variables with circular dependency using different formats
 			const variable1 = createVariable(
 				TEST_VAR_IDS.VAR1,
@@ -645,7 +645,7 @@ describe('VariableItem Component', () => {
 	});
 
 	describe('Textbox Variable Default Value Handling', () => {
-		test('saves textbox variable with defaultValue and selectedValue set to textboxValue', async () => {
+		it('saves textbox variable with defaultValue and selectedValue set to textboxValue', async () => {
 			const user = userEvent.setup();
 			const textboxVariable: IDashboardVariable = {
 				id: TEST_VAR_IDS.VAR1,
@@ -676,7 +676,7 @@ describe('VariableItem Component', () => {
 			);
 		});
 
-		test('saves textbox variable with empty values when textboxValue is empty', async () => {
+		it('saves textbox variable with empty values when textboxValue is empty', async () => {
 			const user = userEvent.setup();
 			const textboxVariable: IDashboardVariable = {
 				id: TEST_VAR_IDS.VAR1,
@@ -707,7 +707,7 @@ describe('VariableItem Component', () => {
 			);
 		});
 
-		test('updates textbox defaultValue and selectedValue when user changes textboxValue input', async () => {
+		it('updates textbox defaultValue and selectedValue when user changes textboxValue input', async () => {
 			const user = userEvent.setup();
 			const textboxVariable: IDashboardVariable = {
 				id: TEST_VAR_IDS.VAR1,
@@ -745,7 +745,7 @@ describe('VariableItem Component', () => {
 			);
 		});
 
-		test('non-textbox variables use variableDefaultValue instead of textboxValue', async () => {
+		it('non-textbox variables use variableDefaultValue instead of textboxValue', async () => {
 			const user = userEvent.setup();
 			const queryVariable: IDashboardVariable = {
 				id: TEST_VAR_IDS.VAR1,
@@ -780,7 +780,7 @@ describe('VariableItem Component', () => {
 			expect(savedVariable.defaultValue).not.toBe('should-not-be-used');
 		});
 
-		test('switching to textbox type sets defaultValue and selectedValue correctly on save', async () => {
+		it('switching to textbox type sets defaultValue and selectedValue correctly on save', async () => {
 			const user = userEvent.setup();
 			// Start with a QUERY variable
 			const queryVariable: IDashboardVariable = {

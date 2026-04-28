@@ -254,10 +254,10 @@ export function useInspectMetrics(
 			const valuesMap = new Map<number, number>();
 
 			series.values.forEach(({ timestamp, value }) => {
-				valuesMap.set(timestamp, parseFloat(value));
+				valuesMap.set(timestamp, Number.parseFloat(value));
 			});
 
-			return timestamps.map((timestamp) => valuesMap.get(timestamp) ?? NaN);
+			return timestamps.map((timestamp) => valuesMap.get(timestamp) ?? Number.NaN);
 		});
 
 		const rawData = [timestamps, ...timeseriesArray];
@@ -271,7 +271,7 @@ export function useInspectMetrics(
 				labels.add(label);
 			});
 		});
-		return Array.from(labels);
+		return [...labels];
 	}, [inspectMetricsData]);
 
 	const reset = useCallback(() => {

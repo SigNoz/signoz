@@ -67,7 +67,7 @@ describe('NoFilterTable', () => {
 
 		if (severityHeader) {
 			const initialRows = screen.getAllByRole('row');
-			expect(initialRows.length).toBe(4);
+			expect(initialRows).toHaveLength(4);
 			expect(initialRows[1]).toHaveTextContent('Alert B');
 			expect(initialRows[2]).toHaveTextContent('Alert C');
 			expect(initialRows[3]).toHaveTextContent('Alert A');
@@ -75,7 +75,7 @@ describe('NoFilterTable', () => {
 			fireEvent.click(severityHeader);
 
 			const sortedRows = screen.getAllByRole('row');
-			expect(sortedRows.length).toBe(4);
+			expect(sortedRows).toHaveLength(4);
 			expect(sortedRows[1]).toHaveTextContent('Alert A');
 			expect(sortedRows[2]).toHaveTextContent('Alert B');
 			expect(sortedRows[3]).toHaveTextContent('Alert C');

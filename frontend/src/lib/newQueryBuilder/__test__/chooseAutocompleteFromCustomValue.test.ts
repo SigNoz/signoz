@@ -37,16 +37,16 @@ describe('chooseAutocompleteFromCustomValue', () => {
 		const r1 = chooseAutocompleteFromCustomValue([], 'region', 'number');
 		const r2 = chooseAutocompleteFromCustomValue([], 'region', 'number');
 		expect(r1.id).toBeTruthy();
-		expect(r1.id).not.toEqual('----');
-		expect(r1.id).toEqual(r2.id);
-		expect(r1.key).toEqual('region');
+		expect(r1.id).not.toBe('----');
+		expect(r1.id).toStrictEqual(r2.id);
+		expect(r1.key).toBe('region');
 		// "number" maps to Float64 in our normalization
-		expect(r1.dataType).toEqual(DataTypes.Float64);
+		expect(r1.dataType).toStrictEqual(DataTypes.Float64);
 	});
 
 	it('normalizes "number" to Float64', () => {
 		const res = chooseAutocompleteFromCustomValue([], 'latency', 'number');
-		expect(res.dataType).toEqual(DataTypes.Float64);
+		expect(res.dataType).toStrictEqual(DataTypes.Float64);
 	});
 
 	it('same key but different dataType returns new object with computed id', () => {
@@ -60,7 +60,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{ key: 'service.name', dataType: DataTypes.Float64, type: '' },
 			baseAutoCompleteIdKeysOrder,
 		);
-		expect(res).toEqual(
+		expect(res).toStrictEqual(
 			expect.objectContaining({
 				key: 'service.name',
 				dataType: DataTypes.Float64,
@@ -80,7 +80,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{ key: 'unknown_key', dataType: 'unknown' as any, type: '' },
 			baseAutoCompleteIdKeysOrder,
 		);
-		expect(res).toEqual(
+		expect(res).toStrictEqual(
 			expect.objectContaining({
 				key: 'unknown_key',
 				dataType: 'unknown',
@@ -96,7 +96,7 @@ describe('chooseAutocompleteFromCustomValue', () => {
 			{ key: 'undef_key', dataType: DataTypes.EMPTY, type: '' },
 			baseAutoCompleteIdKeysOrder,
 		);
-		expect(res).toEqual(
+		expect(res).toStrictEqual(
 			expect.objectContaining({
 				key: 'undef_key',
 				dataType: DataTypes.EMPTY,
@@ -108,6 +108,6 @@ describe('chooseAutocompleteFromCustomValue', () => {
 
 	it('uses empty string as default type when fieldType is not provided', () => {
 		const res = chooseAutocompleteFromCustomValue([], 'env', DataTypes.String);
-		expect(res.type).toEqual('');
+		expect(res.type).toBe('');
 	});
 });
