@@ -83,7 +83,7 @@ func (b *logQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
@@ -268,7 +268,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteFragments []string
 		cteArgs      [][]any
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -372,7 +372,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		cteFragments []string
 		cteArgs      [][]any
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -532,7 +532,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		cteFragments []string
 		cteArgs      [][]any
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -651,7 +651,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression

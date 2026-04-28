@@ -8,7 +8,7 @@ var (
 	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
 	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
 	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
-	FeatureBodyJSONQuery     = featuretypes.MustNewName("body_json_enabled")
+	FeatureUseJSONBody       = featuretypes.MustNewName("use_json_body")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -54,7 +54,7 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureBodyJSONQuery,
+			Name:           FeatureUseJSONBody,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether body JSON querying is enabled",

@@ -207,7 +207,7 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 	}
 
 	// 
-	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := v.flagger.BooleanOrEmpty(v.ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	// Handle *If functions with predicate + values
 	if aggFunc.FuncCombinator {

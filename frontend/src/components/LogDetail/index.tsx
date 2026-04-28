@@ -83,7 +83,7 @@ function LogDetailInner({
 	const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
 	const { featureFlags } = useAppContext();
 	const isBodyJsonQueryEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
 			?.active || false;
 
 	const [filters, setFilters] = useState<TagFilter | null>(null);

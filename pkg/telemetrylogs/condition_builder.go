@@ -41,7 +41,7 @@ func (c *conditionBuilder) conditionFor(
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -62,7 +62,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// Check if this is a body JSON search - either by FieldContext
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -174,7 +174,7 @@ func (c *conditionBuilder) conditionFor(
 	// key membership checks, so depending on the column type, the condition changes
 	case qbtypes.FilterOperatorExists, qbtypes.FilterOperatorNotExists:
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		if key.FieldContext == telemetrytypes.FieldContextBody && !c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			if operator == qbtypes.FilterOperatorExists {
 				return GetBodyJSONKeyForExists(ctx, key, operator, value), nil
 			} else {
@@ -295,7 +295,7 @@ func (c *conditionBuilder) ConditionFor(
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
 		// TODO(Tushar): thread orgID here to evaluate correctly
-		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
+		if c.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			return condition, nil
 		}
 	}

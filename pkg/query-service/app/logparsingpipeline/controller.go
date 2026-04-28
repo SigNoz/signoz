@@ -367,13 +367,13 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 // RecommendAgentConfig generates the collector config to be sent to agents.
-// The normalize pipeline (when body_json_enabled feature flag is on) is injected here, after
+// The normalize pipeline (when use_json_body feature flag is on) is injected here, after
 // rawPipelineData is serialized. So it is only present in the config sent to
 // the collector and never persisted to the database as part of the user's pipeline list.
 //
 // NOTE: The configId sent to agents is derived from the pipeline version number
 // (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
-// the generated YAML without bumping the version (e.g. toggling the body_json_enabled
+// the generated YAML without bumping the version (e.g. toggling the use_json_body
 // flag or updating operator IfExpressions), agents that already applied that version will
 // not re-apply the new config. In such cases, users must save a new pipeline version
 // via the API to force agents to pick up the change.
@@ -403,7 +403,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	}
 
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(orgId)) {
+	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgId)) {
 		// add default normalize pipeline at the beginning, only for sending to collector
 		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
 	}

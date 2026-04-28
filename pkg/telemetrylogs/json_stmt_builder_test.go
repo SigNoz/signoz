@@ -1127,7 +1127,7 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 	t.Helper()
 
 	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
-	fl := flaggertest.WithBodyJSON(t, true)
+	fl := flaggertest.WithUseJSONBody(t, true)
 	fm := NewFieldMapper(fl)
 	cb := NewConditionBuilder(fm, fl)
 

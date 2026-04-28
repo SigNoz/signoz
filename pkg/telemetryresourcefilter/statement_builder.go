@@ -136,7 +136,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 ) (bool, error) {
 
 	// TODO(Tushar): thread orgID here to evaluate correctly
-	bodyJSONEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+	bodyJSONEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
