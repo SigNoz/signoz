@@ -271,7 +271,7 @@
                 {
                   "metricName": "azure_blobcapacity_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "sum",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1057,7 +1057,7 @@
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "sum"
+                  "timeAggregation": "avg"
                 }
               ],
               "dataSource": "metrics",
@@ -1248,7 +1248,7 @@
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "sum"
+                  "timeAggregation": "avg"
                 }
               ],
               "dataSource": "metrics",
