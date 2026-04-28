@@ -23,7 +23,8 @@ export const WrapperStyled = styled.div`
 	& .ant-table {
 		flex: 1;
 		min-width: 0;
-		overflow: hidden;
+		overflow-x: hidden;
+		overflow-y: auto;
 
 		> .ant-table-container {
 			min-width: 0;
