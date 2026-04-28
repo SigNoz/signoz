@@ -312,7 +312,7 @@
                 {
                   "metricName": "azure_totallatency_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -429,7 +429,7 @@
                 {
                   "metricName": "azure_originlatency_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -907,7 +907,7 @@
                 {
                   "metricName": "azure_percentage4xx_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1024,7 +1024,7 @@
                 {
                   "metricName": "azure_percentage5xx_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1291,7 +1291,7 @@
       "query": {
         "builder": {
           "queryData": [{
-            "aggregations": [{ "metricName": "azure_activewebsocketconnections_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "aggregations": [{ "metricName": "azure_activewebsocketconnections_total", "reduceTo": "max", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "max" }],
             "dataSource": "metrics", "disabled": false, "expression": "A",
             "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
             "filters": { "items": [

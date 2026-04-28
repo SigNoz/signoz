@@ -862,7 +862,7 @@
                 {
                   "metricName": "azure_availability_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "min",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1054,10 +1054,10 @@
               "aggregations": [
                 {
                   "metricName": "azure_egress_average",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "avg"
+                  "timeAggregation": "sum"
                 }
               ],
               "dataSource": "metrics",
@@ -1245,10 +1245,10 @@
               "aggregations": [
                 {
                   "metricName": "azure_ingress_average",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "avg"
+                  "timeAggregation": "sum"
                 }
               ],
               "dataSource": "metrics",
@@ -1437,7 +1437,7 @@
                 {
                   "metricName": "azure_successe2elatency_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1628,7 +1628,7 @@
                 {
                   "metricName": "azure_successserverlatency_average",
                   "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "spaceAggregation": "max",
                   "temporality": "",
                   "timeAggregation": "avg"
                 }
@@ -1818,10 +1818,10 @@
               "aggregations": [
                 {
                   "metricName": "azure_transactions_total",
-                  "reduceTo": "avg",
-                  "spaceAggregation": "avg",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
                   "temporality": "",
-                  "timeAggregation": "avg"
+                  "timeAggregation": "sum"
                 }
               ],
               "dataSource": "metrics",
