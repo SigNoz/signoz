@@ -316,8 +316,19 @@ describe('K8sBaseList', () => {
 			// First click - ascending
 			await user.click(sortButton);
 
+			// Wait for the URL to be updated with ascending order first
+			// This ensures the state has propagated through nuqs before checking the DOM
+			await waitFor(() => {
+				const ascOrderBy = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter(Boolean)
+					.pop();
+				expect(ascOrderBy).toBeDefined();
+				const parsed = JSON.parse(ascOrderBy as string);
+				expect(parsed.order).toBe('asc');
+			});
+
 			// Wait for the component to visually reflect the ascending sort state
-			// This ensures the component has re-rendered before the second click
 			await waitFor(() => {
 				expect(sortButton).toHaveAttribute('data-sort', 'ascending');
 			});
@@ -325,20 +336,21 @@ describe('K8sBaseList', () => {
 			// Second click - descending
 			await user.click(sortButton);
 
-			// Wait for descending sort state
+			// Wait for the URL to be updated with descending order
+			await waitFor(() => {
+				const lastOrderBy = onUrlUpdateMock.mock.calls
+					.map((call) => call[0].searchParams.get('orderBy'))
+					.filter(Boolean)
+					.pop();
+				expect(lastOrderBy).toBeDefined();
+				const parsed = JSON.parse(lastOrderBy as string);
+				expect(parsed.order).toBe('desc');
+			});
+
+			// Wait for descending sort state in the DOM
 			await waitFor(() => {
 				expect(sortButton).toHaveAttribute('data-sort', 'descending');
 			});
-
-			// Verify URL was also updated
-			const lastOrderBy = onUrlUpdateMock.mock.calls
-				.map((call) => call[0].searchParams.get('orderBy'))
-				.filter(Boolean)
-				.pop();
-
-			expect(lastOrderBy).toBeDefined();
-			const parsed = JSON.parse(lastOrderBy as string);
-			expect(parsed.order).toBe('desc');
 		});
 
 		it('should update page in URL when clicking pagination', async () => {
