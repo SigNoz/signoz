@@ -176,6 +176,22 @@ function NewWidget({
 
 	const [selectedWidget, setSelectedWidget] = useState(getWidget());
 
+	const handleColumnWidthsChange = useCallback(
+		(widths: Record<string, number>): void => {
+			setSelectedWidget((prev) => {
+				if (!prev) {
+					return prev;
+				}
+
+				return {
+					...prev,
+					columnWidths: widths,
+				};
+			});
+		},
+		[],
+	);
+
 	const [title, setTitle] = useState<string>(
 		selectedWidget?.title?.toString() || '',
 	);
@@ -879,6 +895,7 @@ function NewWidget({
 									isLoadingPanelData={isLoadingPanelData}
 									setQueryResponse={setQueryResponse}
 									enableDrillDown={enableDrillDown}
+									onColumnWidthsChange={handleColumnWidthsChange}
 								/>
 							)}
 						</OverlayScrollbar>

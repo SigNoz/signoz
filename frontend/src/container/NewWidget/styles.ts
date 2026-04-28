@@ -17,7 +17,10 @@ export const ButtonContainer = styled.div`
 
 export const PanelContainer = styled.div`
 	display: flex;
-	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+	width: 100%;
+	overflow: hidden;
 `;
 
 export const Tag = styled(AntDTag)`
