@@ -85,7 +85,7 @@ func (b *logQueryStatementBuilder) Build(
 	// TODO(Tushar): thread orgID here to evaluate correctly
 	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
-	keySelectors, warnings := getKeySelectors(ctx, query, bodyJSONEnabled)
+	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -116,7 +116,7 @@ func (b *logQueryStatementBuilder) Build(
 	return stmt, nil
 }
 
-func getKeySelectors(ctx context.Context, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
+func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	var warnings []string
 
