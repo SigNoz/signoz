@@ -86,9 +86,9 @@ export default function MarkdownStep(): JSX.Element {
 		} else if (selectedModule?.id === ModulesMap.AzureMonitoring) {
 			docFilePaths = AzureMonitoringDocFilePaths;
 		}
-		// @ts-ignore
+		// @ts-expect-error
 		if (docFilePaths && docFilePaths[path]) {
-			// @ts-ignore
+			// @ts-expect-error
 			setMarkdownContent(docFilePaths[path]);
 		}
 

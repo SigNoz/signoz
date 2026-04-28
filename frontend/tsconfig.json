@@ -34,7 +34,6 @@
 				"./src/*"
 			]
 		},
-		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"

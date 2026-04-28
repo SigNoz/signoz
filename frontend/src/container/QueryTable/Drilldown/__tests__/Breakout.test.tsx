@@ -236,10 +236,10 @@ describe('TableDrilldown Breakout Functionality', () => {
 
 		// Verify that the groupBy has been updated to only contain the selected breakout option
 		expect(aggregateQueryData.groupBy).toHaveLength(1);
-		expect(aggregateQueryData.groupBy[0].key).toEqual('deployment.environment');
+		expect(aggregateQueryData.groupBy[0].key).toBe('deployment.environment');
 
 		// Verify that orderBy has been cleared (as per getBreakoutQuery logic)
-		expect(aggregateQueryData.orderBy).toEqual([]);
+		expect(aggregateQueryData.orderBy).toStrictEqual([]);
 
 		// Verify that the legend has been updated (check the actual value being returned)
 		// The legend logic in getBreakoutQuery: legend: item.legend && groupBy.key ? `{{${groupBy.key}}}` : ''
@@ -247,7 +247,7 @@ describe('TableDrilldown Breakout Functionality', () => {
 		expect(aggregateQueryData.legend).toBeDefined();
 
 		// Check that the queryParams contain the expandedWidgetId
-		expect(queryParams).toEqual({
+		expect(queryParams).toStrictEqual({
 			expandedWidgetId: 'test-widget',
 			graphType: 'graph',
 		});

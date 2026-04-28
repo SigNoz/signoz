@@ -83,7 +83,7 @@ describe('GroupByFilter', () => {
 		fireEvent.focus(select);
 
 		await waitFor(() => expect(dataSourceCalls.length).toBeGreaterThanOrEqual(1));
-		expect(dataSourceCalls[0]).toEqual('meter');
+		expect(dataSourceCalls[0]).toBe('meter');
 
 		const input = select.querySelector('input') as HTMLInputElement;
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
@@ -94,12 +94,12 @@ describe('GroupByFilter', () => {
 		await user.click(option);
 
 		expect(onChange).toHaveBeenCalled();
-		expect(dataSourceCalls[dataSourceCalls.length - 1]).toEqual('meter');
+		expect(dataSourceCalls[dataSourceCalls.length - 1]).toBe('meter');
 
 		const emitted = onChange.mock.calls[0][0][0];
-		expect(emitted.key).toEqual('custom.attr');
+		expect(emitted.key).toBe('custom.attr');
 		expect(emitted.id).toBeTruthy();
-		expect(emitted.id).not.toEqual('----');
+		expect(emitted.id).not.toBe('----');
 	});
 	it('clicks suggested option and emits proper value', async () => {
 		server.use(
@@ -139,7 +139,7 @@ describe('GroupByFilter', () => {
 		// Expect payload to be resolved to the exact attribute returned by MSW
 		await waitFor(() => expect(onChange).toHaveBeenCalled());
 		const emitted = onChange.mock.calls[0][0][0];
-		expect(emitted.key).toEqual('service.name');
-		expect(emitted.id).toEqual('service.name--string--');
+		expect(emitted.key).toBe('service.name');
+		expect(emitted.id).toBe('service.name--string--');
 	});
 });

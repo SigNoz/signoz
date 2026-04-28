@@ -287,7 +287,7 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// @ts-ignore
+			// @ts-expect-error
 			outputJson[key] = logData[key as keyof ILog];
 		}
 	});

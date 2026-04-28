@@ -149,7 +149,7 @@ describe('ServiceDetails for S3 Sync service', () => {
 			expect(capturedPayload).not.toBeNull();
 		});
 
-		expect(capturedPayload).toEqual({
+		expect(capturedPayload).toStrictEqual({
 			config: {
 				aws: {
 					logs: {

@@ -297,7 +297,7 @@ describe('Tooltip utils', () => {
 				decimalPrecision,
 			});
 
-			expect(result.map((item) => item.value)).toEqual([3, 1, 4, 2]);
+			expect(result.map((item) => item.value)).toStrictEqual([3, 1, 4, 2]);
 		});
 	});
 });
