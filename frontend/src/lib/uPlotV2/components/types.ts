@@ -58,6 +58,9 @@ export interface TooltipRenderArgs {
 	isPinned: boolean;
 	dismiss: () => void;
 	viaSync: boolean;
+	/** In Tooltip sync mode, limits which series are rendered in the receiver tooltip.
+	 * null = no filtering; [] = no matches (tooltip hidden upstream); [...] = allowed indexes */
+	syncedSeriesIndexes?: number[] | null;
 }
 
 export interface BaseTooltipProps {
