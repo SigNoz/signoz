@@ -320,7 +320,7 @@ function NewWidget({
 				isLogScale,
 				legendPosition,
 				customLegendColors,
-				columnWidths: selectedWidget.columnWidths,
+				columnWidths: prev.columnWidths,
 				contextLinks,
 			};
 		});
@@ -352,7 +352,6 @@ function NewWidget({
 		spanGaps,
 		customLegendColors,
 		contextLinks,
-		selectedWidget.columnWidths,
 	]);
 
 	const closeModal = (): void => {
