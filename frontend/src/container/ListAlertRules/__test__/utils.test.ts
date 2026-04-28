@@ -68,12 +68,12 @@ describe('filterAlerts', () => {
 
 	it('should return all alerts when filter is empty', () => {
 		const result = filterAlerts(mockAlerts, '');
-		expect(result).toEqual(mockAlerts);
+		expect(result).toStrictEqual(mockAlerts);
 	});
 
 	it('should return all alerts when filter is only whitespace', () => {
 		const result = filterAlerts(mockAlerts, '   ');
-		expect(result).toEqual(mockAlerts);
+		expect(result).toStrictEqual(mockAlerts);
 	});
 
 	it('should filter alerts by alert name', () => {

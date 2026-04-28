@@ -203,7 +203,7 @@ describe('SpanScopeSelector', () => {
 					createSpanScopeFilter(filterKey),
 				]);
 				renderWithContext(queryWithFilter, undefined, defaultQueryBuilderQuery);
-				expect(await screen.findByText(expectedText)).toBeInTheDocument();
+				await expect(screen.findByText(expectedText)).resolves.toBeInTheDocument();
 			},
 		);
 	});
@@ -238,17 +238,17 @@ describe('SpanScopeSelector', () => {
 			);
 
 			if (expectedScopeKey) {
-				expect(scopeFiltersInPayload.length).toBe(1);
+				expect(scopeFiltersInPayload).toHaveLength(1);
 				expect(scopeFiltersInPayload[0].key?.key).toBe(expectedScopeKey);
 				expect(scopeFiltersInPayload[0].value).toBe('true');
 				expect(scopeFiltersInPayload[0].op).toBe('=');
 			} else {
-				expect(scopeFiltersInPayload.length).toBe(0);
+				expect(scopeFiltersInPayload).toHaveLength(0);
 			}
 
 			const expectedTotalFilters =
 				expectedNonScopeItems.length + (expectedScopeKey ? 1 : 0);
-			expect(items.length).toBe(expectedTotalFilters);
+			expect(items).toHaveLength(expectedTotalFilters);
 		};
 
 		beforeEach(() => {
@@ -259,19 +259,21 @@ describe('SpanScopeSelector', () => {
 		it('should initialize with ALL_SPANS if query prop has no scope filters', async () => {
 			const localQuery = createLocalQuery();
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 		});
 
 		it('should initialize with ROOT_SPANS if query prop has isRoot filter', async () => {
 			const localQuery = createLocalQuery([createSpanScopeFilter('isRoot')]);
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 		});
 
 		it('should initialize with ENTRYPOINT_SPANS if query prop has isEntryPoint filter', async () => {
 			const localQuery = createLocalQuery([createSpanScopeFilter('isEntryPoint')]);
 			renderWithContext(defaultQuery, mockOnChange, localQuery);
-			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Entrypoint Spans'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('should call onChange and not redirect when selecting ROOT_SPANS (from ALL_SPANS)', async () => {
@@ -282,7 +284,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Root Spans');
 
@@ -302,7 +304,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('All Spans');
 
@@ -323,7 +325,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 
@@ -345,7 +347,7 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Root Spans')).toBeInTheDocument();
+			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 
@@ -372,7 +374,9 @@ describe('SpanScopeSelector', () => {
 				localQuery,
 				true,
 			);
-			expect(await screen.findByText('Entrypoint Spans')).toBeInTheDocument();
+			await expect(
+				screen.findByText('Entrypoint Spans'),
+			).resolves.toBeInTheDocument();
 
 			await selectOption('All Spans');
 
@@ -418,7 +422,7 @@ describe('SpanScopeSelector', () => {
 				</QueryClientProvider>,
 			);
 
-			expect(await screen.findByText('All Spans')).toBeInTheDocument();
+			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
 

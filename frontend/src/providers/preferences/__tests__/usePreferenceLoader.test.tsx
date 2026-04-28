@@ -61,11 +61,11 @@ describe('usePreferenceLoader', () => {
 		});
 
 		// Should have loaded from local storage (highest priority)
-		expect(result.current.preferences).toEqual({
+		expect(result.current.preferences).toStrictEqual({
 			columns: [{ name: 'local-column' }],
 			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
 		});
-		expect(result.current.error).toBe(null);
+		expect(result.current.error).toBeNull();
 		expect(setReSync).not.toHaveBeenCalled(); // Should not call setReSync when reSync is false
 	});
 
@@ -85,7 +85,7 @@ describe('usePreferenceLoader', () => {
 		});
 
 		// Should have loaded trace columns
-		expect(result.current.preferences).toEqual({
+		expect(result.current.preferences).toStrictEqual({
 			columns: [{ name: 'local-trace-column' }],
 		});
 		expect(setReSync).not.toHaveBeenCalled(); // Should not call setReSync when reSync is false

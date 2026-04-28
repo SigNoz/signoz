@@ -500,6 +500,14 @@ def get_scalar_columns(response_json: dict) -> list[dict]:
     return results[0].get("columns", [])
 
 
+def get_rows(response: requests.Response) -> list[dict[str, Any]]:
+    assert response.json()["status"] == "success"
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+    # The server returns rows:null (not []) when there are 0 matching logs.
+    return results[0].get("rows") or []
+
+
 def get_column_data_from_response(response_json: dict, column_name: str) -> list[Any]:
     results = response_json.get("data", {}).get("data", {}).get("results", [])
     if not results:

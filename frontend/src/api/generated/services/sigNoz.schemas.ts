@@ -3243,6 +3243,108 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+export enum InframonitoringtypesPodPhaseDTO {
+	pending = 'pending',
+	running = 'running',
+	succeeded = 'succeeded',
+	failed = 'failed',
+	unknown = 'unknown',
+	'' = '',
+}
+/**
+ * @nullable
+ */
+export type InframonitoringtypesPodRecordDTOMeta = {
+	[key: string]: unknown;
+} | null;
+
+export interface InframonitoringtypesPodRecordDTO {
+	/**
+	 * @type integer
+	 */
+	failedPodCount: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesPodRecordDTOMeta;
+	/**
+	 * @type integer
+	 */
+	pendingPodCount: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	podAge: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPURequest: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryRequest: number;
+	podPhase: InframonitoringtypesPodPhaseDTO;
+	/**
+	 * @type string
+	 */
+	podUID: string;
+	/**
+	 * @type integer
+	 */
+	runningPodCount: number;
+	/**
+	 * @type integer
+	 */
+	succeededPodCount: number;
+	/**
+	 * @type integer
+	 */
+	unknownPodCount: number;
+}
+
+export interface InframonitoringtypesPodsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesPodRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export interface InframonitoringtypesPostableHostsDTO {
 	/**
 	 * @type integer
@@ -3250,6 +3352,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostablePodsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -5772,6 +5902,11 @@ export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationM
 
 export interface TracedetailtypesGettableWaterfallTraceDTO {
 	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationResultDTO[] | null;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -5826,6 +5961,11 @@ export interface TracedetailtypesGettableWaterfallTraceDTO {
 
 export interface TracedetailtypesPostableWaterfallDTO {
 	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationDTO[] | null;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -5841,6 +5981,33 @@ export interface TracedetailtypesPostableWaterfallDTO {
 	uncollapsedSpans?: string[] | null;
 }
 
+export interface TracedetailtypesSpanAggregationDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesSpanAggregationResultDTOValue = {
+	[key: string]: number;
+} | null;
+
+export interface TracedetailtypesSpanAggregationResultDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	value?: TracedetailtypesSpanAggregationResultDTOValue;
+}
+
+export enum TracedetailtypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
 /**
  * @nullable
  */
@@ -7344,6 +7511,14 @@ export type Healthz503 = {
 
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListPods200 = {
+	data: InframonitoringtypesPodsDTO;
 	/**
 	 * @type string
 	 */

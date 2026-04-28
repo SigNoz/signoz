@@ -8,7 +8,7 @@ import { formatUniversalUnit } from '../formatter';
 
 describe('formatUniversalUnit', () => {
 	describe('Time', () => {
-		test.each([
+		it.each([
 			// Days
 			[31, UniversalYAxisUnit.DAYS, '4.43 weeks'],
 			[7, UniversalYAxisUnit.DAYS, '1 week'],
@@ -48,7 +48,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Data', () => {
-		test.each([
+		it.each([
 			// Bytes
 			[864, UniversalYAxisUnit.BYTES, '864 B'],
 			[1000, UniversalYAxisUnit.BYTES, '1 kB'],
@@ -91,7 +91,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Data rate', () => {
-		test.each([
+		it.each([
 			// Bytes/second
 			[864, UniversalYAxisUnit.BYTES_SECOND, '864 B/s'],
 			[1000, UniversalYAxisUnit.BYTES_SECOND, '1 kB/s'],
@@ -134,7 +134,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Bit', () => {
-		test.each([
+		it.each([
 			// Bits
 			[1, UniversalYAxisUnit.BITS, '1 b'],
 			[250, UniversalYAxisUnit.BITS, '250 b'],
@@ -186,7 +186,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Bit rate', () => {
-		test.each([
+		it.each([
 			// Bits/second
 			[512, UniversalYAxisUnit.BITS_SECOND, '512 b/s'],
 			[1000, UniversalYAxisUnit.BITS_SECOND, '1 kb/s'],
@@ -236,7 +236,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Count', () => {
-		test.each([
+		it.each([
 			[100, UniversalYAxisUnit.COUNT, '100'],
 			[875, UniversalYAxisUnit.COUNT, '875'],
 			[1000, UniversalYAxisUnit.COUNT, '1 K'],
@@ -256,7 +256,7 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(value, unit)).toBe(expected);
 		});
 
-		test.each([
+		it.each([
 			[100, UniversalYAxisUnit.COUNT_SECOND, '100 c/s'],
 			[875, UniversalYAxisUnit.COUNT_SECOND, '875 c/s'],
 			[1000, UniversalYAxisUnit.COUNT_SECOND, '1K c/s'],
@@ -267,7 +267,7 @@ describe('formatUniversalUnit', () => {
 			expect(formatUniversalUnit(value, unit)).toBe(expected);
 		});
 
-		test.each([
+		it.each([
 			[100, UniversalYAxisUnit.COUNT_MINUTE, '100 c/m'],
 			[875, UniversalYAxisUnit.COUNT_MINUTE, '875 c/m'],
 			[1000, UniversalYAxisUnit.COUNT_MINUTE, '1K c/m'],
@@ -280,7 +280,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Operations units', () => {
-		test.each([
+		it.each([
 			[780, UniversalYAxisUnit.OPS_SECOND, '780 ops/s'],
 			[1000, UniversalYAxisUnit.OPS_SECOND, '1K ops/s'],
 			[520, UniversalYAxisUnit.OPS_MINUTE, '520 ops/m'],
@@ -297,7 +297,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Request units', () => {
-		test.each([
+		it.each([
 			[615, UniversalYAxisUnit.REQUESTS_SECOND, '615 req/s'],
 			[1000, UniversalYAxisUnit.REQUESTS_SECOND, '1K req/s'],
 			[480, UniversalYAxisUnit.REQUESTS_MINUTE, '480 req/m'],
@@ -311,7 +311,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Read/Write units', () => {
-		test.each([
+		it.each([
 			[505, UniversalYAxisUnit.READS_SECOND, '505 rd/s'],
 			[1000, UniversalYAxisUnit.READS_SECOND, '1K rd/s'],
 			[610, UniversalYAxisUnit.WRITES_SECOND, '610 wr/s'],
@@ -335,7 +335,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('IO Operations units', () => {
-		test.each([
+		it.each([
 			[777, UniversalYAxisUnit.IOOPS_SECOND, '777 io/s'],
 			[1000, UniversalYAxisUnit.IOOPS_SECOND, '1K io/s'],
 			[2500, UniversalYAxisUnit.IOOPS_SECOND, '2.5K io/s'],
@@ -363,7 +363,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Time (additional)', () => {
-		test.each([
+		it.each([
 			[900, UniversalYAxisUnit.DURATION_MS, '900 milliseconds'],
 			[1000, UniversalYAxisUnit.DURATION_MS, '1 second'],
 			[1, UniversalYAxisUnit.DURATION_MS, '1 millisecond'],
@@ -388,7 +388,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Data (IEC/Binary)', () => {
-		test.each([
+		it.each([
 			// Bytes
 			[900, UniversalYAxisUnit.BYTES_IEC, '900 B'],
 			[1024, UniversalYAxisUnit.BYTES_IEC, '1 KiB'],
@@ -430,7 +430,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Data Rate (IEC/Binary)', () => {
-		test.each([
+		it.each([
 			// Kibibytes/second
 			[900, UniversalYAxisUnit.KIBIBYTES_SECOND, '900 KiB/s'],
 			[1024, UniversalYAxisUnit.KIBIBYTES_SECOND, '1 MiB/s'],
@@ -473,7 +473,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Bits (IEC)', () => {
-		test.each([
+		it.each([
 			[900, UniversalYAxisUnit.BITS_IEC, '900 b'],
 			[1024, UniversalYAxisUnit.BITS_IEC, '1 Kib'],
 			[1080, UniversalYAxisUnit.BITS_IEC, '1.05 Kib'],
@@ -483,7 +483,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Hash Rate', () => {
-		test.each([
+		it.each([
 			// Hashes/second
 			[412, UniversalYAxisUnit.HASH_RATE_HASHES_PER_SECOND, '412 H/s'],
 			[1000, UniversalYAxisUnit.HASH_RATE_HASHES_PER_SECOND, '1 kH/s'],
@@ -518,7 +518,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Miscellaneous', () => {
-		test.each([
+		it.each([
 			[742, UniversalYAxisUnit.MISC_STRING, '742'],
 			[688, UniversalYAxisUnit.MISC_SHORT, '688'],
 			[555, UniversalYAxisUnit.MISC_HUMIDITY, '555 %H'],
@@ -534,7 +534,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Acceleration', () => {
-		test.each([
+		it.each([
 			[
 				875,
 				UniversalYAxisUnit.ACCELERATION_METERS_PER_SECOND_SQUARED,
@@ -553,7 +553,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Angular', () => {
-		test.each([
+		it.each([
 			[415, UniversalYAxisUnit.ANGULAR_DEGREE, '415 °'],
 			[732, UniversalYAxisUnit.ANGULAR_RADIAN, '732 rad'],
 			[128, UniversalYAxisUnit.ANGULAR_GRADIAN, '128 grad'],
@@ -565,7 +565,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Area', () => {
-		test.each([
+		it.each([
 			[210, UniversalYAxisUnit.AREA_SQUARE_METERS, '210 m²'],
 			[152, UniversalYAxisUnit.AREA_SQUARE_FEET, '152 ft²'],
 			[64, UniversalYAxisUnit.AREA_SQUARE_MILES, '64 mi²'],
@@ -575,7 +575,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('FLOPs', () => {
-		test.each([
+		it.each([
 			// FLOPS
 			[150, UniversalYAxisUnit.FLOPS_FLOPS, '150 FLOPS'],
 			[1000, UniversalYAxisUnit.FLOPS_FLOPS, '1 kFLOPS'],
@@ -613,7 +613,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Concentration', () => {
-		test.each([
+		it.each([
 			[415, UniversalYAxisUnit.CONCENTRATION_PPM, '415 ppm'],
 			[1000, UniversalYAxisUnit.CONCENTRATION_PPM, '1000 ppm'],
 			[732, UniversalYAxisUnit.CONCENTRATION_PPB, '732 ppb'],
@@ -650,7 +650,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Currency', () => {
-		test.each([
+		it.each([
 			[812, UniversalYAxisUnit.CURRENCY_USD, '$812'],
 			[645, UniversalYAxisUnit.CURRENCY_GBP, '£645'],
 			[731, UniversalYAxisUnit.CURRENCY_EUR, '€731'],
@@ -688,7 +688,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Power/Electrical', () => {
-		test.each([
+		it.each([
 			[715, UniversalYAxisUnit.POWER_WATT, '715 W'],
 			[1000, UniversalYAxisUnit.POWER_WATT, '1 kW'],
 			[1080, UniversalYAxisUnit.POWER_WATT, '1.08 kW'],
@@ -744,7 +744,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Flow', () => {
-		test.each([
+		it.each([
 			[512, UniversalYAxisUnit.FLOW_GALLONS_PER_MINUTE, '512 gpm'],
 			[1000, UniversalYAxisUnit.FLOW_GALLONS_PER_MINUTE, '1000 gpm'],
 			[678, UniversalYAxisUnit.FLOW_CUBIC_METERS_PER_SECOND, '678 cms'],
@@ -766,7 +766,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Force', () => {
-		test.each([
+		it.each([
 			[845, UniversalYAxisUnit.FORCE_NEWTON_METERS, '845 Nm'],
 			[1000, UniversalYAxisUnit.FORCE_NEWTON_METERS, '1 kNm'],
 			[1080, UniversalYAxisUnit.FORCE_NEWTON_METERS, '1.08 kNm'],
@@ -782,7 +782,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Mass', () => {
-		test.each([
+		it.each([
 			[120, UniversalYAxisUnit.MASS_MILLIGRAM, '120 mg'],
 			[120000, UniversalYAxisUnit.MASS_MILLIGRAM, '120 g'],
 			[987, UniversalYAxisUnit.MASS_GRAM, '987 g'],
@@ -796,7 +796,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Length', () => {
-		test.each([
+		it.each([
 			[88, UniversalYAxisUnit.LENGTH_MILLIMETER, '88 mm'],
 			[100, UniversalYAxisUnit.LENGTH_MILLIMETER, '100 mm'],
 			[1000, UniversalYAxisUnit.LENGTH_MILLIMETER, '1 m'],
@@ -812,7 +812,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Pressure', () => {
-		test.each([
+		it.each([
 			[45, UniversalYAxisUnit.PRESSURE_MILLIBAR, '45 mbar'],
 			[1013, UniversalYAxisUnit.PRESSURE_MILLIBAR, '1.01 bar'],
 			[27, UniversalYAxisUnit.PRESSURE_BAR, '27 bar'],
@@ -828,7 +828,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Radiation', () => {
-		test.each([
+		it.each([
 			[452, UniversalYAxisUnit.RADIATION_BECQUEREL, '452 Bq'],
 			[37, UniversalYAxisUnit.RADIATION_CURIE, '37 Ci'],
 			[128, UniversalYAxisUnit.RADIATION_GRAY, '128 Gy'],
@@ -849,7 +849,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Rotation Speed', () => {
-		test.each([
+		it.each([
 			[345, UniversalYAxisUnit.ROTATION_SPEED_REVOLUTIONS_PER_MINUTE, '345 rpm'],
 			[789, UniversalYAxisUnit.ROTATION_SPEED_HERTZ, '789 Hz'],
 			[789000, UniversalYAxisUnit.ROTATION_SPEED_HERTZ, '789 kHz'],
@@ -861,7 +861,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Temperature', () => {
-		test.each([
+		it.each([
 			[37, UniversalYAxisUnit.TEMPERATURE_CELSIUS, '37 °C'],
 			[451, UniversalYAxisUnit.TEMPERATURE_FAHRENHEIT, '451 °F'],
 			[310, UniversalYAxisUnit.TEMPERATURE_KELVIN, '310 K'],
@@ -871,7 +871,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Velocity', () => {
-		test.each([
+		it.each([
 			[900, UniversalYAxisUnit.VELOCITY_METERS_PER_SECOND, '900 m/s'],
 			[456, UniversalYAxisUnit.VELOCITY_KILOMETERS_PER_HOUR, '456 km/h'],
 			[789, UniversalYAxisUnit.VELOCITY_MILES_PER_HOUR, '789 mph'],
@@ -882,7 +882,7 @@ describe('formatUniversalUnit', () => {
 	});
 
 	describe('Volume', () => {
-		test.each([
+		it.each([
 			[1200, UniversalYAxisUnit.VOLUME_MILLILITER, '1.2 L'],
 			[9000000, UniversalYAxisUnit.VOLUME_MILLILITER, '9 kL'],
 			[9, UniversalYAxisUnit.VOLUME_LITER, '9 L'],

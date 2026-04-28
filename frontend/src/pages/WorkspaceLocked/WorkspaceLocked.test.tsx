@@ -8,7 +8,7 @@ import WorkspaceLocked from '.';
 describe('WorkspaceLocked', () => {
 	const apiURL = 'http://localhost/api/v2/licenses';
 
-	test('Should render the component', async () => {
+	it('Should render the component', async () => {
 		server.use(
 			rest.get(apiURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
@@ -30,7 +30,7 @@ describe('WorkspaceLocked', () => {
 		expect(contactUsBtn).toBeInTheDocument();
 	});
 
-	test('Render for Admin', async () => {
+	it('Render for Admin', async () => {
 		server.use(
 			rest.get(apiURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),
@@ -48,7 +48,7 @@ describe('WorkspaceLocked', () => {
 		expect(updateCreditCardBtn).toBeInTheDocument();
 	});
 
-	test('Render for non Admin', async () => {
+	it('Render for non Admin', async () => {
 		server.use(
 			rest.get(apiURL, (req, res, ctx) =>
 				res(ctx.status(200), ctx.json(licensesSuccessWorkspaceLockedResponse)),

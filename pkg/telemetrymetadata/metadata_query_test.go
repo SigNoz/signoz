@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,6 +47,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		DBName,
 		AttributesMetadataLocalTableName,
 		ColumnEvolutionMetadataTableName,
+		flaggertest.New(t),
 	)
 
 	lookupKeys := []telemetrytypes.MetricMetadataLookupKey{

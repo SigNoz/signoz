@@ -2474,6 +2474,97 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesPodPhase:
+      enum:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      - ""
+      type: string
+    InframonitoringtypesPodRecord:
+      properties:
+        failedPodCount:
+          type: integer
+        meta:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        pendingPodCount:
+          type: integer
+        podAge:
+          format: int64
+          type: integer
+        podCPU:
+          format: double
+          type: number
+        podCPULimit:
+          format: double
+          type: number
+        podCPURequest:
+          format: double
+          type: number
+        podMemory:
+          format: double
+          type: number
+        podMemoryLimit:
+          format: double
+          type: number
+        podMemoryRequest:
+          format: double
+          type: number
+        podPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podUID:
+          type: string
+        runningPodCount:
+          type: integer
+        succeededPodCount:
+          type: integer
+        unknownPodCount:
+          type: integer
+      required:
+      - podUID
+      - podCPU
+      - podCPURequest
+      - podCPULimit
+      - podMemory
+      - podMemoryRequest
+      - podMemoryLimit
+      - podPhase
+      - pendingPodCount
+      - runningPodCount
+      - succeededPodCount
+      - failedPodCount
+      - unknownPodCount
+      - podAge
+      - meta
+      type: object
+    InframonitoringtypesPods:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
     InframonitoringtypesPostableHosts:
       properties:
         end:
@@ -2481,6 +2572,32 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostablePods:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -4781,6 +4898,11 @@ components:
       type: object
     TracedetailtypesGettableWaterfallTrace:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
+          nullable: true
+          type: array
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -4820,6 +4942,11 @@ components:
       type: object
     TracedetailtypesPostableWaterfall:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
+          nullable: true
+          type: array
         limit:
           minimum: 0
           type: integer
@@ -4831,6 +4958,32 @@ components:
           nullable: true
           type: array
       type: object
+    TracedetailtypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      type: object
+    TracedetailtypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      type: object
+    TracedetailtypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     TracedetailtypesWaterfallSpan:
       properties:
         attributes:
@@ -5179,7 +5332,12 @@ components:
       scheme: bearer
       type: http
 info:
+  contact:
+    email: support@signoz.io
+    name: SigNoz Support
+    url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  termsOfService: https://signoz.io/terms-of-service/
   title: SigNoz
   version: ""
 openapi: 3.0.3
@@ -10886,7 +11044,9 @@ paths:
         five metrics, and pagination via offset/limit. The response type is ''list''
         for the default host.name grouping or ''grouped_list'' for custom groupBy
         keys. Also reports missing required metrics and whether the requested time
-        range falls before the data retention boundary.'
+        range falls before the data retention boundary. Numeric metric fields (cpu,
+        memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListHosts
       requestBody:
         content:
@@ -10938,6 +11098,79 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Hosts for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/pods:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes pods with key metrics:
+        CPU usage, CPU request/limit utilization, memory working set, memory request/limit
+        utilization, current pod phase (pending/running/succeeded/failed/unknown),
+        and pod age (ms since start time). Each pod includes metadata attributes (namespace,
+        node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
+        cluster). Supports filtering via a filter expression, custom groupBy to aggregate
+        pods by any attribute, ordering by any of the six metrics (cpu, cpu_request,
+        cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
+        The response type is ''list'' for the default k8s.pod.uid grouping (each row
+        is one pod with its current phase) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
+        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
+        from each pod''s latest phase in the window). Also reports missing required
+        metrics and whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
+        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
+        data is available for that field.'
+      operationId: ListPods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostablePods'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesPods'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/livez:
@@ -17320,3 +17553,16 @@ paths:
       summary: Replace variables
       tags:
       - querier
+servers:
+- description: The fully qualified URL to the SigNoz APIServer.
+  url: https://{host}:{port}{base_path}
+  variables:
+    base_path:
+      default: /
+      description: The base path of the SigNoz APIServer
+    host:
+      default: localhost
+      description: The host of the SigNoz APIServer
+    port:
+      default: "8080"
+      description: The port of the SigNoz APIServer

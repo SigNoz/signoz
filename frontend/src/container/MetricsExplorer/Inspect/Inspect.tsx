@@ -217,7 +217,7 @@ function Inspect({
 			);
 		}
 
-		if (!inspectMetricsTimeSeries.length) {
+		if (inspectMetricsTimeSeries.length === 0) {
 			return renderFallback(
 				'inspect-metrics-empty',
 				<Empty description="No time series found for this metric to inspect." />,

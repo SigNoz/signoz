@@ -159,3 +159,86 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	return resp, nil
 }
+
+func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Pods{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.PodsOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{podUIDGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getPodsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, req.End)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}

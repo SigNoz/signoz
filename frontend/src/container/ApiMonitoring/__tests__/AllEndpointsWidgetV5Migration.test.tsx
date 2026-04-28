@@ -61,25 +61,29 @@ describe('AllEndpointsWidget - V5 Migration Validation', () => {
 			// Query A: count()
 			expect(queryA.aggregations).toBeDefined();
 			expect(Array.isArray(queryA.aggregations)).toBe(true);
-			expect(queryA.aggregations).toEqual([{ expression: 'count()' }]);
+			expect(queryA.aggregations).toStrictEqual([{ expression: 'count()' }]);
 			expect(queryA).not.toHaveProperty('aggregateAttribute');
 
 			// Query B: p99(duration_nano)
 			expect(queryB.aggregations).toBeDefined();
 			expect(Array.isArray(queryB.aggregations)).toBe(true);
-			expect(queryB.aggregations).toEqual([{ expression: 'p99(duration_nano)' }]);
+			expect(queryB.aggregations).toStrictEqual([
+				{ expression: 'p99(duration_nano)' },
+			]);
 			expect(queryB).not.toHaveProperty('aggregateAttribute');
 
 			// Query C: max(timestamp)
 			expect(queryC.aggregations).toBeDefined();
 			expect(Array.isArray(queryC.aggregations)).toBe(true);
-			expect(queryC.aggregations).toEqual([{ expression: 'max(timestamp)' }]);
+			expect(queryC.aggregations).toStrictEqual([
+				{ expression: 'max(timestamp)' },
+			]);
 			expect(queryC).not.toHaveProperty('aggregateAttribute');
 
 			// Query D: count() (disabled, for errors)
 			expect(queryD.aggregations).toBeDefined();
 			expect(Array.isArray(queryD.aggregations)).toBe(true);
-			expect(queryD.aggregations).toEqual([{ expression: 'count()' }]);
+			expect(queryD.aggregations).toStrictEqual([{ expression: 'count()' }]);
 			expect(queryD).not.toHaveProperty('aggregateAttribute');
 		});
 

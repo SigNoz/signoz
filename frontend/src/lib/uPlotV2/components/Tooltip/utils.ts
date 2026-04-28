@@ -62,6 +62,7 @@ export function buildTooltipContent({
 	yAxisUnit,
 	decimalPrecision,
 	isStackedBarChart,
+	syncedSeriesIndexes,
 }: {
 	data: AlignedData;
 	series: Series[];
@@ -71,18 +72,34 @@ export function buildTooltipContent({
 	yAxisUnit: string;
 	decimalPrecision?: PrecisionOption;
 	isStackedBarChart?: boolean;
+	syncedSeriesIndexes?: number[] | null;
 }): TooltipContentItem[] {
 	const items: TooltipContentItem[] = [];
+	const allowedIndexes =
+		syncedSeriesIndexes != null ? new Set(syncedSeriesIndexes) : null;
 
 	for (let seriesIndex = 1; seriesIndex < series.length; seriesIndex += 1) {
 		const seriesItem = series[seriesIndex];
 		if (!seriesItem?.show) {
 			continue;
 		}
+		if (allowedIndexes != null && !allowedIndexes.has(seriesIndex)) {
+			continue;
+		}
 
 		const dataIndex = dataIndexes[seriesIndex];
-		// Skip series with no data at the current cursor position
+		const isSync = allowedIndexes != null;
+
 		if (dataIndex === null) {
+			if (isSync) {
+				items.push({
+					label: String(seriesItem.label ?? ''),
+					value: 0,
+					tooltipValue: 'No Data',
+					color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+					isActive: false,
+				});
+			}
 			continue;
 		}
 
@@ -101,6 +118,14 @@ export function buildTooltipContent({
 				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
 				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
 				isActive: seriesIndex === activeSeriesIndex,
+			});
+		} else if (isSync) {
+			items.push({
+				label: String(seriesItem.label ?? ''),
+				value: 0,
+				tooltipValue: 'No Data',
+				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+				isActive: false,
 			});
 		}
 	}

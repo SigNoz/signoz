@@ -58,7 +58,7 @@ describe('getYAxisScale', () => {
 			softMax: null,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({ auto: true });
+		expect(result).toStrictEqual({ auto: true });
 	});
 
 	it('Threshold absent, series data present softmin and softmax present', () => {
@@ -70,7 +70,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [5, 30],
 		});
@@ -85,7 +85,7 @@ describe('getYAxisScale', () => {
 			softMax: null,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({ auto: true });
+		expect(result).toStrictEqual({ auto: true });
 	});
 
 	it('Threshold absent, series data present, softmin present and softmax absent', () => {
@@ -97,7 +97,7 @@ describe('getYAxisScale', () => {
 			softMax: null,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [5, 25],
 		});
@@ -112,7 +112,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [15, 30],
 		});
@@ -127,7 +127,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [5, 30],
 		});
@@ -142,7 +142,7 @@ describe('getYAxisScale', () => {
 			softMax: null,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [10, 20],
 		});
@@ -157,7 +157,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [10, 30],
 		});
@@ -172,7 +172,7 @@ describe('getYAxisScale', () => {
 			softMax: null,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [5, 20],
 		});
@@ -187,7 +187,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			range: {
 				min: { soft: mockSoftMin, mode: 2 },
 				max: { soft: mockSoftMax, mode: 2 },
@@ -204,7 +204,7 @@ describe('getYAxisScale', () => {
 			softMax: mockSoftMax,
 		} as GetYAxisScale);
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			auto: false,
 			range: [5, 30],
 		});
