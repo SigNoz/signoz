@@ -3,8 +3,6 @@ package rules
 import (
 	"context"
 	"time"
-
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type TaskType string
@@ -31,9 +29,9 @@ type Task interface {
 
 // newTask returns an appropriate group for
 // rule type
-func newTask(taskType TaskType, name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, orgID valuer.UUID) Task {
+func newTask(taskType TaskType, name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) Task {
 	if taskType == TaskTypeCh {
-		return NewRuleTask(name, file, frequency, rules, opts, notify, orgID)
+		return NewRuleTask(name, file, frequency, rules, opts, notify)
 	}
-	return NewPromRuleTask(name, file, frequency, rules, opts, notify, orgID)
+	return NewPromRuleTask(name, file, frequency, rules, opts, notify)
 }

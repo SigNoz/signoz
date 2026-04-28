@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // PromRuleTask is a promql rule executor
@@ -39,13 +38,11 @@ type PromRuleTask struct {
 	pause  bool
 	logger *slog.Logger
 	notify NotifyFunc
-
-	orgID valuer.UUID
 }
 
 // NewPromRuleTask holds rules that have promql condition
 // and evaluates the rule at a given frequency
-func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, orgID valuer.UUID) *PromRuleTask {
+func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *PromRuleTask {
 	opts.Logger.Info("initiating a new rule group", "name", name, "frequency", frequency)
 
 	if frequency == 0 {
@@ -64,7 +61,6 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		terminated:           make(chan struct{}),
 		notify: notify,
 		logger: opts.Logger,
-		orgID:  orgID,
 	}
 }
 

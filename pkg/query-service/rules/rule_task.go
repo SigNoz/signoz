@@ -2,12 +2,11 @@ package rules
 
 import (
 	"context"
+	"log/slog"
 	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
-
-	"log/slog"
 
 	opentracing "github.com/opentracing/opentracing-go"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -37,32 +35,28 @@ type RuleTask struct {
 
 	pause  bool
 	notify NotifyFunc
-
-	orgID valuer.UUID
 }
 
 const DefaultFrequency = 1 * time.Minute
 
 // NewRuleTask makes a new RuleTask with the given name, options, and rules.
-func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, orgID valuer.UUID) *RuleTask {
-
+func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc) *RuleTask {
 	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
 	opts.Logger.Info("initiating a new rule task", "name", name, "frequency", frequency)
 
 	return &RuleTask{
-		name:             name,
-		file:             file,
-		pause:            false,
-		frequency:        frequency,
-		rules:            rules,
-		opts:             opts,
-		logger:           opts.Logger,
-		done:             make(chan struct{}),
-		terminated:       make(chan struct{}),
-		notify: notify,
-		orgID:  orgID,
+		name:       name,
+		file:       file,
+		pause:      false,
+		frequency:  frequency,
+		rules:      rules,
+		opts:       opts,
+		logger:     opts.Logger,
+		done:       make(chan struct{}),
+		terminated: make(chan struct{}),
+		notify:     notify,
 	}
 }
 
@@ -70,6 +64,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 func (g *RuleTask) Name() string { return g.name }
 
 // Key returns the group key
+// TODO: remove (unused)?
 func (g *RuleTask) Key() string {
 	return g.name + ";" + g.file
 }
@@ -259,7 +254,6 @@ func nameAndLabels(rule Rule) string {
 // Rules are matched based on their name and labels. If there are duplicates, the
 // first is matched with the first, second with the second etc.
 func (g *RuleTask) CopyState(fromTask Task) error {
-
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
 		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
@@ -304,7 +298,6 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 // Eval runs a single evaluation cycle in which all rules are evaluated sequentially.
 func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
-
 	defer func() {
 		if r := recover(); r != nil {
 			g.logger.ErrorContext(
@@ -360,7 +353,6 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 			}
 
 			rule.SendAlerts(ctx, ts, g.opts.ResendDelay, g.frequency, g.notify)
-
 		}(i, rule)
 	}
 }
