@@ -5296,7 +5296,12 @@ components:
       scheme: bearer
       type: http
 info:
+  contact:
+    email: support@signoz.io
+    name: SigNoz Support
+    url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  termsOfService: https://signoz.io/terms-of-service/
   title: SigNoz
   version: ""
 openapi: 3.0.3
@@ -17512,3 +17517,16 @@ paths:
       summary: Replace variables
       tags:
       - querier
+servers:
+- description: The fully qualified URL to the SigNoz APIServer.
+  url: https://{host}:{port}{base_path}
+  variables:
+    base_path:
+      default: /
+      description: The base path of the SigNoz APIServer
+    host:
+      default: localhost
+      description: The host of the SigNoz APIServer
+    port:
+      default: "8080"
+      description: The port of the SigNoz APIServer
