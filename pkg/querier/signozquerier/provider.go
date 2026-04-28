@@ -153,6 +153,7 @@ func newProvider(
 		telemetryMetadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
+		flagger,
 	)
 
 	// Create meter statement builder

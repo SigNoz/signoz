@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -86,7 +85,6 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				Builder:          sb,
 				StartNs:          tt.startNs,
 				EndNs:            1761458708000000000,
-				Flagger: flaggertest.New(t),
 			})
 
 			if tt.expectError {
@@ -157,7 +155,6 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 				SkipResourceFilter: false, // This would be set by the statement builder
 				StartNs:            1761437108000000000,
 				EndNs:              1761458708000000000,
-				Flagger: flaggertest.New(t),
 			})
 
 			assert.NoError(t, err)

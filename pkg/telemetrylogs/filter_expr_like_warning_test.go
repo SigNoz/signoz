@@ -29,7 +29,6 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Flagger:          fl,
 	}
 
 	tests := []string{
@@ -69,7 +68,6 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 		FieldKeys:        keys,
 		FullTextColumn:   DefaultFullTextColumn,
 		JsonKeyToKey:     GetBodyJSONKey,
-		Flagger:          fl,
 	}
 
 	tests := []string{

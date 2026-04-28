@@ -176,7 +176,6 @@ func TestStatementBuilder(t *testing.T) {
 		fm,
 		cb,
 		metricStmtBuilder,
-		flagger,
 	)
 
 	for _, c := range cases {

@@ -29,7 +29,6 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
 		FieldKeys:        keys,
-		Flagger:          fl,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "body"},
 		JsonKeyToKey:     GetBodyJSONKey,
 	}
