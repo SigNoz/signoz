@@ -2,7 +2,10 @@
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: var(--tanstack-cell-padding-top, 0.3rem) var(--tanstack-cell-padding-right, 0.3rem) var(--tanstack-cell-padding-bottom, 0.3rem) var(--tanstack-cell-padding-left, 0.3rem);
+	padding: var(--tanstack-cell-padding-top, 0.3rem)
+		var(--tanstack-cell-padding-right, 0.3rem)
+		var(--tanstack-cell-padding-bottom, 0.3rem)
+		var(--tanstack-cell-padding-left, 0.3rem);
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
