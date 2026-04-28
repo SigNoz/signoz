@@ -8,49 +8,46 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-type Hosts struct {
+type Pods struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []HostRecord           `json:"records" required:"true"`
+	Records                []PodRecord            `json:"records" required:"true"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
-type HostRecord struct {
-	HostName          string                 `json:"hostName" required:"true"`
-	Status            HostStatus             `json:"status" required:"true"`
-	ActiveHostCount   int                    `json:"activeHostCount" required:"true"`
-	InactiveHostCount int                    `json:"inactiveHostCount" required:"true"`
-	CPU               float64                `json:"cpu" required:"true"`
-	Memory            float64                `json:"memory" required:"true"`
-	Wait              float64                `json:"wait" required:"true"`
-	Load15            float64                `json:"load15" required:"true"`
-	DiskUsage         float64                `json:"diskUsage" required:"true"`
+type PodRecord struct {
+	PodUID            string                 `json:"podUID" required:"true"`
+	PodCPU            float64                `json:"podCPU" required:"true"`
+	PodCPURequest     float64                `json:"podCPURequest" required:"true"`
+	PodCPULimit       float64                `json:"podCPULimit" required:"true"`
+	PodMemory         float64                `json:"podMemory" required:"true"`
+	PodMemoryRequest  float64                `json:"podMemoryRequest" required:"true"`
+	PodMemoryLimit    float64                `json:"podMemoryLimit" required:"true"`
+	PodPhase          PodPhase               `json:"podPhase" required:"true"`
+	PendingPodCount   int                    `json:"pendingPodCount" required:"true"`
+	RunningPodCount   int                    `json:"runningPodCount" required:"true"`
+	SucceededPodCount int                    `json:"succeededPodCount" required:"true"`
+	FailedPodCount    int                    `json:"failedPodCount" required:"true"`
+	UnknownPodCount   int                    `json:"unknownPodCount" required:"true"`
+	PodAge            int64                  `json:"podAge" required:"true"`
 	Meta              map[string]interface{} `json:"meta" required:"true"`
 }
 
-type RequiredMetricsCheck struct {
-	MissingMetrics []string `json:"missingMetrics" required:"true"`
-}
-
-type PostableHosts struct {
+// PostablePods is the request body for the v2 pods list API.
+type PostablePods struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
-	Filter  *HostFilter          `json:"filter"`
+	Filter  *qbtypes.Filter      `json:"filter"`
 	GroupBy []qbtypes.GroupByKey `json:"groupBy"`
 	OrderBy *qbtypes.OrderBy     `json:"orderBy"`
 	Offset  int                  `json:"offset"`
 	Limit   int                  `json:"limit" required:"true"`
 }
 
-type HostFilter struct {
-	qbtypes.Filter `json:",inline"`
-	FilterByStatus HostStatus `json:"filterByStatus"`
-}
-
-// Validate ensures PostableHosts contains acceptable values.
-func (req *PostableHosts) Validate() error {
+// Validate ensures PostablePods contains acceptable values.
+func (req *PostablePods) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -88,13 +85,8 @@ func (req *PostableHosts) Validate() error {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "offset cannot be negative")
 	}
 
-	if req.Filter != nil && !req.Filter.FilterByStatus.IsZero() &&
-		req.Filter.FilterByStatus != HostStatusActive && req.Filter.FilterByStatus != HostStatusInactive {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid filter by status: %s", req.Filter.FilterByStatus)
-	}
-
 	if req.OrderBy != nil {
-		if !slices.Contains(HostsValidOrderByKeys, req.OrderBy.Key.Name) {
+		if !slices.Contains(PodsValidOrderByKeys, req.OrderBy.Key.Name) {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by key: %s", req.OrderBy.Key.Name)
 		}
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
@@ -106,12 +98,12 @@ func (req *PostableHosts) Validate() error {
 }
 
 // UnmarshalJSON validates input immediately after decoding.
-func (req *PostableHosts) UnmarshalJSON(data []byte) error {
-	type raw PostableHosts
+func (req *PostablePods) UnmarshalJSON(data []byte) error {
+	type raw PostablePods
 	var decoded raw
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return err
 	}
-	*req = PostableHosts(decoded)
+	*req = PostablePods(decoded)
 	return req.Validate()
 }

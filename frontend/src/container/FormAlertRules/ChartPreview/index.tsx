@@ -139,8 +139,8 @@ function ChartPreview({
 		if (startTime && endTime && startTime !== endTime) {
 			dispatch(
 				UpdateTimeInterval('custom', [
-					parseInt(getTimeString(startTime), 10),
-					parseInt(getTimeString(endTime), 10),
+					Number.parseInt(getTimeString(startTime), 10),
+					Number.parseInt(getTimeString(endTime), 10),
 				]),
 			);
 		}

@@ -101,7 +101,7 @@ function TracesExplorer(): JSX.Element {
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
 	const defaultQuery = useMemo(
