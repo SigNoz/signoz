@@ -11,16 +11,16 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -402,7 +402,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	if querybuilder.IsBodyJSONEnabled(ctx, pc.fl) {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if pc.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(orgId)) {
 		// add default normalize pipeline at the beginning, only for sending to collector
 		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
 	}

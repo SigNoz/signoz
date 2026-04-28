@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -32,7 +31,6 @@ type MetricQueryStatementBuilder struct {
 	metadataStore telemetrytypes.MetadataStore
 	fm            qbtypes.FieldMapper
 	cb            qbtypes.ConditionBuilder
-	flagger       flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*MetricQueryStatementBuilder)(nil)
@@ -42,7 +40,6 @@ func NewMetricQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	flagger flagger.Flagger,
 ) *MetricQueryStatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetrics")
 	return &MetricQueryStatementBuilder{
@@ -50,7 +47,6 @@ func NewMetricQueryStatementBuilder(
 		metadataStore: metadataStore,
 		fm:            fieldMapper,
 		cb:            conditionBuilder,
-		flagger:       flagger,
 	}
 }
 
@@ -274,7 +270,6 @@ func (b *MetricQueryStatementBuilder) buildTimeSeriesCTE(
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
-			Flagger:          b.flagger,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
 			StartNs:          start,

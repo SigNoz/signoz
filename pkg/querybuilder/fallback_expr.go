@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -28,7 +27,7 @@ func CollisionHandledFinalExpr(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	requiredDataType telemetrytypes.FieldDataType,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-	fl flagger.Flagger,
+	bodyJSONEnabled bool,
 ) (string, []any, error) {
 
 	if requiredDataType != telemetrytypes.FieldDataTypeString &&
@@ -108,7 +107,7 @@ func CollisionHandledFinalExpr(
 		}
 
 		// first if condition covers the older tests and second if condition covers the array conditions
-		if !IsBodyJSONEnabled(ctx, fl) && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
+		if !bodyJSONEnabled && field.FieldContext == telemetrytypes.FieldContextBody && jsonKeyToKey != nil {
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the body column")
 		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)

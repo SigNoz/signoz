@@ -21,7 +21,6 @@ type traceOperatorStatementBuilder struct {
 	traceStmtBuilder          qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
-	fl                        flagger.Flagger
 }
 
 var _ qbtypes.TraceOperatorStatementBuilder = (*traceOperatorStatementBuilder)(nil)
@@ -33,7 +32,7 @@ func NewTraceOperatorStatementBuilder(
 	conditionBuilder qbtypes.ConditionBuilder,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
-	fl flagger.Flagger,
+	flagger flagger.Flagger,
 ) *traceOperatorStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 
@@ -46,7 +45,7 @@ func NewTraceOperatorStatementBuilder(
 		metadataStore,
 		nil,
 		nil,
-		fl,
+		flagger,
 	)
 
 	return &traceOperatorStatementBuilder{
@@ -57,7 +56,6 @@ func NewTraceOperatorStatementBuilder(
 		traceStmtBuilder:          traceStmtBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
-		fl:                        fl,
 	}
 }
 

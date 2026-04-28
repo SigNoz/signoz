@@ -20,10 +20,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 var (
@@ -99,7 +101,7 @@ func NewTelemetryMetaStore(
 	fl flagger.Flagger,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
-	
+
 	fm := NewFieldMapper()
 	conditionBuilder := NewConditionBuilder(fm)
 
@@ -135,8 +137,8 @@ func NewTelemetryMetaStore(
 				},
 			},
 		},
-		fl: fl,
-		fm: fm,
+		fl:               fl,
+		fm:               fm,
 		conditionBuilder: conditionBuilder,
 	}
 
@@ -419,7 +421,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// body keys are gated behind the feature flag
-	queryBodyTable = queryBodyTable && querybuilder.IsBodyJSONEnabled(ctx, t.fl)
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	queryBodyTable = queryBodyTable && t.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	// requestedFieldKeySelectors is the set of names the user explicitly asked for.
 	// Used to ensure a name that is both a parent path AND a directly requested field still surfaces
@@ -679,7 +682,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 
 	// enrich body keys with promoted paths, indexes, and JSON access plans
-	if querybuilder.IsBodyJSONEnabled(ctx, t.fl) {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if t.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 		if err := t.enrichJSONKeys(ctx, fieldKeySelectors, keys, parentTypes); err != nil {
 			return nil, false, err
 		}
@@ -1363,6 +1367,9 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		instrumentationtypes.CodeFunctionName: "getRelatedValues",
 	})
 
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := t.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
 		return nil, true, nil
@@ -1412,7 +1419,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-			Flagger:          t.fl,
+			BodyJSONEnabled:  bodyJSONEnabled,
 		})
 		if err != nil {
 			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))

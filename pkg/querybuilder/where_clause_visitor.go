@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -37,7 +36,7 @@ type filterExpressionVisitor struct {
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
-	flagger            flagger.Flagger
+	bodyJSONEnabled    bool
 	skipResourceFilter bool
 	skipFullTextFilter bool
 	skipFunctionCalls  bool
@@ -58,7 +57,7 @@ type FilterExprVisitorOpts struct {
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
-	Flagger            flagger.Flagger
+	BodyJSONEnabled    bool
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	SkipFunctionCalls  bool
@@ -79,7 +78,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
 		jsonKeyToKey:       opts.JsonKeyToKey,
-		flagger:            opts.Flagger,
+		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
@@ -755,7 +754,8 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	if IsBodyJSONEnabled(v.context, v.flagger) && functionName != "hasToken" {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if v.bodyJSONEnabled && functionName != "hasToken" {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldDataType.IsArray() {
@@ -796,7 +796,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			// this is that all other functions only support array fields
 			if key.FieldContext == telemetrytypes.FieldContextBody {
 				var err error
-				if IsBodyJSONEnabled(v.context, v.flagger) {
+				if v.bodyJSONEnabled {
 					fieldName, err = v.fieldMapper.FieldFor(v.context, v.startNs, v.endNs, key)
 					if err != nil {
 						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
@@ -939,7 +939,8 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
 	//
 	// TODO(Piyush): After entire migration this is supposed to be removed.
-	if fieldKey.FieldContext == telemetrytypes.FieldContextBody && !IsBodyJSONEnabled(v.context, v.flagger) {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if fieldKey.FieldContext == telemetrytypes.FieldContextBody && !v.bodyJSONEnabled {
 		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 

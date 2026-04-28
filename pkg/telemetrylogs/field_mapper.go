@@ -13,9 +13,10 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -99,7 +100,8 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
-		if querybuilder.IsBodyJSONEnabled(ctx, m.fl) {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if m.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
@@ -108,7 +110,8 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
-		if key.Name == LogsV2BodyColumn && querybuilder.IsBodyJSONEnabled(ctx, m.fl) {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if key.Name == LogsV2BodyColumn && m.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
@@ -116,7 +119,8 @@ func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.Telemet
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if querybuilder.IsBodyJSONEnabled(ctx, m.fl) {
+				// TODO(Tushar): thread orgID here to evaluate correctly
+				if m.fl.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
 					// based on the query range time.

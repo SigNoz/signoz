@@ -153,7 +153,6 @@ func newProvider(
 		telemetryMetadataStore,
 		metricFieldMapper,
 		metricConditionBuilder,
-		flagger,
 	)
 
 	// Create meter statement builder
@@ -163,7 +162,6 @@ func newProvider(
 		metricFieldMapper,
 		metricConditionBuilder,
 		metricStmtBuilder,
-		flagger,
 	)
 
 	// Create bucket cache

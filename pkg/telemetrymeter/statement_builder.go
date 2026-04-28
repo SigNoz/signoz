@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
@@ -22,7 +21,6 @@ type meterQueryStatementBuilder struct {
 	fm                      qbtypes.FieldMapper
 	cb                      qbtypes.ConditionBuilder
 	metricsStatementBuilder *telemetrymetrics.MetricQueryStatementBuilder
-	fl                      flagger.Flagger
 }
 
 var _ qbtypes.StatementBuilder[qbtypes.MetricAggregation] = (*meterQueryStatementBuilder)(nil)
@@ -33,7 +31,6 @@ func NewMeterQueryStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	metricsStatementBuilder *telemetrymetrics.MetricQueryStatementBuilder,
-	fl flagger.Flagger,
 ) *meterQueryStatementBuilder {
 	metricsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymeter")
 
@@ -43,7 +40,6 @@ func NewMeterQueryStatementBuilder(
 		fm:                      fieldMapper,
 		cb:                      conditionBuilder,
 		metricsStatementBuilder: metricsStatementBuilder,
-		fl:                      fl,
 	}
 }
 
@@ -156,7 +152,6 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
-			Flagger:          b.fl,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
 			StartNs:          start,
@@ -246,7 +241,6 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
-			Flagger:          b.fl,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
 			StartNs:          start,
@@ -317,7 +311,6 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
-			Flagger:          b.fl,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
 			StartNs:          start,

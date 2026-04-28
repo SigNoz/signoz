@@ -8,8 +8,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -132,6 +134,10 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 	variables map[string]qbtypes.VariableItem,
 ) (bool, error) {
+
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := b.flagger.BooleanOrEmpty(ctx, flagger.FeatureBodyJSONQuery, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
+
 	// Add filter condition if present
 	if query.Filter != nil && query.Filter.Expression != "" {
 
@@ -142,7 +148,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
 			FieldKeys:          keys,
-			Flagger:            b.flagger,
+			BodyJSONEnabled:    bodyJSONEnabled,
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			SkipFullTextFilter: true,
