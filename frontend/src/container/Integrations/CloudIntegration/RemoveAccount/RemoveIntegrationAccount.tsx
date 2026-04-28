@@ -44,8 +44,9 @@ function RemoveIntegrationAccount({
 			},
 		});
 	const handleOk = (): void => {
-		logEvent(INTEGRATION_TELEMETRY_EVENTS.AWS_INTEGRATION_ACCOUNT_REMOVED, {
+		logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATION_ACCOUNT_REMOVED, {
 			accountId,
+			integration: cloudProvider,
 		});
 		disconnectAccount({
 			pathParams: {
