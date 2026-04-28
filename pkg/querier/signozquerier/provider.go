@@ -72,13 +72,14 @@ func newProvider(
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	// Create trace statement builder
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(settings, nil, traceFieldMapper, traceConditionBuilder, nil, flagger)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		settings,
 		telemetryMetadataStore,
@@ -86,6 +87,7 @@ func newProvider(
 		traceConditionBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
+		flagger,
 	)
 
 	// Create trace operator statement builder
@@ -96,17 +98,19 @@ func newProvider(
 		traceConditionBuilder,
 		traceStmtBuilder,
 		traceAggExprRewriter,
+		flagger,
 	)
 
 	// Create log statement builder
-	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
+	logFieldMapper := telemetrylogs.NewFieldMapper(flagger)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, flagger)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		settings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
+		flagger,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		settings,
@@ -116,6 +120,7 @@ func newProvider(
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+		flagger,
 	)
 
 	// Create audit statement builder
@@ -127,6 +132,7 @@ func newProvider(
 		auditFieldMapper,
 		auditConditionBuilder,
 		nil,
+		flagger,
 	)
 	auditStmtBuilder := telemetryaudit.NewAuditQueryStatementBuilder(
 		settings,
@@ -136,6 +142,7 @@ func newProvider(
 		auditAggExprRewriter,
 		telemetryaudit.DefaultFullTextColumn,
 		nil,
+		flagger,
 	)
 
 	// Create metric statement builder

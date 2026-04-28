@@ -4898,6 +4898,11 @@ components:
       type: object
     TracedetailtypesGettableWaterfallTrace:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
+          nullable: true
+          type: array
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -4937,6 +4942,11 @@ components:
       type: object
     TracedetailtypesPostableWaterfall:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
+          nullable: true
+          type: array
         limit:
           minimum: 0
           type: integer
@@ -4948,6 +4958,32 @@ components:
           nullable: true
           type: array
       type: object
+    TracedetailtypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      type: object
+    TracedetailtypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      type: object
+    TracedetailtypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     TracedetailtypesWaterfallSpan:
       properties:
         attributes:

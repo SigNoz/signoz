@@ -62,6 +62,6 @@ def signoz_json_body(
         pytestconfig=pytestconfig,
         cache_key="signoz-json-body",
         env_overrides={
-            "BODY_JSON_QUERY_ENABLED": "true",
+            "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_USE__JSON__BODY": True,
         },
     )

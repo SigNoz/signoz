@@ -5902,6 +5902,11 @@ export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationM
 
 export interface TracedetailtypesGettableWaterfallTraceDTO {
 	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationResultDTO[] | null;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -5956,6 +5961,11 @@ export interface TracedetailtypesGettableWaterfallTraceDTO {
 
 export interface TracedetailtypesPostableWaterfallDTO {
 	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationDTO[] | null;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 */
@@ -5971,6 +5981,33 @@ export interface TracedetailtypesPostableWaterfallDTO {
 	uncollapsedSpans?: string[] | null;
 }
 
+export interface TracedetailtypesSpanAggregationDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesSpanAggregationResultDTOValue = {
+	[key: string]: number;
+} | null;
+
+export interface TracedetailtypesSpanAggregationResultDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	value?: TracedetailtypesSpanAggregationResultDTOValue;
+}
+
+export enum TracedetailtypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
 /**
  * @nullable
  */
