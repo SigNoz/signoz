@@ -39,6 +39,8 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 			width: { min: 210 },
 			enableSort: false,
 			enableRemove: false,
+			enableMove: false,
+			pin: 'left',
 			visibilityBehavior: 'hidden-on-collapse',
 			cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 				return (
@@ -58,6 +60,8 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 			width: { min: 200 },
 			enableSort: false,
 			enableRemove: false,
+			enableMove: false,
+			pin: 'left',
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const statefulsetName = value as string;

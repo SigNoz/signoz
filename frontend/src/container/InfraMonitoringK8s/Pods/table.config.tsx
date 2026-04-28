@@ -32,6 +32,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 			return (
@@ -51,6 +53,8 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const podName = value as string;
@@ -65,7 +69,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'cpu_request',
 		header: 'CPU Req Usage (%)',
 		accessorFn: (row): number => row.podCPURequest,
-		width: { min: 200 },
+		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuRequest = value as number;
@@ -86,7 +90,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'cpu_limit',
 		header: 'CPU Limit Usage (%)',
 		accessorFn: (row): number => row.podCPULimit,
-		width: { min: 200 },
+		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpuLimit = value as number;
@@ -107,7 +111,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'cpu',
 		header: 'CPU Usage (cores)',
 		accessorFn: (row): number => row.podCPU,
-		width: { min: 190 },
+		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
@@ -122,7 +126,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'memory_request',
 		header: 'Mem Req Usage (%)',
 		accessorFn: (row): number => row.podMemoryRequest,
-		width: { min: 200 },
+		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memoryRequest = value as number;
@@ -143,7 +147,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'memory_limit',
 		header: 'Mem Limit Usage (%)',
 		accessorFn: (row): number => row.podMemoryLimit,
-		width: { min: 200 },
+		width: { min: 210 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memoryLimit = value as number;
@@ -164,7 +168,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		id: 'memory',
 		header: 'Mem Usage (WSS)',
 		accessorFn: (row): number => row.podMemory,
-		width: { min: 200, default: '100%' },
+		width: { min: 210, default: '100%' },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;

@@ -36,6 +36,8 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 			return (
@@ -55,6 +57,8 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const daemonsetName = value as string;
@@ -84,7 +88,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		id: 'available_nodes',
 		header: 'Available',
 		accessorFn: (row): number => row.availableNodes,
-		width: { min: 100 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const availableNodes = value as number;
@@ -99,7 +103,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 		id: 'desired_nodes',
 		header: 'Desired',
 		accessorFn: (row): number => row.desiredNodes,
-		width: { min: 100 },
+		width: { min: 140 },
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const desiredNodes = value as number;

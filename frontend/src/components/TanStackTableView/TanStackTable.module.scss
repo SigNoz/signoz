@@ -1,4 +1,22 @@
 .tanStackTable {
+	--tanstack-cell-padding: var(--tanstack-cell-padding-override, 0.3rem);
+	--tanstack-cell-padding-left: var(
+		--tanstack-cell-padding-left-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-right: var(
+		--tanstack-cell-padding-right-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-top: var(
+		--tanstack-cell-padding-top-override,
+		var(--tanstack-cell-padding)
+	);
+	--tanstack-cell-padding-bottom: var(
+		--tanstack-cell-padding-bottom-override,
+		var(--tanstack-cell-padding)
+	);
+
 	width: 100%;
 	border-collapse: separate;
 	border-spacing: 0;
@@ -42,7 +60,8 @@
 }
 
 .tableCell {
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
+		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
 	height: var(--tanstack-table-row-height, auto);
 	font-style: normal;
 	font-weight: 400;
@@ -121,7 +140,8 @@
 }
 
 .tableHeaderCell {
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top) var(--tanstack-cell-padding-right)
+		var(--tanstack-cell-padding-bottom) var(--tanstack-cell-padding-left);
 	height: 36px;
 	text-align: left;
 	font-size: 14px;
@@ -140,6 +160,28 @@
 	.tableCellExpansion {
 		background-color: var(--tanstack-table-header-cell-bg, var(--l1-background));
 		color: var(--tanstack-table-header-cell-color, var(--l1-foreground));
+	}
+
+	& > td {
+		padding: 0;
+	}
+
+	& thead th:first-child {
+		padding-left: var(
+			--tanstack-expansion-first-col-padding-left,
+			var(--spacing-20)
+		);
+	}
+
+	& tbody td:first-child {
+		padding-left: var(
+			--tanstack-expansion-first-col-padding-left,
+			calc(var(--spacing-20) + var(--spacing-4))
+		);
+	}
+
+	:global(thead) {
+		position: unset !important;
 	}
 }
 

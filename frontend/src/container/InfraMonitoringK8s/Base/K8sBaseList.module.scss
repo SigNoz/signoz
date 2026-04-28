@@ -7,30 +7,20 @@
 }
 
 .k8SListTable {
-	--tanstack-table-header-cell-bg: var(--l1-background);
-	--tanstack-table-header-cell-color: var(--l1-foreground);
-	--tanstack-table-cell-bg: var(--l1-background);
-	--tanstack-table-cell-color: var(--l1-foreground);
+	--tanstack-table-header-cell-bg: var(--l2-background);
+	--tanstack-table-header-cell-color: var(--l2-foreground);
+	--tanstack-table-cell-bg: var(--l2-background);
+	--tanstack-table-cell-color: var(--l2-foreground);
+	--tanstack-table-row-hover-bg: var(--l2-background-hover);
+	--tanstack-table-row-active-bg: var(--l2-background-active);
+	--tanstack-table-resize-handle-bg: var(--l2-background);
+	--tanstack-table-resize-handle-hover-bg: var(--l2-border);
 	--tanstack-table-row-height: 42px;
-	--tanstack-table-row-hover-bg: var(--l1-background-hover);
-	--tanstack-table-row-active-bg: var(--l1-background-active);
-	--tanstack-table-resize-handle-bg: var(--l1-background);
-	--tanstack-table-resize-handle-hover-bg: var(--l1-border);
 
-	--tanstack-first-column-bg: color-mix(
-		in srgb,
-		var(--l1-background) 95%,
-		var(--l1-foreground)
-	);
-	--tanstack-first-column-color: var(--l1-foreground);
-	--tanstack-first-column-header-bg: var(--tanstack-first-column-bg);
-
-	--tanstack-table-row-odd-bg: var(--l1-background);
-	--tanstack-table-row-even-bg: color-mix(
-		in srgb,
-		var(--l1-background) 97%,
-		var(--l1-foreground)
-	);
+	--tanstack-cell-padding-top-override: 5px;
+	--tanstack-cell-padding-bottom-override: 5px;
+	--tanstack-cell-padding-left-override: 5px;
+	--tanstack-cell-padding-right-override: 5px;
 }
 
 .paginationContainer {

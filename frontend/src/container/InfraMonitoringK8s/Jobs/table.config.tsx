@@ -29,9 +29,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 			</div>
 		),
 		accessorFn: (row): string => row.meta.k8s_job_name || '',
-		width: { min: 300 },
+		width: { min: 270 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 			return (
@@ -48,9 +50,11 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 		id: 'jobName',
 		header: 'Job Name',
 		accessorFn: (row): string => row.meta.k8s_job_name || '',
-		width: { min: 290 },
+		width: { min: 260 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const jobName = value as string;

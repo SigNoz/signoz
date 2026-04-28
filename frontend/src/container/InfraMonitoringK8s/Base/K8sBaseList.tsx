@@ -274,7 +274,6 @@ export function K8sBaseList<T extends K8sEntityData>({
 					renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 					getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
 					className={styles.k8SListTable}
-					enableAlternatingRowColors
 					enableQueryParams={{
 						page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 						limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,

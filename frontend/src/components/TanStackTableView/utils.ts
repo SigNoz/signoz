@@ -62,10 +62,19 @@ export const getColumnWidthStyle = <TData>(
 	};
 };
 
+const isSkeletonRow = (row: unknown): boolean => {
+	const r = row as Record<string, unknown>;
+	return typeof r?.id === 'string' && r.id.startsWith('skeleton-');
+};
+
 const buildAccessorFn = <TData>(
 	colDef: TableColumnDef<TData>,
 ): ((row: TData) => unknown) => {
 	return (row: TData): unknown => {
+		// Skip accessor for skeleton rows to avoid errors with missing properties
+		if (isSkeletonRow(row)) {
+			return undefined;
+		}
 		if (colDef.accessorFn) {
 			return colDef.accessorFn(row);
 		}

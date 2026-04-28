@@ -181,6 +181,8 @@ export type TanStackTableProps<TData> = {
 	suffixPaginationContent?: ReactNode;
 	/** Enable alternating row background colors (zebra striping) */
 	enableAlternatingRowColors?: boolean;
+	/** Disable virtual scrolling and render all rows at once. Cannot be used with onEndReached. */
+	disableVirtualScroll?: boolean;
 };
 
 export type TanStackTableHandle = TableVirtuosoHandle & {

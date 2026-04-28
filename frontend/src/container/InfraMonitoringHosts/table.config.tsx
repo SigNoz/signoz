@@ -1,19 +1,21 @@
 import React from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Progress, Tag, Tooltip } from 'antd';
+import { Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8s/Base/utils';
-import { ValidateColumnValueWrapper } from 'container/InfraMonitoringK8s/components/ValidateColumnValueWrapper';
+import {
+	EntityProgressBar,
+	ExpandButtonWrapper,
+	ValidateColumnValueWrapper,
+} from 'container/InfraMonitoringK8s/components';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { useInfraMonitoringGroupBy } from 'container/InfraMonitoringK8s/hooks';
 import { Group } from 'lucide-react';
 
-import { getMemoryProgressColor, getProgressColor } from './constants';
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
@@ -53,6 +55,8 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ row, isExpanded, toggleExpanded }): React.ReactNode => (
 			<ExpandButtonWrapper isExpanded={isExpanded} toggleExpanded={toggleExpanded}>
@@ -69,6 +73,8 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => (
 			<HostnameCell hostName={value as string} />
@@ -111,20 +117,13 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
-			const cpuPercent = Number((cpu * 100).toFixed(1));
 			return (
 				<div className={styles.progressContainer}>
 					<ValidateColumnValueWrapper
 						value={cpu}
 						entity={InfraMonitoringEntity.HOSTS}
 					>
-						<Progress
-							percent={cpuPercent}
-							strokeLinecap="butt"
-							size="small"
-							strokeColor={getProgressColor(cpuPercent)}
-							className={styles.progressBar}
-						/>
+						<EntityProgressBar value={cpu} type="cpu" />
 					</ValidateColumnValueWrapper>
 				</div>
 			);
@@ -145,20 +144,13 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
-			const memoryPercent = Number((memory * 100).toFixed(1));
 			return (
 				<div className={styles.progressContainer}>
 					<ValidateColumnValueWrapper
 						value={memory}
 						entity={InfraMonitoringEntity.HOSTS}
 					>
-						<Progress
-							percent={memoryPercent}
-							strokeLinecap="butt"
-							size="small"
-							strokeColor={getMemoryProgressColor(memoryPercent)}
-							className={styles.progressBar}
-						/>
+						<EntityProgressBar value={memory} type="memory" />
 					</ValidateColumnValueWrapper>
 				</div>
 			);

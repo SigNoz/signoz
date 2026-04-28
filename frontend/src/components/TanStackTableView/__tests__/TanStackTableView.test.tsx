@@ -411,6 +411,52 @@ describe('TanStackTableView Integration', () => {
 		});
 	});
 
+	describe('disableVirtualScroll', () => {
+		it('throws error when used with onEndReached', () => {
+			expect(() => {
+				renderTanStackTable({
+					props: {
+						disableVirtualScroll: true,
+						onEndReached: jest.fn(),
+					},
+				});
+			}).toThrow(
+				'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
+			);
+		});
+
+		it('renders all rows without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+				expect(screen.getByText('Item 2')).toBeInTheDocument();
+				expect(screen.getByText('Item 3')).toBeInTheDocument();
+			});
+
+			// Verify table structure exists
+			expect(screen.getByRole('table')).toBeInTheDocument();
+		});
+
+		it('renders column headers without virtualization', async () => {
+			renderTanStackTable({
+				props: {
+					disableVirtualScroll: true,
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('ID')).toBeInTheDocument();
+				expect(screen.getByText('Name')).toBeInTheDocument();
+				expect(screen.getByText('Value')).toBeInTheDocument();
+			});
+		});
+	});
+
 	describe('infinite scroll', () => {
 		it('calls onEndReached when provided', async () => {
 			const onEndReached = jest.fn();

@@ -114,9 +114,16 @@ function TanStackTableInner<TData>(
 		prefixPaginationContent,
 		suffixPaginationContent,
 		enableAlternatingRowColors,
+		disableVirtualScroll,
 	}: TanStackTableProps<TData>,
 	forwardedRef: React.ForwardedRef<TanStackTableHandle>,
 ): JSX.Element {
+	if (disableVirtualScroll && onEndReached) {
+		throw new Error(
+			'TanStackTable: Cannot use onEndReached with disableVirtualScroll. Infinite scroll requires virtualization.',
+		);
+	}
+
 	const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
 	const isDarkMode = useIsDarkMode();
 
@@ -521,23 +528,51 @@ function TanStackTableInner<TData>(
 				/>
 				<ColumnVisibilitySync visibility={effectiveVisibility} />
 				<TooltipProvider>
-					<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
-						className={virtuosoClassName}
-						ref={virtuosoRef}
-						{...restTableScrollerProps}
-						data={flatItems}
-						totalCount={flatItems.length}
-						context={virtuosoContext}
-						increaseViewportBy={INCREASE_VIEWPORT_BY}
-						initialTopMostItemIndex={
-							flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
-						}
-						fixedHeaderContent={tableHeader}
-						style={virtuosoTableStyle}
-						components={virtuosoComponents}
-						endReached={onEndReached ? handleEndReached : undefined}
-						data-testid={testId}
-					/>
+					{disableVirtualScroll ? (
+						<div
+							className={virtuosoClassName}
+							{...restTableScrollerProps}
+							data-testid={testId}
+						>
+							<table className={tableStyles.tanStackTable} style={virtuosoTableStyle}>
+								<VirtuosoTableColGroup columns={effectiveColumns} table={table} />
+								<thead>{tableHeader()}</thead>
+								<tbody>
+									{(isLoading && data.length === 0
+										? flatItems.slice(0, skeletonRowCount)
+										: flatItems
+									).map((item, index) => (
+										<TanStackCustomTableRow
+											key={item.row.id}
+											item={item}
+											context={virtuosoContext}
+											data-index={index}
+											data-item-index={index}
+											data-known-size={0}
+										/>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<TableVirtuoso<FlatItem<TData>, TableRowContext<TData>>
+							className={virtuosoClassName}
+							ref={virtuosoRef}
+							{...restTableScrollerProps}
+							data={flatItems}
+							totalCount={flatItems.length}
+							context={virtuosoContext}
+							increaseViewportBy={INCREASE_VIEWPORT_BY}
+							initialTopMostItemIndex={
+								flatIndexForActiveRow >= 0 ? flatIndexForActiveRow : 0
+							}
+							fixedHeaderContent={tableHeader}
+							style={virtuosoTableStyle}
+							components={virtuosoComponents}
+							endReached={onEndReached ? handleEndReached : undefined}
+							data-testid={testId}
+						/>
+					)}
 					{showInfiniteScrollLoader && (
 						<div
 							className={viewStyles.tanstackLoadingOverlay}

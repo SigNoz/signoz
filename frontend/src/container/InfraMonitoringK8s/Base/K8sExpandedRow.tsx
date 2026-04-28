@@ -217,6 +217,8 @@ export function K8sExpandedRow<T>({
 						tableScrollerProps={{
 							className: styles.expandedTable,
 						}}
+						disableVirtualScroll
+						cellTypographySize="medium"
 					/>
 				</TanStackTableStateProvider>
 				{!isLoading && expandedData.length > 0 && (

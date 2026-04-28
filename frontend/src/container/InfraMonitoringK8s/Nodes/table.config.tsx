@@ -39,6 +39,8 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 			return (
@@ -58,6 +60,8 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const nodeName = value as string;

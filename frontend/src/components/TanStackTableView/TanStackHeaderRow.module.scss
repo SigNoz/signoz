@@ -2,7 +2,7 @@
 	position: sticky;
 	top: 0;
 	z-index: 2;
-	padding: 0.3rem;
+	padding: var(--tanstack-cell-padding-top, 0.3rem) var(--tanstack-cell-padding-right, 0.3rem) var(--tanstack-cell-padding-bottom, 0.3rem) var(--tanstack-cell-padding-left, 0.3rem);
 	transform: translate3d(
 		var(--tanstack-header-translate-x, 0px),
 		var(--tanstack-header-translate-y, 0px),
@@ -245,7 +245,12 @@
 	flex-shrink: 0;
 	width: 14px;
 	height: 14px;
-	color: var(--l2-foreground);
+	color: var(--l3-foreground);
+
+	&[data-sort-direction='asc'],
+	&[data-sort-direction='desc'] {
+		color: var(--primary);
+	}
 }
 
 .isSortable {

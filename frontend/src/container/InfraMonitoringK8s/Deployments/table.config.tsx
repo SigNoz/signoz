@@ -35,6 +35,8 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			width: { min: 220 },
 			enableSort: false,
 			enableRemove: false,
+			enableMove: false,
+			pin: 'left',
 			visibilityBehavior: 'hidden-on-collapse',
 			cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 				return (
@@ -51,9 +53,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'deploymentName',
 			header: 'Deployment Name',
 			accessorFn: (row): string => row.meta.k8s_deployment_name || '',
-			width: { min: 220 },
+			width: { min: 210 },
 			enableSort: false,
 			enableRemove: false,
+			enableMove: false,
+			pin: 'left',
 			visibilityBehavior: 'hidden-on-expand',
 			cell: ({ value }): React.ReactNode => {
 				const deploymentName = value as string;
@@ -113,7 +117,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'cpu_request',
 			header: 'CPU Req Usage (%)',
 			accessorFn: (row): number => row.cpuRequest,
-			width: { min: 200 },
+			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
@@ -135,7 +139,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'cpu_limit',
 			header: 'CPU Limit Usage (%)',
 			accessorFn: (row): number => row.cpuLimit,
-			width: { min: 200 },
+			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
@@ -157,7 +161,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'cpu',
 			header: 'CPU Usage (cores)',
 			accessorFn: (row): number => row.cpuUsage,
-			width: { min: 140 },
+			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
@@ -173,7 +177,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'memory_request',
 			header: 'Mem Req Usage (%)',
 			accessorFn: (row): number => row.memoryRequest,
-			width: { min: 200 },
+			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {
@@ -195,7 +199,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			id: 'memory_limit',
 			header: 'Mem Limit Usage (%)',
 			accessorFn: (row): number => row.memoryLimit,
-			width: { min: 200 },
+			width: { min: 210 },
 			enableSort: true,
 			enableResize: true,
 			cell: ({ value }): React.ReactNode => {

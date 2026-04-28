@@ -35,6 +35,8 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		width: { min: 300 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-collapse',
 		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
 			return (
@@ -54,6 +56,8 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		width: { min: 290 },
 		enableSort: false,
 		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
 		visibilityBehavior: 'hidden-on-expand',
 		cell: ({ value }): React.ReactNode => {
 			const pvcName = value as string;
