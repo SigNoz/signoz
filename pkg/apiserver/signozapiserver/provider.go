@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -24,6 +25,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -49,6 +52,7 @@ type provider struct {
 	dashboardModule         dashboard.Module
 	dashboardHandler        dashboard.Handler
 	metricsExplorerHandler  metricsexplorer.Handler
+	infraMonitoringHandler  inframonitoring.Handler
 	gatewayHandler          gateway.Handler
 	fieldsHandler           fields.Handler
 	authzHandler            authz.Handler
@@ -59,7 +63,9 @@ type provider struct {
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
 	ruleStateHistoryHandler rulestatehistory.Handler
+	spanMapperHandler       spanmapper.Handler
 	alertmanagerHandler     alertmanager.Handler
+	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
 }
 
@@ -77,6 +83,7 @@ func NewFactory(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -87,7 +94,9 @@ func NewFactory(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
@@ -108,6 +117,7 @@ func NewFactory(
 			dashboardModule,
 			dashboardHandler,
 			metricsExplorerHandler,
+			infraMonitoringHandler,
 			gatewayHandler,
 			fieldsHandler,
 			authzHandler,
@@ -118,7 +128,9 @@ func NewFactory(
 			factoryHandler,
 			cloudIntegrationHandler,
 			ruleStateHistoryHandler,
+			spanMapperHandler,
 			alertmanagerHandler,
+			traceDetailHandler,
 			rulerHandler,
 		)
 	})
@@ -141,6 +153,7 @@ func newProvider(
 	dashboardModule dashboard.Module,
 	dashboardHandler dashboard.Handler,
 	metricsExplorerHandler metricsexplorer.Handler,
+	infraMonitoringHandler inframonitoring.Handler,
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
@@ -151,7 +164,9 @@ func newProvider(
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
 	ruleStateHistoryHandler rulestatehistory.Handler,
+	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
@@ -172,6 +187,7 @@ func newProvider(
 		dashboardModule:         dashboardModule,
 		dashboardHandler:        dashboardHandler,
 		metricsExplorerHandler:  metricsExplorerHandler,
+		infraMonitoringHandler:  infraMonitoringHandler,
 		gatewayHandler:          gatewayHandler,
 		fieldsHandler:           fieldsHandler,
 		authzHandler:            authzHandler,
@@ -182,7 +198,9 @@ func newProvider(
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
 		ruleStateHistoryHandler: ruleStateHistoryHandler,
+		spanMapperHandler:       spanMapperHandler,
 		alertmanagerHandler:     alertmanagerHandler,
+		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
 	}
 
@@ -240,6 +258,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addInfraMonitoringRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addGatewayRoutes(router); err != nil {
 		return err
 	}
@@ -284,7 +306,15 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addSpanMapperRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addAlertmanagerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addTraceDetailRoutes(router); err != nil {
 		return err
 	}
 

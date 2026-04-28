@@ -25,7 +25,7 @@ const valueWithAttributeAndOperator: IBuilderQuery = {
 };
 
 describe('Having filter behaviour', () => {
-	test('Having filter render is rendered', () => {
+	it('Having filter render is rendered', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
 			<HavingFilter
@@ -44,7 +44,7 @@ describe('Having filter behaviour', () => {
 		unmount();
 	});
 
-	test('Having render is disabled initially', () => {
+	it('Having render is disabled initially', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
 			<HavingFilter
@@ -61,7 +61,7 @@ describe('Having filter behaviour', () => {
 		unmount();
 	});
 
-	test('Is having filter is enable', () => {
+	it('Is having filter is enable', () => {
 		const mockFn = jest.fn();
 		const { unmount } = render(
 			<HavingFilter
@@ -78,7 +78,7 @@ describe('Having filter behaviour', () => {
 		unmount();
 	});
 
-	test('Autocomplete in the having filter', async () => {
+	it('Autocomplete in the having filter', async () => {
 		const onChange = jest.fn();
 		const user = userEvent.setup();
 
@@ -126,7 +126,7 @@ describe('Having filter behaviour', () => {
 		// show operators after SUM(bytes)
 		const operatorsOptions = screen.getAllByTitle(optionTestTitle);
 
-		expect(operatorsOptions.length).toEqual(HAVING_OPERATORS.length);
+		expect(operatorsOptions).toHaveLength(HAVING_OPERATORS.length);
 
 		// show operators after SUM(bytes) when type from keyboard
 		await user.clear(input);
@@ -136,7 +136,7 @@ describe('Having filter behaviour', () => {
 		// get filtered operators
 		const filteredOperators = screen.getAllByTitle(optionTestTitle);
 
-		expect(filteredOperators.length).toEqual(1);
+		expect(filteredOperators).toHaveLength(1);
 
 		// clear and show again all operators
 		await user.clear(input);
@@ -144,7 +144,7 @@ describe('Having filter behaviour', () => {
 
 		const returnedOptions = screen.getAllByTitle(optionTestTitle);
 
-		expect(returnedOptions.length).toEqual(HAVING_OPERATORS.length);
+		expect(returnedOptions).toHaveLength(HAVING_OPERATORS.length);
 
 		// check write value after operator
 		await user.clear(input);

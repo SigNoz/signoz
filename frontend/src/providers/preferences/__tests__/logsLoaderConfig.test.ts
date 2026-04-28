@@ -63,7 +63,7 @@ describe('logsLoaderConfig', () => {
 	});
 
 	it('should have priority order: local, url, default', () => {
-		expect(logsLoaderConfig.priority).toEqual(['local', 'url', 'default']);
+		expect(logsLoaderConfig.priority).toStrictEqual(['local', 'url', 'default']);
 	});
 
 	it('should load from localStorage when available', async () => {
@@ -86,7 +86,7 @@ describe('logsLoaderConfig', () => {
 
 		const result = await logsLoaderConfig.local();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: mockColumns,
 			formatting: {
 				maxLines: 10,
@@ -103,7 +103,7 @@ describe('logsLoaderConfig', () => {
 
 		const result = await logsLoaderConfig.local();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
 			formatting: undefined,
 		});
@@ -131,7 +131,7 @@ describe('logsLoaderConfig', () => {
 
 		const result = await logsLoaderConfig.url();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: mockColumns,
 			formatting: {
 				maxLines: 5,
@@ -148,7 +148,7 @@ describe('logsLoaderConfig', () => {
 
 		const result = await logsLoaderConfig.url();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: [] as BaseAutocompleteData[],
 			formatting: undefined,
 		});
@@ -157,7 +157,7 @@ describe('logsLoaderConfig', () => {
 	it('should provide default values when no other source is available', async () => {
 		const result = await logsLoaderConfig.default();
 
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			columns: defaultLogsSelectedColumns,
 			formatting: {
 				maxLines: 1,
@@ -181,7 +181,7 @@ describe('logsLoaderConfig', () => {
 			const result = await logsLoaderConfig.url();
 
 			// Should only keep logs columns
-			expect(result.columns).toEqual(mockLogsColumns);
+			expect(result.columns).toStrictEqual(mockLogsColumns);
 		});
 
 		it('should filter out Traces columns from localStorage', async () => {
@@ -194,7 +194,7 @@ describe('logsLoaderConfig', () => {
 			const result = await logsLoaderConfig.local();
 
 			// Should filter out all Traces columns
-			expect(result.columns).toEqual([]);
+			expect(result.columns).toStrictEqual([]);
 		});
 
 		it('should accept valid Logs columns from URL', async () => {
@@ -208,7 +208,7 @@ describe('logsLoaderConfig', () => {
 
 			const result = await logsLoaderConfig.url();
 
-			expect(result.columns).toEqual(logsColumns);
+			expect(result.columns).toStrictEqual(logsColumns);
 		});
 
 		it('should fall back to defaults when all columns are filtered out from URL', async () => {
@@ -223,7 +223,7 @@ describe('logsLoaderConfig', () => {
 			const result = await logsLoaderConfig.url();
 
 			// Should return empty array, which triggers fallback to defaults in preferencesLoader
-			expect(result.columns).toEqual([]);
+			expect(result.columns).toStrictEqual([]);
 		});
 
 		it('should handle columns without signal field (legacy data)', async () => {
@@ -243,7 +243,7 @@ describe('logsLoaderConfig', () => {
 			// Without signal field, columns pass through validation
 			// This matches the current implementation behavior where only columns
 			// with signal !== 'logs' are filtered out
-			expect(result.columns).toEqual(columnsWithoutSignal);
+			expect(result.columns).toStrictEqual(columnsWithoutSignal);
 		});
 	});
 });

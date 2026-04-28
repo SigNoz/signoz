@@ -29,8 +29,10 @@ function QueryConditionField({
 		<Select
 			defaultValue={
 				(query as QueryFields).value &&
-				(((((query as QueryFields)
-					?.value as unknown) as QueryFields) as unknown) as string).toUpperCase()
+				(
+					(query as QueryFields)
+						?.value as unknown as QueryFields as unknown as string
+				).toUpperCase()
 			}
 			onChange={(e): void => {
 				onUpdate({ ...query, value: e }, queryIndex);
@@ -73,10 +75,10 @@ function QueryField({
 		[selected],
 	);
 
-	const fieldType = useMemo(() => getFieldType(query[0].value as string), [
-		getFieldType,
-		query,
-	]);
+	const fieldType = useMemo(
+		() => getFieldType(query[0].value as string),
+		[getFieldType, query],
+	);
 
 	const handleChange = (qIdx: number, value: string): void => {
 		const updatedQuery = [...query];

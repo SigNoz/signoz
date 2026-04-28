@@ -98,7 +98,7 @@ export const getK8sClustersList = async (
 							[] as typeof props.filters.items,
 						),
 					},
-			  }
+				}
 			: props;
 
 		const response = await axios.post('/clusters/list', requestProps, {

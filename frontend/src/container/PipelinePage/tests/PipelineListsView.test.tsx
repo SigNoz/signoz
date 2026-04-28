@@ -113,16 +113,12 @@ describe('PipelinePage container test', () => {
 		);
 
 		// table headers assertions
-		[
-			'Pipeline Name',
-			'Filters',
-			'Last Edited',
-			'Edited By',
-			'Actions',
-		].forEach((text) => expect(getByText(text)).toBeInTheDocument());
+		['Pipeline Name', 'Filters', 'Last Edited', 'Edited By', 'Actions'].forEach(
+			(text) => expect(getByText(text)).toBeInTheDocument(),
+		);
 
 		// content assertion
-		expect(container.querySelectorAll('.ant-table-row').length).toBe(2);
+		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(2);
 
 		expect(getByText('Apache common parser')).toBeInTheDocument();
 		expect(getByText('source = nginx')).toBeInTheDocument();
@@ -146,14 +142,14 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-icon="edit"]').length).toBe(2);
+		expect(document.querySelectorAll('[data-icon="edit"]')).toHaveLength(2);
 		expect(getByText('add_new_pipeline')).toBeInTheDocument();
 
 		// expand action
 		const expandIcon = document.querySelectorAll(
 			'.ant-table-row-expand-icon-cell > span[class*="anticon-right"]',
 		);
-		expect(expandIcon.length).toBe(2);
+		expect(expandIcon).toHaveLength(2);
 
 		await fireEvent.click(expandIcon[0]);
 
@@ -179,13 +175,13 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-icon="edit"]').length).toBe(2);
+		expect(document.querySelectorAll('[data-icon="edit"]')).toHaveLength(2);
 
 		// expand action
 		const expandIcon = document.querySelectorAll(
 			'.ant-table-row-expand-icon-cell > span[class*="anticon-right"]',
 		);
-		expect(expandIcon.length).toBe(2);
+		expect(expandIcon).toHaveLength(2);
 		await fireEvent.click(expandIcon[0]);
 
 		const switchToggle = document.querySelector(
@@ -200,7 +196,7 @@ describe('PipelinePage container test', () => {
 			'.ant-table-expanded-row [data-icon="delete"]',
 		);
 
-		expect(deleteBtns.length).toBe(3);
+		expect(deleteBtns).toHaveLength(3);
 
 		// delete pipeline
 		await fireEvent.click(deleteBtns[0] as HTMLElement);
@@ -213,15 +209,14 @@ describe('PipelinePage container test', () => {
 		});
 
 		await fireEvent.click(
-			((deleteConfirmationModal as unknown) as HTMLElement)?.querySelector(
+			(deleteConfirmationModal as unknown as HTMLElement)?.querySelector(
 				'.ant-modal-confirm-btns .ant-btn-primary',
 			) as HTMLElement,
 		);
 
 		expect(
-			document.querySelectorAll('.ant-table-expanded-row [data-icon="delete"]')
-				.length,
-		).toBe(2);
+			document.querySelectorAll('.ant-table-expanded-row [data-icon="delete"]'),
+		).toHaveLength(2);
 	});
 
 	it('should be able to toggle and delete pipeline', async () => {
@@ -254,12 +249,12 @@ describe('PipelinePage container test', () => {
 		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
 		expect(viewPipelineModal).toBeInTheDocument();
 
-		expect(
-			await findByText(
-				(viewPipelineModal as unknown) as HTMLElement,
+		await expect(
+			findByText(
+				viewPipelineModal as unknown as HTMLElement,
 				'Simulate Processing',
 			),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 
 		await fireEvent.click(
 			viewPipelineModal?.querySelector(
@@ -286,7 +281,7 @@ describe('PipelinePage container test', () => {
 			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
 		);
 
-		expect(document.querySelectorAll('[data-icon="delete"]').length).toBe(1);
+		expect(document.querySelectorAll('[data-icon="delete"]')).toHaveLength(1);
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
@@ -309,13 +304,13 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(document.querySelectorAll('[data-icon="edit"]').length).toBe(2);
+		expect(document.querySelectorAll('[data-icon="edit"]')).toHaveLength(2);
 
 		// expand action
 		const expandIcon = document.querySelectorAll(
 			'.ant-table-row-expand-icon-cell > span[class*="anticon-right"]',
 		);
-		expect(expandIcon.length).toBe(2);
+		expect(expandIcon).toHaveLength(2);
 		await fireEvent.click(expandIcon[0]);
 
 		const editBtn = document.querySelectorAll('[data-icon="edit"]');
@@ -323,7 +318,7 @@ describe('PipelinePage container test', () => {
 		await fireEvent.click(editBtn[0] as HTMLElement);
 
 		// to have length 2
-		expect(screen.queryAllByText('source = nginx').length).toBe(2);
+		expect(screen.queryAllByText('source = nginx')).toHaveLength(2);
 
 		server.use(
 			rest.get(attributeKeysURL, (_req, res, ctx) =>

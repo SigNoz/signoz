@@ -139,7 +139,7 @@ const mockWidget: Widgets = {
 	selectedTracesFields: [],
 };
 
-const mockQueryResponse = ({
+const mockQueryResponse = {
 	data: {
 		payload: {
 			data: {
@@ -155,7 +155,7 @@ const mockQueryResponse = ({
 	isError: false,
 	error: null,
 	isFetching: false,
-} as unknown) as UseQueryResult<
+} as unknown as UseQueryResult<
 	SuccessResponse<MetricRangePayloadProps, unknown> & {
 		warning?: Warning;
 	},
@@ -322,7 +322,7 @@ describe('WidgetHeader', () => {
 						url: 'https://example.com',
 						warnings: [{ message: 'Test warning' }],
 					} as Warning,
-			  }
+				}
 			: undefined;
 
 		const warningResponse = {

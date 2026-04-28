@@ -44,17 +44,3 @@
 		line-height: 18px; /* 150% */
 	}
 }
-
-.lightMode {
-	.filter-row {
-		.pre-next-toggle {
-			.ant-typography {
-				color: var(--l2-background);
-			}
-		}
-
-		.no-results {
-			color: var(--l2-background);
-		}
-	}
-}

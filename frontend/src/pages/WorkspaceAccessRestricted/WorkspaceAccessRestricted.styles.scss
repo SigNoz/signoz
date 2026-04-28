@@ -118,7 +118,7 @@ $dark-theme: 'darkMode';
 		}
 
 		&__highlight {
-			color: var(--l1-foreground, #fff);
+			color: var(--l1-foreground);
 			font-style: normal;
 			font-weight: 700;
 			line-height: 24px;

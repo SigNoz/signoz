@@ -85,10 +85,8 @@ function ValueGraph({
 		};
 	}, []);
 
-	const {
-		threshold,
-		isConflictingThresholds,
-	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue, yAxisUnit);
+	const { threshold, isConflictingThresholds } =
+		getBackgroundColorAndThresholdCheck(thresholds, rawValue, yAxisUnit);
 
 	return (
 		<div

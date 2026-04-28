@@ -27,6 +27,6 @@ export const TableBodyContent = styled.div<TableBodyContentProps>`
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px;`
 			: fontSize === FontSize.MEDIUM
-			? `font-size:13px; line-height:20px;`
-			: `font-size:14px; line-height:24px;`}
+				? `font-size:13px; line-height:20px;`
+				: `font-size:14px; line-height:24px;`}
 `;

@@ -2,8 +2,9 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
 import uPlot from 'uplot';
+import logEvent from 'api/common/logEvent';
 
-import { syncCursorRegistry } from './syncCursorRegistry';
+import { createSyncDisplayHook } from './syncDisplayHook';
 import {
 	createInitialControllerState,
 	createSetCursorHandler,
@@ -28,8 +29,10 @@ import {
 	createInitialViewState,
 	createLayoutObserver,
 } from './utils';
+import { Events } from 'constants/events';
 
 import Styles from './TooltipPlugin.module.scss';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
@@ -104,32 +107,20 @@ export default function TooltipPlugin({
 
 		// Enable uPlot's built-in cursor sync when requested so that
 		// crosshair / tooltip can follow the dashboard-wide cursor.
+		let removeSyncDisplayHook: (() => void) | null = null;
 		if (syncMode !== DashboardCursorSync.None && config.scales[0]?.props.time) {
 			config.setCursor({
-				sync: { key: syncKey, scales: ['x', 'y'] },
+				sync: {
+					key: syncKey,
+					scales:
+						syncMode === DashboardCursorSync.Crosshair ? ['x', 'y'] : ['x', null],
+				},
 			});
 
-			// Show the horizontal crosshair only when the receiving panel shares
-			// the same y-axis unit as the source panel. When this panel is the
-			// source (cursor.event != null) the line is always shown and this
-			// panel's metadata is written to the registry so receivers can read it.
-			config.addHook('setCursor', (u: uPlot): void => {
-				const yCursorEl = u.root.querySelector<HTMLElement>('.u-cursor-y');
-				if (!yCursorEl) {
-					return;
-				}
-
-				if (u.cursor.event != null) {
-					// This panel is the source — publish metadata and always show line.
-					syncCursorRegistry.setMetadata(syncKey, syncMetadata);
-					yCursorEl.style.display = '';
-				} else {
-					// This panel is receiving sync — show only if units match.
-					const sourceMeta = syncCursorRegistry.getMetadata(syncKey);
-					yCursorEl.style.display =
-						sourceMeta?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
-				}
-			});
+			removeSyncDisplayHook = config.addHook(
+				'setCursor',
+				createSyncDisplayHook(syncKey, syncMetadata, controller),
+			);
 		}
 
 		// Dismiss the tooltip when the user clicks / presses a key
@@ -137,7 +128,12 @@ export default function TooltipPlugin({
 		const onOutsideInteraction = (event: Event): void => {
 			const target = event.target as Node;
 			if (!containerRef.current?.contains(target)) {
-				dismissTooltip();
+				// Don't dismiss if the click landed inside any other pinned tooltip.
+				const isInsideAnyPinnedTooltip =
+					(target as Element).closest?.('[data-pinned="true"]') != null;
+				if (!isInsideAnyPinnedTooltip) {
+					dismissTooltip();
+				}
 			}
 		};
 
@@ -156,7 +152,7 @@ export default function TooltipPlugin({
 		function updateCursorLock(): void {
 			const plot = getPlot(controller);
 			if (plot) {
-				// @ts-ignore uPlot cursor lock is not working as expected
+				// @ts-expect-error uPlot cursor lock is not working as expected
 				plot.cursor._lock = controller.pinned;
 			}
 		}
@@ -203,6 +199,16 @@ export default function TooltipPlugin({
 			if (!controller.hoverActive || !plot) {
 				return null;
 			}
+			// In Tooltip sync mode, suppress the receiver tooltip entirely when
+			// no receiver series match the source panel's focused series.
+			if (
+				syncTooltipWithDashboard &&
+				controller.cursorDrivenBySync &&
+				Array.isArray(controller.syncedSeriesIndexes) &&
+				controller.syncedSeriesIndexes.length === 0
+			) {
+				return null;
+			}
 			return renderRef.current({
 				uPlotInstance: plot,
 				dataIndexes: controller.seriesIndexes,
@@ -210,6 +216,7 @@ export default function TooltipPlugin({
 				isPinned: controller.pinned,
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
+				syncedSeriesIndexes: controller.syncedSeriesIndexes,
 			});
 		}
 
@@ -296,6 +303,9 @@ export default function TooltipPlugin({
 			// Escape: release-only (never toggles on).
 			if (event.key === 'Escape') {
 				if (controller.pinned) {
+					logEvent(Events.TOOLTIP_UNPINNED, {
+						path: getAbsoluteUrl(window.location.pathname),
+					});
 					dismissTooltip();
 				}
 				return;
@@ -307,6 +317,9 @@ export default function TooltipPlugin({
 
 			// Toggle off: P pressed while already pinned.
 			if (controller.pinned) {
+				logEvent(Events.TOOLTIP_UNPINNED, {
+					path: getAbsoluteUrl(window.location.pathname),
+				});
 				dismissTooltip();
 				return;
 			}
@@ -328,16 +341,19 @@ export default function TooltipPlugin({
 			}
 
 			const plotRect = plot.over.getBoundingClientRect();
-			const syntheticEvent = ({
+			const syntheticEvent = {
 				clientX: plotRect.left + cursorLeft,
 				clientY: plotRect.top + cursorTop,
 				target: plot.over,
 				offsetX: cursorLeft,
 				offsetY: cursorTop,
-			} as unknown) as MouseEvent;
+			} as unknown as MouseEvent;
 
 			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;
+			logEvent(Events.TOOLTIP_PINNED, {
+				path: getAbsoluteUrl(window.location.pathname),
+			});
 			scheduleRender(true);
 		};
 
@@ -431,6 +447,7 @@ export default function TooltipPlugin({
 			removeSetSeriesHook();
 			removeSetLegendHook();
 			removeSetCursorHook();
+			removeSyncDisplayHook?.();
 			if (overClickHandler) {
 				const plot = getPlot(controller);
 				plot?.over.removeEventListener('click', overClickHandler);
@@ -493,7 +510,7 @@ export default function TooltipPlugin({
 		isHovering,
 		contents,
 	]);
-	const isTooltipVisible = isHovering || tooltipBody != null;
+	const isTooltipVisible = tooltipBody != null;
 
 	if (!hasPlot) {
 		return null;

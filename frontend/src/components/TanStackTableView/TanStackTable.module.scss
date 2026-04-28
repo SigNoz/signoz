@@ -1,0 +1,100 @@
+.tanStackTable {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	table-layout: fixed;
+
+	& td,
+	& th {
+		overflow: hidden;
+		min-width: 0;
+		box-sizing: border-box;
+		vertical-align: middle;
+	}
+}
+
+.tableCellText {
+	font-style: normal;
+	font-weight: 400;
+	letter-spacing: -0.07px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	width: auto;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: var(--tanstack-plain-body-line-clamp, 1);
+	line-clamp: var(--tanstack-plain-body-line-clamp, 1);
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: var(--l2-foreground);
+	max-width: 100%;
+	word-break: break-all;
+}
+
+.tableViewRowActions {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	left: auto;
+	transform: translateY(-50%);
+	margin: 0;
+	z-index: 5;
+}
+
+.tableCell {
+	padding: 0.3rem;
+	font-style: normal;
+	font-weight: 400;
+	letter-spacing: -0.07px;
+	font-size: var(--tanstack-plain-cell-font-size, 14px);
+	line-height: var(--tanstack-plain-cell-line-height, 18px);
+	color: var(--l2-foreground);
+}
+
+.tableRow {
+	cursor: pointer;
+	position: relative;
+	overflow-anchor: none;
+
+	&:hover {
+		.tableCell {
+			background-color: var(--row-hover-bg) !important;
+		}
+	}
+
+	&.tableRowActive {
+		.tableCell {
+			background-color: var(--row-active-bg) !important;
+		}
+	}
+}
+
+.tableHeaderCell {
+	padding: 0.3rem;
+	height: 36px;
+	text-align: left;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+	color: var(--l1-foreground);
+
+	// TODO: Remove this once background color (l1) is matching the actual background color of the page
+	&[data-dark-mode='true'] {
+		background: #0b0c0d;
+	}
+
+	&[data-dark-mode='false'] {
+		background: #fdfdfd;
+	}
+}
+
+.tableRowExpansion {
+	display: table-row;
+}
+
+.tableCellExpansion {
+	padding: 0.5rem;
+	vertical-align: top;
+}

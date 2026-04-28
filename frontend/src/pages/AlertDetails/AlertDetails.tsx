@@ -61,13 +61,8 @@ function AlertDetails(): JSX.Element {
 	const { routes } = useRouteTabUtils();
 	const params = useUrlQuery();
 
-	const {
-		isLoading,
-		isError,
-		ruleId,
-		isValidRuleId,
-		alertDetailsResponse,
-	} = useGetAlertRuleDetails();
+	const { isLoading, isError, ruleId, isValidRuleId, alertDetailsResponse } =
+		useGetAlertRuleDetails();
 
 	const isTestAlert = useMemo(() => {
 		return params.get(QueryParams.isTestAlert) === 'true';

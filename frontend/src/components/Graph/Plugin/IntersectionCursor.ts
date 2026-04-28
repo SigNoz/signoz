@@ -12,11 +12,12 @@ export type IntersectionCursorPluginOptions = {
 	gapSize?: number;
 };
 
-export const defaultIntersectionCursorPluginOptions: Required<IntersectionCursorPluginOptions> = {
-	color: 'white',
-	dashSize: 3,
-	gapSize: 3,
-};
+export const defaultIntersectionCursorPluginOptions: Required<IntersectionCursorPluginOptions> =
+	{
+		color: 'white',
+		dashSize: 3,
+		gapSize: 3,
+	};
 
 export function createIntersectionCursorPluginOptions(
 	isEnabled: boolean,

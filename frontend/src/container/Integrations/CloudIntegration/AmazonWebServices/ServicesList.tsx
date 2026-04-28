@@ -27,9 +27,10 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 		serviceQueryParams,
 	);
 
-	const awsServices = useMemo(() => servicesMetadata?.data?.services ?? [], [
-		servicesMetadata,
-	]);
+	const awsServices = useMemo(
+		() => servicesMetadata?.data?.services ?? [],
+		[servicesMetadata],
+	);
 
 	const activeService = urlQuery.get('service');
 
@@ -48,9 +49,10 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	);
 
 	// Derive from enabled to guarantee each service is in exactly one list
-	const enabledIds = useMemo(() => new Set(enabledServices.map((s) => s.id)), [
-		enabledServices,
-	]);
+	const enabledIds = useMemo(
+		() => new Set(enabledServices.map((s) => s.id)),
+		[enabledServices],
+	);
 	const notEnabledServices = useMemo(
 		() => awsServices?.filter((s) => !enabledIds.has(s.id)) ?? [],
 		[awsServices, enabledIds],

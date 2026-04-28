@@ -112,7 +112,9 @@
 			max-width: 180px !important;
 		}
 
-		:global(.ant-table-cell:first-of-type):not(:global(.ant-table-row-expand-icon-cell)) {
+		:global(.ant-table-cell:first-of-type):not(
+			:global(.ant-table-row-expand-icon-cell)
+		) {
 			min-width: 250px !important;
 			max-width: 250px !important;
 		}

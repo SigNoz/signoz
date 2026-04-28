@@ -9,13 +9,13 @@ import { CreditCard, MessageSquareText, X } from 'lucide-react';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 
 export default function ChatSupportGateway(): JSX.Element {
 	const { notifications } = useNotifications();
 
-	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
-		false,
-	);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
+		useState(false);
 
 	const handleBillingOnSuccess = (
 		data: SuccessResponseV2<CheckoutSuccessPayloadProps>,
@@ -54,7 +54,7 @@ export default function ChatSupportGateway(): JSX.Element {
 		});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	};
 

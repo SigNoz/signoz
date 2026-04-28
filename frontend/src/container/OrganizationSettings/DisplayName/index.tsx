@@ -35,15 +35,10 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const displayName =
 		currentOrg?.displayName ?? orgData?.data?.displayName ?? '';
 
-	const {
-		control,
-		handleSubmit,
-		watch,
-		getValues,
-		setValue,
-	} = useForm<FormValues>({
-		defaultValues: { displayName },
-	});
+	const { control, handleSubmit, watch, getValues, setValue } =
+		useForm<FormValues>({
+			defaultValues: { displayName },
+		});
 
 	const orgName = watch('displayName');
 
@@ -53,24 +48,24 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		}
 	}, [displayName, getValues, setValue]);
 
-	const {
-		mutateAsync: updateMyOrganization,
-		isLoading,
-	} = useUpdateMyOrganization({
-		mutation: {
-			onSuccess: (_, { data }) => {
-				toast.success(t('success', { ns: 'common' }), {
-					position: 'top-right',
-				});
-				updateOrg(orgId, data.displayName ?? '');
+	const { mutateAsync: updateMyOrganization, isLoading } =
+		useUpdateMyOrganization({
+			mutation: {
+				onSuccess: (_, { data }) => {
+					toast.success(t('success', { ns: 'common' }), {
+						position: 'top-right',
+					});
+					updateOrg(orgId, data.displayName ?? '');
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO>,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
 		const { displayName: name } = values;

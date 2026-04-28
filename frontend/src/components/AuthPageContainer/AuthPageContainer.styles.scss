@@ -143,28 +143,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.bg-dot-pattern {
-		background: radial-gradient(
-			circle,
-			var(--l3-background) 1px,
-			transparent 1px
-		);
-		background-size: 12px 12px;
-	}
-
-	.auth-page-gradient {
-		background: radial-gradient(
-			ellipse at center top,
-			color-mix(in srgb, var(--primary-background) 12%, transparent) 0%,
-			transparent 60%
-		);
-		opacity: 0.8;
-		filter: blur(200px);
-
-		@media (min-width: 768px) {
-			filter: blur(300px);
-		}
-	}
-}

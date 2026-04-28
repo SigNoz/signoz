@@ -280,30 +280,28 @@ function getTableData(data: QueueOverviewResponse['data']): RowData[] {
 	];
 
 	const tableData: RowData[] =
-		data?.map(
-			(row, index: number): RowData => {
-				const rowData: Record<string, string | number> = {};
-				columnOrder.forEach((key) => {
-					const value = row.data[key as keyof typeof row.data];
-					if (typeof value === 'string' || typeof value === 'number') {
-						rowData[key] = value;
-					}
-				});
-				Object.entries(row.data).forEach(([key, value]) => {
-					if (
-						!columnOrder.includes(key) &&
-						(typeof value === 'string' || typeof value === 'number')
-					) {
-						rowData[key] = value;
-					}
-				});
+		data?.map((row, index: number): RowData => {
+			const rowData: Record<string, string | number> = {};
+			columnOrder.forEach((key) => {
+				const value = row.data[key as keyof typeof row.data];
+				if (typeof value === 'string' || typeof value === 'number') {
+					rowData[key] = value;
+				}
+			});
+			Object.entries(row.data).forEach(([key, value]) => {
+				if (
+					!columnOrder.includes(key) &&
+					(typeof value === 'string' || typeof value === 'number')
+				) {
+					rowData[key] = value;
+				}
+			});
 
-				return {
-					...rowData,
-					key: index,
-				};
-			},
-		) || [];
+			return {
+				...rowData,
+				key: index,
+			};
+		}) || [];
 
 	return tableData;
 }
@@ -480,10 +478,10 @@ export default function CeleryOverviewTable({
 		[searchText],
 	);
 
-	const filteredData = useMemo(() => getFilteredData(tableData), [
-		getFilteredData,
-		tableData,
-	]);
+	const filteredData = useMemo(
+		() => getFilteredData(tableData),
+		[getFilteredData, tableData],
+	);
 
 	const prevTableDataRef = useRef<string>();
 

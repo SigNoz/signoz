@@ -139,10 +139,10 @@ function PermissionSidePanel({
 		}
 	}, [open, resources, initialConfig]);
 
-	const savedConfig = useMemo(() => buildConfig(resources, initialConfig), [
-		resources,
-		initialConfig,
-	]);
+	const savedConfig = useMemo(
+		() => buildConfig(resources, initialConfig),
+		[resources, initialConfig],
+	);
 
 	const unsavedCount = useMemo(() => {
 		if (configsEqual(config, savedConfig)) {

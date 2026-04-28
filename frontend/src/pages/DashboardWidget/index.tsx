@@ -66,9 +66,8 @@ function DashboardWidgetInternal({
 		undefined,
 	);
 
-	const { transformDashboardVariables } = useTransformDashboardVariables(
-		dashboardId,
-	);
+	const { transformDashboardVariables } =
+		useTransformDashboardVariables(dashboardId);
 
 	const {
 		isFetching: isFetchingDashboardResponse,

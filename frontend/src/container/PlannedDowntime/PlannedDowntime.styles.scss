@@ -215,7 +215,11 @@
 				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'cpsp' on,
+					'case' on;
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -238,7 +242,11 @@
 				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'cpsp' on,
+					'case' on;
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -442,131 +450,5 @@
 .duration-input {
 	.ant-select {
 		width: 100px;
-	}
-}
-
-.lightMode {
-	.datePicker {
-		.ant-picker-panel-container {
-			background: var(--card) !important;
-		}
-	}
-
-	.planned-downtime-container {
-		.planned-downtime-content {
-			.title {
-				color: var(--l1-foreground);
-			}
-
-			.schedule-created-at {
-				border: 1px solid var(--l1-border);
-				background-color: var(--l1-background);
-				.ant-typography {
-					color: var(--l3-foreground);
-				}
-				border-top: 0px !important;
-			}
-		}
-	}
-
-	.planned-downtime-table {
-		.ant-table-tbody {
-			.collapse-list {
-				border: 1px solid var(--l1-border);
-				background-color: var(--l1-background);
-
-				.ant-collapse-content-box {
-					.ant-typography {
-						color: var(--l3-foreground);
-					}
-				}
-
-				.ant-typography {
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-
-	.delete-schedule-modal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.ant-modal-header {
-				background: var(--card);
-
-				.title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l1-foreground);
-				}
-
-				.save-view-input {
-					.ant-input {
-						background: var(--l1-background);
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--l3-background);
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-
-	.createDowntimeModal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.ant-modal-header {
-				background-color: var(--card);
-				.ant-typography {
-					color: var(--l3-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-divider {
-					border: 0.5px solid var(--l1-border);
-				}
-			}
-		}
-	}
-
-	.createForm {
-		.ant-picker,
-		input {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-		}
-
-		.ant-picker .ant-picker-input input {
-			border: 0px !important;
-		}
-
-		.ant-select {
-			.ant-select-selector {
-				border: 1px solid var(--l1-border);
-				background: var(--l1-background);
-			}
-		}
-
-		.scheduleTimeInfoText {
-			color: var(--l2-foreground);
-		}
-
-		.alert-rule-info {
-			color: var(--l2-foreground);
-		}
 	}
 }

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { Button } from 'antd';
+import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import ROUTES from 'constants/routes';
 import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -20,13 +21,13 @@ function DashboardBreadcrumbs(): JSX.Element {
 		? {
 				...dashboardData.data,
 				uuid: dashboardData.id,
-		  }
+			}
 		: ({} as DashboardData);
 
 	const { title = '', image = Base64Icons[0] } = selectedData || {};
 
 	const goToListPage = useCallback(() => {
-		const dashboardsListQueryParamsString = sessionStorage.getItem(
+		const dashboardsListQueryParamsString = getSessionStorageApi(
 			DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
 		);
 

@@ -112,7 +112,7 @@ const baseQuery: Query = {
 
 describe('extractQueryTextStrings', () => {
 	it('returns empty array for query builder with no data', () => {
-		expect(extractQueryTextStrings(baseQuery)).toEqual([]);
+		expect(extractQueryTextStrings(baseQuery)).toStrictEqual([]);
 	});
 
 	it('extracts string values from query builder filter items', () => {
@@ -121,7 +121,7 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [
 								{ id: '1', op: '=', value: ['$service_name', 'hardcoded'] },
@@ -129,7 +129,7 @@ describe('extractQueryTextStrings', () => {
 							],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -137,7 +137,7 @@ describe('extractQueryTextStrings', () => {
 		};
 
 		const texts = extractQueryTextStrings(query);
-		expect(texts).toEqual(['$service_name', 'hardcoded', '$env']);
+		expect(texts).toStrictEqual(['$service_name', 'hardcoded', '$env']);
 	});
 
 	it('extracts filter expression from query builder', () => {
@@ -146,10 +146,10 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: { items: [], op: 'AND' },
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -157,7 +157,7 @@ describe('extractQueryTextStrings', () => {
 		};
 
 		const texts = extractQueryTextStrings(query);
-		expect(texts).toEqual(['env = $deployment_environment']);
+		expect(texts).toStrictEqual(['env = $deployment_environment']);
 	});
 
 	it('skips non-string filter values', () => {
@@ -166,19 +166,19 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: [42, true] }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
 			},
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual([]);
+		expect(extractQueryTextStrings(query)).toStrictEqual([]);
 	});
 
 	it('extracts promql query strings', () => {
@@ -191,7 +191,7 @@ describe('extractQueryTextStrings', () => {
 			],
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual([
+		expect(extractQueryTextStrings(query)).toStrictEqual([
 			'up{env="$env"}',
 			'cpu{ns="$namespace"}',
 		]);
@@ -211,7 +211,7 @@ describe('extractQueryTextStrings', () => {
 			],
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual([
+		expect(extractQueryTextStrings(query)).toStrictEqual([
 			'SELECT * WHERE env = {{.env}}',
 		]);
 	});
@@ -222,25 +222,28 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$env' }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
-					({
+					} as unknown as IBuilderQuery,
+					{
 						filters: {
 							items: [{ id: '2', op: '=', value: ['$service_name'] }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
 			},
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual(['$env', '$service_name']);
+		expect(extractQueryTextStrings(query)).toStrictEqual([
+			'$env',
+			'$service_name',
+		]);
 	});
 
 	it('collects both filter items and filter expression from the same queryData', () => {
@@ -249,20 +252,20 @@ describe('extractQueryTextStrings', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$service_name' }],
 							op: 'AND',
 						},
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
 			},
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual([
+		expect(extractQueryTextStrings(query)).toStrictEqual([
 			'$service_name',
 			'env = $deployment_environment',
 		]);
@@ -278,7 +281,7 @@ describe('extractQueryTextStrings', () => {
 			],
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual(['up{env="$env"}']);
+		expect(extractQueryTextStrings(query)).toStrictEqual(['up{env="$env"}']);
 	});
 
 	it('skips clickhouse entries with empty query strings', () => {
@@ -296,7 +299,7 @@ describe('extractQueryTextStrings', () => {
 			],
 		};
 
-		expect(extractQueryTextStrings(query)).toEqual([
+		expect(extractQueryTextStrings(query)).toStrictEqual([
 			'SELECT * WHERE x = {{.env}}',
 		]);
 	});
@@ -304,9 +307,9 @@ describe('extractQueryTextStrings', () => {
 	it('returns empty array for unknown query type', () => {
 		const query = {
 			...baseQuery,
-			queryType: ('unknown' as unknown) as EQueryType,
+			queryType: 'unknown' as unknown as EQueryType,
 		};
-		expect(extractQueryTextStrings(query)).toEqual([]);
+		expect(extractQueryTextStrings(query)).toStrictEqual([]);
 	});
 });
 
@@ -319,7 +322,9 @@ describe('getVariableReferencesInQuery', () => {
 	];
 
 	it('returns empty array when query has no text', () => {
-		expect(getVariableReferencesInQuery(baseQuery, variableNames)).toEqual([]);
+		expect(getVariableReferencesInQuery(baseQuery, variableNames)).toStrictEqual(
+			[],
+		);
 	});
 
 	it('detects variables referenced in query builder filters', () => {
@@ -328,7 +333,7 @@ describe('getVariableReferencesInQuery', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [
 								{ id: '1', op: '=', value: '$service_name' },
@@ -336,7 +341,7 @@ describe('getVariableReferencesInQuery', () => {
 							],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -344,7 +349,7 @@ describe('getVariableReferencesInQuery', () => {
 		};
 
 		const result = getVariableReferencesInQuery(query, variableNames);
-		expect(result).toEqual(['deployment_environment', 'service_name']);
+		expect(result).toStrictEqual(['deployment_environment', 'service_name']);
 	});
 
 	it('detects variables in promql queries', () => {
@@ -363,7 +368,7 @@ describe('getVariableReferencesInQuery', () => {
 		};
 
 		const result = getVariableReferencesInQuery(query, variableNames);
-		expect(result).toEqual(['deployment_environment', 'endpoint']);
+		expect(result).toStrictEqual(['deployment_environment', 'endpoint']);
 	});
 
 	it('detects variables in clickhouse sql queries', () => {
@@ -381,7 +386,7 @@ describe('getVariableReferencesInQuery', () => {
 		};
 
 		const result = getVariableReferencesInQuery(query, variableNames);
-		expect(result).toEqual(['service_name']);
+		expect(result).toStrictEqual(['service_name']);
 	});
 
 	it('detects variables spread across multiple queryData entries', () => {
@@ -390,15 +395,15 @@ describe('getVariableReferencesInQuery', () => {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: {
 				queryData: [
-					({
+					{
 						filters: {
 							items: [{ id: '1', op: '=', value: '$service_name' }],
 							op: 'AND',
 						},
-					} as unknown) as IBuilderQuery,
-					({
+					} as unknown as IBuilderQuery,
+					{
 						filter: { expression: 'env = $deployment_environment' },
-					} as unknown) as IBuilderQuery,
+					} as unknown as IBuilderQuery,
 				],
 				queryFormulas: [],
 				queryTraceOperator: [],
@@ -406,7 +411,7 @@ describe('getVariableReferencesInQuery', () => {
 		};
 
 		const result = getVariableReferencesInQuery(query, variableNames);
-		expect(result).toEqual(['deployment_environment', 'service_name']);
+		expect(result).toStrictEqual(['deployment_environment', 'service_name']);
 	});
 
 	it('returns empty array when no variables are referenced', () => {
@@ -423,7 +428,7 @@ describe('getVariableReferencesInQuery', () => {
 			],
 		};
 
-		expect(getVariableReferencesInQuery(query, variableNames)).toEqual([]);
+		expect(getVariableReferencesInQuery(query, variableNames)).toStrictEqual([]);
 	});
 
 	it('returns empty array when variableNames list is empty', () => {
@@ -440,6 +445,6 @@ describe('getVariableReferencesInQuery', () => {
 			],
 		};
 
-		expect(getVariableReferencesInQuery(query, [])).toEqual([]);
+		expect(getVariableReferencesInQuery(query, [])).toStrictEqual([]);
 	});
 });

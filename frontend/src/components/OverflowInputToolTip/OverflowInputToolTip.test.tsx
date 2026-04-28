@@ -44,7 +44,7 @@ describe('OverflowInputToolTip', () => {
 		jest.restoreAllMocks();
 	});
 
-	test('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {
+	it('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {
 		mockOverflow(150, 250); // clientWidth >= maxAutoWidth (150), scrollWidth > clientWidth
 
 		render(<OverflowInputToolTip value="Very long overflowing text" />);
@@ -64,7 +64,7 @@ describe('OverflowInputToolTip', () => {
 		).toBeInTheDocument();
 	});
 
-	test('does NOT show tooltip when content does not overflow', async () => {
+	it('does NOT show tooltip when content does not overflow', async () => {
 		mockOverflow(150, 100); // content fits (scrollWidth <= clientWidth)
 
 		render(<OverflowInputToolTip value="Short text" />);
@@ -76,7 +76,7 @@ describe('OverflowInputToolTip', () => {
 		});
 	});
 
-	test('does NOT show tooltip when content overflows but input is NOT at maxAutoWidth', async () => {
+	it('does NOT show tooltip when content overflows but input is NOT at maxAutoWidth', async () => {
 		mockOverflow(100, 250); // clientWidth < maxAutoWidth (150), scrollWidth > clientWidth
 
 		render(<OverflowInputToolTip value="Long but input not clamped" />);
@@ -88,7 +88,7 @@ describe('OverflowInputToolTip', () => {
 		});
 	});
 
-	test('uncontrolled input allows typing', async () => {
+	it('uncontrolled input allows typing', async () => {
 		render(<OverflowInputToolTip defaultValue="Init" />);
 
 		const input = screen.getByRole('textbox') as HTMLInputElement;
@@ -97,7 +97,7 @@ describe('OverflowInputToolTip', () => {
 		expect(input).toHaveValue('InitABC');
 	});
 
-	test('disabled input never shows tooltip even if overflowing', async () => {
+	it('disabled input never shows tooltip even if overflowing', async () => {
 		mockOverflow(150, 300);
 
 		render(<OverflowInputToolTip value="Overflowing!" disabled />);
@@ -109,7 +109,7 @@ describe('OverflowInputToolTip', () => {
 		});
 	});
 
-	test('renders mirror span and input correctly (structural assertions instead of snapshot)', () => {
+	it('renders mirror span and input correctly (structural assertions instead of snapshot)', () => {
 		const { container } = render(<OverflowInputToolTip value="Snapshot" />);
 		const mirror = container.querySelector('.overflow-input-mirror');
 		const input = container.querySelector('input') as HTMLInputElement | null;

@@ -19,6 +19,7 @@ import {
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { openInNewTab } from 'utils/navigation';
 
 import {
 	convertToMilliseconds,
@@ -93,7 +94,7 @@ export function getColumns(
 											key={item}
 											className="traceid-text"
 											onClick={(): void => {
-												window.open(`${ROUTES.TRACE}/${item}`, '_blank');
+												openInNewTab(`${ROUTES.TRACE}/${item}`);
 												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
 													item,
 												});
@@ -123,7 +124,7 @@ export function getColumns(
 						onClick={(e): void => {
 							e.preventDefault();
 							e.stopPropagation();
-							window.open(`/services/${encodeURIComponent(text)}`, '_blank');
+							openInNewTab(`/services/${encodeURIComponent(text)}`);
 						}}
 					>
 						{text}
@@ -183,9 +184,10 @@ function DropRateView(): JSX.Element {
 		[tableData],
 	);
 
-	const evaluationTime = useMemo(() => convertToMilliseconds(interval), [
-		interval,
-	]);
+	const evaluationTime = useMemo(
+		() => convertToMilliseconds(interval),
+		[interval],
+	);
 	const tableApiPayload: MessagingQueueServicePayload = useMemo(
 		() => ({
 			start: minTime,

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { FeatureKeys } from 'constants/features';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { isEmpty } from 'lodash-es';
+import { useAppContext } from 'providers/App/App';
 
 import { jsonToDataNodes, recursiveParseJSON } from '../utils';
 
@@ -9,6 +12,7 @@ const MAX_BODY_BYTES = 100 * 1024; // 100 KB
 const useAsyncJSONProcessing = (
 	value: string,
 	shouldProcess: boolean,
+	handleChangeSelectedView?: ChangeViewFunctionType,
 ): {
 	isLoading: boolean;
 	treeData: any[] | null;
@@ -25,6 +29,10 @@ const useAsyncJSONProcessing = (
 	});
 
 	const processingRef = useRef<boolean>(false);
+	const { featureFlags } = useAppContext();
+	const isBodyJsonQueryEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
+			?.active || false;
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect((): (() => void) => {
@@ -47,7 +55,10 @@ const useAsyncJSONProcessing = (
 				try {
 					const parsedBody = recursiveParseJSON(value);
 					if (!isEmpty(parsedBody)) {
-						const treeData = jsonToDataNodes(parsedBody);
+						const treeData = jsonToDataNodes(parsedBody, {
+							isBodyJsonQueryEnabled,
+							handleChangeSelectedView,
+						});
 						setJsonState({ isLoading: false, treeData, error: null });
 					} else {
 						setJsonState({ isLoading: false, treeData: null, error: null });
@@ -73,7 +84,10 @@ const useAsyncJSONProcessing = (
 						try {
 							const parsedBody = recursiveParseJSON(value);
 							if (!isEmpty(parsedBody)) {
-								const treeData = jsonToDataNodes(parsedBody);
+								const treeData = jsonToDataNodes(parsedBody, {
+									isBodyJsonQueryEnabled,
+									handleChangeSelectedView,
+								});
 								setJsonState({ isLoading: false, treeData, error: null });
 							} else {
 								setJsonState({ isLoading: false, treeData: null, error: null });
@@ -101,7 +115,7 @@ const useAsyncJSONProcessing = (
 		return (): void => {
 			processingRef.current = false;
 		};
-	}, [value, shouldProcess]);
+	}, [value, shouldProcess, isBodyJsonQueryEnabled, handleChangeSelectedView]);
 
 	return jsonState;
 };

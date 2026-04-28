@@ -4,6 +4,7 @@ import type {
 	ReactNode,
 	RefObject,
 } from 'react';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type uPlot from 'uplot';
 
 import type { TooltipRenderArgs } from '../../components/types';
@@ -39,6 +40,7 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
+	groupBy?: BaseAutocompleteData[];
 }
 
 export interface TooltipPluginProps {
@@ -95,6 +97,11 @@ export interface TooltipControllerState {
 	verticalOffset: number;
 	seriesIndexes: Array<number | null>;
 	focusedSeriesIndex: number | null;
+	/** Receiver-side series filtering for Tooltip sync mode.
+	 * null  = no filtering (source panel or no groupBy configured)
+	 * []    = no matching series found → hide the synced tooltip
+	 * [...] = only these 1-based series indexes should appear in the synced tooltip */
+	syncedSeriesIndexes: number[] | null;
 	cursorDrivenBySync: boolean;
 	plotWithinViewport: boolean;
 	windowWidth: number;

@@ -62,10 +62,13 @@ export function ColumnUnitSelector(
 	};
 
 	useEffect(() => {
-		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
-			acc[query.value] = getValues(query.value);
-			return acc;
-		}, {} as Record<string, string>);
+		const newColumnUnits = aggregationQueries.reduce(
+			(acc, query) => {
+				acc[query.value] = getValues(query.value);
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 		setColumnUnits(newColumnUnits);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [aggregationQueries]);

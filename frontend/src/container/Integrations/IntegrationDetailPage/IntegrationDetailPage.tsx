@@ -32,25 +32,17 @@ function IntegrationDetailPage(): JSX.Element {
 		'overview',
 	);
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		refetch,
-		isRefetching,
-		isError,
-	} = useGetIntegration({
-		integrationId: integrationId || '',
-	});
+	const { data, isLoading, isFetching, refetch, isRefetching, isError } =
+		useGetIntegration({
+			integrationId: integrationId || '',
+		});
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const {
-		data: integrationStatus,
-		isLoading: isStatusLoading,
-	} = useGetIntegrationStatus({
-		integrationId: integrationId || '',
-	});
+	const { data: integrationStatus, isLoading: isStatusLoading } =
+		useGetIntegrationStatus({
+			integrationId: integrationId || '',
+		});
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
 	const integrationData = data?.data.data;

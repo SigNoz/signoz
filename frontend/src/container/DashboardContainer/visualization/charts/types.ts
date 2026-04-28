@@ -6,6 +6,7 @@ import {
 	DashboardCursorSync,
 	TooltipClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 interface BaseChartProps {
 	width: number;
@@ -38,26 +39,21 @@ interface UPlotBasedChartProps {
 interface UPlotChartDataProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
+	groupBy?: BaseAutocompleteData[];
 }
 
 export interface TimeSeriesChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	timezone?: Timezone;
 }
 
 export interface HistogramChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	isQueriesMerged?: boolean;
 }
 
 export interface BarChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps,
-		UPlotChartDataProps {
+	extends BaseChartProps, UPlotBasedChartProps, UPlotChartDataProps {
 	isStackedBarChart?: boolean;
 	timezone?: Timezone;
 }

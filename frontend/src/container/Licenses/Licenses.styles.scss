@@ -9,6 +9,8 @@
 
 		.licenses-page-header-title {
 			color: var(--l1-foreground);
+			background: var(--l1-background);
+			border-right: 1px solid var(--l1-border);
 			text-align: center;
 			font-family: Inter;
 			font-size: 13px;
@@ -50,41 +52,6 @@
 
 			&::-webkit-scrollbar-thumb:hover {
 				background: var(--l3-background);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.licenses-page {
-		.licenses-page-header {
-			border-bottom: 1px solid var(--l1-border);
-			background: var(--card);
-			backdrop-filter: blur(20px);
-
-			.licenses-page-header-title {
-				color: var(--l1-foreground);
-
-				background: var(--l1-background);
-				border-right: 1px solid var(--l1-border);
-			}
-		}
-
-		.licenses-page-content-container {
-			.licenses-page-content {
-				background: var(--l1-background);
-
-				&::-webkit-scrollbar-track {
-					background: transparent;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background: var(--l3-background);
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--l3-background);
-				}
 			}
 		}
 	}

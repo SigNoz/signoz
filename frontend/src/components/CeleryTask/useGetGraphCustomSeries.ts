@@ -9,7 +9,7 @@ import { paths } from './CeleryUtils';
 
 interface UseGetGraphCustomSeriesProps {
 	isDarkMode: boolean;
-	drawStyle?: typeof drawStyles[keyof typeof drawStyles];
+	drawStyle?: (typeof drawStyles)[keyof typeof drawStyles];
 	colorMapping?: Record<string, string>;
 }
 

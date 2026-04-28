@@ -17,6 +17,7 @@ export default function TimeSeriesTooltip(
 				uPlotInstance: props.uPlotInstance,
 				yAxisUnit: props.yAxisUnit ?? '',
 				decimalPrecision: props.decimalPrecision,
+				syncedSeriesIndexes: props.syncedSeriesIndexes,
 			}),
 		[
 			props.uPlotInstance,
@@ -24,6 +25,7 @@ export default function TimeSeriesTooltip(
 			props.dataIndexes,
 			props.yAxisUnit,
 			props.decimalPrecision,
+			props.syncedSeriesIndexes,
 		],
 	);
 

@@ -27,9 +27,8 @@ function SSOEnforcementToggle({
 		setIsChecked(isDefaultChecked);
 	}, [isDefaultChecked]);
 
-	const { mutate: updateAuthDomain, isLoading } = useUpdateAuthDomain<
-		AxiosError<RenderErrorResponseDTO>
-	>();
+	const { mutate: updateAuthDomain, isLoading } =
+		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	const onChangeHandler = (checked: boolean): void => {
 		if (!record.id) {

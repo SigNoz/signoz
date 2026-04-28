@@ -43,7 +43,7 @@ describe('useDashboardsListQueryParams', () => {
 				wrapper: createTestWrapper('/dashboard'),
 			});
 
-			expect(result.current.dashboardsListQueryParams).toEqual({
+			expect(result.current.dashboardsListQueryParams).toStrictEqual({
 				columnKey: 'updatedAt',
 				order: 'descend',
 				page: '1',
@@ -58,7 +58,7 @@ describe('useDashboardsListQueryParams', () => {
 				),
 			});
 
-			expect(result.current.dashboardsListQueryParams).toEqual({
+			expect(result.current.dashboardsListQueryParams).toStrictEqual({
 				columnKey: 'createdAt',
 				order: 'ascend',
 				page: '3',
@@ -116,7 +116,7 @@ describe('useDashboardsListQueryParams', () => {
 				result.current.updateDashboardsListQueryParams(updated);
 			});
 
-			expect(result.current.dashboardsListQueryParams).toEqual(updated);
+			expect(result.current.dashboardsListQueryParams).toStrictEqual(updated);
 		});
 
 		it('does not update state when params are identical', () => {
@@ -181,7 +181,7 @@ describe('useDashboardsListQueryParams', () => {
 			const storedParams = Object.fromEntries(
 				new URLSearchParams(stored || '').entries(),
 			);
-			expect(storedParams).toEqual(updated);
+			expect(storedParams).toStrictEqual(updated);
 		});
 
 		it('still calls safeNavigate even when params are unchanged', () => {

@@ -79,24 +79,25 @@ export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 };
 
 // Mock Auth Domain with useRoleAttribute enabled
-export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO = {
-	id: 'domain-5',
-	name: 'direct-role.com',
-	ssoEnabled: true,
-	ssoType: 'oidc',
-	oidcConfig: {
-		issuer: 'https://oidc.direct-role.com',
-		clientId: 'direct-role-client-id',
-		clientSecret: 'direct-role-client-secret',
-	},
-	roleMapping: {
-		defaultRole: 'VIEWER',
-		useRoleAttribute: true,
-	},
-	authNProviderInfo: {
-		relayStatePath: 'api/v1/sso/relay/domain-5',
-	},
-};
+export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO =
+	{
+		id: 'domain-5',
+		name: 'direct-role.com',
+		ssoEnabled: true,
+		ssoType: 'oidc',
+		oidcConfig: {
+			issuer: 'https://oidc.direct-role.com',
+			clientId: 'direct-role-client-id',
+			clientSecret: 'direct-role-client-secret',
+		},
+		roleMapping: {
+			defaultRole: 'VIEWER',
+			useRoleAttribute: true,
+		},
+		authNProviderInfo: {
+			relayStatePath: 'api/v1/sso/relay/domain-5',
+		},
+	};
 
 // Mock OIDC domain with claim mapping
 export const mockOidcWithClaimMapping: AuthtypesGettableAuthDomainDTO = {
@@ -146,27 +147,28 @@ export const mockSamlWithAttributeMapping: AuthtypesGettableAuthDomainDTO = {
 };
 
 // Mock Google Auth with workspace groups
-export const mockGoogleAuthWithWorkspaceGroups: AuthtypesGettableAuthDomainDTO = {
-	id: 'domain-8',
-	name: 'google-groups.com',
-	ssoEnabled: true,
-	ssoType: 'google_auth',
-	googleAuthConfig: {
-		clientId: 'google-groups-client-id',
-		clientSecret: 'google-groups-client-secret',
-		insecureSkipEmailVerified: false,
-		fetchGroups: true,
-		serviceAccountJson: '{"type": "service_account"}',
-		domainToAdminEmail: {
-			'google-groups.com': 'admin@google-groups.com',
+export const mockGoogleAuthWithWorkspaceGroups: AuthtypesGettableAuthDomainDTO =
+	{
+		id: 'domain-8',
+		name: 'google-groups.com',
+		ssoEnabled: true,
+		ssoType: 'google_auth',
+		googleAuthConfig: {
+			clientId: 'google-groups-client-id',
+			clientSecret: 'google-groups-client-secret',
+			insecureSkipEmailVerified: false,
+			fetchGroups: true,
+			serviceAccountJson: '{"type": "service_account"}',
+			domainToAdminEmail: {
+				'google-groups.com': 'admin@google-groups.com',
+			},
+			fetchTransitiveGroupMembership: true,
+			allowedGroups: ['allowed-group-1', 'allowed-group-2'],
 		},
-		fetchTransitiveGroupMembership: true,
-		allowedGroups: ['allowed-group-1', 'allowed-group-2'],
-	},
-	authNProviderInfo: {
-		relayStatePath: 'api/v1/sso/relay/domain-8',
-	},
-};
+		authNProviderInfo: {
+			relayStatePath: 'api/v1/sso/relay/domain-8',
+		},
+	};
 
 // Mock empty list response
 export const mockEmptyDomainsResponse = {

@@ -38,7 +38,7 @@ const buildSupersetQuery = (extras?: Record<string, unknown>): Query => ({
 });
 
 describe('handleQueryChange', () => {
-	test('sets list-specific fields when switching to LIST', () => {
+	it('sets list-specific fields when switching to LIST', () => {
 		const superset = buildSupersetQuery();
 		const output = handleQueryChange(
 			PANEL_TYPES.LIST as keyof PartialPanelTypes,
@@ -60,7 +60,7 @@ describe('handleQueryChange', () => {
 		expect(secondQuery.queryName).toBe('B');
 	});
 
-	test('resets noop and pagination when leaving LIST', () => {
+	it('resets noop and pagination when leaving LIST', () => {
 		const superset = buildSupersetQuery({
 			aggregateOperator: 'noop',
 			offset: 5,
