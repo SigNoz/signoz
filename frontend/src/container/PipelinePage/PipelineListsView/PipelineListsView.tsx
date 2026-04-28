@@ -51,6 +51,8 @@ import {
 	getElementFromArray,
 	getRecordIndex,
 	getTableColumn,
+	mapTagFilterToCanonicalOperators,
+	mapTagFilterToDeprecatedOperators,
 	getUpdatedRow,
 } from './utils';
 
@@ -104,10 +106,16 @@ function PipelineListsView({
 	const { notifications } = useNotifications();
 	const [pipelineSearchValue, setPipelineSearchValue] = useState<string>('');
 	const [prevPipelineData, setPrevPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
+		cloneDeep(pipelineData?.pipelines || []).map((p) => ({
+			...p,
+			filter: mapTagFilterToCanonicalOperators(p.filter),
+		})),
 	);
 	const [currPipelineData, setCurrPipelineData] = useState<Array<PipelineData>>(
-		cloneDeep(pipelineData?.pipelines || []),
+		cloneDeep(pipelineData?.pipelines || []).map((p) => ({
+			...p,
+			filter: mapTagFilterToCanonicalOperators(p.filter),
+		})),
 	);
 
 	const [expandedPipelineId, setExpandedPipelineId] = useState<
@@ -179,7 +187,10 @@ function PipelineListsView({
 		(record: PipelineData) => (): void => {
 			setActionType(ActionType.EditPipeline);
 			setSelectedPipelineData(record);
-			pipelineForm.setFieldsValue(record);
+			pipelineForm.setFieldsValue({
+				...record,
+				filter: mapTagFilterToCanonicalOperators(record.filter),
+			});
 		},
 		[setActionType, pipelineForm],
 	);
@@ -438,6 +449,7 @@ function PipelineListsView({
 		const modifiedPipelineData = currPipelineData.map((item: PipelineData) => {
 			const pipelineData = { ...item };
 			delete pipelineData?.id;
+			pipelineData.filter = mapTagFilterToDeprecatedOperators(pipelineData.filter);
 			return pipelineData;
 		});
 		try {
@@ -449,8 +461,12 @@ function PipelineListsView({
 			setShowSaveButton(undefined);
 
 			const pipelinesInDB = response.data?.pipelines || [];
-			setCurrPipelineData(pipelinesInDB);
-			setPrevPipelineData(pipelinesInDB);
+			const canonicalPipelinesInDB = pipelinesInDB.map((p) => ({
+				...p,
+				filter: mapTagFilterToCanonicalOperators(p.filter),
+			}));
+			setCurrPipelineData(canonicalPipelinesInDB);
+			setPrevPipelineData(canonicalPipelinesInDB);
 
 			// Log modified JSON flattening configurations
 			const modifiedConfigs = getModifiedJsonFlatteningConfigs();
