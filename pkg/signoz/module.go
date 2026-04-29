@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -102,6 +103,7 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	fl flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)

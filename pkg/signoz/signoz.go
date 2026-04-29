@@ -419,6 +419,7 @@ func New(
 		telemetrymetadata.DBName,
 		telemetrymetadata.AttributesMetadataLocalTableName,
 		telemetrymetadata.ColumnEvolutionMetadataTableName,
+		flagger,
 	)
 
 	global, err := factory.NewProviderFromNamedMap(
@@ -440,7 +441,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, cloudIntegrationModule)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, serviceAccount, cloudIntegrationModule, flagger)
 
 	// Initialize ruler from the variant-specific provider factories
 	rulerInstance, err := factory.NewProviderFromNamedMap(ctx, providerSettings, config.Ruler, rulerProviderFactories(cache, alertmanager, sqlstore, telemetrystore, telemetryMetadataStore, prometheus, orgGetter, modules.RuleStateHistory, querier, queryParser), "signoz")

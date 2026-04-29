@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/pkg/errors"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
@@ -314,6 +315,31 @@ type FlamegraphSpan struct {
 	Events       []Event           `json:"event"`
 	References   []OtelSpanRef     `json:"references,omitempty"`
 	Children     []*FlamegraphSpan `json:"children"`
+	Attributes   map[string]any    `json:"attributes,omitempty"`
+	Resource     map[string]string `json:"resource,omitempty"`
+}
+
+// SetRequestedFields extracts the requested attribute/resource fields from item into s.
+// This can eventually support missing fieldContext by checking both
+func (s *FlamegraphSpan) SetRequestedFields(item SpanItemV2, fields []telemetrytypes.TelemetryFieldKey) {
+	for _, field := range fields {
+		switch field.FieldContext {
+		case telemetrytypes.FieldContextResource:
+			if v, ok := item.Resources_string[field.Name]; ok && v != "" {
+				if s.Resource == nil {
+					s.Resource = make(map[string]string)
+				}
+				s.Resource[field.Name] = v
+			}
+		case telemetrytypes.FieldContextAttribute:
+			if v := item.AttributeValue(field.Name); v != nil {
+				if s.Attributes == nil {
+					s.Attributes = make(map[string]any)
+				}
+				s.Attributes[field.Name] = v
+			}
+		}
+	}
 }
 
 type GetWaterfallSpansForTraceWithMetadataResponse struct {

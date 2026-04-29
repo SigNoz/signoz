@@ -1,1 +1,1492 @@
-{}
+{
+  "description": "Out of the box dashboard for Azure CDN Profile.",
+  "image": "data:image/svg+xml;base64,PHN2ZyBpZD0iYjMwMGYwZDEtMmFkOC00NDE4LWExYzUtMjNkMGI5ZDIxODQxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiOGNhZDZmZC1lYzdmLTQ1ZTktYmUyYS0xMjVlOGI4N2JkMDMiIHgxPSIxMC43OSIgeTE9IjIuMTciIHgyPSIxMC43OSIgeTI9IjE2LjU2IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwLjE4IiBzdG9wLWNvbG9yPSIjNWVhMGVmIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMDA3OGQ0Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHRpdGxlPkljb24td2ViLTQzPC90aXRsZT48cmVjdCB4PSIzLjciIHk9IjUuNDkiIHdpZHRoPSIxLjE4IiBoZWlnaHQ9IjUuMjYiIHJ4PSIwLjUyIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMy44MyAxMi40MSkgcm90YXRlKC05MCkiIGZpbGw9IiNiM2IzYjMiLz48cmVjdCB4PSIyLjA0IiB5PSI3Ljg4IiB3aWR0aD0iMS4xOCIgaGVpZ2h0PSI1LjI2IiByeD0iMC41MiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTcuODggMTMuMTQpIHJvdGF0ZSgtOTApIiBmaWxsPSIjYTNhM2EzIi8+PHJlY3QgeD0iMy43IiB5PSIxMC4yNiIgd2lkdGg9IjEuMTgiIGhlaWdodD0iNS4yNiIgcng9IjAuNTIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC04LjYgMTcuMTkpIHJvdGF0ZSgtOTApIiBmaWxsPSIjN2E3YTdhIi8+PHBhdGggZD0iTTE4LDExYTMuMjgsMy4yOCwwLDAsMC0yLjgxLTMuMTgsNC4xMyw0LjEzLDAsMCwwLTQuMjEtNCw0LjIzLDQuMjMsMCwwLDAtNCwyLjgsMy44OSwzLjg5LDAsMCwwLTMuMzgsMy44LDQsNCwwLDAsMCw0LjA2LDMuODZsLjM2LDBoNi41OGwuMTcsMEEzLjMyLDMuMzIsMCwwLDAsMTgsMTFaIiBmaWxsPSJ1cmwoI2I4Y2FkNmZkLWVjN2YtNDVlOS1iZTJhLTEyNWU4Yjg3YmQwMykiLz48L3N2Zz4=",
+  "layout": [
+    {
+      "h": 1,
+      "i": "row-latency",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "w-totallatency",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "h": 6,
+      "i": "w-originlatency",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 1
+    },
+    {
+      "h": 6,
+      "i": "w-avgwsconnectionduration",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 7
+    },
+    {
+      "h": 1,
+      "i": "row-originhealth",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 13
+    },
+    {
+      "h": 6,
+      "i": "w-originhealthpercentage",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 14
+    },
+    {
+      "h": 1,
+      "i": "row-requeststatus",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "w-bytehitratio",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 21
+    },
+    {
+      "h": 6,
+      "i": "w-percentage4xx",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 21
+    },
+    {
+      "h": 6,
+      "i": "w-percentage5xx",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 27
+    },
+    {
+      "h": 1,
+      "i": "row-traffic",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 33
+    },
+    { "h": 6, "i": "w-requestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 34 },
+    { "h": 6, "i": "w-originrequestcount", "moved": false, "static": false, "w": 6, "x": 6, "y": 34 },
+    { "h": 6, "i": "w-requestsize", "moved": false, "static": false, "w": 6, "x": 0, "y": 40 },
+    { "h": 6, "i": "w-responsesize", "moved": false, "static": false, "w": 6, "x": 6, "y": 40 },
+    { "h": 6, "i": "w-activewebsocketconnections", "moved": false, "static": false, "w": 6, "x": 0, "y": 46 },
+    { "h": 6, "i": "w-websocketconnections", "moved": false, "static": false, "w": 6, "x": 6, "y": 46 },
+    { "h": 6, "i": "w-wafrequestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 52 },
+    { "h": 6, "i": "w-wafcaptcharequestcount", "moved": false, "static": false, "w": 6, "x": 6, "y": 52 },
+    { "h": 6, "i": "w-wafjsrequestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 58 }
+  ],
+  "panelMap": {
+    "row-latency": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "w-totallatency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "w-originlatency",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "w-avgwsconnectionduration",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 7
+        }
+      ]
+    },
+    "row-originhealth": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "w-originhealthpercentage",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 14
+        }
+      ]
+    },
+    "row-traffic": {
+      "collapsed": false,
+      "widgets": [
+        { "h": 6, "i": "w-requestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 34 },
+        { "h": 6, "i": "w-originrequestcount", "moved": false, "static": false, "w": 6, "x": 6, "y": 34 },
+        { "h": 6, "i": "w-requestsize", "moved": false, "static": false, "w": 6, "x": 0, "y": 40 },
+        { "h": 6, "i": "w-responsesize", "moved": false, "static": false, "w": 6, "x": 6, "y": 40 },
+        { "h": 6, "i": "w-activewebsocketconnections", "moved": false, "static": false, "w": 6, "x": 0, "y": 46 },
+        { "h": 6, "i": "w-websocketconnections", "moved": false, "static": false, "w": 6, "x": 6, "y": 46 },
+        { "h": 6, "i": "w-wafrequestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 52 },
+        { "h": 6, "i": "w-wafcaptcharequestcount", "moved": false, "static": false, "w": 6, "x": 6, "y": 52 },
+        { "h": 6, "i": "w-wafjsrequestcount", "moved": false, "static": false, "w": 6, "x": 0, "y": 58 }
+      ]
+    },
+    "row-requeststatus": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "w-bytehitratio",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 21
+        },
+        {
+          "h": 6,
+          "i": "w-percentage4xx",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 21
+        },
+        {
+          "h": 6,
+          "i": "w-percentage5xx",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 27
+        }
+      ]
+    }
+  },
+  "tags": [],
+  "title": "Azure CDN Profile Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "a1b2c3d4-0001-4000-8000-000000000001": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Subscription ID for your Azure Account",
+      "dynamicVariablesAttribute": "azuremonitor.subscription_id",
+      "dynamicVariablesSource": "Metrics",
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "key": "a1b2c3d4-0001-4000-8000-000000000001",
+      "modificationUUID": "a1b2c3d4-0001-4000-8000-000000000011",
+      "multiSelect": false,
+      "name": "azuremonitor.subscription_id",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "a1b2c3d4-0002-4000-8000-000000000002": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Resource Group for your resources",
+      "dynamicVariablesAttribute": "resource_group",
+      "dynamicVariablesSource": "Metrics",
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "key": "a1b2c3d4-0002-4000-8000-000000000002",
+      "modificationUUID": "a1b2c3d4-0002-4000-8000-000000000022",
+      "multiSelect": false,
+      "name": "resource_group",
+      "order": 1,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "a1b2c3d4-0003-4000-8000-000000000003": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the CDN Profile",
+      "dynamicVariablesAttribute": "name",
+      "dynamicVariablesSource": "Metrics",
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "modificationUUID": "a1b2c3d4-0003-4000-8000-000000000033",
+      "multiSelect": false,
+      "name": "cdnprofile",
+      "order": 2,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "id": "row-latency",
+      "panelTypes": "row",
+      "title": "Latency"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The time calculated from when the client request was received by the HTTP/S proxy until the client acknowledged the last response byte from the HTTP/S proxy.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-totallatency",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_totallatency_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f001-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f001-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f001-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f001-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-totallatency",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Total Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The time calculated from when the request was sent by AFDX edge to the backend until AFDX received the last response byte from the backend.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-originlatency",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_originlatency_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f002-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f002-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f002-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f002-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-originlatency",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Origin Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The average time taken by a WebSocket connection.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-avgwsconnectionduration",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_averagewebsocketconnectionduration_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f003-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f003-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f003-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f003-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-avgwsconnectionduration",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Avg WebSocket Connection Duration",
+      "yAxisUnit": "ms"
+    },
+    {
+      "id": "row-originhealth",
+      "panelTypes": "row",
+      "title": "Origin Health"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The percentage of successful health probes from AFDX to backends.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-originhealthpercentage",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_originhealthpercentage_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f004-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f004-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f004-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f004-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-originhealthpercentage",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Origin Health Percentage",
+      "yAxisUnit": "%"
+    },
+    {
+      "id": "row-requeststatus",
+      "panelTypes": "row",
+      "title": "Request Status"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The ratio of the total bytes served from the cache compared to the total response bytes.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-bytehitratio",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_bytehitratio_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f005-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f005-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f005-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f005-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-bytehitratio",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Byte Hit Ratio",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The percentage of all client requests for which the response status code is 4XX.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-percentage4xx",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_percentage4xx_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f006-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f006-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f006-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f006-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-percentage4xx",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "4XX Error Rate",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": { "linksData": [] },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The percentage of all client requests for which the response status code is 5XX.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "w-percentage5xx",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_percentage5xx_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "f007-name",
+                    "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" },
+                    "op": "IN",
+                    "value": "$cdnprofile"
+                  },
+                  {
+                    "id": "f007-sub",
+                    "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "f007-rg",
+                    "key": { "id": "resource_group", "key": "resource_group", "type": "" },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "f007-type",
+                    "key": { "id": "type", "key": "type", "type": "" },
+                    "op": "=",
+                    "value": "Microsoft.Cdn/profiles"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": { "expression": "" },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-percentage5xx",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "5XX Error Rate",
+      "yAxisUnit": "%"
+    },
+    {
+      "id": "row-traffic",
+      "panelTypes": "row",
+      "title": "Traffic"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of client requests served by the HTTP/S proxy.", "fillMode": "none", "fillSpans": false,
+      "id": "w-requestcount", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_requestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f008-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f008-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f008-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f008-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-requestcount",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "Request Count", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of requests sent from AFDX to origin.", "fillMode": "none", "fillSpans": false,
+      "id": "w-originrequestcount", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_originrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f009-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f009-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f009-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f009-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-originrequestcount",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "Origin Request Count", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of bytes sent as requests from clients to AFDX.", "fillMode": "none", "fillSpans": false,
+      "id": "w-requestsize", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_requestsize_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f010-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f010-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f010-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f010-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-requestsize",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "Request Size", "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of bytes sent as responses from HTTP/S proxy to clients.", "fillMode": "none", "fillSpans": false,
+      "id": "w-responsesize", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_responsesize_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f011-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f011-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f011-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f011-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-responsesize",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "Response Size", "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of active WebSocket connections.", "fillMode": "none", "fillSpans": false,
+      "id": "w-activewebsocketconnections", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_activewebsocketconnections_total", "reduceTo": "max", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "max" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f012-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f012-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f012-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f012-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-activewebsocketconnections",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "Active WebSocket Connections", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of WebSocket connections requested.", "fillMode": "none", "fillSpans": false,
+      "id": "w-websocketconnections", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_websocketconnections_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f013-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f013-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f013-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f013-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-websocketconnections",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "WebSocket Connections", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of client requests processed by the Web Application Firewall.", "fillMode": "none", "fillSpans": false,
+      "id": "w-wafrequestcount", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_webapplicationfirewallrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f014-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f014-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f014-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f014-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-wafrequestcount",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "WAF Request Count", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of CAPTCHA requests evaluated by the Web Application Firewall.", "fillMode": "none", "fillSpans": false,
+      "id": "w-wafcaptcharequestcount", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_webapplicationfirewallcaptcharequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f015-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f015-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f015-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f015-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-wafcaptcharequestcount",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "WAF CAPTCHA Request Count", "yAxisUnit": "{count}"
+    },
+    {
+      "bucketCount": 30, "bucketWidth": 0, "columnUnits": {}, "contextLinks": { "linksData": [] }, "customLegendColors": {},
+      "decimalPrecision": 2, "description": "The number of JS challenge requests evaluated by the Web Application Firewall.", "fillMode": "none", "fillSpans": false,
+      "id": "w-wafjsrequestcount", "isLogScale": false, "legendPosition": "bottom", "lineInterpolation": "spline", "lineStyle": "solid",
+      "mergeAllActiveQueries": false, "nullZeroValues": "zero", "opacity": "1", "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [{
+            "aggregations": [{ "metricName": "azure_webapplicationfirewalljsrequestcount_total", "reduceTo": "sum", "spaceAggregation": "sum", "temporality": "", "timeAggregation": "sum" }],
+            "dataSource": "metrics", "disabled": false, "expression": "A",
+            "filter": { "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $cdnprofile  AND type = 'Microsoft.Cdn/profiles'" },
+            "filters": { "items": [
+              { "id": "f016-name", "key": { "dataType": "string", "id": "name--string--", "key": "name", "type": "" }, "op": "IN", "value": "$cdnprofile" },
+              { "id": "f016-sub", "key": { "id": "azuremonitor.subscription_id", "key": "azuremonitor.subscription_id", "type": "" }, "op": "=", "value": "$azuremonitor.subscription_id" },
+              { "id": "f016-rg", "key": { "id": "resource_group", "key": "resource_group", "type": "" }, "op": "=", "value": "$resource_group" },
+              { "id": "f016-type", "key": { "id": "type", "key": "type", "type": "" }, "op": "=", "value": "Microsoft.Cdn/profiles" }
+            ], "op": "AND" },
+            "functions": [], "groupBy": [{ "dataType": "string", "id": "name--string--tag", "isColumn": false, "isJSON": false, "key": "name", "type": "tag" }],
+            "having": { "expression": "" }, "legend": "{{name}}", "limit": null, "orderBy": [], "queryName": "A", "source": "", "stepInterval": null
+          }],
+          "queryFormulas": [], "queryTraceOperator": []
+        },
+        "clickhouse_sql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "id": "q-w-wafjsrequestcount",
+        "promql": [{ "disabled": false, "legend": "", "name": "A", "query": "" }],
+        "queryType": "builder", "unit": ""
+      },
+      "selectedLogFields": [
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "timestamp", "signal": "logs", "type": "log" },
+        { "dataType": "", "fieldContext": "log", "fieldDataType": "", "isIndexed": false, "name": "body", "signal": "logs", "type": "log" }
+      ],
+      "selectedTracesFields": [
+        { "fieldContext": "resource", "fieldDataType": "string", "name": "service.name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "string", "name": "name", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "duration_nano", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "http_method", "signal": "traces" },
+        { "fieldContext": "span", "fieldDataType": "", "name": "response_status_code", "signal": "traces" }
+      ],
+      "showPoints": false, "softMax": 0, "softMin": 0, "spanGaps": true, "stackedBarChart": false, "thresholds": [],
+      "timePreferance": "GLOBAL_TIME", "title": "WAF JS Challenge Request Count", "yAxisUnit": "{count}"
+    }
+  ]
+}

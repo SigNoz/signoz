@@ -63,7 +63,9 @@ describe('TanStackCustomTableRow', () => {
 				</tbody>
 			</table>,
 		);
-		expect(await screen.findByTestId('mocked-row-cells')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('mocked-row-cells'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('applies active class when isRowActive returns true', () => {

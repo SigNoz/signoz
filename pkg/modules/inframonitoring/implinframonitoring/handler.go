@@ -45,3 +45,27 @@ func (h *handler) ListHosts(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, result)
 }
+
+func (h *handler) ListPods(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	var parsedReq inframonitoringtypes.PostablePods
+	if err := binding.JSON.BindBody(req.Body, &parsedReq); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.ListPods(req.Context(), orgID, &parsedReq)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}

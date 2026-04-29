@@ -196,6 +196,7 @@ export const getUplotClickData = ({
 	coord: { x: number; y: number };
 	record: { queryName: string; filters: FilterData[] };
 	label: string | React.ReactNode;
+	seriesColor?: string;
 } | null => {
 	if (!queryData?.queryName || !metric) {
 		return null;
@@ -208,6 +209,8 @@ export const getUplotClickData = ({
 
 	// Generate label from focusedSeries data
 	let label: string | React.ReactNode = '';
+	const seriesColor = focusedSeries?.color;
+
 	if (focusedSeries && focusedSeries.seriesName) {
 		label = (
 			<span style={{ color: focusedSeries.color }}>
@@ -223,6 +226,7 @@ export const getUplotClickData = ({
 		},
 		record,
 		label,
+		seriesColor,
 	};
 };
 
@@ -237,6 +241,7 @@ export const getPieChartClickData = (
 	queryName: string;
 	filters: FilterData[];
 	label: string | React.ReactNode;
+	seriesColor?: string;
 } | null => {
 	const { metric, queryName } = arc.data.record;
 	if (!queryName || !metric) {
@@ -248,6 +253,7 @@ export const getPieChartClickData = (
 		queryName,
 		filters: getFiltersFromMetric(metric), // TODO: add where clause query as well.
 		label,
+		seriesColor: arc.data.color,
 	};
 };
 

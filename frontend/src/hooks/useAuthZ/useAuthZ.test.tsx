@@ -70,7 +70,7 @@ describe('useAuthZ', () => {
 		});
 
 		expect(result.current.error).toBeNull();
-		expect(result.current.permissions).toEqual(expectedResponse);
+		expect(result.current.permissions).toStrictEqual(expectedResponse);
 	});
 
 	it('should handle API errors', async () => {
@@ -134,7 +134,7 @@ describe('useAuthZ', () => {
 		});
 
 		expect(requestCount).toBe(1);
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: {
 				isGranted: true,
 			},
@@ -147,7 +147,7 @@ describe('useAuthZ', () => {
 		});
 
 		expect(requestCount).toBe(2);
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: {
 				isGranted: true,
 			},
@@ -213,7 +213,7 @@ describe('useAuthZ', () => {
 
 		expect(result.current.isLoading).toBe(false);
 		expect(result.current.error).toBeNull();
-		expect(result.current.permissions).toEqual({});
+		expect(result.current.permissions).toStrictEqual({});
 	});
 
 	it('should send correct payload format to API', async () => {
@@ -317,13 +317,13 @@ describe('useAuthZ', () => {
 			object: { resource: { name: 'dashboard' }, selector: '456' },
 		});
 
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
-		expect(result2.current.permissions).toEqual({
+		expect(result2.current.permissions).toStrictEqual({
 			[permission2]: { isGranted: false },
 		});
-		expect(result3.current.permissions).toEqual({
+		expect(result3.current.permissions).toStrictEqual({
 			[permission3]: { isGranted: true },
 		});
 	});
@@ -427,7 +427,7 @@ describe('useAuthZ', () => {
 			expect(result.current.isLoading).toBe(false);
 		});
 
-		expect(result.current.permissions).toEqual({
+		expect(result.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 			[permission2]: { isGranted: false },
 			[permission3]: { isGranted: true },
@@ -466,7 +466,7 @@ describe('useAuthZ', () => {
 		);
 
 		expect(requestCount).toBe(1);
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
 
@@ -484,10 +484,10 @@ describe('useAuthZ', () => {
 		);
 
 		expect(requestCount).toBe(2);
-		expect(result1.current.permissions).toEqual({
+		expect(result1.current.permissions).toStrictEqual({
 			[permission1]: { isGranted: true },
 		});
-		expect(result2.current.permissions).toEqual({
+		expect(result2.current.permissions).toStrictEqual({
 			[permission2]: { isGranted: false },
 		});
 		expect(result1.current.permissions).not.toHaveProperty(permission2);

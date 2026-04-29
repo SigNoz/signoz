@@ -52,49 +52,49 @@ go.mod @therealpandey
 
 # Querier Owners
 
-/pkg/querier/ @srikanthccv
-/pkg/variables/ @srikanthccv
-/pkg/types/querybuildertypes/ @srikanthccv
-/pkg/types/telemetrytypes/ @srikanthccv
-/pkg/querybuilder/ @srikanthccv
-/pkg/telemetrylogs/ @srikanthccv
-/pkg/telemetrymetadata/ @srikanthccv
-/pkg/telemetrymetrics/ @srikanthccv
-/pkg/telemetrytraces/ @srikanthccv
+/pkg/querier/ @srikanthccv @therealpandey
+/pkg/variables/ @srikanthccv @therealpandey
+/pkg/types/querybuildertypes/ @srikanthccv @therealpandey
+/pkg/types/telemetrytypes/ @srikanthccv @therealpandey
+/pkg/querybuilder/ @srikanthccv @therealpandey
+/pkg/telemetrylogs/ @srikanthccv @therealpandey
+/pkg/telemetrymetadata/ @srikanthccv @therealpandey
+/pkg/telemetrymetrics/ @srikanthccv @therealpandey
+/pkg/telemetrytraces/ @srikanthccv @therealpandey
 
 # Metrics
 
-/pkg/types/metrictypes/ @srikanthccv
-/pkg/types/metricsexplorertypes/ @srikanthccv
-/pkg/modules/metricsexplorer/ @srikanthccv
-/pkg/prometheus/ @srikanthccv
+/pkg/types/metrictypes/ @srikanthccv @therealpandey
+/pkg/types/metricsexplorertypes/ @srikanthccv @therealpandey
+/pkg/modules/metricsexplorer/ @srikanthccv @therealpandey
+/pkg/prometheus/ @srikanthccv @therealpandey
 
 # APM
 
-/pkg/types/servicetypes/ @srikanthccv
-/pkg/types/apdextypes/ @srikanthccv
-/pkg/modules/apdex/ @srikanthccv
-/pkg/modules/services/ @srikanthccv
+/pkg/types/servicetypes/ @srikanthccv @therealpandey
+/pkg/types/apdextypes/ @srikanthccv @therealpandey
+/pkg/modules/apdex/ @srikanthccv @therealpandey
+/pkg/modules/services/ @srikanthccv @therealpandey
 
 # Dashboard
 
-/pkg/types/dashboardtypes/ @srikanthccv
-/pkg/modules/dashboard/ @srikanthccv
+/pkg/types/dashboardtypes/ @srikanthccv @therealpandey
+/pkg/modules/dashboard/ @srikanthccv @therealpandey
 
 # Rule/Alertmanager
 
-/pkg/types/ruletypes/ @srikanthccv
-/pkg/types/alertmanagertypes @srikanthccv
-/pkg/alertmanager/ @srikanthccv
-/pkg/ruler/ @srikanthccv
-/pkg/modules/rulestatehistory/ @srikanthccv
-/pkg/types/rulestatehistorytypes/ @srikanthccv
+/pkg/types/ruletypes/ @srikanthccv @therealpandey
+/pkg/types/alertmanagertypes @srikanthccv @therealpandey
+/pkg/alertmanager/ @srikanthccv @therealpandey
+/pkg/ruler/ @srikanthccv @therealpandey
+/pkg/modules/rulestatehistory/ @srikanthccv @therealpandey
+/pkg/types/rulestatehistorytypes/ @srikanthccv @therealpandey
 
 # Correlation-adjacent
 
-/pkg/contextlinks/ @srikanthccv
-/pkg/types/parsertypes/ @srikanthccv
-/pkg/queryparser/ @srikanthccv
+/pkg/contextlinks/ @srikanthccv @therealpandey
+/pkg/types/parsertypes/ @srikanthccv @therealpandey
+/pkg/queryparser/ @srikanthccv @therealpandey
 
 # AuthN / AuthZ Owners
 

@@ -93,6 +93,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
 		reader,
+		signoz.Flagger,
 	)
 	if err != nil {
 		return nil, err

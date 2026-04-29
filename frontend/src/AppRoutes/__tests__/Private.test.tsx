@@ -105,7 +105,7 @@ function createMockLicense(
 			status: '',
 			updated_at: '0',
 		},
-		state: LicenseState.ACTIVE,
+		state: LicenseState.ACTIVATED,
 		status: LicenseStatus.VALID,
 		platform: LicensePlatform.CLOUD,
 		created_at: '0',
@@ -931,7 +931,7 @@ describe('PrivateRoute', () => {
 					isFetchingActiveLicense: false,
 					activeLicense: createMockLicense({
 						platform: LicensePlatform.CLOUD,
-						state: LicenseState.ACTIVE,
+						state: LicenseState.ACTIVATED,
 					}),
 				},
 				isCloudUser: true,
@@ -1522,7 +1522,7 @@ describe('PrivateRoute', () => {
 					isFetchingActiveLicense: false,
 					activeLicense: createMockLicense({
 						platform: LicensePlatform.CLOUD,
-						state: LicenseState.ACTIVE,
+						state: LicenseState.ACTIVATED,
 					}),
 					trialInfo: createMockTrialInfo({ workSpaceBlock: false }),
 					user: createMockUser({ role: USER_ROLES.ADMIN as ROLES }),

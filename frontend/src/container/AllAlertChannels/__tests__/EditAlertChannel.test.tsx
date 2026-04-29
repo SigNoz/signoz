@@ -24,7 +24,7 @@ jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
 	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
-describe('Should check if the edit alert channel is properly displayed ', () => {
+describe('Should check if the edit alert channel is properly displayed', () => {
 	beforeEach(() => {
 		render(<EditAlertChannels initialValue={editAlertChannelInitialValue} />);
 	});
@@ -35,14 +35,14 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		expect(screen.getByText('page_title_edit')).toBeInTheDocument();
 	});
 
-	it('Should check if the name label and textbox are displayed properly ', () => {
+	it('Should check if the name label and textbox are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_channel_name',
 			testId: 'channel-name-textbox',
 			value: 'Dummy-Channel',
 		});
 	});
-	it('Should check if Send resolved alerts label and checkbox are displayed properly and the checkbox is checked ', () => {
+	it('Should check if Send resolved alerts label and checkbox are displayed properly and the checkbox is checked', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_send_resolved',
 			testId: 'field-send-resolved-checkbox',
@@ -61,7 +61,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		expect(screen.getByText('Slack')).toBeInTheDocument();
 	});
 
-	it('Should check if Webhook URL label and input are displayed properly ', () => {
+	it('Should check if Webhook URL label and input are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_webhook_url',
 			testId: 'webhook-url-textbox',
@@ -70,7 +70,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		});
 	});
 
-	it('Should check if Recepient label, input, and help text are displayed properly ', () => {
+	it('Should check if Recepient label, input, and help text are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_slack_recipient',
 			testId: 'slack-channel-textbox',
@@ -79,7 +79,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		});
 	});
 
-	it('Should check if Title label and text area are displayed properly ', () => {
+	it('Should check if Title label and text area are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_slack_title',
 			testId: 'title-textarea',
@@ -92,7 +92,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		expect(titleTextArea).toHaveTextContent(slackTitleDefaultValue);
 	});
 
-	it('Should check if Description label and text area are displayed properly ', () => {
+	it('Should check if Description label and text area are displayed properly', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_slack_description',
 			testId: 'description-textarea',

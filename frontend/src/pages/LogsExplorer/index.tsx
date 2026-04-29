@@ -98,7 +98,7 @@ function LogsExplorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {

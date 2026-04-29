@@ -20,7 +20,7 @@ jest.mock('../getSeriesData', () =>
 );
 
 describe('getUPlotChartOptions', () => {
-	test('should return uPlot options', () => {
+	it('should return uPlot options', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
 		expect(options.legend?.isolate).toBe(true);
 		expect(options.width).toBe(inputPropsTimeSeries.dimensions.width);
@@ -28,7 +28,7 @@ describe('getUPlotChartOptions', () => {
 		expect(options.series[1].label).toBe('A');
 	});
 
-	test('should return enhanced legend options when enabled', () => {
+	it('should return enhanced legend options when enabled', () => {
 		const options = getUPlotChartOptions({
 			...inputPropsTimeSeries,
 			enhancedLegend: true,
@@ -40,7 +40,7 @@ describe('getUPlotChartOptions', () => {
 		expect(Array.isArray(options.hooks?.ready)).toBe(true);
 	});
 
-	test('should adjust chart dimensions for right legend position', () => {
+	it('should adjust chart dimensions for right legend position', () => {
 		const options = getUPlotChartOptions({
 			...inputPropsTimeSeries,
 			enhancedLegend: true,
@@ -51,7 +51,7 @@ describe('getUPlotChartOptions', () => {
 		expect(options.height).toBe(inputPropsTimeSeries.dimensions.height);
 	});
 
-	test('should adjust chart dimensions for bottom legend position', () => {
+	it('should adjust chart dimensions for bottom legend position', () => {
 		const options = getUPlotChartOptions({
 			...inputPropsTimeSeries,
 			enhancedLegend: true,
@@ -62,39 +62,35 @@ describe('getUPlotChartOptions', () => {
 		expect(options.height).toBeLessThan(inputPropsTimeSeries.dimensions.height);
 	});
 
-	test('Should return line chart as drawStyle for time series', () => {
+	it('Should return line chart as drawStyle for time series', () => {
 		const options = getUPlotChartOptions(inputPropsTimeSeries);
-		// @ts-ignore
+		// @ts-expect-error
 		expect(options.series[1].drawStyle).toBe('line');
-		// @ts-ignore
+		// @ts-expect-error
 		expect(options.series[1].lineInterpolation).toBe('spline');
-		// @ts-ignore
 		expect(options.series[1].show).toBe(true);
 		expect(options.series[1].label).toBe('A');
 		expect(options.series[1].stroke).toBe('#6495ED');
 		expect(options.series[1].width).toBe(2);
 		expect(options.series[1].spanGaps).toBe(true);
-		// @ts-ignore
-		expect(options.series[1].points.size).toBe(5);
+		expect(options.series[1].points?.size).toBe(5);
 	});
 
-	test('should return bar chart as drawStyle for panel type bar', () => {
+	it('should return bar chart as drawStyle for panel type bar', () => {
 		const options = getUPlotChartOptions({
 			...inputPropsTimeSeries,
 			panelType: PANEL_TYPES.BAR,
 		});
-		// @ts-ignore
+		// @ts-expect-error
 		expect(options.series[1].drawStyle).toBe('bars');
-		// @ts-ignore
-		expect(options.series[1].lineInterpolation).toBe(null);
-		// @ts-ignore
+		// @ts-expect-error
+		expect(options.series[1].lineInterpolation).toBeNull();
 		expect(options.series[1].show).toBe(true);
 		expect(options.series[1].label).toBe('A');
 		expect(options.series[1].fill).toBe('#6495ED40');
 		expect(options.series[1].stroke).toBe('#6495ED');
 		expect(options.series[1].width).toBe(2);
 		expect(options.series[1].spanGaps).toBe(true);
-		// @ts-ignore
-		expect(options.series[1].points.size).toBe(5);
+		expect(options.series[1].points?.size).toBe(5);
 	});
 });

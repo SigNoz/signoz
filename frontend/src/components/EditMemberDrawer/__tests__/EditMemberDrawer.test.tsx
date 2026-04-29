@@ -361,9 +361,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /delete member/i }));
 
-		expect(
-			await screen.findByText(/are you sure you want to delete/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/are you sure you want to delete/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /delete member/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
@@ -441,9 +441,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
 
-		expect(
-			await screen.findByText(/Are you sure you want to revoke the invite/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Are you sure you want to revoke the invite/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /revoke invite/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);

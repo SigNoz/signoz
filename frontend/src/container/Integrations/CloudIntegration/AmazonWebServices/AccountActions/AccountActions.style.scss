@@ -1,0 +1,155 @@
+.hero-section {
+	&__actions {
+		margin-top: 12px;
+
+		&-with-account {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+			flex-wrap: wrap;
+			gap: 16px;
+
+			border-radius: 4px;
+			border: 1px solid var(--l3-background);
+			background: var(--l1-background);
+
+			.selected-cloud-integration-account-status {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-right: 1px solid var(--l3-background);
+				border-radius: none;
+				width: 32px;
+			}
+
+			&-selector-container {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+
+				.account-selector-label {
+					color: var(--l2-foreground);
+					font-size: 12px;
+					font-weight: 400;
+					line-height: 16px;
+					padding: 8px 16px;
+				}
+
+				.account-selector {
+					.ant-select {
+						background-color: transparent !important;
+						border: none !important;
+						box-shadow: none !important;
+
+						.ant-select-selector {
+							background: transparent !important;
+							border: none !important;
+							box-shadow: none !important;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	&__input-skeleton {
+		width: 300px;
+	}
+
+	&__new-account-button-skeleton {
+		width: 180px;
+		margin-right: 8px;
+	}
+
+	&__account-settings-button-skeleton {
+		width: 140px;
+	}
+
+	&__action-buttons {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__action-button {
+		font-family: 'Inter';
+		border-radius: 2px;
+		cursor: pointer;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		padding: 8px 17px;
+
+		&.primary {
+			background: var(--primary-background);
+			border: none;
+			color: var(--primary-foreground);
+		}
+
+		&.secondary {
+			display: flex;
+			align-items: center;
+			border: 1px solid var(--l1-border);
+			border-radius: 2px;
+			background: var(--l1-background);
+			box-shadow: none;
+			color: var(--l1-foreground);
+
+			&:hover {
+				border-color: var(--l1-border);
+				color: var(--l1-foreground);
+			}
+		}
+	}
+}
+
+.cloud-account-selector {
+	border-radius: 2px;
+	border: 1px solid var(--l3-background);
+	background: var(--l1-background);
+	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+
+	.ant-select-selector {
+		border-color: var(--l1-border) !important;
+		background: var(--l1-background) !important;
+		padding: 6px 8px !important;
+		min-width: 140px !important;
+	}
+
+	&.azure {
+		.ant-select-selector {
+			min-width: 282px !important;
+		}
+	}
+
+	.ant-select-item-option-active {
+		background: var(--l3-background) !important;
+	}
+	.ant-select-selection-item {
+		color: var(--l1-foreground);
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 16px;
+	}
+	&:hover {
+		.ant-select-selector {
+			border-color: var(--l1-border) !important;
+		}
+	}
+
+	.account-option-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		&__selected {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 14px;
+			width: 14px;
+			background-color: color-mix(in srgb, var(--border) 20%, transparent);
+			border-radius: 2px;
+		}
+	}
+}
