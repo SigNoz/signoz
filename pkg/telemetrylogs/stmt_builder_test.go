@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -15,7 +16,6 @@ import (
 )
 
 func TestStatementBuilderTimeSeries(t *testing.T) {
-
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	releaseTimeNano := uint64(releaseTime.UnixNano())
@@ -191,16 +191,17 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	fl := flaggertest.New(t)
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keysMap := buildCompleteFieldKeyMap(releaseTime)
 
 	mockMetadataStore.KeysMap = keysMap
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -210,6 +211,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -313,15 +315,16 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(fl)
 
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -331,6 +334,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -454,14 +458,15 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(fl)
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -471,6 +476,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -528,14 +534,15 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	fl := flaggertest.New(t)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper()
+	fm := NewFieldMapper(fl)
 	// Create a test release time
 	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -545,6 +552,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -624,11 +632,12 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	fm := NewFieldMapper()
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -638,6 +647,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -845,12 +855,13 @@ func TestAdjustKey(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
+	fl := flaggertest.New(t)
+	fm := NewFieldMapper(fl)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
-	cb := NewConditionBuilder(fm)
+	cb := NewConditionBuilder(fm, fl)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -860,6 +871,7 @@ func TestAdjustKey(t *testing.T) {
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	for _, c := range cases {
@@ -885,7 +897,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 		name                string
 		requestType         qbtypes.RequestType
 		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-		enableBodyJSONQuery bool
+		enableUseJSONBody bool
 		expected            qbtypes.Statement
 		expectedErr         error
 	}{
@@ -897,7 +909,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body Exists"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: true,
+			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
 				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE body_v2.message <> ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -913,7 +925,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body Exists"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: false,
+			enableUseJSONBody: false,
 			expected: qbtypes.Statement{
 				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE body <> ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -928,7 +940,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body == ''"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: true,
+			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
 				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE body_v2.message = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -944,7 +956,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body == ''"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: false,
+			enableUseJSONBody: false,
 			expected: qbtypes.Statement{
 				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE body = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -959,7 +971,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body CONTAINS 'error'"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: true,
+			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
 				Query:    "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE LOWER(body_v2.message) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:     []any{"%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -975,7 +987,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "body CONTAINS 'error'"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: false,
+			enableUseJSONBody: false,
 			expected: qbtypes.Statement{
 				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE LOWER(body) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"%error%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -984,25 +996,18 @@ func TestStmtBuilderBodyField(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-
-	enable, disable := jsonQueryTestUtil(t)
-	defer disable()
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if c.enableBodyJSONQuery {
-				enable()
-			} else {
-				disable()
-			}
-			// build the key map after enabling/disabling body JSON query
+			fl := flaggertest.WithUseJSONBody(t, c.enableUseJSONBody)
+			fm := NewFieldMapper(fl)
+			cb := NewConditionBuilder(fm, fl)
+			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			for _, field := range IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
@@ -1011,6 +1016,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				fl,
 			)
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
@@ -1036,7 +1042,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 		name                string
 		requestType         qbtypes.RequestType
 		query               qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-		enableBodyJSONQuery bool
+		enableUseJSONBody bool
 		expected            qbtypes.Statement
 		expectedErr         error
 	}{
@@ -1048,7 +1054,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "'error'"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: true,
+			enableUseJSONBody: true,
 			expected: qbtypes.Statement{
 				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body_v2.message), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -1063,7 +1069,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				Filter: &qbtypes.Filter{Expression: "'error'"},
 				Limit:  10,
 			},
-			enableBodyJSONQuery: false,
+			enableUseJSONBody: false,
 			expected: qbtypes.Statement{
 				Query: "SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE match(LOWER(body), LOWER(?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"error", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
@@ -1072,25 +1078,18 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-
-	enable, disable := jsonQueryTestUtil(t)
-	defer disable()
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if c.enableBodyJSONQuery {
-				enable()
-			} else {
-				disable()
-			}
-			// build the key map after enabling/disabling body JSON query
+			fl := flaggertest.WithUseJSONBody(t, c.enableUseJSONBody)
+			fm := NewFieldMapper(fl)
+			cb := NewConditionBuilder(fm, fl)
+			// build the key map
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			for _, field := range IntrinsicFields {
 				f := field
 				mockMetadataStore.KeysMap[field.Name] = append(mockMetadataStore.KeysMap[field.Name], &f)
 			}
-			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 			statementBuilder := NewLogQueryStatementBuilder(
 				instrumentationtest.New().ToProviderSettings(),
 				mockMetadataStore,
@@ -1099,6 +1098,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 				aggExprRewriter,
 				DefaultFullTextColumn,
 				GetBodyJSONKey,
+				fl,
 			)
 
 			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)

@@ -49,7 +49,7 @@ type HostFilter struct {
 	FilterByStatus HostStatus `json:"filterByStatus"`
 }
 
-// Validate ensures HostsListRequest contains acceptable values.
+// Validate ensures PostableHosts contains acceptable values.
 func (req *PostableHosts) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")

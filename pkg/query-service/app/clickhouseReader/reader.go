@@ -1154,7 +1154,13 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,links as references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
+		if len(req.SelectFields) > 0 {
+			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
+		}
+		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
+
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -1191,6 +1197,10 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				References:   ref,
 				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
+			}
+
+			if len(req.SelectFields) > 0 {
+				jsonItem.SetRequestedFields(item, req.SelectFields)
 			}
 
 			// metadata calculation

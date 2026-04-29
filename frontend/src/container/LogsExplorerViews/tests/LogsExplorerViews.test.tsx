@@ -183,7 +183,7 @@ describe('LogsExplorerViews -', () => {
 		// Test that the menu items are present
 		const expectedMenuItemsCount = 3;
 		const menuItems = document.querySelectorAll('.menu-items .item');
-		expect(menuItems.length).toBe(expectedMenuItemsCount);
+		expect(menuItems).toHaveLength(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing
 		expect(queryByTestId(periscopeDownloadButtonTestId)).toBeInTheDocument();
@@ -429,7 +429,7 @@ describe('LogsExplorerViews -', () => {
 					expect(first.groupBy?.length ?? 0).toBe(0);
 					expect(first.having?.expression).toBe('');
 					// Default orderBy should be timestamp desc, then id desc
-					expect(first.orderBy).toEqual([
+					expect(first.orderBy).toStrictEqual([
 						{ columnName: 'timestamp', order: 'desc' },
 						{ columnName: 'id', order: 'desc' },
 					]);

@@ -370,7 +370,7 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
-		const element = document.getElementById('top');
+		const element = document.querySelector('#top');
 		if (element) {
 			element.scrollIntoView({ behavior: 'smooth' });
 		}

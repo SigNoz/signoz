@@ -2474,6 +2474,97 @@ components:
       - requiredMetricsCheck
       - endTimeBeforeRetention
       type: object
+    InframonitoringtypesPodPhase:
+      enum:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - unknown
+      - ""
+      type: string
+    InframonitoringtypesPodRecord:
+      properties:
+        failedPodCount:
+          type: integer
+        meta:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        pendingPodCount:
+          type: integer
+        podAge:
+          format: int64
+          type: integer
+        podCPU:
+          format: double
+          type: number
+        podCPULimit:
+          format: double
+          type: number
+        podCPURequest:
+          format: double
+          type: number
+        podMemory:
+          format: double
+          type: number
+        podMemoryLimit:
+          format: double
+          type: number
+        podMemoryRequest:
+          format: double
+          type: number
+        podPhase:
+          $ref: '#/components/schemas/InframonitoringtypesPodPhase'
+        podUID:
+          type: string
+        runningPodCount:
+          type: integer
+        succeededPodCount:
+          type: integer
+        unknownPodCount:
+          type: integer
+      required:
+      - podUID
+      - podCPU
+      - podCPURequest
+      - podCPULimit
+      - podMemory
+      - podMemoryRequest
+      - podMemoryLimit
+      - podPhase
+      - pendingPodCount
+      - runningPodCount
+      - succeededPodCount
+      - failedPodCount
+      - unknownPodCount
+      - podAge
+      - meta
+      type: object
+    InframonitoringtypesPods:
+      properties:
+        endTimeBeforeRetention:
+          type: boolean
+        records:
+          items:
+            $ref: '#/components/schemas/InframonitoringtypesPodRecord'
+          nullable: true
+          type: array
+        requiredMetricsCheck:
+          $ref: '#/components/schemas/InframonitoringtypesRequiredMetricsCheck'
+        total:
+          type: integer
+        type:
+          $ref: '#/components/schemas/InframonitoringtypesResponseType'
+        warning:
+          $ref: '#/components/schemas/Querybuildertypesv5QueryWarnData'
+      required:
+      - type
+      - records
+      - total
+      - requiredMetricsCheck
+      - endTimeBeforeRetention
+      type: object
     InframonitoringtypesPostableHosts:
       properties:
         end:
@@ -2481,6 +2572,32 @@ components:
           type: integer
         filter:
           $ref: '#/components/schemas/InframonitoringtypesHostFilter'
+        groupBy:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        orderBy:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+        start:
+          format: int64
+          type: integer
+      required:
+      - start
+      - end
+      - limit
+      type: object
+    InframonitoringtypesPostablePods:
+      properties:
+        end:
+          format: int64
+          type: integer
+        filter:
+          $ref: '#/components/schemas/Querybuildertypesv5Filter'
         groupBy:
           items:
             $ref: '#/components/schemas/Querybuildertypesv5GroupByKey'
@@ -2933,8 +3050,8 @@ components:
       type: object
     PromotetypesWrappedIndex:
       properties:
-        column_type:
-          type: string
+        fieldDataType:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
         granularity:
           type: integer
         type:
@@ -4496,6 +4613,184 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
+    SpantypesFieldContext:
+      enum:
+      - attribute
+      - resource
+      type: string
+    SpantypesGettableSpanMapperGroups:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperGroup'
+          type: array
+      required:
+      - items
+      type: object
+    SpantypesPostableSpanMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+        name:
+          type: string
+      required:
+      - name
+      - field_context
+      - config
+      type: object
+    SpantypesPostableSpanMapperGroup:
+      properties:
+        category:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          type: boolean
+        name:
+          type: string
+      required:
+      - name
+      - category
+      - condition
+      type: object
+    SpantypesSpanMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+        group_id:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - group_id
+      - name
+      - field_context
+      - config
+      - enabled
+      type: object
+    SpantypesSpanMapperConfig:
+      properties:
+        sources:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanMapperSource'
+          nullable: true
+          type: array
+      required:
+      - sources
+      type: object
+    SpantypesSpanMapperGroup:
+      properties:
+        category:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - name
+      - category
+      - condition
+      - enabled
+      type: object
+    SpantypesSpanMapperGroupCategory:
+      type: object
+    SpantypesSpanMapperGroupCondition:
+      properties:
+        attributes:
+          items:
+            type: string
+          nullable: true
+          type: array
+        resource:
+          items:
+            type: string
+          nullable: true
+          type: array
+      required:
+      - attributes
+      - resource
+      type: object
+    SpantypesSpanMapperOperation:
+      enum:
+      - move
+      - copy
+      type: string
+    SpantypesSpanMapperSource:
+      properties:
+        context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+        key:
+          type: string
+        operation:
+          $ref: '#/components/schemas/SpantypesSpanMapperOperation'
+        priority:
+          type: integer
+      required:
+      - key
+      - context
+      - operation
+      - priority
+      type: object
+    SpantypesUpdatableSpanMapper:
+      properties:
+        config:
+          $ref: '#/components/schemas/SpantypesSpanMapperConfig'
+        enabled:
+          nullable: true
+          type: boolean
+        field_context:
+          $ref: '#/components/schemas/SpantypesFieldContext'
+      type: object
+    SpantypesUpdatableSpanMapperGroup:
+      properties:
+        condition:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
+        enabled:
+          nullable: true
+          type: boolean
+        name:
+          nullable: true
+          type: string
+      type: object
     TelemetrytypesFieldContext:
       enum:
       - metric
@@ -4603,6 +4898,11 @@ components:
       type: object
     TracedetailtypesGettableWaterfallTrace:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
+          nullable: true
+          type: array
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -4642,6 +4942,11 @@ components:
       type: object
     TracedetailtypesPostableWaterfall:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
+          nullable: true
+          type: array
         limit:
           minimum: 0
           type: integer
@@ -4653,6 +4958,32 @@ components:
           nullable: true
           type: array
       type: object
+    TracedetailtypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      type: object
+    TracedetailtypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      type: object
+    TracedetailtypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     TracedetailtypesWaterfallSpan:
       properties:
         attributes:
@@ -5001,7 +5332,12 @@ components:
       scheme: bearer
       type: http
 info:
+  contact:
+    email: support@signoz.io
+    name: SigNoz Support
+    url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  termsOfService: https://signoz.io/terms-of-service/
   title: SigNoz
   version: ""
 openapi: 3.0.3
@@ -9238,6 +9574,487 @@ paths:
       summary: Updates my service account
       tags:
       - serviceaccount
+  /api/v1/span_mapper_groups:
+    get:
+      deprecated: false
+      description: Returns all span attribute mapping groups for the authenticated
+        org.
+      operationId: ListSpanMapperGroups
+      parameters:
+      - explode: true
+        in: query
+        name: category
+        schema:
+          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
+        style: deepObject
+      - in: query
+        name: enabled
+        schema:
+          nullable: true
+          type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List span attribute mapping groups
+      tags:
+      - spanmapper
+    post:
+      deprecated: false
+      description: Creates a new span attribute mapping group for the org.
+      operationId: CreateSpanMapperGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapperGroup'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesSpanMapperGroup'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a span attribute mapping group
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/{groupId}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a mapping group and cascades to all its mappers.
+      operationId: DeleteSpanMapperGroup
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a span attribute mapping group
+      tags:
+      - spanmapper
+    patch:
+      deprecated: false
+      description: Partially updates an existing mapping group's name, condition,
+        or enabled state.
+      operationId: UpdateSpanMapperGroup
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesUpdatableSpanMapperGroup'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a span attribute mapping group
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/{groupId}/span_mappers:
+    get:
+      deprecated: false
+      description: Returns all mappers belonging to a mapping group.
+      operationId: ListSpanMappers
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesGettableSpanMapperGroups'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List span mappers for a group
+      tags:
+      - spanmapper
+    post:
+      deprecated: false
+      description: Adds a new mapper to the specified mapping group.
+      operationId: CreateSpanMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesPostableSpanMapper'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesSpanMapper'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Conflict
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create a span mapper
+      tags:
+      - spanmapper
+  /api/v1/span_mapper_groups/{groupId}/span_mappers/{mapperId}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a mapper from a mapping group.
+      operationId: DeleteSpanMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: mapperId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a span mapper
+      tags:
+      - spanmapper
+    patch:
+      deprecated: false
+      description: Partially updates an existing mapper's field context, config, or
+        enabled state.
+      operationId: UpdateSpanMapper
+      parameters:
+      - in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: mapperId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpantypesUpdatableSpanMapper'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update a span mapper
+      tags:
+      - spanmapper
   /api/v1/testChannel:
     post:
       deprecated: true
@@ -10227,7 +11044,9 @@ paths:
         five metrics, and pagination via offset/limit. The response type is ''list''
         for the default host.name grouping or ''grouped_list'' for custom groupBy
         keys. Also reports missing required metrics and whether the requested time
-        range falls before the data retention boundary.'
+        range falls before the data retention boundary. Numeric metric fields (cpu,
+        memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available
+        for that field.'
       operationId: ListHosts
       requestBody:
         content:
@@ -10279,6 +11098,79 @@ paths:
       - tokenizer:
         - VIEWER
       summary: List Hosts for Infra Monitoring
+      tags:
+      - inframonitoring
+  /api/v2/infra_monitoring/pods:
+    post:
+      deprecated: false
+      description: 'Returns a paginated list of Kubernetes pods with key metrics:
+        CPU usage, CPU request/limit utilization, memory working set, memory request/limit
+        utilization, current pod phase (pending/running/succeeded/failed/unknown),
+        and pod age (ms since start time). Each pod includes metadata attributes (namespace,
+        node, workload owner such as deployment/statefulset/daemonset/job/cronjob,
+        cluster). Supports filtering via a filter expression, custom groupBy to aggregate
+        pods by any attribute, ordering by any of the six metrics (cpu, cpu_request,
+        cpu_limit, memory, memory_request, memory_limit), and pagination via offset/limit.
+        The response type is ''list'' for the default k8s.pod.uid grouping (each row
+        is one pod with its current phase) or ''grouped_list'' for custom groupBy
+        keys (each row aggregates pods in the group with per-phase counts: pendingPodCount,
+        runningPodCount, succeededPodCount, failedPodCount, unknownPodCount derived
+        from each pod''s latest phase in the window). Also reports missing required
+        metrics and whether the requested time range falls before the data retention
+        boundary. Numeric metric fields (podCPU, podCPURequest, podCPULimit, podMemory,
+        podMemoryRequest, podMemoryLimit, podAge) return -1 as a sentinel when no
+        data is available for that field.'
+      operationId: ListPods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InframonitoringtypesPostablePods'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/InframonitoringtypesPods'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List Pods for Infra Monitoring
       tags:
       - inframonitoring
   /api/v2/livez:
@@ -16661,3 +17553,16 @@ paths:
       summary: Replace variables
       tags:
       - querier
+servers:
+- description: The fully qualified URL to the SigNoz APIServer.
+  url: https://{host}:{port}{base_path}
+  variables:
+    base_path:
+      default: /
+      description: The base path of the SigNoz APIServer
+    host:
+      default: localhost
+      description: The host of the SigNoz APIServer
+    port:
+      default: "8080"
+      description: The port of the SigNoz APIServer

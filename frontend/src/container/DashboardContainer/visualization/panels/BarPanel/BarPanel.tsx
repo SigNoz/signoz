@@ -125,6 +125,9 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		},
 		[],
 	);
+	const groupBy = useMemo(() => {
+		return widget.query.builder.queryData?.[0]?.groupBy;
+	}, [widget.query]);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
@@ -141,6 +144,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
+					groupBy={groupBy}
 					isStackedBarChart={widget.stackedBarChart ?? false}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}

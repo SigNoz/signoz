@@ -292,7 +292,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.selectedValue).toEqual(['prod']);
+			expect(result.data.variables.v1.selectedValue).toStrictEqual(['prod']);
 		});
 
 		it('looks up URL variable by variable id when name is absent', () => {
@@ -317,7 +317,7 @@ describe('useTransformDashboardVariables', () => {
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables).toEqual({});
+			expect(result.data.variables).toStrictEqual({});
 		});
 
 		it('does not mutate the original dashboard', () => {

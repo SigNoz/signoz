@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -18,7 +17,7 @@ type MockMetadataStore struct {
 	TemporalityMap             map[string]metrictypes.Temporality
 	TypeMap                    map[string]metrictypes.Type
 	PromotedPathsMap           map[string]bool
-	LogsJSONIndexesMap         map[string][]schemamigrator.Index
+	LogsJSONIndexes            []telemetrytypes.TelemetryFieldKeySkipIndex
 	ColumnEvolutionMetadataMap map[string][]*telemetrytypes.EvolutionEntry
 	LookupKeysMap              map[telemetrytypes.MetricMetadataLookupKey]int64
 	// StaticFields holds signal-specific intrinsic field definitions (e.g. telemetrylogs.IntrinsicFields).
@@ -34,7 +33,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		TemporalityMap:             make(map[string]metrictypes.Temporality),
 		TypeMap:                    make(map[string]metrictypes.Type),
 		PromotedPathsMap:           make(map[string]bool),
-		LogsJSONIndexesMap:         make(map[string][]schemamigrator.Index),
+		LogsJSONIndexes:            []telemetrytypes.TelemetryFieldKeySkipIndex{},
 		ColumnEvolutionMetadataMap: make(map[string][]*telemetrytypes.EvolutionEntry),
 		LookupKeysMap:              make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 		StaticFields:               make(map[string]telemetrytypes.TelemetryFieldKey),
@@ -369,8 +368,8 @@ func (m *MockMetadataStore) GetPromotedPaths(ctx context.Context, paths ...strin
 }
 
 // ListLogsJSONIndexes lists the JSON indexes for the logs table.
-func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error) {
-	return m.LogsJSONIndexesMap, nil
+func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]telemetrytypes.TelemetryFieldKeySkipIndex, error) {
+	return m.LogsJSONIndexes, nil
 }
 
 func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.EvolutionEntry {

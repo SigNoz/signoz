@@ -32,7 +32,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 	});
 
 	describe('Single Select Variables', () => {
-		test('should keep previous selection value', async () => {
+		it('should keep previous selection value', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -51,10 +51,10 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(await screen.findByText('option1')).toBeInTheDocument();
+			await expect(screen.findByText('option1')).resolves.toBeInTheDocument();
 		});
 
-		test('should auto-select first option when no previous and no default', async () => {
+		it('should auto-select first option when no previous and no default', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -74,12 +74,12 @@ describe('VariableItem Default Value Selection Behavior', () => {
 			});
 
 			// With the new variable select strategy, the first option is auto-selected
-			expect(await screen.findByText('option1')).toBeInTheDocument();
+			await expect(screen.findByText('option1')).resolves.toBeInTheDocument();
 		});
 	});
 
 	describe('Multi Select Variables with ALL enabled', () => {
-		test('should show ALL when all options are selected', async () => {
+		it('should show ALL when all options are selected', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -99,12 +99,12 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(await screen.findByText('ALL')).toBeInTheDocument();
+			await expect(screen.findByText('ALL')).resolves.toBeInTheDocument();
 		});
 	});
 
 	describe('Multi Select Variables with ALL disabled', () => {
-		test('should show placeholder when no selection', async () => {
+		it('should show placeholder when no selection', async () => {
 			const variable: IDashboardVariable = {
 				id: TEST_VARIABLE_ID,
 				name: TEST_VARIABLE_NAME,
@@ -123,7 +123,7 @@ describe('VariableItem Default Value Selection Behavior', () => {
 				expect(screen.getByTestId(VARIABLE_SELECT_TESTID)).toBeInTheDocument();
 			});
 
-			expect(await screen.findByText('Select value')).toBeInTheDocument();
+			await expect(screen.findByText('Select value')).resolves.toBeInTheDocument();
 		});
 	});
 });

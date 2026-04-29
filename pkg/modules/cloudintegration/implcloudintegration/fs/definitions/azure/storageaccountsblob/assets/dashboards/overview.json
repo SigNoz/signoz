@@ -1,1 +1,1986 @@
-{}
+{
+  "description": "Out of the box dashboard for Azure Blob Storage.",
+  "image": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJhOWM2MjMwNy0xY2QwLTQwMGMtOTExYi0xN2VjNmE5MTEwY2UiIHgxPSI5IiB5MT0iMTUuODM0IiB4Mj0iOSIgeTI9IjUuNzg4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMzJiZWRkIi8+PHN0b3Agb2Zmc2V0PSIwLjc3NSIgc3RvcC1jb2xvcj0iIzMyZDRmNSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0aXRsZT5Nc1BvcnRhbEZ4LmJhc2UuaW1hZ2VzLTc8L3RpdGxlPjxnIGlkPSJmMzFkMjE0ZS1mMDllLTQ5ZTMtYjNkMi03YzVkNTU2ODJkMDkiPjxnPjxwYXRoIGQ9Ik0uNSw1Ljc4OGgxN2EwLDAsMCwwLDEsMCwwdjkuNDc4YS41NjguNTY4LDAsMCwxLS41NjguNTY4SDEuMDY4QS41NjguNTY4LDAsMCwxLC41LDE1LjI2NlY1Ljc4OEEwLDAsMCwwLDEsLjUsNS43ODhaIiBmaWxsPSJ1cmwoI2E5YzYyMzA3LTFjZDAtNDAwYy05MTFiLTE3ZWM2YTkxMTBjZSkiLz48cGF0aCBkPSJNMS4wNzEsMi4xNjZIMTYuOTI5YS41NjguNTY4LDAsMCwxLC41NjguNTY4VjUuNzg4YTAsMCwwLDAsMSwwLDBILjVhMCwwLDAsMCwxLDAsMFYyLjczNEEuNTY4LjU2OCwwLDAsMSwxLjA3MSwyLjE2NloiIGZpbGw9IiMwMDc4ZDQiLz48cmVjdCB4PSIyLjMyOCIgeT0iNy4wNDkiIHdpZHRoPSI2LjI4MSIgaGVpZ2h0PSIzLjQwOCIgcng9IjAuMjgzIiBmaWxsPSIjMDA3OGQ0Ii8+PHJlY3QgeD0iOS4zMzYiIHk9IjcuMDQ5IiB3aWR0aD0iNi4yODEiIGhlaWdodD0iMy40MDgiIHJ4PSIwLjI4MyIgZmlsbD0iI2ZmZiIvPjxyZWN0IHg9IjIuMjk2IiB5PSIxMS4xMjgiIHdpZHRoPSI2LjI4MSIgaGVpZ2h0PSIzLjQwOCIgcng9IjAuMjgzIiBmaWxsPSIjMDA3OGQ0Ii8+PHJlY3QgeD0iOS4zMDQiIHk9IjExLjEyOCIgd2lkdGg9IjYuMjgxIiBoZWlnaHQ9IjMuNDA4IiByeD0iMC4yODMiIGZpbGw9IiMwMDc4ZDQiLz48L2c+PC9nPjwvc3ZnPg==",
+  "layout": [
+    {
+      "h": 1,
+      "i": "5905bfb8-2376-4385-8323-e02370c912d5",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "h": 6,
+      "i": "44c3d1ac-e374-4018-aecd-69817a4e6651",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "h": 6,
+      "i": "aefb8124-eee8-467b-b8db-366d92d91096",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 1
+    },
+    {
+      "h": 6,
+      "i": "6b22d520-339e-4e1e-98d0-511f6036a4ff",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 7
+    },
+    {
+      "h": 1,
+      "i": "f07e3d7e-0f0f-49c9-a69c-24ea4d6c9556",
+      "maxH": 1,
+      "minH": 1,
+      "minW": 12,
+      "moved": false,
+      "static": false,
+      "w": 12,
+      "x": 0,
+      "y": 13
+    },
+    {
+      "h": 6,
+      "i": "1cced153-1d0d-4081-9d17-981fc241f005",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 14
+    },
+    {
+      "h": 6,
+      "i": "f98fafa7-b4e2-40bd-b2e6-ef2187eef16c",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 14
+    },
+    {
+      "h": 6,
+      "i": "2d4950b8-e9d8-4750-a312-320c954610a6",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 0,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "abc1e732-4fa3-45b0-87ef-d115bc7abdb3",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 20
+    },
+    {
+      "h": 6,
+      "i": "ea31818a-d882-4a19-9bac-09fec3ec608e",
+      "w": 6,
+      "x": 0,
+      "y": 26
+    },
+    {
+      "h": 6,
+      "i": "b73c1da0-73b0-45e8-89c7-7308ffa472bf",
+      "w": 6,
+      "x": 6,
+      "y": 26
+    }
+  ],
+  "panelMap": {
+    "5905bfb8-2376-4385-8323-e02370c912d5": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "44c3d1ac-e374-4018-aecd-69817a4e6651",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "aefb8124-eee8-467b-b8db-366d92d91096",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 1
+        },
+        {
+          "h": 6,
+          "i": "6b22d520-339e-4e1e-98d0-511f6036a4ff",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 7
+        }
+      ]
+    },
+    "f07e3d7e-0f0f-49c9-a69c-24ea4d6c9556": {
+      "collapsed": false,
+      "widgets": [
+        {
+          "h": 6,
+          "i": "1cced153-1d0d-4081-9d17-981fc241f005",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 14
+        },
+        {
+          "h": 6,
+          "i": "f98fafa7-b4e2-40bd-b2e6-ef2187eef16c",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 14
+        },
+        {
+          "h": 6,
+          "i": "2d4950b8-e9d8-4750-a312-320c954610a6",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 0,
+          "y": 20
+        },
+        {
+          "h": 6,
+          "i": "abc1e732-4fa3-45b0-87ef-d115bc7abdb3",
+          "moved": false,
+          "static": false,
+          "w": 6,
+          "x": 6,
+          "y": 20
+        }
+      ]
+    }
+  },
+  "tags": [],
+  "title": "Azure Blob Storage Overview",
+  "uploadedGrafana": false,
+  "variables": {
+    "26b4bfd5-5100-434a-9e36-b66d989d3830": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Name of the storage account",
+      "dynamicVariablesAttribute": "name",
+      "dynamicVariablesSource": "Metrics",
+      "id": "26b4bfd5-5100-434a-9e36-b66d989d3830",
+      "modificationUUID": "aef85a5f-4e3b-4550-bc80-2c9d6d913a01",
+      "multiSelect": false,
+      "name": "storageaccount",
+      "order": 2,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "500d9daf-d3ab-4bec-bff7-2e716c389958": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Subscription ID for your Azure Account",
+      "dynamicVariablesAttribute": "azuremonitor.subscription_id",
+      "dynamicVariablesSource": "Metrics",
+      "id": "500d9daf-d3ab-4bec-bff7-2e716c389958",
+      "key": "500d9daf-d3ab-4bec-bff7-2e716c389958",
+      "modificationUUID": "d60e7dbb-5740-4d4a-8a65-9bbb1b8cf4aa",
+      "multiSelect": false,
+      "name": "azuremonitor.subscription_id",
+      "order": 0,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "c41c1e8e-81c3-44f1-a563-1fbc50b19308": {
+      "allSelected": false,
+      "customValue": "",
+      "defaultValue": "",
+      "description": "Resource Group for your resources",
+      "dynamicVariablesAttribute": "resource_group",
+      "dynamicVariablesSource": "Metrics",
+      "id": "c41c1e8e-81c3-44f1-a563-1fbc50b19308",
+      "key": "c41c1e8e-81c3-44f1-a563-1fbc50b19308",
+      "modificationUUID": "71e5473a-381e-4ce0-84c3-470317636a55",
+      "multiSelect": false,
+      "name": "resource_group",
+      "order": 1,
+      "queryValue": "",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    }
+  },
+  "version": "v5",
+  "widgets": [
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The amount of storage used by the storage account's Blob service in bytes.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "44c3d1ac-e374-4018-aecd-69817a4e6651",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_blobcapacity_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "e4fcdf44-7f3a-498a-a940-7e51c0ee0207",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "35a98ed2-e48d-4eb5-80e2-53452199c5a9",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "8c85d60a-985b-474d-b92a-0303fa02ba7d",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "d7f89445-ab8b-463e-8716-c96037c95abb",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Blob Capacity",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The number of blob objects stored in the storage account.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "6b22d520-339e-4e1e-98d0-511f6036a4ff",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_blobcount_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "d14f31c6-ad28-43cc-91a3-f7c18231c7e6",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "246f20e4-558c-4a69-9488-6fc3b0824264",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "a2a4fa45-7b95-4bd8-8737-1109215c489d",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4fef30d3-4c91-404c-a8cb-402eb542d2f4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Blob Count",
+      "yAxisUnit": "none"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The number of containers in the storage account.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "aefb8124-eee8-467b-b8db-366d92d91096",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_containercount_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "avg",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "08a10d11-770a-4518-9eed-1cede51180cc",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "7a1fe360-f53f-486a-9581-8f975aa9dfd8",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "3864e736-3761-4b6b-8715-5dba6f9eae53",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "742f960e-e60a-4409-a897-73612116ca0b",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Blob Container Count",
+      "yAxisUnit": "{count}"
+    },
+    {
+      "description": "",
+      "id": "f07e3d7e-0f0f-49c9-a69c-24ea4d6c9556",
+      "panelTypes": "row",
+      "title": "Transaction"
+    },
+    {
+      "description": "",
+      "id": "5905bfb8-2376-4385-8323-e02370c912d5",
+      "panelTypes": "row",
+      "title": "Capacity"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The percentage of availability for the storage service or the specified API operation.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "1cced153-1d0d-4081-9d17-981fc241f005",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_availability_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "min",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "2e256002-761e-46da-ab9a-8dc0f33ac187",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "cb12f76b-e16e-4d92-aa88-d1bccf1fe9c0",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "fb865049-0636-4851-9da5-3c61ddff26a2",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "name--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "name",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "a818dcca-59c8-4aaf-ad98-a31bbf2cab95",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Availability",
+      "yAxisUnit": "%"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The amount of egress data. This number includes egress to external client from Azure Storage as well as egress within Azure. As a result, this number does not reflect billable egress.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "f98fafa7-b4e2-40bd-b2e6-ef2187eef16c",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_egress_average",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "9716a7c9-ed42-4921-bad8-c5fb6b68fef2",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "2a7a68bf-9033-4494-b5c7-e82af92423e2",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "c9ea764d-b6af-4e93-b097-093ff562cc8e",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "name----",
+                  "key": "name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "name = {{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "aa8fb4f1-cf1c-4627-a5ef-bc8ebddc22f0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Egress",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The amount of ingress data, in bytes. This number includes ingress from an external client into Azure Storage as well as ingress within Azure.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "2d4950b8-e9d8-4750-a312-320c954610a6",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_ingress_average",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "c5bb4e0b-f88a-4041-85f7-cbc07b5073bc",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "2b3de77d-2fde-465d-ba7e-9d7be8b6853a",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "adf659d5-6609-4720-98d0-4129321b63f7",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "name----",
+                  "key": "name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "aa8fb4f1-cf1c-4627-a5ef-bc8ebddc22f0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Ingress",
+      "yAxisUnit": "By"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The average end-to-end latency of successful requests made to a storage service or the specified API operation, in milliseconds. This value includes the required processing time within Azure Storage to read the request, send the response, and receive acknowledgment of the response.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "abc1e732-4fa3-45b0-87ef-d115bc7abdb3",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_successe2elatency_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "725192d6-cdfa-466f-87b3-960980c26bc4",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "301cb143-a872-4b17-b335-cb638d8d7022",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "22b7d4ca-56b5-4bfc-b123-0f4988a961d0",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "name----",
+                  "key": "name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "aa8fb4f1-cf1c-4627-a5ef-bc8ebddc22f0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Success E2E Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The average time used to process a successful request by Azure Storage. This value does not include the network latency specified in SuccessE2ELatency.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "ea31818a-d882-4a19-9bac-09fec3ec608e",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_successserverlatency_average",
+                  "reduceTo": "avg",
+                  "spaceAggregation": "max",
+                  "temporality": "",
+                  "timeAggregation": "avg"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "cccb9c11-9e54-40e3-9b75-21a753f0651a",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "32b7a033-1da0-43da-83cf-0beb7fb6eb5d",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "77d3f853-9720-46a6-ac71-405ccd2d16e1",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "name----",
+                  "key": "name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "aa8fb4f1-cf1c-4627-a5ef-bc8ebddc22f0",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Success Server Latency",
+      "yAxisUnit": "ms"
+    },
+    {
+      "bucketCount": 30,
+      "bucketWidth": 0,
+      "columnUnits": {},
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "The number of requests made to a storage service or the specified API operation. This number includes successful and failed requests, as well as requests which produced errors. Use ResponseType dimension for the number of different type of response.",
+      "fillMode": "none",
+      "fillSpans": false,
+      "id": "b73c1da0-73b0-45e8-89c7-7308ffa472bf",
+      "isLogScale": false,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": false,
+      "nullZeroValues": "zero",
+      "opacity": "1",
+      "panelTypes": "graph",
+      "query": {
+        "builder": {
+          "queryData": [
+            {
+              "aggregations": [
+                {
+                  "metricName": "azure_transactions_total",
+                  "reduceTo": "sum",
+                  "spaceAggregation": "sum",
+                  "temporality": "",
+                  "timeAggregation": "sum"
+                }
+              ],
+              "dataSource": "metrics",
+              "disabled": false,
+              "expression": "A",
+              "filter": {
+                "expression": "azuremonitor.subscription_id = $azuremonitor.subscription_id AND resource_group = $resource_group AND name IN $storageaccount  AND type = 'Microsoft.Storage/storageAccounts/blobServices'"
+              },
+              "filters": {
+                "items": [
+                  {
+                    "id": "8ad4d515-5e1e-440c-870b-05315f919297",
+                    "key": {
+                      "dataType": "string",
+                      "id": "name--string--",
+                      "key": "name",
+                      "type": ""
+                    },
+                    "op": "IN",
+                    "value": "$storageaccount"
+                  },
+                  {
+                    "id": "bbef20d9-4b62-49a2-b522-079f814406ca",
+                    "key": {
+                      "id": "azuremonitor.subscription_id",
+                      "key": "azuremonitor.subscription_id",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$azuremonitor.subscription_id"
+                  },
+                  {
+                    "id": "ffbdf757-11b8-45d1-8190-50b4ec067839",
+                    "key": {
+                      "id": "resource_group",
+                      "key": "resource_group",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "$resource_group"
+                  },
+                  {
+                    "id": "65021cbd-add8-44c3-b5a3-16e1c582ccbb",
+                    "key": {
+                      "id": "type",
+                      "key": "type",
+                      "type": ""
+                    },
+                    "op": "=",
+                    "value": "Microsoft.Storage/storageAccounts/blobServices"
+                  }
+                ],
+                "op": "AND"
+              },
+              "functions": [],
+              "groupBy": [
+                {
+                  "dataType": "",
+                  "id": "name----",
+                  "key": "name",
+                  "type": ""
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{name}}",
+              "limit": null,
+              "orderBy": [],
+              "queryName": "A",
+              "source": "",
+              "stepInterval": null
+            }
+          ],
+          "queryFormulas": [],
+          "queryTraceOperator": []
+        },
+        "clickhouse_sql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "id": "4eb41b96-d18f-4082-b03e-70606c7544f4",
+        "promql": [
+          {
+            "disabled": false,
+            "legend": "",
+            "name": "A",
+            "query": ""
+          }
+        ],
+        "queryType": "builder",
+        "unit": ""
+      },
+      "selectedLogFields": [
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "timestamp",
+          "signal": "logs",
+          "type": "log"
+        },
+        {
+          "dataType": "",
+          "fieldContext": "log",
+          "fieldDataType": "",
+          "isIndexed": false,
+          "name": "body",
+          "signal": "logs",
+          "type": "log"
+        }
+      ],
+      "selectedTracesFields": [
+        {
+          "fieldContext": "resource",
+          "fieldDataType": "string",
+          "name": "service.name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "string",
+          "name": "name",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "duration_nano",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "http_method",
+          "signal": "traces"
+        },
+        {
+          "fieldContext": "span",
+          "fieldDataType": "",
+          "name": "response_status_code",
+          "signal": "traces"
+        }
+      ],
+      "showPoints": false,
+      "softMax": 0,
+      "softMin": 0,
+      "spanGaps": true,
+      "stackedBarChart": false,
+      "thresholds": [],
+      "timePreferance": "GLOBAL_TIME",
+      "title": "Transactions",
+      "yAxisUnit": "{count}"
+    }
+  ],
+  "uuid": "019dba4f-c877-7dba-8a33-4f3eebe06b00"
+}

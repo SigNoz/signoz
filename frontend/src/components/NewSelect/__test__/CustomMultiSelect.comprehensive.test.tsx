@@ -61,7 +61,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 1. CUSTOM VALUES SUPPORT =====
 	describe('Custom Values Support (CS)', () => {
-		test('CS-01: Custom values persist in selected state', async () => {
+		it('CS-01: Custom values persist in selected state', async () => {
 			const { rerender } = renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -87,7 +87,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(screen.getByText('another-custom')).toBeInTheDocument();
 		});
 
-		test('CS-02: Partial matches create custom values', async () => {
+		it('CS-02: Partial matches create custom values', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -129,7 +129,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(combobox).toBeInTheDocument();
 		});
 
-		test('CS-03: Exact match filtering behavior', async () => {
+		it('CS-03: Exact match filtering behavior', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -176,7 +176,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('CS-04: Search filtering with "end" pattern', async () => {
+		it('CS-04: Search filtering with "end" pattern', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -234,7 +234,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('CS-05: Comma-separated values behavior', async () => {
+		it('CS-05: Comma-separated values behavior', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -281,7 +281,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 2. SEARCH AND FILTERING =====
 	describe('Search and Filtering (SF)', () => {
-		test('SF-01: Selected values pushed to top', async () => {
+		it('SF-01: Selected values pushed to top', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -305,7 +305,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-02: Filtering with search text', async () => {
+		it('SF-02: Filtering with search text', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -350,7 +350,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-03: Highlighting search matches', async () => {
+		it('SF-03: Highlighting search matches', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -381,7 +381,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SF-04: Search with no results', async () => {
+		it('SF-04: Search with no results', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -424,7 +424,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 3. KEYBOARD NAVIGATION =====
 	describe('Keyboard Navigation (KN)', () => {
-		test('KN-01: Arrow key navigation in dropdown', async () => {
+		it('KN-01: Arrow key navigation in dropdown', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -465,7 +465,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-02: Tab navigation to dropdown', async () => {
+		it('KN-02: Tab navigation to dropdown', async () => {
 			renderWithVirtuoso(
 				<div>
 					<input data-testid="prev-input" />
@@ -515,7 +515,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('KN-03: Enter selection in dropdown', async () => {
+		it('KN-03: Enter selection in dropdown', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -540,7 +540,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(mockOnChange).toHaveBeenCalledWith(['frontend'], ['frontend']);
 		});
 
-		test('KN-04: Chip deletion with keyboard', async () => {
+		it('KN-04: Chip deletion with keyboard', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -586,7 +586,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 5. UI/UX BEHAVIORS =====
 	describe('UI/UX Behaviors (UI)', () => {
-		test('UI-01: Loading state does not block interaction', async () => {
+		it('UI-01: Loading state does not block interaction', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -603,7 +603,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-02: Component remains editable in all states', async () => {
+		it('UI-02: Component remains editable in all states', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -634,7 +634,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(combobox).not.toBeDisabled();
 		});
 
-		test('UI-03: Toggle/Only labels in dropdown', async () => {
+		it('UI-03: Toggle/Only labels in dropdown', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -656,7 +656,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-04: Should display values with loading info at bottom', async () => {
+		it('UI-04: Should display values with loading info at bottom', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -677,7 +677,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-05: Error state display in footer', async () => {
+		it('UI-05: Error state display in footer', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -696,7 +696,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('UI-06: No data state display', async () => {
+		it('UI-06: No data state display', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={[]}
@@ -716,7 +716,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 6. CLEAR ACTIONS =====
 	describe('Clear Actions (CA)', () => {
-		test('CA-01: Ctrl+A selects all chips', async () => {
+		it('CA-01: Ctrl+A selects all chips', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -760,7 +760,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('CA-02: Clear icon removes all selections', async () => {
+		it('CA-02: Clear icon removes all selections', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -777,7 +777,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			}
 		});
 
-		test('CA-03: Individual chip removal', async () => {
+		it('CA-03: Individual chip removal', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -790,7 +790,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			const removeButtons = document.querySelectorAll(
 				'.ant-select-selection-item-remove',
 			);
-			expect(removeButtons.length).toBe(2);
+			expect(removeButtons).toHaveLength(2);
 
 			await user.click(removeButtons[1] as Element);
 
@@ -804,7 +804,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 7. SAVE AND SELECTION TRIGGERS =====
 	describe('Save and Selection Triggers (ST)', () => {
-		test('ST-01: ESC triggers save action', async () => {
+		it('ST-01: ESC triggers save action', async () => {
 			const mockDropdownChange = jest.fn();
 
 			renderWithVirtuoso(
@@ -837,7 +837,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('ST-02: Mouse selection works', async () => {
+		it('ST-02: Mouse selection works', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -859,7 +859,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			);
 		});
 
-		test('ST-03: ENTER in input field creates custom value', async () => {
+		it('ST-03: ENTER in input field creates custom value', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -892,7 +892,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('ST-04: Search text persistence', async () => {
+		it('ST-04: Search text persistence', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -932,7 +932,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 8. SPECIAL OPTIONS AND STATES =====
 	describe('Special Options and States (SO)', () => {
-		test('SO-01: ALL option appears first and separated', async () => {
+		it('SO-01: ALL option appears first and separated', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -954,7 +954,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('SO-02: ALL selection behavior', async () => {
+		it('SO-02: ALL selection behavior', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -981,7 +981,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			);
 		});
 
-		test('SO-03: ALL tag display when all selected', () => {
+		it('SO-03: ALL tag display when all selected', () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -996,7 +996,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(screen.queryByText('frontend')).not.toBeInTheDocument();
 		});
 
-		test('SO-04: Footer information display', async () => {
+		it('SO-04: Footer information display', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1017,7 +1017,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== GROUPED OPTIONS SUPPORT =====
 	describe('Grouped Options Support', () => {
-		test('handles grouped options correctly', async () => {
+		it('handles grouped options correctly', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockGroupedOptions} onChange={mockOnChange} />,
 			);
@@ -1041,7 +1041,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== ACCESSIBILITY TESTS =====
 	describe('Accessibility', () => {
-		test('has proper ARIA attributes', async () => {
+		it('has proper ARIA attributes', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1058,7 +1058,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('supports screen reader navigation', async () => {
+		it('supports screen reader navigation', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1079,7 +1079,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 9. ADVANCED KEYBOARD NAVIGATION =====
 	describe('Advanced Keyboard Navigation (AKN)', () => {
-		test('AKN-01: Shift + Arrow + Del chip deletion', async () => {
+		it('AKN-01: Shift + Arrow + Del chip deletion', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -1137,7 +1137,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(combobox).toHaveFocus();
 		});
 
-		test('AKN-03: Mouse out closes dropdown', async () => {
+		it('AKN-03: Mouse out closes dropdown', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1164,7 +1164,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 10. ADVANCED FILTERING AND HIGHLIGHTING =====
 	describe('Advanced Filtering and Highlighting (AFH)', () => {
-		test('AFH-01: Highlighted values pushed to top', async () => {
+		it('AFH-01: Highlighted values pushed to top', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1220,7 +1220,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('AFH-02: Distinction between selection Enter and save Enter', async () => {
+		it('AFH-02: Distinction between selection Enter and save Enter', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1267,7 +1267,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 11. ADVANCED CLEAR ACTIONS =====
 	describe('Advanced Clear Actions (ACA)', () => {
-		test('ACA-01: Clear action waiting behavior', async () => {
+		it('ACA-01: Clear action waiting behavior', async () => {
 			const mockOnChangeWithDelay = jest.fn().mockImplementation(
 				() =>
 					new Promise<void>((resolve) => {
@@ -1300,7 +1300,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 12. ADVANCED UI STATES =====
 	describe('Advanced UI States (AUS)', () => {
-		test('AUS-01: No data with previous value selected', async () => {
+		it('AUS-01: No data with previous value selected', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={[]}
@@ -1322,7 +1322,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(screen.getByText('previous-value')).toBeInTheDocument();
 		});
 
-		test('AUS-02: Always editable accessibility', async () => {
+		it('AUS-02: Always editable accessibility', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} loading />,
 			);
@@ -1338,7 +1338,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			expect(combobox).not.toBeDisabled();
 		});
 
-		test('AUS-03: Sufficient space for search value', async () => {
+		it('AUS-03: Sufficient space for search value', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
@@ -1372,7 +1372,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 13. REGEX AND CUSTOM VALUES =====
 	describe('Regex and Custom Values (RCV)', () => {
-		test('RCV-01: Regex pattern support', async () => {
+		it('RCV-01: Regex pattern support', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect
 					options={mockOptions}
@@ -1418,7 +1418,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 		});
 
-		test('RCV-02: Custom values treated as normal dropdown values', async () => {
+		it('RCV-02: Custom values treated as normal dropdown values', async () => {
 			const customOptions = [
 				...mockOptions,
 				{ label: 'custom-value', value: 'custom-value', type: 'custom' as const },
@@ -1456,7 +1456,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 	// ===== 14. DROPDOWN PERSISTENCE =====
 	describe('Dropdown Persistence (DP)', () => {
-		test('DP-01: Dropdown stays open for non-save actions', async () => {
+		it('DP-01: Dropdown stays open for non-save actions', async () => {
 			renderWithVirtuoso(
 				<CustomMultiSelect options={mockOptions} onChange={mockOnChange} />,
 			);
