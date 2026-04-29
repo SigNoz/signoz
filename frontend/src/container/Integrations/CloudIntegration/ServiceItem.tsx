@@ -1,7 +1,7 @@
 import cx from 'classnames';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 
-import { Service } from './types';
+import { Service } from './AmazonWebServices/types';
 
 function ServiceItem({
 	service,

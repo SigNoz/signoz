@@ -9,10 +9,10 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { Save } from 'lucide-react';
 
-import logEvent from '../../../../../../api/common/logEvent';
-import { CloudAccount } from '../../types';
-import { RegionSelector } from './RegionSelector';
-import RemoveIntegrationAccount from './RemoveIntegrationAccount';
+import logEvent from '../../../../../api/common/logEvent';
+import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
+import { RegionSelector } from '../RegionForm/RegionSelector';
+import { CloudAccount } from '../types';
 
 import './AccountSettingsModal.style.scss';
 
@@ -110,11 +110,7 @@ function AccountSettingsModal({
 		form,
 		selectedRegions,
 		includeAllRegions,
-		account?.id,
-		handleRemoveIntegrationAccountSuccess,
-		isSaveDisabled,
-		handleSubmit,
-		isLoading,
+		account?.providerAccountId,
 		setSelectedRegions,
 		setIncludeAllRegions,
 	]);
@@ -133,6 +129,7 @@ function AccountSettingsModal({
 			<RemoveIntegrationAccount
 				accountId={account?.id}
 				onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+				cloudProvider={INTEGRATION_TYPES.AWS}
 			/>
 
 			<Button
