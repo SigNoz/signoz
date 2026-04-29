@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -16,9 +15,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 )
 
-func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) querier.Querier {
+func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.TelemetryStore) (querier.Querier, *telemetrytypestest.MockMetadataStore) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -47,15 +48,16 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // prometheus
 		nil, // traceStmtBuilder
 		nil, // logStmtBuilder
+		nil, // auditStmtBuilder
 		metricStmtBuilder,
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
-	)
+	), metadataStore
 }
 
-func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
-
+func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+	t.Helper()
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
 
@@ -66,35 +68,26 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 	}
 	metadataStore.KeysMap = keysMap
 
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-
-	logFieldMapper := telemetrylogs.NewFieldMapper()
-	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
-	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		providerSettings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		metadataStore,
-		telemetrylogs.DefaultFullTextColumn,
-		telemetrylogs.GetBodyJSONKey,
-	)
+	fl := flaggertest.New(t)
+	logFieldMapper := telemetrylogs.NewFieldMapper(fl)
+	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper, fl)
 	logAggExprRewriter := querybuilder.NewAggExprRewriter(
 		providerSettings,
 		telemetrylogs.DefaultFullTextColumn,
 		logFieldMapper,
 		logConditionBuilder,
 		telemetrylogs.GetBodyJSONKey,
+		fl,
 	)
 	logStmtBuilder := telemetrylogs.NewLogQueryStatementBuilder(
 		providerSettings,
 		metadataStore,
 		logFieldMapper,
 		logConditionBuilder,
-		logResourceFilterStmtBuilder,
 		logAggExprRewriter,
 		telemetrylogs.DefaultFullTextColumn,
 		telemetrylogs.GetBodyJSONKey,
+		fl,
 	)
 
 	return querier.New(
@@ -104,6 +97,7 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 		nil,            // prometheus
 		nil,            // traceStmtBuilder
 		logStmtBuilder, // logStmtBuilder
+		nil,            // auditStmtBuilder
 		nil,            // metricStmtBuilder
 		nil,            // meterStmtBuilder
 		nil,            // traceOperatorStmtBuilder
@@ -111,7 +105,8 @@ func prepareQuerierForLogs(telemetryStore telemetrystore.TelemetryStore, keysMap
 	)
 }
 
-func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.TelemetryStore, keysMap map[string][]*telemetrytypes.TelemetryFieldKey) querier.Querier {
+	t.Helper()
 
 	providerSettings := instrumentationtest.New().ToProviderSettings()
 	metadataStore := telemetrytypestest.NewMockMetadataStore()
@@ -127,24 +122,16 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
-		providerSettings,
-		resourceFilterFieldMapper,
-		resourceFilterConditionBuilder,
-		metadataStore,
-	)
-
-	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil)
+	fl := flaggertest.New(t)
+	traceAggExprRewriter := querybuilder.NewAggExprRewriter(providerSettings, nil, traceFieldMapper, traceConditionBuilder, nil, fl)
 	traceStmtBuilder := telemetrytraces.NewTraceQueryStatementBuilder(
 		providerSettings,
 		metadataStore,
 		traceFieldMapper,
 		traceConditionBuilder,
-		resourceFilterStmtBuilder,
 		traceAggExprRewriter,
 		telemetryStore,
+		fl,
 	)
 
 	return querier.New(
@@ -154,6 +141,7 @@ func prepareQuerierForTraces(telemetryStore telemetrystore.TelemetryStore, keysM
 		nil,              // prometheus
 		traceStmtBuilder, // traceStmtBuilder
 		nil,              // logStmtBuilder
+		nil,              // auditStmtBuilder
 		nil,              // metricStmtBuilder
 		nil,              // meterStmtBuilder
 		nil,              // traceOperatorStmtBuilder

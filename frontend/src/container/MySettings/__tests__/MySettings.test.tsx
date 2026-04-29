@@ -22,9 +22,12 @@ jest.mock('react-use', () => ({
 	],
 }));
 
-jest.mock('api/v1/user/id/update', () => ({
-	__esModule: true,
-	default: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
+jest.mock('api/generated/services/users', () => ({
+	...jest.requireActual('api/generated/services/users'),
+	useUpdateMyUserV2: jest.fn(() => ({
+		mutateAsync: (...args: unknown[]): Promise<unknown> => editUserFn(...args),
+		isLoading: false,
+	})),
 }));
 
 jest.mock('hooks/useDarkMode', () => ({
@@ -173,10 +176,10 @@ describe('MySettings Flows', () => {
 				screen.getByText((content, element) =>
 					Boolean(
 						element &&
-							'className' in element &&
-							typeof element.className === 'string' &&
-							element.className.includes('title') &&
-							content === RESET_PASSWORD_BUTTON_TEXT,
+						'className' in element &&
+						typeof element.className === 'string' &&
+						element.className.includes('title') &&
+						content === RESET_PASSWORD_BUTTON_TEXT,
 					),
 				),
 			).toBeInTheDocument();

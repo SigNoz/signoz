@@ -65,9 +65,8 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
-		false,
-	);
+	const [isInternalServerError, setIsInternalServerError] =
+		useState<boolean>(false);
 	const queryRangeCalledRef = useRef(false);
 
 	useEffect(() => {
@@ -233,7 +232,7 @@ function GridCardGraph({
 								return { ...acc, [id]: variable.selectedValue };
 							}
 							return acc;
-					  }, {})
+						}, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]

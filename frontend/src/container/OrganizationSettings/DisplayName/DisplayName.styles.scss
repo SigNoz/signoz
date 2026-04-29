@@ -1,0 +1,16 @@
+.display-name-form {
+	.form-field {
+		margin-bottom: var(--spacing-8);
+
+		label {
+			display: block;
+			margin-bottom: var(--spacing-4);
+		}
+	}
+
+	.field-error {
+		color: var(--destructive);
+		margin-top: var(--spacing-2);
+		font-size: var(--font-size-xs);
+	}
+}

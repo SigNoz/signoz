@@ -279,7 +279,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	_, err = tx.NewUpdate().
 		Model(new(types.User)).
 		Set("status = ?", types.UserStatusDeleted).
-		Set("deleted_at = ?", now).
 		Set("updated_at = ?", now).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
@@ -355,6 +354,26 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for password %s does not exist", passwordID)
+	}
+
+	return resetPasswordToken, nil
+}
+
+func (store *store) GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+	resetPasswordToken := new(types.ResetPasswordToken)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(resetPasswordToken).
+		Join("JOIN factor_password ON factor_password.id = reset_password_token.password_id").
+		Join("JOIN users ON users.id = factor_password.user_id").
+		Where("factor_password.user_id = ?", userID).
+		Where("users.org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token for user %s does not exist", userID)
 	}
 
 	return resetPasswordToken, nil

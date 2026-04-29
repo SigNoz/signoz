@@ -14,7 +14,7 @@ import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { getDataTypes } from 'container/LogDetailedView/utils';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import {
@@ -80,9 +80,10 @@ function QueryBuilderSearch({
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
@@ -292,7 +293,7 @@ function QueryBuilderSearch({
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
 					? tagValue?.slice(0, -1)
-					: tagValue ?? '';
+					: (tagValue ?? '');
 
 			return {
 				id: uuid().slice(0, 8),
@@ -502,7 +503,7 @@ function QueryBuilderSearch({
 								/>
 								{option.selected && <StyledCheckOutlined />}
 							</Select.Option>
-					  ))}
+						))}
 			</Select>
 		</div>
 	);
@@ -517,7 +518,8 @@ interface QueryBuilderSearchProps {
 	suffixIcon?: React.ReactNode;
 	isInfraMonitoring?: boolean;
 	disableNavigationShortcuts?: boolean;
-	entity?: K8sCategory | null;
+	// TODO: Remove the dependency of InfraMonitoring from this code
+	entity?: InfraMonitoringEntity | null;
 	isMetricsExplorer?: boolean;
 }
 

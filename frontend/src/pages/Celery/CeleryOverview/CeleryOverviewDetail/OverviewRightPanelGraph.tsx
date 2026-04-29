@@ -89,12 +89,9 @@ export default function OverviewRightPanelGraph({
 	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
 
 	const handleGraphClick = useCallback(
-		(type: string): OnClickPluginOpts['onClick'] => (
-			xValue,
-			yValue,
-			mouseX,
-			mouseY,
-		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		(type: string): OnClickPluginOpts['onClick'] =>
+			(xValue, yValue, mouseX, mouseY): Promise<void> =>
+				onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);

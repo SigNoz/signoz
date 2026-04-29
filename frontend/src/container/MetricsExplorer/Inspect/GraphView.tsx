@@ -40,16 +40,15 @@ function GraphView({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const start = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
+	const start = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
 	const end = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [maxTime]);
 	const [showGraphPopover, setShowGraphPopover] = useState(false);
 	const [showHoverPopover, setShowHoverPopover] = useState(false);
-	const [
-		hoverPopoverOptions,
-		setHoverPopoverOptions,
-	] = useState<GraphPopoverOptions | null>(null);
+	const [hoverPopoverOptions, setHoverPopoverOptions] =
+		useState<GraphPopoverOptions | null>(null);
 	const [viewType, setViewType] = useState<'graph' | 'table'>('graph');
 
 	const popoverRef = useRef<HTMLDivElement>(null);

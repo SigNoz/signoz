@@ -14,6 +14,7 @@ import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
@@ -76,7 +77,7 @@ function RoutingPolicyDetails({
 							style={{ padding: '0 4px' }}
 							type="link"
 							onClick={(): void => {
-								window.open(ROUTES.CHANNELS_NEW, '_blank');
+								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
 						>
 							here.

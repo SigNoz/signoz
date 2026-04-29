@@ -113,9 +113,10 @@ function LogsExplorerViewsContainer({
 
 	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
-	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
-		stagedQuery,
-	]);
+	const listQuery = useMemo(
+		() => getListQuery(stagedQuery) || null,
+		[stagedQuery],
+	);
 
 	const isLimit: boolean = useMemo(() => {
 		if (!listQuery) {
@@ -159,37 +160,33 @@ function LogsExplorerViewsContainer({
 		'custom',
 	);
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isError,
-		isSuccess,
-		error,
-	} = useGetExplorerQueryRange(
-		requestData,
-		selectedPanelType,
-		ENTITY_VERSION_V5,
-		{
-			keepPreviousData: true,
-			enabled: !isLimit && !!requestData,
-		},
-		{
-			...(activeLogId &&
-				!logs.length && {
-					start: minTime,
-					end: maxTime,
-				}),
-		},
-		undefined,
-		listQueryKeyRef,
-		{
-			...(!isEmpty(queryId) &&
-				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
-		},
-		// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
-		'custom',
-	);
+	const { data, isLoading, isFetching, isError, isSuccess, error } =
+		useGetExplorerQueryRange(
+			requestData,
+			selectedPanelType,
+			ENTITY_VERSION_V5,
+			{
+				keepPreviousData: true,
+				enabled: !isLimit && !!requestData,
+			},
+			{
+				...(activeLogId &&
+					!logs.length && {
+						start: minTime,
+						end: maxTime,
+					}),
+			},
+			undefined,
+			listQueryKeyRef,
+			{
+				...(!isEmpty(queryId) &&
+					selectedPanelType !== PANEL_TYPES.LIST && {
+						'X-SIGNOZ-QUERY-ID': queryId,
+					}),
+			},
+			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
+			'custom',
+		);
 
 	const getRequestData = useCallback(
 		(
@@ -499,16 +496,18 @@ function LogsExplorerViewsContainer({
 						</div>
 					)}
 					{selectedPanelType === PANEL_TYPES.TABLE && !showLiveLogs && (
-						<LogsExplorerTable
-							data={
-								(data?.payload?.data?.newResult?.data?.result ||
-									data?.payload?.data?.result ||
-									[]) as QueryDataV3[]
-							}
-							isLoading={isLoading || isFetching}
-							isError={isError}
-							error={error as APIError}
-						/>
+						<div className="table-view-container">
+							<LogsExplorerTable
+								data={
+									(data?.payload?.data?.newResult?.data?.result ||
+										data?.payload?.data?.result ||
+										[]) as QueryDataV3[]
+								}
+								isLoading={isLoading || isFetching}
+								isError={isError}
+								error={error as APIError}
+							/>
+						</div>
 					)}
 				</div>
 			</div>

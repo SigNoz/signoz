@@ -1,5 +1,5 @@
 .serviceName {
-	color: #4e74f8;
+	color: var(--bg-robin-500);
 	font-weight: 600;
 	cursor: pointer;
 
@@ -9,10 +9,10 @@
 }
 
 .error {
-	color: var(--bg-cherry-500);
+	color: var(--danger-background);
 
 	a {
-		color: var(--bg-cherry-500);
+		color: var(--danger-background);
 	}
 }
 

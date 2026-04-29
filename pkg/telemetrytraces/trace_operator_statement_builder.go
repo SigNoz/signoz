@@ -6,7 +6,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -29,10 +31,23 @@ func NewTraceOperatorStatementBuilder(
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
+	flagger flagger.Flagger,
 ) *traceOperatorStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
+
+	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.TraceAggregation](
+		settings,
+		DBName,
+		TracesResourceV3TableName,
+		telemetrytypes.SignalTraces,
+		telemetrytypes.SourceUnspecified,
+		metadataStore,
+		nil,
+		nil,
+		flagger,
+	)
+
 	return &traceOperatorStatementBuilder{
 		logger:                    tracesSettings.Logger(),
 		metadataStore:             metadataStore,

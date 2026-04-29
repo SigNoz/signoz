@@ -27,8 +27,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 		super(props);
 		// By default while creating a widget we set the softMin and softMax to 0, so we need to handle this case separately
 		const isDefaultSoftMinMax = props.softMin === 0 && props.softMax === 0;
-		this.softMin = isDefaultSoftMinMax ? null : props.softMin ?? null;
-		this.softMax = isDefaultSoftMinMax ? null : props.softMax ?? null;
+		this.softMin = isDefaultSoftMinMax ? null : (props.softMin ?? null);
+		this.softMax = isDefaultSoftMinMax ? null : (props.softMax ?? null);
 		this.min = props.min ?? null;
 		this.max = props.max ?? null;
 	}
@@ -81,15 +81,13 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 		// Adjust softMin/softMax to include threshold values
 		// This ensures threshold lines are visible within the scale range
 		const thresholdList = thresholds?.thresholds;
-		const {
-			softMin: adjustedSoftMin,
-			softMax: adjustedSoftMax,
-		} = adjustSoftLimitsWithThresholds(
-			this.softMin,
-			this.softMax,
-			thresholdList,
-			thresholds?.yAxisUnit,
-		);
+		const { softMin: adjustedSoftMin, softMax: adjustedSoftMax } =
+			adjustSoftLimitsWithThresholds(
+				this.softMin,
+				this.softMax,
+				thresholdList,
+				thresholds?.yAxisUnit,
+			);
 
 		const { min, max, softMin, softMax } = normalizeLogScaleLimits({
 			distr,
@@ -108,12 +106,8 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			logBase,
 		});
 
-		const {
-			rangeConfig,
-			hardMinOnly,
-			hardMaxOnly,
-			hasFixedRange,
-		} = getRangeConfig(min, max, softMin, softMax, padMinBy, padMaxBy);
+		const { rangeConfig, hardMinOnly, hardMaxOnly, hasFixedRange } =
+			getRangeConfig(min, max, softMin, softMax, padMinBy, padMaxBy);
 
 		const rangeFn = createRangeFunction({
 			rangeConfig,

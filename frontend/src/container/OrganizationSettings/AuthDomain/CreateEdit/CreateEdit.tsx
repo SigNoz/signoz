@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { toast } from '@signozhq/sonner';
+import { Button, toast } from '@signozhq/ui';
 import { Form, Modal } from 'antd';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
@@ -78,15 +77,11 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const samlEnabled =
 		featureFlags?.find((flag) => flag.name === FeatureKeys.SSO)?.active || false;
 
-	const {
-		mutate: createAuthDomain,
-		isLoading: isCreating,
-	} = useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createAuthDomain, isLoading: isCreating } =
+		useCreateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: updateAuthDomain,
-		isLoading: isUpdating,
-	} = useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAuthDomain, isLoading: isUpdating } =
+		useUpdateAuthDomain<AxiosError<RenderErrorResponseDTO>>();
 
 	/**
 	 * Prepares Google Auth config for API payload

@@ -18,6 +18,13 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
+import cmdTerminalSvgUrl from '@/assets/Logos/cmd-terminal.svg';
+import dockerSvgUrl from '@/assets/Logos/docker.svg';
+import kubernetesSvgUrl from '@/assets/Logos/kubernetes.svg';
+import nodeJsSvgUrl from '@/assets/Logos/node-js.svg';
+import softwareWindowSvgUrl from '@/assets/Logos/software-window.svg';
+import syslogsSvgUrl from '@/assets/Logos/syslogs.svg';
+
 import './LogsConnectionStatus.styles.scss';
 
 const enum ApplicationLogsType {
@@ -27,11 +34,8 @@ const enum ApplicationLogsType {
 
 export default function LogsConnectionStatus(): JSX.Element {
 	const [loading, setLoading] = useState(true);
-	const {
-		selectedDataSource,
-		activeStep,
-		selectedEnvironment,
-	} = useOnboardingContext();
+	const { selectedDataSource, activeStep, selectedEnvironment } =
+		useOnboardingContext();
 	const [isReceivingData, setIsReceivingData] = useState(false);
 	const [pollingInterval, setPollingInterval] = useState<number | false>(15000); // initial Polling interval of 15 secs , Set to false after 5 mins
 	const [retryCount, setRetryCount] = useState(20); // Retry for 5 mins
@@ -165,7 +169,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="kubernetes"
 						heading="Collecting Kubernetes Pod logs"
-						imgURL="/Logos/kubernetes.svg"
+						imgURL={kubernetesSvgUrl}
 						docsURL="https://signoz.io/docs/userguide/collect_kubernetes_pod_logs/#collect-kubernetes-pod-logs-in-signoz-cloud"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -176,7 +180,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="docker"
 						heading="Collecting Docker container logs"
-						imgURL="/Logos/docker.svg"
+						imgURL={dockerSvgUrl}
 						docsURL="https://signoz.io/docs/userguide/collect_docker_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -187,7 +191,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="syslog"
 						heading="Collecting Syslogs"
-						imgURL="/Logos/syslogs.svg"
+						imgURL={syslogsSvgUrl}
 						docsURL="https://signoz.io/docs/userguide/collecting_syslogs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -197,7 +201,7 @@ export default function LogsConnectionStatus(): JSX.Element {
 					<Header
 						entity="nodejs"
 						heading="Collecting NodeJS winston logs"
-						imgURL="/Logos/node-js.svg"
+						imgURL={nodeJsSvgUrl}
 						docsURL="https://signoz.io/docs/userguide/collecting_nodejs_winston_logs/"
 						imgClassName="supported-logs-type-img"
 					/>
@@ -212,11 +216,11 @@ export default function LogsConnectionStatus(): JSX.Element {
 								? 'Collecting Application Logs from Log file'
 								: 'Collecting Application Logs Using OTEL SDK'
 						}
-						imgURL={`/Logos/${
+						imgURL={
 							logType === ApplicationLogsType.FROM_LOG_FILE
-								? 'software-window'
-								: 'cmd-terminal'
-						}.svg`}
+								? softwareWindowSvgUrl
+								: cmdTerminalSvgUrl
+						}
 						docsURL={
 							logType === ApplicationLogsType.FROM_LOG_FILE
 								? 'https://signoz.io/docs/userguide/collect_logs_from_file/'

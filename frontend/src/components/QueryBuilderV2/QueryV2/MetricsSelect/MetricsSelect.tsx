@@ -49,11 +49,8 @@ export const MetricsSelect = memo(function MetricsSelect({
 		entityVersion: version,
 	});
 
-	const {
-		updateAllQueriesOperators,
-		handleSetQueryData,
-		panelType,
-	} = useQueryBuilder();
+	const { updateAllQueriesOperators, handleSetQueryData, panelType } =
+		useQueryBuilder();
 
 	const source = useMemo(
 		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
@@ -123,9 +120,8 @@ export const MetricsSelect = memo(function MetricsSelect({
 				signalSource: newSignalSource,
 				panelType: panelType || '',
 			});
-			const savedQuery: IBuilderQuery | null = getPreviousQueryFromKey(
-				newQueryKey,
-			);
+			const savedQuery: IBuilderQuery | null =
+				getPreviousQueryFromKey(newQueryKey);
 
 			// remove the new query key from session storage
 			removeKeyFromPreviousQuery(newQueryKey);
@@ -150,6 +146,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 					options={SOURCE_OPTIONS}
 					value={source}
 					defaultValue="metrics"
+					data-testid={`metrics-source-selector-${index}`}
 					onChange={handleSignalSourceChange}
 				/>
 			)}
@@ -157,6 +154,7 @@ export const MetricsSelect = memo(function MetricsSelect({
 			<MetricNameSelector
 				onChange={handleChangeAggregatorAttribute}
 				query={query}
+				data-testid={`metric-name-selector-${index}`}
 				signalSource={signalSource || ''}
 			/>
 		</div>

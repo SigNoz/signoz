@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -21,8 +23,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -112,6 +117,9 @@ type Config struct {
 	// MetricsExplorer config
 	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
 
+	// InfraMonitoring config
+	InfraMonitoring inframonitoring.Config `mapstructure:"inframonitoring"`
+
 	// Flagger config
 	Flagger flagger.Config `mapstructure:"flagger"`
 
@@ -123,6 +131,18 @@ type Config struct {
 
 	// ServiceAccount config
 	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
+
+	// Auditor config
+	Auditor auditor.Config `mapstructure:"auditor"`
+
+	// CloudIntegration config
+	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
+
+	// TraceDetail config
+	TraceDetail tracedetail.Config `mapstructure:"tracedetail"`
+
+	// Authz config
+	Authz authz.Config `mapstructure:"authz"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -149,10 +169,15 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
+		inframonitoring.NewConfigFactory(),
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
+		auditor.NewConfigFactory(),
+		cloudintegration.NewConfigFactory(),
+		tracedetail.NewConfigFactory(),
+		authz.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
@@ -296,6 +321,14 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 		config.Flagger.Config.Boolean[flagger.FeatureKafkaSpanEval.String()] = os.Getenv("KAFKA_SPAN_EVAL") == "true"
 	}
 
+	if os.Getenv("RULES_EVAL_DELAY") != "" {
+		logger.WarnContext(ctx, "[Deprecated] env RULES_EVAL_DELAY is deprecated and scheduled for removal. Please use SIGNOZ_RULER_EVAL__DELAY instead.")
+		if d, err := time.ParseDuration(os.Getenv("RULES_EVAL_DELAY")); err == nil {
+			config.Ruler.EvalDelay = d
+		} else {
+			logger.WarnContext(ctx, "Error parsing RULES_EVAL_DELAY, using default value of 2m")
+		}
+	}
 }
 
 func (config Config) Collect(_ context.Context, _ valuer.UUID) (map[string]any, error) {

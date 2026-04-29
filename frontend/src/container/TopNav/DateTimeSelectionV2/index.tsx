@@ -14,6 +14,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'hooks/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -124,35 +128,33 @@ function DateTimeSelection({
 		}
 	}, [modalInitialStartTime, modalInitialEndTime]);
 
-	const {
-		localstorageStartTime,
-		localstorageEndTime,
-	} = ((): LocalStorageTimeRange => {
-		const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+	const { localstorageStartTime, localstorageEndTime } =
+		((): LocalStorageTimeRange => {
+			const routes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
 
-		if (routes !== null) {
-			const routesObject = JSON.parse(routes || '{}');
-			const selectedTime = routesObject[location.pathname];
+			if (routes !== null) {
+				const routesObject = JSON.parse(routes || '{}');
+				const selectedTime = routesObject[location.pathname];
 
-			if (selectedTime) {
-				let parsedSelectedTime: TimeRange;
-				try {
-					parsedSelectedTime = JSON.parse(selectedTime);
-				} catch {
-					parsedSelectedTime = selectedTime;
+				if (selectedTime) {
+					let parsedSelectedTime: TimeRange;
+					try {
+						parsedSelectedTime = JSON.parse(selectedTime);
+					} catch {
+						parsedSelectedTime = selectedTime;
+					}
+
+					if (isObject(parsedSelectedTime)) {
+						return {
+							localstorageStartTime: parsedSelectedTime.startTime,
+							localstorageEndTime: parsedSelectedTime.endTime,
+						};
+					}
+					return { localstorageStartTime: null, localstorageEndTime: null };
 				}
-
-				if (isObject(parsedSelectedTime)) {
-					return {
-						localstorageStartTime: parsedSelectedTime.startTime,
-						localstorageEndTime: parsedSelectedTime.endTime,
-					};
-				}
-				return { localstorageStartTime: null, localstorageEndTime: null };
 			}
-		}
-		return { localstorageStartTime: null, localstorageEndTime: null };
-	})();
+			return { localstorageStartTime: null, localstorageEndTime: null };
+		})();
 
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
@@ -179,9 +181,8 @@ function DateTimeSelection({
 
 	const [options, setOptions] = useState(getOptions(location.pathname));
 	const [refreshButtonHidden, setRefreshButtonHidden] = useState<boolean>(false);
-	const [customDateTimeVisible, setCustomDTPickerVisible] = useState<boolean>(
-		false,
-	);
+	const [customDateTimeVisible, setCustomDTPickerVisible] =
+		useState<boolean>(false);
 
 	const { stagedQuery, currentQuery, initQueryBuilderData } = useQueryBuilder();
 
@@ -352,8 +353,15 @@ function DateTimeSelection({
 		],
 	);
 
+	const isRefreshingQueries = useIsGlobalTimeQueryRefreshing();
+	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTime);
+		invalidateQueries();
+		onSelectHandler(
+			isModalTimeSelection && modalSelectedInterval
+				? modalSelectedInterval
+				: selectedTime,
+		);
 		onLastRefreshHandler();
 	};
 	const handleReset = useCallback(() => {
@@ -732,7 +740,11 @@ function DateTimeSelection({
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+								<Button
+									icon={<SyncOutlined />}
+									loading={!!isRefreshingQueries}
+									onClick={onRefreshHandler}
+								/>
 							</FormItem>
 
 							<FormItem>

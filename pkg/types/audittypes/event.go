@@ -53,13 +53,13 @@ func NewAuditEventFromHTTPRequest(
 	actionCategory ActionCategory,
 	claims authtypes.Claims,
 	resourceID string,
-	resourceName string,
+	resourceKind string,
 	errorType string,
 	errorCode string,
 ) AuditEvent {
 	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
 	principalAttributes := NewPrincipalAttributesFromClaims(claims)
-	resourceAttributes := NewResourceAttributes(resourceID, resourceName)
+	resourceAttributes := NewResourceAttributes(resourceID, resourceKind)
 	errorAttributes := NewErrorAttributes(errorType, errorCode)
 	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 
@@ -68,7 +68,7 @@ func NewAuditEventFromHTTPRequest(
 		TraceID:             traceID,
 		SpanID:              spanID,
 		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:           NewEventName(resourceAttributes.ResourceName, auditAttributes.Action),
+		EventName:           NewEventName(resourceAttributes.ResourceKind, auditAttributes.Action),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,
@@ -80,14 +80,34 @@ func NewAuditEventFromHTTPRequest(
 func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, scope string) plog.Logs {
 	logs := plog.NewLogs()
 
-	resourceLogs := logs.ResourceLogs().AppendEmpty()
-	resourceLogs.Resource().Attributes().PutStr(string(semconv.ServiceNameKey), name)
-	resourceLogs.Resource().Attributes().PutStr(string(semconv.ServiceVersionKey), version)
-	scopeLogs := resourceLogs.ScopeLogs().AppendEmpty()
-	scopeLogs.Scope().SetName(scope)
+	// Group events by target resource so each ResourceLogs has uniform resource attributes.
+	type resourceKey struct {
+		kind string
+		id   string
+	}
+	groups := make(map[resourceKey][]int)
+	order := make([]resourceKey, 0)
+	for i, event := range events {
+		key := resourceKey{kind: event.ResourceAttributes.ResourceKind, id: event.ResourceAttributes.ResourceID}
+		if _, exists := groups[key]; !exists {
+			order = append(order, key)
+		}
+		groups[key] = append(groups[key], i)
+	}
 
-	for i := range events {
-		events[i].ToLogRecord(scopeLogs.LogRecords().AppendEmpty())
+	for _, key := range order {
+		resourceLogs := logs.ResourceLogs().AppendEmpty()
+		resourceAttrs := resourceLogs.Resource().Attributes()
+		resourceAttrs.PutStr(string(semconv.ServiceNameKey), name)
+		resourceAttrs.PutStr(string(semconv.ServiceVersionKey), version)
+		events[groups[key][0]].ResourceAttributes.PutResource(resourceAttrs)
+
+		scopeLogs := resourceLogs.ScopeLogs().AppendEmpty()
+		scopeLogs.Scope().SetName(scope)
+
+		for _, idx := range groups[key] {
+			events[idx].ToLogRecord(scopeLogs.LogRecords().AppendEmpty())
+		}
 	}
 
 	return logs
@@ -123,8 +143,8 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 	// Principal attributes
 	event.PrincipalAttributes.Put(attrs)
 
-	// Resource attributes
-	event.ResourceAttributes.Put(attrs)
+	// Resource attributes are set at the ResourceLogs level, not per-LogRecord.
+	// See NewPLogsFromAuditEvents.
 
 	// Error attributes
 	event.ErrorAttributes.Put(attrs)

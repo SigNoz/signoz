@@ -12,8 +12,8 @@ import {
 import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
-import get from 'api/v1/user/me/get';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -40,7 +40,9 @@ import {
 	UserPreference,
 } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
+import { UserResponse } from 'types/api/user/getUser';
 import { ROLES, USER_ROLES } from 'types/roles';
+import { toISOString } from 'utils/app';
 
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
@@ -71,17 +73,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
 
-	// fetcher for user
+	// fetcher for current user
 	// user will only be fetched if the user id and token is present
 	// if logged out and trying to hit any route none of these calls will trigger
 	const {
 		data: userData,
 		isFetching: isFetchingUserData,
 		error: userFetchDataError,
-	} = useQuery({
-		queryFn: get,
-		queryKey: ['/api/v1/user/me'],
-		enabled: isLoggedIn,
+	} = useGetMyUser({
+		query: { enabled: isLoggedIn },
 	});
 
 	const {
@@ -118,38 +118,56 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [defaultUser, userRole]);
 
 	useEffect(() => {
-		if (!isFetchingUser && userData && userData.data) {
-			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
+		if (!isFetchingUserData && userData?.data) {
+			setLocalStorageApi(
+				LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
+				userData.data.email ?? '',
+			);
 			setDefaultUser((prev) => ({
 				...prev,
-				...userData.data,
+				id: userData.data.id,
+				displayName: userData.data.displayName ?? prev.displayName,
+				email: userData.data.email ?? prev.email,
+				orgId: userData.data.orgId ?? prev.orgId,
+				isRoot: userData.data.isRoot,
+				status: userData.data.status as UserResponse['status'],
+				createdAt: toISOString(userData.data.createdAt) ?? prev.createdAt,
+				updatedAt: toISOString(userData.data.updatedAt) ?? prev.updatedAt,
 			}));
-			setOrg((prev) => {
+
+			// todo: we need to update the org name as well, we should have the [admin only role restriction on the get org api call] - BE input needed
+			setOrg((prev): any => {
 				if (!prev) {
-					// if no org is present enter a new entry
 					return [
 						{
 							createdAt: 0,
 							id: userData.data.orgId,
-							displayName: userData.data.organization,
 						},
 					];
 				}
-				// else mutate the existing entry
 				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
-				const updatedOrg: Organization[] = [
+
+				if (orgIndex === -1) {
+					return [
+						...prev,
+						{
+							createdAt: 0,
+							id: userData.data.orgId,
+						},
+					];
+				}
+
+				return [
 					...prev.slice(0, orgIndex),
 					{
 						createdAt: 0,
 						id: userData.data.orgId,
-						displayName: userData.data.organization,
 					},
-					...prev.slice(orgIndex + 1, prev.length),
+					...prev.slice(orgIndex + 1),
 				];
-				return updatedOrg;
 			});
 		}
-	}, [userData, isFetchingUser]);
+	}, [userData, isFetchingUserData]);
 
 	// fetcher for licenses v3
 	const {
@@ -187,12 +205,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [activeLicenseData, isFetchingActiveLicense]);
 
 	// fetcher for feature flags
-	const {
-		isFetching: isFetchingFeatureFlags,
-		error: featureFlagsFetchError,
-	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
-		setFeatureFlags(allFlags);
-	}, isLoggedIn);
+	const { isFetching: isFetchingFeatureFlags, error: featureFlagsFetchError } =
+		useGetFeatureFlag((allFlags: FeatureFlags[]) => {
+			setFeatureFlags(allFlags);
+		}, isLoggedIn);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
@@ -222,14 +238,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
-	const {
-		data: userPreferencesData,
-		isFetching: isFetchingUserPreferences,
-	} = useQuery({
-		queryFn: () => listUserPreferences(),
-		queryKey: ['getAllUserPreferences', 'app-context'],
-		enabled: !!isLoggedIn && !!user.email,
-	});
+	const { data: userPreferencesData, isFetching: isFetchingUserPreferences } =
+		useQuery({
+			queryFn: () => listUserPreferences(),
+			queryKey: ['getAllUserPreferences', 'app-context'],
+			enabled: !!isLoggedIn && !!user.email,
+		});
 
 	useEffect(() => {
 		if (
@@ -273,6 +287,9 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(orgId: string, updatedOrgName: string): void => {
 			if (org && org.length > 0) {
 				const orgIndex = org.findIndex((e) => e.id === orgId);
+				if (orgIndex === -1) {
+					return;
+				}
 				const updatedOrg: Organization[] = [
 					...org.slice(0, orgIndex),
 					{
@@ -280,7 +297,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 						id: orgId,
 						displayName: updatedOrgName,
 					},
-					...org.slice(orgIndex + 1, org.length),
+					...org.slice(orgIndex + 1),
 				];
 				setOrg(updatedOrg);
 				setDefaultUser((prev) => {

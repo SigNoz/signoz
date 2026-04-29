@@ -10,6 +10,7 @@ import {
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	mcpServerSettings,
 	membersSettings,
 	multiIngestionSettings,
 	mySettings,
@@ -62,12 +63,16 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...membersSettings(t), ...serviceAccountsSettings(t));
+		settings.push(
+			...membersSettings(t),
+			...serviceAccountsSettings(t),
+			...rolesSettings(t),
+			...roleDetails(t),
+		);
 	}
 
-	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...billingSettings(t), ...rolesSettings(t), ...roleDetails(t));
+		settings.push(...billingSettings(t));
 	}
 
 	settings.push(
@@ -75,6 +80,7 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
+		...mcpServerSettings(t),
 	);
 
 	return settings;

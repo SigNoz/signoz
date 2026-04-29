@@ -11,14 +11,40 @@ const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
-jest.mock('@signozhq/drawer', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	DrawerWrapper: ({
-		content,
+		children,
+		footer,
 		open,
 	}: {
-		content?: ReactNode;
+		children?: ReactNode;
+		footer?: ReactNode;
 		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+	}): JSX.Element | null =>
+		open ? (
+			<div>
+				{children}
+				{footer}
+			</div>
+		) : null,
+	DialogWrapper: ({
+		children,
+		open,
+		title,
+	}: {
+		children?: ReactNode;
+		open: boolean;
+		title?: string;
+	}): JSX.Element | null =>
+		open ? (
+			<div role="dialog" aria-label={title}>
+				{children}
+			</div>
+		) : null,
+	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
+		<div>{children}</div>
+	),
 }));
 
 const mockServiceAccountsAPI = [
@@ -148,9 +174,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 			}),
 		);
 
-		expect(
-			await screen.findByRole('button', { name: /Delete Service Account/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('button', { name: /Delete Service Account/i }),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('saving changes in the drawer refetches the list', async () => {
@@ -224,10 +250,10 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		expect(
-			await screen.findByText(
+		await expect(
+			screen.findByText(
 				/An unexpected error occurred while fetching service accounts/i,
 			),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 	});
 });

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import { ChevronDown, ChevronUp, CircleAlert, RotateCw } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import APIError from 'types/api/error';
 
@@ -40,9 +40,9 @@ function SaveErrorItem({
 				</span>
 				{onRetry && !isRetrying && (
 					<Button
-						type="button"
+						variant="link"
+						color="none"
 						aria-label="Retry"
-						size="xs"
 						onClick={async (e): Promise<void> => {
 							e.stopPropagation();
 							setIsRetrying(true);

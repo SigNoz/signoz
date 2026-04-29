@@ -9,7 +9,7 @@
 		max-width: 736px;
 
 		.title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: var(--font-size-lg);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -18,7 +18,7 @@
 		}
 
 		.subtitle {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: var(--font-size-sm);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -69,7 +69,7 @@
 				}
 
 				.ant-typography {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 				}
 			}
 		}
@@ -92,8 +92,8 @@
 		gap: 16px;
 
 		.policy-list-item {
-			border: 1px solid var(--bg-slate-500);
-			background-color: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background-color: var(--l2-background);
 			border-radius: 6px;
 
 			.ant-collapse-header {
@@ -103,7 +103,7 @@
 
 			.policy-list-item-header {
 				.ant-typography {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 14px;
 					font-weight: 400;
@@ -138,7 +138,7 @@
 					margin-bottom: 13px;
 
 					.ant-typography:first-child {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 						font-family: Inter;
 						font-size: 13px;
 						font-weight: 400;
@@ -147,7 +147,7 @@
 
 					.ant-typography:last-child,
 					div .ant-typography {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 13px;
 						font-weight: 400;
@@ -175,15 +175,15 @@
 	.ant-modal-content {
 		padding: 16px;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
-			background-color: var(--bg-ink-400);
+			background-color: var(--l2-background);
 			.ant-typography {
 				margin: 0;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -195,7 +195,7 @@
 		.ant-modal-body {
 			.ant-divider {
 				margin: 16px 0;
-				border: 0.5px solid var(--bg-slate-500);
+				border: 0.5px solid var(--l1-border);
 			}
 		}
 	}
@@ -211,7 +211,7 @@
 			gap: 4px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-500);
+				color: var(--muted-foreground);
 				font-size: 14px;
 				font-style: normal;
 				font-weight: 500;
@@ -222,25 +222,25 @@
 			.ant-input {
 				width: 100%;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 			}
 
 			.ant-select {
 				width: 100%;
 				.ant-select-selector {
 					border-radius: 2px;
-					border: 1px solid var(--bg-slate-400);
-					background: var(--bg-ink-300);
+					border: 1px solid var(--l1-border);
+					background: var(--l3-background);
 				}
 
 				&.ant-select-focused .ant-select-selector {
-					border-color: var(--bg-slate-400) !important;
+					border-color: var(--l1-border) !important;
 					box-shadow: none !important;
 				}
 
 				&:hover .ant-select-selector {
-					border-color: var(--bg-slate-400) !important;
+					border-color: var(--l1-border) !important;
 				}
 			}
 		}
@@ -266,20 +266,20 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 
 		.ant-modal-body {
 			padding: 0px 16px 28px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -296,8 +296,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
 
@@ -327,7 +327,7 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-slate-500);
+				background: var(--l1-border);
 			}
 
 			.delete-btn {
@@ -335,146 +335,21 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
+				background: var(--danger-background);
 				margin-left: 12px;
 			}
 
 			.delete-btn:hover {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				background: var(--bg-cherry-600);
 			}
 		}
 	}
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: var(--font-size-sm);
 		font-style: normal;
 		font-weight: var(--font-weight-medium);
 		line-height: 20px; /* 142.857% */
-	}
-}
-
-.lightMode {
-	.routing-policies-container {
-		.routing-policies-content {
-			.title {
-				color: var(--bg-ink-500);
-			}
-		}
-	}
-
-	.routing-policies-table {
-		.ant-table-tbody {
-			.policy-list-item {
-				border: 1px solid var(--bg-vanilla-300);
-				background-color: var(--bg-vanilla-100);
-
-				.policy-list-item-header {
-					.ant-typography {
-						color: var(--bg-slate-400);
-					}
-				}
-
-				.policy-list-item-content {
-					.policy-list-item-content-row {
-						.ant-typography:first-child {
-							color: var(--bg-slate-400);
-						}
-
-						.ant-typography:last-child,
-						div .ant-typography {
-							color: var(--bg-slate-100);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.create-policy-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background-color: var(--bg-vanilla-100);
-				.ant-typography {
-					color: var(--bg-slate-100);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-divider {
-					border: 0.5px solid var(--bg-vanilla-300);
-				}
-			}
-		}
-
-		.create-policy-container {
-			.input-group {
-				.ant-typography {
-					color: var(--bg-slate-100);
-				}
-
-				.ant-input {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
-
-				.ant-select {
-					.ant-select-selector {
-						border: 1px solid var(--bg-vanilla-300);
-						background: var(--bg-vanilla-100);
-					}
-
-					&.ant-select-focused .ant-select-selector {
-						border-color: var(--bg-vanilla-300) !important;
-						box-shadow: none !important;
-					}
-
-					&:hover .ant-select-selector {
-						border-color: var(--bg-vanilla-300) !important;
-					}
-				}
-			}
-		}
-	}
-
-	.delete-policy-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--bg-slate-400);
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-slate-100);
-				}
-
-				.delete-btn {
-					background: var(--bg-cherry-500);
-					color: var(--bg-vanilla-100);
-				}
-
-				.delete-btn:hover {
-					color: var(--bg-vanilla-100);
-					background: var(--bg-cherry-600);
-				}
-			}
-		}
-
-		.title {
-			color: var(--bg-slate-100);
-		}
 	}
 }

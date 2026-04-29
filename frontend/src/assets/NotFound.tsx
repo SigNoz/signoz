@@ -1,3 +1,5 @@
+import notFound404Url from '@/assets/Images/notFound404.png';
+
 function NotFound(): JSX.Element {
 	return (
 		<img
@@ -5,7 +7,7 @@ function NotFound(): JSX.Element {
 				maxHeight: 480,
 				maxWidth: 480,
 			}}
-			src="/Images/notFound404.png"
+			src={notFound404Url}
 			alt="not-found"
 		/>
 	);

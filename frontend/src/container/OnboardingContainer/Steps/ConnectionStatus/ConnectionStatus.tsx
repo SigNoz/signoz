@@ -23,6 +23,15 @@ import { PayloadProps as QueryServicePayloadProps } from 'types/api/metrics/getS
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
+import elixirPngUrl from '@/assets/Logos/elixir.png';
+import goPngUrl from '@/assets/Logos/go.png';
+import javaPngUrl from '@/assets/Logos/java.png';
+import javascriptPngUrl from '@/assets/Logos/javascript.png';
+import pythonPngUrl from '@/assets/Logos/python.png';
+import railsPngUrl from '@/assets/Logos/rails.png';
+import rustPngUrl from '@/assets/Logos/rust.png';
+import swiftPngUrl from '@/assets/Logos/swift.png';
+
 import './ConnectionStatus.styles.scss';
 
 const pollingInterval = 10000;
@@ -88,10 +97,8 @@ export default function ConnectionStatus(): JSX.Element {
 		'query-key-onboarding-status',
 	);
 
-	const [
-		shouldRetryOnboardingCall,
-		setShouldRetryOnboardingCall,
-	] = useState<boolean>(false);
+	const [shouldRetryOnboardingCall, setShouldRetryOnboardingCall] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		// runs only when the caller is coming from 'kafka' i.e. coming from Messaging Queues - setup helper
@@ -139,7 +146,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="java"
 						heading="Java OpenTelemetry Instrumentation"
-						imgURL="/Logos/java.png"
+						imgURL={javaPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/java/"
 						imgClassName="supported-language-img"
 					/>
@@ -150,7 +157,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="python"
 						heading="Python OpenTelemetry Instrumentation"
-						imgURL="/Logos/python.png"
+						imgURL={pythonPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/python/"
 						imgClassName="supported-language-img"
 					/>
@@ -161,7 +168,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="javascript"
 						heading="Javascript OpenTelemetry Instrumentation"
-						imgURL="/Logos/javascript.png"
+						imgURL={javascriptPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/javascript/"
 						imgClassName="supported-language-img"
 					/>
@@ -171,7 +178,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="go"
 						heading="Go OpenTelemetry Instrumentation"
-						imgURL="/Logos/go.png"
+						imgURL={goPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/golang/"
 						imgClassName="supported-language-img"
 					/>
@@ -181,7 +188,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rails"
 						heading="Ruby on Rails OpenTelemetry Instrumentation"
-						imgURL="/Logos/rails.png"
+						imgURL={railsPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/ruby-on-rails/"
 						imgClassName="supported-language-img"
 					/>
@@ -191,7 +198,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rust"
 						heading="Rust OpenTelemetry Instrumentation"
-						imgURL="/Logos/rust.png"
+						imgURL={rustPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/rust/"
 						imgClassName="supported-language-img"
 					/>
@@ -201,7 +208,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="rust"
 						heading="Elixir OpenTelemetry Instrumentation"
-						imgURL="/Logos/elixir.png"
+						imgURL={elixirPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/elixir/"
 						imgClassName="supported-language-img"
 					/>
@@ -211,7 +218,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<Header
 						entity="swift"
 						heading="Swift OpenTelemetry Instrumentation"
-						imgURL="/Logos/swift.png"
+						imgURL={swiftPngUrl}
 						docsURL="https://signoz.io/docs/instrumentation/swift/"
 						imgClassName="supported-language-img"
 					/>

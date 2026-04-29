@@ -36,12 +36,13 @@ function Duration({
 	onFilterChange?: (query: Query) => void;
 	source?: QuickFiltersSource;
 }): JSX.Element {
-	const [selectedFilters, setSelectedFilters] = useState<
-		Record<
-			AllTraceFilterKeys,
-			{ values: string[] | string; keys: BaseAutocompleteData }
-		>
-	>();
+	const [selectedFilters, setSelectedFilters] =
+		useState<
+			Record<
+				AllTraceFilterKeys,
+				{ values: string[] | string; keys: BaseAutocompleteData }
+			>
+		>();
 	const [activeKeys, setActiveKeys] = useState<string[]>([
 		filter.defaultOpen ? 'durationNano' : '',
 	]);

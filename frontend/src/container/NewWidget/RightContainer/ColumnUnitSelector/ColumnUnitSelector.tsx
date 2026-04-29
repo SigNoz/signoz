@@ -13,6 +13,7 @@ interface ColumnUnitSelectorProps {
 	columnUnits: ColumnUnit;
 	setColumnUnits: Dispatch<SetStateAction<ColumnUnit>>;
 	isNewDashboard: boolean;
+	'data-testid'?: string;
 }
 
 export function ColumnUnitSelector(
@@ -61,10 +62,13 @@ export function ColumnUnitSelector(
 	};
 
 	useEffect(() => {
-		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
-			acc[query.value] = getValues(query.value);
-			return acc;
-		}, {} as Record<string, string>);
+		const newColumnUnits = aggregationQueries.reduce(
+			(acc, query) => {
+				acc[query.value] = getValues(query.value);
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 		setColumnUnits(newColumnUnits);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [aggregationQueries]);
@@ -83,6 +87,7 @@ export function ColumnUnitSelector(
 							}
 							fieldLabel={label}
 							key={value}
+							data-testid={props['data-testid']}
 							selectedQueryName={baseQueryName}
 							// Update the column unit value automatically only in create mode
 							shouldUpdateYAxisUnit={isNewDashboard}

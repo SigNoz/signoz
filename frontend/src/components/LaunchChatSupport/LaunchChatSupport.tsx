@@ -14,6 +14,7 @@ import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';
+import { getBaseUrl } from 'utils/basePath';
 
 import './LaunchChatSupport.styles.scss';
 
@@ -46,9 +47,8 @@ function LaunchChatSupport({
 		featureFlagsFetchError,
 		isLoggedIn,
 	} = useAppContext();
-	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] = useState(
-		false,
-	);
+	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
+		useState(false);
 
 	const { pathname } = useLocation();
 
@@ -154,7 +154,7 @@ function LaunchChatSupport({
 		});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	};
 

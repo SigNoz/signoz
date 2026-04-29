@@ -1,10 +1,13 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import {
+	Button,
+	DialogFooter,
+	DialogWrapper,
+	Input,
+	toast,
+} from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,
@@ -14,6 +17,8 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 import './CreateServiceAccountModal.styles.scss';
 
@@ -27,6 +32,9 @@ function CreateServiceAccountModal(): JSX.Element {
 		SA_QUERY_PARAMS.CREATE_SA,
 		parseAsBoolean.withDefault(false),
 	);
+	const [, setSelectedAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
+
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 
 	const {
 		control,
@@ -40,34 +48,28 @@ function CreateServiceAccountModal(): JSX.Element {
 		},
 	});
 
-	const {
-		mutate: createServiceAccount,
-		isLoading: isSubmitting,
-	} = useCreateServiceAccount({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Service account created successfully', {
-					richColors: true,
-				});
-				reset();
-				await setIsOpen(null);
-				await invalidateListServiceAccounts(queryClient);
-			},
-			onError: (err) => {
-				const errMessage =
-					convertToApiError(
+	const { mutate: createServiceAccount, isLoading: isSubmitting } =
+		useCreateServiceAccount({
+			mutation: {
+				onSuccess: async (response) => {
+					toast.success('Service account created successfully');
+					reset();
+					await setIsOpen(null);
+					await invalidateListServiceAccounts(queryClient);
+					await setSelectedAccountId(response.data.id);
+				},
+				onError: (err) => {
+					const errMessage = convertToApiError(
 						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'An error occurred';
-				toast.error(`Failed to create service account: ${errMessage}`, {
-					richColors: true,
-				});
+					);
+					showErrorModal(errMessage as APIError);
+				},
 			},
-		},
-	});
+		});
 
 	function handleClose(): void {
 		reset();
-		setIsOpen(null);
+		void setIsOpen(null);
 	}
 
 	function handleCreate(values: FormValues): void {
@@ -90,7 +92,7 @@ function CreateServiceAccountModal(): JSX.Element {
 			showCloseButton
 			width="narrow"
 			className="create-sa-modal"
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			<div className="create-sa-modal__content">
 				<form
@@ -127,7 +129,6 @@ function CreateServiceAccountModal(): JSX.Element {
 					type="button"
 					variant="solid"
 					color="secondary"
-					size="sm"
 					onClick={handleClose}
 				>
 					<X size={12} />
@@ -136,10 +137,10 @@ function CreateServiceAccountModal(): JSX.Element {
 
 				<Button
 					type="submit"
+					// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
 					form="create-sa-form"
 					variant="solid"
 					color="primary"
-					size="sm"
 					loading={isSubmitting}
 					disabled={!isValid}
 				>

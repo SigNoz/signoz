@@ -155,10 +155,10 @@ function RightContainer({
 		[],
 	);
 
-	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
-		allowSoftMinMax,
-		allowLogScale,
-	]);
+	const isAxisSectionVisible = useMemo(
+		() => allowSoftMinMax || allowLogScale,
+		[allowSoftMinMax, allowLogScale],
+	);
 
 	const isFormattingSectionVisible = useMemo(
 		() => allowYAxisUnit || allowDecimalPrecision || allowPanelColumnPreference,
@@ -177,7 +177,7 @@ function RightContainer({
 			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
 			 */
 
-			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			// oxlint-disable-next-line no-constant-binary-expression
 			false &&
 			(allowFillMode ||
 				allowLineStyle ||

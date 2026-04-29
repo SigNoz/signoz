@@ -12,7 +12,7 @@ import {
 } from './utils';
 
 describe('Error utils', () => {
-	test('Valid OrderBy Params', () => {
+	it('Valid OrderBy Params', () => {
 		expect(isOrderParams('serviceName')).toBe(true);
 		expect(isOrderParams('exceptionCount')).toBe(true);
 		expect(isOrderParams('lastSeen')).toBe(true);
@@ -20,24 +20,24 @@ describe('Error utils', () => {
 		expect(isOrderParams('exceptionType')).toBe(true);
 	});
 
-	test('Invalid OrderBy Params', () => {
+	it('Invalid OrderBy Params', () => {
 		expect(isOrderParams('invalid')).toBe(false);
 		expect(isOrderParams(null)).toBe(false);
 		expect(isOrderParams('')).toBe(false);
 	});
 
-	test('Valid Order', () => {
+	it('Valid Order', () => {
 		expect(isOrder('ascending')).toBe(true);
 		expect(isOrder('descending')).toBe(true);
 	});
 
-	test('Invalid Order', () => {
+	it('Invalid Order', () => {
 		expect(isOrder('invalid')).toBe(false);
 		expect(isOrder(null)).toBe(false);
 		expect(isOrder('')).toBe(false);
 	});
 
-	test('Default Order', () => {
+	it('Default Order', () => {
 		const OrderBy: OrderBy[] = [
 			'exceptionCount',
 			'exceptionType',
@@ -57,7 +57,7 @@ describe('Error utils', () => {
 		});
 	});
 
-	test('Limit', () => {
+	it('Limit', () => {
 		expect(getLimit(null)).toBe(10);
 		expect(getLimit('')).toBe(10);
 		expect(getLimit('0')).toBe(0);
@@ -68,7 +68,7 @@ describe('Error utils', () => {
 		expect(getLimit('101')).toBe(101);
 	});
 
-	test('Update Page Size', () => {
+	it('Update Page Size', () => {
 		expect(getUpdatePageSize(null)).toBe(10);
 		expect(getUpdatePageSize('')).toBe(10);
 		expect(getUpdatePageSize('0')).toBe(0);
@@ -79,7 +79,7 @@ describe('Error utils', () => {
 		expect(getUpdatePageSize('101')).toBe(101);
 	});
 
-	test('Order Params', () => {
+	it('Order Params', () => {
 		expect(getOrderParams(null)).toBe('serviceName');
 		expect(getOrderParams('')).toBe('serviceName');
 		expect(getOrderParams('serviceName')).toBe('serviceName');
@@ -89,7 +89,7 @@ describe('Error utils', () => {
 		expect(getOrderParams('exceptionType')).toBe('exceptionType');
 	});
 
-	test('OffSet', () => {
+	it('OffSet', () => {
 		expect(getOffSet(null)).toBe(0);
 		expect(getOffSet('')).toBe(0);
 		expect(getOffSet('0')).toBe(0);
@@ -100,7 +100,7 @@ describe('Error utils', () => {
 		expect(getOffSet('101')).toBe(101);
 	});
 
-	test('Order', () => {
+	it('Order', () => {
 		expect(getOrder(null)).toBe('ascending');
 		expect(getOrder('')).toBe('ascending');
 		expect(getOrder('ascending')).toBe('ascending');

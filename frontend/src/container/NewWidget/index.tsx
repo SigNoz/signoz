@@ -7,11 +7,12 @@ import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import {
+	Button,
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
-} from '@signozhq/resizable';
-import { Button, Flex, Modal, Space, Typography } from 'antd';
+} from '@signozhq/ui';
+import { Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -85,7 +86,7 @@ import {
 import './NewWidget.styles.scss';
 
 function NewWidget({
-	selectedDashboard,
+	dashboardData,
 	dashboardId,
 	selectedGraph,
 	enableDrillDown = false,
@@ -134,7 +135,7 @@ function NewWidget({
 		[selectedGraph, globalSelectedInterval, isLogsQuery],
 	);
 
-	const { widgets = [] } = selectedDashboard?.data || {};
+	const { widgets = [] } = dashboardData?.data || {};
 
 	const query = useUrlQuery();
 
@@ -153,9 +154,9 @@ function NewWidget({
 		if (!logEventCalledRef.current) {
 			logEvent('Panel Edit: Page visited', {
 				panelType: selectedWidget?.panelTypes,
-				dashboardId: selectedDashboard?.id,
+				dashboardId: dashboardData?.id,
 				widgetId: selectedWidget?.id,
-				dashboardName: selectedDashboard?.data.title,
+				dashboardName: dashboardData?.data.title,
 				isNewPanel: !!isWidgetNotPresent,
 				dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 			});
@@ -361,7 +362,7 @@ function NewWidget({
 	const updateDashboardMutation = useUpdateDashboard();
 
 	const { afterWidgets, preWidgets } = useMemo(() => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return {
 				selectedWidget: {} as Widgets,
 				preWidgets: [],
@@ -371,21 +372,18 @@ function NewWidget({
 
 		const widgetId = query.get('widgetId');
 
-		const selectedWidgetIndex = getSelectedWidgetIndex(
-			selectedDashboard,
-			widgetId,
-		);
+		const selectedWidgetIndex = getSelectedWidgetIndex(dashboardData, widgetId);
 
-		const preWidgets = getPreviousWidgets(selectedDashboard, selectedWidgetIndex);
+		const preWidgets = getPreviousWidgets(dashboardData, selectedWidgetIndex);
 
-		const afterWidgets = getNextWidgets(selectedDashboard, selectedWidgetIndex);
+		const afterWidgets = getNextWidgets(dashboardData, selectedWidgetIndex);
 
-		const selectedWidget = (selectedDashboard.data.widgets || [])[
+		const selectedWidget = (dashboardData.data.widgets || [])[
 			selectedWidgetIndex || 0
 		];
 
 		return { selectedWidget, preWidgets, afterWidgets };
-	}, [selectedDashboard, query]);
+	}, [dashboardData, query]);
 
 	// this loading state is to take care of mismatch in the responses for table and other panels
 	// hence while changing the query contains the older value and the processing logic fails
@@ -482,12 +480,12 @@ function NewWidget({
 	}, [dashboardId, query, safeNavigate]);
 
 	const onClickSaveHandler = useCallback(() => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		const widgetId = query.get('widgetId') || '';
-		let updatedLayout = selectedDashboard.data.layout || [];
+		let updatedLayout = dashboardData.data.layout || [];
 
 		const selectedRowWidgetId = getSelectedRowWidgetId(dashboardId);
 
@@ -521,10 +519,10 @@ function NewWidget({
 		const adjustedQueryForV5 = adjustQueryForV5(currentQuery);
 
 		const dashboard: Props = {
-			id: selectedDashboard.id,
+			id: dashboardData.id,
 
 			data: {
-				...selectedDashboard.data,
+				...dashboardData.data,
 				widgets: isNewDashboard
 					? [
 							...afterWidgets,
@@ -557,7 +555,7 @@ function NewWidget({
 								customLegendColors: selectedWidget?.customLegendColors || {},
 								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
-					  ]
+						]
 					: [
 							...preWidgets,
 							{
@@ -590,7 +588,7 @@ function NewWidget({
 								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
 							...afterWidgets,
-					  ],
+						],
 				layout: [...updatedLayout],
 			},
 		};
@@ -602,7 +600,7 @@ function NewWidget({
 			},
 		});
 	}, [
-		selectedDashboard,
+		dashboardData,
 		query,
 		isNewDashboard,
 		afterWidgets,
@@ -671,12 +669,24 @@ function NewWidget({
 	const onSaveDashboard = useCallback((): void => {
 		logEvent('Panel Edit: Save changes', {
 			panelType: selectedWidget.panelTypes,
-			dashboardId: selectedDashboard?.id,
+			dashboardId: dashboardData?.id,
 			widgetId: selectedWidget.id,
-			dashboardName: selectedDashboard?.data.title,
+			dashboardName: dashboardData?.data.title,
 			queryType: currentQuery.queryType,
 			isNewPanel,
 			dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
+			...(currentQuery.queryType === EQueryType.CLICKHOUSE && {
+				clickhouseQueryCount: currentQuery.clickhouse_sql.length,
+				clickhouseQueries: currentQuery.clickhouse_sql.map((q) => ({
+					name: q.name,
+					query: (q.query ?? '')
+						.replace(/--[^\n]*/g, '') // strip line comments
+						.replace(/\/\*[\s\S]*?\*\//g, '') // strip block comments
+						.replace(/'(?:[^'\\]|\\.|'')*'/g, "'?'") // replace single-quoted strings (handles \' and '' escapes)
+						.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '?'), // replace numeric literals (int, float, scientific)
+					disabled: q.disabled,
+				})),
+			}),
 		});
 		setSaveModal(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -806,6 +816,7 @@ function NewWidget({
 				<div className="right-header">
 					{showSwitchToViewModeButton && (
 						<Button
+							color="primary"
 							data-testid="switch-to-view-mode"
 							disabled={isSaveDisabled || !currentQuery}
 							onClick={handleSwitchToViewMode}
@@ -815,7 +826,7 @@ function NewWidget({
 					)}
 					{isSaveDisabled && (
 						<Button
-							type="primary"
+							color="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
@@ -827,12 +838,12 @@ function NewWidget({
 					)}
 					{!isSaveDisabled && (
 						<Button
-							type="primary"
+							color="primary"
 							data-testid="new-widget-save"
 							loading={updateDashboardMutation.isLoading}
 							disabled={isSaveDisabled}
 							onClick={onSaveDashboard}
-							icon={<Check size={14} />}
+							prefix={<Check size={14} />}
 							className="save-btn"
 						>
 							Save Changes
@@ -843,9 +854,8 @@ function NewWidget({
 
 			<PanelContainer>
 				<ResizablePanelGroup
-					direction="horizontal"
+					orientation="horizontal"
 					className="widget-resizable-panel-group"
-					autoSaveId="panel-editor"
 				>
 					<ResizablePanel
 						minSize={70}
@@ -856,7 +866,7 @@ function NewWidget({
 						<OverlayScrollbar>
 							{selectedWidget && (
 								<LeftContainer
-									selectedDashboard={selectedDashboard}
+									dashboardData={dashboardData}
 									selectedGraph={graphType}
 									selectedLogFields={selectedLogFields}
 									setSelectedLogFields={setSelectedLogFields}

@@ -59,11 +59,11 @@ const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
 describe('CreateAlertRule', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		useUrlQuerySpy.mockReturnValue(({
+		useUrlQuerySpy.mockReturnValue({
 			set: mockSetUrlQuery,
 			toString: mockToString,
 			get: mockGetUrlQuery,
-		} as Partial<URLSearchParams>) as URLSearchParams);
+		} as Partial<URLSearchParams> as URLSearchParams);
 		useCompositeQueryParamSpy.mockReturnValue(initialQueriesMap.metrics);
 	});
 

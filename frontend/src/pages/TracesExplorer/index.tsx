@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -71,17 +73,35 @@ function TracesExplorer(): JSX.Element {
 	});
 
 	const [searchParams] = useSearchParams();
+	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
 	// Get panel type from URL
 	const panelTypesFromUrl = useGetPanelTypesQueryParam(PANEL_TYPES.LIST);
 	const [isLoadingQueries, setIsLoadingQueries] = useState<boolean>(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		if (listQueryKeyRef.current) {
+			queryClient.cancelQueries(listQueryKeyRef.current);
+		}
+		setIsCancelled(true);
+		// Reset loading state — the active view unmounts when cancelled, so no
+		// child will call setIsLoadingQueries(false) otherwise.
+		setIsLoadingQueries(false);
+	}, [queryClient]);
 
 	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
 		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
 	);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 	const [isOpen, setOpen] = useState<boolean>(true);
 
 	const defaultQuery = useMemo(
@@ -210,9 +230,12 @@ function TracesExplorer(): JSX.Element {
 							}
 							rightActions={
 								<RightToolbarActions
-									onStageRunQuery={(): void => handleRunQuery()}
+									onStageRunQuery={(): void => {
+										setIsCancelled(false);
+										handleRunQuery();
+									}}
 									isLoadingQueries={isLoadingQueries}
-									listQueryKeyRef={listQueryKeyRef}
+									handleCancelQuery={handleCancelQuery}
 								/>
 							}
 						/>
@@ -224,7 +247,11 @@ function TracesExplorer(): JSX.Element {
 					</ExplorerCard>
 
 					<div className="traces-explorer-views">
-						{selectedView === ExplorerViews.LIST && (
+						{isCancelled && (
+							<QueryCancelledPlaceholder subText='Click "Run Query" to load traces.' />
+						)}
+
+						{!isCancelled && selectedView === ExplorerViews.LIST && (
 							<div className="trace-explorer-list-view">
 								<ListView
 									isFilterApplied={isFilterApplied}
@@ -235,7 +262,7 @@ function TracesExplorer(): JSX.Element {
 							</div>
 						)}
 
-						{selectedView === ExplorerViews.TRACE && (
+						{!isCancelled && selectedView === ExplorerViews.TRACE && (
 							<div className="trace-explorer-traces-view">
 								<TracesView
 									isFilterApplied={isFilterApplied}
@@ -246,7 +273,7 @@ function TracesExplorer(): JSX.Element {
 							</div>
 						)}
 
-						{selectedView === ExplorerViews.TIMESERIES && (
+						{!isCancelled && selectedView === ExplorerViews.TIMESERIES && (
 							<div className="trace-explorer-time-series-view">
 								<TimeSeriesView
 									dataSource={DataSource.TRACES}
@@ -258,7 +285,7 @@ function TracesExplorer(): JSX.Element {
 							</div>
 						)}
 
-						{selectedView === ExplorerViews.TABLE && (
+						{!isCancelled && selectedView === ExplorerViews.TABLE && (
 							<div className="trace-explorer-table-view">
 								<TableView
 									setWarning={setWarning}

@@ -2702,17 +2702,17 @@
   "telemetryCollectionStrategy": {
     "aws": {
       "metrics": {
-        "cloudwatchMetricStreamFilters": [
+        "streamFilters": [
           {
-            "Namespace": "AWS/EKS"
+            "namespace": "AWS/EKS"
           },
           {
-            "Namespace": "ContainerInsights"
+            "namespace": "ContainerInsights"
           }
         ]
       },
       "logs": {
-        "cloudwatchLogsSubscriptions": [
+        "subscriptions": [
           {
             "logGroupNamePrefix": "/aws/containerinsights",
             "filterPattern": ""
@@ -2728,13 +2728,13 @@
   "assets": {
     "dashboards": [
       {
-        "id": "overview.json",
+        "id": "overview",
         "title": "EKS Control Plane Overview",
         "description": "Overview of EKS Control Plane",
         "definition": "file://assets/dashboards/overview.json"
       },
       {
-        "id": "containerinsights.json",
+        "id": "containerinsights",
         "title": "EKS ContainerInsights Overview",
         "description": "Overview of EKS ContainerInsights",
         "definition": "file://assets/dashboards/containerinsights.json"

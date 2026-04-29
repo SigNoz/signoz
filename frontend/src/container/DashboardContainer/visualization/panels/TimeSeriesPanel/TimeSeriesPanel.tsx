@@ -104,6 +104,10 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		widget.decimalPrecision,
 	]);
 
+	const groupBy = useMemo(() => {
+		return widget.query.builder.queryData[0].groupBy;
+	}, [widget.query]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
@@ -112,10 +116,12 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
+					timezone={timezone}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
-					timezone={timezone}
 					data={chartData as uPlot.AlignedData}
+					groupBy={groupBy}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}

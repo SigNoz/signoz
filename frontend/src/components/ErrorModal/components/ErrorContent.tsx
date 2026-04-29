@@ -10,7 +10,12 @@ import APIError from 'types/api/error';
 import './ErrorContent.styles.scss';
 
 interface ErrorContentProps {
-	error: APIError;
+	error:
+		| APIError
+		| {
+				code: number;
+				message: string;
+		  };
 	icon?: ReactNode;
 }
 
@@ -20,7 +25,14 @@ function ErrorContent({ error, icon }: ErrorContentProps): JSX.Element {
 		errors: errorMessages,
 		code: errorCode,
 		message: errorMessage,
-	} = error?.error?.error || {};
+	} = error && 'error' in error
+		? error?.error?.error || {}
+		: {
+				url: undefined,
+				errors: [],
+				code: error.code || 500,
+				message: error.message || 'Something went wrong',
+			};
 	return (
 		<section className="error-content">
 			{/* Summary Header */}

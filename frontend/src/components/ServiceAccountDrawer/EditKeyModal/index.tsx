@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper } from '@signozhq/dialog';
-import { toast } from '@signozhq/sonner';
+import { DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -17,7 +16,9 @@ import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
 import { parseAsString, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
+import APIError from 'types/api/error';
 
 import { RevokeKeyContent } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
@@ -41,6 +42,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	const open = !!editKeyId && !!selectedAccountId;
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] = useState(false);
 
 	const {
@@ -69,7 +71,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Key updated successfully', { richColors: true });
+				toast.success('Key updated successfully');
 				await setEditKeyId(null);
 				if (selectedAccountId) {
 					await invalidateListServiceAccountKeys(queryClient, {
@@ -78,39 +80,38 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 				}
 			},
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to update key';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
 
-	const {
-		mutate: revokeKey,
-		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Key revoked successfully', { richColors: true });
-				setIsRevokeConfirmOpen(false);
-				await setEditKeyId(null);
-				if (selectedAccountId) {
-					await invalidateListServiceAccountKeys(queryClient, {
-						id: selectedAccountId,
-					});
-				}
+	const { mutate: revokeKey, isLoading: isRevoking } =
+		useRevokeServiceAccountKey({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Key revoked successfully');
+					setIsRevokeConfirmOpen(false);
+					await setEditKeyId(null);
+					if (selectedAccountId) {
+						await invalidateListServiceAccountKeys(queryClient, {
+							id: selectedAccountId,
+						});
+					}
+				},
+				// eslint-disable-next-line sonarjs/no-identical-functions
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				const errMessage =
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to revoke key';
-				toast.error(errMessage, { richColors: true });
-			},
-		},
-	});
+		});
 
 	function handleClose(): void {
 		setEditKeyId(null);
@@ -160,7 +161,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
 			}
 			showCloseButton={!isRevokeConfirmOpen}
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			{isRevokeConfirmOpen ? (
 				<RevokeKeyContent

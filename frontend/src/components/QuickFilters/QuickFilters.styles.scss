@@ -1,27 +1,41 @@
 .quick-filters-container {
 	display: flex;
+	flex-direction: row;
 	height: 100%;
+	min-height: 0;
 	position: relative;
 
 	.quick-filters-settings-container {
+		flex: 0 0 0;
+		width: 0;
+		min-width: 0;
+		overflow: visible;
 		position: relative;
+		align-self: stretch;
 	}
 }
 
 .quick-filters {
 	display: flex;
 	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
 	height: 100%;
-	width: 100%;
-	border-right: 1px solid var(--bg-slate-400);
-	color: var(--bg-vanilla-100);
+	min-height: 0;
+	border-right: 1px solid var(--l1-border);
+	color: var(--l1-foreground);
+
+	.overlay-scrollbar {
+		flex: 1;
+		min-height: 0;
+	}
 
 	.header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 10.5px;
-		border-bottom: 1px solid var(--bg-slate-400);
+		border-bottom: 1px solid var(--l1-border);
 
 		.left-actions {
 			display: flex;
@@ -31,7 +45,7 @@
 			justify-content: flex-start;
 
 			.text {
-				color: var(--bg-vanilla-400);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -50,9 +64,10 @@
 				align-items: center;
 				gap: 10px;
 				border-radius: 2px;
-				border: 1px solid rgba(78, 116, 248, 0.2);
-				background: rgba(78, 116, 248, 0.1);
-				color: var(--bg-robin-500);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 20%, transparent);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 				font-family: 'Geist Mono';
 				font-size: 14px;
 				font-style: normal;
@@ -60,6 +75,7 @@
 				line-height: 18px;
 				text-transform: uppercase;
 			}
+
 			.select-box {
 				display: flex;
 				padding: 2px 5px;
@@ -85,7 +101,7 @@
 			.divider-filter {
 				width: 1px;
 				height: 14px;
-				background: #161922;
+				background: var(--l1-background);
 			}
 
 			.sync-icon {
@@ -97,7 +113,7 @@
 				position: relative;
 				display: flex;
 				padding: 2px;
-				background-color: var(--bg-ink-500);
+				background-color: var(--l1-background);
 
 				.settings-icon {
 					height: 14px;
@@ -107,7 +123,7 @@
 
 				&.active,
 				&:hover {
-					background: var(--bg-slate-500);
+					background: var(--l2-background);
 				}
 			}
 		}
@@ -136,49 +152,18 @@
 	width: 100%;
 	height: 100%;
 
-	background: radial-gradient(circle, #fff 10%, transparent 0);
+	background: radial-gradient(circle, var(--l1-foreground) 10%, transparent 0);
 	background-size: 12px 12px;
 	opacity: 1;
 
 	mask-image: radial-gradient(
 		circle at 50% 0,
-		rgba(11, 12, 14, 0.1) 0,
-		rgba(11, 12, 14, 0) 100%
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0,
+		transparent 100%
 	);
 	-webkit-mask-image: radial-gradient(
 		circle at 50% 0,
-		rgba(11, 12, 14, 0.1) 0,
-		rgba(11, 12, 14, 0) 100%
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0,
+		transparent 100%
 	);
-}
-
-.lightMode {
-	.quick-filters {
-		background-color: var(--bg-vanilla-100);
-		border-right: 1px solid var(--bg-vanilla-300);
-		color: var(--bg-ink-200);
-
-		.header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.left-actions {
-				.text {
-					color: var(--bg-ink-400);
-				}
-
-				.sync-icon {
-					background-color: var(--bg-vanilla-100);
-				}
-			}
-			.right-actions {
-				.right-action-icon-container {
-					background-color: var(--bg-vanilla-100);
-					&.active,
-					&:hover {
-						background-color: var(--bg-vanilla-200);
-					}
-				}
-			}
-		}
-	}
 }

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { cloneDeep, isEqual } from 'lodash-es';
+import { withBasePath } from 'utils/basePath';
 
 interface NavigateOptions {
 	replace?: boolean;
@@ -25,12 +26,9 @@ const areUrlsEffectivelySame = (url1: URL, url2: URL): boolean => {
 	const params1 = new URLSearchParams(url1.search);
 	const params2 = new URLSearchParams(url2.search);
 
-	const allParams = new Set([
-		...Array.from(params1.keys()),
-		...Array.from(params2.keys()),
-	]);
+	const allParams = new Set([...params1.keys(), ...params2.keys()]);
 
-	return Array.from(allParams).every((param) => {
+	return [...allParams].every((param) => {
 		if (param === 'compositeQuery') {
 			try {
 				const query1 = params1.get('compositeQuery');
@@ -83,11 +81,11 @@ const isDefaultNavigation = (currentUrl: URL, targetUrl: URL): boolean => {
 	}
 
 	// Case 2: Check for new params that didn't exist before
-	const currentKeys = new Set(Array.from(currentParams.keys()));
-	const targetKeys = new Set(Array.from(targetParams.keys()));
+	const currentKeys = new Set(currentParams.keys());
+	const targetKeys = new Set(targetParams.keys());
 
 	// Find keys that exist in target but not in current
-	const newKeys = Array.from(targetKeys).filter((key) => !currentKeys.has(key));
+	const newKeys = [...targetKeys].filter((key) => !currentKeys.has(key));
 
 	return newKeys.length > 0;
 };
@@ -107,19 +105,18 @@ export const useSafeNavigate = (
 	const safeNavigate = useCallback(
 		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(to: string | SafeNavigateParams, options?: NavigateOptions) => {
-			const currentUrl = new URL(
-				`${location.pathname}${location.search}`,
-				window.location.origin,
-			);
+			// oxlint-disable-next-line signoz/no-raw-absolute-path
+			const base = window.location.origin;
+			const currentUrl = new URL(`${location.pathname}${location.search}`, base);
 
 			let targetUrl: URL;
 
 			if (typeof to === 'string') {
-				targetUrl = new URL(to, window.location.origin);
+				targetUrl = new URL(to, base);
 			} else {
 				targetUrl = new URL(
 					`${to.pathname || location.pathname}${to.search || ''}`,
-					window.location.origin,
+					base,
 				);
 			}
 
@@ -130,7 +127,7 @@ export const useSafeNavigate = (
 					typeof to === 'string'
 						? to
 						: `${to.pathname || location.pathname}${to.search || ''}`;
-				window.open(targetPath, '_blank');
+				window.open(withBasePath(targetPath), '_blank');
 				return;
 			}
 

@@ -1,10 +1,13 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Badge } from '@signozhq/badge';
-import { Button } from '@signozhq/button';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import {
+	Badge,
+	Button,
+	Input,
+	ToggleGroup,
+	ToggleGroupItem,
+} from '@signozhq/ui';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -72,11 +75,12 @@ function EditKeyForm({
 							<ToggleGroup
 								type="single"
 								value={field.value}
-								onValueChange={(val): void => {
+								onChange={(val): void => {
 									if (val) {
 										field.onChange(val);
 									}
 								}}
+								size="sm"
 								className="edit-key-modal__expiry-toggle"
 							>
 								<ToggleGroupItem
@@ -132,25 +136,21 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<Button
-					type="button"
-					className="edit-key-modal__footer-danger"
-					onClick={onRevokeClick}
-				>
+				<Button variant="ghost" color="destructive" onClick={onRevokeClick}>
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
 				<div className="edit-key-modal__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
+					<Button variant="solid" color="secondary" onClick={onClose}>
 						<X size={12} />
 						Cancel
 					</Button>
 					<Button
 						type="submit"
+						// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
 						form={FORM_ID}
 						variant="solid"
 						color="primary"
-						size="sm"
 						loading={isSaving}
 						disabled={!isDirty}
 					>

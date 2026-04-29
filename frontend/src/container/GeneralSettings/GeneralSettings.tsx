@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button } from '@signozhq/button';
 import { Compass, ScrollText } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
@@ -38,6 +38,7 @@ import {
 } from 'types/api/settings/getRetention';
 import { USER_ROLES } from 'types/roles';
 
+import LicenseRowDismissibleCallout from './LicenseKeyRow/LicenseRowDismissibleCallout/LicenseRowDismissibleCallout';
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
@@ -61,12 +62,10 @@ function GeneralSettings({
 	const [modalTraces, setModalTraces] = useState<boolean>(false);
 	const [modalLogs, setModalLogs] = useState<boolean>(false);
 
-	const [postApiLoadingMetrics, setPostApiLoadingMetrics] = useState<boolean>(
-		false,
-	);
-	const [postApiLoadingTraces, setPostApiLoadingTraces] = useState<boolean>(
-		false,
-	);
+	const [postApiLoadingMetrics, setPostApiLoadingMetrics] =
+		useState<boolean>(false);
+	const [postApiLoadingTraces, setPostApiLoadingTraces] =
+		useState<boolean>(false);
 	const [postApiLoadingLogs, setPostApiLoadingLogs] = useState<boolean>(false);
 
 	const [availableDisks] = useState<IDiskType[]>(getAvailableDiskPayload);
@@ -78,9 +77,8 @@ function GeneralSettings({
 		tracesTtlValuesPayload,
 	);
 
-	const [logsCurrentTTLValues, setLogsCurrentTTLValues] = useState(
-		logsTtlValuesPayload,
-	);
+	const [logsCurrentTTLValues, setLogsCurrentTTLValues] =
+		useState(logsTtlValuesPayload);
 
 	const { user, activeLicense } = useAppContext();
 
@@ -89,31 +87,19 @@ function GeneralSettings({
 		user.role,
 	);
 
-	const [
-		metricsTotalRetentionPeriod,
-		setMetricsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		metricsS3RetentionPeriod,
-		setMetricsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesTotalRetentionPeriod,
-		setTracesTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		tracesS3RetentionPeriod,
-		setTracesS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [metricsTotalRetentionPeriod, setMetricsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [metricsS3RetentionPeriod, setMetricsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesTotalRetentionPeriod, setTracesTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [tracesS3RetentionPeriod, setTracesS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
-	const [
-		logsTotalRetentionPeriod,
-		setLogsTotalRetentionPeriod,
-	] = useState<NumberOrNull>(null);
-	const [
-		logsS3RetentionPeriod,
-		setLogsS3RetentionPeriod,
-	] = useState<NumberOrNull>(null);
+	const [logsTotalRetentionPeriod, setLogsTotalRetentionPeriod] =
+		useState<NumberOrNull>(null);
+	const [logsS3RetentionPeriod, setLogsS3RetentionPeriod] =
+		useState<NumberOrNull>(null);
 
 	useEffect(() => {
 		if (metricsCurrentTTLValues) {
@@ -683,7 +669,12 @@ function GeneralSettings({
 					{showCustomDomainSettings && activeLicense?.key && (
 						<div className="custom-domain-card-divider" />
 					)}
-					{activeLicense?.key && <LicenseKeyRow />}
+					{activeLicense?.key && (
+						<>
+							<LicenseKeyRow />
+							<LicenseRowDismissibleCallout />
+						</>
+					)}
 				</div>
 			)}
 

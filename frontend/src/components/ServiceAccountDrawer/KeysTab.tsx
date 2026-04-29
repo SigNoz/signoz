@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/button';
 import { KeyRound, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
@@ -96,7 +96,7 @@ function buildColumns({
 				<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
 					<Button
 						variant="ghost"
-						size="xs"
+						size="sm"
 						color="destructive"
 						disabled={isDisabled}
 						onClick={(e): void => {
@@ -165,10 +165,20 @@ function KeysTab({
 		return (
 			<div className="keys-tab__empty">
 				<KeyRound size={24} className="keys-tab__empty-icon" />
-				<p className="keys-tab__empty-text">No keys. Start by creating one.</p>
+				<p className="keys-tab__empty-text">
+					No keys. Start by creating one.{' '}
+					<a
+						href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts/#step-3-generate-an-api-key"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="keys-tab__learn-more"
+					>
+						Learn more
+					</a>
+				</p>
 				<Button
-					type="button"
-					className="keys-tab__learn-more"
+					variant="link"
+					color="primary"
 					onClick={async (): Promise<void> => {
 						await setIsAddKeyOpen(true);
 					}}

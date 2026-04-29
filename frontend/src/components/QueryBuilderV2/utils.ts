@@ -210,8 +210,8 @@ export const convertExpressionToFilters = (
 				type: '',
 			},
 			value: pair.isMultiValue
-				? formatValuesForFilter(pair.valueList as string[]) ?? []
-				: formatValuesForFilter(pair.value as string) ?? '',
+				? (formatValuesForFilter(pair.valueList as string[]) ?? [])
+				: (formatValuesForFilter(pair.value as string) ?? ''),
 		});
 	});
 
@@ -469,8 +469,8 @@ export const convertFiltersToExpressionWithExistingQuery = (
 					type: '',
 				},
 				value: pair.isMultiValue
-					? formatValuesForFilter(pair.valueList as string[]) ?? ''
-					: formatValuesForFilter(pair.value as string) ?? '',
+					? (formatValuesForFilter(pair.valueList as string[]) ?? '')
+					: (formatValuesForFilter(pair.value as string) ?? ''),
 			});
 		}
 	});
@@ -554,7 +554,7 @@ export const removeKeysFromExpression = (
 							}
 							const value = pair.value?.toString().trim();
 							return value && value.includes('$');
-					  })
+						})
 					: existingQueryPairs;
 
 				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
@@ -744,15 +744,18 @@ export function getQueryLabelWithAggregation(
 	const labels: { label: string; value: string }[] = [];
 
 	const aggregationPerQuery =
-		queryData.reduce((acc, query) => {
-			if (query.queryName && query.aggregations?.length) {
-				acc[query.queryName] = createAggregation(query).map((a: any) => ({
-					alias: a.alias,
-					expression: a.expression,
-				}));
-			}
-			return acc;
-		}, {} as Record<string, any>) || {};
+		queryData.reduce(
+			(acc, query) => {
+				if (query.queryName && query.aggregations?.length) {
+					acc[query.queryName] = createAggregation(query).map((a: any) => ({
+						alias: a.alias,
+						expression: a.expression,
+					}));
+				}
+				return acc;
+			},
+			{} as Record<string, any>,
+		) || {};
 
 	Object.entries(aggregationPerQuery).forEach(([queryName, aggregations]) => {
 		const isMultipleAggregations = aggregations.length > 1;

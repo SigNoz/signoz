@@ -1,8 +1,8 @@
 .query-builder-container {
 	position: relative;
-	border-top: 1px solid var(--bg-slate-400);
-	border-bottom: 1px solid var(--bg-slate-400);
-	background: var(--bg-ink-400);
+	border-top: 1px solid var(--l1-border);
+	border-bottom: 1px solid var(--l1-border);
+	background: var(--l1-background);
 
 	// height: 280px;
 	// overflow: hidden;
@@ -11,11 +11,11 @@
 		// min-height: 280px;
 		// position: relative;
 
-		border-top: 1px solid var(--bg-slate-400);
-		border-right: 1px solid var(--bg-slate-400);
-		border-bottom: 1px solid var(--bg-slate-400);
-		border-left: 1px solid var(--bg-slate-400);
-		background: var(--bg-slate-500);
+		border-top: 1px solid var(--l1-border);
+		border-right: 1px solid var(--l1-border);
+		border-bottom: 1px solid var(--l1-border);
+		border-left: 1px solid var(--l1-border);
+		background: var(--l1-background);
 	}
 
 	.new-query-formula-buttons-container {
@@ -26,13 +26,13 @@
 		left: 16px;
 
 		border-radius: 2px;
-		background: var(--bg-ink-200);
+		background: var(--l2-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 		.ant-btn {
 			border-radius: 0px;
-			border: 1px solid var(--bg-slate-200);
-			background: var(--bg-ink-200);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 			padding: 2px 10px;
@@ -43,8 +43,8 @@
 	}
 
 	.query-builder-mini-map {
-		border-left: 1px solid var(--bg-slate-400);
-		border-right: 1px solid var(--bg-slate-400);
+		border-left: 1px solid var(--l1-border);
+		border-right: 1px solid var(--l1-border);
 
 		display: flex;
 		flex-direction: column;
@@ -70,11 +70,11 @@
 			&.query-btn {
 				color: var(--bg-sakura-400);
 
-				border: 1px solid rgba(242, 71, 105, 0.2);
-				background: rgba(242, 71, 105, 0.1);
+				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+				background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
 
 				&:hover {
-					border: 1px solid rgba(242, 71, 105, 0.4);
+					border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 40%, transparent);
 					color: var(--bg-sakura-400);
 				}
 			}
@@ -82,11 +82,11 @@
 			&.formula-btn {
 				color: var(--bg-sienna-400);
 
-				border: 1px solid rgba(189, 153, 121, 0.2);
-				background: rgba(189, 153, 121, 0.1);
+				border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 20%, transparent);
+				background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent);
 
 				&:hover {
-					border: 1px solid rgba(189, 153, 121, 0.4);
+					border: 1px solid color-mix(in srgb, var(--bg-sienna-400) 40%, transparent);
 					color: var(--bg-sienna-400);
 				}
 			}
@@ -123,8 +123,8 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 
 			input {
 				font-size: 12px;
@@ -137,7 +137,7 @@
 
 		.ant-input-number {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 		}
 
 		.divider {
@@ -146,7 +146,7 @@
 			.ant-divider-horizontal {
 				width: calc(100% + 24px);
 				margin: 24px 0 12px;
-				border-block-start: 2px solid var(--bg-slate-400);
+				border-block-start: 2px solid var(--l1-border);
 			}
 		}
 	}
@@ -154,71 +154,5 @@
 	::-webkit-scrollbar {
 		height: 0.2rem;
 		width: 0.2rem;
-	}
-}
-
-.lightMode {
-	.query-builder-container {
-		border-top-color: var(--bg-vanilla-300);
-		border-bottom-color: var(--bg-vanilla-300);
-		background: var(--bg-vanilla-100);
-
-		.query-builder-left-col {
-			border-top-color: var(--bg-vanilla-300);
-			border-right-color: var(--bg-vanilla-300);
-			border-bottom-color: var(--bg-vanilla-300);
-			border-left-color: var(--bg-vanilla-300);
-			background-color: var(--bg-vanilla-100);
-
-			.new-query-formula-buttons-container {
-				border-color: var(--bg-vanilla-200);
-				background: var(--bg-vanilla-200);
-
-				.ant-btn {
-					border-color: var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
-			}
-		}
-
-		.new-query-formula-buttons-container {
-			border-color: var(--bg-vanilla-200);
-			background: var(--bg-vanilla-200);
-
-			.ant-btn {
-				border-color: var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-			}
-		}
-
-		.query-builder-mini-map {
-			border-left-color: var(--bg-vanilla-300);
-			border-right-color: var(--bg-vanilla-300);
-		}
-
-		.query-builder {
-			.divider {
-				.ant-divider-horizontal {
-					border-block-start: 2px solid var(--bg-vanilla-300);
-				}
-			}
-
-			.ant-select-selector {
-				border-color: var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-
-				.ant-select-selection-item {
-					color: var(--text-ink-400);
-				}
-			}
-
-			.ant-input-number {
-				border-color: var(--bg-vanilla-300);
-			}
-
-			.anticon {
-				color: var(--bg-vanilla-400);
-			}
-		}
 	}
 }

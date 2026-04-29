@@ -121,24 +121,19 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 	} = props;
 
 	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
-	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] = useState<boolean>(
-		false,
-	);
-	const [isSpanPercentilesOpen, setIsSpanPercentilesOpen] = useState<boolean>(
-		false,
-	);
-	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] = useState<boolean>(
-		false,
-	);
+	const [shouldAutoFocusSearch, setShouldAutoFocusSearch] =
+		useState<boolean>(false);
+	const [isSpanPercentilesOpen, setIsSpanPercentilesOpen] =
+		useState<boolean>(false);
+	const [isRelatedSignalsOpen, setIsRelatedSignalsOpen] =
+		useState<boolean>(false);
 	const [activeDrawerView, setActiveDrawerView] = useState<RelatedSignalsViews>(
 		RelatedSignalsViews.LOGS,
 	);
 
 	const [selectedTimeRange, setSelectedTimeRange] = useState<number>(1);
-	const [
-		resourceAttributesSearchQuery,
-		setResourceAttributesSearchQuery,
-	] = useState<string>('');
+	const [resourceAttributesSearchQuery, setResourceAttributesSearchQuery] =
+		useState<string>('');
 
 	const [spanPercentileData, setSpanPercentileData] = useState<{
 		percentile: number;
@@ -146,10 +141,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		percentiles: Record<string, number>;
 	} | null>(null);
 
-	const [
-		showResourceAttributesSelector,
-		setShowResourceAttributesSelector,
-	] = useState<boolean>(false);
+	const [showResourceAttributesSelector, setShowResourceAttributesSelector] =
+		useState<boolean>(false);
 
 	const [selectedResourceAttributes, setSelectedResourceAttributes] = useState<
 		Record<string, string>
@@ -159,19 +152,14 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		IResourceAttribute[]
 	>([] as IResourceAttribute[]);
 
-	const [initialWaitCompleted, setInitialWaitCompleted] = useState<boolean>(
-		false,
-	);
+	const [initialWaitCompleted, setInitialWaitCompleted] =
+		useState<boolean>(false);
 
-	const [
-		shouldFetchSpanPercentilesData,
-		setShouldFetchSpanPercentilesData,
-	] = useState<boolean>(false);
+	const [shouldFetchSpanPercentilesData, setShouldFetchSpanPercentilesData] =
+		useState<boolean>(false);
 
-	const [
-		shouldUpdateUserPreference,
-		setShouldUpdateUserPreference,
-	] = useState<boolean>(false);
+	const [shouldUpdateUserPreference, setShouldUpdateUserPreference] =
+		useState<boolean>(false);
 
 	const [statusMessageModalContent, setStatusMessageModalContent] = useState<{
 		title: string;
@@ -349,9 +337,8 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 		[selectedSpan?.timestamp, selectedTimeRange],
 	);
 
-	const { mutate: updateUserPreferenceMutation } = useMutation(
-		updateUserPreference,
-	);
+	const { mutate: updateUserPreferenceMutation } =
+		useMutation(updateUserPreference);
 
 	// TODO: Span percentile should be eventually moved to context and not fetched on every span change
 	const {
@@ -451,8 +438,9 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
-			const userSelectedResourceAttributesList = (userSelectedResourceAttributes
-				?.data?.value as string[]).map((attribute: string) => attribute);
+			const userSelectedResourceAttributesList = (
+				userSelectedResourceAttributes?.data?.value as string[]
+			).map((attribute: string) => attribute);
 
 			let selectedResourceAttributesMap: Record<string, string> = {};
 

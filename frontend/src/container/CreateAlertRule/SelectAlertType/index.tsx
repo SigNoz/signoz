@@ -7,6 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -55,7 +56,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 			page: 'New alert data source selection page',
 		});
 
-		window.open(url, '_blank');
+		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (

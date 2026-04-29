@@ -7,6 +7,8 @@ import {
 } from 'hooks/useAuthZ/types';
 import { parsePermission } from 'hooks/useAuthZ/utils';
 
+import noDataUrl from '@/assets/Icons/no-data.svg';
+
 import ErrorBoundaryFallback from '../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import AppLoading from '../AppLoading/AppLoading';
 import { GuardAuthZ } from '../GuardAuthZ/GuardAuthZ';
@@ -23,7 +25,7 @@ function OnNoPermissionsFallback(response: {
 	return (
 		<div className="guard-authz-error-no-authz">
 			<div className="guard-authz-error-no-authz-content">
-				<img src="/Icons/no-data.svg" alt="No permission" />
+				<img src={noDataUrl} alt="No permission" />
 				<h3>Uh-oh! You don’t have permission to view this page.</h3>
 				<p>
 					You need the following permission to view this page:

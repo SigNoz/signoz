@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, Input } from '@signozhq/ui';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
@@ -198,15 +197,14 @@ function ServiceAccountsSettings(): JSX.Element {
 					<h1 className="sa-settings__title">Service Accounts</h1>
 					<p className="sa-settings__subtitle">
 						Overview of service accounts added to this workspace.{' '}
-						{/* Todo: to add doc links */}
-						{/* <a
-							href="https://signoz.io/docs/service-accounts"
+						<a
+							href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="sa-settings__learn-more"
 						>
 							Learn more
-						</a> */}
+						</a>
 					</p>
 				</div>
 
@@ -218,7 +216,6 @@ function ServiceAccountsSettings(): JSX.Element {
 					>
 						<Button
 							variant="solid"
-							size="sm"
 							color="secondary"
 							className="sa-settings-filter-trigger"
 						>
@@ -238,13 +235,11 @@ function ServiceAccountsSettings(): JSX.Element {
 								setPage(1);
 							}}
 							className="sa-settings-search-input"
-							color="secondary"
 						/>
 					</div>
 
 					<Button
 						variant="solid"
-						size="sm"
 						color="primary"
 						onClick={async (): Promise<void> => {
 							await setIsCreateModalOpen(true);

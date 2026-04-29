@@ -8,9 +8,13 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 )
 
@@ -21,6 +25,7 @@ type logQueryStatementBuilder struct {
 	cb                        qbtypes.ConditionBuilder
 	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation]
 	aggExprRewriter           qbtypes.AggExprRewriter
+	fl                        flagger.Flagger
 
 	fullTextColumn *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
@@ -33,12 +38,24 @@ func NewLogQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
+	fl flagger.Flagger,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
+
+	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.LogAggregation](
+		settings,
+		DBName,
+		LogsResourceV2TableName,
+		telemetrytypes.SignalLogs,
+		telemetrytypes.SourceUnspecified,
+		metadataStore,
+		fullTextColumn,
+		jsonKeyToKey,
+		fl,
+	)
 
 	return &logQueryStatementBuilder{
 		logger:                    logsSettings.Logger(),
@@ -47,6 +64,7 @@ func NewLogQueryStatementBuilder(
 		cb:                        conditionBuilder,
 		resourceFilterStmtBuilder: resourceFilterStmtBuilder,
 		aggExprRewriter:           aggExprRewriter,
+		fl:                        fl,
 		fullTextColumn:            fullTextColumn,
 		jsonKeyToKey:              jsonKeyToKey,
 	}
@@ -64,8 +82,10 @@ func (b *logQueryStatementBuilder) Build(
 
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
-	keySelectors, warnings := getKeySelectors(query)
+	keySelectors, warnings := getKeySelectors(query, bodyJSONEnabled)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -96,7 +116,7 @@ func (b *logQueryStatementBuilder) Build(
 	return stmt, nil
 }
 
-func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) ([]*telemetrytypes.FieldKeySelector, []string) {
+func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bodyJSONEnabled bool) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
 	var warnings []string
 
@@ -147,7 +167,8 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) ([
 
 	// When the new JSON body experience is enabled, warn the user if they use the bare
 	// "body" key in the filter — queries on plain "body" default to body.message:string.
-	if querybuilder.BodyJSONQueryEnabled {
+	// TODO(Piyush): Setup better for coming FTS support.
+	if bodyJSONEnabled {
 		for _, sel := range keySelectors {
 			if sel.Name == LogsV2BodyColumn {
 				warnings = append(warnings, querybuilder.BodySearchDefaultWarning)
@@ -246,6 +267,8 @@ func (b *logQueryStatementBuilder) buildListQuery(
 	var (
 		cteFragments []string
 		cteArgs      [][]any
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -267,7 +290,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression())
+		sb.SelectMore(bodyAliasExpression(bodyJSONEnabled))
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)
@@ -348,6 +371,8 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	var (
 		cteFragments []string
 		cteArgs      [][]any
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -367,7 +392,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	// Keep original column expressions so we can build the tuple
 	fieldNames := make([]string, 0, len(query.GroupBy))
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -506,6 +531,8 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var (
 		cteFragments []string
 		cteArgs      [][]any
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		bodyJSONEnabled = b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 	)
 
 	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
@@ -520,7 +547,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	var allGroupByArgs []any
 
 	for _, gb := range query.GroupBy {
-		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey)
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, start, end, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, b.jsonKeyToKey, bodyJSONEnabled)
 		if err != nil {
 			return nil, err
 		}
@@ -623,6 +650,8 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 
 	var preparedWhereClause *querybuilder.PreparedWhereClause
 	var err error
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	bodyJSONEnabled := b.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{}))
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		// add filter expression
@@ -632,6 +661,7 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldMapper:        b.fm,
 			ConditionBuilder:   b.cb,
 			FieldKeys:          keys,
+			BodyJSONEnabled:    bodyJSONEnabled,
 			SkipResourceFilter: true,
 			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
@@ -688,6 +718,9 @@ func (b *logQueryStatementBuilder) maybeAttachResourceFilter(
 	stmt, err := b.buildResourceFilterCTE(ctx, query, start, end, variables)
 	if err != nil {
 		return "", nil, err
+	}
+	if stmt == nil {
+		return "", nil, nil
 	}
 
 	sb.Where("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter)")

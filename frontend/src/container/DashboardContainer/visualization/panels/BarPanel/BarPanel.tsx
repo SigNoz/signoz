@@ -113,6 +113,10 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		uPlotRef.current = plot;
 	}, []);
 
+	const groupBy = useMemo(() => {
+		return widget.query.builder.queryData[0].groupBy;
+	}, [widget.query]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
@@ -121,15 +125,17 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
 					}}
+					canPinTooltip
 					plotRef={onPlotRef}
 					onDestroy={onPlotDestroy}
-					yAxisUnit={widget.yAxisUnit}
-					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
+					groupBy={groupBy}
 					isStackedBarChart={widget.stackedBarChart ?? false}
+					yAxisUnit={widget.yAxisUnit}
+					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
 				>
 					<ContextMenu

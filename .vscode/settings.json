@@ -1,23 +1,23 @@
 {
-	"eslint.workingDirectories": [
-		"./frontend"
-	],
-	"editor.formatOnSave": true,
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit"
-	},
-	"prettier.requireConfig": true,
-	"[go]": {
-		"editor.formatOnSave": true,
-		"editor.defaultFormatter": "golang.go"
-	},
-	"[sql]": {
-		"editor.defaultFormatter": "adpyke.vscode-sql-formatter"
-	},
-	"[html]": {
-		"editor.defaultFormatter": "vscode.html-language-features"
-	},
-	"python-envs.defaultEnvManager": "ms-python.python:system",
-	"python-envs.pythonProjects": []
+  "oxc.typeAware": true,
+  "oxc.tsConfigPath": "./frontend/tsconfig.json",
+  "oxc.configPath": "./frontend/.oxlintrc.json",
+  "oxc.fmt.configPath": "./frontend/.oxfmtrc.json",
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.oxc": "explicit"
+  },
+  "[go]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "golang.go"
+  },
+  "[sql]": {
+    "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "python-envs.pythonProjects": []
 }

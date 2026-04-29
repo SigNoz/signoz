@@ -6,13 +6,11 @@ import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check } from 'lucide-react';
 
-import '../../pages/Integrations/Integrations.styles.scss';
+import '../Integrations/Integrations.styles.scss';
 
 export function RequestDashboardBtn(): JSX.Element {
-	const [
-		isSubmittingRequestForDashboard,
-		setIsSubmittingRequestForDashboard,
-	] = useState(false);
+	const [isSubmittingRequestForDashboard, setIsSubmittingRequestForDashboard] =
+		useState(false);
 
 	const [requestedDashboardName, setRequestedDashboardName] = useState('');
 

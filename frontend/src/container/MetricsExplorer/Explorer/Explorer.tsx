@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import { Switch, Tooltip } from 'antd';
@@ -6,6 +7,7 @@ import logEvent from 'api/common/logEvent';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -54,6 +56,21 @@ function Explorer(): JSX.Element {
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+		setIsCancelled(true);
+	}, [queryClient]);
+
 	const metricNames = useMemo(() => {
 		const currentMetricNames: string[] = [];
 		stagedQuery?.builder.queryData.forEach((query) => {
@@ -91,9 +108,8 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
-	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
-		false,
-	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] =
+		useState(false);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
@@ -263,7 +279,7 @@ function Explorer(): JSX.Element {
 		[],
 	);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const oneChartPerQueryDisabledTooltip = useMemo(() => {
 		if (splitedQueries.length <= 1) {
@@ -275,7 +291,7 @@ function Explorer(): JSX.Element {
 		if (disableOneChartPerQuery) {
 			return 'One chart per query cannot be disabled for multiple queries with different units.';
 		}
-		return undefined;
+		return;
 	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
 
 	// Show the y axis unit selector if -
@@ -307,7 +323,11 @@ function Explorer(): JSX.Element {
 					<div className="explore-header-right-actions">
 						{!isEmpty(warning) && <WarningPopover warningData={warning} />}
 						<DateTimeSelector showAutoRefresh />
-						<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
+						<RightToolbarActions
+							onStageRunQuery={(): void => handleRunQuery()}
+							isLoadingQueries={isLoadingQueries}
+							handleCancelQuery={handleCancelQuery}
+						/>
 					</div>
 				</div>
 				<QueryBuilderV2
@@ -319,6 +339,7 @@ function Explorer(): JSX.Element {
 				/>
 				<div className="explore-content">
 					<TimeSeries
+						onFetchingStateChange={setIsLoadingQueries}
 						showOneChartPerQuery={showOneChartPerQuery}
 						setWarning={setWarning}
 						areAllMetricUnitsSame={areAllMetricUnitsSame}
@@ -331,6 +352,7 @@ function Explorer(): JSX.Element {
 						yAxisUnit={yAxisUnit}
 						setYAxisUnit={setYAxisUnit}
 						showYAxisUnitSelector={showYAxisUnitSelector}
+						isCancelled={isCancelled}
 					/>
 				</div>
 			</div>

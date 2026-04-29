@@ -42,7 +42,6 @@ type User struct {
 	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
-	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
 	TimeAuditable
 }
 
@@ -136,7 +135,6 @@ func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
 		OrgID:         deprecatedUser.OrgID,
 		IsRoot:        deprecatedUser.IsRoot,
 		Status:        deprecatedUser.Status,
-		DeletedAt:     deprecatedUser.DeletedAt,
 		TimeAuditable: deprecatedUser.TimeAuditable,
 	}
 }
@@ -286,6 +284,7 @@ type UserStore interface {
 	GetPasswordByUserID(ctx context.Context, userID valuer.UUID) (*FactorPassword, error)
 	GetResetPasswordToken(ctx context.Context, token string) (*ResetPasswordToken, error)
 	GetResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) (*ResetPasswordToken, error)
+	GetResetPasswordTokenByOrgIDAndUserID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*ResetPasswordToken, error)
 	DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error
 	UpdatePassword(ctx context.Context, password *FactorPassword) error
 

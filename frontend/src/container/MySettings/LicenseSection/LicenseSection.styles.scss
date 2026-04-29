@@ -9,7 +9,7 @@
 		gap: 4px;
 
 		.license-section-title {
-			color: #fff;
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 16px;
 			font-style: normal;
@@ -25,8 +25,8 @@
 
 		.license-section-content-item {
 			padding: 16px;
-			border: 1px solid var(--Slate-500, #161922);
-			background: var(--Ink-400, #121317);
+			border: 1px solid var(--l1-border);
+			background: var(--l2-background);
 			border-radius: 3px;
 
 			.license-section-content-item-title-action {
@@ -35,7 +35,7 @@
 				justify-content: space-between;
 				gap: 8px;
 
-				color: var(--Vanilla-300, #eee);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -47,37 +47,12 @@
 			}
 
 			.license-section-content-item-description {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
 				line-height: 20px;
 				letter-spacing: -0.07px;
-			}
-		}
-	}
-}
-
-.lightMode {
-	.license-section {
-		.license-section-header {
-			.license-section-title {
-				color: var(--bg-ink-400);
-			}
-		}
-
-		.license-section-content {
-			.license-section-content-item {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-
-				.license-section-content-item-title-action {
-					color: var(--bg-ink-400);
-				}
-
-				.license-section-content-item-description {
-					color: var(--bg-ink-300);
-				}
 			}
 		}
 	}

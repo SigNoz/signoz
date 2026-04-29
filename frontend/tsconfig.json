@@ -12,27 +12,45 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"lib": ["dom", "dom.iterable", "esnext"],
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
-		"baseUrl": "./src",
 		"paths": {
-			"*": ["./*"],
-			"@constants/*": ["./container/OnboardingContainer/constants/*"]
+			"*": [
+				"./src/*"
+			],
+			"@constants/*": [
+				"./src/container/OnboardingContainer/constants/*"
+			],
+			"@/*": [
+				"./src/*"
+			]
 		},
-		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": ["vite/client", "node", "jest"]
+		"types": [
+			"vite/client",
+			"node",
+			"jest"
+		]
 	},
-	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts", "orval.config.ts"],
+	"exclude": [
+		"node_modules",
+		"src/parser/*.ts",
+		"src/parser/TraceOperatorParser/*.ts",
+		"orval.config.ts"
+	],
 	"include": [
 		"./src",
 		"./src/**/*.ts",
@@ -40,7 +58,6 @@
 		"src/**/*.d.ts",
 		"babel.config.cjs",
 		"./jest.config.ts",
-		"./.eslintrc.cjs",
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
@@ -48,8 +65,6 @@
 		"./vite.config.ts",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts",
-		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./**/*.d.ts"
 	]
 }

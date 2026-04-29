@@ -20,30 +20,28 @@ function EvaluationWindowPopover({
 	evaluationWindow,
 	setEvaluationWindow,
 }: IEvaluationWindowPopoverProps): JSX.Element {
-	const {
-		containerRef,
-		firstItemRef,
-	} = useKeyboardNavigationForEvaluationWindowPopover({
-		onSelect: (value: string, sectionId: string): void => {
-			if (sectionId === 'window-type') {
-				setEvaluationWindow({
-					type: 'SET_WINDOW_TYPE',
-					payload: value as 'rolling' | 'cumulative',
-				});
-			} else if (sectionId === 'timeframe') {
-				setEvaluationWindow({
-					type: 'SET_TIMEFRAME',
-					payload: value as RollingWindowTimeframes | CumulativeWindowTimeframes,
-				});
-			}
-		},
-		onEscape: (): void => {
-			const triggerElement = document.querySelector(
-				'[aria-haspopup="true"]',
-			) as HTMLElement;
-			triggerElement?.focus();
-		},
-	});
+	const { containerRef, firstItemRef } =
+		useKeyboardNavigationForEvaluationWindowPopover({
+			onSelect: (value: string, sectionId: string): void => {
+				if (sectionId === 'window-type') {
+					setEvaluationWindow({
+						type: 'SET_WINDOW_TYPE',
+						payload: value as 'rolling' | 'cumulative',
+					});
+				} else if (sectionId === 'timeframe') {
+					setEvaluationWindow({
+						type: 'SET_TIMEFRAME',
+						payload: value as RollingWindowTimeframes | CumulativeWindowTimeframes,
+					});
+				}
+			},
+			onEscape: (): void => {
+				const triggerElement = document.querySelector(
+					'[aria-haspopup="true"]',
+				) as HTMLElement;
+				triggerElement?.focus();
+			},
+		});
 
 	const renderEvaluationWindowContent = (
 		label: string,

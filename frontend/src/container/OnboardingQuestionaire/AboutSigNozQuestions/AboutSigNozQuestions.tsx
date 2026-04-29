@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Checkbox } from '@signozhq/checkbox';
-import { Input } from '@signozhq/input';
+import { Button, Checkbox, Input } from '@signozhq/ui';
 import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
@@ -29,6 +27,7 @@ const interestedInOptions: Record<string, string> = {
 	singleTool:
 		'Single Tool (logs, metrics & traces) to reduce operational overhead',
 	correlateSignals: 'Correlate signals for faster troubleshooting',
+	openSourceTooling: 'Prefer open-source tooling',
 };
 
 export function AboutSigNozQuestions({
@@ -67,11 +66,11 @@ export function AboutSigNozQuestions({
 		}
 	};
 
-	const createInterestChangeHandler = (option: string) => (
-		checked: boolean,
-	): void => {
-		handleInterestChange(option, Boolean(checked));
-	};
+	const createInterestChangeHandler =
+		(option: string) =>
+		(checked: boolean): void => {
+			handleInterestChange(option, Boolean(checked));
+		};
 
 	const handleOnNext = (): void => {
 		setSignozDetails({
@@ -118,20 +117,22 @@ export function AboutSigNozQuestions({
 								<div key={option} className="checkbox-item">
 									<Checkbox
 										id={`checkbox-${option}`}
-										checked={interestInSignoz.includes(option)}
-										onCheckedChange={createInterestChangeHandler(option)}
-										labelName={interestedInOptions[option]}
-									/>
+										value={interestInSignoz.includes(option)}
+										onChange={createInterestChangeHandler(option)}
+									>
+										{interestedInOptions[option]}
+									</Checkbox>
 								</div>
 							))}
 
 							<div className="checkbox-item checkbox-item-others">
 								<Checkbox
 									id="others-checkbox"
-									checked={interestInSignoz.includes('Others')}
-									onCheckedChange={createInterestChangeHandler('Others')}
-									labelName={interestInSignoz.includes('Others') ? '' : 'Others'}
-								/>
+									value={interestInSignoz.includes('Others')}
+									onChange={createInterestChangeHandler('Others')}
+								>
+									{interestInSignoz.includes('Others') ? '' : 'Others'}
+								</Checkbox>
 								{interestInSignoz.includes('Others') && (
 									<Input
 										type="text"
@@ -154,7 +155,7 @@ export function AboutSigNozQuestions({
 						className={`onboarding-next-button ${isNextDisabled ? 'disabled' : ''}`}
 						onClick={handleOnNext}
 						disabled={isNextDisabled}
-						suffixIcon={<ArrowRight size={12} />}
+						suffix={<ArrowRight size={12} />}
 					>
 						Next
 					</Button>

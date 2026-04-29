@@ -9,7 +9,7 @@
 	.dashboard-btn {
 		display: flex;
 		align-items: center;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -30,7 +30,7 @@
 		gap: 4px;
 		padding: 0px 2px;
 		border-radius: 2px;
-		background: rgba(113, 144, 249, 0.1);
+		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 		color: var(--bg-robin-400);
 		font-family: Inter;
 		font-size: 14px;
@@ -52,20 +52,12 @@
 		}
 	}
 	.id-btn:hover {
-		background: rgba(113, 144, 249, 0.1);
+		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 		color: var(--bg-robin-300);
 	}
 
 	.dashboard-icon-image {
 		height: 14px;
 		width: 14px;
-	}
-}
-
-.lightMode {
-	.dashboard-breadcrumbs {
-		.dashboard-btn {
-			color: var(--bg-ink-400);
-		}
 	}
 }

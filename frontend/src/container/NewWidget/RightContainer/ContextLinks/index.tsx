@@ -37,13 +37,8 @@ function SortableContextLink({
 	onDelete: (contextLink: ContextLinkProps) => void;
 	onEdit: (contextLink: ContextLinkProps) => void;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: contextLink.id });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: contextLink.id });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -138,6 +133,7 @@ function ContextLinks({
 				<Button
 					type="default"
 					className="add-context-link-button"
+					data-testid="add-context-link-cta"
 					icon={<Plus size={12} />}
 					style={{ width: '100%' }}
 					onClick={handleAddContextLink}

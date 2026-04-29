@@ -11,9 +11,9 @@
 		justify-content: space-between;
 		padding: 8px 12px;
 
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--l1-border);
 		.title {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 13px;
 			font-weight: 500;
 			line-height: 22px;
@@ -32,7 +32,7 @@
 			}
 
 			.label {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: 14px;
 				line-height: 20px;
 				letter-spacing: -0.07px;
@@ -52,23 +52,23 @@
 			}
 		}
 		.contributors-row {
-			background: var(--bg-ink-500);
+			background: var(--l1-background);
 
 			td {
 				border: none !important;
 			}
 			&:not(:last-of-type) td {
-				border-bottom: 1px solid var(--bg-slate-500) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
 			}
 		}
 		.total-contribution {
-			color: var(--text-robin-500);
+			color: var(--primary-foreground);
 			font-family: 'Geist Mono';
 			font-size: 12px;
 			font-weight: 500;
 			letter-spacing: -0.06px;
 			padding: 4px 8px;
-			background: rgba(78, 116, 248, 0.1);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 			border-radius: 50px;
 			width: max-content;
 		}
@@ -79,7 +79,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--l1-border);
 		border-radius: 6px;
 
 		&__icon {
@@ -89,10 +89,10 @@
 			letter-spacing: -0.103px;
 		}
 		&__text {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 			line-height: 18px;
 			.bold-text {
-				color: var(--text-vanilla-100);
+				color: var(--l1-foreground);
 				font-weight: 500;
 			}
 		}
@@ -101,9 +101,9 @@
 			.configure-alert-rule-button {
 				padding: 8px 16px;
 				border-radius: 2px;
-				background: var(--bg-slate-400);
+				background: var(--l3-background);
 				border-width: 0;
-				color: var(--text-vanilla-100);
+				color: var(--l1-foreground);
 				line-height: 24px;
 				font-size: 12px;
 				font-weight: 500;
@@ -126,88 +126,34 @@
 		align-items: center;
 		gap: 6px;
 		padding: 12px 15px;
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-size: 14px;
 		letter-spacing: 0.14px;
 		width: 160px;
 		cursor: pointer;
+		background: var(--l1-background);
+		border-color: var(--l1-border);
 
 		.text,
 		.icon {
-			color: var(--text-vanilla-100);
-
-			.lightMode & {
-				color: var(--text-ink-500);
-			}
+			color: var(--l1-foreground);
 		}
 
 		&:hover {
-			background: var(--bg-slate-400);
+			background: var(--l2-background);
 
 			.text,
 			.icon {
-				color: var(--text-vanilla-100);
-
-				.lightMode & {
-					color: var(--text-ink-500);
-				}
+				color: var(--l1-foreground);
 			}
 		}
 
 		.icon {
 			display: flex;
 		}
-
-		.lightMode & {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-400);
-		}
 	}
 }
 
 .view-all-drawer {
 	border-radius: 4px;
-}
-
-.lightMode {
-	.ant-table {
-		background: inherit;
-	}
-
-	.top-contributors-card {
-		&__header {
-			border-color: var(--bg-vanilla-300);
-			.title {
-				color: var(--text-ink-400);
-			}
-			.view-all {
-				.label {
-					color: var(--text-ink-400);
-				}
-			}
-		}
-		&__content {
-			.contributors-row {
-				background: inherit;
-				&:not(:last-of-type) td {
-					border-bottom: 1px solid var(--bg-vanilla-300) !important;
-				}
-			}
-		}
-		.empty-content {
-			border-color: var(--bg-vanilla-300);
-			&__text {
-				color: var(--text-ink-400);
-				.bold-text {
-					color: var(--text-ink-500);
-				}
-			}
-			&__button-wrapper {
-				.configure-alert-rule-button {
-					background: var(--bg-vanilla-300);
-					color: var(--text-ink-500);
-				}
-			}
-		}
-	}
 }

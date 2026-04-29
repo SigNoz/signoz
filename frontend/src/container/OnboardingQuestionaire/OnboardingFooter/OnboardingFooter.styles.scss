@@ -13,8 +13,8 @@
 	gap: 32px;
 	flex-shrink: 0;
 	border-radius: 4px;
-	border: 1px solid var(--Greyscale-Slate-500, #161922);
-	background: var(--Ink-400, #121317);
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
 
 	width: 100%;
 	max-width: 600px;
@@ -30,11 +30,11 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	color: #c0c1c3;
+	color: var(--muted-foreground);
 }
 
 .footer-container .footer-text {
-	color: var(--Vanilla-400, var(--Greyscale-Vanilla-400, #c0c1c3));
+	color: var(--muted-foreground);
 	font-size: 12px;
 	font-style: normal;
 	font-weight: 400;
@@ -45,5 +45,5 @@
 .footer-container .footer-dot {
 	width: 4px;
 	height: 4px;
-	fill: var(--Greyscale-Slate-200, #2c3140);
+	fill: var(--l1-border);
 }

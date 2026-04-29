@@ -68,20 +68,24 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 }
 
 // Audit attributes — Resource (On What).
+// These are OTel resource attributes (placed on the Resource, not event attributes).
 type ResourceAttributes struct {
 	ResourceID   string
-	ResourceName string // guaranteed to be present
+	ResourceKind string // guaranteed to be present
 }
 
-func NewResourceAttributes(resourceID, resourceName string) ResourceAttributes {
+func NewResourceAttributes(resourceID, resourceKind string) ResourceAttributes {
 	return ResourceAttributes{
 		ResourceID:   resourceID,
-		ResourceName: resourceName,
+		ResourceKind: resourceKind,
 	}
 }
 
-func (attributes ResourceAttributes) Put(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, "signoz.audit.resource.name", attributes.ResourceName)
+// PutResource writes the resource attributes to an OTel Resource's attribute map.
+// These are resource-level attributes (stored in the resource JSON column),
+// not event-level attributes (stored in attributes_string).
+func (attributes ResourceAttributes) PutResource(dest pcommon.Map) {
+	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.ResourceKind)
 	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
 }
 
@@ -108,26 +112,40 @@ func (attributes ErrorAttributes) Put(dest pcommon.Map) {
 
 // Audit attributes — Transport Context (Where/How).
 type TransportAttributes struct {
-	HTTPMethod     string
-	HTTPRoute      string
-	HTTPStatusCode int
-	URLPath        string
-	ClientAddress  string
-	UserAgent      string
+	NetworkProtocolName    string
+	NetworkProtocolVersion string
+	URLScheme              string
+	HTTPMethod             string
+	HTTPRoute              string
+	HTTPStatusCode         int
+	URLPath                string
+	ClientAddress          string
+	UserAgent              string
 }
 
 func NewTransportAttributesFromHTTP(req *http.Request, route string, statusCode int) TransportAttributes {
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	}
+
 	return TransportAttributes{
-		HTTPMethod:     req.Method,
-		HTTPRoute:      route,
-		HTTPStatusCode: statusCode,
-		URLPath:        req.URL.Path,
-		ClientAddress:  req.RemoteAddr,
-		UserAgent:      req.UserAgent(),
+		NetworkProtocolName:    "http",
+		NetworkProtocolVersion: req.Proto,
+		URLScheme:              scheme,
+		HTTPMethod:             req.Method,
+		HTTPRoute:              route,
+		HTTPStatusCode:         statusCode,
+		URLPath:                req.URL.Path,
+		ClientAddress:          req.RemoteAddr,
+		UserAgent:              req.UserAgent(),
 	}
 }
 
 func (attributes TransportAttributes) Put(dest pcommon.Map) {
+	putStrIfNotEmpty(dest, string(semconv.NetworkProtocolNameKey), attributes.NetworkProtocolName)
+	putStrIfNotEmpty(dest, string(semconv.NetworkProtocolVersionKey), attributes.NetworkProtocolVersion)
+	putStrIfNotEmpty(dest, string(semconv.URLSchemeKey), attributes.URLScheme)
 	putStrIfNotEmpty(dest, string(semconv.HTTPRequestMethodKey), attributes.HTTPMethod)
 	putStrIfNotEmpty(dest, string(semconv.HTTPRouteKey), attributes.HTTPRoute)
 	if attributes.HTTPStatusCode != 0 {
@@ -172,9 +190,9 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 		b.WriteString(auditAttributes.Action.StringValue())
 	}
 
-	// Resource: " name (id)" or " name".
+	// Resource: " kind (id)" or " kind".
 	b.WriteString(" ")
-	b.WriteString(resourceAttributes.ResourceName)
+	b.WriteString(resourceAttributes.ResourceKind)
 	if resourceAttributes.ResourceID != "" {
 		b.WriteString(" (")
 		b.WriteString(resourceAttributes.ResourceID)

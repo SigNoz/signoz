@@ -7,6 +7,8 @@ import (
 
 type ServiceID struct{ valuer.String }
 
+var ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
+
 var (
 	AWSServiceALB         = ServiceID{valuer.NewString("alb")}
 	AWSServiceAPIGateway  = ServiceID{valuer.NewString("api-gateway")}
@@ -21,6 +23,10 @@ var (
 	AWSServiceS3Sync      = ServiceID{valuer.NewString("s3sync")}
 	AWSServiceSNS         = ServiceID{valuer.NewString("sns")}
 	AWSServiceSQS         = ServiceID{valuer.NewString("sqs")}
+
+	// Azure services.
+	AzureServiceStorageAccountsBlob = ServiceID{valuer.NewString("storageaccountsblob")}
+	AzureServiceCDNProfile          = ServiceID{valuer.NewString("cdnprofile")}
 )
 
 func (ServiceID) Enum() []any {
@@ -38,6 +44,8 @@ func (ServiceID) Enum() []any {
 		AWSServiceS3Sync,
 		AWSServiceSNS,
 		AWSServiceSQS,
+		AzureServiceStorageAccountsBlob,
+		AzureServiceCDNProfile,
 	}
 }
 
@@ -58,18 +66,17 @@ var SupportedServices = map[CloudProviderType][]ServiceID{
 		AWSServiceSNS,
 		AWSServiceSQS,
 	},
+	CloudProviderTypeAzure: {
+		AzureServiceStorageAccountsBlob,
+		AzureServiceCDNProfile,
+	},
 }
 
-// NewServiceID returns a new ServiceID from a string, validated against the supported services for the given cloud provider.
 func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
-	services, ok := SupportedServices[provider]
-	if !ok {
-		return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "no services defined for cloud provider: %s", provider)
-	}
-	for _, s := range services {
+	for _, s := range SupportedServices[provider] {
 		if s.StringValue() == service {
 			return s, nil
 		}
 	}
-	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for cloud provider %s", service, provider)
+	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for %s cloud provider", service, provider.StringValue())
 }

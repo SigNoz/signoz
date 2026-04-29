@@ -4,7 +4,7 @@
 	position: relative;
 	min-height: 100vh;
 	width: 100%;
-	background: var(--bg-neutral-dark-1000);
+	background: var(--l1-background);
 	display: flex;
 	flex-direction: column;
 }
@@ -43,13 +43,13 @@
 .masked-dots {
 	mask-image: radial-gradient(
 		circle at 50% 0%,
-		rgba(11, 12, 14, 0.1) 0%,
-		rgba(11, 12, 14, 0) 56.77%
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0%,
+		transparent 56.77%
 	);
 	-webkit-mask-image: radial-gradient(
 		circle at 50% 0%,
-		rgba(11, 12, 14, 0.1) 0%,
-		rgba(11, 12, 14, 0) 56.77%
+		color-mix(in srgb, var(--l1-background) 10%, transparent) 0%,
+		transparent 56.77%
 	);
 }
 
@@ -65,7 +65,7 @@
 	border-radius: 956px;
 	background: radial-gradient(
 		ellipse at center -500px,
-		rgba(78, 116, 248, 0.3) 0%,
+		color-mix(in srgb, var(--primary-background) 30%, transparent) 0%,
 		transparent 70%
 	);
 	opacity: 0.3;
@@ -85,8 +85,8 @@
 	height: 100%;
 	background-image: repeating-linear-gradient(
 		to bottom,
-		var(--bg-ink-200) 0px,
-		var(--bg-ink-200) 4px,
+		var(--l1-border) 0px,
+		var(--l1-border) 4px,
 		transparent 4px,
 		transparent 8px
 	);
@@ -141,41 +141,5 @@
 		@media (max-width: 768px) {
 			padding-top: 0;
 		}
-	}
-}
-
-.lightMode {
-	.auth-page-wrapper {
-		background: var(--bg-base-white);
-	}
-
-	.bg-dot-pattern {
-		background: radial-gradient(circle, rgba(35, 38, 46, 1) 1px, transparent 1px);
-		background-size: 12px 12px;
-	}
-
-	.auth-page-gradient {
-		background: radial-gradient(
-			ellipse at center top,
-			rgba(78, 116, 248, 0.12) 0%,
-			transparent 60%
-		);
-		opacity: 0.8;
-		filter: blur(200px);
-
-		@media (min-width: 768px) {
-			filter: blur(300px);
-		}
-	}
-
-	.auth-page-line-left,
-	.auth-page-line-right {
-		background-image: repeating-linear-gradient(
-			to bottom,
-			var(--bg-vanilla-300) 0px,
-			var(--bg-vanilla-300) 4px,
-			transparent 4px,
-			transparent 8px
-		);
 	}
 }

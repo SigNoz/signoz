@@ -27,7 +27,7 @@
 	&__input {
 		height: 32px;
 		background: var(--l2-background);
-		border-color: var(--border);
+		border-color: var(--l1-border);
 		color: var(--l1-foreground);
 		box-shadow: none;
 
@@ -44,7 +44,7 @@
 		padding: 0 var(--padding-2);
 		border-radius: 2px;
 		background: var(--l2-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		cursor: not-allowed;
 		opacity: 0.8;
 	}
@@ -70,7 +70,7 @@
 	&__expiry-toggle {
 		width: 60%;
 		display: flex;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 2px;
 		overflow: hidden;
 		padding: 0;
@@ -91,7 +91,7 @@
 			justify-content: center;
 			background: transparent;
 			border: none;
-			border-right: 1px solid var(--border);
+			border-right: 1px solid var(--l1-border);
 			color: var(--foreground);
 			white-space: nowrap;
 
@@ -112,7 +112,7 @@
 
 		.ant-picker {
 			background: var(--l2-background);
-			border-color: var(--border);
+			border-color: var(--l1-border);
 			border-radius: 2px;
 			width: 100%;
 			height: 32px;
@@ -138,7 +138,7 @@
 	&__meta {
 		display: flex;
 		flex-direction: column;
-		gap: var(--spacing-2);
+		gap: var(--spacing-4);
 	}
 
 	&__meta-label {

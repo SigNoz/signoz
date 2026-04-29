@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from '@signozhq/badge';
+import { Badge } from '@signozhq/ui';
 import type {
 	AuthtypesGettableObjectsDTO,
 	AuthtypesGettableResourcesDTO,
@@ -139,12 +139,12 @@ export function buildPatchPayload({
 		} else {
 			// Scope changed (ALL ↔ ONLY_SELECTED) — replace old with new
 			const initialSelectors =
-				initialScope === PermissionScope.ALL ? ['*'] : initial?.selectedIds ?? [];
+				initialScope === PermissionScope.ALL ? ['*'] : (initial?.selectedIds ?? []);
 			if (initialSelectors.length > 0) {
 				deletions.push({ resource: resourceDef, selectors: initialSelectors });
 			}
 			const currentSelectors =
-				currentScope === PermissionScope.ALL ? ['*'] : current?.selectedIds ?? [];
+				currentScope === PermissionScope.ALL ? ['*'] : (current?.selectedIds ?? []);
 			if (currentSelectors.length > 0) {
 				additions.push({ resource: resourceDef, selectors: currentSelectors });
 			}

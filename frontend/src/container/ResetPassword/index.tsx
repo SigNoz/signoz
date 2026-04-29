@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
+import { Button, Callout } from '@signozhq/ui';
 import { Form, Input as AntdInput, Typography } from 'antd';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
@@ -23,9 +22,8 @@ import './ResetPassword.styles.scss';
 type FormValues = { password: string; confirmPassword: string };
 
 function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
+	const [confirmPasswordError, setConfirmPasswordError] =
+		useState<boolean>(false);
 
 	const [errorMessage, setErrorMessage] = useState<APIError | null>();
 
@@ -215,8 +213,9 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							showIcon
 							icon={<CircleAlert size={12} />}
 							className="reset-password-error-callout"
-							description="Passwords don't match. Please try again."
-						/>
+						>
+							Passwords don&apos;t match. Please try again.
+						</Callout>
 					)}
 
 					{errorMessage && !confirmPasswordError && (
@@ -231,7 +230,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							data-attr="reset-password"
 							disabled={!isValidPassword || loading}
 							className="reset-password-submit-button"
-							suffixIcon={<ArrowRight size={16} />}
+							suffix={<ArrowRight size={16} />}
 						>
 							Reset Password
 						</Button>

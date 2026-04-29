@@ -62,13 +62,12 @@ function DashboardWidgetInternal({
 	widgetId: string;
 	graphType: PANEL_TYPES;
 }): JSX.Element | null {
-	const [selectedDashboard, setSelectedDashboard] = useState<
-		Dashboard | undefined
-	>(undefined);
-
-	const { transformDashboardVariables } = useTransformDashboardVariables(
-		dashboardId,
+	const [dashboardData, setDashboardData] = useState<Dashboard | undefined>(
+		undefined,
 	);
+
+	const { transformDashboardVariables } =
+		useTransformDashboardVariables(dashboardId);
 
 	const {
 		isFetching: isFetchingDashboardResponse,
@@ -83,7 +82,7 @@ function DashboardWidgetInternal({
 		cacheTime: DASHBOARD_CACHE_TIME,
 		onSuccess: (response) => {
 			const updatedDashboardData = transformDashboardVariables(response.data);
-			setSelectedDashboard(updatedDashboardData);
+			setDashboardData(updatedDashboardData);
 			setDashboardVariablesStore({
 				dashboardId,
 				variables: updatedDashboardData.data.variables,
@@ -108,7 +107,7 @@ function DashboardWidgetInternal({
 			dashboardId={dashboardId}
 			selectedGraph={graphType}
 			enableDrillDown={isDrilldownEnabled()}
-			selectedDashboard={selectedDashboard}
+			dashboardData={dashboardData}
 		/>
 	);
 }

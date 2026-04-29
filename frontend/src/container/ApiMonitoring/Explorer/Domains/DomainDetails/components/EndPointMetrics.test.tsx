@@ -96,7 +96,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			refetch: jest.fn(),
 			remove: jest.fn(),
 			...overrides,
-		} as UseQueryResult<SuccessResponse<any>, unknown>);
+		}) as UseQueryResult<SuccessResponse<any>, unknown>;
 
 	const renderComponent = (
 		endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>,
@@ -303,7 +303,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			// Wait for skeletons to disappear
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// Verify all metric labels are displayed
@@ -342,7 +342,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// When no data, all values should show "-"

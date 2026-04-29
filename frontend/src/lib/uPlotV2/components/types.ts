@@ -58,27 +58,29 @@ export interface TooltipRenderArgs {
 	isPinned: boolean;
 	dismiss: () => void;
 	viaSync: boolean;
+	/** In Tooltip sync mode, limits which series are rendered in the receiver tooltip.
+	 * null = no filtering; [] = no matches (tooltip hidden upstream); [...] = allowed indexes */
+	syncedSeriesIndexes?: number[] | null;
 }
 
 export interface BaseTooltipProps {
 	showTooltipHeader?: boolean;
-	timezone?: Timezone;
+	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
+	timezone?: Timezone;
 }
 
 export interface TimeSeriesTooltipProps
-	extends BaseTooltipProps,
-		TooltipRenderArgs {}
+	extends BaseTooltipProps, TooltipRenderArgs {}
 
 export interface BarTooltipProps extends BaseTooltipProps, TooltipRenderArgs {
 	isStackedBarChart?: boolean;
 }
 
 export interface HistogramTooltipProps
-	extends BaseTooltipProps,
-		TooltipRenderArgs {}
+	extends BaseTooltipProps, TooltipRenderArgs {}
 
 export type TooltipProps =
 	| TimeSeriesTooltipProps

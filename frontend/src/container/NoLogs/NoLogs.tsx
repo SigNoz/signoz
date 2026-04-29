@@ -6,6 +6,9 @@ import history from 'lib/history';
 import { ArrowUpRight } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
+import { openInNewTab } from 'utils/navigation';
+
+import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
 import './NoLogs.styles.scss';
 
@@ -40,17 +43,17 @@ export default function NoLogs({
 			}
 			history.push(link);
 		} else if (dataSource === 'traces') {
-			window.open(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE, '_blank');
+			openInNewTab(DOCLINKS.TRACES_EXPLORER_EMPTY_STATE);
 		} else if (dataSource === DataSource.METRICS) {
-			window.open(DOCLINKS.METRICS_EXPLORER_EMPTY_STATE, '_blank');
+			openInNewTab(DOCLINKS.METRICS_EXPLORER_EMPTY_STATE);
 		} else {
-			window.open(`${DOCLINKS.USER_GUIDE}${dataSource}/`, '_blank');
+			openInNewTab(`${DOCLINKS.USER_GUIDE}${dataSource}/`);
 		}
 	};
 	return (
 		<div className="no-logs-container">
 			<div className="no-logs-container-content">
-				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+				<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
 				<Typography className="no-logs-text">
 					No {dataSource} yet.
 					<span className="sub-text">

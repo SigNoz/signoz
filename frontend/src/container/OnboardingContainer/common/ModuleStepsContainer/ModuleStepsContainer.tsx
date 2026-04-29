@@ -17,6 +17,8 @@ import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
 import { isModifierKeyPressed } from 'utils/app';
 
+import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
+
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
 	ModuleProps,
@@ -89,9 +91,8 @@ export default function ModuleStepsContainer({
 
 		const { step } = activeStep;
 
-		const {
-			name: selectedDataSourceName = '',
-		} = selectedDataSource as DataSourceType;
+		const { name: selectedDataSourceName = '' } =
+			selectedDataSource as DataSourceType;
 
 		if (
 			step.id === environmentDetailsStep &&
@@ -381,7 +382,7 @@ export default function ModuleStepsContainer({
 				<div>
 					<div className="steps-container-header">
 						<div className="brand-logo" onClick={handleLogoClick}>
-							<img src="/Logos/signoz-brand-logo.svg" alt="SigNoz" />
+							<img src={signozBrandLogoUrl} alt="SigNoz" />
 
 							<div className="brand-logo-name">SigNoz</div>
 						</div>

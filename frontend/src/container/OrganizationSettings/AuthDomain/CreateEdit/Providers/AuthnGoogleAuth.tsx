@@ -1,6 +1,4 @@
 import { useCallback, useState } from 'react';
-import { Callout } from '@signozhq/callout';
-import { Checkbox } from '@signozhq/checkbox';
 import { Color, Style } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
@@ -8,7 +6,7 @@ import {
 	CircleHelp,
 	TriangleAlert,
 } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Callout, Checkbox, Input } from '@signozhq/ui';
 import { Collapse, Form, Input as AntdInput, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
@@ -138,32 +136,32 @@ function ConfigureGoogleAuthAuthnProvider({
 					<div className="authn-provider__checkbox-row">
 						<Form.Item
 							name={['googleAuthConfig', 'insecureSkipEmailVerified']}
-							valuePropName="checked"
+							valuePropName="value"
 							noStyle
 						>
 							<Checkbox
 								id="google-skip-email-verification"
-								labelName="Skip Email Verification"
-								onCheckedChange={(checked: boolean): void => {
+								onChange={(checked: boolean): void => {
 									form.setFieldValue(
 										['googleAuthConfig', 'insecureSkipEmailVerified'],
 										checked,
 									);
 								}}
-							/>
+							>
+								Skip Email Verification
+							</Checkbox>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
 							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
 						</Tooltip>
 					</div>
 
-					<Callout
-						type="warning"
-						size="small"
-						showIcon
-						description="Google OAuth2 won't be enabled unless you enter all the attributes above"
-						className="callout"
-					/>
+					<div className="authn-provider__callout-wrapper">
+						<Callout type="warning" size="small" showIcon className="callout">
+							Google OAuth2 won&apos;t be enabled unless you enter all the attributes
+							above
+						</Callout>
+					</div>
 				</div>
 
 				{/* Right Column - Google Workspace Groups (Advanced) */}
@@ -195,19 +193,20 @@ function ConfigureGoogleAuthAuthnProvider({
 											Requires a Service Account with domain-wide delegation.
 										</p>
 									</div>
-									{expandedSection !== 'workspace-groups' && hasWorkspaceGroupsErrors && (
-										<Tooltip
-											title={
-												<div>
-													{workspaceGroupsErrorMessages.map((msg) => (
-														<div key={msg}>{msg}</div>
-													))}
-												</div>
-											}
-										>
-											<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
-										</Tooltip>
-									)}
+									{expandedSection !== 'workspace-groups' &&
+										hasWorkspaceGroupsErrors && (
+											<Tooltip
+												title={
+													<div>
+														{workspaceGroupsErrorMessages.map((msg) => (
+															<div key={msg}>{msg}</div>
+														))}
+													</div>
+												}
+											>
+												<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+											</Tooltip>
+										)}
 								</div>
 							}
 						>
@@ -215,16 +214,17 @@ function ConfigureGoogleAuthAuthnProvider({
 								<div className="authn-provider__checkbox-row">
 									<Form.Item
 										name={['googleAuthConfig', 'fetchGroups']}
-										valuePropName="checked"
+										valuePropName="value"
 										noStyle
 									>
 										<Checkbox
 											id="google-fetch-groups"
-											labelName="Fetch Groups"
-											onCheckedChange={(checked: boolean): void => {
+											onChange={(checked: boolean): void => {
 												form.setFieldValue(['googleAuthConfig', 'fetchGroups'], checked);
 											}}
-										/>
+										>
+											Fetch Groups
+										</Checkbox>
 									</Form.Item>
 									<Tooltip title="Enable fetching Google Workspace groups for the user. Requires service account configuration.">
 										<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
@@ -263,19 +263,20 @@ function ConfigureGoogleAuthAuthnProvider({
 										<div className="authn-provider__checkbox-row">
 											<Form.Item
 												name={['googleAuthConfig', 'fetchTransitiveGroupMembership']}
-												valuePropName="checked"
+												valuePropName="value"
 												noStyle
 											>
 												<Checkbox
 													id="google-transitive-membership"
-													labelName="Fetch Transitive Group Membership"
-													onCheckedChange={(checked: boolean): void => {
+													onChange={(checked: boolean): void => {
 														form.setFieldValue(
 															['googleAuthConfig', 'fetchTransitiveGroupMembership'],
 															checked,
 														);
 													}}
-												/>
+												>
+													Fetch Transitive Group Membership
+												</Checkbox>
 											</Form.Item>
 											<Tooltip title="If enabled, recursively fetch groups that contain other groups (transitive membership).">
 												<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />

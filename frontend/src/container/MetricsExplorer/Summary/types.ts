@@ -33,6 +33,8 @@ export interface MetricsSearchProps {
 	currentQueryFilterExpression: string;
 	setCurrentQueryFilterExpression: (expression: string) => void;
 	isLoading: boolean;
+	handleCancelQuery: () => void;
+	onRunQuery: () => void;
 }
 
 export interface MetricsTreemapProps {

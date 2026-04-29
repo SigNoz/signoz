@@ -27,7 +27,7 @@ export default function DisconnectValuesSelector({
 		return DisconnectedValuesMode.Never;
 	});
 	const [thresholdSeconds, setThresholdSeconds] = useState<number>(
-		typeof value === 'number' ? value : minValue ?? DEFAULT_THRESHOLD_SECONDS,
+		typeof value === 'number' ? value : (minValue ?? DEFAULT_THRESHOLD_SECONDS),
 	);
 
 	useEffect(() => {

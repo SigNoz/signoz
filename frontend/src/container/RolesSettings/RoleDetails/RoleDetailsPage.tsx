@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/button';
 import { Table2, Trash2, Users } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Button, toast, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Skeleton } from 'antd';
 import { useAuthzResources } from 'api/generated/services/authz';
 import {
@@ -193,7 +191,7 @@ function RoleDetailsPage(): JSX.Element {
 				<ToggleGroup
 					type="single"
 					value={activeTab}
-					onValueChange={(val): void => {
+					onChange={(val): void => {
 						if (val) {
 							setActiveTab(val as TabKey);
 						}

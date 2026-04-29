@@ -9,4 +9,5 @@ const (
 	TopLevelOperationsTableName   = "distributed_top_level_operations"
 	TraceSummaryTableName         = "distributed_trace_summary"
 	SpanAttributesKeysTblName     = "distributed_span_attributes_keys"
+	TracesResourceV3TableName     = "distributed_traces_v3_resource"
 )

@@ -42,35 +42,35 @@ describe('useUrlQueryData', () => {
 	};
 
 	describe('query parsing', () => {
-		test('should parse valid JSON query parameter', () => {
+		it('should parse valid JSON query parameter', () => {
 			const testData = { name: 'test', value: 123 };
 			const { result } = renderHookWithRouter('testKey', {}, [
 				`/test?testKey=${encodeURIComponent(JSON.stringify(testData))}`,
 			]);
 
 			expect(result.current.query).toBe(JSON.stringify(testData));
-			expect(result.current.queryData).toEqual(testData);
+			expect(result.current.queryData).toStrictEqual(testData);
 		});
 
-		test('should return default data when query parameter is not present', () => {
+		it('should return default data when query parameter is not present', () => {
 			const defaultData = { default: 'value' };
 			const { result } = renderHookWithRouter('testKey', defaultData);
 
 			expect(result.current.query).toBeNull();
-			expect(result.current.queryData).toEqual(defaultData);
+			expect(result.current.queryData).toStrictEqual(defaultData);
 		});
 
-		test('should return default data when query parameter is empty', () => {
+		it('should return default data when query parameter is empty', () => {
 			const defaultData = { default: 'value' };
 			const { result } = renderHookWithRouter('testKey', defaultData, [
 				'/test?testKey=',
 			]);
 
 			expect(result.current.query).toBe('');
-			expect(result.current.queryData).toEqual(defaultData);
+			expect(result.current.queryData).toStrictEqual(defaultData);
 		});
 
-		test('should handle invalid JSON and return default data', () => {
+		it('should handle invalid JSON and return default data', () => {
 			const defaultData = { default: 'value' };
 			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -79,7 +79,7 @@ describe('useUrlQueryData', () => {
 			]);
 
 			expect(result.current.query).toBe('invalid-json');
-			expect(result.current.queryData).toEqual(defaultData);
+			expect(result.current.queryData).toStrictEqual(defaultData);
 			expect(consoleSpy).toHaveBeenCalledWith(
 				'Failed to parse query as JSON:',
 				'invalid-json',
@@ -89,7 +89,7 @@ describe('useUrlQueryData', () => {
 			consoleSpy.mockRestore();
 		});
 
-		test('should handle malformed JSON and return default data', () => {
+		it('should handle malformed JSON and return default data', () => {
 			const defaultData = { default: 'value' };
 			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
@@ -100,13 +100,13 @@ describe('useUrlQueryData', () => {
 			);
 
 			expect(result.current.query).toBe('{"name":"test",}');
-			expect(result.current.queryData).toEqual(defaultData);
+			expect(result.current.queryData).toStrictEqual(defaultData);
 			expect(consoleSpy).toHaveBeenCalled();
 
 			consoleSpy.mockRestore();
 		});
 
-		test('should handle complex nested objects', () => {
+		it('should handle complex nested objects', () => {
 			const complexData = {
 				users: [
 					{ id: 1, name: 'John', settings: { theme: 'dark', notifications: true } },
@@ -127,10 +127,10 @@ describe('useUrlQueryData', () => {
 			]);
 
 			expect(result.current.query).toBe(JSON.stringify(complexData));
-			expect(result.current.queryData).toEqual(complexData);
+			expect(result.current.queryData).toStrictEqual(complexData);
 		});
 
-		test('should handle primitive values', () => {
+		it('should handle primitive values', () => {
 			const stringData = 'simple string';
 			const { result } = renderHookWithRouter('stringKey', '', [
 				`/test?stringKey=${encodeURIComponent(JSON.stringify(stringData))}`,
@@ -142,7 +142,7 @@ describe('useUrlQueryData', () => {
 	});
 
 	describe('redirectWithQuery', () => {
-		test('should navigate with new query data', () => {
+		it('should navigate with new query data', () => {
 			const { result } = renderHookWithRouter('testKey', {});
 
 			const newData = { name: 'new', value: 456 };
@@ -159,7 +159,7 @@ describe('useUrlQueryData', () => {
 			expect(urlParams.get('testKey')).toBe(JSON.stringify(newData));
 		});
 
-		test('should preserve existing query parameters when adding new one', () => {
+		it('should preserve existing query parameters when adding new one', () => {
 			const { result } = renderHookWithRouter('newKey', {}, [
 				'/test?existingKey=existingValue',
 			]);
@@ -176,7 +176,7 @@ describe('useUrlQueryData', () => {
 			expect(urlParams.get('newKey')).toBe(JSON.stringify(newData));
 		});
 
-		test('should update existing query parameter', () => {
+		it('should update existing query parameter', () => {
 			const initialData = { name: 'old' };
 			const { result } = renderHookWithRouter('testKey', {}, [
 				`/test?testKey=${encodeURIComponent(JSON.stringify(initialData))}`,
@@ -192,7 +192,7 @@ describe('useUrlQueryData', () => {
 			expect(urlParams.get('testKey')).toBe(JSON.stringify(newData));
 		});
 
-		test('should handle complex data in redirectWithQuery', () => {
+		it('should handle complex data in redirectWithQuery', () => {
 			const { result } = renderHookWithRouter('complexKey', {});
 
 			const complexData = {
@@ -212,7 +212,7 @@ describe('useUrlQueryData', () => {
 			expect(urlParams.get('complexKey')).toBe(JSON.stringify(complexData));
 		});
 
-		test('should handle primitive values in redirectWithQuery', () => {
+		it('should handle primitive values in redirectWithQuery', () => {
 			const { result } = renderHookWithRouter('primitiveKey', '');
 
 			act(() => {
@@ -224,7 +224,7 @@ describe('useUrlQueryData', () => {
 			expect(urlParams.get('primitiveKey')).toBe(JSON.stringify('simple string'));
 		});
 
-		test('should handle null and undefined values', () => {
+		it('should handle null and undefined values', () => {
 			const { result } = renderHookWithRouter('nullKey', {});
 
 			act(() => {
@@ -246,7 +246,7 @@ describe('useUrlQueryData', () => {
 	});
 
 	describe('hook interface', () => {
-		test('should return correct interface structure', () => {
+		it('should return correct interface structure', () => {
 			const { result } = renderHookWithRouter('testKey', {});
 
 			expect(result.current).toHaveProperty('query');
@@ -255,7 +255,7 @@ describe('useUrlQueryData', () => {
 			expect(typeof result.current.redirectWithQuery).toBe('function');
 		});
 
-		test('should handle different query keys', () => {
+		it('should handle different query keys', () => {
 			const { result: result1 } = renderHookWithRouter('key1', {});
 			const { result: result2 } = renderHookWithRouter('key2', {});
 
@@ -275,7 +275,7 @@ describe('useUrlQueryData', () => {
 	});
 
 	describe('URL encoding/decoding', () => {
-		test('should handle URL encoded query parameters', () => {
+		it('should handle URL encoded query parameters', () => {
 			const testData = { name: 'test with spaces', value: 'special&chars' };
 			const encodedData = encodeURIComponent(JSON.stringify(testData));
 
@@ -283,10 +283,10 @@ describe('useUrlQueryData', () => {
 				`/test?testKey=${encodedData}`,
 			]);
 
-			expect(result.current.queryData).toEqual(testData);
+			expect(result.current.queryData).toStrictEqual(testData);
 		});
 
-		test('should properly encode data in redirectWithQuery', () => {
+		it('should properly encode data in redirectWithQuery', () => {
 			const { result } = renderHookWithRouter('testKey', {});
 
 			const testData = { name: 'test with spaces', value: 'special&chars' };
@@ -299,7 +299,7 @@ describe('useUrlQueryData', () => {
 			const decodedValue = JSON.parse(
 				decodeURIComponent(urlParams.get('testKey') || ''),
 			);
-			expect(decodedValue).toEqual(testData);
+			expect(decodedValue).toStrictEqual(testData);
 		});
 	});
 });

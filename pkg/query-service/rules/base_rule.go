@@ -110,7 +110,7 @@ func WithEvalDelay(dur valuer.TextDuration) RuleOption {
 
 func WithLogger(logger *slog.Logger) RuleOption {
 	return func(r *BaseRule) {
-		r.logger = logger
+		r.logger = logger.With(slog.String("rule.id", r.id))
 	}
 }
 
@@ -139,9 +139,6 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 }
 
 func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts ...RuleOption) (*BaseRule, error) {
-	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule condition")
-	}
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -251,7 +248,7 @@ func (r *BaseRule) SelectedQuery(ctx context.Context) string {
 	if r.ruleCondition.SelectedQuery != "" {
 		return r.ruleCondition.SelectedQuery
 	}
-	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
+	r.logger.WarnContext(ctx, "missing selected query")
 	return r.ruleCondition.SelectedQueryName()
 }
 
@@ -371,7 +368,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 			alerts = append(alerts, &anew)
 		}
 	})
-	notifyFunc(ctx, orgID, "", alerts...)
+	notifyFunc(ctx, orgID, alerts...)
 }
 
 func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
@@ -383,13 +380,13 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	}
 }
 
-func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState ruletypes.AlertState, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
 	if r.ruleStateHistoryModule == nil {
 		return nil
 	}
 
 	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, itemsToAdd); err != nil {
-		r.logger.ErrorContext(ctx, "error while recording rule state history", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("items_to_add", itemsToAdd))
+		r.logger.ErrorContext(ctx, "error while recording rule state history", errors.Attr(err), slog.Any("items_to_add", itemsToAdd))
 		return err
 	}
 	r.handledRestart = true
@@ -583,7 +580,12 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
-			r.logger.InfoContext(ctx, "skipping new series", slog.String("rule.id", r.ID()), slog.Int("series.index", i), slog.Int64("series.max_first_seen", maxFirstSeen), slog.Int64("eval.time_ms", evalTimeMs), slog.Int64("eval.delay_ms", newGroupEvalDelayMs), slog.Any("series.labels", series[i].Labels))
+			r.logger.InfoContext(
+				ctx, "skipping new series",
+				slog.Int("series.index", i), slog.Int64("series.max_first_seen", maxFirstSeen),
+				slog.Int64("eval.time_ms", evalTimeMs), slog.Int64("eval.delay_ms", newGroupEvalDelayMs),
+				slog.Any("series.labels", series[i].Labels),
+			)
 			continue
 		}
 
@@ -593,7 +595,11 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 
 	skippedCount := len(series) - len(filteredSeries)
 	if skippedCount > 0 {
-		r.logger.InfoContext(ctx, "filtered new series", slog.String("rule.id", r.ID()), slog.Int("series.skipped_count", skippedCount), slog.Int("series.total_count", len(series)), slog.Int64("eval.delay_ms", newGroupEvalDelayMs))
+		r.logger.InfoContext(
+			ctx, "filtered new series",
+			slog.Int("series.skipped_count", skippedCount), slog.Int("series.total_count", len(series)),
+			slog.Int64("eval.delay_ms", newGroupEvalDelayMs),
+		)
 	}
 
 	return filteredSeries, nil
@@ -614,7 +620,7 @@ func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, has
 		return nil
 	}
 
-	r.logger.InfoContext(ctx, "no data found for rule condition", slog.String("rule.id", r.ID()))
+	r.logger.InfoContext(ctx, "no data found for rule condition")
 	lbls := ruletypes.NewBuilder()
 	if !r.lastTimestampWithDatapoints.IsZero() {
 		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(ruletypes.AlertTimeFormat))
