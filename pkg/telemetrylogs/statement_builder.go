@@ -171,7 +171,7 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], bo
 	if bodyJSONEnabled {
 		for _, sel := range keySelectors {
 			if sel.Name == LogsV2BodyColumn {
-				warnings = append(warnings, querybuilder.BodySearchDefaultWarning)
+				warnings = append(warnings, bodySearchDefaultWarning)
 				break
 			}
 		}
