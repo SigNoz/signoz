@@ -260,7 +260,7 @@ func TestGetSelectedSpans_MultipleRoots(t *testing.T) {
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root1, root2}, spanMap)
 	spans, _ := trace.GetSelectedSpans([]string{"root1", "root2"}, "root1", 500, 5)
 
-	traceRespnose := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, false)
+	traceRespnose := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, false, nil)
 
 	assert.Equal(t, []string{"root1", "child1", "root2", "child2"}, spanIDs(spans), "root1 subtree must precede root2 subtree")
 	assert.Equal(t, "svc-a", traceRespnose.RootServiceName, "metadata comes from first root")
@@ -567,7 +567,7 @@ func TestGetAllSpans(t *testing.T) {
 	)
 	trace := getWaterfallTrace([]*tracedetailtypes.WaterfallSpan{root}, nil)
 	spans := trace.GetAllSpans()
-	traceResponse := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, true)
+	traceResponse := tracedetailtypes.NewGettableWaterfallTrace(trace, spans, nil, true, nil)
 	assert.ElementsMatch(t, spanIDs(spans), []string{"root", "childA", "grandchildA", "leafA", "childB", "grandchildB", "leafB"})
 	assert.Equal(t, "svc", traceResponse.RootServiceName)
 	assert.Equal(t, "root-op", traceResponse.RootServiceEntryPoint)

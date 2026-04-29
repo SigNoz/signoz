@@ -22,6 +22,7 @@ function OneClickIntegrations(props: OneClickIntegrationsProps): JSX.Element {
 		if (!query) {
 			return ONE_CLICK_INTEGRATIONS;
 		}
+
 		return ONE_CLICK_INTEGRATIONS.filter(
 			(integration) =>
 				integration.title.toLowerCase().includes(query) ||

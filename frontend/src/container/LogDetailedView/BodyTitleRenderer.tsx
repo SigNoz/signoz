@@ -48,7 +48,7 @@ function BodyTitleRenderer({
 
 	const cleanedNodeKey = removeObjectFromString(nodeKey);
 	const isBodyJsonQueryEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.BODY_JSON_ENABLED)
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_JSON_BODY)
 			?.active || false;
 
 	// Group by is supported only for body json query enabled and not for array elements

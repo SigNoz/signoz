@@ -14,8 +14,8 @@ export const INTEGRATION_TELEMETRY_EVENTS = {
 		'Integrations Detail Page: Clicked remove Integration button for integration',
 	INTEGRATIONS_DETAIL_CONFIGURE_INSTRUCTION:
 		'Integrations Detail Page: Navigated to configure an integration',
-	AWS_INTEGRATION_ACCOUNT_REMOVED:
-		'AWS Integration Detail page: Clicked remove Integration button for integration',
+	INTEGRATION_ACCOUNT_REMOVED:
+		'Integration Detail page: Clicked remove Integration button for integration',
 };
 
 export const INTEGRATION_TYPES = {
@@ -53,7 +53,7 @@ export const AZURE_INTEGRATION = {
 	is_new: true,
 };
 
-export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION];
+export const ONE_CLICK_INTEGRATIONS = [AWS_INTEGRATION, AZURE_INTEGRATION];
 
 export const AZURE_REGIONS: AzureRegion[] = [
 	{
@@ -81,6 +81,7 @@ export const AZURE_REGIONS: AzureRegion[] = [
 	{ label: 'Central India', value: 'centralindia', geography: 'India' },
 	{ label: 'Central US', value: 'centralus', geography: 'United States' },
 	{ label: 'Chile Central', value: 'chilecentral', geography: 'Chile' },
+	{ label: 'Denmark East', value: 'denmarkeast', geography: 'Denmark' },
 	{ label: 'East Asia', value: 'eastasia', geography: 'Asia Pacific' },
 	{ label: 'East US', value: 'eastus', geography: 'United States' },
 	{ label: 'East US 2', value: 'eastus2', geography: 'United States' },

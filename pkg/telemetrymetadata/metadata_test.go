@@ -17,10 +17,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
-func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+func newTestTelemetryMetaStoreTestHelper(t *testing.T, store telemetrystore.TelemetryStore) telemetrytypes.MetadataStore {
+	t.Helper()
 	return NewTelemetryMetaStore(
 		instrumentationtest.New().ToProviderSettings(),
 		store,
@@ -45,6 +47,7 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		DBName,
 		AttributesMetadataLocalTableName,
 		ColumnEvolutionMetadataTableName,
+		flaggertest.New(t),
 	)
 }
 
@@ -66,7 +69,7 @@ func TestGetKeys(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "statement", Type: "String"},
@@ -176,7 +179,7 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 			mock := mockTelemetryStore.Mock()
 
-			metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+			metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 			hasTraces := false
 			hasLogs := false
@@ -340,7 +343,7 @@ func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -379,7 +382,7 @@ func TestGetMetricFieldValuesIntrinsicBoolReturnsEmpty(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	metadataRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_string_value", Type: "String"},
@@ -411,7 +414,7 @@ func TestGetMetricFieldValuesAppliesMetricNamespace(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_string_value", Type: "String"},
@@ -443,7 +446,7 @@ func TestGetMetricFieldValuesIntrinsicMetricNameAppliesMetricNamespace(t *testin
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	valueRows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "metric_name", Type: "String"},
@@ -483,7 +486,7 @@ func TestGetMeterSourceMetricFieldValuesAppliesMetricNamespace(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr", Type: "Array(String)"},
@@ -514,7 +517,7 @@ func TestGetMetricsKeysAppliesMetricNamespace(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "name", Type: "String"},
@@ -549,7 +552,7 @@ func TestGetMeterSourceMetricKeysAppliesMetricNamespace(t *testing.T) {
 	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
 	mock := mockTelemetryStore.Mock()
 
-	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+	metadata := newTestTelemetryMetaStoreTestHelper(t, mockTelemetryStore)
 
 	rows := cmock.NewRows([]cmock.ColumnType{
 		{Name: "attr_name", Type: "String"},

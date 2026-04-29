@@ -37,7 +37,12 @@ func (m *module) GetWaterfall(ctx context.Context, traceID string, req *tracedet
 		m.config.Waterfall.MaxDepthToAutoExpand,
 	)
 
-	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans), nil
+	aggregationResults := make([]tracedetailtypes.SpanAggregationResult, 0, len(req.Aggregations))
+	for _, a := range req.Aggregations {
+		aggregationResults = append(aggregationResults, waterfallTrace.GetSpanAggregation(a.Aggregation, a.Field))
+	}
+
+	return tracedetailtypes.NewGettableWaterfallTrace(waterfallTrace, selectedSpans, uncollapsedSpans, selectedAllSpans, aggregationResults), nil
 }
 
 // getTraceData returns the waterfall cache for the given traceID with fallback on DB.

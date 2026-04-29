@@ -25,6 +25,11 @@ func (h *handler) GetWaterfall(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := req.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	result, err := h.module.GetWaterfall(r.Context(), mux.Vars(r)["traceID"], req)
 	if err != nil {
 		render.Error(rw, err)

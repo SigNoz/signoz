@@ -4898,6 +4898,11 @@ components:
       type: object
     TracedetailtypesGettableWaterfallTrace:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregationResult'
+          nullable: true
+          type: array
         endTimestampMillis:
           minimum: 0
           type: integer
@@ -4937,6 +4942,11 @@ components:
       type: object
     TracedetailtypesPostableWaterfall:
       properties:
+        aggregations:
+          items:
+            $ref: '#/components/schemas/TracedetailtypesSpanAggregation'
+          nullable: true
+          type: array
         limit:
           minimum: 0
           type: integer
@@ -4948,6 +4958,32 @@ components:
           nullable: true
           type: array
       type: object
+    TracedetailtypesSpanAggregation:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+      type: object
+    TracedetailtypesSpanAggregationResult:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/TracedetailtypesSpanAggregationType'
+        field:
+          $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+        value:
+          additionalProperties:
+            minimum: 0
+            type: integer
+          nullable: true
+          type: object
+      type: object
+    TracedetailtypesSpanAggregationType:
+      enum:
+      - span_count
+      - execution_time_percentage
+      - duration
+      type: string
     TracedetailtypesWaterfallSpan:
       properties:
         attributes:
@@ -5296,7 +5332,12 @@ components:
       scheme: bearer
       type: http
 info:
+  contact:
+    email: support@signoz.io
+    name: SigNoz Support
+    url: https://signoz.io
   description: OpenTelemetry-Native Logs, Metrics and Traces in a single pane
+  termsOfService: https://signoz.io/terms-of-service/
   title: SigNoz
   version: ""
 openapi: 3.0.3
@@ -17512,3 +17553,16 @@ paths:
       summary: Replace variables
       tags:
       - querier
+servers:
+- description: The fully qualified URL to the SigNoz APIServer.
+  url: https://{host}:{port}{base_path}
+  variables:
+    base_path:
+      default: /
+      description: The base path of the SigNoz APIServer
+    host:
+      default: localhost
+      description: The host of the SigNoz APIServer
+    port:
+      default: "8080"
+      description: The port of the SigNoz APIServer
