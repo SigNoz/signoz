@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { useGetGlobalConfig } from 'api/generated/services/global';
+import { useGetHosts } from 'api/generated/services/zeus';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -34,7 +35,22 @@ function MCPServerSettings(): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const instanceUrl = getBaseUrl();
+
+	const {
+		data: hostsData,
+		isLoading: isLoadingHosts,
+		isError: isHostsError,
+	} = useGetHosts();
+
+	const instanceUrl = useMemo(() => {
+		if (isLoadingHosts || isHostsError || !hostsData) {
+			return getBaseUrl();
+		}
+		const hosts = hostsData.data?.hosts ?? [];
+		const activeHost =
+			hosts.find((h) => !h.is_default) ?? hosts.find((h) => h.is_default);
+		return activeHost?.url ?? getBaseUrl();
+	}, [hostsData, isLoadingHosts, isHostsError]);
 
 	const { data: globalConfig, isLoading: isConfigLoading } =
 		useGetGlobalConfig();
@@ -70,10 +86,13 @@ function MCPServerSettings(): JSX.Element {
 	}, []);
 
 	const handleCopyInstanceUrl = useCallback(() => {
+		if (isLoadingHosts) {
+			return;
+		}
 		copyToClipboard(instanceUrl);
 		toast.success('Instance URL copied to clipboard');
 		void logEvent(ANALYTICS.INSTANCE_URL_COPIED, {});
-	}, [copyToClipboard, instanceUrl]);
+	}, [copyToClipboard, instanceUrl, isLoadingHosts]);
 
 	const handleDocsLinkClick = useCallback((target: string) => {
 		void logEvent(ANALYTICS.DOCS_LINK_CLICKED, { target });
@@ -132,6 +151,7 @@ function MCPServerSettings(): JSX.Element {
 			<AuthCard
 				isAdmin={isAdmin}
 				instanceUrl={instanceUrl}
+				isLoadingInstanceUrl={isLoadingHosts}
 				onCopyInstanceUrl={handleCopyInstanceUrl}
 				onCreateServiceAccount={handleCreateServiceAccount}
 			/>

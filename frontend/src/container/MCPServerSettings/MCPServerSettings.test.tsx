@@ -6,6 +6,7 @@ const mockLogEvent = jest.fn();
 const mockCopyToClipboard = jest.fn();
 const mockHistoryPush = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
+const mockUseGetHosts = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastWarning = jest.fn();
 
@@ -17,6 +18,10 @@ jest.mock('api/common/logEvent', () => ({
 jest.mock('api/generated/services/global', () => ({
 	useGetGlobalConfig: (...args: unknown[]): unknown =>
 		mockUseGetGlobalConfig(...args),
+}));
+
+jest.mock('api/generated/services/zeus', () => ({
+	useGetHosts: (...args: unknown[]): unknown => mockUseGetHosts(...args),
 }));
 
 jest.mock('react-use', () => ({
@@ -47,6 +52,8 @@ jest.mock('utils/basePath', () => ({
 }));
 
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
+const CUSTOM_HOST_URL = 'https://myteam.signoz.cloud';
+const DEFAULT_HOST_URL = 'https://default.signoz.cloud';
 
 function setupGlobalConfig({ mcpUrl }: { mcpUrl: string | null }): void {
 	mockUseGetGlobalConfig.mockReturnValue({
@@ -55,7 +62,28 @@ function setupGlobalConfig({ mcpUrl }: { mcpUrl: string | null }): void {
 	});
 }
 
+function setupHosts({
+	hosts = [],
+	isLoading = false,
+	isError = false,
+}: {
+	hosts?: { name?: string; url?: string; is_default?: boolean }[];
+	isLoading?: boolean;
+	isError?: boolean;
+} = {}): void {
+	mockUseGetHosts.mockReturnValue({
+		data: isLoading || isError ? undefined : { data: { hosts } },
+		isLoading,
+		isError,
+	});
+}
+
 describe('MCPServerSettings', () => {
+	beforeEach(() => {
+		// Default: hosts loaded but empty → instanceUrl falls back to getBaseUrl()
+		setupHosts();
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
@@ -157,5 +185,87 @@ describe('MCPServerSettings', () => {
 		expect(mockToastSuccess).toHaveBeenCalledWith(
 			'Instance URL copied to clipboard',
 		);
+	});
+
+	describe('instance URL resolution', () => {
+		it('uses the active custom host URL when available', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({
+				hosts: [
+					{ name: 'default', url: DEFAULT_HOST_URL, is_default: true },
+					{ name: 'myteam', url: CUSTOM_HOST_URL, is_default: false },
+				],
+			});
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				CUSTOM_HOST_URL,
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith(CUSTOM_HOST_URL);
+		});
+
+		it('falls back to the default host URL when no custom host exists', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({
+				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
+			});
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				DEFAULT_HOST_URL,
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith(DEFAULT_HOST_URL);
+		});
+
+		it('falls back to browser URL when hosts request errors', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isError: true });
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
+		});
+
+		it('shows URL skeleton while hosts are loading', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isLoading: true });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
+			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+		});
+
+		it('does not copy while hosts are still loading', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isLoading: true });
+			userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(
+				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
+			).not.toBeInTheDocument();
+			expect(mockCopyToClipboard).not.toHaveBeenCalled();
+		});
 	});
 });
