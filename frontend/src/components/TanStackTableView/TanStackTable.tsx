@@ -543,7 +543,9 @@ function TanStackTableInner<TData>(
 										: flatItems
 									).map((item, index) => (
 										<TanStackCustomTableRow
-											key={item.row.id}
+											key={
+												item.kind === 'expansion' ? `${item.row.id}-expansion` : item.row.id
+											}
 											item={item}
 											context={virtuosoContext}
 											data-index={index}
