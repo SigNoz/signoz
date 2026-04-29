@@ -304,52 +304,56 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should toggle sort order in URL on subsequent header clicks', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
-			// TanStackTable renders a sort button with title attribute
-			const sortButton = screen.getByTitle('Id');
-
-			// First click - ascending
-			await user.click(sortButton);
-
-			// Wait for the URL to be updated with ascending order first
-			// This ensures the state has propagated through nuqs before checking the DOM
-			await waitFor(() => {
-				const ascOrderBy = onUrlUpdateMock.mock.calls
+			// Track orderBy calls
+			const getOrderByCalls = (): string[] =>
+				onUrlUpdateMock.mock.calls
 					.map((call) => call[0].searchParams.get('orderBy'))
-					.filter(Boolean)
-					.pop();
-				expect(ascOrderBy).toBeDefined();
-				const parsed = JSON.parse(ascOrderBy as string);
+					.filter(Boolean) as string[];
+
+			// First click - should set ascending
+			const sortButton = screen.getByTitle('Id');
+			expect(sortButton).toHaveAttribute('data-sort', 'none');
+			fireEvent.click(sortButton);
+
+			// Wait for URL to show ascending
+			await waitFor(() => {
+				const calls = getOrderByCalls();
+				expect(calls.length).toBeGreaterThan(0);
+				const parsed = JSON.parse(calls[calls.length - 1]);
 				expect(parsed.order).toBe('asc');
 			});
 
-			// Wait for the component to visually reflect the ascending sort state
+			// Wait for button to have ascending state
 			await waitFor(() => {
-				expect(sortButton).toHaveAttribute('data-sort', 'ascending');
+				expect(screen.getByTitle('Id')).toHaveAttribute('data-sort', 'ascending');
 			});
 
-			// Second click - descending
-			await user.click(sortButton);
+			const callsAfterFirstClick = getOrderByCalls().length;
 
-			// Wait for the URL to be updated with descending order
+			// Verify only one button exists with title 'Id'
+			const allIdButtons = screen.getAllByTitle('Id');
+			expect(allIdButtons).toHaveLength(1);
+
+			// Second click - should set descending
+			const ascendingButton = screen.getByTitle('Id');
+			expect(ascendingButton).toHaveAttribute('data-sort', 'ascending');
+			fireEvent.click(ascendingButton);
+
+			// Wait for URL to show descending (must be a new call)
 			await waitFor(() => {
-				const lastOrderBy = onUrlUpdateMock.mock.calls
-					.map((call) => call[0].searchParams.get('orderBy'))
-					.filter(Boolean)
-					.pop();
-				expect(lastOrderBy).toBeDefined();
-				const parsed = JSON.parse(lastOrderBy as string);
+				const calls = getOrderByCalls();
+				expect(calls.length).toBeGreaterThan(callsAfterFirstClick);
+				const parsed = JSON.parse(calls[calls.length - 1]);
 				expect(parsed.order).toBe('desc');
 			});
 
-			// Wait for descending sort state in the DOM
+			// Verify DOM updated
 			await waitFor(() => {
-				expect(sortButton).toHaveAttribute('data-sort', 'descending');
+				expect(screen.getByTitle('Id')).toHaveAttribute('data-sort', 'descending');
 			});
 		});
 
