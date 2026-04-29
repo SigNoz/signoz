@@ -363,7 +363,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return ErrorConditionLiteral
 		}
 		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
-			v.warnings = append(v.warnings, bodyFullTextSearchDefaultWarning)
+			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 		}
 
 		return cond
@@ -722,7 +722,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	}
 
 	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
-		v.warnings = append(v.warnings, bodyFullTextSearchDefaultWarning)
+		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 	}
 
 	return cond

@@ -1224,7 +1224,7 @@ def test_message_searches(
         {
             "name": "msg.fts_quoted_without_quotes",
             "requestType": "raw",
-            "expression": 'Payment',
+            "expression": "Payment",
             "aggregation": "count()",
             "validate": lambda r: len(get_rows(r)) == 2 and all("Payment" in b.get("message", "") for b in _get_bodies(r)) and r.json().get("data", {}).get("warning") is not None,
         },
