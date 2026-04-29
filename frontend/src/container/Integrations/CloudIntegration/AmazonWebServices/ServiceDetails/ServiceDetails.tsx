@@ -12,14 +12,14 @@ import {
 	useUpdateService,
 } from 'api/generated/services/cloudintegration';
 import {
+	CloudintegrationtypesServiceConfigDTO,
 	CloudintegrationtypesServiceDTO,
 	ListServicesMetadata200,
 } from 'api/generated/services/sigNoz.schemas';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import ServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards';
-import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { IServiceStatus } from 'container/Integrations/types';
+import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
+import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Save, X } from 'lucide-react';
 
@@ -36,7 +36,81 @@ type ServiceDetailsData = CloudintegrationtypesServiceDTO & {
 	status?: IServiceStatus;
 };
 
-function ServiceDetails(): JSX.Element | null {
+const EMPTY_FORM_VALUES: ServiceConfigFormValues = {
+	logsEnabled: false,
+	metricsEnabled: false,
+	s3BucketsByRegion: {},
+};
+
+function getInitialFormValues(
+	type: IntegrationType,
+	serviceDetailsData?: ServiceDetailsData,
+): ServiceConfigFormValues {
+	const integrationConfig =
+		type === IntegrationType.AWS_SERVICES
+			? serviceDetailsData?.cloudIntegrationService?.config?.aws
+			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
+
+	return {
+		logsEnabled: integrationConfig?.logs?.enabled || false,
+		metricsEnabled: integrationConfig?.metrics?.enabled || false,
+		s3BucketsByRegion:
+			type === IntegrationType.AWS_SERVICES
+				? serviceDetailsData?.cloudIntegrationService?.config?.aws?.logs
+						?.s3Buckets || {}
+				: {},
+	};
+}
+
+function getServiceConfigPayload({
+	type,
+	serviceId,
+	logsEnabled,
+	metricsEnabled,
+	isLogsSupported,
+	isMetricsSupported,
+	s3BucketsByRegion,
+}: {
+	type: IntegrationType;
+	serviceId: string;
+	logsEnabled: boolean;
+	metricsEnabled: boolean;
+	isLogsSupported: boolean;
+	isMetricsSupported: boolean;
+	s3BucketsByRegion: Record<string, string[]>;
+}): CloudintegrationtypesServiceConfigDTO {
+	if (type === IntegrationType.AWS_SERVICES) {
+		return {
+			aws: {
+				logs: {
+					enabled: isLogsSupported ? logsEnabled : false,
+					s3Buckets:
+						serviceId === 's3sync' && isLogsSupported ? s3BucketsByRegion : {},
+				},
+				metrics: {
+					enabled: isMetricsSupported ? metricsEnabled : false,
+				},
+			},
+		};
+	}
+
+	return {
+		azure: {
+			logs: {
+				enabled: isLogsSupported ? logsEnabled : false,
+			},
+			metrics: {
+				enabled: isMetricsSupported ? metricsEnabled : false,
+			},
+		},
+	};
+}
+
+function ServiceDetails({
+	type,
+}: {
+	type: IntegrationType;
+}): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
@@ -51,7 +125,7 @@ function ServiceDetails(): JSX.Element | null {
 		isLoading: isServiceDetailsLoading,
 	} = useGetService(
 		{
-			cloudProvider: INTEGRATION_TYPES.AWS,
+			cloudProvider: type,
 			serviceId: serviceId || '',
 		},
 		{
@@ -65,10 +139,17 @@ function ServiceDetails(): JSX.Element | null {
 		},
 	);
 
-	const awsConfig = serviceDetailsData?.cloudIntegrationService?.config?.aws;
+	const integrationConfig =
+		type === IntegrationType.AWS_SERVICES
+			? serviceDetailsData?.cloudIntegrationService?.config?.aws
+			: serviceDetailsData?.cloudIntegrationService?.config?.azure;
 	const isServiceEnabledInPersistedConfig =
-		Boolean(awsConfig?.logs?.enabled) || Boolean(awsConfig?.metrics?.enabled);
+		Boolean(integrationConfig?.logs?.enabled) ||
+		Boolean(integrationConfig?.metrics?.enabled);
 	const serviceDetailsId = serviceDetailsData?.id;
+	const isLogsSupported = serviceDetailsData?.supportedSignals?.logs || false;
+	const isMetricsSupported =
+		serviceDetailsData?.supportedSignals?.metrics || false;
 
 	const {
 		control,
@@ -77,43 +158,31 @@ function ServiceDetails(): JSX.Element | null {
 		watch,
 		formState: { isDirty },
 	} = useForm<ServiceConfigFormValues>({
-		defaultValues: {
-			logsEnabled: awsConfig?.logs?.enabled || false,
-			metricsEnabled: awsConfig?.metrics?.enabled || false,
-			s3BucketsByRegion: awsConfig?.logs?.s3Buckets || {},
-		},
+		defaultValues: getInitialFormValues(type, serviceDetailsData),
 	});
 
-	const resetToAwsConfig = useCallback((): void => {
-		reset({
-			logsEnabled: awsConfig?.logs?.enabled || false,
-			metricsEnabled: awsConfig?.metrics?.enabled || false,
-			s3BucketsByRegion: awsConfig?.logs?.s3Buckets || {},
-		});
-	}, [awsConfig, reset]);
+	const resetToConfig = useCallback((): void => {
+		reset(getInitialFormValues(type, serviceDetailsData));
+	}, [reset, serviceDetailsData, type]);
 
 	// Ensure form state does not leak across service switches while new details load.
 	useEffect(() => {
-		reset({
-			logsEnabled: false,
-			metricsEnabled: false,
-			s3BucketsByRegion: {},
-		});
+		reset(EMPTY_FORM_VALUES);
 	}, [reset, serviceId]);
 
 	useEffect(() => {
-		resetToAwsConfig();
-	}, [resetToAwsConfig, serviceDetailsId]);
+		resetToConfig();
+	}, [resetToConfig, serviceDetailsId]);
 
 	// log telemetry event on visiting details of a service.
 	useEffect(() => {
 		if (serviceId) {
-			logEvent('AWS Integration: Service viewed', {
+			logEvent(`${type} Integration: Service viewed`, {
 				cloudAccountId,
 				serviceId,
 			});
 		}
-	}, [cloudAccountId, serviceId]);
+	}, [cloudAccountId, serviceId, type]);
 
 	const { mutate: updateService, isLoading: isUpdatingServiceConfig } =
 		useUpdateService();
@@ -121,8 +190,8 @@ function ServiceDetails(): JSX.Element | null {
 	const queryClient = useQueryClient();
 
 	const handleDiscard = useCallback((): void => {
-		resetToAwsConfig();
-	}, [resetToAwsConfig]);
+		resetToConfig();
+	}, [resetToConfig]);
 
 	const onSubmit = useCallback(
 		async (values: ServiceConfigFormValues): Promise<void> => {
@@ -141,25 +210,25 @@ function ServiceDetails(): JSX.Element | null {
 					return;
 				}
 
+				const serviceConfigPayload = getServiceConfigPayload({
+					type,
+					serviceId,
+					logsEnabled,
+					metricsEnabled,
+					isLogsSupported,
+					isMetricsSupported,
+					s3BucketsByRegion: normalizedS3BucketsByRegion,
+				});
+
 				updateService(
 					{
 						pathParams: {
-							cloudProvider: INTEGRATION_TYPES.AWS,
+							cloudProvider: type,
 							id: cloudAccountId,
 							serviceId,
 						},
 						data: {
-							config: {
-								aws: {
-									logs: {
-										enabled: logsEnabled,
-										s3Buckets: normalizedS3BucketsByRegion,
-									},
-									metrics: {
-										enabled: metricsEnabled,
-									},
-								},
-							},
+							config: serviceConfigPayload,
 						},
 					},
 					{
@@ -170,7 +239,7 @@ function ServiceDetails(): JSX.Element | null {
 
 							const servicesListQueryKey = getListServicesMetadataQueryKey(
 								{
-									cloudProvider: INTEGRATION_TYPES.AWS,
+									cloudProvider: type,
 								},
 								{
 									cloud_integration_id: cloudAccountId,
@@ -203,7 +272,7 @@ function ServiceDetails(): JSX.Element | null {
 							invalidateGetService(
 								queryClient,
 								{
-									cloudProvider: INTEGRATION_TYPES.AWS,
+									cloudProvider: type,
 									serviceId,
 								},
 								{
@@ -214,14 +283,14 @@ function ServiceDetails(): JSX.Element | null {
 							invalidateListServicesMetadata(
 								queryClient,
 								{
-									cloudProvider: INTEGRATION_TYPES.AWS,
+									cloudProvider: type,
 								},
 								{
 									cloud_integration_id: cloudAccountId,
 								},
 							);
 
-							logEvent('AWS Integration: Service settings saved', {
+							logEvent(`${type} Integration: Service settings saved`, {
 								cloudAccountId,
 								serviceId,
 								logsEnabled,
@@ -241,7 +310,16 @@ function ServiceDetails(): JSX.Element | null {
 				console.error('Form submission failed:', error);
 			}
 		},
-		[serviceId, cloudAccountId, updateService, queryClient, reset],
+		[
+			serviceId,
+			cloudAccountId,
+			updateService,
+			queryClient,
+			reset,
+			type,
+			isLogsSupported,
+			isMetricsSupported,
+		],
 	);
 
 	if (isServiceDetailsLoading) {
@@ -261,10 +339,6 @@ function ServiceDetails(): JSX.Element | null {
 	const renderOverview = (): JSX.Element => {
 		const logsEnabled = watch('logsEnabled');
 		const s3BucketsByRegion = watch('s3BucketsByRegion');
-
-		const isLogsSupported = serviceDetailsData?.supportedSignals?.logs || false;
-		const isMetricsSupported =
-			serviceDetailsData?.supportedSignals?.metrics || false;
 
 		const hasUnsavedChanges = isDirty;
 

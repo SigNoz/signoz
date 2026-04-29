@@ -8,8 +8,8 @@ import {
 	ActiveViewEnum,
 	IntegrationModalProps,
 	ModalStateEnum,
-} from '../types';
-import { RegionForm } from './RegionForm';
+} from '../../../HeroSection/types';
+import { RegionForm } from '../RegionForm/RegionForm';
 
 import './CloudAccountSetupModal.style.scss';
 
@@ -74,8 +74,6 @@ function CloudAccountSetupModal({
 		isConnectionParamsLoading,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		isLoading,
-		isGeneratingUrl,
 		handleConnectionSuccess,
 		handleConnectionTimeout,
 		handleConnectionError,

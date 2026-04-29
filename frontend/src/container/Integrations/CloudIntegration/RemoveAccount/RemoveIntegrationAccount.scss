@@ -1,9 +1,16 @@
 .remove-integration-account-modal {
+	&__cloud-provider {
+		color: var(--l1-foreground);
+		font-weight: 500;
+		font-size: 14px;
+		line-height: 20px;
+		letter-spacing: -0.07px;
+	}
+
 	.ant-modal-content {
 		background-color: var(--l1-background);
 		border: 1px solid var(--l3-background);
 		border-radius: 4px;
-		padding: 12px;
 	}
 
 	.ant-modal-close {

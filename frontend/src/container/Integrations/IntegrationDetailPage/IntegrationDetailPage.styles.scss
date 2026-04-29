@@ -9,53 +9,6 @@
 		flex-direction: column;
 		gap: 16px;
 
-		.error-container {
-			display: flex;
-			border-radius: 6px;
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-			align-items: center;
-			justify-content: center;
-			flex-direction: column;
-
-			.error-content {
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				height: 300px;
-				gap: 15px;
-
-				.error-btns {
-					display: flex;
-					flex-direction: row;
-					gap: 16px;
-					align-items: center;
-
-					.retry-btn {
-						display: flex;
-						align-items: center;
-					}
-
-					.contact-support {
-						display: flex;
-						align-items: center;
-						gap: 4px;
-						cursor: pointer;
-
-						.text {
-							color: var(--callout-primary-description);
-							font-weight: 500;
-						}
-					}
-				}
-
-				.error-state-svg {
-					height: 40px;
-					width: 40px;
-				}
-			}
-		}
-
 		.loading-integration-details {
 			display: flex;
 			flex-direction: column;
@@ -324,6 +277,36 @@
 
 			.skeleton-item {
 				padding: 16px;
+			}
+		}
+	}
+
+	.error-container {
+		display: flex;
+		border-radius: 6px;
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
+
+		.error-content {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			height: 300px;
+			gap: 15px;
+
+			.error-btns {
+				display: flex;
+				flex-direction: row;
+				gap: 12px;
+				align-items: center;
+			}
+
+			.error-state-svg {
+				height: 40px;
+				width: 40px;
 			}
 		}
 	}

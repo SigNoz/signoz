@@ -117,6 +117,12 @@
 		min-width: 140px !important;
 	}
 
+	&.azure {
+		.ant-select-selector {
+			min-width: 282px !important;
+		}
+	}
+
 	.ant-select-item-option-active {
 		background: var(--l3-background) !important;
 	}
