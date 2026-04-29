@@ -70,6 +70,25 @@
 	line-height: var(--tanstack-plain-cell-line-height, 18px);
 	color: var(--tanstack-table-cell-color, var(--l2-foreground));
 	background-color: var(--tanstack-table-cell-bg, transparent);
+
+	&:first-child {
+		padding: var(
+				--tanstack-cell-padding-top-first-column,
+				var(--tanstack-cell-padding-top)
+			)
+			var(
+				--tanstack-cell-padding-right-first-column,
+				var(--tanstack-cell-padding-right)
+			)
+			var(
+				--tanstack-cell-padding-bottom-first-column,
+				var(--tanstack-cell-padding-bottom)
+			)
+			var(
+				--tanstack-cell-padding-left-first-column,
+				var(--tanstack-cell-padding-left)
+			);
+	}
 }
 
 .tableRow {
@@ -169,7 +188,7 @@
 	& thead th:first-child {
 		padding-left: var(
 			--tanstack-expansion-first-col-padding-left,
-			var(--spacing-20)
+			calc(var(--spacing-3) - 1px)
 		);
 	}
 

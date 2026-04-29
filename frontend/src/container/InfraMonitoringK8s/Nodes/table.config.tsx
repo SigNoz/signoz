@@ -1,15 +1,14 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sNodeData, K8sNodesListPayload } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
+import { K8sNodeData, K8sNodesListPayload } from './api';
+import { Workflow } from 'lucide-react';
 
 export function getK8sNodeRowKey(node: K8sNodeData): string {
 	return node.nodeUID || node.meta.k8s_node_uid || node.meta.k8s_node_name;
@@ -30,11 +29,7 @@ export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 	{
 		id: 'nodeGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> NODE GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="NODE GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_node_name || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -55,7 +50,12 @@ export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 	},
 	{
 		id: 'nodeName',
-		header: 'Node Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Node Name"
+				icon={<Workflow data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.meta.k8s_node_name || '',
 		width: { min: 290 },
 		enableSort: false,

@@ -520,7 +520,10 @@ function TanStackTableInner<TData>(
 	);
 
 	return (
-		<div className={cx(viewStyles.tanstackTableViewWrapper, className)}>
+		<div
+			className={cx(viewStyles.tanstackTableViewWrapper, className)}
+			data-has-group-by={(groupBy?.length || 0) > 0}
+		>
 			<TanStackTableStateProvider>
 				<TableLoadingSync
 					isLoading={isLoading}

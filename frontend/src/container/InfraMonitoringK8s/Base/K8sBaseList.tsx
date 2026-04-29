@@ -33,6 +33,7 @@ import { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 
 import styles from './K8sBaseList.module.scss';
+import cx from 'classnames';
 
 export type K8sBaseListEmptyStateContext = {
 	isError: boolean;
@@ -273,7 +274,7 @@ export function K8sBaseList<T extends K8sEntityData>({
 					onRowClickNewTab={handleRowClickNewTab}
 					renderExpandedRow={isGroupedByAttribute ? renderExpandedRow : undefined}
 					getRowCanExpand={isGroupedByAttribute ? getRowCanExpand : undefined}
-					className={styles.k8SListTable}
+					className={cx(styles.k8SListTable, expandedRowColumns)}
 					enableQueryParams={{
 						page: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE,
 						limit: INFRA_MONITORING_K8S_PARAMS_KEYS.PAGE_SIZE,

@@ -1,15 +1,14 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sClusterData, K8sClustersListPayload } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
+import { K8sClusterData, K8sClustersListPayload } from './api';
+import { Boxes } from 'lucide-react';
 
 export function getK8sClusterRowKey(cluster: K8sClusterData): string {
 	return (
@@ -34,11 +33,7 @@ export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 	{
 		id: 'clusterGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> CLUSTER GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="CLUSTER GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -59,7 +54,12 @@ export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 	},
 	{
 		id: 'clusterName',
-		header: 'Cluster Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Cluster Name"
+				icon={<Boxes data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
 		width: { min: 290 },
 		enableSort: false,

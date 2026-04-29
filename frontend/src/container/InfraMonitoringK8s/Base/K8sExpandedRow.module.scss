@@ -15,6 +15,10 @@
 
 	--tanstack-cell-padding-left-override: 15px;
 	--tanstack-cell-padding-right-override: 15px;
+
+	& [data-hide-expanded='true'] {
+		display: none;
+	}
 }
 
 .expandedTableFooter {

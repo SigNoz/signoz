@@ -1,14 +1,13 @@
 import { Tooltip } from 'antd';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
+import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
+import { FilePenLine } from 'lucide-react';
 
 export function getK8sNamespaceRowKey(namespace: K8sNamespacesData): string {
 	return namespace.namespaceName || namespace.meta.k8s_namespace_name;
@@ -29,11 +28,7 @@ export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
 export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 	{
 		id: 'namespaceGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> NAMESPACE GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="NAMESPACE GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -54,7 +49,12 @@ export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 	},
 	{
 		id: 'namespaceName',
-		header: 'Namespace Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Namespace Name"
+				icon={<FilePenLine data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.namespaceName || '',
 		width: { min: 290 },
 		enableSort: false,

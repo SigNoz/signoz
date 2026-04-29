@@ -1,16 +1,15 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import { InfraMonitoringEntity } from '../constants';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sDeploymentsData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
+import { K8sDeploymentsData } from './api';
+import { Computer } from 'lucide-react';
 
 export function getK8sDeploymentRowKey(deployment: K8sDeploymentsData): string {
 	return deployment.meta.k8s_deployment_name || deployment.deploymentName;
@@ -27,9 +26,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		{
 			id: 'deploymentGroup',
 			header: (): React.ReactNode => (
-				<div className={styles.entityGroupHeader}>
-					<Group size={14} /> DEPLOYMENT GROUP
-				</div>
+				<EntityGroupHeader title="DEPLOYMENT GROUP" />
 			),
 			accessorFn: (row): string => row.meta.k8s_deployment_name || '',
 			width: { min: 220 },
@@ -51,7 +48,12 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 		},
 		{
 			id: 'deploymentName',
-			header: 'Deployment Name',
+			header: (): React.ReactNode => (
+				<EntityGroupHeader
+					title="Deployment Name"
+					icon={<Computer data-hide-expanded="true" size={14} />}
+				/>
+			),
 			accessorFn: (row): string => row.meta.k8s_deployment_name || '',
 			width: { min: 210 },
 			enableSort: false,
@@ -128,9 +130,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU Request"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={cpuRequest} type="request" />
-						</div>
+						<EntityProgressBar value={cpuRequest} type="request" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -150,9 +150,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="CPU Limit"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={cpuLimit} type="limit" />
-						</div>
+						<EntityProgressBar value={cpuLimit} type="limit" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -188,9 +186,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="Memory Request"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={memoryRequest} type="request" />
-						</div>
+						<EntityProgressBar value={memoryRequest} type="request" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -210,9 +206,7 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 						entity={InfraMonitoringEntity.DEPLOYMENTS}
 						attribute="Memory Limit"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={memoryLimit} type="limit" />
-						</div>
+						<EntityProgressBar value={memoryLimit} type="limit" />
 					</ValidateColumnValueWrapper>
 				);
 			},

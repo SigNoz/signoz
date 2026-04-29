@@ -1,15 +1,14 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sVolumesData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
+import { K8sVolumesData } from './api';
+import { HardDrive } from 'lucide-react';
 
 export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
 	return (
@@ -26,11 +25,7 @@ export function getK8sVolumeItemKey(volume: K8sVolumesData): string {
 export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	{
 		id: 'volumeGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> VOLUME GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="VOLUME GROUP" />,
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -51,7 +46,12 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	},
 	{
 		id: 'pvcName',
-		header: 'PVC Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="PVC Name"
+				icon={<HardDrive data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.persistentVolumeClaimName || '',
 		width: { min: 290 },
 		enableSort: false,

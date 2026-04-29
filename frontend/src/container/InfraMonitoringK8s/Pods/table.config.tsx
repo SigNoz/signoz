@@ -1,16 +1,15 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import { InfraMonitoringEntity } from '../constants';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sPodsData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
+import { K8sPodsData } from './api';
+import { Container } from 'lucide-react';
 
 export function getK8sPodRowKey(pod: K8sPodsData): string {
 	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
@@ -23,11 +22,7 @@ export function getK8sPodItemKey(pod: K8sPodsData): string {
 export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	{
 		id: 'podGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> POD GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="POD GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_pod_name || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -48,7 +43,12 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	},
 	{
 		id: 'podName',
-		header: 'Pod Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Pod Name"
+				icon={<Container data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.meta.k8s_pod_name || '',
 		width: { min: 290 },
 		enableSort: false,
@@ -79,9 +79,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuRequest} type="request" />
-					</div>
+					<EntityProgressBar value={cpuRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -100,9 +98,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 					entity={InfraMonitoringEntity.PODS}
 					attribute="CPU Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={cpuLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -136,9 +132,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryRequest} type="request" />
-					</div>
+					<EntityProgressBar value={memoryRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -157,9 +151,7 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 					entity={InfraMonitoringEntity.PODS}
 					attribute="Memory Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={memoryLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},

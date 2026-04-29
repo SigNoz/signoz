@@ -1,16 +1,15 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import { InfraMonitoringEntity } from '../constants';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sStatefulSetsData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
+import { K8sStatefulSetsData } from './api';
+import { ArrowUpDown } from 'lucide-react';
 
 export function getK8sStatefulSetRowKey(
 	statefulSet: K8sStatefulSetsData,
@@ -31,9 +30,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		{
 			id: 'statefulSetGroup',
 			header: (): React.ReactNode => (
-				<div className={styles.entityGroupHeader}>
-					<Group size={14} /> STATEFULSET GROUP
-				</div>
+				<EntityGroupHeader title="STATEFULSET GROUP" />
 			),
 			accessorFn: (row): string => row.meta.k8s_statefulset_name || '',
 			width: { min: 210 },
@@ -55,7 +52,12 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 		},
 		{
 			id: 'statefulsetName',
-			header: 'StatefulSet Name',
+			header: (): React.ReactNode => (
+				<EntityGroupHeader
+					title="StatefulSet Name"
+					icon={<ArrowUpDown data-hide-expanded="true" size={14} />}
+				/>
+			),
 			accessorFn: (row): string => row.meta.k8s_statefulset_name || '',
 			width: { min: 200 },
 			enableSort: false,
@@ -135,9 +137,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU Request"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={cpuRequest} type="request" />
-						</div>
+						<EntityProgressBar value={cpuRequest} type="request" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -157,9 +157,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="CPU Limit"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={cpuLimit} type="limit" />
-						</div>
+						<EntityProgressBar value={cpuLimit} type="limit" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -196,9 +194,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="Memory Request"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={memoryRequest} type="request" />
-						</div>
+						<EntityProgressBar value={memoryRequest} type="request" />
 					</ValidateColumnValueWrapper>
 				);
 			},
@@ -218,9 +214,7 @@ export const k8sStatefulSetsColumnsConfig: TableColumnDef<K8sStatefulSetsData>[]
 						entity={InfraMonitoringEntity.STATEFULSETS}
 						attribute="Memory Limit"
 					>
-						<div className={styles.progressBar}>
-							<EntityProgressBar value={memoryLimit} type="limit" />
-						</div>
+						<EntityProgressBar value={memoryLimit} type="limit" />
 					</ValidateColumnValueWrapper>
 				);
 			},

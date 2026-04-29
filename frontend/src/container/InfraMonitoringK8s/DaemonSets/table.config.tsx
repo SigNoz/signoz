@@ -1,16 +1,15 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import { InfraMonitoringEntity } from '../constants';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sDaemonSetsData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
+import { K8sDaemonSetsData } from './api';
+import { Group } from 'lucide-react';
 
 export function getK8sDaemonSetRowKey(daemonSet: K8sDaemonSetsData): string {
 	return (
@@ -27,11 +26,7 @@ export function getK8sDaemonSetItemKey(daemonSet: K8sDaemonSetsData): string {
 export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	{
 		id: 'daemonSetGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> DAEMONSET GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="DAEMONSET GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
 		width: { min: 300 },
 		enableSort: false,
@@ -52,7 +47,12 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	},
 	{
 		id: 'daemonsetName',
-		header: 'DaemonSet Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="DaemonSet Name"
+				icon={<Group data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
 		width: { min: 290 },
 		enableSort: false,
@@ -128,9 +128,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuRequest} type="request" />
-					</div>
+					<EntityProgressBar value={cpuRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -149,9 +147,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="CPU Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={cpuLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -187,9 +183,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="Memory Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryRequest} type="request" />
-					</div>
+					<EntityProgressBar value={memoryRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -208,9 +202,7 @@ export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 					entity={InfraMonitoringEntity.DAEMONSETS}
 					attribute="Memory Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={memoryLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},

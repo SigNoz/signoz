@@ -11,11 +11,12 @@ import {
 } from 'container/InfraMonitoringK8s/components';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { useInfraMonitoringGroupBy } from 'container/InfraMonitoringK8s/hooks';
-import { Group } from 'lucide-react';
+import EntityGroupHeader from 'container/InfraMonitoringK8s/Base/EntityGroupHeader';
 
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
+import { Container } from 'lucide-react';
 
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
@@ -46,11 +47,7 @@ function HostGroupCell({ row }: { row: HostData }): JSX.Element {
 export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 	{
 		id: 'hostGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> HOST GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="HOST GROUP" />,
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 300 },
 		enableSort: false,
@@ -67,7 +64,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 	{
 		id: 'hostName',
 		header: (): React.ReactNode => (
-			<div className={styles.hostnameColumnHeader}>Hostname</div>
+			<EntityGroupHeader title="Hostname" icon={<Container size={14} />} />
 		),
 		accessorFn: (row): string => row.hostName ?? '',
 		width: { min: 290 },

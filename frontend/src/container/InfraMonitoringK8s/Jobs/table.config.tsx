@@ -1,16 +1,15 @@
 import { Tooltip } from 'antd';
 import { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import { Group } from 'lucide-react';
-
-import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
-import { formatBytes } from '../commonUtils';
-import { InfraMonitoringEntity } from '../constants';
-import K8sGroupCell from '../Base/K8sGroupCell';
-import { K8sJobsData } from './api';
-
-import styles from './table.module.scss';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
+
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
+import { K8sJobsData } from './api';
+import { Bolt } from 'lucide-react';
 
 export function getK8sJobRowKey(job: K8sJobsData): string {
 	return job.jobName || job.meta.k8s_job_name || '';
@@ -23,11 +22,7 @@ export function getK8sJobItemKey(job: K8sJobsData): string {
 export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	{
 		id: 'jobGroup',
-		header: (): React.ReactNode => (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> JOB GROUP
-			</div>
-		),
+		header: (): React.ReactNode => <EntityGroupHeader title="JOB GROUP" />,
 		accessorFn: (row): string => row.meta.k8s_job_name || '',
 		width: { min: 270 },
 		enableSort: false,
@@ -48,7 +43,12 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 	},
 	{
 		id: 'jobName',
-		header: 'Job Name',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Job Name"
+				icon={<Bolt data-hide-expanded="true" size={14} />}
+			/>
+		),
 		accessorFn: (row): string => row.meta.k8s_job_name || '',
 		width: { min: 260 },
 		enableSort: false,
@@ -154,9 +154,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuRequest} type="request" />
-					</div>
+					<EntityProgressBar value={cpuRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -175,9 +173,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="CPU Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={cpuLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={cpuLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -211,9 +207,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="Memory Request"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryRequest} type="request" />
-					</div>
+					<EntityProgressBar value={memoryRequest} type="request" />
 				</ValidateColumnValueWrapper>
 			);
 		},
@@ -232,9 +226,7 @@ export const k8sJobsColumnsConfig: TableColumnDef<K8sJobsData>[] = [
 					entity={InfraMonitoringEntity.JOBS}
 					attribute="Memory Limit"
 				>
-					<div className={styles.progressBar}>
-						<EntityProgressBar value={memoryLimit} type="limit" />
-					</div>
+					<EntityProgressBar value={memoryLimit} type="limit" />
 				</ValidateColumnValueWrapper>
 			);
 		},
