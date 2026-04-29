@@ -20,7 +20,6 @@ export type SuccessStatusCode = Created | Success | SuccessNoContent;
 
 export type ErrorStatusCode =
 	| Forbidden
-	| Forbidden
 	| Unauthorized
 	| NotFound
 	| ServerError

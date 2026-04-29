@@ -14,6 +14,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { isEmpty, isEqual } from 'lodash-es';
 import APIError from 'types/api/error';
+import { DeepPartial } from 'utils/types';
 
 type DateTimeString = string | null | undefined;
 
@@ -82,7 +83,7 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defaultInitialValues: Partial<
+export const defaultInitialValues: DeepPartial<
 	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
 > = {
 	name: '',
@@ -214,7 +215,7 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 
 export const getEndTime = ({
 	schedule,
-}: Partial<
+}: DeepPartial<
 	RuletypesPlannedMaintenanceDTO & {
 		editMode: boolean;
 	}
@@ -222,7 +223,7 @@ export const getEndTime = ({
 	schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '';
 
 export const isScheduleRecurring = (
-	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,
+	schedule?: DeepPartial<RuletypesPlannedMaintenanceDTO['schedule']> | null,
 ): boolean => (schedule ? !isEmpty(schedule?.recurrence) : false);
 
 function convertUtcOffsetToTimezoneOffset(offsetMinutes: number): string {

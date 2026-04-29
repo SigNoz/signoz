@@ -8,7 +8,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 export const buildSchedule = (
-	schedule: Partial<RuletypesScheduleDTO>,
+	schedule: RuletypesScheduleDTO,
 ): RuletypesScheduleDTO => ({
 	timezone: schedule?.timezone ?? '',
 	startTime: schedule?.startTime,
@@ -17,16 +17,13 @@ export const buildSchedule = (
 });
 
 export const createMockDowntime = (
-	overrides: Partial<RuletypesPlannedMaintenanceDTO>,
+	overrides: Partial<RuletypesPlannedMaintenanceDTO> &
+		Pick<RuletypesPlannedMaintenanceDTO, 'schedule'>,
 ): RuletypesPlannedMaintenanceDTO => ({
 	id: overrides.id ?? '0',
 	name: overrides.name ?? '',
 	description: overrides.description ?? '',
-	schedule: buildSchedule({
-		timezone: 'UTC',
-		startTime: new Date('2024-01-01'),
-		...overrides.schedule,
-	}),
+	schedule: overrides.schedule,
 	alertIds: overrides.alertIds ?? [],
 	createdAt: overrides.createdAt,
 	createdBy: overrides.createdBy ?? '',
