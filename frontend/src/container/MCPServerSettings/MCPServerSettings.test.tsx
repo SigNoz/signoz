@@ -7,6 +7,7 @@ const mockCopyToClipboard = jest.fn();
 const mockHistoryPush = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
 const mockUseGetHosts = jest.fn();
+const mockUseGetTenantLicense = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastWarning = jest.fn();
 
@@ -22,6 +23,10 @@ jest.mock('api/generated/services/global', () => ({
 
 jest.mock('api/generated/services/zeus', () => ({
 	useGetHosts: (...args: unknown[]): unknown => mockUseGetHosts(...args),
+}));
+
+jest.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: (): unknown => mockUseGetTenantLicense(),
 }));
 
 jest.mock('react-use', () => ({
@@ -55,6 +60,21 @@ const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
 const CUSTOM_HOST_URL = 'https://myteam.signoz.cloud';
 const DEFAULT_HOST_URL = 'https://default.signoz.cloud';
 
+function setupLicense({
+	isCloudUser = true,
+	isEnterpriseSelfHostedUser = false,
+}: {
+	isCloudUser?: boolean;
+	isEnterpriseSelfHostedUser?: boolean;
+} = {}): void {
+	mockUseGetTenantLicense.mockReturnValue({
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser: !isCloudUser && !isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser: false,
+	});
+}
+
 function setupGlobalConfig({ mcpUrl }: { mcpUrl: string | null }): void {
 	mockUseGetGlobalConfig.mockReturnValue({
 		data: { data: { mcp_url: mcpUrl, ingestion_url: '' }, status: 'success' },
@@ -80,7 +100,8 @@ function setupHosts({
 
 describe('MCPServerSettings', () => {
 	beforeEach(() => {
-		// Default: hosts loaded but empty → instanceUrl falls back to getBaseUrl()
+		// Default: cloud user, hosts loaded but empty → instanceUrl falls back to getBaseUrl()
+		setupLicense();
 		setupHosts();
 	});
 
@@ -266,6 +287,74 @@ describe('MCPServerSettings', () => {
 				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
 			).not.toBeInTheDocument();
 			expect(mockCopyToClipboard).not.toHaveBeenCalled();
+		});
+
+		it('disables the hosts query for non-cloud deployments', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
+
+			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
+
+			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
+			expect(callOptions?.query?.enabled).toBe(false);
+		});
+
+		it('uses browser URL immediately for enterprise self-hosted (no skeleton)', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
+			setupHosts({ isLoading: false });
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
+
+			expect(
+				document.querySelector('.ant-skeleton-input'),
+			).not.toBeInTheDocument();
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				'http://localhost',
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
+		});
+
+		it('disables the hosts query for cloud non-admin users', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: true });
+
+			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
+
+			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
+			expect(callOptions?.query?.enabled).toBe(false);
+		});
+
+		it('shows "ask admin" banner for cloud non-admin instead of the URL', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: true });
+			setupHosts({ isLoading: false });
+
+			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
+
+			expect(
+				document.querySelector('.ant-skeleton-input'),
+			).not.toBeInTheDocument();
+			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
+			expect(
+				screen.getByTestId('mcp-instance-url-unavailable'),
+			).toBeInTheDocument();
+		});
+
+		it('enables the hosts query only for cloud admins', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: true });
+
+			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
+
+			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
+			expect(callOptions?.query?.enabled).toBe(true);
 		});
 	});
 });

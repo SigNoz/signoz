@@ -7,6 +7,7 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetHosts } from 'api/generated/services/zeus';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { USER_ROLES } from 'types/roles';
 import { getBaseUrl } from 'utils/basePath';
 
@@ -35,12 +36,13 @@ function MCPServerSettings(): JSX.Element {
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const { isCloudUser } = useGetTenantLicense();
 
 	const {
 		data: hostsData,
 		isLoading: isLoadingHosts,
 		isError: isHostsError,
-	} = useGetHosts();
+	} = useGetHosts({ query: { enabled: isCloudUser && isAdmin } });
 
 	const instanceUrl = useMemo(() => {
 		if (isLoadingHosts || isHostsError || !hostsData) {
@@ -150,6 +152,7 @@ function MCPServerSettings(): JSX.Element {
 
 			<AuthCard
 				isAdmin={isAdmin}
+				isCloudUser={isCloudUser}
 				instanceUrl={instanceUrl}
 				isLoadingInstanceUrl={isLoadingHosts}
 				onCopyInstanceUrl={handleCopyInstanceUrl}
