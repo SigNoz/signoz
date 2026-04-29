@@ -67,8 +67,6 @@ var RepeatOnAllMap = map[RepeatOn]time.Weekday{
 }
 
 type Recurrence struct {
-	StartTime  time.Time           `json:"startTime" required:"true"`
-	EndTime    *time.Time          `json:"endTime,omitempty"`
 	Duration   valuer.TextDuration `json:"duration" required:"true"`
 	RepeatType RepeatType          `json:"repeatType" required:"true"`
 	RepeatOn   []RepeatOn          `json:"repeatOn"`
@@ -105,33 +103,16 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 		endTime = time.Date(s.EndTime.Year(), s.EndTime.Month(), s.EndTime.Day(), s.EndTime.Hour(), s.EndTime.Minute(), s.EndTime.Second(), s.EndTime.Nanosecond(), loc)
 	}
 
-	var recurrence *Recurrence
-	if s.Recurrence != nil {
-		recStartTime := time.Date(s.Recurrence.StartTime.Year(), s.Recurrence.StartTime.Month(), s.Recurrence.StartTime.Day(), s.Recurrence.StartTime.Hour(), s.Recurrence.StartTime.Minute(), s.Recurrence.StartTime.Second(), s.Recurrence.StartTime.Nanosecond(), loc)
-		var recEndTime *time.Time
-		if s.Recurrence.EndTime != nil {
-			end := time.Date(s.Recurrence.EndTime.Year(), s.Recurrence.EndTime.Month(), s.Recurrence.EndTime.Day(), s.Recurrence.EndTime.Hour(), s.Recurrence.EndTime.Minute(), s.Recurrence.EndTime.Second(), s.Recurrence.EndTime.Nanosecond(), loc)
-			recEndTime = &end
-		}
-		recurrence = &Recurrence{
-			StartTime:  recStartTime,
-			EndTime:    recEndTime,
-			Duration:   s.Recurrence.Duration,
-			RepeatType: s.Recurrence.RepeatType,
-			RepeatOn:   s.Recurrence.RepeatOn,
-		}
-	}
-
 	return json.Marshal(&struct {
 		Timezone   string      `json:"timezone"`
-		StartTime  time.Time   `json:"startTime,omitzero"`
+		StartTime  time.Time   `json:"startTime"`
 		EndTime    time.Time   `json:"endTime,omitzero"`
 		Recurrence *Recurrence `json:"recurrence,omitempty"`
 	}{
 		Timezone:   s.Timezone,
 		StartTime:  startTime,
 		EndTime:    endTime,
-		Recurrence: recurrence,
+		Recurrence: s.Recurrence,
 	})
 }
 
@@ -152,7 +133,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	}
 
 	var startTime time.Time
-	if aux.Recurrence == nil && aux.StartTime != "" {
+	if aux.StartTime != "" {
 		startTime, err = time.Parse(time.RFC3339, aux.StartTime)
 		if err != nil {
 			return err
@@ -161,39 +142,16 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	}
 
 	var endTime time.Time
-	if aux.Recurrence == nil && aux.EndTime != "" {
+	if aux.EndTime != "" {
 		endTime, err = time.Parse(time.RFC3339, aux.EndTime)
 		if err != nil {
 			return err
 		}
+		// TODO: if endTime.IsZero() then we should not set the endTime
 		s.EndTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), endTime.Second(), endTime.Nanosecond(), loc)
 	}
 
 	s.Timezone = aux.Timezone
-
-	if aux.Recurrence != nil {
-		recStartTime, err := time.Parse(time.RFC3339, aux.Recurrence.StartTime.Format(time.RFC3339))
-		if err != nil {
-			return err
-		}
-
-		var recEndTime *time.Time
-		if aux.Recurrence.EndTime != nil {
-			end, err := time.Parse(time.RFC3339, aux.Recurrence.EndTime.Format(time.RFC3339))
-			if err != nil {
-				return err
-			}
-			endConverted := time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), end.Nanosecond(), loc)
-			recEndTime = &endConverted
-		}
-
-		s.Recurrence = &Recurrence{
-			StartTime:  time.Date(recStartTime.Year(), recStartTime.Month(), recStartTime.Day(), recStartTime.Hour(), recStartTime.Minute(), recStartTime.Second(), recStartTime.Nanosecond(), loc),
-			EndTime:    recEndTime,
-			Duration:   aux.Recurrence.Duration,
-			RepeatType: aux.Recurrence.RepeatType,
-			RepeatOn:   aux.Recurrence.RepeatOn,
-		}
-	}
+	s.Recurrence = aux.Recurrence
 	return nil
 }

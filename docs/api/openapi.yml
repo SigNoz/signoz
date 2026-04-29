@@ -4989,10 +4989,6 @@ components:
       properties:
         duration:
           type: string
-        endTime:
-          format: date-time
-          nullable: true
-          type: string
         repeatOn:
           items:
             $ref: '#/components/schemas/RuletypesRepeatOn'
@@ -5000,11 +4996,7 @@ components:
           type: array
         repeatType:
           $ref: '#/components/schemas/RuletypesRepeatType'
-        startTime:
-          format: date-time
-          type: string
       required:
-      - startTime
       - duration
       - repeatType
       type: object

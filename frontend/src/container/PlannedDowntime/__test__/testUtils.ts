@@ -11,7 +11,7 @@ export const buildSchedule = (
 	schedule: Partial<RuletypesScheduleDTO>,
 ): RuletypesScheduleDTO => ({
 	timezone: schedule?.timezone ?? '',
-	startTime: schedule?.startTime,
+	startTime: schedule?.startTime ?? new Date(),
 	endTime: schedule?.endTime,
 	recurrence: schedule?.recurrence,
 });

@@ -11,8 +11,8 @@ import (
 
 type Schedule struct {
 	Timezone   string      `json:"timezone" required:"true"`
-	StartTime  time.Time   `json:"startTime,omitempty"`
-	EndTime    time.Time   `json:"endTime,omitempty"`
+	StartTime  time.Time   `json:"startTime" required:"true"`
+	EndTime    time.Time   `json:"endTime,omitzero"`
 	Recurrence *Recurrence `json:"recurrence"`
 }
 

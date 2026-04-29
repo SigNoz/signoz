@@ -136,7 +136,7 @@ export function CollapseListContent({
 	created_at?: string;
 	created_by_name?: string;
 	created_by_email?: string;
-	timeframe: [string | undefined | null, string | undefined | null];
+	timeframe: [string | undefined, string | undefined];
 	repeats?: RuletypesRecurrenceDTO | null;
 	updated_at?: string;
 	updated_by_name?: string;
@@ -192,7 +192,7 @@ export function CollapseListContent({
 				),
 			)}
 			{renderItems('Timezone', <Typography>{timezone || '-'}</Typography>)}
-			{renderItems('Repeats', <Typography>{recurrenceInfo(repeats)}</Typography>)}
+			{renderItems('Repeats', <Typography>{recurrenceInfo(timeframe[0], timeframe[1], repeats)}</Typography>)}
 			{renderItems(
 				'Alerts silenced',
 				alertOptions?.length ? (
@@ -283,9 +283,7 @@ export function CustomCollapseList(
 							schedule?.startTime?.toString(),
 							typeof endTime === 'string' ? endTime : endTime?.toString(),
 						]}
-						repeats={
-							schedule?.recurrence as RuletypesRecurrenceDTO | null | undefined
-						}
+						repeats={schedule?.recurrence}
 						updated_at={updatedAt ? dayjs(updatedAt).toISOString() : ''}
 						updated_by_name={defaultTo(updatedBy, '')}
 						alertOptions={alertOptions}
