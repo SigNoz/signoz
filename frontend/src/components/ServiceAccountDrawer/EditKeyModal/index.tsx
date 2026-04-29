@@ -158,17 +158,25 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
 			className={
-				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
+				isRevokeConfirmOpen ? 'alert-dialog sa-delete-dialog' : 'edit-key-modal'
 			}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={isErrorModalVisible}
+			footer={
+				isRevokeConfirmOpen ? (
+					<RevokeKeyContent
+						isRevoking={isRevoking}
+						onCancel={(): void => setIsRevokeConfirmOpen(false)}
+						onConfirm={handleRevoke}
+					/>
+				) : undefined
+			}
 		>
 			{isRevokeConfirmOpen ? (
-				<RevokeKeyContent
-					isRevoking={isRevoking}
-					onCancel={(): void => setIsRevokeConfirmOpen(false)}
-					onConfirm={handleRevoke}
-				/>
+				<>
+					Revoking this key will permanently invalidate it. Any systems using this
+					key will lose access immediately.
+				</>
 			) : (
 				<EditKeyForm
 					register={register}

@@ -22,14 +22,12 @@ function RolesSettings(): JSX.Element {
 			</div>
 			<div className="roles-settings-content">
 				<div className="roles-settings-toolbar">
-					<div className="roles-search-wrapper">
-						<Input
-							type="search"
-							placeholder="Search for roles..."
-							value={searchQuery}
-							onChange={(e): void => setSearchQuery(e.target.value)}
-						/>
-					</div>
+					<Input
+						type="search"
+						placeholder="Search for roles..."
+						value={searchQuery}
+						onChange={(e): void => setSearchQuery(e.target.value)}
+					/>
 					{IS_ROLE_DETAILS_AND_CRUD_ENABLED && (
 						<Button
 							variant="solid"

@@ -224,7 +224,7 @@ function EditMemberDrawer({
 				try {
 					await rawRetry();
 					setSaveErrors((prev) => prev.filter((e) => e.context !== context));
-					refetchUser();
+					void refetchUser();
 				} catch (err) {
 					setSaveErrors((prev) =>
 						prev.map((e) =>
@@ -250,7 +250,7 @@ function EditMemberDrawer({
 				});
 			}
 			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
-			refetchUser();
+			void refetchUser();
 		} catch (err) {
 			setSaveErrors((prev) =>
 				prev.map((e) =>
@@ -319,7 +319,7 @@ function EditMemberDrawer({
 								}),
 							];
 						});
-						refetchUser();
+						void refetchUser();
 					},
 				});
 			} else {
@@ -340,7 +340,7 @@ function EditMemberDrawer({
 				onComplete();
 			}
 
-			refetchUser();
+			void refetchUser();
 		} finally {
 			setIsSaving(false);
 		}
@@ -465,7 +465,6 @@ function EditMemberDrawer({
 								prev.filter((err) => err.context !== 'Name update'),
 							);
 						}}
-						className="edit-member-drawer__input"
 						placeholder="Enter name"
 						disabled={isRootUser || isDeleted}
 					/>
@@ -631,7 +630,7 @@ function EditMemberDrawer({
 					</div>
 
 					<div className="edit-member-drawer__footer-right">
-						<Button variant="solid" color="secondary" onClick={handleClose}>
+						<Button variant="outlined" color="secondary" onClick={handleClose}>
 							<X size={14} />
 							Cancel
 						</Button>
@@ -641,6 +640,7 @@ function EditMemberDrawer({
 							color="primary"
 							disabled={!isDirty || isSaving || isRootUser}
 							onClick={handleSave}
+							loading={isSaving}
 						>
 							{isSaving ? 'Saving...' : 'Save Member Details'}
 						</Button>

@@ -119,7 +119,7 @@
 
 			input {
 				color: var(--l1-foreground);
-				font-size: 13px;
+				font-size: var(--font-size-xs);
 			}
 
 			.ant-picker-suffix {

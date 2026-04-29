@@ -136,7 +136,7 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<Button variant="ghost" color="destructive" onClick={onRevokeClick}>
+				<Button variant="link" color="destructive" onClick={onRevokeClick}>
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>
