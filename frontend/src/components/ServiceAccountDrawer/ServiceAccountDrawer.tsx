@@ -129,7 +129,7 @@ function ServiceAccountDrawer({
 	useEffect(() => {
 		if (account?.id) {
 			setLocalName(account?.name ?? '');
-			setKeysPage(1);
+			void setKeysPage(1);
 		}
 	}, [account?.id, account?.name, setKeysPage]);
 
@@ -176,7 +176,7 @@ function ServiceAccountDrawer({
 		}
 		const maxPage = Math.max(1, Math.ceil(keys.length / PAGE_SIZE));
 		if (keysPage > maxPage) {
-			setKeysPage(maxPage);
+			void setKeysPage(maxPage);
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
@@ -214,8 +214,8 @@ function ServiceAccountDrawer({
 				data: { name: localName },
 			});
 			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
-			refetchAccount();
-			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+			void refetchAccount();
+			void queryClient.invalidateQueries(getListServiceAccountsQueryKey());
 		} catch (err) {
 			setSaveErrors((prev) =>
 				prev.map((e) =>
@@ -337,8 +337,8 @@ function ServiceAccountDrawer({
 				onSuccess({ closeDrawer: false });
 			}
 
-			refetchAccount();
-			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+			void refetchAccount();
+			void queryClient.invalidateQueries(getListServiceAccountsQueryKey());
 		} finally {
 			setIsSaving(false);
 		}
@@ -357,12 +357,12 @@ function ServiceAccountDrawer({
 	]);
 
 	const handleClose = useCallback((): void => {
-		setIsDeleteOpen(null);
-		setIsAddKeyOpen(null);
-		setSelectedAccountId(null);
-		setActiveTab(null);
-		setKeysPage(null);
-		setEditKeyId(null);
+		void setIsDeleteOpen(null);
+		void setIsAddKeyOpen(null);
+		void setSelectedAccountId(null);
+		void setActiveTab(null);
+		void setKeysPage(null);
+		void setEditKeyId(null);
 		setSaveErrors([]);
 	}, [
 		setSelectedAccountId,
@@ -379,12 +379,13 @@ function ServiceAccountDrawer({
 				<ToggleGroup
 					type="single"
 					value={activeTab}
+					size="sm"
 					onChange={(val): void => {
 						if (val) {
-							setActiveTab(val as ServiceAccountDrawerTab);
+							void setActiveTab(val as ServiceAccountDrawerTab);
 							if (val !== ServiceAccountDrawerTab.Keys) {
-								setKeysPage(null);
-								setEditKeyId(null);
+								void setKeysPage(null);
+								void setEditKeyId(null);
 							}
 						}
 					}}
@@ -415,7 +416,7 @@ function ServiceAccountDrawer({
 						color="secondary"
 						disabled={isDeleted}
 						onClick={(): void => {
-							setIsAddKeyOpen(true);
+							void setIsAddKeyOpen(true);
 						}}
 					>
 						<Plus size={12} />
@@ -503,7 +504,7 @@ function ServiceAccountDrawer({
 							variant="link"
 							color="destructive"
 							onClick={(): void => {
-								setIsDeleteOpen(true);
+								void setIsDeleteOpen(true);
 							}}
 						>
 							<Trash2 size={12} />
@@ -512,7 +513,7 @@ function ServiceAccountDrawer({
 					)}
 					{!isDeleted && (
 						<div className="sa-drawer__footer-right">
-							<Button variant="solid" color="secondary" onClick={handleClose}>
+							<Button variant="outlined" color="secondary" onClick={handleClose}>
 								<X size={14} />
 								Cancel
 							</Button>

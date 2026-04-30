@@ -5586,10 +5586,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/ui@0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.10.tgz#cdbab838f8cb543cf5b483a86e9d9b65265b81ff"
-  integrity sha512-XLeET+PgSP7heqKMsb9YZOSRT3TpfMPHNQRnY1I4SK8mXSct7BYWwK0Q3Je0uf4Z3aWOcpRYoRUPHWZQBpweFQ==
+"@signozhq/ui@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.12.tgz#b623c1729a0d85532d555fe7e756f3a4207e8e5d"
+  integrity sha512-69XS/j9R+uTNMdupyjki/WK1j0d5K5j0/pJrINGiteQRRrPg/AOMue7v/W6dkLICRhXcz/mgI6tLeT2FAuzKFw==
   dependencies:
     "@chenglou/pretext" "^0.0.5"
     "@radix-ui/react-checkbox" "^1.2.3"
@@ -5611,7 +5611,7 @@
     clsx "^2.1.1"
     cmdk "^1.1.1"
     dayjs "^1.11.10"
-    lodash-es "^4.17.21"
+    lodash-es "^4.18.1"
     motion "^11.11.17"
     next-themes "^0.4.6"
     nuqs "^2.8.9"
@@ -13290,6 +13290,11 @@ lodash-es@4, lodash-es@^4.17.21:
   version "4.17.21"
   resolved "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz"
   integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
+
+lodash-es@^4.18.1:
+  version "4.18.1"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.18.1.tgz#b962eeb80d9d983a900bf342961fb7418ca10b1d"
+  integrity sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==
 
 lodash.camelcase@^4.3.0:
   version "4.3.0"

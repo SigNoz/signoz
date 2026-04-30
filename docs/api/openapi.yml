@@ -2632,6 +2632,158 @@ components:
       - list
       - grouped_list
       type: string
+    LlmpricingruletypesGettablePricingRules:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+          nullable: true
+          type: array
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - total
+      - offset
+      - limit
+      type: object
+    LlmpricingruletypesLLMPricingCacheCosts:
+      properties:
+        mode:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleCacheMode'
+        read:
+          format: double
+          type: number
+        write:
+          format: double
+          type: number
+      required:
+      - mode
+      type: object
+    LlmpricingruletypesLLMPricingRule:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+        isOverride:
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          $ref: '#/components/schemas/LlmpricingruletypesStringSlice'
+        orgId:
+          type: string
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          type: string
+        syncedAt:
+          format: date-time
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      - orgId
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - isOverride
+      - enabled
+      type: object
+    LlmpricingruletypesLLMPricingRuleCacheMode:
+      enum:
+      - subtract
+      - additive
+      - unknown
+      type: string
+    LlmpricingruletypesLLMPricingRuleUnit:
+      enum:
+      - per_million_tokens
+      type: string
+    LlmpricingruletypesLLMRulePricing:
+      properties:
+        cache:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingCacheCosts'
+        input:
+          format: double
+          type: number
+        output:
+          format: double
+          type: number
+      required:
+      - input
+      - output
+      type: object
+    LlmpricingruletypesStringSlice:
+      items:
+        type: string
+      nullable: true
+      type: array
+    LlmpricingruletypesUpdatableLLMPricingRule:
+      properties:
+        enabled:
+          type: boolean
+        id:
+          nullable: true
+          type: string
+        isOverride:
+          nullable: true
+          type: boolean
+        modelName:
+          type: string
+        modelPattern:
+          items:
+            type: string
+          nullable: true
+          type: array
+        pricing:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMRulePricing'
+        provider:
+          type: string
+        sourceId:
+          nullable: true
+          type: string
+        unit:
+          $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRuleUnit'
+      required:
+      - modelName
+      - provider
+      - modelPattern
+      - unit
+      - pricing
+      - enabled
+      type: object
+    LlmpricingruletypesUpdatableLLMPricingRules:
+      properties:
+        rules:
+          items:
+            $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRule'
+          nullable: true
+          type: array
+      required:
+      - rules
+      type: object
     MetricsexplorertypesInspectMetricsRequest:
       properties:
         end:
@@ -7675,6 +7827,218 @@ paths:
       summary: Create bulk invite
       tags:
       - users
+  /api/v1/llm_pricing_rules:
+    get:
+      deprecated: false
+      description: Returns all LLM pricing rules for the authenticated org, with pagination.
+      operationId: ListLLMPricingRules
+      parameters:
+      - in: query
+        name: offset
+        schema:
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesGettablePricingRules'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List pricing rules
+      tags:
+      - llmpricingrules
+    put:
+      deprecated: false
+      description: Single write endpoint used by both the user and the Zeus sync job.
+        Per-rule match is by id, then sourceId, then insert. Override rows (is_override=true)
+        are fully preserved when the request does not provide isOverride; only synced_at
+        is stamped.
+      operationId: CreateOrUpdateLLMPricingRules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmpricingruletypesUpdatableLLMPricingRules'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create or update pricing rules
+      tags:
+      - llmpricingrules
+  /api/v1/llm_pricing_rules/{id}:
+    delete:
+      deprecated: false
+      description: Hard-deletes a pricing rule. If auto-synced, it will be recreated
+        on the next sync cycle.
+      operationId: DeleteLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete a pricing rule
+      tags:
+      - llmpricingrules
+    get:
+      deprecated: false
+      description: Returns a single LLM pricing rule by ID.
+      operationId: GetLLMPricingRule
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LlmpricingruletypesLLMPricingRule'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get a pricing rule
+      tags:
+      - llmpricingrules
   /api/v1/logs/promote_paths:
     get:
       deprecated: false

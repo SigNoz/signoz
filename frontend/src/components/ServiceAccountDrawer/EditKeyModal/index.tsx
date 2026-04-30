@@ -20,7 +20,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
-import { RevokeKeyContent } from '../RevokeKeyModal';
+import { RevokeKeyFooter } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
 import type { FormValues } from './types';
 import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
@@ -158,17 +158,25 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
 			className={
-				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
+				isRevokeConfirmOpen ? 'alert-dialog sa-delete-dialog' : 'edit-key-modal'
 			}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={isErrorModalVisible}
+			footer={
+				isRevokeConfirmOpen ? (
+					<RevokeKeyFooter
+						isRevoking={isRevoking}
+						onCancel={(): void => setIsRevokeConfirmOpen(false)}
+						onConfirm={handleRevoke}
+					/>
+				) : undefined
+			}
 		>
 			{isRevokeConfirmOpen ? (
-				<RevokeKeyContent
-					isRevoking={isRevoking}
-					onCancel={(): void => setIsRevokeConfirmOpen(false)}
-					onConfirm={handleRevoke}
-				/>
+				<>
+					Revoking this key will permanently invalidate it. Any systems using this
+					key will lose access immediately.
+				</>
 			) : (
 				<EditKeyForm
 					register={register}

@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -67,6 +68,7 @@ type provider struct {
 	alertmanagerHandler     alertmanager.Handler
 	traceDetailHandler      tracedetail.Handler
 	rulerHandler            ruler.Handler
+	llmPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewFactory(
@@ -96,6 +98,7 @@ func NewFactory(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
@@ -130,6 +133,7 @@ func NewFactory(
 			ruleStateHistoryHandler,
 			spanMapperHandler,
 			alertmanagerHandler,
+			llmPricingRuleHandler,
 			traceDetailHandler,
 			rulerHandler,
 		)
@@ -166,6 +170,7 @@ func newProvider(
 	ruleStateHistoryHandler rulestatehistory.Handler,
 	spanMapperHandler spanmapper.Handler,
 	alertmanagerHandler alertmanager.Handler,
+	llmPricingRuleHandler llmpricingrule.Handler,
 	traceDetailHandler tracedetail.Handler,
 	rulerHandler ruler.Handler,
 ) (apiserver.APIServer, error) {
@@ -202,6 +207,7 @@ func newProvider(
 		alertmanagerHandler:     alertmanagerHandler,
 		traceDetailHandler:      traceDetailHandler,
 		rulerHandler:            rulerHandler,
+		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -311,6 +317,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addAlertmanagerRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addLLMPricingRuleRoutes(router); err != nil {
 		return err
 	}
 
