@@ -34,13 +34,13 @@ describe('Alert Channels Settings List page', () => {
 		jest.useRealTimers();
 	});
 	describe('Should display the Alert Channels page properly', () => {
-		it('Should check if "The alerts will be sent to all the configured channels." is visible ', () => {
+		it('Should check if "The alerts will be sent to all the configured channels." is visible', () => {
 			expect(screen.getByText('sending_channels_note')).toBeInTheDocument();
 		});
-		it('Should check if "New Alert Channel" Button is visble ', () => {
+		it('Should check if "New Alert Channel" Button is visble', () => {
 			expect(screen.getByText('button_new_channel')).toBeInTheDocument();
 		});
-		it('Should check if the help icon is visible and displays "tooltip_notification_channels ', async () => {
+		it('Should check if the help icon is visible and displays "tooltip_notification_channels', async () => {
 			const helpIcon = screen.getByLabelText('question-circle');
 
 			fireEvent.mouseOver(helpIcon);

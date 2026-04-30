@@ -3,12 +3,14 @@
 	overflow: hidden;
 
 	.licenses-page-header {
-		border-bottom: 1px solid var(--Slate-500, #161922);
-		background: rgba(11, 12, 14, 0.7);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l1-background);
 		backdrop-filter: blur(20px);
 
 		.licenses-page-header-title {
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
+			background: var(--l1-background);
+			border-right: 1px solid var(--l1-border);
 			text-align: center;
 			font-family: Inter;
 			font-size: 13px;
@@ -31,7 +33,7 @@
 		.licenses-page-content {
 			flex: 1;
 			height: calc(100vh - 48px);
-			background: var(--Ink-500, #0b0c0e);
+			background: var(--l1-background);
 			padding: 10px 8px;
 			overflow-y: auto;
 
@@ -45,46 +47,11 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-slate-300);
+				background: var(--l3-background);
 			}
 
 			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-slate-200);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.licenses-page {
-		.licenses-page-header {
-			border-bottom: 1px solid var(--bg-vanilla-300);
-			background: #fff;
-			backdrop-filter: blur(20px);
-
-			.licenses-page-header-title {
-				color: var(--bg-ink-400);
-
-				background: var(--bg-vanilla-100);
-				border-right: 1px solid var(--bg-vanilla-300);
-			}
-		}
-
-		.licenses-page-content-container {
-			.licenses-page-content {
-				background: var(--bg-vanilla-100);
-
-				&::-webkit-scrollbar-track {
-					background: transparent;
-				}
-
-				&::-webkit-scrollbar-thumb {
-					background: var(--bg-slate-300);
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-slate-200);
-				}
+				background: var(--l3-background);
 			}
 		}
 	}

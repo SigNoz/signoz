@@ -1,5 +1,4 @@
-import { MutableRefObject, useEffect } from 'react';
-import { useQueryClient } from 'react-query';
+import { useEffect } from 'react';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 
@@ -9,22 +8,18 @@ import './ToolbarActions.styles.scss';
 
 interface RightToolbarActionsProps {
 	onStageRunQuery: () => void;
-	isLoadingQueries?: boolean;
-	listQueryKeyRef?: MutableRefObject<any>;
-	chartQueryKeyRef?: MutableRefObject<any>;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	showLiveLogs?: boolean;
 }
 
 export default function RightToolbarActions({
 	onStageRunQuery,
 	isLoadingQueries,
-	listQueryKeyRef,
-	chartQueryKeyRef,
+	handleCancelQuery,
 	showLiveLogs,
 }: RightToolbarActionsProps): JSX.Element {
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
-
-	const queryClient = useQueryClient();
 
 	useEffect(() => {
 		if (showLiveLogs) {
@@ -42,19 +37,10 @@ export default function RightToolbarActions({
 	if (showLiveLogs) {
 		return (
 			<div className="right-toolbar-actions-container">
-				<RunQueryBtn />
+				<RunQueryBtn disabled />
 			</div>
 		);
 	}
-
-	const handleCancelQuery = (): void => {
-		if (listQueryKeyRef?.current) {
-			queryClient.cancelQueries(listQueryKeyRef.current);
-		}
-		if (chartQueryKeyRef?.current) {
-			queryClient.cancelQueries(chartQueryKeyRef.current);
-		}
-	};
 
 	return (
 		<div className="right-toolbar-actions-container">
@@ -68,8 +54,5 @@ export default function RightToolbarActions({
 }
 
 RightToolbarActions.defaultProps = {
-	isLoadingQueries: false,
-	listQueryKeyRef: null,
-	chartQueryKeyRef: null,
 	showLiveLogs: false,
 };

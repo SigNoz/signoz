@@ -10,11 +10,13 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+	useCreateRule,
+	useTestRule,
+	useUpdateRuleByID,
+} from 'api/generated/services/rules';
 import { QueryParams } from 'constants/query';
 import { AlertDetectionTypes } from 'container/FormAlertRules';
-import { useCreateAlertRule } from 'hooks/alerts/useCreateAlertRule';
-import { useTestAlertRule } from 'hooks/alerts/useTestAlertRule';
-import { useUpdateAlertRule } from 'hooks/alerts/useUpdateAlertRule';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -53,13 +55,8 @@ export const useCreateAlertState = (): ICreateAlertContextProps => {
 export function CreateAlertProvider(
 	props: ICreateAlertProviderProps,
 ): JSX.Element {
-	const {
-		children,
-		initialAlertState,
-		isEditMode,
-		ruleId,
-		initialAlertType,
-	} = props;
+	const { children, initialAlertState, isEditMode, ruleId, initialAlertType } =
+		props;
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 
@@ -212,20 +209,13 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
-	const {
-		mutate: createAlertRule,
-		isLoading: isCreatingAlertRule,
-	} = useCreateAlertRule();
+	const { mutate: createAlertRule, isLoading: isCreatingAlertRule } =
+		useCreateRule();
 
-	const {
-		mutate: testAlertRule,
-		isLoading: isTestingAlertRule,
-	} = useTestAlertRule();
+	const { mutate: testAlertRule, isLoading: isTestingAlertRule } = useTestRule();
 
-	const {
-		mutate: updateAlertRule,
-		isLoading: isUpdatingAlertRule,
-	} = useUpdateAlertRule(ruleId || '');
+	const { mutate: updateAlertRule, isLoading: isUpdatingAlertRule } =
+		useUpdateRuleByID();
 
 	const contextValue: ICreateAlertContextProps = useMemo(
 		() => ({
@@ -249,6 +239,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
+			ruleId: ruleId || '',
 		}),
 		[
 			createAlertState,
@@ -267,6 +258,7 @@ export function CreateAlertProvider(
 			updateAlertRule,
 			isUpdatingAlertRule,
 			isEditMode,
+			ruleId,
 		],
 	);
 

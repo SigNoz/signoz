@@ -7,6 +7,8 @@ import {
 } from 'container/ApiMonitoring/utils';
 import { SuccessResponse } from 'types/api';
 
+import emptyStateUrl from '@/assets/Icons/emptyState.svg';
+
 import ErrorState from './ErrorState';
 
 function StatusCodeTable({
@@ -14,13 +16,8 @@ function StatusCodeTable({
 }: {
 	endPointStatusCodeDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		refetch,
-	} = endPointStatusCodeDataQuery;
+	const { isLoading, isRefetching, isError, data, refetch } =
+		endPointStatusCodeDataQuery;
 
 	const statusCodeData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {
@@ -52,7 +49,7 @@ function StatusCodeTable({
 							<div className="no-status-code-data-message-container">
 								<div className="no-status-code-data-message-content">
 									<img
-										src="/Icons/emptyState.svg"
+										src={emptyStateUrl}
 										alt="thinking-emoji"
 										className="empty-state-svg"
 									/>

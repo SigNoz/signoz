@@ -65,11 +65,11 @@ export const getListColumns = (
 						? formatTimezoneAdjustedTimestamp(
 								value,
 								DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						  )
+							)
 						: formatTimezoneAdjustedTimestamp(
 								value / 1e6,
 								DATE_TIME_FORMATS.ISO_DATETIME_MS,
-						  );
+							);
 				return (
 					<BlockLink to={getTraceLink(item)} openInNewTab={false}>
 						<Typography.Text>{date}</Typography.Text>

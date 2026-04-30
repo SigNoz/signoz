@@ -13,7 +13,7 @@
 		max-width: 736px;
 
 		.title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: var(--font-size-lg);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -28,7 +28,7 @@
 		}
 
 		.subtitle {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: var(--font-size-sm);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -55,14 +55,14 @@
 			.ant-table-cell {
 				padding: 0;
 				border: none;
-				background: var(--bg-ink-500);
+				background: var(--l1-background);
 			}
 
 			.column-render {
 				margin: 8px 0 !important;
 				border-radius: 6px;
-				border: 1px solid var(--bg-slate-500);
-				background: var(--bg-ink-400);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 
 				.title-with-action {
 					display: flex;
@@ -82,7 +82,7 @@
 							gap: 6px;
 
 							.ant-typography {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 								font-size: var(--font-size-sm);
 								font-style: normal;
 								font-weight: var(--font-weight-medium);
@@ -99,10 +99,10 @@
 							border-radius: 20px;
 							padding: 0px 12px;
 
-							background: var(--bg-ink-200);
+							background: var(--l3-background);
 
 							.ant-typography {
-								color: var(--bg-vanilla-400);
+								color: var(--l2-foreground);
 								font-size: var(--font-size-xs);
 								font-family: 'Space Mono', monospace;
 								font-style: normal;
@@ -125,8 +125,8 @@
 					}
 
 					.visibility-btn {
-						border: 1px solid rgba(113, 144, 249, 0.2);
-						background: rgba(113, 144, 249, 0.1);
+						border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+						background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 					}
 				}
 
@@ -138,11 +138,11 @@
 
 						display: flex;
 						align-items: center;
-						background-color: #121317;
+						background-color: var(--card);
 					}
 
 					.ant-collapse-content {
-						border-top: 1px solid var(--bg-slate-500);
+						border-top: 1px solid var(--l1-border);
 					}
 
 					.ant-collapse-item {
@@ -159,20 +159,20 @@
 					align-items: center;
 					justify-content: space-between;
 					gap: 8px;
-					border-top: 1px solid var(--bg-slate-500);
+					border-top: 1px solid var(--l1-border);
 					padding: 8px;
 
 					.ingestion-key-tag {
 						width: 14px;
 						height: 14px;
 						border-radius: 50px;
-						background: var(--bg-slate-300);
+						background: var(--l1-border);
 						display: flex;
 						justify-content: center;
 						align-items: center;
 
 						.tag-text {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							leading-trim: both;
 							text-edge: cap;
 							font-size: 10px;
@@ -193,7 +193,7 @@
 						gap: 8px;
 
 						.ant-typography {
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 							font-size: var(--font-size-sm);
 							font-style: normal;
 							font-weight: var(--font-weight-normal);
@@ -202,7 +202,11 @@
 							letter-spacing: -0.07px;
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 						}
 					}
 
@@ -249,9 +253,13 @@
 			align-items: center;
 
 			> a {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'case' on,
+					'cpsp' on;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -261,10 +269,10 @@
 		}
 
 		.ant-pagination-item-active {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 
 			> a {
-				color: var(--bg-ink-500) !important;
+				color: var(--foreground) !important;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-medium);
@@ -297,7 +305,7 @@
 		gap: 12px;
 		border-radius: 20px;
 		padding: 0px 12px;
-		background: var(--bg-ink-200);
+		background: var(--l3-background);
 
 		font-family: 'Space Mono', monospace;
 	}
@@ -316,7 +324,7 @@
 
 	.limits-data {
 		padding: 16px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 
 		.signals {
 			.signal {
@@ -339,7 +347,7 @@
 					font-weight: 500;
 					text-transform: uppercase;
 
-					color: var(--bg-robin-500);
+					color: var(--accent-primary);
 				}
 
 				.signal-limit-values {
@@ -445,14 +453,14 @@
 .ingestion-key-modal {
 	.ant-modal-content {
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		padding: 0;
 
 		.ant-modal-header {
 			background: none;
-			border-bottom: 1px solid var(--bg-slate-500);
+			border-bottom: 1px solid var(--l1-border);
 			padding: 16px;
 		}
 
@@ -482,30 +490,30 @@
 		text-transform: capitalize;
 
 		&.ant-radio-button-wrapper-checked {
-			color: #fff;
-			background: var(--bg-slate-400, #1d212d);
-			border-color: var(--bg-slate-400, #1d212d);
+			color: var(--l1-foreground);
+			background: var(--l1-border);
+			border-color: var(--l1-border);
 
 			&:hover {
-				color: #fff;
-				background: var(--bg-slate-400, #1d212d);
-				border-color: var(--bg-slate-400, #1d212d);
+				color: var(--l1-foreground);
+				background: var(--l1-border);
+				border-color: var(--l1-border);
 
 				&::before {
-					background-color: var(--bg-slate-400, #1d212d);
+					background-color: var(--l1-border);
 				}
 			}
 
 			&:focus {
-				color: #fff;
-				background: var(--bg-slate-400, #1d212d);
-				border-color: var(--bg-slate-400, #1d212d);
+				color: var(--l1-foreground);
+				background: var(--l1-border);
+				border-color: var(--l1-border);
 			}
 		}
 	}
 
 	.tab {
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l1-border);
 
 		flex: 1;
 
@@ -513,11 +521,11 @@
 		justify-content: center;
 
 		&::before {
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 		}
 
 		&.selected {
-			background: var(--bg-slate-400, #1d212d);
+			background: var(--l1-border);
 		}
 	}
 
@@ -536,20 +544,20 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 
 		.ant-modal-body {
 			padding: 0px 16px 28px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -566,8 +574,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
 
@@ -597,7 +605,7 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-slate-500);
+				background: var(--l1-border);
 			}
 
 			.delete-btn {
@@ -605,19 +613,19 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
+				background: var(--danger-background);
 				margin-left: 12px;
 			}
 
 			.delete-btn:hover {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				background: var(--bg-cherry-600);
 			}
 		}
 	}
 
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: var(--font-size-sm);
 		font-style: normal;
 		font-weight: var(--font-weight-medium);
@@ -628,13 +636,13 @@
 
 .expires-at {
 	.ant-picker {
-		border-color: var(--bg-slate-400) !important;
+		border-color: var(--l1-border) !important;
 	}
 }
 
 .expiration-selector {
 	.ant-select-selector {
-		border: 1px solid var(--bg-slate-400) !important;
+		border: 1px solid var(--l1-border) !important;
 	}
 }
 
@@ -650,7 +658,7 @@
 	gap: 12px;
 	border-radius: 20px;
 	padding: 0px 12px;
-	background: var(--bg-ink-200, #23262e);
+	background: var(--l3-background);
 
 	.copy-key-btn {
 		cursor: pointer;
@@ -665,7 +673,7 @@
 .ingestion-key-details-meta {
 	padding: 14px 16px;
 	border-radius: 3px;
-	border: 1px solid var(--Slate-500, #161922);
+	border: 1px solid var(--l1-border);
 }
 
 #edit-ingestion-key-form {
@@ -682,8 +690,8 @@
 	margin: 16px 0;
 
 	border-radius: 4px;
-	background: rgba(113, 144, 249, 0.1);
-	color: var(--Robin-300, #95acfb);
+	background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
+	color: var(--bg-robin-300);
 	font-size: 13px;
 	font-style: normal;
 	font-weight: 400;
@@ -692,7 +700,7 @@
 }
 
 .error {
-	color: var(--bg-cherry-500);
+	color: var(--danger-background);
 	margin-bottom: 8px;
 }
 
@@ -704,12 +712,12 @@
 
 .ingestion-details-edit-drawer {
 	.ant-drawer-header {
-		border-bottom: 1px solid var(--Slate-500, #161922);
+		border-bottom: 1px solid var(--l1-border);
 		padding: 8px;
 	}
 
 	.ant-drawer-footer {
-		border-top: 1px solid var(--Slate-500, #161922);
+		border-top: 1px solid var(--l1-border);
 		padding: 8px;
 	}
 }
@@ -718,7 +726,7 @@
 	margin-top: 48px;
 	padding: 16px;
 	border-radius: 3px;
-	border: 1px solid var(--Slate-500, #161922);
+	border: 1px solid var(--l1-border);
 
 	.ant-tabs {
 		.ant-tabs-nav {
@@ -729,10 +737,10 @@
 			}
 
 			.ant-tabs-nav-list {
-				background: #121317;
+				background: var(--card);
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400, #1d212d);
-				background: var(--Ink-400, #121317);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 				.ant-tabs-tab {
@@ -741,7 +749,7 @@
 					justify-content: center;
 					align-items: center;
 					margin: 0px;
-					border-right: 1px solid #1d212d;
+					border-right: 1px solid var(--l1-border);
 
 					&.ant-tabs-tab-active {
 						border-bottom: 0px;
@@ -760,209 +768,9 @@
 
 .ingestion-key-expires-at {
 	border-radius: 4px;
-	border: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-400);
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
 	box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-}
-
-.lightMode {
-	.ingestion-key-container {
-		.ingestion-key-content {
-			.title {
-				color: var(--bg-ink-500);
-			}
-
-			.ant-table-row {
-				.ant-table-cell {
-					background: var(--bg-vanilla-200);
-				}
-
-				&:hover {
-					.ant-table-cell {
-						background: var(--bg-vanilla-200) !important;
-					}
-				}
-
-				.column-render {
-					border: 1px solid var(--bg-vanilla-200);
-					background: var(--bg-vanilla-100);
-
-					.ant-collapse {
-						border: none;
-
-						.ant-collapse-header {
-							background: var(--bg-vanilla-100);
-						}
-
-						.ant-collapse-content {
-							border-top: 1px solid var(--bg-vanilla-300);
-						}
-					}
-
-					.title-with-action {
-						.ingestion-key-title {
-							.ant-typography {
-								color: var(--bg-ink-500);
-							}
-						}
-
-						.ingestion-key-value {
-							background: var(--bg-vanilla-200);
-
-							.ant-typography {
-								color: var(--bg-slate-400);
-							}
-
-							.copy-key-btn {
-								cursor: pointer;
-							}
-						}
-
-						.action-btn {
-							.ant-typography {
-								color: var(--bg-ink-500);
-							}
-						}
-					}
-
-					.ingestion-key-details {
-						border-top: 1px solid var(--bg-vanilla-200);
-
-						.ingestion-key-tag {
-							background: var(--bg-vanilla-200);
-
-							.tag-text {
-								color: var(--bg-ink-500);
-							}
-						}
-
-						.ingestion-key-created-by {
-							color: var(--bg-ink-500);
-						}
-
-						.ingestion-key-last-used-at {
-							.ant-typography {
-								color: var(--bg-ink-500);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.delete-ingestion-key-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-200);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-
-				.title {
-					color: var(--bg-ink-500);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--bg-ink-500);
-				}
-
-				.ingestion-key-input {
-					.ant-input {
-						background: var(--bg-vanilla-200);
-						color: var(--bg-ink-500);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-	}
-
-	.ingestion-key-info-container {
-		.user-email {
-			background: var(--bg-vanilla-200);
-		}
-
-		.limits-data {
-			border: 1px solid var(--bg-vanilla-300);
-		}
-	}
-
-	.ingestion-key-modal {
-		.ant-modal-content {
-			border-radius: 4px;
-			border: 1px solid var(--bg-vanilla-200);
-			background: var(--bg-vanilla-100);
-			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-			padding: 0;
-
-			.ant-modal-header {
-				background: none;
-				border-bottom: 1px solid var(--bg-vanilla-200);
-				padding: 16px;
-			}
-		}
-	}
-
-	.ingestion-key-access-role {
-		.ant-radio-button-wrapper {
-			&.ant-radio-button-wrapper-checked {
-				color: var(--bg-ink-400);
-				background: var(--bg-vanilla-300);
-				border-color: var(--bg-vanilla-300);
-
-				&:hover {
-					color: var(--bg-ink-400);
-					background: var(--bg-vanilla-300);
-					border-color: var(--bg-vanilla-300);
-
-					&::before {
-						background-color: var(--bg-vanilla-300);
-					}
-				}
-
-				&:focus {
-					color: var(--bg-ink-400);
-					background: var(--bg-vanilla-300);
-					border-color: var(--bg-vanilla-300);
-				}
-			}
-		}
-
-		.tab {
-			border: 1px solid var(--bg-vanilla-300);
-
-			&::before {
-				background: var(--bg-vanilla-300);
-			}
-
-			&.selected {
-				background: var(--bg-vanilla-300);
-			}
-		}
-	}
-
-	.copyable-text {
-		background: var(--bg-vanilla-200);
-	}
-
-	.ingestion-key-expires-at {
-		border: 1px solid var(--bg-vanilla-300);
-		background: var(--bg-vanilla-200);
-		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-	}
-
-	.expires-at .ant-picker {
-		border-color: var(--bg-vanilla-300) !important;
-	}
 }
 
 .mt-8 {
@@ -988,8 +796,8 @@
 	margin-top: 12px;
 	padding: 12px;
 	border-radius: 4px;
-	background: rgba(113, 144, 249, 0.1);
-	color: var(--bg-robin-300, #95acfb);
+	background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
+	color: var(--bg-robin-300);
 
 	.ingestion-key-url-container {
 		display: flex;
@@ -1001,7 +809,7 @@
 		.ingestion-key-url-label {
 			font-size: 13px;
 			font-weight: 500;
-			color: var(--bg-robin-300, #95acfb);
+			color: var(--bg-robin-300);
 		}
 
 		.ingestion-key-url-value {
@@ -1010,7 +818,7 @@
 			align-items: center;
 			font-size: 13px;
 			font-weight: 500;
-			color: var(--bg-robin-300, #95acfb);
+			color: var(--bg-robin-300);
 
 			.copy-key-btn {
 				cursor: pointer;
@@ -1027,7 +835,7 @@
 		.ingestion-data-region-label {
 			font-size: 13px;
 			font-weight: 500;
-			color: var(--bg-robin-300, #95acfb);
+			color: var(--bg-robin-300);
 		}
 
 		.ingestion-data-region-value {
@@ -1036,10 +844,10 @@
 			align-items: center;
 			font-size: 13px;
 			font-weight: 500;
-			color: var(--bg-robin-300, #95acfb);
+			color: var(--bg-robin-300);
 
 			.ingestion-data-region-value-text {
-				color: var(--bg-robin-300, #95acfb);
+				color: var(--bg-robin-300);
 			}
 
 			.copy-key-btn {
@@ -1054,7 +862,7 @@
 		align-items: center;
 		text-decoration: underline;
 
-		color: var(--bg-robin-300, #95acfb);
+		color: var(--bg-robin-300);
 	}
 }
 
@@ -1074,29 +882,6 @@
 	.ingestion-url-error-message {
 		font-size: 12px;
 		font-weight: 400;
-		color: var(--bg-vanilla-300);
-	}
-}
-
-.lightMode {
-	.ingestion-setup-details-links {
-		background: rgba(113, 144, 249, 0.1);
-		color: var(--bg-robin-500);
-
-		.learn-more {
-			color: var(--bg-robin-500);
-		}
-	}
-
-	.ingestion-url-error-tooltip {
-		.ingestion-url-error-content {
-			.ingestion-url-error-code {
-				color: var(--bg-amber-500);
-			}
-		}
-
-		.ingestion-url-error-message {
-			color: var(--bg-ink-500);
-		}
+		color: var(--l2-foreground);
 	}
 }

@@ -105,6 +105,43 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 	return storable, nil
 }
 
+func (store *store) GetByIDAndStatus(ctx context.Context, id valuer.UUID, status serviceaccounttypes.ServiceAccountStatus) (*serviceaccounttypes.ServiceAccount, error) {
+	storable := new(serviceaccounttypes.ServiceAccount)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("id = ?", id).
+		Where("status = ?", status.StringValue()).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s and status: %s doesn't exist", id, status.StringValue())
+	}
+
+	return storable, nil
+}
+
+func (store *store) GetServiceAccountsByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
+	serviceAccounts := make([]*serviceaccounttypes.ServiceAccount, 0)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&serviceAccounts).
+		Join(`JOIN service_account_role ON service_account_role.service_account_id = service_account.id`).
+		Where(`service_account.org_id = ?`, orgID).
+		Where("service_account_role.role_id = ?", roleID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccounts, nil
+}
+
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	storable := new(serviceaccounttypes.ServiceAccount)
 
@@ -162,6 +199,21 @@ func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccount
 		NewInsert().
 		Model(serviceAccountRole).
 		On("CONFLICT (service_account_id, role_id) DO NOTHING").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (store *store) DeleteServiceAccountRoles(ctx context.Context, serviceAccountID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.ServiceAccountRole)).
+		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
 		return err

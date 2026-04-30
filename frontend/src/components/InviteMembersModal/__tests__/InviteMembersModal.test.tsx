@@ -1,4 +1,3 @@
-import { toast } from '@signozhq/sonner';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { StatusCodes } from 'http-status-codes';
@@ -15,11 +14,22 @@ const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
 
 jest.mock('api/v1/invite/create');
 jest.mock('api/v1/invite/bulk/create');
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
 	},
+}));
+
+const showErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
+	__esModule: true,
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal,
+		isErrorModalVisible: false,
+	})),
 }));
 
 const mockSendInvite = jest.mocked(sendInvite);
@@ -34,6 +44,7 @@ const defaultProps = {
 describe('InviteMembersModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		showErrorModal.mockClear();
 		mockSendInvite.mockResolvedValue({
 			httpStatusCode: 200,
 			data: { data: 'test', status: 'success' },
@@ -79,11 +90,11 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText(
+			await expect(
+				screen.findByText(
 					'Please enter valid emails and select roles for team members',
 				),
-			).toBeInTheDocument();
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows email-only message when email is invalid but role is selected', async () => {
@@ -101,9 +112,9 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText('Please enter valid emails for team members'),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText('Please enter valid emails for team members'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows role-only message when email is valid but role is missing', async () => {
@@ -119,9 +130,9 @@ describe('InviteMembersModal', () => {
 				screen.getByRole('button', { name: /invite team members/i }),
 			);
 
-			expect(
-				await screen.findByText('Please select roles for team members'),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText('Please select roles for team members'),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
@@ -154,9 +165,10 @@ describe('InviteMembersModal', () => {
 	describe('error handling', () => {
 		it('shows BE message on single invite 409', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockSendInvite.mockRejectedValue(
-				makeApiError('An invite already exists for this email: single@signoz.io'),
+			const error = makeApiError(
+				'An invite already exists for this email: single@signoz.io',
 			);
+			mockSendInvite.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -171,18 +183,16 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'An invite already exists for this email: single@signoz.io',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 
 		it('shows BE message on bulk invite 409', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockInviteUsers.mockRejectedValue(
-				makeApiError('An invite already exists for this email: alice@signoz.io'),
+			const error = makeApiError(
+				'An invite already exists for this email: alice@signoz.io',
 			);
+			mockInviteUsers.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -201,18 +211,17 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'An invite already exists for this email: alice@signoz.io',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 
 		it('shows BE message on generic error', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			mockSendInvite.mockRejectedValue(
-				makeApiError('Internal server error', StatusCodes.INTERNAL_SERVER_ERROR),
+			const error = makeApiError(
+				'Internal server error',
+				StatusCodes.INTERNAL_SERVER_ERROR,
 			);
+			mockSendInvite.mockRejectedValue(error);
 
 			render(<InviteMembersModal {...defaultProps} />);
 
@@ -227,10 +236,7 @@ describe('InviteMembersModal', () => {
 			);
 
 			await waitFor(() => {
-				expect(toast.error).toHaveBeenCalledWith(
-					'Internal server error',
-					expect.anything(),
-				);
+				expect(showErrorModal).toHaveBeenCalledWith(error);
 			});
 		});
 	});

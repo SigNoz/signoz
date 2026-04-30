@@ -10,6 +10,11 @@ import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
+
+import dialsUrl from '@/assets/Icons/dials.svg';
+
+import { getItemIcon } from '../constants';
 
 export default function Dashboards({
 	onUpdateChecklistDoneItem,
@@ -52,11 +57,7 @@ export default function Dashboards({
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
-					<img
-						src="/Icons/dials.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
+					<img src={dialsUrl} alt="empty-alert-icon" className="empty-state-icon" />
 
 					<div className="empty-title">You don’t have any dashboards yet.</div>
 
@@ -114,7 +115,7 @@ export default function Dashboards({
 							dashboardName: dashboard.data.title,
 						});
 						if (event.metaKey || event.ctrlKey) {
-							window.open(getLink(), '_blank');
+							openInNewTab(getLink());
 						} else {
 							safeNavigate(getLink());
 						}
@@ -129,17 +130,13 @@ export default function Dashboards({
 							onClick={onClickHandler}
 							onKeyDown={(e): void => {
 								if (e.key === 'Enter') {
-									onClickHandler((e as unknown) as React.MouseEvent<HTMLElement>);
+									onClickHandler(e as unknown as React.MouseEvent<HTMLElement>);
 								}
 							}}
 						>
 							<div className="dashboard-item-name-container home-data-item-name-container">
 								<img
-									src={
-										Math.random() % 2 === 0
-											? '/Icons/eight-ball.svg'
-											: '/Icons/circus-tent.svg'
-									}
+									src={getItemIcon(dashboard.id)}
 									alt="alert-rules"
 									className="alert-rules-img"
 								/>

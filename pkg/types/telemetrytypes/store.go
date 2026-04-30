@@ -3,7 +3,6 @@ package telemetrytypes
 import (
 	"context"
 
-	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 )
 
@@ -35,7 +34,7 @@ type MetadataStore interface {
 	FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error)
 
 	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
-	ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error)
+	ListLogsJSONIndexes(ctx context.Context, filters ...string) ([]TelemetryFieldKeySkipIndex, error)
 
 	// ListPromotedPaths lists the promoted paths.
 	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)

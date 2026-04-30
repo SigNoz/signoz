@@ -4,7 +4,8 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -117,14 +118,14 @@ describe('MembersSettings (integration)', () => {
 		await screen.findByText('Member Details');
 	});
 
-	it('does not open EditMemberDrawer when a deleted member row is clicked', async () => {
+	it('opens EditMemberDrawer when a deleted member row is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(<MembersSettings />);
 
 		await user.click(await screen.findByText('Dave Deleted'));
 
-		expect(screen.queryByText('Member Details')).not.toBeInTheDocument();
+		expect(screen.queryByText('Member Details')).toBeInTheDocument();
 	});
 
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
@@ -134,8 +135,8 @@ describe('MembersSettings (integration)', () => {
 
 		await user.click(screen.getByRole('button', { name: /invite member/i }));
 
-		expect(await screen.findAllByPlaceholderText('john@signoz.io')).toHaveLength(
-			3,
-		);
+		await expect(
+			screen.findAllByPlaceholderText('john@signoz.io'),
+		).resolves.toHaveLength(3);
 	});
 });

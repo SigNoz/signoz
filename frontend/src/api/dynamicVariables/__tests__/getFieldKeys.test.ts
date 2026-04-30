@@ -104,7 +104,7 @@ describe('getFieldKeys API', () => {
 		const result = await getFieldKeys('traces');
 
 		// Verify the returned structure matches SuccessResponseV2 format
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			httpStatusCode: 200,
 			data: mockSuccessResponse.data.data,
 		});

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button, Typography } from 'antd';
+import { Button } from '@signozhq/ui';
 import classNames from 'classnames';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 import './AnnouncementTooltip.styles.scss';
 
@@ -46,13 +46,12 @@ function AnnouncementTooltip({
 				className={classNames('announcement-tooltip__container', className)}
 				style={{
 					top: position.top,
-					left: position.left + 30,
+					left: position.left + 20,
 				}}
 			>
 				<div className="announcement-tooltip__header">
-					<Typography.Text className="announcement-tooltip__title">
-						{title}
-					</Typography.Text>
+					<p className="announcement-tooltip__title">{title}</p>
+
 					<X
 						size={18}
 						onClick={closeTooltip}
@@ -61,7 +60,13 @@ function AnnouncementTooltip({
 				</div>
 				<p className="announcement-tooltip__message">{message}</p>
 				<div className="announcement-tooltip__footer">
-					<Button onClick={closeTooltip} className="announcement-tooltip__button">
+					<Button
+						variant="solid"
+						color="primary"
+						onClick={closeTooltip}
+						prefix={<Check size={16} />}
+						className="announcement-tooltip__footer__button"
+					>
 						Okay
 					</Button>
 				</div>

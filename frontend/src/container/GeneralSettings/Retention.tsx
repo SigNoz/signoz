@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Input as SignozInput } from '@signozhq/input';
+import { Input as SignozInput } from '@signozhq/ui';
 import { Col, Row, Select } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
@@ -55,10 +55,8 @@ function Retention({
 	);
 
 	// Convert the hours value using only the available units
-	const {
-		value: initialValue,
-		timeUnitValue: initialTimeUnitValue,
-	} = convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
+	const { value: initialValue, timeUnitValue: initialTimeUnitValue } =
+		convertHoursValueToRelevantUnit(Number(retentionValue), availableUnits);
 
 	const [selectedTimeUnit, setSelectTimeUnit] = useState(initialTimeUnitValue);
 	const [selectedValue, setSelectedValue] = useState<number | null>(

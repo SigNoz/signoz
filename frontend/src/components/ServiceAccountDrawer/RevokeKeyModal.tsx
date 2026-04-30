@@ -1,8 +1,6 @@
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { Button, DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -16,46 +14,42 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsString, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
-export interface RevokeKeyContentProps {
+export interface RevokeKeyFooterProps {
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
 }
 
-export function RevokeKeyContent({
+export function RevokeKeyFooter({
 	isRevoking,
 	onCancel,
 	onConfirm,
-}: RevokeKeyContentProps): JSX.Element {
+}: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<p className="delete-dialog__body">
-				Revoking this key will permanently invalidate it. Any systems using this key
-				will lose access immediately.
-			</p>
-			<DialogFooter className="delete-dialog__footer">
-				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
-					<X size={12} />
-					Cancel
-				</Button>
-				<Button
-					variant="solid"
-					color="destructive"
-					size="sm"
-					loading={isRevoking}
-					onClick={onConfirm}
-				>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
-			</DialogFooter>
+			<Button variant="solid" color="secondary" onClick={onCancel}>
+				<X size={12} />
+				Cancel
+			</Button>
+			<Button
+				variant="solid"
+				color="destructive"
+				loading={isRevoking}
+				onClick={onConfirm}
+			>
+				<Trash2 size={12} />
+				Revoke Key
+			</Button>
 		</>
 	);
 }
 
 function RevokeKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [revokeKeyId, setRevokeKeyId] = useQueryState(
 		SA_QUERY_PARAMS.REVOKE_KEY,
@@ -66,31 +60,29 @@ function RevokeKeyModal(): JSX.Element {
 	const cachedKeys = accountId
 		? queryClient.getQueryData<{
 				data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
-		  }>(getListServiceAccountKeysQueryKey({ id: accountId }))
+			}>(getListServiceAccountKeysQueryKey({ id: accountId }))
 		: null;
 	const keyName = cachedKeys?.data?.find((k) => k.id === revokeKeyId)?.name;
 
-	const {
-		mutate: revokeKey,
-		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Key revoked successfully', { richColors: true });
-				await setRevokeKeyId(null);
-				if (accountId) {
-					await invalidateListServiceAccountKeys(queryClient, { id: accountId });
-				}
+	const { mutate: revokeKey, isLoading: isRevoking } =
+		useRevokeServiceAccountKey({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Key revoked successfully');
+					await setRevokeKeyId(null);
+					if (accountId) {
+						await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+					}
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				const errMessage =
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to revoke key';
-				toast.error(errMessage, { richColors: true });
-			},
-		},
-	});
+		});
 
 	function handleConfirm(): void {
 		if (!revokeKeyId || !accountId) {
@@ -113,15 +105,19 @@ function RevokeKeyModal(): JSX.Element {
 			}}
 			title={`Revoke ${keyName ?? 'key'}?`}
 			width="narrow"
-			className="alert-dialog delete-dialog"
+			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
+			footer={
+				<RevokeKeyFooter
+					isRevoking={isRevoking}
+					onCancel={handleCancel}
+					onConfirm={handleConfirm}
+				/>
+			}
 		>
-			<RevokeKeyContent
-				isRevoking={isRevoking}
-				onCancel={handleCancel}
-				onConfirm={handleConfirm}
-			/>
+			Revoking this key will permanently invalidate it. Any systems using this key
+			will lose access immediately.
 		</DialogWrapper>
 	);
 }

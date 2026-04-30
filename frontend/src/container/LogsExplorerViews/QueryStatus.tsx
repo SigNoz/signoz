@@ -4,6 +4,8 @@ import { LoaderCircle } from '@signozhq/icons';
 import { Spin } from 'antd';
 import { CircleCheck } from 'lucide-react';
 
+import solidXCircleUrl from '@/assets/Icons/solid-x-circle.svg';
+
 import './QueryStatus.styles.scss';
 
 interface IQueryStatusProps {
@@ -30,7 +32,7 @@ export default function QueryStatus(
 		if (error) {
 			return (
 				<img
-					src="/Icons/solid-x-circle.svg"
+					src={solidXCircleUrl}
 					alt="header"
 					className="error"
 					style={{ height: '14px', width: '14px' }}

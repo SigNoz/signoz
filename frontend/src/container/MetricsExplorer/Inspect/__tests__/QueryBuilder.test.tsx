@@ -103,6 +103,8 @@ describe('QueryBuilder', () => {
 			filterExpression: '',
 		} as any,
 		setCurrentQuery: jest.fn(),
+		isLoadingQueries: false,
+		handleCancelQuery: jest.fn(),
 	};
 
 	beforeEach(() => {

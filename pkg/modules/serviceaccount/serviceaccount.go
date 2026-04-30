@@ -5,10 +5,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+type Getter interface {
+	// OnBeforeRoleDelete checks if any service accounts are assigned to the role and rejects deletion if so.
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+}
 
 type Module interface {
 	// Creates a new service account for an organization.
@@ -66,6 +72,8 @@ type Module interface {
 	GetIdentity(context.Context, string) (*authtypes.Identity, error)
 
 	Config() Config
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

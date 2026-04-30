@@ -12,6 +12,8 @@ function MetricsSearch({
 	currentQueryFilterExpression,
 	setCurrentQueryFilterExpression,
 	isLoading,
+	handleCancelQuery,
+	onRunQuery,
 }: MetricsSearchProps): JSX.Element {
 	const handleOnChange = useCallback(
 		(expression: string): void => {
@@ -22,7 +24,8 @@ function MetricsSearch({
 
 	const handleStageAndRunQuery = useCallback(() => {
 		onChange(currentQueryFilterExpression);
-	}, [currentQueryFilterExpression, onChange]);
+		onRunQuery?.();
+	}, [currentQueryFilterExpression, onChange, onRunQuery]);
 
 	const handleRunQuery = useCallback(
 		(expression: string): void => {
@@ -53,6 +56,7 @@ function MetricsSearch({
 			<RunQueryBtn
 				onStageRunQuery={handleStageAndRunQuery}
 				isLoadingQueries={isLoading}
+				handleCancelQuery={handleCancelQuery}
 			/>
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2

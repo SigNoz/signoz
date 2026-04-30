@@ -18,9 +18,10 @@ function createMockElement(): MockHTMLElement {
 }
 
 describe('useScrollWidgetIntoView', () => {
-	const mockedUseScrollToWidgetIdStore = useScrollToWidgetIdStore as jest.MockedFunction<
-		typeof useScrollToWidgetIdStore
-	>;
+	const mockedUseScrollToWidgetIdStore =
+		useScrollToWidgetIdStore as jest.MockedFunction<
+			typeof useScrollToWidgetIdStore
+		>;
 
 	let mockElement: MockHTMLElement;
 	let ref: React.RefObject<HTMLDivElement>;
@@ -31,7 +32,7 @@ describe('useScrollWidgetIntoView', () => {
 		mockedUseScrollToWidgetIdStore.mockImplementation(
 			(selector) =>
 				selector(
-					(storeState as unknown) as Parameters<typeof selector>[0],
+					storeState as unknown as Parameters<typeof selector>[0],
 				) as ReturnType<typeof useScrollToWidgetIdStore>,
 		);
 	}
@@ -39,9 +40,9 @@ describe('useScrollWidgetIntoView', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockElement = createMockElement();
-		ref = ({
+		ref = {
 			current: mockElement,
-		} as unknown) as React.RefObject<HTMLDivElement>;
+		} as unknown as React.RefObject<HTMLDivElement>;
 		setToScrollWidgetId = jest.fn();
 	});
 

@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,15 +16,15 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetMyOrganization200,
 	RenderErrorResponseDTO,
 	TypesOrganizationDTO,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns the organization I belong to
@@ -43,7 +44,7 @@ export const getGetMyOrganizationQueryKey = () => {
 
 export const getGetMyOrganizationQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -77,7 +78,7 @@ export type GetMyOrganizationQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMyOrganization<
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -128,7 +129,7 @@ export const updateMyOrganization = (
 
 export const getUpdateMyOrganizationMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
@@ -145,8 +146,8 @@ export const getUpdateMyOrganizationMutationOptions = <
 	const mutationKey = ['updateMyOrganization'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -167,14 +168,15 @@ export type UpdateMyOrganizationMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMyOrganization>>
 >;
 export type UpdateMyOrganizationMutationBody = BodyType<TypesOrganizationDTO>;
-export type UpdateMyOrganizationMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyOrganizationMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update my organization
  */
 export const useUpdateMyOrganization = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,

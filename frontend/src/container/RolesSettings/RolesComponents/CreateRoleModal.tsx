@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, useHistory } from 'react-router-dom';
-import { Button } from '@signozhq/button';
 import { X } from '@signozhq/icons';
-import { Input, inputVariants } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { Button, Input, toast } from '@signozhq/ui';
 import { Form, Modal } from 'antd';
 import {
 	invalidateGetRole,
@@ -176,7 +174,7 @@ function CreateRoleModal({
 				</Form.Item>
 				<Form.Item name="description" label="Description">
 					<textarea
-						className={inputVariants()}
+						className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm text-foreground shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 						placeholder="A helpful description of the role"
 					/>
 				</Form.Item>

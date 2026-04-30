@@ -15,7 +15,7 @@
 
 		.views-tabs-container {
 			padding: 8px 16px;
-			border: 1px solid var(--text-slate-400);
+			border: 1px solid var(--l1-border);
 			border-left: none;
 			border-right: none;
 
@@ -24,7 +24,7 @@
 			justify-content: space-between;
 
 			.views-tabs {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 
 				.view-title {
 					display: flex;
@@ -41,22 +41,22 @@
 				}
 
 				.tab {
-					border: 1px solid var(--bg-slate-400);
+					border: 1px solid var(--l1-border);
 					width: 114px;
 				}
 
 				.tab::before {
-					background: var(--bg-slate-400);
+					background: var(--l1-border);
 				}
 
 				.selected_view {
-					background: var(--bg-slate-300);
-					color: var(--text-vanilla-100);
-					border: 1px solid var(--bg-slate-400);
+					background: var(--l1-border);
+					color: var(--l1-foreground);
+					border: 1px solid var(--l1-border);
 				}
 
 				.selected_view::before {
-					background: var(--bg-slate-400);
+					background: var(--l1-border);
 				}
 
 				.ant-radio-button-wrapper {
@@ -75,7 +75,7 @@
 				align-items: center;
 
 				.ant-btn {
-					border: 1px solid var(--bg-slate-400);
+					border: 1px solid var(--l1-border);
 				}
 
 				.order-by-container {
@@ -100,8 +100,7 @@
 			padding: 4px 8px;
 			width: 100%;
 
-			border-top: 1px solid var(--Slate-500, #161922);
-			border-bottom: 1px solid var(--Slate-500, #161922);
+			border-bottom: 1px solid var(--l1-border);
 
 			.tab-options {
 				display: flex;
@@ -126,7 +125,7 @@
 						gap: 8px;
 
 						.order-by-label {
-							color: var(--text-vanilla-400);
+							color: var(--l2-foreground);
 							font-size: 12px;
 							font-style: normal;
 							font-weight: 400;
@@ -164,7 +163,7 @@
 				align-self: flex-end;
 
 				.rows {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: 'Geist Mono';
 					font-size: 12px;
 					font-style: normal;
@@ -176,11 +175,11 @@
 				.divider {
 					width: 1px;
 					height: 14px;
-					background: #242834;
+					background: var(--l3-background);
 				}
 
 				.time {
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					font-family: 'Geist Mono';
 					font-size: 12px;
 					font-style: normal;
@@ -245,7 +244,7 @@
 	}
 
 	.ant-card-body {
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 	}
 
 	.logs-frequency-chart-container {
@@ -260,52 +259,6 @@
 			}
 
 			margin-bottom: 0px;
-		}
-	}
-}
-
-.lightMode {
-	.logs-explorer-views-container {
-		.ant-card-body {
-			background-color: var(--bg-vanilla-100);
-		}
-
-		.views-tabs-container {
-			border: 1px solid var(--text-vanilla-300);
-
-			.views-tabs {
-				.tab {
-					border: 1px solid var(--bg-vanilla-300);
-				}
-
-				.tab::before {
-					background: var(--bg-vanilla-300);
-				}
-
-				.selected_view {
-					background: white;
-					color: var(--text-robin-400);
-					border: 1px solid var(--bg-robin-400);
-				}
-
-				.selected_view::before {
-					background: var(--bg-robin-400);
-				}
-			}
-		}
-
-		.logs-actions-container {
-			border-color: var(--bg-vanilla-300);
-
-			.query-stats {
-				.rows {
-					color: var(--bg-ink-400);
-				}
-
-				.time {
-					color: var(--bg-ink-400);
-				}
-			}
 		}
 	}
 }

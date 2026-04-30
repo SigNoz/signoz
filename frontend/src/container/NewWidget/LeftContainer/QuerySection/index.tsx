@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { QueryKey } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -19,14 +18,14 @@ import { Atom, Terminal } from 'lucide-react';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { EQueryType } from 'types/common/dashboard';
 
-import ClickHouseQueryContainer from './QueryBuilder/clickHouse';
+import ClickHouseQueryContainer from './QueryBuilder/ClickHouse';
 import PromQLQueryContainer from './QueryBuilder/promQL';
 
 import './QuerySection.styles.scss';
 function QuerySection({
 	selectedGraph,
-	queryRangeKey,
 	isLoadingQueries,
+	handleCancelQuery,
 	selectedWidget,
 	dashboardVersion,
 	dashboardId,
@@ -179,7 +178,7 @@ function QuerySection({
 							label="Stage & Run Query"
 							onStageRunQuery={handleRunQuery}
 							isLoadingQueries={isLoadingQueries}
-							queryRangeKey={queryRangeKey}
+							handleCancelQuery={handleCancelQuery}
 						/>
 					</span>
 				}
@@ -191,8 +190,8 @@ function QuerySection({
 
 interface QueryProps {
 	selectedGraph: PANEL_TYPES;
-	queryRangeKey?: QueryKey;
-	isLoadingQueries?: boolean;
+	isLoadingQueries: boolean;
+	handleCancelQuery: () => void;
 	selectedWidget: Widgets;
 	dashboardVersion?: string;
 	dashboardId?: string;

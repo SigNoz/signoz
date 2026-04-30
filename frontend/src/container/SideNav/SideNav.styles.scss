@@ -15,11 +15,14 @@
 	max-width: 54px;
 	min-width: 54px;
 	width: 54px;
-	border-right: 1px solid var(--bg-slate-500, #161922);
-	background: var(--bg-ink-500, #0b0c0e);
+	border-right: 1px solid var(--l1-border);
+	background: var(--l1-background);
 
 	padding-bottom: 48px;
-	transition: all 0.08s ease, background 0s, border 0s;
+	transition:
+		all 0.08s ease,
+		background 0s,
+		border 0s;
 
 	.brand-container {
 		padding: 8px 15px;
@@ -73,7 +76,7 @@
 				font-weight: 500;
 				line-height: 18px;
 
-				color: #fff;
+				color: var(--l1-foreground);
 			}
 		}
 
@@ -91,9 +94,9 @@
 				align-items: center;
 				gap: 4px;
 
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				border-radius: 4px 0px 0px 4px;
-				background: var(--bg-slate-400, #1d212d);
+				background: var(--l2-background);
 
 				text-align: center;
 				font-family: Inter;
@@ -115,11 +118,11 @@
 				gap: 6px;
 
 				border-radius: 0px 4px 4px 0px;
-				background: var(--bg-slate-300, #242834);
+				background: var(--l3-background);
 			}
 
 			.version {
-				color: var(--bg-vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				text-align: center;
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
 				font-feature-settings: 'salt' on;
@@ -152,7 +155,7 @@
 
 			&.version-update-notification {
 				.license-type {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 				}
 			}
 		}
@@ -186,33 +189,33 @@
 			height: 32px;
 
 			border-radius: 3px;
-			border: 1px solid var(--bg-slate-400, #1d212d);
-			background: var(--bg-slate-500, #161922);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-background-hover);
 
 			box-shadow: none !important;
 
-			color: var(--bg-vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 
 			svg {
-				color: var(--bg-vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 			}
 
 			.nav-item-label {
-				color: var(--bg-vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 			}
 
 			&:hover:not(:disabled) {
-				background: var(--bg-slate-400, #1d212d);
-				border-color: var(--bg-slate-400, #1d212d);
+				background: var(--l2-background);
+				border-color: var(--l2-background);
 
-				color: var(--bg-vanilla-100, #fff);
+				color: var(--l1-foreground);
 
 				svg {
-					color: var(--bg-vanilla-100, #fff);
+					color: var(--l1-foreground);
 				}
 
 				.nav-item-label {
-					color: var(--bg-vanilla-100, #fff);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -272,7 +275,7 @@
 				}
 
 				.nav-section-title {
-					color: var(--bg-slate-50, #62687c);
+					color: var(--l1-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -295,7 +298,9 @@
 					.nav-section-title-icon {
 						display: flex;
 						align-items: center;
-						transition: opacity 0.08s ease, transform 0.08s ease;
+						transition:
+							opacity 0.08s ease,
+							transform 0.08s ease;
 
 						&.reorder {
 							display: none;
@@ -304,7 +309,7 @@
 							transition: color 0.2s;
 
 							&:hover {
-								color: var(--bg-vanilla-100, #fff);
+								color: var(--l1-foreground);
 							}
 						}
 					}
@@ -319,7 +324,7 @@
 				}
 
 				.nav-section-subtitle {
-					color: var(--bg-vanilla-400, #c0c1c3);
+					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;
@@ -332,7 +337,10 @@
 
 					display: none;
 
-					transition: all 0.08s ease, background 0s, border 0s;
+					transition:
+						all 0.08s ease,
+						background 0s,
+						border 0s;
 					transition-delay: 0.03s;
 				}
 
@@ -418,7 +426,7 @@
 					}
 
 					.scroll-for-more-icon {
-						color: var(--bg-vanilla-400);
+						color: var(--l2-foreground);
 
 						// add animation to the chevrons down icon
 						svg {
@@ -456,9 +464,16 @@
 				width: 54px;
 				// width: 100%; // temp
 
-				transition: all 0.08s ease, background 0s, border 0s;
+				transition:
+					all 0.08s ease,
+					background 0s,
+					border 0s;
 
-				background: linear-gradient(180deg, rgba(11, 12, 14, 0) 0%, #0b0c0e 27.11%);
+				background: linear-gradient(
+					180deg,
+					transparent 0%,
+					var(--l1-background) 27.11%
+				);
 
 				&::-webkit-scrollbar {
 					width: 0.1rem;
@@ -476,8 +491,8 @@
 					transition: display 0.3s;
 
 					svg {
-						fill: var(--bg-vanilla-400);
-						color: var(--bg-slate-300);
+						fill: var(--l2-foreground);
+						color: var(--l2-foreground);
 					}
 				}
 			}
@@ -485,7 +500,7 @@
 
 		&.scroll-available {
 			.nav-bottom-section {
-				border-top: 1px solid var(--bg-slate-500, #161922);
+				border-top: 1px solid var(--l1-border);
 			}
 		}
 	}
@@ -565,11 +580,15 @@
 
 	.sidenav-new-tag {
 		border-radius: 12px;
-		background: var(--Robin-500, #4e74f8);
+		background: var(--primary-background);
 
-		color: var(--bg-vanilla-100, #fff);
+		color: var(--primary-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -580,9 +599,13 @@
 	}
 
 	.sidenav-beta-tag {
-		color: var(--bg-vanilla-100, #fff);
+		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -592,7 +615,7 @@
 		text-transform: uppercase;
 
 		border-radius: 12px;
-		background: var(--bg-slate-300);
+		background: var(--l3-background);
 	}
 
 	&:not(.pinned) {
@@ -644,7 +667,7 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
-		background: #0b0c0e;
+		background: var(--l1-background);
 
 		.brand-container {
 			padding: 8px 15px;
@@ -686,7 +709,7 @@
 								transition: color 0.2s;
 
 								&:hover {
-									color: var(--bg-vanilla-100, #fff);
+									color: var(--l1-foreground);
 								}
 							}
 						}
@@ -729,10 +752,11 @@
 						flex-direction: row;
 						gap: 3px;
 						border-radius: 20px;
-						background: var(--bg-slate-400, #1d212d);
+						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
@@ -745,7 +769,7 @@
 						width: 140px;
 
 						.scroll-for-more-label {
-							color: var(--bg-vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -758,7 +782,7 @@
 
 						.scroll-for-more-icon {
 							display: flex;
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 
 							// add animation to the chevrons down icon
 							svg {
@@ -824,7 +848,7 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
-		background: #0b0c0e;
+		background: var(--l1-background);
 
 		.brand-container {
 			padding: 8px 15px;
@@ -866,7 +890,7 @@
 								transition: color 0.2s;
 
 								&:hover {
-									color: var(--bg-vanilla-100, #fff);
+									color: var(--l1-foreground);
 								}
 							}
 						}
@@ -909,10 +933,11 @@
 						flex-direction: row;
 						gap: 3px;
 						border-radius: 20px;
-						background: var(--bg-slate-400, #1d212d);
+						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
@@ -927,7 +952,7 @@
 						.scroll-for-more-label {
 							display: block;
 
-							color: var(--bg-vanilla-400, #c0c1c3);
+							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -938,7 +963,7 @@
 
 						.scroll-for-more-icon {
 							display: flex;
-							color: var(--bg-vanilla-400);
+							color: var(--l2-foreground);
 
 							// add animation to the chevrons down icon
 							svg {
@@ -1020,19 +1045,9 @@
 		width: 360px !important;
 		border-radius: 3px !important;
 
-		// Glass blur
-		// background: rgba(18, 19, 23, 0.6); /* based on #121317 */
-		// backdrop-filter: blur(16px);
-		// -webkit-backdrop-filter: blur(16px);
-		// border: 1px solid rgba(255, 255, 255, 0.08);
-		// border-radius: 12px;
-		// box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-		// color: white;
-		// padding: 8px 0;
-
 		.ant-dropdown-menu-item {
 			.ant-dropdown-menu-title-content {
-				color: var(--bg-vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -1043,7 +1058,7 @@
 
 			&:hover:not(.ant-dropdown-menu-item-disabled) {
 				.ant-dropdown-menu-title-content {
-					color: var(--bg-vanilla-100, #fff);
+					color: var(--l1-foreground);
 				}
 			}
 		}
@@ -1132,21 +1147,21 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
-			border-bottom: 1px solid var(--bg-slate-500);
+			background: var(--card);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		.ant-modal-body {
 			padding: 12px 16px 0px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 13px;
 				font-style: normal;
@@ -1165,7 +1180,7 @@
 				flex-direction: column;
 				gap: 8px;
 				margin-bottom: 16px;
-				border: 1px solid var(--bg-slate-500);
+				border: 1px solid var(--l1-border);
 				border-radius: 4px;
 
 				.reorder-shortcut-nav-item {
@@ -1178,7 +1193,7 @@
 					padding: 6px 8px;
 					align-items: center;
 					gap: 16px;
-					border-bottom: 1px solid var(--bg-slate-500);
+					border-bottom: 1px solid var(--l1-border);
 
 					.reorder-shortcut-nav-item-grab-icon {
 						display: flex;
@@ -1188,7 +1203,7 @@
 					.reorder-shortcut-nav-item-icon {
 						display: flex;
 
-						color: #c0c1c3;
+						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 13px;
 						font-style: normal;
@@ -1199,7 +1214,7 @@
 					.reorder-shortcut-nav-item-label {
 						display: flex;
 
-						color: #c0c1c3;
+						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 13px;
 						font-style: normal;
@@ -1212,8 +1227,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l2-background);
 				width: 32px;
 				height: 32px;
 
@@ -1242,8 +1257,8 @@
 				display: flex;
 				align-items: center;
 				border-radius: 2px;
-				background: var(--Robin-500, #4e74f8) !important;
-				color: var(--bg-vanilla-100) !important;
+				background: var(--primary-background) !important;
+				color: var(--primary-foreground) !important;
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -1251,10 +1266,10 @@
 				line-height: 24px;
 
 				&.secondary-btn {
-					background-color: var(--bg-slate-500, #161922) !important;
-					border: 1px solid var(--bg-slate-500) !important;
+					background-color: var(--secondary-background) !important;
+					border: 1px solid var(--secondary-border) !important;
 
-					color: var(--bg-vanilla-400, #c0c1c3) !important;
+					color: var(--secondary-foreground) !important;
 
 					/* button/ small  */
 					font-family: Inter;
@@ -1268,7 +1283,7 @@
 	}
 
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 13px;
 		font-style: normal;
@@ -1281,232 +1296,17 @@
 	background-color: var(--secondary) !important;
 }
 
-.lightMode {
-	.sideNav {
-		background: var(--bg-vanilla-100);
-		border-right: 1px solid var(--bg-vanilla-300);
-
-		.brand {
-			.brand-logo {
-				.brand-logo-name {
-					color: var(--bg-ink-400);
-				}
-			}
-
-			.brand-title-section {
-				.license-type {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-				}
-
-				.version-container {
-					background: var(--bg-vanilla-300);
-				}
-
-				.version {
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-
-		.get-started-nav-items {
-			.get-started-btn {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-200);
-				color: var(--bg-slate-50, #62687c);
-
-				svg {
-					color: var(--bg-slate-50, #62687c);
-				}
-
-				.nav-item-label {
-					color: var(--bg-ink-400, #62687c);
-				}
-
-				// Hover state (light mode)
-				&:hover:not(:disabled) {
-					background: var(--bg-vanilla-300);
-					border-color: var(--bg-vanilla-300);
-
-					color: var(--bg-slate-500, #161922);
-
-					svg {
-						color: var(--bg-slate-500, #161922);
-					}
-
-					.nav-item-label {
-						color: var(--bg-slate-500, #161922);
-					}
-				}
-			}
-		}
-
-		.brand {
-			.brand-logo {
-				.brand-logo-name {
-					color: var(--bg-slate-400);
-				}
-			}
-		}
-
-		.brand-container {
-			background: transparent;
-		}
-
-		.nav-wrapper {
-			.nav-top-section {
-				.shortcut-nav-items {
-					.nav-section-title {
-						.nav-section-title-icon {
-							&.reorder {
-								&:hover {
-									color: var(--bg-slate-400, #1d212d);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			.secondary-nav-items {
-				border-top: 1px solid var(--bg-vanilla-300);
-
-				background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, #fff 27.11%);
-
-				.collapse-expand-handlers {
-					svg {
-						color: var(--bg-slate-300);
-						fill: var(--bg-vanilla-300);
-					}
-				}
-			}
-		}
-
-		&.pinned {
-			.nav-wrapper {
-				.nav-top-section {
-					.shortcut-nav-items {
-						.nav-section-title {
-							.nav-section-title-icon {
-								&.reorder {
-									&:hover {
-										color: var(--bg-slate-400, #1d212d);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		&:not(.pinned):hover,
-		&.dropdown-open {
-			background: var(--bg-vanilla-100);
-
-			.nav-wrapper {
-				.nav-top-section {
-					.shortcut-nav-items {
-						.nav-section-title {
-							.nav-section-title-icon {
-								&.reorder {
-									&:hover {
-										color: var(--bg-slate-400, #1d212d);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.nav-dropdown-overlay {
-		.ant-dropdown-menu {
-			.ant-dropdown-menu-item {
-				.ant-dropdown-menu-title-content {
-					color: var(--bg-ink-400);
-				}
-
-				&:hover:not(.ant-dropdown-menu-item-disabled) {
-					.ant-dropdown-menu-title-content {
-						color: var(--bg-ink-500);
-					}
-				}
-			}
-		}
-	}
-
-	.reorder-shortcut-nav-items-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-				border-bottom: 1px solid var(--bg-vanilla-300);
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--bg-ink-400);
-				}
-
-				.reorder-shortcut-nav-items-container {
-					border: 1px solid var(--bg-vanilla-300);
-
-					.reorder-shortcut-nav-item {
-						border-bottom: 1px solid var(--bg-vanilla-300);
-
-						.reorder-shortcut-nav-item-icon {
-							color: var(--bg-ink-400);
-						}
-
-						.reorder-shortcut-nav-item-label {
-							color: var(--bg-ink-400);
-						}
-					}
-				}
-
-				.ant-color-picker-trigger {
-					border: 1px solid var(--bg-vanilla-300);
-					background: var(--bg-vanilla-100);
-				}
-			}
-
-			.ant-modal-footer {
-				> button {
-					background: var(--bg-robin-500) !important;
-					color: var(--bg-vanilla-100) !important;
-
-					&.secondary-btn {
-						background-color: var(--bg-vanilla-300) !important;
-						border: 1px solid var(--bg-vanilla-300) !important;
-
-						color: var(--bg-ink-400) !important;
-					}
-				}
-			}
-		}
-
-		.title {
-			color: var(--bg-ink-400);
-		}
-	}
-}
-
 .version-tooltip-overlay {
 	.ant-tooltip-inner {
-		background-color: var(--bg-ink-400);
-		color: var(--bg-vanilla-100);
+		background-color: var(--card);
+		color: var(--l1-foreground);
 
 		font-size: 11px;
 
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 
-		color: var(--bg-vanilla-100, #fff);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 11px;
 		font-style: normal;
@@ -1521,7 +1321,7 @@
 		gap: 4px;
 
 		.version-update-notification-tooltip-title {
-			color: var(--bg-vanilla-100, #fff);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -1531,7 +1331,7 @@
 		}
 
 		.version-update-notification-tooltip-content {
-			color: var(--bg-vanilla-100, #fff);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 10px;
 			font-style: normal;
@@ -1544,13 +1344,13 @@
 
 @keyframes ripple {
 	0% {
-		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--bg-amber-400) 40%, transparent);
 	}
 	70% {
-		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+		box-shadow: 0 0 0 6px transparent;
 	}
 	100% {
-		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+		box-shadow: 0 0 0 0 transparent;
 	}
 }
 

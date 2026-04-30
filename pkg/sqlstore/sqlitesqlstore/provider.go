@@ -56,6 +56,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	}
 	settings.Logger().InfoContext(ctx, "connected to sqlite", slog.String("path", config.Sqlite.Path))
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
+	sqldb.SetConnMaxLifetime(config.Connection.MaxConnLifetime)
 
 	sqliteDialect := sqlitedialect.New()
 	bunDB := sqlstore.NewBunDB(settings, sqldb, sqliteDialect, hooks)

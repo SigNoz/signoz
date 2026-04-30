@@ -14,7 +14,7 @@ jest.mock('react-router-dom', () => ({
 // Mock useDashabord hook
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 	useDashboardStore: (): any => ({
-		selectedDashboard: {
+		dashboardData: {
 			data: {
 				variables: [],
 			},
@@ -32,7 +32,7 @@ describe('QueryTable -', () => {
 	it('should render correctly with all the data rows', () => {
 		const { container } = render(<QueryTable {...QueryTableProps} />);
 		const tableRows = container.querySelectorAll('tr.ant-table-row');
-		expect(tableRows.length).toBe(QueryTableProps.queryTableData.rows.length);
+		expect(tableRows).toHaveLength(QueryTableProps.queryTableData.rows.length);
 	});
 
 	it('should render correctly with searchTerm', () => {
@@ -40,7 +40,7 @@ describe('QueryTable -', () => {
 			<QueryTable {...QueryTableProps} searchTerm="frontend" />,
 		);
 		const tableRows = container.querySelectorAll('tr.ant-table-row');
-		expect(tableRows.length).toBe(3);
+		expect(tableRows).toHaveLength(3);
 	});
 });
 

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
-import { Badge } from '@signozhq/badge';
 import { LockKeyhole } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Badge, Input } from '@signozhq/ui';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -16,8 +15,8 @@ interface OverviewTabProps {
 	account: ServiceAccountRow;
 	localName: string;
 	onNameChange: (v: string) => void;
-	localRoles: string[];
-	onRolesChange: (v: string[]) => void;
+	localRole: string;
+	onRoleChange: (v: string | undefined) => void;
 	isDisabled: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
@@ -31,8 +30,8 @@ function OverviewTab({
 	account,
 	localName,
 	onNameChange,
-	localRoles,
-	onRolesChange,
+	localRole,
+	onRoleChange,
 	isDisabled,
 	availableRoles,
 	rolesLoading,
@@ -73,7 +72,6 @@ function OverviewTab({
 						id="sa-name"
 						value={localName}
 						onChange={(e): void => onNameChange(e.target.value)}
-						className="sa-drawer__input"
 						placeholder="Enter name"
 					/>
 				)}
@@ -96,15 +94,10 @@ function OverviewTab({
 				{isDisabled ? (
 					<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 						<div className="sa-drawer__disabled-roles">
-							{localRoles.length > 0 ? (
-								localRoles.map((roleId) => {
-									const role = availableRoles.find((r) => r.id === roleId);
-									return (
-										<Badge key={roleId} color="vanilla">
-											{role?.name ?? roleId}
-										</Badge>
-									);
-								})
+							{localRole ? (
+								<Badge color="vanilla">
+									{availableRoles.find((r) => r.id === localRole)?.name ?? localRole}
+								</Badge>
 							) : (
 								<span className="sa-drawer__input-text">—</span>
 							)}
@@ -114,15 +107,14 @@ function OverviewTab({
 				) : (
 					<RolesSelect
 						id="sa-roles"
-						mode="multiple"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}
 						error={rolesErrorObj}
 						onRefetch={onRefetchRoles}
-						value={localRoles}
-						onChange={onRolesChange}
-						placeholder="Select roles"
+						value={localRole}
+						onChange={onRoleChange}
+						placeholder="Select role"
 					/>
 				)}
 			</div>

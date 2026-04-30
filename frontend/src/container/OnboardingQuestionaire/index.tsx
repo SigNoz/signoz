@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -73,18 +73,14 @@ function OnboardingQuestionaire(): JSX.Element {
 		INITIAL_SIGNOZ_DETAILS,
 	);
 
-	const [
-		optimiseSignozDetails,
-		setOptimiseSignozDetails,
-	] = useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
+	const [optimiseSignozDetails, setOptimiseSignozDetails] =
+		useState<OptimiseSignozDetails>(INITIAL_OPTIMISE_SIGNOZ_DETAILS);
 	const [teamMembers, setTeamMembers] = useState<
 		InviteTeamMembersProps[] | null
 	>(null);
 
-	const [
-		updatingOrgOnboardingStatus,
-		setUpdatingOrgOnboardingStatus,
-	] = useState<boolean>(false);
+	const [updatingOrgOnboardingStatus, setUpdatingOrgOnboardingStatus] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		logEvent('Org Onboarding: Started', {
@@ -123,9 +119,8 @@ function OnboardingQuestionaire(): JSX.Element {
 		optimiseSignozDetails.hostsPerDay === 0 &&
 		optimiseSignozDetails.services === 0;
 
-	const { mutate: updateProfile, isLoading: isUpdatingProfile } = usePutProfile<
-		AxiosError<RenderErrorResponseDTO>
-	>();
+	const { mutate: updateProfile, isLoading: isUpdatingProfile } =
+		usePutProfile<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: updateOrgPreference } = useMutation(updateOrgPreferenceAPI, {
 		onSuccess: () => {
@@ -163,7 +158,7 @@ function OnboardingQuestionaire(): JSX.Element {
 									(item) => item !== 'Others',
 								) || []),
 								signozDetails?.otherInterestInSignoz,
-						  ] as string[])
+							] as string[])
 						: (signozDetails?.interestInSignoz as string[]),
 					logs_scale_per_day_in_gb: optimiseSignozDetails?.logsPerDay as number,
 					number_of_hosts: optimiseSignozDetails?.hostsPerDay as number,

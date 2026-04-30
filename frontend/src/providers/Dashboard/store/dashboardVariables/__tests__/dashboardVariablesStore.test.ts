@@ -50,8 +50,8 @@ describe('dashboardVariablesStore', () => {
 
 			const storeSnapshot = dashboardVariablesStore.getSnapshot();
 			expect(storeSnapshot.dashboardId).toBe('dash-1');
-			expect(storeSnapshot.variables).toEqual(variables);
-			expect(storeSnapshot.variableTypes).toEqual({ env: 'QUERY' });
+			expect(storeSnapshot.variables).toStrictEqual(variables);
+			expect(storeSnapshot.variableTypes).toStrictEqual({ env: 'QUERY' });
 			expect(storeSnapshot.sortedVariablesArray).toHaveLength(1);
 		});
 	});
@@ -76,11 +76,11 @@ describe('dashboardVariablesStore', () => {
 			});
 
 			const storeSnapshot = dashboardVariablesStore.getSnapshot();
-			expect(storeSnapshot.variableTypes).toEqual({
+			expect(storeSnapshot.variableTypes).toStrictEqual({
 				env: 'QUERY',
 				dyn1: 'DYNAMIC',
 			});
-			expect(storeSnapshot.dynamicVariableOrder).toEqual(['dyn1']);
+			expect(storeSnapshot.dynamicVariableOrder).toStrictEqual(['dyn1']);
 		});
 
 		it('should replace dashboardId when it does not match', () => {
@@ -100,10 +100,10 @@ describe('dashboardVariablesStore', () => {
 
 			const storeSnapshot = dashboardVariablesStore.getSnapshot();
 			expect(storeSnapshot.dashboardId).toBe('dash-2');
-			expect(storeSnapshot.variableTypes).toEqual({
+			expect(storeSnapshot.variableTypes).toStrictEqual({
 				a: 'QUERY',
 			});
-			expect(storeSnapshot.variableTypes).not.toEqual({
+			expect(storeSnapshot.variableTypes).not.toStrictEqual({
 				'not-there': 'QUERY',
 			});
 		});
@@ -123,14 +123,11 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				variableTypes,
-				dynamicVariableOrder,
-				dependencyData,
-			} = getVariableDependencyContext();
+			const { variableTypes, dynamicVariableOrder, dependencyData } =
+				getVariableDependencyContext();
 
-			expect(variableTypes).toEqual({ env: 'QUERY' });
-			expect(dynamicVariableOrder).toEqual([]);
+			expect(variableTypes).toStrictEqual({ env: 'QUERY' });
+			expect(dynamicVariableOrder).toStrictEqual([]);
 			expect(dependencyData).not.toBeNull();
 		});
 
@@ -153,9 +150,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -178,9 +174,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
 		});
 
@@ -210,9 +205,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -229,9 +223,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -258,9 +251,8 @@ describe('dashboardVariablesStore', () => {
 				},
 			});
 
-			const {
-				doAllQueryVariablesHaveValuesSelected,
-			} = getVariableDependencyContext();
+			const { doAllQueryVariablesHaveValuesSelected } =
+				getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
@@ -286,9 +278,8 @@ describe('dashboardVariablesStore', () => {
 					},
 				});
 
-				const {
-					doAllQueryVariablesHaveValuesSelected,
-				} = getVariableDependencyContext();
+				const { doAllQueryVariablesHaveValuesSelected } =
+					getVariableDependencyContext();
 				expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
 			},
 		);

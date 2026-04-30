@@ -106,7 +106,7 @@ describe('LogsPanelComponent', () => {
 				<PreferenceContextProvider>
 					<NewWidget
 						dashboardId=""
-						selectedDashboard={undefined}
+						dashboardData={undefined}
 						selectedGraph={PANEL_TYPES.LIST}
 					/>
 				</PreferenceContextProvider>

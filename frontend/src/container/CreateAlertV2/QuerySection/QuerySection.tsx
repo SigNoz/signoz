@@ -1,9 +1,11 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import classNames from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
@@ -37,9 +39,10 @@ function QuerySection(): JSX.Element {
 		redirectWithQueryBuilderData(query);
 	};
 
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
 
 	const didQueryChange = useMemo(() => {
 		if (alertType !== AlertTypes.METRICS_BASED_ALERT) {
@@ -62,7 +65,24 @@ function QuerySection(): JSX.Element {
 		return currentQueryKey !== stagedQueryKey;
 	}, [currentQuery, alertType, thresholdState, stagedQuery]);
 
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+		setIsCancelled(true);
+	}, [queryClient]);
+
 	const runQueryHandler = useCallback(() => {
+		setIsCancelled(false);
+		queryClient.invalidateQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
 		// Reset the source param when the query is changed
 		// Then manually run the query
 		if (source === YAxisSource.DASHBOARDS && didQueryChange) {
@@ -76,6 +96,7 @@ function QuerySection(): JSX.Element {
 		currentQuery,
 		didQueryChange,
 		handleRunQuery,
+		queryClient,
 		redirectWithQueryBuilderData,
 		source,
 	]);
@@ -106,7 +127,12 @@ function QuerySection(): JSX.Element {
 	return (
 		<div className="query-section">
 			<Stepper stepNumber={1} label="Define the query" />
-			<ChartPreview alertDef={alertDef} source={source} />
+			<ChartPreview
+				alertDef={alertDef}
+				source={source}
+				isCancelled={isCancelled}
+				onFetchingStateChange={setIsLoadingQueries}
+			/>
 			<div className="query-section-tabs">
 				<div className="query-section-query-actions">
 					{tabs.map((tab) => (
@@ -130,6 +156,8 @@ function QuerySection(): JSX.Element {
 				setQueryCategory={onQueryCategoryChange}
 				alertType={alertType}
 				runQuery={runQueryHandler}
+				isLoadingQueries={isLoadingQueries}
+				handleCancelQuery={handleCancelQuery}
 				alertDef={alertDef}
 				panelType={PANEL_TYPES.TIME_SERIES}
 				key={currentQuery.queryType}

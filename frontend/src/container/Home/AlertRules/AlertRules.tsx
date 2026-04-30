@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Skeleton, Tag } from 'antd';
-import getAll from 'api/alerts/getAll';
 import logEvent from 'api/common/logEvent';
+import { useListRules } from 'api/generated/services/rules';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
@@ -11,8 +11,12 @@ import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/map
 import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { GettableAlert } from 'types/api/alerts/get';
+import { toCompositeMetricQuery } from 'types/api/alerts/convert';
 import { USER_ROLES } from 'types/roles';
+
+import beaconUrl from '@/assets/Icons/beacon.svg';
+
+import { getItemIcon } from '../constants';
 
 export default function AlertRules({
 	onUpdateChecklistDoneItem,
@@ -24,22 +28,27 @@ export default function AlertRules({
 	const { user } = useAppContext();
 	const [rulesExist, setRulesExist] = useState(false);
 
-	const [sortedAlertRules, setSortedAlertRules] = useState<GettableAlert[]>([]);
+	const [sortedAlertRules, setSortedAlertRules] = useState<RuletypesRuleDTO[]>(
+		[],
+	);
 
 	const location = useLocation();
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
-	const { data: alerts, isError, isLoading } = useQuery('allAlerts', {
-		queryFn: getAll,
-		cacheTime: 0,
+	const {
+		data: alerts,
+		isError,
+		isLoading,
+	} = useListRules({
+		query: { cacheTime: 0 },
 	});
 
 	useEffect(() => {
-		const rules = alerts?.payload || [];
+		const rules = alerts?.data ?? [];
 		setRulesExist(rules.length > 0);
 
-		const sortedRules = rules.sort((a, b) => {
+		const sortedRules = [...rules].sort((a, b) => {
 			// First, prioritize firing alerts
 			if (a.state === 'firing' && b.state !== 'firing') {
 				return -1;
@@ -48,10 +57,10 @@ export default function AlertRules({
 				return 1;
 			}
 
-			// Then sort by updateAt timestamp
-			const aUpdateAt = new Date(a.updateAt).getTime();
-			const bUpdateAt = new Date(b.updateAt).getTime();
-			return bUpdateAt - aUpdateAt;
+			// Then sort by updatedAt timestamp
+			return (
+				new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+			);
 		});
 
 		if (sortedRules.length > 0 && !loadingUserPreferences) {
@@ -65,11 +74,7 @@ export default function AlertRules({
 		<div className="empty-state-container">
 			<div className="empty-state-content-container">
 				<div className="empty-state-content">
-					<img
-						src="/Icons/beacon.svg"
-						alt="empty-alert-icon"
-						className="empty-state-icon"
-					/>
+					<img src={beaconUrl} alt="empty-alert-icon" className="empty-state-icon" />
 
 					<div className="empty-title">No Alert rules yet.</div>
 
@@ -118,22 +123,27 @@ export default function AlertRules({
 		</div>
 	);
 
-	const onEditHandler = (record: GettableAlert) => (): void => {
+	const onEditHandler = (record: RuletypesRuleDTO) => (): void => {
 		logEvent('Homepage: Alert clicked', {
 			ruleId: record.id,
 			ruleName: record.alert,
 			ruleState: record.state,
 		});
 
-		const compositeQuery = mapQueryDataFromApi(record.condition.compositeQuery);
+		const compositeQuery = mapQueryDataFromApi(
+			toCompositeMetricQuery(record.condition.compositeQuery),
+		);
 		params.set(
 			QueryParams.compositeQuery,
 			encodeURIComponent(JSON.stringify(compositeQuery)),
 		);
 
-		params.set(QueryParams.panelTypes, record.condition.compositeQuery.panelType);
+		const panelType = record.condition.compositeQuery.panelType;
+		if (panelType) {
+			params.set(QueryParams.panelTypes, panelType);
+		}
 
-		params.set(QueryParams.ruleId, record.id.toString());
+		params.set(QueryParams.ruleId, record.id);
 
 		history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
 	};
@@ -156,11 +166,7 @@ export default function AlertRules({
 					>
 						<div className="alert-rule-item-name-container home-data-item-name-container">
 							<img
-								src={
-									Math.random() % 2 === 0
-										? '/Icons/eight-ball.svg'
-										: '/Icons/circus-tent.svg'
-								}
+								src={getItemIcon(rule.id)}
 								alt="alert-rules"
 								className="alert-rules-img"
 							/>
@@ -173,9 +179,9 @@ export default function AlertRules({
 						<div className="alert-rule-item-description home-data-item-tag">
 							<Tag color={rule?.labels?.severity}>{rule?.labels?.severity}</Tag>
 
-							{rule?.state === 'firing' && (
+							{rule.state === 'firing' && (
 								<Tag color="red" className="firing-tag">
-									{rule?.state}
+									{rule.state}
 								</Tag>
 							)}
 						</div>

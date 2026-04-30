@@ -5,7 +5,7 @@ const { Sider: SiderComponent } = Layout;
 
 export const Sider = styled(SiderComponent)`
 	&&& {
-		background: #1f1f1f;
+		background: var(--bg-ink-300);
 
 		.ant-layout-sider-children {
 			display: flex;
@@ -13,7 +13,7 @@ export const Sider = styled(SiderComponent)`
 		}
 
 		.ant-layout-sider-trigger {
-			background: #1f1f1f;
+			background: var(--bg-ink-300);
 		}
 	}
 `;
@@ -45,7 +45,7 @@ export const StyledSecondaryMenu = styled(Menu)`
 export const RedDot = styled.div`
 	width: 10px;
 	height: 10px;
-	background: #d32029;
+	background: var(--danger-background);
 	border-radius: 50%;
 
 	margin-left: 0.5rem;
@@ -62,5 +62,5 @@ export const MenuLabelContainer = styled.div`
 export const StyledText = styled(Typography.Text)`
 	width: 100%;
 
-	color: white;
+	color: var(--l1-foreground);
 `;

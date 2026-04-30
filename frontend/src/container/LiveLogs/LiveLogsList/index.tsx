@@ -1,25 +1,41 @@
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { toast } from '@signozhq/ui';
 import { Card, Typography } from 'antd';
 import LogDetail from 'components/LogDetail';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
+import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { getRowBackgroundColor } from 'components/Logs/LogStateIndicator/getRowBackgroundColor';
+import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import RawLogView from 'components/Logs/RawLogView';
+import { useLogsTableColumns } from 'components/Logs/TableView/useLogsTableColumns';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import type { TanStackTableHandle } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { useHiddenColumnIds } from 'components/TanStackTableView/useColumnStore';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
+import { QueryParams } from 'constants/query';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
-import TanStackTableView from 'container/LogsExplorerList/TanStackTableView';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
+import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
+
+import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
+import { getAbsoluteUrl } from '@/utils/basePath';
 
 import { LiveLogsListProps } from './types';
 
@@ -30,11 +46,16 @@ function LiveLogsList({
 	isLoading,
 	handleChangeSelectedView,
 }: LiveLogsListProps): JSX.Element {
-	const ref = useRef<VirtuosoHandle>(null);
+	const ref = useRef<TanStackTableHandle | VirtuosoHandle | null>(null);
+	const [, setCopy] = useCopyToClipboard();
+	const isDarkMode = useIsDarkMode();
 
 	const { isConnectionLoading } = useEventSource();
 
 	const { activeLogId } = useCopyLogLink();
+	const { logs: logsPreferences } = usePreferenceContext();
+	const hiddenColumnIds = useHiddenColumnIds(LOCALSTORAGE.LOGS_LIST_COLUMNS);
+	const hasReconciledHiddenColumnsRef = useRef(false);
 
 	const {
 		activeLog,
@@ -50,7 +71,7 @@ function LiveLogsList({
 		[logs],
 	);
 
-	const { options, config } = useOptionsMenu({
+	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
@@ -66,9 +87,66 @@ function LiveLogsList({
 		...options.selectColumns,
 	]);
 
+	const syncedSelectedColumns = useMemo(
+		() =>
+			options.selectColumns.filter(({ name }) => !hiddenColumnIds.includes(name)),
+		[options.selectColumns, hiddenColumnIds],
+	);
+
+	const logsColumns = useLogsTableColumns({
+		fields: selectedFields,
+		fontSize: options.fontSize,
+		appendTo: 'end',
+	});
+
+	useEffect(() => {
+		if (hasReconciledHiddenColumnsRef.current) {
+			return;
+		}
+
+		hasReconciledHiddenColumnsRef.current = true;
+
+		if (syncedSelectedColumns.length === options.selectColumns.length) {
+			return;
+		}
+
+		logsPreferences.updateColumns(syncedSelectedColumns);
+	}, [logsPreferences, options.selectColumns.length, syncedSelectedColumns]);
+
+	const handleColumnRemove = useCallback(
+		(columnId: string) => {
+			const updatedColumns = options.selectColumns.filter(
+				({ name }) => name !== columnId,
+			);
+			logsPreferences.updateColumns(updatedColumns);
+		},
+		[options.selectColumns, logsPreferences],
+	);
+
+	const makeOnLogCopy = useCallback(
+		(log: ILog) =>
+			(event: MouseEvent<HTMLElement>): void => {
+				event.preventDefault();
+				event.stopPropagation();
+				const urlQuery = new URLSearchParams(window.location.search);
+				urlQuery.delete(QueryParams.activeLogId);
+				urlQuery.delete(QueryParams.relativeTime);
+				urlQuery.set(QueryParams.activeLogId, `"${log.id}"`);
+				const link = getAbsoluteUrl(
+					`${window.location.pathname}?${urlQuery.toString()}`,
+				);
+				setCopy(link);
+				toast.success('Copied to clipboard', { position: 'top-right' });
+			},
+		[setCopy],
+	);
+
 	const handleScrollToLog = useScrollToLog({
 		logs: formattedLogs,
-		virtuosoRef: ref,
+		virtuosoRef: ref as React.RefObject<Pick<
+			VirtuosoHandle,
+			'scrollToIndex'
+		> | null>,
 	});
 
 	const getItemContent = useCallback(
@@ -137,11 +215,7 @@ function LiveLogsList({
 		() => (
 			<div className="live-logs-list-loading">
 				<div className="loading-live-logs-content">
-					<img
-						className="loading-gif"
-						src="/Icons/loading-plane.gif"
-						alt="wait-icon"
-					/>
+					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
 					<Typography>Fetching live logs...</Typography>
 				</div>
@@ -158,29 +232,49 @@ function LiveLogsList({
 			{formattedLogs.length !== 0 && (
 				<InfinityWrapperStyled>
 					{options.format === OptionFormatTypes.TABLE ? (
-						<TanStackTableView
-							ref={ref}
+						<TanStackTable<ILog>
+							ref={ref as React.Ref<TanStackTableHandle>}
+							columns={logsColumns}
+							columnStorageKey={LOCALSTORAGE.LOGS_LIST_COLUMNS}
+							onColumnRemove={handleColumnRemove}
+							plainTextCellLineClamp={options.maxLines}
+							cellTypographySize={options.fontSize}
+							data={formattedLogs}
 							isLoading={false}
-							tableViewProps={{
-								logs: formattedLogs,
-								fields: selectedFields,
-								linesPerRow: options.maxLines,
-								fontSize: options.fontSize,
-								appendTo: 'end',
-								activeLogIndex,
+							isRowActive={(log): boolean => log.id === activeLog?.id}
+							getRowStyle={(log): CSSProperties =>
+								({
+									'--row-active-bg': getRowBackgroundColor(
+										isDarkMode,
+										getLogIndicatorType(log),
+									),
+									'--row-hover-bg': getRowBackgroundColor(
+										isDarkMode,
+										getLogIndicatorType(log),
+									),
+								}) as CSSProperties
+							}
+							onRowClick={(log): void => {
+								handleSetActiveLog(log);
 							}}
-							handleChangeSelectedView={handleChangeSelectedView}
-							logs={formattedLogs}
-							onSetActiveLog={handleSetActiveLog}
-							onClearActiveLog={handleCloseLogDetail}
-							activeLog={activeLog}
-							onRemoveColumn={config.addColumn?.onRemove}
+							onRowDeactivate={handleCloseLogDetail}
+							activeRowIndex={activeLogIndex}
+							renderRowActions={(log): ReactNode => (
+								<LogLinesActionButtons
+									handleShowContext={(e): void => {
+										e.preventDefault();
+										e.stopPropagation();
+										handleSetActiveLog(log, VIEW_TYPES.CONTEXT);
+									}}
+									onLogCopy={makeOnLogCopy(log)}
+								/>
+							)}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>
 							<OverlayScrollbar isVirtuoso>
 								<Virtuoso
-									ref={ref}
+									ref={ref as React.Ref<VirtuosoHandle>}
 									initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}
 									data={formattedLogs}
 									totalCount={formattedLogs.length}

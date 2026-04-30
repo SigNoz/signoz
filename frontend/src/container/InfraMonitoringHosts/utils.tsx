@@ -1,40 +1,14 @@
-import { Dispatch, SetStateAction } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag, Tooltip, Typography } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
-import { SortOrder } from 'antd/lib/table/interface';
-import {
-	HostData,
-	HostListPayload,
-	HostListResponse,
-} from 'api/infraMonitoring/getHostLists';
+import { Tooltip, Typography } from 'antd';
+import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import TabLabel from 'components/TabLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { TriangleAlert } from 'lucide-react';
-import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-
-import { OrderBySchemaType } from '../InfraMonitoringK8s/schemas';
-import HostsList from './HostsList';
-
-import './InfraMonitoring.styles.scss';
-
-export interface HostRowData {
-	key?: string;
-	hostName: string;
-	cpu: React.ReactNode;
-	memory: React.ReactNode;
-	wait: string;
-	load15: number;
-	active: React.ReactNode;
-}
 
 const HOSTNAME_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
@@ -89,38 +63,6 @@ export function HostnameCell({
 	);
 }
 
-export interface HostsListTableProps {
-	isLoading: boolean;
-	isError: boolean;
-	isFetching: boolean;
-	tableData:
-		| SuccessResponse<HostListResponse, unknown>
-		| ErrorResponse
-		| undefined;
-	hostMetricsData: HostData[];
-	filters: TagFilter;
-	onHostClick: (hostName: string) => void;
-	currentPage: number;
-	setCurrentPage: Dispatch<SetStateAction<number>>;
-	pageSize: number;
-	setOrderBy: (
-		orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
-	) => void;
-	setPageSize: (pageSize: number) => void;
-	orderBy: OrderBySchemaType;
-}
-
-export interface EmptyOrLoadingViewProps {
-	isError: boolean;
-	errorMessage: string;
-	showHostsEmptyState: boolean;
-	sentAnyHostMetricsData: boolean;
-	isSendingIncorrectK8SAgentMetrics: boolean;
-	showEndTimeBeforeRetentionMessage: boolean;
-	showNoRecordsInSelectedTimeRangeMessage: boolean;
-	showTableLoadingState: boolean;
-}
-
 export const getHostListsQuery = (): HostListPayload => ({
 	filters: {
 		items: [],
@@ -129,151 +71,6 @@ export const getHostListsQuery = (): HostListPayload => ({
 	groupBy: [],
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
-
-function mapOrderByToSortOrder(
-	column: string,
-	orderBy: OrderBySchemaType,
-): SortOrder | undefined {
-	return orderBy?.columnName === column
-		? orderBy?.order === 'asc'
-			? 'ascend'
-			: 'descend'
-		: undefined;
-}
-
-export const getTabsItems = (): TabsProps['items'] => [
-	{
-		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
-		key: PANEL_TYPES.LIST,
-		children: <HostsList />,
-	},
-];
-
-export const getHostsListColumns = (
-	orderBy: OrderBySchemaType,
-): ColumnType<HostRowData>[] => [
-	{
-		title: <div className="hostname-column-header">Hostname</div>,
-		dataIndex: 'hostName',
-		key: 'hostName',
-		width: 250,
-		render: (value: string | undefined): React.ReactNode => (
-			<HostnameCell hostName={value ?? ''} />
-		),
-	},
-	{
-		title: (
-			<div className="status-header">
-				Status
-				<Tooltip title="Sent system metrics in last 10 mins">
-					<InfoCircleOutlined />
-				</Tooltip>
-			</div>
-		),
-		dataIndex: 'active',
-		key: 'active',
-		width: 100,
-	},
-	{
-		title: <div className="column-header-right">CPU Usage</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 100,
-		sorter: true,
-		defaultSortOrder: mapOrderByToSortOrder('cpu', orderBy),
-		align: 'right',
-	},
-	{
-		title: (
-			<div className="column-header-right memory-usage-header">
-				Memory Usage
-				<Tooltip title="Excluding cache memory">
-					<InfoCircleOutlined />
-				</Tooltip>
-			</div>
-		),
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 100,
-		sorter: true,
-		defaultSortOrder: mapOrderByToSortOrder('memory', orderBy),
-		align: 'right',
-	},
-	{
-		title: <div className="column-header-right">IOWait</div>,
-		dataIndex: 'wait',
-		key: 'wait',
-		width: 100,
-		sorter: true,
-		defaultSortOrder: mapOrderByToSortOrder('wait', orderBy),
-		align: 'right',
-	},
-	{
-		title: <div className="column-header-right">Load Avg</div>,
-		dataIndex: 'load15',
-		key: 'load15',
-		width: 100,
-		sorter: true,
-		defaultSortOrder: mapOrderByToSortOrder('load15', orderBy),
-		align: 'right',
-	},
-];
-
-export const formatDataForTable = (data: HostData[]): HostRowData[] =>
-	data.map((host, index) => ({
-		key: `${host.hostName}-${index}`,
-		hostName: host.hostName || '',
-		active: (
-			<Tag
-				bordered
-				className={`infra-monitoring-tags ${host.active ? 'active' : 'inactive'}`}
-			>
-				{host.active ? 'ACTIVE' : 'INACTIVE'}
-			</Tag>
-		),
-		cpu: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((host.cpu * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					strokeColor={((): string => {
-						const cpuPercent = Number((host.cpu * 100).toFixed(1));
-						if (cpuPercent >= 90) {
-							return Color.BG_SAKURA_500;
-						}
-						if (cpuPercent >= 60) {
-							return Color.BG_AMBER_500;
-						}
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
-		memory: (
-			<div className="progress-container">
-				<Progress
-					percent={Number((host.memory * 100).toFixed(1))}
-					strokeLinecap="butt"
-					size="small"
-					strokeColor={((): string => {
-						const memoryPercent = Number((host.memory * 100).toFixed(1));
-						if (memoryPercent >= 90) {
-							return Color.BG_CHERRY_500;
-						}
-						if (memoryPercent >= 60) {
-							return Color.BG_AMBER_500;
-						}
-						return Color.BG_FOREST_500;
-					})()}
-					className="progress-bar"
-				/>
-			</div>
-		),
-		wait: `${Number((host.wait * 100).toFixed(1))}%`,
-		load15: host.load15,
-	}));
 
 export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	{
@@ -304,13 +101,11 @@ export const HostsQuickFiltersConfig: IQuickFiltersConfig[] = [
 	},
 ];
 
-export function GetHostsQuickFiltersConfig(
+export function getHostsQuickFiltersConfig(
 	dotMetricsEnabled: boolean,
 ): IQuickFiltersConfig[] {
-	// These keys don’t change with dotMetricsEnabled
 	const hostNameKey = dotMetricsEnabled ? 'host.name' : 'host_name';
 	const osTypeKey = dotMetricsEnabled ? 'os.type' : 'os_type';
-	// This metric stays the same regardless of notation
 	const metricName = dotMetricsEnabled
 		? 'system.cpu.load_average.15m'
 		: 'system_cpu_load_average_15m';

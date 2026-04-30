@@ -29,6 +29,7 @@ import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -43,12 +44,8 @@ import {
 import './WorkspaceLocked.styles.scss';
 
 export default function WorkspaceBlocked(): JSX.Element {
-	const {
-		user,
-		isFetchingActiveLicense,
-		trialInfo,
-		activeLicense,
-	} = useAppContext();
+	const { user, isFetchingActiveLicense, trialInfo, activeLicense } =
+		useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
 	const { safeNavigate } = useSafeNavigate();
@@ -115,7 +112,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 		logEvent('Workspace Blocked: User Clicked Update Credit Card', {});
 
 		updateCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [updateCreditCard]);
 

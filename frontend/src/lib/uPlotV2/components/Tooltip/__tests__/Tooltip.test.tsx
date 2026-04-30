@@ -1,5 +1,6 @@
 import React from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
+import userEvent from '@testing-library/user-event';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -73,11 +74,11 @@ function createTooltipContent(
 }
 
 function createUPlotInstance(cursorIdx: number | null): uPlot {
-	return ({
+	return {
 		data: [[1], []],
 		cursor: { idx: cursorIdx },
 		// The rest of the uPlot fields are not used by Tooltip
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
@@ -92,7 +93,6 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 		isPinned: false,
 		dismiss: jest.fn(),
 		viaSync: false,
-		clickData: null,
 	} as TooltipTestProps;
 
 	return render(
@@ -133,46 +133,30 @@ describe('Tooltip', () => {
 		expect(screen.queryByText(unexpectedTitle)).not.toBeInTheDocument();
 	});
 
-	it('renders lightMode class when dark mode is disabled', () => {
+	it('renders single active item in header only, without a list', () => {
 		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(false);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('lightMode');
-		expect(container).not.toHaveClass('darkMode');
-	});
-
-	it('renders darkMode class when dark mode is enabled', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(true);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('darkMode');
-		expect(container).not.toHaveClass('lightMode');
-	});
-
-	it('renders tooltip items when content is provided', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		const content = [createTooltipContent()];
+		const content = [createTooltipContent({ isActive: true })];
 
 		renderTooltip({ uPlotInstance, content });
 
-		const list = screen.queryByTestId('uplot-tooltip-list');
+		// Active item is shown in the header, not duplicated in a list
+		expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		expect(screen.getByTestId('uplot-tooltip-pinned')).toBeInTheDocument();
+		const pinnedContent = screen.getByTestId('uplot-tooltip-pinned-content');
+		expect(pinnedContent).toHaveTextContent('Series A');
+		expect(pinnedContent).toHaveTextContent('10');
+	});
 
-		expect(list).not.toBeNull();
+	it('renders list when multiple series are present', () => {
+		const uPlotInstance = createUPlotInstance(null);
+		const content = [
+			createTooltipContent({ isActive: true }),
+			createTooltipContent({ label: 'Series B', isActive: false }),
+		];
 
-		const marker = screen.getByTestId('uplot-tooltip-item-marker');
-		const itemContent = screen.getByTestId('uplot-tooltip-item-content');
+		renderTooltip({ uPlotInstance, content });
 
-		expect(marker).toHaveStyle({ borderColor: '#ff0000' });
-		expect(itemContent).toHaveStyle({ color: '#ff0000', fontWeight: '700' });
-		expect(itemContent).toHaveTextContent('Series A: 10');
+		expect(screen.getByTestId('uplot-tooltip-list')).toBeInTheDocument();
 	});
 
 	it('does not render tooltip list when content is empty', () => {
@@ -192,7 +176,7 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		expect(list).toHaveStyle({ height: '210px' });
+		expect(list).toHaveStyle({ height: '200px' });
 	});
 
 	it('sets tooltip list height based on content length when Virtuoso reports 0 height', () => {
@@ -205,5 +189,87 @@ describe('Tooltip', () => {
 		const list = screen.getByTestId('uplot-tooltip-list');
 		// Falls back to content length: 2 items * 38px = 76px
 		expect(list).toHaveStyle({ height: '76px' });
+	});
+});
+
+describe('Tooltip footer hint', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseIsDarkMode.mockReturnValue(false);
+	});
+
+	it('renders footer with "Press P to pin the tooltip" hint when not pinned', () => {
+		renderTooltip({ isPinned: false, canPinTooltip: true });
+
+		const footer = screen.getByTestId('uplot-tooltip-footer');
+		expect(footer).toBeInTheDocument();
+		expect(footer).toHaveTextContent('Press');
+		expect(footer).toHaveTextContent('P');
+		expect(footer).toHaveTextContent('to pin the tooltip');
+	});
+
+	it('renders footer with "Press P or Esc to unpin" hint when pinned', () => {
+		renderTooltip({ isPinned: true, canPinTooltip: true });
+
+		const footer = screen.getByTestId('uplot-tooltip-footer');
+		expect(footer).toHaveTextContent('Press');
+		expect(footer).toHaveTextContent('P');
+		expect(footer).toHaveTextContent('Esc');
+		expect(footer).toHaveTextContent('to unpin');
+	});
+
+	it('does not render Unpin button when not pinned', () => {
+		renderTooltip({ isPinned: false, canPinTooltip: true });
+
+		expect(screen.queryByTestId('uplot-tooltip-unpin')).not.toBeInTheDocument();
+	});
+
+	it('renders Unpin button when pinned', () => {
+		renderTooltip({ isPinned: true, canPinTooltip: true });
+
+		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
+		expect(unpinBtn).toBeInTheDocument();
+		expect(unpinBtn).toHaveAttribute('aria-label', 'Unpin tooltip');
+	});
+
+	it('calls dismiss when Unpin button is clicked', async () => {
+		const dismiss = jest.fn();
+		renderTooltip({ isPinned: true, canPinTooltip: true, dismiss });
+
+		const user = userEvent.setup();
+		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
+		await user.click(unpinBtn);
+
+		expect(dismiss).toHaveBeenCalledTimes(1);
+	});
+
+	it('footer has role="status" for screen reader announcements', () => {
+		renderTooltip({ canPinTooltip: true });
+
+		const footer = screen.getByRole('status');
+		expect(footer).toBeInTheDocument();
+	});
+});
+
+describe('Tooltip header status pill', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockUseIsDarkMode.mockReturnValue(false);
+	});
+
+	it('shows Pinned status when pinned and header is visible', () => {
+		const uPlotInstance = createUPlotInstance(0);
+
+		renderTooltip({ uPlotInstance, isPinned: true });
+
+		expect(screen.getByText('Pinned')).toBeInTheDocument();
+	});
+
+	it('does not render status pill when showTooltipHeader is false', () => {
+		const uPlotInstance = createUPlotInstance(0);
+
+		renderTooltip({ uPlotInstance, showTooltipHeader: false, isPinned: false });
+
+		expect(screen.queryByTestId('uplot-tooltip-status')).not.toBeInTheDocument();
 	});
 });

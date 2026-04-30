@@ -7,7 +7,10 @@ import type uPlot from 'uplot';
 import { TooltipRenderArgs } from '../../components/types';
 import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
-import { DashboardCursorSync } from '../TooltipPlugin/types';
+import {
+	DashboardCursorSync,
+	DEFAULT_PIN_TOOLTIP_KEY,
+} from '../TooltipPlugin/types';
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
 // We only care that pinning logic runs without throwing, not which series is focused.
@@ -60,7 +63,7 @@ function getHandler(config: ConfigMock, hookName: string): HookHandler {
 function createFakePlot(): {
 	over: HTMLDivElement;
 	setCursor: jest.Mock<void, [uPlot.Cursor]>;
-	cursor: { event: Record<string, unknown> };
+	cursor: { event: Record<string, unknown>; left: number; top: number };
 	posToVal: jest.Mock<number, [value: number]>;
 	posToIdx: jest.Mock<number, []>;
 	data: [number[], number[]];
@@ -71,7 +74,9 @@ function createFakePlot(): {
 	return {
 		over,
 		setCursor: jest.fn(),
-		cursor: { event: {} },
+		// left / top are set to valid values so keyboard-pin tests do not
+		// hit the "cursor off-screen" guard inside handleKeyDown.
+		cursor: { event: {}, left: 50, top: 50 },
 		// In real uPlot these map overlay coordinates to data-space values.
 		posToVal: jest.fn((value: number) => value),
 		posToIdx: jest.fn(() => 0),
@@ -144,7 +149,7 @@ describe('TooltipPlugin', () => {
 				}),
 			);
 
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+			expect(screen.queryByTestId('tooltip-plugin-container')).toBeNull();
 		});
 
 		it('registers all required uPlot hooks on mount', () => {
@@ -182,9 +187,7 @@ describe('TooltipPlugin', () => {
 			expect(renderTooltip).toHaveBeenCalled();
 			expect(screen.getByText('tooltip-body')).toBeInTheDocument();
 
-			const container = document.querySelector(
-				'.tooltip-plugin-container',
-			) as HTMLElement;
+			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).not.toBeNull();
 			expect(container.parentElement).toBe(document.body);
 		});
@@ -203,13 +206,11 @@ describe('TooltipPlugin', () => {
 
 			renderAndActivateHover(config);
 
-			const container = document.querySelector(
-				'.tooltip-plugin-container',
-			) as HTMLElement;
+			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container.parentElement).toBe(document.body);
 
 			const fullscreenRoot = document.createElement('div');
-			document.body.appendChild(fullscreenRoot);
+			document.body.append(fullscreenRoot);
 
 			act(() => {
 				mockedFullscreenElement = fullscreenRoot;
@@ -245,24 +246,27 @@ describe('TooltipPlugin', () => {
 	// ---- Pin behaviour ----------------------------------------------------------
 
 	describe('pin behaviour', () => {
-		it('pins the tooltip when canPinTooltip is true and overlay is clicked', () => {
+		it('pins the tooltip when canPinTooltip is true and the pinKey is pressed while hovering', () => {
 			const config = createConfigMock();
 
-			const fakePlot = renderAndActivateHover(config, undefined, {
-				canPinTooltip: true,
-			});
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
 
 			const container = screen.getByTestId('tooltip-plugin-container');
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 			});
 
 			return waitFor(() => {
 				const updated = screen.getByTestId('tooltip-plugin-container');
 				expect(updated).toBeInTheDocument();
-				expect(updated.classList.contains('pinned')).toBe(true);
+				expect(updated.dataset.pinned === 'true').toBe(true);
 			});
 		});
 
@@ -272,7 +276,7 @@ describe('TooltipPlugin', () => {
 				React.createElement('div', null, 'pinned-tooltip'),
 			);
 
-			const fakePlot = renderAndActivateHover(
+			renderAndActivateHover(
 				config,
 				() => React.createElement('div', null, 'hover-tooltip'),
 				{
@@ -284,7 +288,12 @@ describe('TooltipPlugin', () => {
 			expect(screen.getByText('hover-tooltip')).toBeInTheDocument();
 
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 			});
 
 			await waitFor(() => {
@@ -318,18 +327,20 @@ describe('TooltipPlugin', () => {
 				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
 			});
 
-			// Pin the tooltip.
+			// Pin the tooltip via the keyboard shortcut.
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 			});
 
-			// Wait until the tooltip is actually pinned (pointer events enabled)
+			// Wait until the tooltip is actually pinned.
 			await waitFor(() => {
-				const container = document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement | null;
-				expect(container).not.toBeNull();
-				expect(container?.classList.contains('pinned')).toBe(true);
+				const container = screen.getByTestId('tooltip-plugin-container');
+				expect(container.dataset.pinned === 'true').toBe(true);
 			});
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
@@ -342,8 +353,7 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 				expect(container.textContent).toBe('');
 			});
 		});
@@ -369,16 +379,19 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
-			// Pin.
+			// Pin via keyboard.
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 				jest.runAllTimers();
 			});
 
 			expect(
-				(document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement)?.classList.contains('pinned'),
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Simulate data update – should dismiss the pinned tooltip.
@@ -390,8 +403,7 @@ describe('TooltipPlugin', () => {
 			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).toBeInTheDocument();
 			expect(container.getAttribute('aria-hidden')).toBe('true');
-			expect(container.classList.contains('visible')).toBe(false);
-			expect(container.classList.contains('pinned')).toBe(false);
+			expect(container.dataset.pinned === 'true').toBe(false);
 
 			jest.useRealTimers();
 		});
@@ -417,15 +429,19 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
+			// Pin via keyboard.
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 				jest.runAllTimers();
 			});
 
 			expect(
-				document
-					.querySelector('.tooltip-plugin-container')
-					?.classList.contains('pinned'),
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
 			// Click outside the tooltip container.
@@ -439,14 +455,13 @@ describe('TooltipPlugin', () => {
 
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
 			});
 
 			jest.useRealTimers();
 		});
 
-		it('unpins the tooltip on outside keydown', async () => {
+		it('unpins the tooltip when Escape is pressed while pinned', async () => {
 			jest.useFakeTimers();
 			const config = createConfigMock();
 
@@ -467,18 +482,22 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
+			// Pin via keyboard.
 			act(() => {
-				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
 				jest.runAllTimers();
 			});
 
 			expect(
-				document
-					.querySelector('.tooltip-plugin-container')
-					?.classList.contains('pinned'),
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
 			).toBe(true);
 
-			// Press a key outside the tooltip.
+			// Press Escape to release.
 			act(() => {
 				document.body.dispatchEvent(
 					new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
@@ -490,18 +509,278 @@ describe('TooltipPlugin', () => {
 				const container = screen.getByTestId('tooltip-plugin-container');
 				expect(container).toBeInTheDocument();
 				expect(container.getAttribute('aria-hidden')).toBe('true');
-				expect(container.classList.contains('visible')).toBe(false);
-				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.dataset.pinned === 'true').toBe(false);
+			});
+
+			jest.useRealTimers();
+		});
+
+		it('unpins the tooltip when the pin key is pressed a second time (toggle off)', async () => {
+			jest.useFakeTimers();
+			const config = createConfigMock();
+
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+			jest.runAllTimers();
+
+			// First press — pin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				).toBe(true);
+			});
+
+			// Second press — unpin (toggle off).
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				const container = screen.getByTestId('tooltip-plugin-container');
+				expect(container.dataset.pinned === 'true').toBe(false);
+			});
+
+			jest.useRealTimers();
+		});
+
+		it('does not unpin on Escape when tooltip is not pinned', () => {
+			const config = createConfigMock();
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+
+			// Escape without pinning first — should be a no-op.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+				);
+			});
+
+			const container = screen.getByTestId('tooltip-plugin-container');
+			// Tooltip should still be hovering (visible), not dismissed.
+			expect(container.getAttribute('aria-hidden')).toBe('false');
+			expect(container.dataset.pinned === 'true').toBe(false);
+		});
+
+		it('does not unpin on arbitrary keys that are not Escape or the pin key', async () => {
+			jest.useFakeTimers();
+			const config = createConfigMock();
+
+			renderAndActivateHover(config, undefined, { canPinTooltip: true });
+			jest.runAllTimers();
+
+			// Pin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				).toBe(true);
+			});
+
+			// Arrow key — should NOT unpin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+				);
+				jest.runAllTimers();
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				).toBe(true);
 			});
 
 			jest.useRealTimers();
 		});
 	});
 
+	// ---- Keyboard pin edge cases ------------------------------------------------
+
+	describe('keyboard pin edge cases', () => {
+		it('does not pin when cursor coordinates are negative (cursor off-screen)', () => {
+			const config = createConfigMock();
+
+			render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => React.createElement('div', null, 'tooltip-body'),
+					syncMode: DashboardCursorSync.None,
+					canPinTooltip: true,
+				}),
+			);
+
+			// Negative cursor coords — handleKeyDown bails out before pinning.
+			const fakePlot = {
+				...createFakePlot(),
+				cursor: { event: {}, left: -1, top: -1 },
+			};
+
+			act(() => {
+				getHandler(config, 'init')(fakePlot);
+				getHandler(config, 'setSeries')(fakePlot, 1, { focus: true });
+			});
+
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+			});
+
+			const container = screen.getByTestId('tooltip-plugin-container');
+			expect(container.dataset.pinned === 'true').toBe(false);
+		});
+
+		it('does not pin when hover is not active', () => {
+			const config = createConfigMock();
+
+			render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => React.createElement('div', null, 'tooltip-body'),
+					syncMode: DashboardCursorSync.None,
+					canPinTooltip: true,
+				}),
+			);
+
+			const fakePlot = createFakePlot();
+
+			act(() => {
+				// Initialise the plot but do NOT call setSeries – hoverActive stays false.
+				getHandler(config, 'init')(fakePlot);
+			});
+
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: DEFAULT_PIN_TOOLTIP_KEY,
+						bubbles: true,
+					}),
+				);
+			});
+
+			// The container exists once the plot is initialised, but it should
+			// be hidden and not pinned since hover was never activated.
+			const container = screen.getByTestId('tooltip-plugin-container');
+			expect(container.dataset.pinned === 'true').toBe(false);
+			expect(container.getAttribute('aria-hidden')).toBe('true');
+		});
+
+		it('ignores other keys and only pins on the configured pinKey', async () => {
+			const config = createConfigMock();
+
+			renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				pinKey: 'p',
+			});
+
+			// 'l' should NOT pin when pinKey is 'p'.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', {
+						key: 'l',
+						bubbles: true,
+					}),
+				);
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				).toBe(false);
+			});
+
+			// Custom pin key 'p' SHOULD pin.
+			act(() => {
+				document.body.dispatchEvent(
+					new KeyboardEvent('keydown', { key: 'p', bubbles: true }),
+				);
+			});
+
+			await waitFor(() => {
+				expect(
+					screen.getByTestId('tooltip-plugin-container').dataset.pinned === 'true',
+				).toBe(true);
+			});
+		});
+
+		it('does not register a keydown listener when canPinTooltip is false', () => {
+			const config = createConfigMock();
+			const addSpy = jest.spyOn(document, 'addEventListener');
+
+			render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => null,
+					syncMode: DashboardCursorSync.None,
+					canPinTooltip: false,
+				}),
+			);
+
+			const keydownCalls = addSpy.mock.calls.filter(
+				([type]) => type === 'keydown',
+			);
+			expect(keydownCalls).toHaveLength(0);
+		});
+
+		it('removes the keydown pin listener on unmount', () => {
+			const config = createConfigMock();
+			const addSpy = jest.spyOn(document, 'addEventListener');
+			const removeSpy = jest.spyOn(document, 'removeEventListener');
+
+			const { unmount } = render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => null,
+					syncMode: DashboardCursorSync.None,
+					canPinTooltip: true,
+				}),
+			);
+
+			const pinListenerCall = addSpy.mock.calls.find(
+				([type]) => type === 'keydown',
+			);
+			expect(pinListenerCall).toBeDefined();
+			if (!pinListenerCall) {
+				return;
+			}
+			const [, pinListener, pinOptions] = pinListenerCall;
+
+			unmount();
+
+			expect(removeSpy).toHaveBeenCalledWith('keydown', pinListener, pinOptions);
+		});
+	});
+
 	// ---- Cursor sync ------------------------------------------------------------
 
 	describe('cursor sync', () => {
-		it('enables uPlot cursor sync for time-based scales when mode is Tooltip', () => {
+		it('enables uPlot cursor sync on x-axis only when mode is Tooltip', () => {
 			const config = createConfigMock();
 			const setCursorSpy = jest.spyOn(config, 'setCursor');
 			config.addScale({ scaleKey: 'x', time: true });
@@ -517,6 +796,25 @@ describe('TooltipPlugin', () => {
 
 			expect(setCursorSpy).toHaveBeenCalledWith({
 				sync: { key: 'dashboard-sync', scales: ['x', null] },
+			});
+		});
+
+		it('enables uPlot cursor sync on both axes when mode is Crosshair', () => {
+			const config = createConfigMock();
+			const setCursorSpy = jest.spyOn(config, 'setCursor');
+			config.addScale({ scaleKey: 'x', time: true });
+
+			render(
+				React.createElement(TooltipPlugin, {
+					config,
+					render: () => null,
+					syncMode: DashboardCursorSync.Crosshair,
+					syncKey: 'dashboard-sync',
+				}),
+			);
+
+			expect(setCursorSpy).toHaveBeenCalledWith({
+				sync: { key: 'dashboard-sync', scales: ['x', 'y'] },
 			});
 		});
 

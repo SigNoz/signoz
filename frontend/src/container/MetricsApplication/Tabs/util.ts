@@ -168,7 +168,7 @@ export function onViewAPIMonitoringPopupClick({
 								op: 'in',
 								value: ['true'],
 							},
-					  ]
+						]
 					: []),
 				{
 					id: uuid().slice(0, 8),

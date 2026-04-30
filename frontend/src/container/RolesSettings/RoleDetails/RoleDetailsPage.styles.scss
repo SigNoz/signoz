@@ -14,7 +14,7 @@
 	}
 
 	.role-details-title {
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 18px;
 		font-weight: 500;
@@ -149,8 +149,8 @@
 	.role-details-permissions-divider {
 		flex: 1;
 		border: none;
-		border-top: 2px dotted var(--border);
-		border-bottom: 2px dotted var(--border);
+		border-top: 2px dotted var(--l1-border);
+		border-bottom: 2px dotted var(--l1-border);
 		height: 7px;
 		margin: 0;
 	}
@@ -167,14 +167,14 @@
 		justify-content: space-between;
 		height: 44px;
 		padding: 0 12px;
-		background: rgba(171, 189, 255, 0.08);
+		background: color-mix(in srgb, var(--bg-robin-200) 8%, transparent);
 		border: 1px solid var(--secondary);
 		border-radius: 4px;
 		cursor: pointer;
 		transition: background 0.15s ease;
 
 		&:hover {
-			background: rgba(171, 189, 255, 0.12);
+			background: color-mix(in srgb, var(--bg-robin-200) 12%, transparent);
 		}
 	}
 
@@ -190,7 +190,7 @@
 		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: -0.07px;
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 	}
 
 	.role-details-members {
@@ -267,7 +267,7 @@
 
 			&--bold {
 				font-weight: 500;
-				color: var(--text-base-white);
+				color: var(--l1-foreground);
 			}
 
 			&--muted {
@@ -295,11 +295,13 @@
 	color: var(--destructive);
 	opacity: 0.6;
 	padding: 0;
-	transition: background-color 0.2s, opacity 0.2s;
+	transition:
+		background-color 0.2s,
+		opacity 0.2s;
 	box-shadow: none;
 
 	&:hover {
-		background: rgba(229, 72, 77, 0.1);
+		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 		opacity: 0.9;
 	}
 }
@@ -349,7 +351,7 @@
 	}
 
 	.title {
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 13px;
 		font-weight: 400;
@@ -367,51 +369,7 @@
 
 		strong {
 			font-weight: 600;
-			color: var(--text-base-white);
-		}
-	}
-}
-
-.lightMode {
-	.role-details-delete-modal {
-		.ant-modal-content {
-			.ant-modal-header {
-				.title {
-					color: var(--text-base-black);
-				}
-			}
-
-			.ant-modal-body {
-				.delete-text {
-					strong {
-						color: var(--text-base-black);
-					}
-				}
-			}
-		}
-	}
-
-	.role-details-page {
-		.role-details-title {
-			color: var(--text-base-black);
-		}
-
-		.role-details-members-empty-state {
-			.role-details-members-empty-text--bold {
-				color: var(--text-base-black);
-			}
-		}
-
-		.role-details-permission-item {
-			background: rgba(0, 0, 0, 0.04);
-
-			&:hover {
-				background: rgba(0, 0, 0, 0.07);
-			}
-		}
-
-		.role-details-permission-item-label {
-			color: var(--text-base-black);
+			color: var(--l1-foreground);
 		}
 	}
 }

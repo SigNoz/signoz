@@ -13,10 +13,8 @@ import { PanelTypesWithData } from './menuItems';
 import './PanelTypeSelectionModal.styles.scss';
 
 function PanelTypeSelectionModal(): JSX.Element {
-	const {
-		isPanelTypeSelectionModalOpen,
-		setIsPanelTypeSelectionModalOpen,
-	} = usePanelTypeSelectionModalStore();
+	const { isPanelTypeSelectionModalOpen, setIsPanelTypeSelectionModalOpen } =
+		usePanelTypeSelectionModalStore();
 
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
@@ -55,7 +53,12 @@ function PanelTypeSelectionModal(): JSX.Element {
 		>
 			<div className="panel-selection">
 				{PanelTypesWithData.map(({ name, icon, display }) => (
-					<Card onClick={(): void => handleCardClick(name)} id={name} key={name}>
+					<Card
+						onClick={(): void => handleCardClick(name)}
+						id={name}
+						key={name}
+						data-testid={`panel-type-${name}`}
+					>
 						{icon}
 						<Typography className="panel-type-text">{display}</Typography>
 					</Card>

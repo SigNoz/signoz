@@ -1,11 +1,18 @@
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	waitForElementToBeRemoved,
+} from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
 
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -116,10 +123,7 @@ describe('AddKeyModal', () => {
 
 		await waitFor(() => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('snz_abc123xyz456secret');
-			expect(mockToast.success).toHaveBeenCalledWith(
-				'Key copied to clipboard',
-				expect.anything(),
-			);
+			expect(mockToast.success).toHaveBeenCalledWith('Key copied to clipboard');
 		});
 	});
 
@@ -127,11 +131,9 @@ describe('AddKeyModal', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderModal();
 
-		await screen.findByRole('dialog', { name: /Add a New Key/i });
+		const dialog = await screen.findByRole('dialog', { name: /Add a New Key/i });
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(
-			screen.queryByRole('dialog', { name: /Add a New Key/i }),
-		).not.toBeInTheDocument();
+		await waitForElementToBeRemoved(dialog);
 	});
 });

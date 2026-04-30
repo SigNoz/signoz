@@ -67,7 +67,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 				}},
 			},
 			SelectedQuery: "A",
-			Seasonality:   "daily",
+			Seasonality:   ruletypes.SeasonalityDaily,
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{{
@@ -170,7 +170,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 				}},
 			},
 			SelectedQuery: "A",
-			Seasonality:   "daily",
+			Seasonality:   ruletypes.SeasonalityDaily,
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{{

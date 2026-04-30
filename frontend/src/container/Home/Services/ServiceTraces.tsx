@@ -17,6 +17,9 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
+
+import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -66,12 +69,14 @@ export default function ServiceTraces({
 		[services],
 	);
 
-	const servicesExist = useMemo(() => sortedServices.length > 0, [
-		sortedServices,
-	]);
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const servicesExist = useMemo(
+		() => sortedServices.length > 0,
+		[sortedServices],
+	);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (servicesExist && !loadingUserPreferences) {
@@ -103,7 +108,7 @@ export default function ServiceTraces({
 				<div className="empty-state-content-container">
 					<div className="empty-state-content">
 						<img
-							src="/Icons/triangle-ruler.svg"
+							src={triangleRulerUrl}
 							alt="empty-alert-icon"
 							className="empty-state-icon"
 						/>
@@ -131,11 +136,7 @@ export default function ServiceTraces({
 									) {
 										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
-										window?.open(
-											DOCS_LINKS.ADD_DATA_SOURCE,
-											'_blank',
-											'noopener noreferrer',
-										);
+										openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 									}
 								}}
 							>

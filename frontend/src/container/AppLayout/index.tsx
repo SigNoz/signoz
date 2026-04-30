@@ -13,7 +13,7 @@ import { useMutation, useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
-import { Toaster } from '@signozhq/sonner';
+import { Toaster } from '@signozhq/ui';
 import { Flex } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -73,6 +73,7 @@ import {
 import { UserPreference } from 'types/api/preferences/preference';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
+import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
 import {
@@ -106,10 +107,8 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	const [
-		showPaymentFailedWarning,
-		setShowPaymentFailedWarning,
-	] = useState<boolean>(false);
+	const [showPaymentFailedWarning, setShowPaymentFailedWarning] =
+		useState<boolean>(false);
 
 	const errorBoundaryRef = useRef<Sentry.ErrorBoundary>(null);
 
@@ -167,15 +166,13 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		});
 	};
 
-	const {
-		mutate: manageCreditCard,
-		isLoading: isLoadingManageBilling,
-	} = useMutation(manageCreditCardApi, {
-		onSuccess: (data) => {
-			handleBillingOnSuccess(data);
-		},
-		onError: handleBillingOnError,
-	});
+	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
+		useMutation(manageCreditCardApi, {
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		});
 
 	const isDarkMode = useIsDarkMode();
 
@@ -461,7 +458,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const handleFailedPayment = useCallback((): void => {
 		manageCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [manageCreditCard]);
 

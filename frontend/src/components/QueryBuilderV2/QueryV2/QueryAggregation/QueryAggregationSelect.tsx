@@ -290,12 +290,12 @@ function QueryAggregationSelect({
 			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
-			const oldMatches = [
-				...tr.startState.doc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
-			const newMatches = [
-				...tr.newDoc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+			const oldMatches = [...tr.startState.doc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
+			const newMatches = [...tr.newDoc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
 
 			if (
 				newMatches.length > oldMatches.length &&
@@ -558,7 +558,7 @@ function QueryAggregationSelect({
 									? availableSuggestions
 									: availableSuggestions.filter((suggestion) =>
 											suggestion.label.toLowerCase().includes(inputText.toLowerCase()),
-									  );
+										);
 
 							return {
 								from: startOfArg,

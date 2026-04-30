@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
-import { PersistedAnnouncementBanner } from '@signozhq/ui';
-import { Button, Popover } from 'antd';
+import { Button, PersistedAnnouncementBanner } from '@signozhq/ui';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -32,6 +32,15 @@ import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
 import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import crackerUrl from '@/assets/Icons/cracker.svg';
+import dashboardUrl from '@/assets/Icons/dashboard.svg';
+import spinnerHalfBlueUrl from '@/assets/Icons/spinner-half-blue.svg';
+import wrenchUrl from '@/assets/Icons/wrench.svg';
+import allInOneUrl from '@/assets/Images/allInOne.svg';
+import allInOneLightModeUrl from '@/assets/Images/allInOneLightMode.svg';
+import dottedDividerUrl from '@/assets/Images/dotted-divider.svg';
+import perilianBackgroundUrl from '@/assets/Images/perilianBackground.svg';
 
 import AlertRules from './AlertRules/AlertRules';
 import { defaultChecklistItemsState } from './constants';
@@ -61,9 +70,8 @@ export default function Home(): JSX.Element {
 		defaultChecklistItemsState,
 	);
 
-	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
-		false,
-	);
+	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] =
+		useState(false);
 
 	useEffect(() => {
 		const now = new Date();
@@ -129,9 +137,8 @@ export default function Home(): JSX.Element {
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
-	const [isMetricsIngestionActive, setIsMetricsIngestionActive] = useState(
-		false,
-	);
+	const [isMetricsIngestionActive, setIsMetricsIngestionActive] =
+		useState(false);
 
 	const processUserPreferences = (userPreferences: UserPreference[]): void => {
 		const checklistSkipped = Boolean(
@@ -264,20 +271,22 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			<PersistedAnnouncementBanner
-				type="info"
-				storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-				action={{
-					label: 'Go to Service Accounts',
-					onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-				}}
-			>
-				<>
-					<strong>API keys</strong> have been deprecated in favour of{' '}
-					<strong>Service accounts</strong>. The existing API Keys have been migrated
-					to service accounts.
-				</>
-			</PersistedAnnouncementBanner>
+			{user?.role === USER_ROLES.ADMIN && (
+				<PersistedAnnouncementBanner
+					type="info"
+					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
+					action={{
+						label: 'Go to Service Accounts',
+						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+					}}
+				>
+					<>
+						<strong>API keys</strong> have been deprecated in favour of{' '}
+						<strong>Service accounts</strong>. The existing API Keys have been
+						migrated to service accounts.
+					</>
+				</PersistedAnnouncementBanner>
+			)}
 
 			<div className="sticky-header">
 				<Header
@@ -306,12 +315,13 @@ export default function Home(): JSX.Element {
 									rootClassName="welcome-checklist-popover"
 								>
 									<Button
-										type="default"
-										size="small"
+										variant="solid"
+										color="secondary"
+										size="sm"
 										className="periscope-btn secondary welcome-checklist-btn"
 									>
 										<img
-											src="/Icons/spinner-half-blue.svg"
+											src={spinnerHalfBlueUrl}
 											alt="spinner-half-blue"
 											width={16}
 											height={16}
@@ -338,7 +348,7 @@ export default function Home(): JSX.Element {
 					/>
 
 					<div className="divider">
-						<img src="/Images/dotted-divider.svg" alt="divider" />
+						<img src={dottedDividerUrl} alt="divider" />
 					</div>
 
 					<div className="active-ingestions-container">
@@ -481,7 +491,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/wrench.svg"
+													src={wrenchUrl}
 													alt="wrench"
 													width={16}
 													height={16}
@@ -500,9 +510,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
@@ -516,9 +527,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
@@ -532,9 +544,10 @@ export default function Home(): JSX.Element {
 											</Button>
 
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Wrench size={14} />}
+												prefix={<Wrench size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
@@ -556,12 +569,7 @@ export default function Home(): JSX.Element {
 									<div className="section-container">
 										<div className="section-content">
 											<div className="section-icon">
-												<img
-													src="/Icons/dashboard.svg"
-													alt="dashboard"
-													width={16}
-													height={16}
-												/>
+												<img src={dashboardUrl} alt="dashboard" width={16} height={16} />
 											</div>
 
 											<div className="section-title">
@@ -575,9 +583,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
@@ -600,7 +609,7 @@ export default function Home(): JSX.Element {
 										<div className="section-content">
 											<div className="section-icon">
 												<img
-													src="/Icons/cracker.svg"
+													src={crackerUrl}
 													alt="cracker"
 													width={16}
 													height={16}
@@ -619,9 +628,10 @@ export default function Home(): JSX.Element {
 
 										<div className="section-actions">
 											<Button
-												type="default"
+												variant="solid"
+												color="secondary"
 												className="periscope-btn secondary"
-												icon={<Plus size={14} />}
+												prefix={<Plus size={14} />}
 												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
@@ -679,7 +689,7 @@ export default function Home(): JSX.Element {
 											<div className="checklist-container-right-img">
 												<div className="checklist-img-bg-container">
 													<img
-														src="/Images/perilianBackground.svg"
+														src={perilianBackgroundUrl}
 														alt="not-found"
 														className="checklist-img-bg"
 													/>
@@ -687,11 +697,7 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src={
-															isDarkMode
-																? '/Images/allInOne.svg'
-																: '/Images/allInOneLightMode.svg'
-														}
+														src={isDarkMode ? allInOneUrl : allInOneLightModeUrl}
 														alt="checklist-img"
 														className="checklist-img"
 													/>
@@ -704,7 +710,8 @@ export default function Home(): JSX.Element {
 								<Card.Footer>
 									<div className="checklist-footer-container">
 										<Button
-											type="link"
+											variant="link"
+											color="secondary"
 											onClick={handleWillDoThisLater}
 											loading={updatingUserPreferences}
 										>

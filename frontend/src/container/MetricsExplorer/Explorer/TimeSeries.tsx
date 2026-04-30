@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Button, Tooltip, Typography } from 'antd';
 import {
 	invalidateGetMetricMetadata,
@@ -11,10 +11,12 @@ import {
 } from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
+import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
@@ -36,6 +38,7 @@ import {
 } from './utils';
 
 function TimeSeries({
+	onFetchingStateChange,
 	showOneChartPerQuery,
 	setWarning,
 	isMetricUnitsLoading,
@@ -46,13 +49,15 @@ function TimeSeries({
 	setYAxisUnit,
 	showYAxisUnitSelector,
 	metrics,
+	isCancelled = false,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const queryClient = useQueryClient();
 
 	const isValidToConvertToMs = useMemo(() => {
@@ -81,7 +86,7 @@ function TimeSeries({
 						stagedQuery || initialQueriesMap[DataSource.METRICS],
 						metricNames,
 						metricUnits,
-				  )
+					)
 				: [stagedQuery || initialQueriesMap[DataSource.METRICS]],
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[showOneChartPerQuery, stagedQuery, JSON.stringify(metricUnits)],
@@ -98,7 +103,11 @@ function TimeSeries({
 				minTime,
 				index,
 			],
-			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
+			queryFn: ({
+				signal,
+			}: {
+				signal?: AbortSignal;
+			}): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 				GetMetricQueryRange(
 					{
 						query: payload,
@@ -111,9 +120,15 @@ function TimeSeries({
 					},
 					// ENTITY_VERSION_V4,
 					ENTITY_VERSION_V5,
+					undefined,
+					signal,
 				),
 			enabled: !!payload,
-			retry: (failureCount: number, error: Error): boolean => {
+			retry: (failureCount: number, error: unknown): boolean => {
+				if (isAxiosError(error) && error.code === 'ERR_CANCELED') {
+					return false;
+				}
+
 				let status: number | undefined;
 
 				if (error instanceof APIError) {
@@ -126,10 +141,15 @@ function TimeSeries({
 					return false;
 				}
 
-				return failureCount < 3;
+				return failureCount < MAX_QUERY_RETRIES;
 			},
 		})),
 	);
+
+	const isFetching = queries.some((q) => q.isFetching);
+	useEffect(() => {
+		onFetchingStateChange?.(isFetching);
+	}, [isFetching, onFetchingStateChange]);
 
 	const data = useMemo(() => queries.map(({ data }) => data) ?? [], [queries]);
 
@@ -163,10 +183,8 @@ function TimeSeries({
 		[metricUnits, metrics, yAxisUnit],
 	);
 
-	const {
-		mutate: updateMetricMetadata,
-		isLoading: isUpdatingMetricMetadata,
-	} = useUpdateMetricMetadata();
+	const { mutate: updateMetricMetadata, isLoading: isUpdatingMetricMetadata } =
+		useUpdateMetricMetadata();
 
 	const handleSaveUnit = (): void => {
 		if (metrics[0] && yAxisUnit) {
@@ -231,7 +249,11 @@ function TimeSeries({
 				})}
 			>
 				{metricNames.length === 0 && <EmptyMetricsSearch />}
-				{metricNames.length > 0 &&
+				{isCancelled && metricNames.length > 0 && (
+					<QueryCancelledPlaceholder subText='Click "Run Query" to load metrics.' />
+				)}
+				{!isCancelled &&
+					metricNames.length > 0 &&
 					responseData.map((datapoint, index) => {
 						const isQueryDataItem = index < metricNames.length;
 						const metricName = isQueryDataItem ? metricNames[index] : undefined;

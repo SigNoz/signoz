@@ -14,7 +14,7 @@
 	&__title {
 		font-size: var(--label-large-500-font-size);
 		font-weight: var(--label-large-500-font-weight);
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		letter-spacing: -0.09px;
 		line-height: var(--line-height-normal);
 		margin: 0;
@@ -45,7 +45,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-2);
-	border: 1px solid var(--border);
+	border: 1px solid var(--l1-border);
 	border-radius: 2px;
 	background-color: var(--l2-background);
 
@@ -63,7 +63,7 @@
 	.ant-dropdown-menu {
 		padding: var(--padding-3) 14px;
 		border-radius: 4px;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		background: var(--l2-background);
 		backdrop-filter: blur(20px);
 	}
@@ -98,23 +98,9 @@
 	height: 32px;
 	color: var(--l1-foreground);
 	background-color: var(--l2-background);
-	border-color: var(--border);
+	border-color: var(--l1-border);
 
 	&::placeholder {
 		color: var(--l3-foreground);
-	}
-}
-
-.lightMode {
-	.members-settings {
-		&__title {
-			color: var(--text-base-black);
-		}
-	}
-
-	.members-filter-option {
-		&:hover {
-			color: var(--bg-neutral-light-100);
-		}
 	}
 }

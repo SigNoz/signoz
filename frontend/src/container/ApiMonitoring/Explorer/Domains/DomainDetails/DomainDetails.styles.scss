@@ -8,8 +8,8 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
 
@@ -21,8 +21,8 @@
 }
 
 .domain-detail-drawer {
-	border-left: 1px solid var(--bg-slate-500);
-	background: var(--bg-ink-400);
+	border-left: 1px solid var(--l1-border);
+	background: var(--l2-background) !important;
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 	.ant-drawer-header {
@@ -31,8 +31,8 @@
 
 		align-items: stretch;
 
-		border-bottom: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border-bottom: 1px solid var(--l1-border);
+		background: var(--l2-background);
 	}
 
 	.ant-drawer-close {
@@ -46,7 +46,7 @@
 	}
 
 	.title {
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 14px;
 		font-style: normal;
@@ -60,8 +60,8 @@
 		align-items: center;
 		justify-content: center;
 		padding-top: var(--padding-1);
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
 
@@ -73,8 +73,8 @@
 		width: fit-content;
 
 		border-radius: 50px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
+		background: var(--l1-border);
 		text-transform: lowercase;
 	}
 
@@ -93,7 +93,7 @@
 			}
 
 			.domain-details-metadata-label {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -104,7 +104,7 @@
 			}
 
 			.domain-details-metadata-value {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: 'Geist Mono';
 				font-size: 12px;
 				font-style: normal;
@@ -152,7 +152,7 @@
 
 			.ant-card {
 				&.ant-card-bordered {
-					border: 1px solid var(--bg-slate-500) !important;
+					border: 1px solid var(--l1-border) !important;
 				}
 			}
 		}
@@ -163,10 +163,10 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		border-bottom: 1px solid var(--bg-slate-400);
+		border-bottom: 1px solid var(--l1-border);
 
 		.views-tabs {
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 
 			.view-title {
 				display: flex;
@@ -180,23 +180,23 @@
 
 			.tab {
 				padding: 0 32px;
-				background: var(--bg-ink-300);
-				border: 1px solid var(--bg-slate-400);
+				background: var(--l3-background);
+				border: 1px solid var(--l1-border);
 				width: auto;
 			}
 
 			.tab::before {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 
 			.selected_view {
 				background: none;
-				border: 1px solid var(--bg-slate-400);
+				border: 1px solid var(--l1-border);
 				border-bottom: none;
 			}
 
 			.selected_view::before {
-				background: var(--bg-slate-400);
+				background: var(--l1-border);
 			}
 		}
 	}
@@ -221,11 +221,11 @@
 			flex-shrink: 0;
 
 			border-radius: 2px 0px 0px 2px;
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			border-right: none;
-			background: var(--bg-ink-300);
+			background: var(--l3-background);
 
-			color: var(--Vanilla-400, #c0c1c3);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -239,28 +239,28 @@
 			.ant-select-selector {
 				font-size: 14px;
 				border-radius: 2px 0px 0px 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 			}
 		}
 	}
 	// Add border-bottom to table cells when pagination is not present
 	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
-		border-bottom: 1px solid var(--bg-slate-500) !important;
+		border-bottom: 1px solid var(--l1-border) !important;
 	}
 
 	.endpoints-table-container {
 		display: flex;
 		flex-direction: column;
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 
 		.endpoints-table-header {
 			display: flex;
 			align-items: center;
 			gap: 10px;
 			padding: 12px;
-			color: var(--Vanilla-100, #fff);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -276,7 +276,7 @@
 				line-height: 18px;
 				border-bottom: none;
 
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -293,26 +293,28 @@
 			}
 
 			.ant-table-thead > tr > th:has(.endpoint-name-header) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				border-bottom: none;
 			}
 
 			.ant-table-cell:has(.endpoint-name-value) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: rgba(255, 255, 255, 0.04);
+				background-color: var(--l2-background);
 				cursor: pointer;
+			}
+
+			.ant-table-tbody > tr:hover > td:has(.endpoint-name-value) {
+				background-color: var(--l2-background);
 			}
 
 			.ant-table-cell:first-child {
@@ -341,7 +343,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -351,10 +355,6 @@
 
 			.table-row-light {
 				background: none;
-			}
-
-			.table-row-dark {
-				background: var(--bg-ink-300);
 			}
 
 			.endpoint-name-value {
@@ -427,24 +427,24 @@
 		.endpoint-meta-data-pill {
 			display: flex;
 			border-radius: 4px;
-			border: 1px solid var(--bg-slate-300);
+			border: 1px solid var(--l1-border);
 			overflow: hidden;
 			box-sizing: content-box;
 			.endpoint-meta-data-label {
 				padding: 6px 8px;
-				border-right: 1px solid var(--bg-slate-300);
-				color: var(--text-vanilla-100);
+				border-right: 1px solid var(--l1-border);
+				color: var(--l1-foreground);
 				font-size: 14px;
 				line-height: 18px; /* 128.571% */
 				letter-spacing: -0.07px;
 				padding: 6px 8px;
-				background: var(--bg-slate-500);
+				background: var(--l1-border);
 			}
 
 			.endpoint-meta-data-value {
 				padding: 6px 8px;
-				color: var(--text-vanilla-400);
-				background: var(--bg-slate-400);
+				color: var(--l2-foreground);
+				background: var(--l1-border);
 				font-size: 14px;
 				line-height: 18px;
 				letter-spacing: -0.07px;
@@ -456,7 +456,7 @@
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 		height: 36px;
 		box-sizing: content-box;
 		.ant-select-selector {
@@ -465,7 +465,7 @@
 
 		.endpoint-details-filters-container-dropdown {
 			width: 120px;
-			border-right: 1px solid var(--bg-slate-500);
+			border-right: 1px solid var(--l1-border);
 			height: 36px;
 			display: flex;
 			align-items: center;
@@ -488,7 +488,7 @@
 
 	.status-code-table-container {
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
@@ -497,7 +497,7 @@
 				line-height: 18px;
 				border-bottom: none;
 
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -514,25 +514,31 @@
 			}
 
 			.ant-table-thead > tr > th:has(.status-code-header) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-cell {
 				padding: 12px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				border-bottom: none;
 			}
 
 			.ant-table-cell:has(.status-code-value) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: rgba(255, 255, 255, 0.04);
+				background: color-mix(in srgb, var(--l1-background) 4%, transparent);
+			}
+
+			.ant-table-tbody > tr:hover > td:has(.status-code-value) {
+				background: color-mix(
+					in srgb,
+					var(--l1-foreground) 4%,
+					color-mix(in srgb, var(--l3-background) 60%, transparent)
+				);
 			}
 
 			.ant-table-cell:first-child {
@@ -561,7 +567,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -574,7 +582,7 @@
 			}
 
 			.table-row-dark {
-				background: var(--bg-ink-300);
+				background: var(--l2-background);
 			}
 
 			.endpoint-name-value {
@@ -622,7 +630,7 @@
 	padding: 16px 0px 16px 0px;
 
 	border-radius: 6px;
-	border: 1px dashed var(--bg-slate-500);
+	border: 1px dashed var(--l1-border);
 	font-family: 'Inter';
 
 	.error-state-content-wrapper {
@@ -645,7 +653,7 @@
 		.refresh-cta {
 			display: inline-flex;
 			border-radius: 2px;
-			background: var(--bg-slate-400);
+			background: var(--l1-border);
 			border: none;
 			align-items: center;
 			width: fit-content;
@@ -658,7 +666,7 @@
 	height: 370px;
 	padding: 10px;
 
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 
 	.header {
 		display: flex;
@@ -675,7 +683,7 @@
 		padding: 0;
 		height: 100%;
 
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -696,7 +704,7 @@
 	}
 
 	.views-tabs {
-		color: var(--text-vanilla-400);
+		color: var(--l2-foreground);
 
 		.ant-btn {
 			box-shadow: none;
@@ -704,7 +712,7 @@
 		}
 
 		.tab {
-			border: 1px solid var(--bg-slate-400);
+			border: 1px solid var(--l1-border);
 			width: 114px;
 			z-index: 1;
 		}
@@ -714,18 +722,18 @@
 		}
 
 		.tab::before {
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 
 		.selected_view {
-			background: var(--bg-slate-400);
-			color: var(--text-vanilla-100);
-			border: 1px solid var(--bg-slate-400);
+			background: var(--l1-border);
+			color: var(--l1-foreground);
+			border: 1px solid var(--l1-border);
 			z-index: 2;
 		}
 
 		.selected_view::before {
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 	}
 }
@@ -736,14 +744,14 @@
 	font-family: 'Geist Mono' !important;
 
 	border-radius: 3px;
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--l1-border);
 
 	.title-wrapper {
 		display: inline-flex;
 		padding: 1px 2px;
 		align-items: center;
 		border-radius: 2px;
-		background: rgba(113, 144, 249, 0.08);
+		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
 
 		color: var(--bg-robin-400);
 		font-family: Inter;
@@ -755,7 +763,8 @@
 	}
 	.dependent-services-container {
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--l1-border);
+
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
@@ -764,7 +773,7 @@
 				line-height: 18px;
 				border-bottom: none;
 
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -781,33 +790,34 @@
 			}
 
 			.ant-table-thead > tr > th:has(.status-code-header) {
-				background: var(--bg-ink-300);
-				opacity: 0.6;
+				background: color-mix(in srgb, var(--l3-background) 60%, transparent);
 			}
 
 			.ant-table-cell {
-				padding: 12px;
+				padding: 0px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				border-bottom: none;
-				background: var(--bg-ink-400);
+				background: var(--l2-background);
 			}
 
 			.ant-table-cell:has(.col-title) {
-				background: rgba(171, 189, 255, 0.04);
+				background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 			}
 
 			.ant-table-cell:has(.top-services-item-latency) {
 				text-align: center;
+				opacity: 0.8;
 			}
 
 			.ant-table-cell:has(.top-services-item-latency-title) {
 				text-align: center;
+				opacity: 0.8;
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: rgba(255, 255, 255, 0.04);
+				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
 			}
 
 			.ant-table-cell:first-child {
@@ -829,7 +839,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -838,7 +850,7 @@
 			}
 
 			.table-row-dark {
-				background: var(--bg-ink-300);
+				background: var(--l2-background);
 			}
 
 			.ant-table-content {
@@ -877,7 +889,7 @@
 				gap: 12px;
 				height: 34px;
 				width: 100%;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				padding: 0 12px;
 				margin-right: 12px;
 				align-items: center;
@@ -888,15 +900,14 @@
 				}
 
 				.top-services-item-count {
-					background-color: var(--bg-slate-300);
+					background-color: var(--l3-background);
 					border-radius: 50px;
 					padding: 2px 6px;
-					color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
 					z-index: 2;
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--bg-slate-400);
 					border-radius: 2px;
 					height: 100%;
 					position: absolute;
@@ -907,15 +918,15 @@
 		}
 
 		.top-services-item-percentage {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			z-index: 2;
 		}
 
 		.top-services-load-more {
-			border-top: 1px solid var(--bg-slate-500);
+			border-top: 1px solid var(--l1-border);
 			padding: 10px;
 
-			color: var(--text-vanilla-400);
+			color: var(--l2-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -992,11 +1003,11 @@
 			letter-spacing: -0.07px;
 
 			.title {
-				color: var(--text-vanilla-100);
+				color: var(--l1-foreground);
 			}
 
 			.description {
-				color: var(--text-vanilla-400);
+				color: var(--l2-foreground);
 			}
 		}
 
@@ -1010,283 +1021,5 @@
 		flex: auto;
 		white-space: normal;
 		overflow-wrap: break-word;
-	}
-}
-
-.lightMode {
-	.ant-drawer-header {
-		background: var(--bg-vanilla-100);
-	}
-
-	.domain-navigate-cta {
-		border: 1px solid var(--bg-vanilla-400);
-		background: var(--bg-vanilla-100);
-		color: var(--text-ink-300);
-	}
-
-	.domain-detail-drawer {
-		.endpoint-details-card,
-		.status-code-table-container,
-		.endpoint-details-filters-container,
-		.endpoint-details-filters-container-dropdown,
-		.ant-radio-button-wrapper,
-		.views-tabs-container,
-		.ant-btn-default.tab,
-		.tab::before,
-		.endpoint-meta-data-pill,
-		.endpoint-meta-data-label,
-		.endpoints-table-container,
-		.group-by-label,
-		.ant-select-selector,
-		.ant-drawer-header {
-			border-color: var(--bg-vanilla-300) !important;
-		}
-		.views-tabs .tab::before {
-			background: var(--bg-vanilla-300);
-		}
-		.title {
-			color: var(--text-ink-300);
-		}
-
-		.domain-detail-drawer__endpoint {
-			.ant-typography {
-				color: var(--text-ink-300);
-				background: transparent;
-			}
-		}
-
-		.radio-button {
-			border: 1px solid var(--bg-vanilla-400);
-			background: var(--bg-vanilla-100);
-			color: var(--text-ink-300);
-		}
-
-		.views-tabs {
-			.tab {
-				background: var(--bg-vanilla-100);
-			}
-
-			.selected_view {
-				background: var(--bg-vanilla-300);
-				color: var(--text-ink-400);
-			}
-
-			.selected_view::before {
-				background: var(--bg-vanilla-300);
-				border-left: 1px solid var(--bg-slate-300);
-			}
-		}
-	}
-
-	.round-metric-tag {
-		color: var(--bg-vanilla-100);
-	}
-
-	.group-by-container {
-		.group-by-label {
-			background: var(--bg-vanilla-100);
-			color: var(--text-ink-300);
-		}
-
-		.group-by-select {
-			width: 100%;
-			.ant-select-selector {
-				background: var(--bg-vanilla-100);
-			}
-		}
-	}
-
-	.endpoints-table-container {
-		.ant-table {
-			.ant-table-thead > tr > th {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-thead > tr > th:has(.endpoint-name-header) {
-				background: var(--bg-vanilla-100);
-			}
-
-			.ant-table-cell {
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-500);
-			}
-
-			.ant-table-cell:has(.endpoint-name-value) {
-				background: var(--bg-vanilla-100);
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
-
-			.table-row-light {
-				background: none;
-				color: var(--bg-ink-500);
-			}
-
-			.table-row-dark {
-				background: none;
-				color: var(--bg-ink-500);
-			}
-
-			.round-metric-tag {
-				color: var(--bg-vanilla-100);
-			}
-		}
-	}
-
-	.endpoint-meta-data {
-		.endpoint-meta-data-pill {
-			.endpoint-meta-data-label {
-				color: var(--text-ink-300);
-				background: var(--bg-vanilla-100);
-			}
-
-			.endpoint-meta-data-value {
-				color: var(--text-ink-300);
-				background: var(--bg-vanilla-100);
-			}
-		}
-	}
-
-	.status-code-table-container {
-		.ant-table {
-			.ant-table-thead > tr > th {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-cell {
-				background: var(--bg-vanilla-100);
-				color: var(--bg-ink-500);
-			}
-
-			.ant-table-thead > tr > th:has(.status-code-header) {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-cell {
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-cell:has(.status-code-value) {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
-
-			.table-row-light {
-				background: none;
-				color: var(--bg-ink-500);
-			}
-
-			.table-row-dark {
-				background: none;
-				color: var(--bg-ink-500);
-			}
-
-			.round-metric-tag {
-				color: var(--bg-vanilla-100);
-			}
-		}
-	}
-
-	.top-services-content {
-		border-color: var(--bg-vanilla-300);
-	}
-	.dependent-services-container {
-		border: none;
-		padding: 10px 12px;
-		.top-services-item {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			.top-services-item-progress {
-				display: flex;
-				gap: 12px;
-				height: 34px;
-				width: 100%;
-				color: var(--bg-vanilla-100);
-				padding: 0 12px;
-				margin-right: 12px;
-				align-items: center;
-				position: relative;
-
-				.top-services-item-key {
-					color: var(--text-ink-300);
-				}
-
-				.top-services-item-count {
-					background-color: var(--bg-slate-300);
-					color: var(--bg-vanilla-400);
-				}
-
-				.top-services-item-progress-bar {
-					background-color: var(--bg-vanilla-200);
-					border: 1px solid var(--bg-vanilla-300);
-				}
-			}
-		}
-		.ant-table {
-			.ant-table-thead > tr > th {
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-cell {
-				&,
-				&:has(.top-services-item-latency) {
-					background: var(--bg-vanilla-100);
-				}
-				color: var(--text-ink-300);
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: var(--bg-vanilla-200);
-			}
-			.table-row-dark {
-				background: var(--bg-vanilla-300);
-			}
-		}
-
-		.top-services-item-percentage {
-			color: var(--text-ink-300);
-		}
-
-		.top-services-load-more {
-			color: var(--text-ink-300);
-		}
-	}
-
-	.error-state-container {
-		.error-state-content-wrapper {
-			.refresh-cta {
-				background: var(--bg-vanilla-100);
-				color: var(--text-ink-300);
-				border: 1px solid var(--bg-slate-300);
-			}
-		}
-	}
-
-	.end-point-details-zero-state-wrapper {
-		.end-point-details-zero-state-content-wrapper {
-			.end-point-details-zero-state-text-content {
-				.title {
-					color: var(--text-ink-300);
-				}
-
-				.description {
-					color: var(--text-ink-100);
-				}
-			}
-		}
-	}
-	// Add border-bottom to table cells when pagination is not present
-	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
-		border-bottom: 1px solid var(--bg-vanilla-300) !important;
 	}
 }

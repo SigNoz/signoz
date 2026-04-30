@@ -66,6 +66,7 @@ export default function FormattingUnitsSection({
 						options={decimapPrecisionOptions}
 						value={decimalPrecision}
 						className="panel-type-select"
+						data-testid="decimal-precision-selector"
 						defaultValue={decimapPrecisionOptions[0]?.value}
 						onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
 					/>
@@ -77,6 +78,7 @@ export default function FormattingUnitsSection({
 					columnUnits={columnUnits}
 					setColumnUnits={setColumnUnits}
 					isNewDashboard={isNewDashboard}
+					data-testid="column-unit-selector"
 				/>
 			)}
 		</SettingsSection>

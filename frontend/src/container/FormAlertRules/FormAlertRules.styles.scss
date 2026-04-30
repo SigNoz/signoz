@@ -1,21 +1,21 @@
 .create-alert-modal {
 	.ant-modal-content {
-		background-color: var(--bg-ink-300);
+		background-color: var(--l3-background);
 		.ant-modal-confirm-title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 		}
 
 		.ant-modal-confirm-content {
 			.ant-typography {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 
 		.ant-modal-confirm-btns {
 			button:nth-of-type(1) {
-				background-color: var(--bg-slate-400);
+				background-color: var(--l1-border);
 				border: none;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 			}
 		}
 	}
@@ -116,41 +116,6 @@
 
 	.facing-issue-btn {
 		width: 100% !important;
-	}
-}
-
-.lightMode {
-	.main-container {
-		.plot-tag {
-			background: var(--bg-vanilla-300);
-		}
-	}
-	.ant-modal-content {
-		background-color: var(--bg-vanilla-100);
-		.ant-modal-confirm-title {
-			color: var(--bg-ink-500);
-		}
-
-		.ant-modal-confirm-content {
-			.ant-typography {
-				color: var(--bg-ink-500);
-			}
-		}
-
-		.ant-modal-confirm-btns {
-			button:nth-of-type(1) {
-				background-color: var(--bg-vanilla-300);
-				border: none;
-				color: var(--bg-ink-500);
-			}
-		}
-	}
-
-	.info-help-btns {
-		.doc-redirection-btn {
-			color: var(--bg-aqua-600) !important;
-			border-color: var(--bg-aqua-600) !important;
-		}
 	}
 }
 

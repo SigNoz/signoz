@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Table, TableColumnsType } from 'antd';
-import { VIEWS } from 'components/HostMetricsDetail/constants';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { EventContents } from 'container/InfraMonitoringK8s/commonUtils';
-import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
+import { VIEWS } from 'container/InfraMonitoringK8s/constants';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import LoadingContainer from 'container/InfraMonitoringK8s/LoadingContainer';
 import { INITIAL_PAGE_SIZE } from 'container/LogsContextList/configs';
 import LogsError from 'container/LogsError/LogsError';
@@ -67,7 +67,7 @@ interface IEntityEventsProps {
 		dateTimeRange?: [number, number],
 	) => void;
 	selectedInterval: Time;
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 	queryKey: string;
 }
 
@@ -141,7 +141,12 @@ export default function Events({
 		return basePayload;
 	}, [timeRange.startTime, timeRange.endTime, filters, page]);
 
-	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
+	const {
+		data: eventsData,
+		isLoading,
+		isFetching,
+		isError,
+	} = useQuery({
 		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters, page],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
@@ -228,10 +233,7 @@ export default function Events({
 				className="periscope-btn-icon"
 				size={14}
 				onClick={(e): void =>
-					onExpand(
-						record,
-						(e as unknown) as React.MouseEvent<HTMLElement, MouseEvent>,
-					)
+					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
 				}
 			/>
 		) : (
@@ -240,10 +242,7 @@ export default function Events({
 				size={14}
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				onClick={(e): void =>
-					onExpand(
-						record,
-						(e as unknown) as React.MouseEvent<HTMLElement, MouseEvent>,
-					)
+					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
 				}
 			/>
 		);

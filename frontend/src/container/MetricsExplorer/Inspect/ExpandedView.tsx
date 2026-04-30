@@ -34,10 +34,8 @@ function ExpandedView({
 	metricInspectionAppliedOptions,
 	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
-	const [
-		selectedTimeSeries,
-		setSelectedTimeSeries,
-	] = useState<InspectMetricsSeries | null>(null);
+	const [selectedTimeSeries, setSelectedTimeSeries] =
+		useState<InspectMetricsSeries | null>(null);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
@@ -237,15 +235,15 @@ function ExpandedView({
 											selectedTimeSeries?.values.find(
 												(value) => value?.timestamp >= (options?.timestamp || 0),
 											)?.value ?? options?.value
-									  } is the ${
+										} is the ${
 											TIME_AGGREGATION_OPTIONS[
 												metricInspectionAppliedOptions.timeAggregationOption ??
 													TimeAggregationOptions.SUM
 											]
-									  } of`
-									: selectedTimeSeries?.values.find(
+										} of`
+									: (selectedTimeSeries?.values.find(
 											(value) => value?.timestamp >= (options?.timestamp || 0),
-									  )?.value ?? options?.value}
+										)?.value ?? options?.value)}
 							</Typography.Text>
 						</div>
 

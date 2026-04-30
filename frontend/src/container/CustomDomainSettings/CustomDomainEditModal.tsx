@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { DialogWrapper } from '@signozhq/dialog';
 import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Button, DialogWrapper, Input } from '@signozhq/ui';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -84,8 +82,8 @@ export default function CustomDomainEditModal({
 	const errorMessage =
 		validationError ??
 		(is409
-			? apiErrorMessage ??
-			  "You've already updated the custom domain once today. Please contact support."
+			? (apiErrorMessage ??
+				"You've already updated the custom domain once today. Please contact support.")
 			: apiErrorMessage);
 
 	const hasError = Boolean(errorMessage);

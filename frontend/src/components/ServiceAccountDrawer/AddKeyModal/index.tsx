@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper } from '@signozhq/dialog';
-import { toast } from '@signozhq/sonner';
+import { DialogWrapper, toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -17,6 +16,8 @@ import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 import KeyCreatedPhase from './KeyCreatedPhase';
 import KeyFormPhase from './KeyFormPhase';
@@ -27,6 +28,7 @@ import './AddKeyModal.styles.scss';
 
 function AddKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useQueryState(
 		SA_QUERY_PARAMS.ADD_KEY,
@@ -35,10 +37,8 @@ function AddKeyModal(): JSX.Element {
 	const open = isAddKeyOpen && !!accountId;
 
 	const [phase, setPhase] = useState<Phase>(Phase.FORM);
-	const [
-		createdKey,
-		setCreatedKey,
-	] = useState<ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO | null>(null);
+	const [createdKey, setCreatedKey] =
+		useState<ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO | null>(null);
 	const [hasCopied, setHasCopied] = useState(false);
 
 	const {
@@ -65,30 +65,28 @@ function AddKeyModal(): JSX.Element {
 		}
 	}, [open, reset]);
 
-	const {
-		mutate: createKey,
-		isLoading: isSubmitting,
-	} = useCreateServiceAccountKey({
-		mutation: {
-			onSuccess: async (response) => {
-				const keyData = response?.data;
-				if (keyData) {
-					setCreatedKey(keyData);
-					setPhase(Phase.CREATED);
-					if (accountId) {
-						await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+	const { mutate: createKey, isLoading: isSubmitting } =
+		useCreateServiceAccountKey({
+			mutation: {
+				onSuccess: async (response) => {
+					const keyData = response?.data;
+					if (keyData) {
+						setCreatedKey(keyData);
+						setPhase(Phase.CREATED);
+						if (accountId) {
+							await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+						}
 					}
-				}
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				const errMessage =
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to create key';
-				toast.error(errMessage, { richColors: true });
-			},
-		},
-	});
+		});
 
 	function handleCreate({
 		keyName,
@@ -115,12 +113,12 @@ function AddKeyModal(): JSX.Element {
 		copyToClipboard(createdKey.key);
 		setHasCopied(true);
 		setTimeout(() => setHasCopied(false), 2000);
-		toast.success('Key copied to clipboard', { richColors: true });
+		toast.success('Key copied to clipboard');
 	}, [copyToClipboard, createdKey?.key]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy key', { richColors: true });
+			toast.error('Failed to copy key');
 		}
 	}, [copyState.error]);
 
@@ -151,7 +149,7 @@ function AddKeyModal(): JSX.Element {
 			width="base"
 			className="add-key-modal"
 			showCloseButton
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			{phase === Phase.FORM && (
 				<KeyFormPhase

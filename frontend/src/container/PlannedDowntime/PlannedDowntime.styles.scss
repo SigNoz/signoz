@@ -2,15 +2,15 @@
 	.ant-modal-content {
 		padding: 16px;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
-			background-color: var(--bg-ink-400);
+			background-color: var(--l2-background);
 			.ant-typography {
 				margin: 0;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -22,7 +22,7 @@
 		.ant-modal-body {
 			.ant-divider {
 				margin: 16px 0;
-				border: 0.5px solid var(--bg-slate-500);
+				border: 0.5px solid var(--l1-border);
 			}
 		}
 	}
@@ -42,8 +42,8 @@
 	input {
 		width: 100%;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
+		border: 1px solid var(--l1-border);
+		background: var(--l3-background);
 	}
 
 	.alert-rule-tags {
@@ -61,8 +61,8 @@
 	.ant-select {
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
+			border: 1px solid var(--l1-border);
+			background: var(--l3-background);
 		}
 	}
 
@@ -74,7 +74,7 @@
 		.alert-rule-info {
 			font-size: 11px;
 			font-weight: 300;
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 		}
 	}
 
@@ -87,7 +87,7 @@
 		margin-bottom: 20px;
 		font-size: 12px;
 		font-weight: 400;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 	}
 }
 
@@ -95,47 +95,53 @@
 	.ant-tag {
 		display: flex;
 		align-items: center;
-		border: 1px solid rgba(113, 144, 249, 0.2);
-		background: rgba(113, 144, 249, 0.1);
+		border: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		padding-right: 0px;
 		border-right: 0;
-		color: var(--Robin-400, #7190f9);
+		color: var(--bg-robin-400);
 
 		.ant-tag-close-icon {
 			height: 28px;
 			width: 20px !important;
 			justify-content: center;
-			border-left: 1px solid rgba(113, 144, 249, 0.2);
+			border-left: 1px solid
+				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 			border-radius: 0px 2px 2px 0px;
-			background: rgba(113, 144, 249, 0.3);
-			border-right: 1px solid rgba(113, 144, 249, 0.2);
+			background: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
+			border-right: 1px solid
+				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 			margin-right: 0px;
 
 			svg {
-				fill: var(--bg-robin-500);
+				fill: var(--primary-background);
 			}
 		}
 	}
 	.non-closable-tag {
 		padding-right: 7px;
-		border-right: 1px solid rgba(113, 144, 249, 0.2);
+		border-right: 1px solid
+			color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 	}
 
 	.red-tag.non-closable-tag {
-		border-right: 1px solid rgba(242, 71, 105, 0.2) !important;
+		border-right: 1px solid
+			color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
 	}
 
 	.red-tag {
-		border: 1px solid rgba(242, 71, 105, 0.2);
-		background: rgba(242, 71, 105, 0.1);
+		border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+		background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
 		border-right: 0;
-		color: var(--Sakura-400, #f56c87);
+		color: var(--bg-sakura-400);
 
 		.ant-tag-close-icon {
-			background: rgba(242, 71, 105, 0.3);
-			border-left: 1px solid rgba(242, 71, 105, 0.2);
-			border-right: 1px solid rgba(242, 71, 105, 0.2);
+			background: color-mix(in srgb, var(--bg-sakura-500) 30%, transparent);
+			border-left: 1px solid
+				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+			border-right: 1px solid
+				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
 
 			svg {
 				fill: var(--bg-sakura-500);
@@ -146,7 +152,7 @@
 
 .datePicker {
 	.ant-picker-panel-container {
-		background: #262930 !important;
+		background: var(--l3-background) !important;
 	}
 }
 
@@ -160,7 +166,7 @@
 		max-width: 736px;
 
 		.title {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: var(--font-size-lg);
 			font-style: normal;
 			font-weight: var(--font-weight-normal);
@@ -193,8 +199,8 @@
 		}
 
 		.schedule-created-at {
-			border: 1px solid var(--bg-slate-500);
-			background-color: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background-color: var(--l2-background);
 			border-top: 0px;
 			width: 100%;
 			padding: 8px 16px;
@@ -206,10 +212,14 @@
 			display: flex;
 			align-items: center;
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'cpsp' on,
+					'case' on;
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -229,10 +239,14 @@
 			gap: 8px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums stacked-fractions
 					slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'cpsp' on,
+					'case' on;
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -282,8 +296,8 @@
 		gap: 16px;
 
 		.collapse-list {
-			border: 1px solid var(--bg-slate-500);
-			background-color: var(--bg-ink-400);
+			border: 1px solid var(--l1-border);
+			background-color: var(--l2-background);
 			border-top-left-radius: 6px;
 			border-top-right-radius: 6px;
 
@@ -316,7 +330,7 @@
 
 				.render-item-value {
 					.ant-typography {
-						color: var(--bg-vanilla-100);
+						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 14px;
 						font-style: normal;
@@ -327,7 +341,7 @@
 			}
 
 			.ant-typography {
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
@@ -345,20 +359,20 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 		}
 
 		.ant-modal-body {
 			padding: 0px 16px 28px 16px;
 
 			.ant-typography {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -375,8 +389,8 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--bg-slate-400);
-				background: var(--bg-ink-300);
+				border: 1px solid var(--l1-border);
+				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
 
@@ -406,7 +420,7 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-slate-500);
+				background: var(--l1-border);
 			}
 
 			.delete-btn {
@@ -414,18 +428,18 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
+				background: var(--danger-background);
 				margin-left: 12px;
 			}
 
 			.delete-btn:hover {
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				background: var(--bg-cherry-600);
 			}
 		}
 	}
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--l1-foreground);
 		font-size: var(--font-size-sm);
 		font-style: normal;
 		font-weight: var(--font-weight-medium);
@@ -436,131 +450,5 @@
 .duration-input {
 	.ant-select {
 		width: 100px;
-	}
-}
-
-.lightMode {
-	.datePicker {
-		.ant-picker-panel-container {
-			background: #ffffff !important;
-		}
-	}
-
-	.planned-downtime-container {
-		.planned-downtime-content {
-			.title {
-				color: var(--bg-ink-500);
-			}
-
-			.schedule-created-at {
-				border: 1px solid var(--bg-vanilla-300);
-				background-color: var(--bg-vanilla-100);
-				.ant-typography {
-					color: var(--bg-slate-100);
-				}
-				border-top: 0px !important;
-			}
-		}
-	}
-
-	.planned-downtime-table {
-		.ant-table-tbody {
-			.collapse-list {
-				border: 1px solid var(--bg-vanilla-300);
-				background-color: var(--bg-vanilla-100);
-
-				.ant-collapse-content-box {
-					.ant-typography {
-						color: var(--bg-slate-100);
-					}
-				}
-
-				.ant-typography {
-					color: var(--bg-slate-400);
-				}
-			}
-		}
-	}
-
-	.delete-schedule-modal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-200);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-
-				.title {
-					color: var(--bg-ink-500);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--bg-ink-500);
-				}
-
-				.save-view-input {
-					.ant-input {
-						background: var(--bg-vanilla-200);
-						color: var(--bg-ink-500);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
-				}
-			}
-		}
-	}
-
-	.createDowntimeModal {
-		.ant-modal-content {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-
-			.ant-modal-header {
-				background-color: var(--bg-vanilla-100);
-				.ant-typography {
-					color: var(--bg-slate-100);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-divider {
-					border: 0.5px solid var(--bg-vanilla-300);
-				}
-			}
-		}
-	}
-
-	.createForm {
-		.ant-picker,
-		input {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-100);
-		}
-
-		.ant-picker .ant-picker-input input {
-			border: 0px !important;
-		}
-
-		.ant-select {
-			.ant-select-selector {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-100);
-			}
-		}
-
-		.scheduleTimeInfoText {
-			color: var(--bg-slate-300);
-		}
-
-		.alert-rule-info {
-			color: var(--bg-slate-300);
-		}
 	}
 }

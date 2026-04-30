@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Badge } from '@signozhq/badge';
+import { Badge } from '@signozhq/ui';
 import { Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -210,7 +210,7 @@ function MembersTable({
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
 				onRow={(record): React.HTMLAttributes<HTMLElement> => {
-					const isClickable = onRowClick && record.status !== MemberStatus.Deleted;
+					const isClickable = !!onRowClick;
 					return {
 						onClick: (): void => {
 							if (isClickable) {

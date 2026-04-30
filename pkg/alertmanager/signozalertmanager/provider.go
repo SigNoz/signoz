@@ -169,6 +169,21 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
+	// Check if channel is referenced by any route policy (rule-based or policy-based)
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.Name)
+	if err != nil {
+		return err
+	}
+	if len(policies) > 0 {
+		names := make([]string, 0, len(policies))
+		for _, p := range policies {
+			names = append(names, p.Name)
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channel %q cannot be deleted because it is used by the following routing policies: %v",
+			channel.Name, names)
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -294,8 +309,8 @@ func (provider *provider) CreateRoutePolicy(ctx context.Context, routeRequest *a
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *routeRequest,
 		ID:                  route.ID.StringValue(),
-		CreatedAt:           &route.CreatedAt,
-		UpdatedAt:           &route.UpdatedAt,
+		CreatedAt:           route.CreatedAt,
+		UpdatedAt:           route.UpdatedAt,
 		CreatedBy:           &route.CreatedBy,
 		UpdatedBy:           &route.UpdatedBy,
 	}, nil
@@ -350,8 +365,8 @@ func (provider *provider) CreateRoutePolicies(ctx context.Context, routeRequests
 		results = append(results, &alertmanagertypes.GettableRoutePolicy{
 			PostableRoutePolicy: *routeRequest,
 			ID:                  route.ID.StringValue(),
-			CreatedAt:           &route.CreatedAt,
-			UpdatedAt:           &route.UpdatedAt,
+			CreatedAt:           route.CreatedAt,
+			UpdatedAt:           route.UpdatedAt,
 			CreatedBy:           &route.CreatedBy,
 			UpdatedBy:           &route.UpdatedBy,
 		})
@@ -390,8 +405,8 @@ func (provider *provider) GetRoutePolicyByID(ctx context.Context, routeID string
 			Tags:           route.Tags,
 		},
 		ID:        route.ID.StringValue(),
-		CreatedAt: &route.CreatedAt,
-		UpdatedAt: &route.UpdatedAt,
+		CreatedAt: route.CreatedAt,
+		UpdatedAt: route.UpdatedAt,
 		CreatedBy: &route.CreatedBy,
 		UpdatedBy: &route.UpdatedBy,
 	}, nil
@@ -424,8 +439,8 @@ func (provider *provider) GetAllRoutePolicies(ctx context.Context) ([]*alertmana
 				Tags:           route.Tags,
 			},
 			ID:        route.ID.StringValue(),
-			CreatedAt: &route.CreatedAt,
-			UpdatedAt: &route.UpdatedAt,
+			CreatedAt: route.CreatedAt,
+			UpdatedAt: route.UpdatedAt,
 			CreatedBy: &route.CreatedBy,
 			UpdatedBy: &route.UpdatedBy,
 		})
@@ -493,8 +508,8 @@ func (provider *provider) UpdateRoutePolicyByID(ctx context.Context, routeID str
 	return &alertmanagertypes.GettableRoutePolicy{
 		PostableRoutePolicy: *route,
 		ID:                  updatedRoute.ID.StringValue(),
-		CreatedAt:           &updatedRoute.CreatedAt,
-		UpdatedAt:           &updatedRoute.UpdatedAt,
+		CreatedAt:           updatedRoute.CreatedAt,
+		UpdatedAt:           updatedRoute.UpdatedAt,
 		CreatedBy:           &updatedRoute.CreatedBy,
 		UpdatedBy:           &updatedRoute.UpdatedBy,
 	}, nil

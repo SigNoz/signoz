@@ -34,6 +34,45 @@ func (store *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, p
 	return account, nil
 }
 
+func (store *store) GetConnectedAccount(ctx context.Context, orgID, id valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+	account := new(cloudintegrationtypes.StorableCloudIntegration)
+	err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(account).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("account_id IS NOT NULL").
+		Where("last_agent_report IS NOT NULL").
+		Where("removed_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return nil, store.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "connected cloud integration account with id %s not found", id)
+	}
+	return account, nil
+}
+
+func (store *store) GetConnectedAccountByProviderAccountID(ctx context.Context, orgID valuer.UUID, providerAccountID string, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+	account := new(cloudintegrationtypes.StorableCloudIntegration)
+	err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(account).
+		Where("account_id = ?", providerAccountID).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("last_agent_report IS NOT NULL").
+		Where("removed_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return nil, store.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "connected cloud integration account with provider account id %s not found", providerAccountID)
+	}
+	return account, nil
+}
+
 func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
 	var accounts []*cloudintegrationtypes.StorableCloudIntegration
 	err := store.
@@ -52,6 +91,26 @@ func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 	return accounts, nil
+}
+
+func (store *store) CountConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (int, error) {
+	storable := new(cloudintegrationtypes.StorableCloudIntegration)
+	count, err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("removed_at IS NULL").
+		Where("account_id IS NOT NULL").
+		Where("last_agent_report IS NOT NULL").
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (store *store) CreateAccount(ctx context.Context, account *cloudintegrationtypes.StorableCloudIntegration) error {
@@ -94,25 +153,6 @@ func (store *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, pr
 		Where("provider = ?", provider).
 		Exec(ctx)
 	return err
-}
-
-func (store *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, providerAccountID string) (*cloudintegrationtypes.StorableCloudIntegration, error) {
-	account := new(cloudintegrationtypes.StorableCloudIntegration)
-	err := store.
-		store.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(account).
-		Where("org_id = ?", orgID).
-		Where("provider = ?", provider).
-		Where("account_id = ?", providerAccountID).
-		Where("last_agent_report IS NOT NULL").
-		Where("removed_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		return nil, store.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "connected account with provider account id %s not found", providerAccountID)
-	}
-	return account, nil
 }
 
 func (store *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {
@@ -171,4 +211,10 @@ func (store *store) UpdateService(ctx context.Context, service *cloudintegration
 		Where("type = ?", service.Type).
 		Exec(ctx)
 	return err
+}
+
+func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return store.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		return cb(ctx)
+	})
 }

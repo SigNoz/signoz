@@ -12,7 +12,8 @@ jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 }));
 
 const mockToastCustom = jest.fn();
-jest.mock('@signozhq/sonner', () => ({
+jest.mock('@signozhq/ui', () => ({
+	...jest.requireActual('@signozhq/ui'),
 	toast: {
 		custom: (...args: unknown[]): unknown => mockToastCustom(...args),
 		dismiss: jest.fn(),
@@ -112,7 +113,7 @@ describe('CustomDomainSettings', () => {
 		await user.click(screen.getByRole('button', { name: /apply changes/i }));
 
 		await waitFor(() => {
-			expect(capturedBody).toEqual({ name: 'myteam' });
+			expect(capturedBody).toStrictEqual({ name: 'myteam' });
 		});
 	});
 
@@ -142,9 +143,9 @@ describe('CustomDomainSettings', () => {
 		await user.type(input, 'myteam');
 		await user.click(screen.getByRole('button', { name: /apply changes/i }));
 
-		expect(
-			await screen.findByRole('button', { name: /contact support/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('button', { name: /contact support/i }),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('shows validation error when subdomain is less than 3 characters', async () => {
@@ -254,7 +255,7 @@ describe('CustomDomainSettings', () => {
 				},
 			});
 
-			expect(await screen.findByText('My Org Name')).toBeInTheDocument();
+			await expect(screen.findByText('My Org Name')).resolves.toBeInTheDocument();
 		});
 
 		it('falls back to customDomainSubdomain when org displayName is missing', async () => {
@@ -268,7 +269,7 @@ describe('CustomDomainSettings', () => {
 				appContextOverrides: { org: [] },
 			});
 
-			expect(await screen.findByText('custom-host')).toBeInTheDocument();
+			await expect(screen.findByText('custom-host')).resolves.toBeInTheDocument();
 		});
 
 		it('falls back to activeHost.name when neither org name nor custom domain exists', async () => {
@@ -293,7 +294,9 @@ describe('CustomDomainSettings', () => {
 			});
 
 			// 'accepted-starfish' is the default host's name
-			expect(await screen.findByText('accepted-starfish')).toBeInTheDocument();
+			await expect(
+				screen.findByText('accepted-starfish'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('does not render the card name row if workspaceName is totally falsy', async () => {

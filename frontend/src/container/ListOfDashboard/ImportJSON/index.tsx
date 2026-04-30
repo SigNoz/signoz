@@ -39,9 +39,8 @@ function ImportJSON({
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
-	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
-		false,
-	);
+	const [isCreateDashboardError, setIsCreateDashboardError] =
+		useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 
@@ -120,7 +119,9 @@ function ImportJSON({
 	const getErrorNode = (error: string): JSX.Element => (
 		<Space>
 			<ExclamationCircleTwoTone twoToneColor={[red[7], '#1f1f1f']} />
-			<Typography style={{ color: '#D89614' }}>{error}</Typography>
+			<Typography style={{ color: 'var(--warning-background)' }}>
+				{error}
+			</Typography>
 		</Space>
 	);
 

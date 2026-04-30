@@ -41,15 +41,15 @@
 						font-size: 12px;
 					}
 
-					border-bottom: 1px solid var(--bg-slate-400) !important;
+					border-bottom: 1px solid var(--l1-border) !important;
 				}
 
-				border-bottom: 1px solid var(--bg-slate-400) !important;
-				background-color: var(--bg-ink-400) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
+				background-color: var(--l2-background) !important;
 
 				tr {
 					&:hover {
-						background-color: var(--bg-ink-400) !important;
+						background-color: var(--l2-background) !important;
 					}
 				}
 			}
@@ -67,10 +67,10 @@
 					}
 
 					&:hover {
-						background-color: var(--bg-slate-500) !important;
+						background-color: var(--l1-border) !important;
 					}
 
-					border-bottom: 1px solid var(--bg-slate-400) !important;
+					border-bottom: 1px solid var(--l1-border) !important;
 				}
 
 				tr:has(.active-log) {
@@ -80,7 +80,7 @@
 						248,
 						0.5
 					) !important; // same as bg-robin-500
-					color: var(--text-vanilla-100) !important;
+					color: var(--l1-foreground) !important;
 				}
 			}
 
@@ -108,11 +108,11 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--bg-slate-300);
+				background: var(--l3-background);
 			}
 
 			&::-webkit-scrollbar-thumb:hover {
-				background: var(--bg-slate-200);
+				background: var(--l3-background);
 			}
 		}
 
@@ -318,53 +318,6 @@
 							text-overflow: ellipsis;
 						}
 					}
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.logs-list-view-container {
-		.logs-list-table-view-container {
-			table {
-				thead {
-					tr {
-						th {
-							color: var(--text-ink-500) !important;
-						}
-
-						border-bottom: 1px solid var(--bg-vanilla-300) !important;
-					}
-
-					border-bottom: 1px solid var(--bg-vanilla-300) !important;
-					background-color: var(--bg-vanilla-100) !important;
-
-					tr {
-						&:hover {
-							background-color: var(--bg-vanilla-300) !important;
-						}
-					}
-				}
-
-				tbody {
-					tr {
-						&:hover {
-							background-color: var(--bg-vanilla-300) !important;
-						}
-
-						border-bottom: 1px solid var(--bg-vanilla-300) !important;
-					}
-				}
-			}
-
-			.sticky-header-table-container {
-				&::-webkit-scrollbar-thumb {
-					background: var(--bg-vanilla-300);
-				}
-
-				&::-webkit-scrollbar-thumb:hover {
-					background: var(--bg-vanilla-100);
 				}
 			}
 		}

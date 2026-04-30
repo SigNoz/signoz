@@ -17,12 +17,12 @@ import (
 )
 
 var (
-	ErrCodeServiceAccountInvalidConfig        = errors.MustNewCode("service_account_invalid_config")
-	ErrCodeServiceAccountInvalidInput         = errors.MustNewCode("service_account_invalid_input")
-	ErrCodeServiceAccountAlreadyExists        = errors.MustNewCode("service_account_already_exists")
-	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
-	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
-	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
+	ErrCodeServiceAccountInvalidConfig     = errors.MustNewCode("service_account_invalid_config")
+	ErrCodeServiceAccountInvalidInput      = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountAlreadyExists     = errors.MustNewCode("service_account_already_exists")
+	ErrCodeServiceAccountNotFound          = errors.MustNewCode("service_account_not_found")
+	ErrCodeServiceAccountRoleAlreadyExists = errors.MustNewCode("service_account_role_already_exists")
+	errInvalidServiceAccountName           = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must start with a lowercase letter (a-z), contain only lowercase letters, numbers (0-9), and hyphens (-), and be at most 50 characters long")
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 )
 
 var (
-	serviceAccountNameRegex = regexp.MustCompile("^[a-z-]{1,50}$")
+	serviceAccountNameRegex = regexp.MustCompile("^[a-z][a-z0-9-]{0,49}$")
 )
 
 type ServiceAccountStatus struct{ valuer.String }
@@ -119,7 +119,7 @@ func (serviceAccount *ServiceAccount) UpdateStatus(status ServiceAccountStatus) 
 
 func (serviceAccount *ServiceAccount) ErrIfDeleted() error {
 	if serviceAccount.Status == ServiceAccountStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeServiceAccountOperationUnsupported, "this operation is not supported for disabled service account")
+		return errors.Newf(errors.TypeNotFound, ErrCodeServiceAccountNotFound, "an active service account with id: %s does not exist", serviceAccount.ID)
 	}
 
 	return nil
@@ -214,7 +214,7 @@ func (serviceAccount *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := serviceAccountNameRegex.MatchString(temp.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must conform to the regex: %s", serviceAccountNameRegex.String())
+		return errInvalidServiceAccountName
 	}
 
 	*serviceAccount = PostableServiceAccount(temp)
@@ -237,12 +237,15 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccount, error)
 	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*ServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*ServiceAccount, error)
+	GetByIDAndStatus(context.Context, valuer.UUID, ServiceAccountStatus) (*ServiceAccount, error)
+	GetServiceAccountsByOrgIDAndRoleID(context.Context, valuer.UUID, valuer.UUID) ([]*ServiceAccount, error)
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 	List(context.Context, valuer.UUID) ([]*ServiceAccount, error)
 	Update(context.Context, valuer.UUID, *ServiceAccount) error
 
 	// Service Account Role
 	CreateServiceAccountRole(context.Context, *ServiceAccountRole) error
+	DeleteServiceAccountRoles(context.Context, valuer.UUID) error
 	DeleteServiceAccountRole(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Service Account Factor API Key

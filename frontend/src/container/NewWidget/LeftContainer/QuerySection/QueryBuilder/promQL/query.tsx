@@ -19,10 +19,8 @@ function PromQLQueryBuilder({
 	queryIndex,
 	deletable,
 }: IPromQLQueryBuilderProps): JSX.Element {
-	const {
-		handleSetQueryItemData,
-		removeQueryTypeItemByIndex,
-	} = useQueryBuilder();
+	const { handleSetQueryItemData, removeQueryTypeItemByIndex } =
+		useQueryBuilder();
 
 	const handleRemoveQuery = useCallback(() => {
 		removeQueryTypeItemByIndex(EQueryType.PROM, queryIndex);

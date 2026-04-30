@@ -1,3 +1,4 @@
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { ILog } from 'types/api/logs/log';
 
@@ -6,6 +7,7 @@ export interface BodyTitleRendererProps {
 	nodeKey: string;
 	value: unknown;
 	parentIsArray?: boolean;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 export type AnyObject = { [key: string]: any };

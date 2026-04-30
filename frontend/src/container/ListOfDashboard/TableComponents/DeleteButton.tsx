@@ -48,11 +48,16 @@ export function DeleteButton({
 			title: (
 				<Typography.Title level={5}>
 					Are you sure you want to delete the
-					<span style={{ color: '#e42b35', fontWeight: 500 }}> {name} </span>
+					<span style={{ color: 'var(--danger-background)', fontWeight: 500 }}>
+						{' '}
+						{name}{' '}
+					</span>
 					dashboard?
 				</Typography.Title>
 			),
-			icon: <ExclamationCircleOutlined style={{ color: '#e42b35' }} />,
+			icon: (
+				<ExclamationCircleOutlined style={{ color: 'var(--danger-background)' }} />
+			),
 			okText: 'Delete',
 			okButtonProps: {
 				danger: true,

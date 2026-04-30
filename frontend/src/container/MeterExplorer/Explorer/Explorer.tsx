@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { Button, Tooltip } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -7,6 +8,7 @@ import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ExplorerOptionWrapper from 'container/ExplorerOptions/ExplorerOptionWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
@@ -37,6 +39,20 @@ function Explorer(): JSX.Element {
 		currentQuery,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingQueries) {
+			setIsCancelled(false);
+		}
+	}, [isLoadingQueries]);
+
+	const handleCancelQuery = useCallback(() => {
+		queryClient.cancelQueries([REACT_QUERY_KEY.GET_QUERY_RANGE]);
+		setIsCancelled(true);
+	}, [queryClient]);
 
 	const [showQuickFilters, setShowQuickFilters] = useState(true);
 
@@ -155,7 +171,11 @@ function Explorer(): JSX.Element {
 
 							<div className="explore-header-right-actions">
 								<DateTimeSelector showAutoRefresh />
-								<RightToolbarActions onStageRunQuery={(): void => handleRunQuery()} />
+								<RightToolbarActions
+									onStageRunQuery={(): void => handleRunQuery()}
+									isLoadingQueries={isLoadingQueries}
+									handleCancelQuery={handleCancelQuery}
+								/>
 							</div>
 						</div>
 						<QueryBuilderV2
@@ -171,7 +191,10 @@ function Explorer(): JSX.Element {
 						/>
 
 						<div className="explore-content">
-							<TimeSeries />
+							<TimeSeries
+								onFetchingStateChange={setIsLoadingQueries}
+								isCancelled={isCancelled}
+							/>
 						</div>
 					</div>
 					<ExplorerOptionWrapper

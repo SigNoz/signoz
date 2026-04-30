@@ -21,7 +21,7 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
       aria-label="eye"
       class="anticon anticon-eye"
       role="img"
-      style="font-size: 1.5rem;"
+      style="font-size: 1rem;"
       tabindex="-1"
     >
       <svg
@@ -42,7 +42,7 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
       aria-label="edit"
       class="anticon anticon-edit"
       role="img"
-      style="font-size: 1.5rem;"
+      style="font-size: 1rem;"
       tabindex="-1"
     >
       <svg
@@ -63,7 +63,7 @@ exports[`PipelinePage container test should render PipelineActions section 1`] =
       aria-label="delete"
       class="anticon anticon-delete"
       role="img"
-      style="font-size: 1.5rem;"
+      style="font-size: 1rem;"
       tabindex="-1"
     >
       <svg

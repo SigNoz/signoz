@@ -93,7 +93,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 describe('placeWidgetAtBottom', () => {
 	it('should place widget at (0,0) when layout is empty', () => {
 		const result = placeWidgetAtBottom('widget1', []);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget1',
 			x: 0,
 			y: 0,
@@ -104,7 +104,7 @@ describe('placeWidgetAtBottom', () => {
 
 	it('should place widget at (0,0) with custom dimensions when layout is empty', () => {
 		const result = placeWidgetAtBottom('widget1', [], 4, 8);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget1',
 			x: 0,
 			y: 0,
@@ -116,7 +116,7 @@ describe('placeWidgetAtBottom', () => {
 	it('should place widget next to existing widget in last row if space available', () => {
 		const existingLayout = [{ i: 'widget1', x: 0, y: 0, w: 6, h: 6 }];
 		const result = placeWidgetAtBottom('widget2', existingLayout);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget2',
 			x: 6,
 			y: 0,
@@ -131,7 +131,7 @@ describe('placeWidgetAtBottom', () => {
 			{ i: 'widget2', x: 6, y: 0, w: 6, h: 6 },
 		];
 		const result = placeWidgetAtBottom('widget3', existingLayout);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget3',
 			x: 0,
 			y: 6,
@@ -147,7 +147,7 @@ describe('placeWidgetAtBottom', () => {
 			{ i: 'widget3', x: 0, y: 6, w: 6, h: 6 },
 		];
 		const result = placeWidgetAtBottom('widget4', existingLayout);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget4',
 			x: 6,
 			y: 6,
@@ -163,7 +163,7 @@ describe('placeWidgetAtBottom', () => {
 		];
 		const result = placeWidgetAtBottom('widget3', existingLayout);
 		// y = 2 here as later the react-grid-layout will add 2px to the y value while adjusting the layout
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			i: 'widget3',
 			x: 6,
 			y: 2,
@@ -176,7 +176,7 @@ describe('placeWidgetAtBottom', () => {
 describe('placeWidgetBetweenRows', () => {
 	it('should return single widget layout when layout is empty', () => {
 		const result = placeWidgetBetweenRows('widget1', [], 'currentRow');
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				i: 'widget1',
 				x: 0,
@@ -195,7 +195,7 @@ describe('placeWidgetBetweenRows', () => {
 
 		const result = placeWidgetBetweenRows('widget3', existingLayout, 'widget2');
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{ i: 'widget1', x: 0, y: 0, w: 6, h: 6 },
 			{ i: 'widget2', x: 6, y: 0, w: 6, h: 6 },
 			{ i: 'widget3', x: 0, y: 6, w: 6, h: 6 },
@@ -238,7 +238,7 @@ describe('placeWidgetBetweenRows', () => {
 			'widget3',
 		);
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				h: 1,
 				i: "'widget1'",
@@ -292,7 +292,7 @@ describe('placeWidgetBetweenRows', () => {
 			3,
 		);
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{ i: 'widget1', x: 0, y: 0, w: 12, h: 4 },
 			{ i: 'widget2', x: 0, y: 4, w: 8, h: 3 },
 		]);
@@ -326,7 +326,7 @@ describe('Stacking bar in new panel', () => {
 					<PreferenceContextProvider>
 						<NewWidget
 							dashboardId=""
-							selectedDashboard={undefined}
+							dashboardData={undefined}
 							selectedGraph={PANEL_TYPES.BAR}
 						/>
 					</PreferenceContextProvider>
@@ -378,7 +378,7 @@ describe('when switching to BAR panel type', () => {
 			<DashboardBootstrapWrapper dashboardId="">
 				<NewWidget
 					dashboardId=""
-					selectedDashboard={undefined}
+					dashboardData={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
 				/>
 			</DashboardBootstrapWrapper>,

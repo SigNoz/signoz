@@ -27,6 +27,7 @@ export function createInitialControllerState(): TooltipControllerState {
 		verticalOffset: 0,
 		seriesIndexes: [],
 		focusedSeriesIndex: null,
+		syncedSeriesIndexes: null,
 		cursorDrivenBySync: false,
 		plotWithinViewport: false,
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
@@ -102,6 +103,12 @@ export function updateHoverState(
 	controller: TooltipControllerState,
 	syncTooltipWithDashboard: boolean,
 ): void {
+	// When pinned, keep hoverActive stable so the tooltip stays visible
+	// until explicitly dismissed — the cursor lock fires asynchronously
+	// and setSeries/setLegend can otherwise race and clear hoverActive.
+	if (controller.pinned) {
+		return;
+	}
 	// When the cursor is driven by dashboard‑level sync, we only show
 	// the tooltip if the plot is in viewport and at least one series
 	// is active. Otherwise we fall back to local interaction logic.
@@ -178,7 +185,7 @@ export function createSetLegendHandler(
 			return;
 		}
 
-		const newSeriesIndexes = plot.cursor.idxs.slice();
+		const newSeriesIndexes = [...plot.cursor.idxs];
 		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
 		const previousCursorDrivenBySync = controller.cursorDrivenBySync;

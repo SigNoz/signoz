@@ -1,11 +1,11 @@
-import { Button } from '@signozhq/button';
-import { DialogWrapper } from '@signozhq/dialog';
 import { Check, Copy } from '@signozhq/icons';
+import { Button, DialogWrapper } from '@signozhq/ui';
 
 interface ResetLinkDialogProps {
 	open: boolean;
 	linkType: 'invite' | 'reset' | null;
 	resetLink: string | null;
+	expiresAt: string | null;
 	hasCopied: boolean;
 	onClose: () => void;
 	onCopy: () => void;
@@ -15,6 +15,7 @@ function ResetLinkDialog({
 	open,
 	linkType,
 	resetLink,
+	expiresAt,
 	hasCopied,
 	onClose,
 	onCopy,
@@ -43,16 +44,20 @@ function ResetLinkDialog({
 						<span className="reset-link-dialog__link-text">{resetLink}</span>
 					</div>
 					<Button
-						variant="outlined"
+						variant="link"
 						color="secondary"
-						size="sm"
 						onClick={onCopy}
-						prefixIcon={hasCopied ? <Check size={12} /> : <Copy size={12} />}
+						prefix={hasCopied ? <Check size={12} /> : <Copy size={12} />}
 						className="reset-link-dialog__copy-btn"
 					>
 						{hasCopied ? 'Copied!' : 'Copy'}
 					</Button>
 				</div>
+				{expiresAt && (
+					<p className="reset-link-dialog__description">
+						This link expires on {expiresAt}.
+					</p>
+				)}
 			</div>
 		</DialogWrapper>
 	);

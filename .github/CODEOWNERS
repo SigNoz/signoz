@@ -10,110 +10,116 @@
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
 # CI
+
 /deploy/ @therealpandey
 .github @therealpandey
 go.mod @therealpandey
 
 # Scaffold Owners
 
-/pkg/config/ @vikrantgupta25
-/pkg/errors/ @vikrantgupta25
-/pkg/factory/ @vikrantgupta25
-/pkg/types/ @vikrantgupta25
-/pkg/valuer/ @vikrantgupta25
-/cmd/ @vikrantgupta25
-.golangci.yml @vikrantgupta25
+/pkg/config/ @therealpandey
+/pkg/errors/ @therealpandey
+/pkg/factory/ @therealpandey
+/pkg/types/ @therealpandey
+/pkg/valuer/ @therealpandey
+/cmd/ @therealpandey
+.golangci.yml @therealpandey
 
 # Zeus Owners
 
-/pkg/zeus/ @vikrantgupta25
-/ee/zeus/ @vikrantgupta25
-/pkg/licensing/ @vikrantgupta25
-/ee/licensing/ @vikrantgupta25
+/pkg/zeus/ @therealpandey
+/ee/zeus/ @therealpandey
+/pkg/licensing/ @therealpandey
+/ee/licensing/ @therealpandey
 
 # SQL Owners
 
-/pkg/sqlmigration/ @vikrantgupta25
-/ee/sqlmigration/ @vikrantgupta25
-/pkg/sqlschema/ @vikrantgupta25
-/ee/sqlschema/ @vikrantgupta25
+/pkg/sqlmigration/ @therealpandey
+/ee/sqlmigration/ @therealpandey
+/pkg/sqlschema/ @therealpandey
+/ee/sqlschema/ @therealpandey
 
 # Analytics Owners
 
-/pkg/analytics/ @vikrantgupta25
-/pkg/statsreporter/ @vikrantgupta25
+/pkg/analytics/ @therealpandey
+/pkg/statsreporter/ @therealpandey
 
 # Emailing Owners
 
-/pkg/emailing/ @vikrantgupta25
-/pkg/types/emailtypes/ @vikrantgupta25
-/templates/email/ @vikrantgupta25
+/pkg/emailing/ @therealpandey
+/pkg/types/emailtypes/ @therealpandey
+/templates/email/ @therealpandey
 
 # Querier Owners
 
-/pkg/querier/ @srikanthccv
-/pkg/variables/ @srikanthccv
-/pkg/types/querybuildertypes/ @srikanthccv
-/pkg/types/telemetrytypes/ @srikanthccv
-/pkg/querybuilder/ @srikanthccv
-/pkg/telemetrylogs/ @srikanthccv
-/pkg/telemetrymetadata/ @srikanthccv
-/pkg/telemetrymetrics/ @srikanthccv
-/pkg/telemetrytraces/ @srikanthccv
+/pkg/querier/ @srikanthccv @therealpandey
+/pkg/variables/ @srikanthccv @therealpandey
+/pkg/types/querybuildertypes/ @srikanthccv @therealpandey
+/pkg/types/telemetrytypes/ @srikanthccv @therealpandey
+/pkg/querybuilder/ @srikanthccv @therealpandey
+/pkg/telemetrylogs/ @srikanthccv @therealpandey
+/pkg/telemetrymetadata/ @srikanthccv @therealpandey
+/pkg/telemetrymetrics/ @srikanthccv @therealpandey
+/pkg/telemetrytraces/ @srikanthccv @therealpandey
 
 # Metrics
 
-/pkg/types/metrictypes/ @srikanthccv
-/pkg/types/metricsexplorertypes/ @srikanthccv
-/pkg/modules/metricsexplorer/ @srikanthccv
-/pkg/prometheus/ @srikanthccv
+/pkg/types/metrictypes/ @srikanthccv @therealpandey
+/pkg/types/metricsexplorertypes/ @srikanthccv @therealpandey
+/pkg/modules/metricsexplorer/ @srikanthccv @therealpandey
+/pkg/prometheus/ @srikanthccv @therealpandey
 
 # APM
 
-/pkg/types/servicetypes/ @srikanthccv
-/pkg/types/apdextypes/ @srikanthccv
-/pkg/modules/apdex/ @srikanthccv
-/pkg/modules/services/ @srikanthccv
+/pkg/types/servicetypes/ @srikanthccv @therealpandey
+/pkg/types/apdextypes/ @srikanthccv @therealpandey
+/pkg/modules/apdex/ @srikanthccv @therealpandey
+/pkg/modules/services/ @srikanthccv @therealpandey
 
 # Dashboard
 
-/pkg/types/dashboardtypes/ @srikanthccv
-/pkg/modules/dashboard/ @srikanthccv
+/pkg/types/dashboardtypes/ @srikanthccv @therealpandey
+/pkg/modules/dashboard/ @srikanthccv @therealpandey
 
 # Rule/Alertmanager
 
-/pkg/types/ruletypes/ @srikanthccv
-/pkg/types/alertmanagertypes @srikanthccv
-/pkg/alertmanager/ @srikanthccv
-/pkg/ruler/ @srikanthccv
-/pkg/modules/rulestatehistory/ @srikanthccv
-/pkg/types/rulestatehistorytypes/ @srikanthccv
+/pkg/types/ruletypes/ @srikanthccv @therealpandey
+/pkg/types/alertmanagertypes @srikanthccv @therealpandey
+/pkg/alertmanager/ @srikanthccv @therealpandey
+/pkg/ruler/ @srikanthccv @therealpandey
+/pkg/modules/rulestatehistory/ @srikanthccv @therealpandey
+/pkg/types/rulestatehistorytypes/ @srikanthccv @therealpandey
 
 # Correlation-adjacent
 
-/pkg/contextlinks/ @srikanthccv
-/pkg/types/parsertypes/ @srikanthccv
-/pkg/queryparser/ @srikanthccv
+/pkg/contextlinks/ @srikanthccv @therealpandey
+/pkg/types/parsertypes/ @srikanthccv @therealpandey
+/pkg/queryparser/ @srikanthccv @therealpandey
 
 # AuthN / AuthZ Owners
 
-/pkg/authz/ @vikrantgupta25
-/ee/authz/ @vikrantgupta25
-/pkg/authn/ @vikrantgupta25
-/ee/authn/ @vikrantgupta25
-/pkg/modules/user/ @vikrantgupta25
-/pkg/modules/session/ @vikrantgupta25
-/pkg/modules/organization/ @vikrantgupta25
-/pkg/modules/authdomain/ @vikrantgupta25
-/pkg/modules/role/ @vikrantgupta25
+/pkg/authz/ @therealpandey
+/ee/authz/ @therealpandey
+/pkg/authn/ @therealpandey
+/ee/authn/ @therealpandey
+/pkg/modules/user/ @therealpandey
+/pkg/modules/session/ @therealpandey
+/pkg/modules/organization/ @therealpandey
+/pkg/modules/authdomain/ @therealpandey
+/pkg/modules/role/ @therealpandey
 
 # IdentN Owners
-/pkg/identn/ @vikrantgupta25
-/pkg/http/middleware/identn.go @vikrantgupta25
+
+/pkg/identn/ @therealpandey
+/pkg/http/middleware/identn.go @therealpandey
 
 # Integration tests
 
-/tests/integration/ @vikrantgupta25
+/tests/integration/ @therealpandey
+
+# Flagger Owners
+
+/pkg/flagger/ @therealpandey
 
 # OpenAPI types generator
 
@@ -134,6 +140,7 @@ go.mod @therealpandey
 /frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
 
 # Dashboard Widget Page
+
 /frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
 /frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
 
@@ -149,6 +156,7 @@ go.mod @therealpandey
 /frontend/src/container/PublicDashboardContainer/ @SigNoz/pulse-frontend
 
 ## Dashboard Libs + Components
+
 /frontend/src/lib/uPlotV2/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboard/ @SigNoz/pulse-frontend
 /frontend/src/lib/dashboardVariables/ @SigNoz/pulse-frontend

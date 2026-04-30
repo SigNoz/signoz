@@ -15,16 +15,17 @@ function DashboardYAxisUnitSelectorWrapper({
 	fieldLabel,
 	shouldUpdateYAxisUnit,
 	selectedQueryName,
+	'data-testid': dataTestId,
 }: {
 	value: string;
 	onSelect: OnSelectType;
 	fieldLabel: string;
 	shouldUpdateYAxisUnit: boolean;
 	selectedQueryName?: string;
+	'data-testid'?: string;
 }): JSX.Element {
-	const { yAxisUnit: initialYAxisUnit, isLoading } = useGetYAxisUnit(
-		selectedQueryName,
-	);
+	const { yAxisUnit: initialYAxisUnit, isLoading } =
+		useGetYAxisUnit(selectedQueryName);
 
 	useEffect(() => {
 		if (shouldUpdateYAxisUnit) {
@@ -42,6 +43,7 @@ function DashboardYAxisUnitSelectorWrapper({
 				initialValue={initialYAxisUnit}
 				source={YAxisSource.DASHBOARDS}
 				loading={isLoading}
+				data-testid={dataTestId}
 			/>
 		</div>
 	);

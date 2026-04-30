@@ -21,7 +21,10 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDateWithMinutes } from 'utils/timeUtils';
+
+import featureGraphicCorrelationUrl from '@/assets/Images/feature-graphic-correlation.svg';
 
 import './WorkspaceSuspended.styles.scss';
 
@@ -55,7 +58,7 @@ function WorkspaceSuspended(): JSX.Element {
 
 	const handleUpdateCreditCard = useCallback(async () => {
 		manageCreditCard({
-			url: window.location.origin,
+			url: getBaseUrl(),
 		});
 	}, [manageCreditCard]);
 
@@ -165,10 +168,7 @@ function WorkspaceSuspended(): JSX.Element {
 								</Row>
 							)}
 							<div className="workspace-suspended__creative">
-								<img
-									src="/Images/feature-graphic-correlation.svg"
-									alt="correlation-graphic"
-								/>
+								<img src={featureGraphicCorrelationUrl} alt="correlation-graphic" />
 							</div>
 						</>
 					)}

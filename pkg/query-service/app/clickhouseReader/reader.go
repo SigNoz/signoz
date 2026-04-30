@@ -947,7 +947,6 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			return response, nil
 		}
 		totalSpans = uint64(len(searchScanResponses))
-		processingBeforeCache := time.Now()
 		for _, item := range searchScanResponses {
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
@@ -1070,23 +1069,9 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 
 		serviceNameToTotalDurationMap = tracedetail.CalculateServiceTime(serviceNameIntervalMap)
 
-		traceCache := model.GetWaterfallSpansForTraceWithMetadataCache{
-			StartTime:                     startTime,
-			EndTime:                       endTime,
-			DurationNano:                  durationNano,
-			TotalSpans:                    totalSpans,
-			TotalErrorSpans:               totalErrorSpans,
-			SpanIdToSpanNodeMap:           spanIdToSpanNodeMap,
-			ServiceNameToTotalDurationMap: serviceNameToTotalDurationMap,
-			TraceRoots:                    traceRoots,
-			HasMissingSpans:               hasMissingSpans,
-		}
-
-		r.logger.Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
-		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
-		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", "traceID", traceID, errorsV2.Attr(err))
-		}
+		// TODO: set the span data (model.GetWaterfallSpansForTraceWithMetadataCache) in cache here
+		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
+		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
 	}
 
 	processingPostCache := time.Now()
@@ -1169,7 +1154,13 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if err != nil {
 		r.logger.Info("cache miss for getFlamegraphSpansForTrace", "traceID", traceID)
 
-		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error,links as references, resource_string_service$$name, name, events FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", r.TraceDB, r.traceTableName))
+		selectCols := "timestamp, duration_nano, span_id, trace_id, has_error, links as references, resource_string_service$$name, name, events"
+		if len(req.SelectFields) > 0 {
+			selectCols += ", attributes_string, attributes_number, attributes_bool, resources_string"
+		}
+		flamegraphQuery := fmt.Sprintf("SELECT %s FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3 ORDER BY timestamp ASC, name ASC", selectCols, r.TraceDB, r.traceTableName)
+
+		searchScanResponses, err := r.GetSpansForTrace(ctx, traceID, flamegraphQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -1177,7 +1168,6 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			return trace, nil
 		}
 
-		processingBeforeCache := time.Now()
 		for _, item := range searchScanResponses {
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
@@ -1207,6 +1197,10 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				References:   ref,
 				Events:       events,
 				Children:     make([]*model.FlamegraphSpan, 0),
+			}
+
+			if len(req.SelectFields) > 0 {
+				jsonItem.SetRequestedFields(item, req.SelectFields)
 			}
 
 			// metadata calculation
@@ -1259,19 +1253,10 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		}
 
 		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
-		traceCache := model.GetFlamegraphSpansForTraceCache{
-			StartTime:     startTime,
-			EndTime:       endTime,
-			DurationNano:  durationNano,
-			SelectedSpans: selectedSpans,
-			TraceRoots:    traceRoots,
-		}
 
-		r.logger.Info("getFlamegraphSpansForTrace: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
-		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
-		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getFlamegraphSpansForTrace", "traceID", traceID, errorsV2.Attr(err))
-		}
+		// TODO: set the trace data (model.GetFlamegraphSpansForTraceCache) in cache here
+		// removed existing cache usage since it was not getting used due to this bug https://github.com/SigNoz/engineering-pod/issues/4648
+		// and was causing out of memory issues https://github.com/SigNoz/engineering-pod/issues/4638
 	}
 
 	processingPostCache := time.Now()

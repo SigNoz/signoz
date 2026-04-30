@@ -12,9 +12,11 @@ import (
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
 
 	"golang.org/x/exp/maps"
@@ -66,13 +68,15 @@ var (
 	}
 )
 
-type fieldMapper struct{}
-
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+type fieldMapper struct {
+	fl flagger.Flagger
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
+func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
+	return &fieldMapper{fl: fl}
+}
+
+func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
@@ -96,7 +100,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		}
 	case telemetrytypes.FieldContextBody:
 		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
-		if querybuilder.BodyJSONQueryEnabled {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			if key.Name == messageSubField {
 				return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 			}
@@ -105,7 +110,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		// Fall back to legacy body column
 		return []*schema.Column{logsV2Columns["body"]}, nil
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextUnspecified:
-		if key.Name == LogsV2BodyColumn && querybuilder.BodyJSONQueryEnabled {
+		// TODO(Tushar): thread orgID here to evaluate correctly
+		if key.Name == LogsV2BodyColumn && m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 			return []*schema.Column{logsV2Columns[messageSubColumn]}, nil
 		}
 		col, ok := logsV2Columns[key.Name]
@@ -113,7 +119,8 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
 				// Use body_v2 if feature flag is enabled and we have a body condition builder
-				if querybuilder.BodyJSONQueryEnabled {
+				// TODO(Tushar): thread orgID here to evaluate correctly
+				if m.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})) {
 					// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 					// i.e return both the body json and body json promoted and let the evolutions decide which one to use
 					// based on the query range time.
@@ -276,12 +283,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 					continue
 				}
 
-				if key.JSONDataType == nil {
+				if key.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
 					return "", qbtypes.ErrColumnNotFound
-				}
-
-				if key.KeyNameContainsArray() && !key.JSONDataType.IsArray {
-					return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "FieldFor not supported for nested fields; only supported for flat paths (e.g. body.status.detail) and paths of Array type: %s(%s)", key.Name, key.FieldDataType)
 				}
 
 				expr, err := m.buildFieldForJSON(key)
@@ -354,7 +357,6 @@ func (m *fieldMapper) ColumnExpressionFor(
 	field *telemetrytypes.TelemetryFieldKey,
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-
 	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
@@ -393,6 +395,8 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
+	} else if err != nil {
+		return "", err
 	}
 
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil

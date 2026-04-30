@@ -27,10 +27,10 @@
 				font-size: 12px;
 				line-height: 18px;
 
-				background: var(--bg-ink-500);
+				background: var(--l1-background);
 				border-bottom: none;
 
-				color: var(--Vanilla-400, #c0c1c3);
+				color: var(--l2-foreground);
 				font-family: Inter;
 				font-size: 11px;
 				font-style: normal;
@@ -47,8 +47,8 @@
 				padding: 12px;
 				font-size: 13px;
 				line-height: 20px;
-				color: var(--bg-vanilla-100);
-				background: var(--bg-ink-500);
+				color: var(--l1-foreground);
+				background: var(--l1-background);
 			}
 
 			.progress-container {
@@ -59,7 +59,7 @@
 			}
 
 			.ant-table-tbody > tr:hover > td {
-				background: rgba(255, 255, 255, 0.04);
+				background: color-mix(in srgb, var(--l1-foreground) 4%, transparent);
 			}
 
 			.ant-table-cell:first-child {
@@ -89,7 +89,7 @@
 			position: relative;
 			bottom: 0;
 			width: 100%;
-			background: var(--bg-ink-500);
+			background: var(--l1-background);
 			padding: 4px;
 			margin: 0;
 
@@ -100,48 +100,11 @@
 				border-radius: 4px;
 
 				&-active {
-					background: var(--bg-robin-500);
-					border-color: var(--bg-robin-500);
+					background: var(--primary-background);
+					border-color: var(--primary-background);
 
 					a {
-						color: var(--bg-ink-500) !important;
-					}
-				}
-			}
-		}
-	}
-}
-
-.lightMode {
-	.celery-overview-table-container {
-		.celery-overview-table {
-			.ant-table {
-				.ant-table-thead > tr > th {
-					background: var(--bg-vanilla-100);
-					color: var(--text-ink-300);
-				}
-
-				.ant-table-cell {
-					background: var(--bg-vanilla-100);
-					color: var(--bg-ink-500);
-				}
-
-				.ant-table-tbody > tr:hover > td {
-					background: rgba(0, 0, 0, 0.04);
-				}
-			}
-
-			.ant-pagination {
-				background: var(--bg-vanilla-100);
-
-				.ant-pagination-item {
-					&-active {
-						background: var(--bg-robin-500);
-						border-color: var(--bg-robin-500);
-
-						a {
-							color: var(--bg-vanilla-100) !important;
-						}
+						color: var(--primary-foreground) !important;
 					}
 				}
 			}

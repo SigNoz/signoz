@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { useUpdateMyUserV2 } from 'api/generated/services/users';
-import changeMyPassword from 'api/v1/factor_password/changeMyPassword';
+import {
+	updateMyPassword,
+	useUpdateMyUserV2,
+} from 'api/generated/services/users';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
@@ -27,13 +29,10 @@ function UserInfo(): JSX.Element {
 		user?.displayName || '',
 	);
 
-	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] = useState<boolean>(
-		false,
-	);
-	const [
-		isResetPasswordModalOpen,
-		setIsResetPasswordModalOpen,
-	] = useState<boolean>(false);
+	const [isUpdateNameModalOpen, setIsUpdateNameModalOpen] =
+		useState<boolean>(false);
+	const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+		useState<boolean>(false);
 
 	const defaultPlaceHolder = '*************';
 
@@ -53,10 +52,9 @@ function UserInfo(): JSX.Element {
 		try {
 			setIsLoading(true);
 
-			await changeMyPassword({
+			await updateMyPassword({
 				newPassword: updatePassword,
 				oldPassword: currentPassword,
-				userId: user.id,
 			});
 			notifications.success({
 				message: t('success', {

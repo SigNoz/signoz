@@ -52,39 +52,38 @@ function DynamicColumnTable({
 						...prevColumns.slice(0, prevColumns.length - 1),
 						...visibleColumns,
 						prevColumns[prevColumns.length - 1],
-				  ]
+					]
 				: undefined,
 		);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [columns, dynamicColumns]);
 
-	const onToggleHandler = (
-		index: number,
-		column: ColumnGroupType<any> | ColumnType<any>,
-	) => (checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
-		event.stopPropagation();
+	const onToggleHandler =
+		(index: number, column: ColumnGroupType<any> | ColumnType<any>) =>
+		(checked: boolean, event: React.MouseEvent<HTMLButtonElement>): void => {
+			event.stopPropagation();
 
-		if (shouldSendAlertsLogEvent) {
-			logEvent('Alert: Column toggled', {
-				column: column?.title,
-				action: checked ? 'Enable' : 'Disable',
-			});
-		}
-		setVisibleColumns({
-			tablesource,
-			dynamicColumns,
-			index,
-			checked,
-		});
-		setColumnsData((prevColumns) =>
-			getNewColumnData({
-				checked,
-				index,
-				prevColumns,
+			if (shouldSendAlertsLogEvent) {
+				logEvent('Alert: Column toggled', {
+					column: column?.title,
+					action: checked ? 'Enable' : 'Disable',
+				});
+			}
+			setVisibleColumns({
+				tablesource,
 				dynamicColumns,
-			}),
-		);
-	};
+				index,
+				checked,
+			});
+			setColumnsData((prevColumns) =>
+				getNewColumnData({
+					checked,
+					index,
+					prevColumns,
+					dynamicColumns,
+				}),
+			);
+		};
 
 	const items: MenuProps['items'] =
 		dynamicColumns?.map((column, index) => ({
@@ -108,8 +107,7 @@ function DynamicColumnTable({
 		// Update URL with new page number while preserving other params
 		urlQuery.set('page', page.toString());
 
-		const newUrl = `${window.location.pathname}?${urlQuery.toString()}`;
-		safeNavigate(newUrl);
+		safeNavigate({ search: `?${urlQuery.toString()}` });
 
 		// Call original pagination handler if provided
 		if (pagination?.onChange && !!pageSize) {

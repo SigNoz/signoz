@@ -15,14 +15,18 @@ import './GeneralSettings.styles.scss';
 const { Option } = Select;
 
 function GeneralDashboardSettings(): JSX.Element {
-	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
+	const { dashboardData, setDashboardData } = useDashboardStore();
 
 	const updateDashboardMutation = useUpdateDashboard();
 
-	const selectedData = selectedDashboard?.data;
+	const selectedData = dashboardData?.data;
 
-	const { title = '', tags = [], description = '', image = Base64Icons[0] } =
-		selectedData || {};
+	const {
+		title = '',
+		tags = [],
+		description = '',
+		image = Base64Icons[0],
+	} = selectedData || {};
 
 	const [updatedTitle, setUpdatedTitle] = useState<string>(title);
 	const [updatedTags, setUpdatedTags] = useState<string[]>(tags || []);
@@ -30,22 +34,21 @@ function GeneralDashboardSettings(): JSX.Element {
 		description || '',
 	);
 	const [updatedImage, setUpdatedImage] = useState<string>(image);
-	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] = useState<number>(
-		0,
-	);
+	const [numberOfUnsavedChanges, setNumberOfUnsavedChanges] =
+		useState<number>(0);
 
 	const { t } = useTranslation('common');
 
 	const onSaveHandler = (): void => {
-		if (!selectedDashboard) {
+		if (!dashboardData) {
 			return;
 		}
 
 		updateDashboardMutation.mutate(
 			{
-				id: selectedDashboard.id,
+				id: dashboardData.id,
 				data: {
-					...selectedDashboard.data,
+					...dashboardData.data,
 					description: updatedDescription,
 					tags: updatedTags,
 					title: updatedTitle,
@@ -55,7 +58,7 @@ function GeneralDashboardSettings(): JSX.Element {
 			{
 				onSuccess: (updatedDashboard) => {
 					if (updatedDashboard.data) {
-						setSelectedDashboard(updatedDashboard.data);
+						setDashboardData(updatedDashboard.data);
 					}
 				},
 				onError: () => {},

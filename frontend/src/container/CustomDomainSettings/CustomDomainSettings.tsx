@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
 import {
 	Check,
 	ChevronDown,
@@ -11,7 +9,7 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { Button, Callout, toast } from '@signozhq/ui';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -44,10 +42,11 @@ function DomainUpdateToast({
 			<div className="custom-domain-toast-actions">
 				<Button
 					variant="ghost"
-					size="xs"
+					size="sm"
 					className="custom-domain-toast-visit-btn"
-					suffixIcon={<ExternalLink size={12} />}
+					suffix={<ExternalLink size={12} />}
 					onClick={(): void => {
+						// oxlint-disable-next-line signoz/no-raw-absolute-path
 						window.open(url, '_blank', 'noopener,noreferrer');
 					}}
 				>
@@ -61,7 +60,7 @@ function DomainUpdateToast({
 						toast.dismiss(toastId);
 					}}
 					aria-label="Dismiss"
-					prefixIcon={<X size={14} />}
+					prefix={<X size={14} />}
 				/>
 			</div>
 		</div>
@@ -76,10 +75,8 @@ export default function CustomDomainSettings(): JSX.Element {
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
 	const [hosts, setHosts] = useState<ZeustypesHostDTO[] | null>(null);
 
-	const [
-		updateDomainError,
-		setUpdateDomainError,
-	] = useState<AxiosError<RenderErrorResponseDTO> | null>(null);
+	const [updateDomainError, setUpdateDomainError] =
+		useState<AxiosError<RenderErrorResponseDTO> | null>(null);
 
 	const [customDomainSubdomain, setCustomDomainSubdomain] = useState<
 		string | undefined
@@ -92,10 +89,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		refetch: refetchHosts,
 	} = useGetHosts();
 
-	const {
-		mutate: updateSubDomain,
-		isLoading: isLoadingUpdateCustomDomain,
-	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateSubDomain, isLoading: isLoadingUpdateCustomDomain } =
+		usePutHost<AxiosError<RenderErrorResponseDTO>>();
 
 	const stripProtocol = (url: string): string => url?.split('://')[1] ?? url;
 
@@ -139,7 +134,7 @@ export default function CustomDomainSettings(): JSX.Element {
 			{
 				onSuccess: () => {
 					setIsPollingEnabled(true);
-					refetchHosts();
+					void refetchHosts();
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
 					const newUrl = `https://${subdomain}.${dnsSuffix}`;
@@ -209,6 +204,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					>
 						<Dropdown
 							trigger={['click']}
+							disabled={isFetchingHosts}
 							dropdownRender={(): JSX.Element => (
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
@@ -244,12 +240,7 @@ export default function CustomDomainSettings(): JSX.Element {
 								</div>
 							)}
 						>
-							<Button
-								type="button"
-								size="xs"
-								className="workspace-url-trigger"
-								disabled={isFetchingHosts}
-							>
+							<Button variant="link" color="none">
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
 								<ChevronDown size={12} />
@@ -264,9 +255,8 @@ export default function CustomDomainSettings(): JSX.Element {
 
 				<Button
 					variant="solid"
-					size="sm"
-					className="custom-domain-edit-button"
-					prefixIcon={<FilePenLine size={12} />}
+					color="secondary"
+					prefix={<FilePenLine size={12} />}
 					disabled={isFetchingHosts || isPollingEnabled}
 					onClick={(): void => setIsEditModalOpen(true)}
 				>
@@ -281,7 +271,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					className="custom-domain-callout"
 					size="small"
 					icon={<SolidAlertCircle size={13} color="primary" />}
-					message={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+					title={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
 				/>
 			)}
 

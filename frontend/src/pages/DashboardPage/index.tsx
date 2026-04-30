@@ -14,16 +14,12 @@ function DashboardPage(): JSX.Element {
 
 	const [onModal, Content] = Modal.useModal();
 
-	const {
-		isLoading,
-		isError,
-		isFetching,
-		error,
-	} = useDashboardBootstrap(dashboardId, { confirm: onModal.confirm });
-
-	const dashboardTitle = useDashboardStore(
-		(s) => s.selectedDashboard?.data.title,
+	const { isLoading, isError, isFetching, error } = useDashboardBootstrap(
+		dashboardId,
+		{ confirm: onModal.confirm },
 	);
+
+	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
 
 	useEffect(() => {
 		document.title = dashboardTitle || document.title;

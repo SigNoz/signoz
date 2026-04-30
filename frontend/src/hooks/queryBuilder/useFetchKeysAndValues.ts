@@ -6,7 +6,7 @@ import { DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import {
 	GetK8sEntityToAggregateAttribute,
-	K8sCategory,
+	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8s/constants';
 import {
 	getRemovePrefixFromKey,
@@ -52,7 +52,7 @@ export const useFetchKeysAndValues = (
 	searchKey: string,
 	shouldUseSuggestions?: boolean,
 	isInfraMonitoring?: boolean,
-	entity?: K8sCategory | null,
+	entity?: InfraMonitoringEntity | null,
 	isMetricsExplorer?: boolean,
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
@@ -204,8 +204,8 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
 			} else {
@@ -218,8 +218,8 @@ export const useFetchKeysAndValues = (
 						filterAttributeKey?.dataType ?? DataTypes.EMPTY,
 					tagType: filterAttributeKey?.type ?? '',
 					searchText: isInNInOperator(tagOperator)
-						? tagValue[tagValue.length - 1]?.toString() ?? ''
-						: tagValue?.toString() ?? '',
+						? (tagValue[tagValue.length - 1]?.toString() ?? '')
+						: (tagValue?.toString() ?? ''),
 				});
 				payload = response.payload;
 			}
