@@ -55,9 +55,27 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		Model(storableDashboard).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
+		Where("source = ?", "").
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
+	}
+
+	return storableDashboard, nil
+}
+
+func (store *store) GetBySource(ctx context.Context, orgID valuer.UUID, source string) (*dashboardtypes.StorableDashboard, error) {
+	storableDashboard := new(dashboardtypes.StorableDashboard)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storableDashboard).
+		Where("org_id = ?", orgID).
+		Where("source = ?", source).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "system dashboard with source %s doesn't exist", source)
 	}
 
 	return storableDashboard, nil
@@ -124,6 +142,7 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardty
 		NewSelect().
 		Model(&storableDashboards).
 		Where("org_id = ?", orgID).
+		Where("source = ?", "").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -150,14 +169,16 @@ func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashb
 	return storable, nil
 }
 
+// Update works for user dashboards (Source = "") and system dashboards (Source = "ai-o11y-overview").
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewUpdate().
 		Model(storableDashboard).
 		WherePK().
 		Where("org_id = ?", orgID).
+		Where("source = ?", storableDashboard.Source).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", storableDashboard.ID)
@@ -189,6 +210,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		Model(new(dashboardtypes.StorableDashboard)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
+		Where("source = ?", "").
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)

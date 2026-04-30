@@ -42,6 +42,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
+	"github.com/SigNoz/signoz/pkg/modules/systemdashboard/implsystemdashboard"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
@@ -57,6 +59,7 @@ type Handlers struct {
 	SavedView               savedview.Handler
 	Apdex                   apdex.Handler
 	Dashboard               dashboard.Handler
+	SystemDashboard         systemdashboard.Handler
 	QuickFilter             quickfilter.Handler
 	TraceFunnel             tracefunnel.Handler
 	RawDataExport           rawdataexport.Handler
@@ -102,6 +105,7 @@ func NewHandlers(
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
 		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
+		SystemDashboard:         implsystemdashboard.NewHandler(modules.SystemDashboard),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),

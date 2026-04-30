@@ -1,0 +1,107 @@
+{
+  "title": "AI Observability Overview",
+  "description": "AI / LLM observability overview — cost, tokens, latency, errors, RED for tool calls, and time to first token. Scoped by model, environment and service (apply via the variable bar).",
+  "tags": ["ai", "llm", "genai", "overview"],
+  "version": "v5",
+  "variables": {
+    "model": {
+      "id": "a1000000-0000-0000-0000-000000000001",
+      "name": "model",
+      "key": "model",
+      "description": "LLM model",
+      "type": "QUERY",
+      "sort": "ASC",
+      "multiSelect": true,
+      "showALLOption": true,
+      "allSelected": true,
+      "queryValue": "SELECT DISTINCT attributes_string['gen_ai.request.model'] AS model FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(attributes_string, 'gen_ai.request.model') AND timestamp >= now() - INTERVAL 1 DAY",
+      "customValue": "",
+      "textboxValue": "",
+      "selectedValue": [],
+      "order": 0,
+      "modificationUUID": "a1000000-0000-0000-0000-000000000011"
+    },
+    "environment": {
+      "id": "a1000000-0000-0000-0000-000000000002",
+      "name": "environment",
+      "key": "environment",
+      "description": "Deployment environment",
+      "type": "QUERY",
+      "sort": "ASC",
+      "multiSelect": true,
+      "showALLOption": true,
+      "allSelected": true,
+      "queryValue": "SELECT DISTINCT resources_string['deployment.environment'] AS environment FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'deployment.environment') AND timestamp >= now() - INTERVAL 1 DAY",
+      "customValue": "",
+      "textboxValue": "",
+      "selectedValue": [],
+      "order": 1,
+      "modificationUUID": "a1000000-0000-0000-0000-000000000012"
+    },
+    "service_name": {
+      "id": "a1000000-0000-0000-0000-000000000003",
+      "name": "service_name",
+      "key": "service_name",
+      "description": "Service name",
+      "type": "QUERY",
+      "sort": "ASC",
+      "multiSelect": true,
+      "showALLOption": true,
+      "allSelected": true,
+      "queryValue": "SELECT DISTINCT resources_string['service.name'] AS service_name FROM signoz_traces.distributed_signoz_index_v3 WHERE mapContains(resources_string, 'service.name') AND timestamp >= now() - INTERVAL 1 DAY",
+      "customValue": "",
+      "textboxValue": "",
+      "selectedValue": [],
+      "order": 2,
+      "modificationUUID": "a1000000-0000-0000-0000-000000000013"
+    }
+  },
+  "layout": [
+    {"i": "11111111-1111-1111-1111-111111111111", "x": 0,  "y": 0,  "w": 3, "h": 3, "moved": false, "static": false},
+    {"i": "22222222-2222-2222-2222-222222222222", "x": 3,  "y": 0,  "w": 3, "h": 3, "moved": false, "static": false},
+    {"i": "33333333-3333-3333-3333-333333333333", "x": 6,  "y": 0,  "w": 2, "h": 3, "moved": false, "static": false},
+    {"i": "44444444-4444-4444-4444-444444444444", "x": 8,  "y": 0,  "w": 2, "h": 3, "moved": false, "static": false},
+    {"i": "55555555-5555-5555-5555-555555555555", "x": 10, "y": 0,  "w": 2, "h": 3, "moved": false, "static": false},
+    {"i": "66666666-6666-6666-6666-666666666666", "x": 0,  "y": 3,  "w": 6, "h": 4, "moved": false, "static": false},
+    {"i": "77777777-7777-7777-7777-777777777777", "x": 6,  "y": 3,  "w": 6, "h": 4, "moved": false, "static": false},
+    {"i": "88888888-8888-8888-8888-888888888888", "x": 0,  "y": 7,  "w": 6, "h": 4, "moved": false, "static": false},
+    {"i": "99999999-9999-9999-9999-999999999999", "x": 6,  "y": 7,  "w": 6, "h": 4, "moved": false, "static": false},
+    {"i": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "x": 0,  "y": 11, "w": 4, "h": 4, "moved": false, "static": false},
+    {"i": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "x": 4,  "y": 11, "w": 4, "h": 4, "moved": false, "static": false},
+    {"i": "cccccccc-cccc-cccc-cccc-cccccccccccc", "x": 8,  "y": 11, "w": 4, "h": 4, "moved": false, "static": false},
+    {"i": "dddddddd-dddd-dddd-dddd-dddddddddddd", "x": 0,  "y": 15, "w": 4, "h": 4, "moved": false, "static": false},
+    {"i": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "x": 4,  "y": 15, "w": 4, "h": 4, "moved": false, "static": false},
+    {"i": "ffffffff-ffff-ffff-ffff-ffffffffffff", "x": 8,  "y": 15, "w": 4, "h": 4, "moved": false, "static": false}
+  ],
+  "widgets": [
+    {"id": "11111111-1111-1111-1111-111111111111", "title": "Total cost", "description": "Total LLM cost across all calls. Requires gen_ai.usage.cost attribute.", "panelTypes": "value", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "none", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q1111111-1111-1111-1111-111111111111", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "sum(gen_ai.usage.cost)"}], "filter": {"expression": ""}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "", "disabled": false, "having": {"expression": ""}, "limit": null, "reduceTo": "sum"}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "22222222-2222-2222-2222-222222222222", "title": "Total tokens", "description": "Sum of input + output tokens.", "panelTypes": "value", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "short", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q2222222-2222-2222-2222-222222222222", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "sum(gen_ai.usage.input_tokens) + sum(gen_ai.usage.output_tokens)"}], "filter": {"expression": ""}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "", "disabled": false, "having": {"expression": ""}, "limit": null, "reduceTo": "sum"}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "33333333-3333-3333-3333-333333333333", "title": "Avg latency (p95)", "description": "p95 latency of LLM spans.", "panelTypes": "value", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ns", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q3333333-3333-3333-3333-333333333333", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p95(duration_nano)"}], "filter": {"expression": "gen_ai.system != ''"}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "", "disabled": false, "having": {"expression": ""}, "limit": null, "reduceTo": "avg"}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "44444444-4444-4444-4444-444444444444", "title": "Error rate", "description": "Error rate as a percentage of total LLM calls.", "panelTypes": "value", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "percent", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q4444444-4444-4444-4444-444444444444", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "countIf(has_error = true) * 100 / count()"}], "filter": {"expression": "gen_ai.system != ''"}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "", "disabled": false, "having": {"expression": ""}, "limit": null, "reduceTo": "avg"}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "55555555-5555-5555-5555-555555555555", "title": "TTFT (p95)", "description": "p95 time to first token.", "panelTypes": "value", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ms", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q5555555-5555-5555-5555-555555555555", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p95(gen_ai.server.ttft)"}], "filter": {"expression": ""}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "", "disabled": false, "having": {"expression": ""}, "limit": null, "reduceTo": "avg"}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "66666666-6666-6666-6666-666666666666", "title": "Cost over time", "description": "Cost by model over time.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "none", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q6666666-6666-6666-6666-666666666666", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "sum(gen_ai.usage.cost)"}], "filter": {"expression": ""}, "groupBy": [{"key": "gen_ai.request.model", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false}], "expression": "A", "orderBy": [], "legend": "{{gen_ai.request.model}}", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "77777777-7777-7777-7777-777777777777", "title": "Token usage over time", "description": "Input vs output tokens over time.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": true, "fillSpans": false, "yAxisUnit": "short", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q7777777-7777-7777-7777-777777777777", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "sum(gen_ai.usage.input_tokens)"}], "filter": {"expression": ""}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "Input", "disabled": false, "having": {"expression": ""}, "limit": null}, {"queryName": "B", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "sum(gen_ai.usage.output_tokens)"}], "filter": {"expression": ""}, "groupBy": [], "expression": "B", "orderBy": [], "legend": "Output", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "88888888-8888-8888-8888-888888888888", "title": "LLM call latency percentiles", "description": "p50, p90, p95, p99 latency by model.", "panelTypes": "table", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ns", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q8888888-8888-8888-8888-888888888888", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p50(duration_nano)"}, {"expression": "p90(duration_nano)"}, {"expression": "p95(duration_nano)"}, {"expression": "p99(duration_nano)"}], "filter": {"expression": "gen_ai.system != ''"}, "groupBy": [{"key": "gen_ai.request.model", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false}], "expression": "A", "orderBy": [], "legend": "{{gen_ai.request.model}}", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "99999999-9999-9999-9999-999999999999", "title": "LLM call latency over time", "description": "p95 latency trend by model.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ns", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "q9999999-9999-9999-9999-999999999999", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p95(duration_nano)"}], "filter": {"expression": "gen_ai.system != ''"}, "groupBy": [{"key": "gen_ai.request.model", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false}], "expression": "A", "orderBy": [], "legend": "{{gen_ai.request.model}}", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "title": "Error count", "description": "Errors grouped by error type.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": true, "fillSpans": false, "yAxisUnit": "short", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "count()"}], "filter": {"expression": "has_error = true AND gen_ai.system != ''"}, "groupBy": [{"key": "gen_ai.error.type", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false}], "expression": "A", "orderBy": [], "legend": "{{gen_ai.error.type}}", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "title": "Time to first token", "description": "p95 TTFT by model.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ms", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p95(gen_ai.server.ttft)"}], "filter": {"expression": ""}, "groupBy": [{"key": "gen_ai.request.model", "dataType": "string", "type": "tag", "isColumn": false, "isJSON": false}], "expression": "A", "orderBy": [], "legend": "{{gen_ai.request.model}}", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "cccccccc-cccc-cccc-cccc-cccccccccccc", "title": "Top 10 span names", "description": "Top span names by count across GenAI spans.", "panelTypes": "table", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "none", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qccccccc-cccc-cccc-cccc-cccccccccccc", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "count()"}], "filter": {"expression": "gen_ai.system != ''"}, "groupBy": [{"key": "name", "dataType": "string", "type": "tag", "isColumn": true, "isJSON": false}], "expression": "A", "orderBy": [{"columnName": "count()", "order": "desc"}], "legend": "{{name}}", "disabled": false, "having": {"expression": ""}, "limit": 10}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "dddddddd-dddd-dddd-dddd-dddddddddddd", "title": "Tool call rate", "description": "Tool call rate per second.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "reqps", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qddddddd-dddd-dddd-dddd-dddddddddddd", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "rate()"}], "filter": {"expression": "name = 'execute_tool'"}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "req/s", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "title": "Tool error rate", "description": "Percentage of tool calls that errored.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "percent", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "countIf(has_error = true) * 100 / count()"}], "filter": {"expression": "name = 'execute_tool'"}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "error %", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}},
+
+    {"id": "ffffffff-ffff-ffff-ffff-ffffffffffff", "title": "Tool duration (p50)", "description": "Median tool call duration.", "panelTypes": "graph", "nullZeroValues": "zero", "opacity": "1", "isStacked": false, "fillSpans": false, "yAxisUnit": "ns", "timePreferance": "GLOBAL_TIME", "softMax": null, "softMin": null, "thresholds": [], "selectedLogFields": [], "selectedTracesFields": [], "query": {"queryType": "builder", "promql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "clickhouse_sql": [{"disabled": false, "legend": "", "name": "A", "query": ""}], "id": "qfffffff-ffff-ffff-ffff-ffffffffffff", "builder": {"queryData": [{"queryName": "A", "stepInterval": 60, "dataSource": "traces", "aggregations": [{"expression": "p50(duration_nano)"}], "filter": {"expression": "name = 'execute_tool'"}, "groupBy": [], "expression": "A", "orderBy": [], "legend": "p50", "disabled": false, "having": {"expression": ""}, "limit": null}], "queryFormulas": [], "queryTraceOperator": []}}}
+  ]
+}
