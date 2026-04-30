@@ -7,6 +7,7 @@ const mockOnCreateServiceAccount = jest.fn();
 
 const defaultProps = {
 	instanceUrl: 'http://localhost',
+	isCloudUser: false,
 	onCopyInstanceUrl: mockOnCopyInstanceUrl,
 	onCreateServiceAccount: mockOnCreateServiceAccount,
 };
@@ -66,5 +67,76 @@ describe('AuthCard', () => {
 		await user.click(screen.getByText('Create service account'));
 
 		expect(mockOnCreateServiceAccount).toHaveBeenCalledTimes(1);
+	});
+
+	describe('cloud non-admin: instance URL unavailable', () => {
+		const cloudNonAdminProps = { ...defaultProps, isCloudUser: true };
+
+		it('shows an info banner instead of the URL', () => {
+			render(<AuthCard {...cloudNonAdminProps} isAdmin={false} />);
+
+			expect(
+				screen.getByTestId('mcp-instance-url-unavailable'),
+			).toBeInTheDocument();
+			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
+		});
+
+		it('does not render the copy button', () => {
+			render(<AuthCard {...cloudNonAdminProps} isAdmin={false} />);
+
+			expect(
+				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows URL normally for cloud admin', () => {
+			render(<AuthCard {...cloudNonAdminProps} isAdmin />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				'http://localhost',
+			);
+			expect(
+				screen.queryByTestId('mcp-instance-url-unavailable'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows URL normally for self-hosted non-admin (browser URL is correct)', () => {
+			render(<AuthCard {...defaultProps} isAdmin={false} />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				'http://localhost',
+			);
+			expect(
+				screen.queryByTestId('mcp-instance-url-unavailable'),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	describe('isLoadingInstanceUrl', () => {
+		it('shows a skeleton and hides the URL while loading', () => {
+			render(<AuthCard {...defaultProps} isAdmin isLoadingInstanceUrl />);
+
+			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
+			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+		});
+
+		it('does not render the copy button while loading', () => {
+			render(<AuthCard {...defaultProps} isAdmin isLoadingInstanceUrl />);
+
+			expect(
+				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows the URL and copy button once loading is done', () => {
+			render(<AuthCard {...defaultProps} isAdmin isLoadingInstanceUrl={false} />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				'http://localhost',
+			);
+			expect(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			).toBeInTheDocument();
+		});
 	});
 });
