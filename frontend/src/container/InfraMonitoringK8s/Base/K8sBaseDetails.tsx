@@ -37,10 +37,7 @@ import {
 	X,
 } from 'lucide-react';
 import { isCustomTimeRange, useGlobalTimeStore } from 'store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from 'store/globalTime/utils';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -190,16 +187,19 @@ function K8sBaseDetails<T>({
 	);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const lastComputedMinMax = useGlobalTimeStore((s) => s.lastComputedMinMax);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
 
-	const { startMs, endMs } = useMemo(() => {
-		const { minTime: startNs, maxTime: endNs } = getMinMaxTime(selectedTime);
-
-		return {
-			startMs: Math.floor(startNs / NANO_SECOND_MULTIPLIER),
-			endMs: Math.floor(endNs / NANO_SECOND_MULTIPLIER),
-		};
-	}, [getMinMaxTime, selectedTime]);
+	const { startMs, endMs } = useMemo(
+		() => ({
+			startMs: Math.floor(lastComputedMinMax.minTime / NANO_SECOND_MULTIPLIER),
+			endMs: Math.floor(lastComputedMinMax.maxTime / NANO_SECOND_MULTIPLIER),
+		}),
+		[lastComputedMinMax],
+	);
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,
@@ -246,7 +246,7 @@ function K8sBaseDetails<T>({
 				`${queryKeyPrefix}EntityDetails`,
 				selectedItem,
 			),
-		[queryKeyPrefix, selectedItem, selectedTime],
+		[getAutoRefreshQueryKey, queryKeyPrefix, selectedItem, selectedTime],
 	);
 
 	const {
