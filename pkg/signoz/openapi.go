@@ -5,7 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/apiserver"
@@ -87,18 +90,10 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 	}
 
 	reflector := openapi3.NewReflector()
-	reflector.JSONSchemaReflector().DefaultOptions = append(reflector.JSONSchemaReflector().DefaultOptions, jsonschema.InterceptDefName(func(t reflect.Type, defaultDefName string) string {
-		if defaultDefName == "RenderSuccessResponse" {
-			field, ok := t.FieldByName("Data")
-			if !ok {
-				return defaultDefName
-			}
-
-			return field.Type.Name()
-		}
-
-		return defaultDefName
-	}))
+	reflector.JSONSchemaReflector().DefaultOptions = append(
+		reflector.JSONSchemaReflector().DefaultOptions,
+		jsonschema.InterceptDefName(defName),
+	)
 
 	reflector.Spec.WithInfo(*(&openapi3.Info{}).
 		WithTitle("SigNoz").
@@ -166,6 +161,127 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 	}
 
 	return os.WriteFile(path, spec, 0o600)
+}
+
+// pkgPrefixOverrides maps package basenames to CamelCase prefixes when
+// stripping "types" and capitalizing the first letter is not enough to
+// recover word boundaries. Add an entry when the algorithmic prefix reads
+// poorly.
+var pkgPrefixOverrides = map[string]string{
+	"alertmanagertypes":     "AlertManager",
+	"cloudintegrationtypes": "CloudIntegration",
+	"inframonitoringtypes":  "InfraMonitoring",
+	"llmpricingruletypes":   "LLMPricingRule",
+	"metricsexplorertypes":  "MetricsExplorer",
+	"querybuildertypesv5":   "QueryBuilderV5",
+	"rulestatehistorytypes": "RuleStateHistory",
+	"serviceaccounttypes":   "ServiceAccount",
+	"tracedetailtypes":      "TraceDetail",
+}
+
+// defName produces the OpenAPI schema key for a reflected type. It replaces
+// the verbose default that swaggest/jsonschema-go produces for generic
+// instantiations and for types in "*types" packages.
+func defName(t reflect.Type, defaultDefName string) string {
+	if defaultDefName == "RenderSuccessResponse" {
+		if field, ok := t.FieldByName("Data"); ok {
+			return field.Type.Name()
+		}
+		return defaultDefName
+	}
+
+	name := t.Name()
+	if strings.Contains(name, "[") && strings.HasSuffix(name, "]") {
+		return collapseGenericName(name)
+	}
+	if name == "" {
+		return defaultDefName
+	}
+
+	name = capitalize(name)
+	prefix := packagePrefix(t.PkgPath())
+	// Skip the prefix when the type name already starts with it (case-insensitive).
+	// For example, sigv4.SigV4Config becomes SigV4Config rather than Sigv4SigV4Config.
+	if prefix == "" || (len(name) >= len(prefix) && strings.EqualFold(name[:len(prefix)], prefix)) {
+		return name
+	}
+	return prefix + name
+}
+
+func packagePrefix(pkgPath string) string {
+	base := path.Base(pkgPath)
+	if base == "." || base == "" || base == "types" {
+		return ""
+	}
+	if v, ok := pkgPrefixOverrides[base]; ok {
+		return v
+	}
+	return capitalize(stripTypesSuffix(base))
+}
+
+func stripTypesSuffix(s string) string {
+	if rest, ok := strings.CutSuffix(s, "types"); ok {
+		return rest
+	}
+	if i := strings.LastIndex(s, "typesv"); i != -1 {
+		if v := s[i+len("typesv"):]; v != "" {
+			if _, err := strconv.Atoi(v); err == nil {
+				return s[:i] + "V" + v
+			}
+		}
+	}
+	return s
+}
+
+// collapseGenericName turns a reflect.Type.Name() like
+// "QueryBuilderQuery[github.com/SigNoz/.../v5.LogAggregation]" into
+// "QueryBuilderQueryLogAggregation" by concatenating the leaf name of the
+// base and each type parameter.
+func collapseGenericName(typeName string) string {
+	open := strings.Index(typeName, "[")
+	if open == -1 {
+		if i := strings.LastIndex(typeName, "."); i != -1 {
+			return typeName[i+1:]
+		}
+		return typeName
+	}
+	end := strings.LastIndex(typeName, "]")
+	if end <= open {
+		return collapseGenericName(typeName[:open])
+	}
+
+	var sb strings.Builder
+	sb.WriteString(collapseGenericName(typeName[:open]))
+	for _, param := range splitTypeParams(typeName[open+1 : end]) {
+		sb.WriteString(collapseGenericName(param))
+	}
+	return sb.String()
+}
+
+func splitTypeParams(s string) []string {
+	var params []string
+	depth, start := 0, 0
+	for i, c := range s {
+		switch c {
+		case '[':
+			depth++
+		case ']':
+			depth--
+		case ',':
+			if depth == 0 {
+				params = append(params, strings.TrimSpace(s[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	return append(params, strings.TrimSpace(s[start:]))
+}
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 // convertJSONNumbers recursively walks a decoded JSON structure and converts
