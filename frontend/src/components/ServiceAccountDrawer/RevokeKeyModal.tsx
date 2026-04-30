@@ -17,17 +17,17 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-export interface RevokeKeyContentProps {
+export interface RevokeKeyFooterProps {
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
 }
 
-export function RevokeKeyContent({
+export function RevokeKeyFooter({
 	isRevoking,
 	onCancel,
 	onConfirm,
-}: RevokeKeyContentProps): JSX.Element {
+}: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
 			<Button variant="solid" color="secondary" onClick={onCancel}>
@@ -109,7 +109,7 @@ function RevokeKeyModal(): JSX.Element {
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
 			footer={
-				<RevokeKeyContent
+				<RevokeKeyFooter
 					isRevoking={isRevoking}
 					onCancel={handleCancel}
 					onConfirm={handleConfirm}
