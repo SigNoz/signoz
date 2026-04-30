@@ -16,7 +16,10 @@ import { InfraMonitoringEvents } from 'constants/events';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
-import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from 'store/globalTime/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -111,9 +114,6 @@ export function K8sBaseList<T>({
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
 	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
-	const getAutoRefreshQueryKey = useGlobalTimeStore(
-		(s) => s.getAutoRefreshQueryKey,
-	);
 
 	const queryKey = useMemo(() => {
 		return getAutoRefreshQueryKey(
@@ -127,7 +127,6 @@ export function K8sBaseList<T>({
 			JSON.stringify(groupBy),
 		);
 	}, [
-		getAutoRefreshQueryKey,
 		selectedTime,
 		entity,
 		pageSize,
