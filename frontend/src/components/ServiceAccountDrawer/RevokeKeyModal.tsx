@@ -17,39 +17,32 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
-export interface RevokeKeyContentProps {
+export interface RevokeKeyFooterProps {
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
 }
 
-export function RevokeKeyContent({
+export function RevokeKeyFooter({
 	isRevoking,
 	onCancel,
 	onConfirm,
-}: RevokeKeyContentProps): JSX.Element {
+}: RevokeKeyFooterProps): JSX.Element {
 	return (
 		<>
-			<p className="delete-dialog__body">
-				Revoking this key will permanently invalidate it. Any systems using this key
-				will lose access immediately.
-			</p>
-			<div className="delete-dialog__footer">
-				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
-					<X size={12} />
-					Cancel
-				</Button>
-				<Button
-					variant="solid"
-					color="destructive"
-					size="sm"
-					loading={isRevoking}
-					onClick={onConfirm}
-				>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
-			</div>
+			<Button variant="solid" color="secondary" onClick={onCancel}>
+				<X size={12} />
+				Cancel
+			</Button>
+			<Button
+				variant="solid"
+				color="destructive"
+				loading={isRevoking}
+				onClick={onConfirm}
+			>
+				<Trash2 size={12} />
+				Revoke Key
+			</Button>
 		</>
 	);
 }
@@ -112,15 +105,19 @@ function RevokeKeyModal(): JSX.Element {
 			}}
 			title={`Revoke ${keyName ?? 'key'}?`}
 			width="narrow"
-			className="alert-dialog delete-dialog"
+			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={isErrorModalVisible}
+			footer={
+				<RevokeKeyFooter
+					isRevoking={isRevoking}
+					onCancel={handleCancel}
+					onConfirm={handleConfirm}
+				/>
+			}
 		>
-			<RevokeKeyContent
-				isRevoking={isRevoking}
-				onCancel={handleCancel}
-				onConfirm={handleConfirm}
-			/>
+			Revoking this key will permanently invalidate it. Any systems using this key
+			will lose access immediately.
 		</DialogWrapper>
 	);
 }

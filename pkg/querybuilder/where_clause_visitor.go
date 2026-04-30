@@ -362,6 +362,10 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
+		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+		}
+
 		return cond
 	}
 
@@ -715,6 +719,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ErrorConditionLiteral
+	}
+
+	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 	}
 
 	return cond

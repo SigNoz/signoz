@@ -204,6 +204,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					>
 						<Dropdown
 							trigger={['click']}
+							disabled={isFetchingHosts}
 							dropdownRender={(): JSX.Element => (
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
@@ -239,12 +240,7 @@ export default function CustomDomainSettings(): JSX.Element {
 								</div>
 							)}
 						>
-							<Button
-								className="workspace-url-trigger"
-								disabled={isFetchingHosts}
-								variant="link"
-								color="none"
-							>
+							<Button variant="link" color="none">
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
 								<ChevronDown size={12} />
