@@ -7,7 +7,6 @@ const mockOnCreateServiceAccount = jest.fn();
 
 const defaultProps = {
 	instanceUrl: 'http://localhost',
-	isCloudUser: false,
 	onCopyInstanceUrl: mockOnCopyInstanceUrl,
 	onCreateServiceAccount: mockOnCreateServiceAccount,
 };
@@ -69,47 +68,12 @@ describe('AuthCard', () => {
 		expect(mockOnCreateServiceAccount).toHaveBeenCalledTimes(1);
 	});
 
-	describe('cloud non-admin: instance URL unavailable', () => {
-		const cloudNonAdminProps = { ...defaultProps, isCloudUser: true };
+	it('shows URL for non-admin (all roles can fetch instance URL)', () => {
+		render(<AuthCard {...defaultProps} isAdmin={false} />);
 
-		it('shows an info banner instead of the URL', () => {
-			render(<AuthCard {...cloudNonAdminProps} isAdmin={false} />);
-
-			expect(
-				screen.getByTestId('mcp-instance-url-unavailable'),
-			).toBeInTheDocument();
-			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
-		});
-
-		it('does not render the copy button', () => {
-			render(<AuthCard {...cloudNonAdminProps} isAdmin={false} />);
-
-			expect(
-				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
-			).not.toBeInTheDocument();
-		});
-
-		it('shows URL normally for cloud admin', () => {
-			render(<AuthCard {...cloudNonAdminProps} isAdmin />);
-
-			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
-				'http://localhost',
-			);
-			expect(
-				screen.queryByTestId('mcp-instance-url-unavailable'),
-			).not.toBeInTheDocument();
-		});
-
-		it('shows URL normally for self-hosted non-admin (browser URL is correct)', () => {
-			render(<AuthCard {...defaultProps} isAdmin={false} />);
-
-			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
-				'http://localhost',
-			);
-			expect(
-				screen.queryByTestId('mcp-instance-url-unavailable'),
-			).not.toBeInTheDocument();
-		});
+		expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+			'http://localhost',
+		);
 	});
 
 	describe('isLoadingInstanceUrl', () => {

@@ -42,7 +42,7 @@ function MCPServerSettings(): JSX.Element {
 		data: hostsData,
 		isLoading: isLoadingHosts,
 		isError: isHostsError,
-	} = useGetHosts({ query: { enabled: isCloudUser && isAdmin } });
+	} = useGetHosts({ query: { enabled: isCloudUser } });
 
 	const instanceUrl = useMemo(() => {
 		if (isLoadingHosts || isHostsError || !hostsData) {
@@ -152,7 +152,6 @@ function MCPServerSettings(): JSX.Element {
 
 			<AuthCard
 				isAdmin={isAdmin}
-				isCloudUser={isCloudUser}
 				instanceUrl={instanceUrl}
 				isLoadingInstanceUrl={isLoadingHosts}
 				onCopyInstanceUrl={handleCopyInstanceUrl}

@@ -321,40 +321,31 @@ describe('MCPServerSettings', () => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
 		});
 
-		it('disables the hosts query for cloud non-admin users', () => {
+		it('enables the hosts query for all cloud users including viewers', () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupLicense({ isCloudUser: true });
 
 			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
 
 			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
-			expect(callOptions?.query?.enabled).toBe(false);
+			expect(callOptions?.query?.enabled).toBe(true);
 		});
 
-		it('shows "ask admin" banner for cloud non-admin instead of the URL', () => {
+		it('shows instance URL for cloud viewer', () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupLicense({ isCloudUser: true });
-			setupHosts({ isLoading: false });
+			setupHosts({
+				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
+			});
 
 			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
 
 			expect(
 				document.querySelector('.ant-skeleton-input'),
 			).not.toBeInTheDocument();
-			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
-			expect(
-				screen.getByTestId('mcp-instance-url-unavailable'),
-			).toBeInTheDocument();
-		});
-
-		it('enables the hosts query only for cloud admins', () => {
-			setupGlobalConfig({ mcpUrl: MCP_URL });
-			setupLicense({ isCloudUser: true });
-
-			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
-
-			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
-			expect(callOptions?.query?.enabled).toBe(true);
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				DEFAULT_HOST_URL,
+			);
 		});
 	});
 });

@@ -7,7 +7,6 @@ import './AuthCard.styles.scss';
 
 interface AuthCardProps {
 	isAdmin: boolean;
-	isCloudUser: boolean;
 	instanceUrl: string;
 	isLoadingInstanceUrl?: boolean;
 	onCopyInstanceUrl: () => void;
@@ -16,13 +15,11 @@ interface AuthCardProps {
 
 function AuthCard({
 	isAdmin,
-	isCloudUser,
 	instanceUrl,
 	isLoadingInstanceUrl = false,
 	onCopyInstanceUrl,
 	onCreateServiceAccount,
 }: AuthCardProps): JSX.Element {
-	const showInstanceUrlUnavailable = isCloudUser && !isAdmin;
 	return (
 		<section className="mcp-auth-card">
 			<h3 className="mcp-auth-card__title">
@@ -38,17 +35,7 @@ function AuthCard({
 
 			<div className="mcp-auth-card__field">
 				<span className="mcp-auth-card__field-label">SigNoz Instance URL</span>
-				{showInstanceUrlUnavailable ? (
-					<div className="mcp-auth-card__info-banner">
-						<Info size={14} />
-						<span
-							className="mcp-auth-card__helper-text"
-							data-testid="mcp-instance-url-unavailable"
-						>
-							Ask your workspace admin for the SigNoz instance URL.
-						</span>
-					</div>
-				) : isLoadingInstanceUrl ? (
+				{isLoadingInstanceUrl ? (
 					<Skeleton.Input active size="small" />
 				) : (
 					<div className="mcp-auth-card__endpoint-value">
