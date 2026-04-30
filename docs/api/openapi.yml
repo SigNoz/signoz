@@ -17273,9 +17273,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - VIEWER
       - tokenizer:
-        - ADMIN
+        - VIEWER
       summary: Get host info from Zeus.
       tags:
       - zeus
