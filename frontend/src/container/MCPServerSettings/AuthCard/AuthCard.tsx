@@ -1,3 +1,4 @@
+import { Skeleton } from 'antd';
 import { Badge, Button } from '@signozhq/ui';
 import { Info, KeyRound } from '@signozhq/icons';
 import CopyIconButton from '../CopyIconButton';
@@ -7,6 +8,7 @@ import './AuthCard.styles.scss';
 interface AuthCardProps {
 	isAdmin: boolean;
 	instanceUrl: string;
+	isLoadingInstanceUrl?: boolean;
 	onCopyInstanceUrl: () => void;
 	onCreateServiceAccount: () => void;
 }
@@ -14,6 +16,7 @@ interface AuthCardProps {
 function AuthCard({
 	isAdmin,
 	instanceUrl,
+	isLoadingInstanceUrl = false,
 	onCopyInstanceUrl,
 	onCreateServiceAccount,
 }: AuthCardProps): JSX.Element {
@@ -32,13 +35,18 @@ function AuthCard({
 
 			<div className="mcp-auth-card__field">
 				<span className="mcp-auth-card__field-label">SigNoz Instance URL</span>
-				<div className="mcp-auth-card__endpoint-value">
-					<span data-testid="mcp-instance-url">{instanceUrl}</span>
-					<CopyIconButton
-						ariaLabel="Copy SigNoz instance URL"
-						onCopy={onCopyInstanceUrl}
-					/>
-				</div>
+				{isLoadingInstanceUrl ? (
+					<Skeleton.Input active size="small" />
+				) : (
+					<div className="mcp-auth-card__endpoint-value">
+						<span data-testid="mcp-instance-url">{instanceUrl}</span>
+						<CopyIconButton
+							ariaLabel="Copy SigNoz instance URL"
+							onCopy={onCopyInstanceUrl}
+							disabled={isLoadingInstanceUrl}
+						/>
+					</div>
+				)}
 			</div>
 
 			<div className="mcp-auth-card__field">
