@@ -241,7 +241,7 @@
     "*.(js|jsx|ts|tsx)": [
       "oxlint --fix",
       "oxfmt --write",
-      "tsgo --noEmit"
+      "sh -c tsgo --noEmit"
     ],
     "*.(scss|css)": [
       "stylelint"
