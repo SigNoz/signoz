@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
@@ -77,6 +78,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ rulestatehistory.Handler }{},
 		struct{ spanmapper.Handler }{},
 		struct{ alertmanager.Handler }{},
+		struct{ llmpricingrule.Handler }{},
 		struct{ tracedetail.Handler }{},
 		struct{ ruler.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
