@@ -30,8 +30,11 @@ function getCommonGroupByKeys(
 }
 
 /**
- * Returns the 1-based indexes of every series whose metric matches
- * sourceMetric on all commonKeys.
+ * Returns the 1-based indexes of every visible series whose metric matches
+ * sourceMetric on all commonKeys. Hidden series (show === false) are
+ * excluded — a hidden match contributes nothing to the receiver tooltip,
+ * so treating it as "no match" lets the empty-array path suppress the
+ * tooltip entirely instead of rendering an empty shell.
  */
 function findMatchingSeriesIndexes(
 	series: uPlot.Series[],
@@ -39,7 +42,7 @@ function findMatchingSeriesIndexes(
 	commonKeys: string[],
 ): number[] {
 	return series.reduce<number[]>((acc, s, i) => {
-		if (i === 0) {
+		if (i === 0 || s.show === false) {
 			return acc;
 		}
 		const metric = (s as ExtendedSeries).metric;

@@ -3,10 +3,12 @@ import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSe
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -15,6 +17,8 @@ import get from 'lodash/get';
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
 import '../Panel.styles.scss';
+import { PanelMode } from '../types';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -32,6 +36,9 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
+
+	const dashboardId = useDashboardStore((s) => s.dashboardData?.id);
+	const [syncMode] = useDashboardCursorSyncMode(dashboardId);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -81,6 +88,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		minTimeScale,
 		maxTimeScale,
 		timezone,
+		// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
+		// Rebuild it on syncMode changes so the new chart instance starts from a
+		// clean config — otherwise switching to "No Sync" would inherit stale sync
+		// settings from the previous mode.
+		syncMode,
 	]);
 
 	const layoutChildren = useMemo(() => {
@@ -109,10 +121,18 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		return get(widget, 'query.builder.queryData[0].groupBy', []);
 	}, [widget.query]);
 
+	const cursorSyncMode = useMemo(() => {
+		if (panelMode !== PanelMode.DASHBOARD_VIEW) {
+			return DashboardCursorSync.None;
+		}
+		return syncMode;
+	}, [syncMode, panelMode]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<TimeSeries
+					key={cursorSyncMode}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
@@ -125,6 +145,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					groupBy={groupBy}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
+					syncMode={cursorSyncMode}
 					layoutChildren={layoutChildren}
 				>
 					<ContextMenu

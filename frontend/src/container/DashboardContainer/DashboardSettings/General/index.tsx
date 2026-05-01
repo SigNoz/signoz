@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Col, Input, Select, Space, Typography } from 'antd';
+import { Col, Input, Radio, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
@@ -18,6 +20,10 @@ function GeneralDashboardSettings(): JSX.Element {
 	const { dashboardData, setDashboardData } = useDashboardStore();
 
 	const updateDashboardMutation = useUpdateDashboard();
+
+	const [cursorSyncMode, setCursorSyncMode] = useDashboardCursorSyncMode(
+		dashboardData?.id,
+	);
 
 	const selectedData = dashboardData?.data;
 
@@ -158,6 +164,28 @@ function GeneralDashboardSettings(): JSX.Element {
 						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
 					</div>
 				</Space>
+			</Col>
+			<Col className="overview-settings cross-panel-sync">
+				<div className="cross-panel-sync__info">
+					<Typography.Text className="cross-panel-sync__title">
+						Cross-Panel Sync
+					</Typography.Text>
+					<Typography.Text className="cross-panel-sync__description">
+						Sync crosshair and tooltip across all the dashboard panels
+					</Typography.Text>
+				</div>
+				<Radio.Group
+					value={cursorSyncMode}
+					onChange={(e): void => {
+						setCursorSyncMode(e.target.value as DashboardCursorSync);
+					}}
+				>
+					<Radio.Button value={DashboardCursorSync.None}>No Sync</Radio.Button>
+					<Radio.Button value={DashboardCursorSync.Crosshair}>
+						Crosshair
+					</Radio.Button>
+					<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
+				</Radio.Group>
 			</Col>
 			{numberOfUnsavedChanges > 0 && (
 				<div className="overview-settings-footer">

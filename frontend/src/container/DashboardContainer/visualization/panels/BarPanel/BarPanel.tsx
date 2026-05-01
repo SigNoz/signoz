@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
+import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import ContextMenu from 'periscope/components/ContextMenu';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
@@ -15,6 +17,8 @@ import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
 import get from 'lodash/get';
+import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { PanelMode } from '../types';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -33,6 +37,9 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
+
+	const dashboardId = useDashboardStore((s) => s.dashboardData?.id);
+	const [syncMode] = useDashboardCursorSyncMode(dashboardId);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -75,6 +82,11 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		maxTimeScale,
 		timezone,
 		panelMode,
+		// `config` gets mutated by TooltipPlugin (config.setCursor for cursor sync).
+		// Rebuild it on syncMode changes so the new chart instance starts from a
+		// clean config — otherwise switching to "No Sync" would inherit stale sync
+		// settings from the previous mode.
+		syncMode,
 	]);
 
 	const chartData = useMemo(() => {
@@ -118,10 +130,18 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		return get(widget, 'query.builder.queryData[0].groupBy', []);
 	}, [widget.query]);
 
+	const cursorSyncMode = useMemo(() => {
+		if (panelMode !== PanelMode.DASHBOARD_VIEW) {
+			return DashboardCursorSync.None;
+		}
+		return syncMode;
+	}, [syncMode, panelMode]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<BarChart
+					key={cursorSyncMode}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
@@ -138,6 +158,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
+					syncMode={cursorSyncMode}
 				>
 					<ContextMenu
 						coordinates={coordinates}

@@ -1,11 +1,42 @@
 .overview-content {
 	display: flex;
 	flex-direction: column;
+	gap: 16px;
 
 	.overview-settings {
 		border-radius: 3px;
 		border: 1px solid var(--l1-border);
 		padding: 16px !important;
+
+		&.cross-panel-sync {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+
+			.cross-panel-sync__info {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+
+				.cross-panel-sync__title {
+					color: var(--l2-foreground);
+					font-family: Inter;
+					font-size: 14px;
+					font-weight: 400;
+					line-height: 20px;
+				}
+
+				.cross-panel-sync__description {
+					color: var(--l3-foreground);
+					font-family: Inter;
+					font-size: 13px;
+					font-weight: 400;
+					line-height: 20px;
+				}
+			}
+		}
 
 		.name-icon-input {
 			display: flex;
