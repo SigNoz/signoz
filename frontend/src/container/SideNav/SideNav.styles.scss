@@ -486,7 +486,11 @@
 					right: -9px;
 					cursor: pointer;
 
-					display: none;
+					// Keep the resize/expand handle visible and clickable even when
+					// the sidebar is collapsed so users can re-open it from this
+					// state (fixes #9370). It used to be display: none here.
+					display: block;
+					pointer-events: auto;
 
 					transition: display 0.3s;
 
