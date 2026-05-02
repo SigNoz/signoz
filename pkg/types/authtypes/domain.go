@@ -29,8 +29,8 @@ var (
 )
 
 type GettableAuthDomain struct {
-	*StorableAuthDomain
-	*AuthDomainConfig
+	StorableAuthDomain
+	AuthDomainConfig
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
@@ -111,8 +111,8 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 
 func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
-		StorableAuthDomain: authDomain.StorableAuthDomain(),
-		AuthDomainConfig:   authDomain.AuthDomainConfig(),
+		StorableAuthDomain: *authDomain.StorableAuthDomain(),
+		AuthDomainConfig:   *authDomain.AuthDomainConfig(),
 		AuthNProviderInfo:  authNProviderInfo,
 	}
 }
@@ -184,6 +184,14 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 	*typ = AuthDomainConfig(temp)
 	return nil
 
+}
+
+func (AuthDomainConfig) JSONSchemaOneOf() []any {
+	return []any{
+		SamlConfig{},
+		GoogleConfig{},
+		OIDCConfig{},
+	}
 }
 
 type AuthDomainStore interface {
