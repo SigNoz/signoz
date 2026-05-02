@@ -57,6 +57,15 @@ type StorableAuthDomain struct {
 	types.TimeAuditable
 }
 
+// TODO: the oneOf emitted by JSONSchemaOneOf is not the shape OpenAPI wants
+// for a discriminated union. OpenAPI's discriminator requires every oneOf
+// branch to be a $ref to a named component and a sibling property whose value
+// selects the variant. ssoType is already discriminator-shaped, but the
+// variant payload lives in a sibling field (samlConfig / googleAuthConfig /
+// oidcConfig) instead of being the payload itself, so no discriminator can
+// be attached. Refactor AuthDomainConfig into an envelope (see
+// ruletypes.RuleThresholdData for the pattern) where the chosen config is
+// the payload and ssoType is the discriminator.
 type AuthDomainConfig struct {
 	SSOEnabled    bool          `json:"ssoEnabled"`
 	AuthNProvider AuthNProvider `json:"ssoType"`

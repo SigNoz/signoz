@@ -30,6 +30,14 @@ type Channels = []*Channel
 
 type GettableChannels = []*Channel
 
+// TODO: the oneOf emitted by JSONSchema is not the shape OpenAPI wants for a
+// discriminated union. OpenAPI's discriminator requires every oneOf branch to
+// be a $ref to a named component and a sibling property whose value selects
+// the variant. Our payload instead uses the *presence* of one of the 18
+// *_configs arrays to imply the type, so no discriminator can be attached.
+// Refactor PostableChannel into a {name, type, config} envelope (see
+// ruletypes.RuleThresholdData for the pattern) so each notification kind
+// becomes a named component and the discriminator can be wired up properly.
 type PostableChannel struct {
 	Receiver
 }
