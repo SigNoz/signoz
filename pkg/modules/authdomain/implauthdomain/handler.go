@@ -77,6 +77,31 @@ func (handler *handler) Delete(rw http.ResponseWriter, req *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+func (handler *handler) Get(rw http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	domainID, err := valuer.NewUUID(mux.Vars(req)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	authDomain, err := handler.module.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), domainID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, authtypes.NewGettableAuthDomainFromAuthDomain(authDomain, handler.module.GetAuthNProviderInfo(ctx, authDomain)))
+}
+
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

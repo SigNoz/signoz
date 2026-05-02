@@ -7166,6 +7166,63 @@ paths:
       summary: Delete auth domain
       tags:
       - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
     put:
       deprecated: false
       description: This endpoint updates an auth domain

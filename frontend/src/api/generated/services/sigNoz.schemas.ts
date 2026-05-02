@@ -8456,6 +8456,17 @@ export type CreateAuthDomain200 = {
 export type DeleteAuthDomainPathParameters = {
 	id: string;
 };
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
