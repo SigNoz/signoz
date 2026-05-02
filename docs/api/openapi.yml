@@ -265,8 +265,15 @@ components:
         ssoEnabled:
           type: boolean
         ssoType:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
+    AuthtypesAuthNProvider:
+      enum:
+      - google_auth
+      - saml
+      - email_password
+      - oidc
+      type: string
     AuthtypesAuthNProviderInfo:
       properties:
         relayStatePath:
@@ -289,7 +296,7 @@ components:
     AuthtypesCallbackAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         url:
           type: string
       type: object
@@ -321,7 +328,7 @@ components:
         ssoEnabled:
           type: boolean
         ssoType:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         updatedAt:
           format: date-time
           type: string
@@ -447,7 +454,7 @@ components:
     AuthtypesPasswordAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
     AuthtypesPatchableObjects:
       properties:

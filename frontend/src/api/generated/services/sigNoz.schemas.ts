@@ -1581,10 +1581,7 @@ export type AuthtypesAuthDomainConfigDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 	  })
 	| (AuthtypesGoogleConfigDTO & {
 			googleAuthConfig?: AuthtypesGoogleConfigDTO;
@@ -1595,10 +1592,7 @@ export type AuthtypesAuthDomainConfigDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 	  })
 	| (AuthtypesOIDCConfigDTO & {
 			googleAuthConfig?: AuthtypesGoogleConfigDTO;
@@ -1609,12 +1603,15 @@ export type AuthtypesAuthDomainConfigDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 	  });
 
+export enum AuthtypesAuthNProviderDTO {
+	google_auth = 'google_auth',
+	saml = 'saml',
+	email_password = 'email_password',
+	oidc = 'oidc',
+}
 export interface AuthtypesAuthNProviderInfoDTO {
 	/**
 	 * @type string
@@ -1637,10 +1634,7 @@ export interface AuthtypesAuthNSupportDTO {
 }
 
 export interface AuthtypesCallbackAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
+	provider?: AuthtypesAuthNProviderDTO;
 	/**
 	 * @type string
 	 */
@@ -1675,10 +1669,7 @@ export type AuthtypesGettableAuthDomainDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 			/**
 			 * @type string
 			 * @format date-time
@@ -1712,10 +1703,7 @@ export type AuthtypesGettableAuthDomainDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 			/**
 			 * @type string
 			 * @format date-time
@@ -1749,10 +1737,7 @@ export type AuthtypesGettableAuthDomainDTO =
 			 * @type boolean
 			 */
 			ssoEnabled?: boolean;
-			/**
-			 * @type string
-			 */
-			ssoType?: string;
+			ssoType?: AuthtypesAuthNProviderDTO;
 			/**
 			 * @type string
 			 * @format date-time
@@ -1911,10 +1896,7 @@ export interface AuthtypesOrgSessionContextDTO {
 }
 
 export interface AuthtypesPasswordAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
+	provider?: AuthtypesAuthNProviderDTO;
 }
 
 export interface AuthtypesPatchableObjectsDTO {
