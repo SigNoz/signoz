@@ -137,77 +137,77 @@ components:
       properties:
         discord_configs:
           items:
-            $ref: '#/definitions/ConfigDiscordConfig'
+            $ref: '#/components/schemas/ConfigDiscordConfig'
           type: array
         email_configs:
           items:
-            $ref: '#/definitions/ConfigEmailConfig'
+            $ref: '#/components/schemas/ConfigEmailConfig'
           type: array
         incidentio_configs:
           items:
-            $ref: '#/definitions/ConfigIncidentioConfig'
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
           type: array
         jira_configs:
           items:
-            $ref: '#/definitions/ConfigJiraConfig'
+            $ref: '#/components/schemas/ConfigJiraConfig'
           type: array
         mattermost_configs:
           items:
-            $ref: '#/definitions/ConfigMattermostConfig'
+            $ref: '#/components/schemas/ConfigMattermostConfig'
           type: array
         msteams_configs:
           items:
-            $ref: '#/definitions/ConfigMSTeamsConfig'
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
           type: array
         msteamsv2_configs:
           items:
-            $ref: '#/definitions/ConfigMSTeamsV2Config'
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
           type: array
         name:
           type: string
         opsgenie_configs:
           items:
-            $ref: '#/definitions/ConfigOpsGenieConfig'
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
           type: array
         pagerduty_configs:
           items:
-            $ref: '#/definitions/ConfigPagerdutyConfig'
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
           type: array
         pushover_configs:
           items:
-            $ref: '#/definitions/ConfigPushoverConfig'
+            $ref: '#/components/schemas/ConfigPushoverConfig'
           type: array
         rocketchat_configs:
           items:
-            $ref: '#/definitions/ConfigRocketchatConfig'
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
           type: array
         slack_configs:
           items:
-            $ref: '#/definitions/ConfigSlackConfig'
+            $ref: '#/components/schemas/ConfigSlackConfig'
           type: array
         sns_configs:
           items:
-            $ref: '#/definitions/ConfigSNSConfig'
+            $ref: '#/components/schemas/ConfigSNSConfig'
           type: array
         telegram_configs:
           items:
-            $ref: '#/definitions/ConfigTelegramConfig'
+            $ref: '#/components/schemas/ConfigTelegramConfig'
           type: array
         victorops_configs:
           items:
-            $ref: '#/definitions/ConfigVictorOpsConfig'
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
           type: array
         webex_configs:
           items:
-            $ref: '#/definitions/ConfigWebexConfig'
+            $ref: '#/components/schemas/ConfigWebexConfig'
           type: array
         webhook_configs:
           items:
-            $ref: '#/definitions/ConfigWebhookConfig'
+            $ref: '#/components/schemas/ConfigWebhookConfig'
           type: array
         wechat_configs:
           items:
-            $ref: '#/definitions/ConfigWechatConfig'
+            $ref: '#/components/schemas/ConfigWechatConfig'
           type: array
       required:
       - name

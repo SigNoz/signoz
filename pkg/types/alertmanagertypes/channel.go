@@ -194,7 +194,7 @@ func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
 	type alias PostableChannel
 	reflector := &jsonschema.Reflector{}
 
-	schema, err := reflector.Reflect(alias{})
+	schema, err := reflector.Reflect(alias{}, jsonschema.DefinitionsPrefix("#/components/schemas/"))
 	if err != nil {
 		return jsonschema.Schema{}, err
 	}
