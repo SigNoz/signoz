@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { Check } from '@signozhq/icons';
 import {
 	Button,
@@ -55,6 +61,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { PanelMode } from 'rc-picker/lib/interface';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -88,7 +95,7 @@ interface PlannedDowntimeFormProps {
 	setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
 	refetchAllSchedules: () => void;
 	isEditMode: boolean;
-	form: FormInstance<any>;
+	form: FormInstance;
 }
 
 export function PlannedDowntimeForm(
@@ -132,14 +139,13 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
-	const datePickerFooter = (mode: any): any =>
+	const datePickerFooter = (mode: PanelMode): ReactNode =>
 		mode === 'time' ? (
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
 
 	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
-			const shouldKeepLocalTime = !isEditMode;
 			const data: RuletypesPostablePlannedMaintenanceDTO = {
 				alertIds: values.alertRules
 					.map((alert) => alert.value)
@@ -151,7 +157,6 @@ export function PlannedDowntimeForm(
 							values.startTime,
 							timezoneInitialValue,
 							values.timezone,
-							shouldKeepLocalTime,
 						),
 					),
 					timezone: values.timezone as string,
@@ -161,7 +166,6 @@ export function PlannedDowntimeForm(
 									values.endTime,
 									timezoneInitialValue,
 									values.timezone,
-									shouldKeepLocalTime,
 								),
 							)
 						: undefined,
@@ -324,7 +328,6 @@ export function PlannedDowntimeForm(
 				startTime,
 				timezoneInitialValue,
 				formData?.timezone,
-				!isEditMode,
 			);
 		}
 		const daysOfWeek = formData?.recurrence?.repeatOn;
@@ -358,7 +361,7 @@ export function PlannedDowntimeForm(
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
-	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+	}, [formData, recurrenceType, timezoneInitialValue]);
 
 	const endTimeText = useMemo((): string => {
 		let endTime = formData?.endTime;
@@ -371,7 +374,6 @@ export function PlannedDowntimeForm(
 				endTime,
 				timezoneInitialValue,
 				formData?.timezone,
-				!isEditMode,
 			);
 		}
 
@@ -386,7 +388,7 @@ export function PlannedDowntimeForm(
 			DATE_FORMAT,
 		);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
-	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
+	}, [formData, timezoneInitialValue]);
 
 	return (
 		<Modal
@@ -421,7 +423,7 @@ export function PlannedDowntimeForm(
 					name="startTime"
 					rules={formValidationRules}
 					className={!isEmpty(startTimeText) ? 'formItemWithBullet' : ''}
-					getValueProps={(value): any => ({
+					getValueProps={(value) => ({
 						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
 					})}
 				>
@@ -502,7 +504,7 @@ export function PlannedDowntimeForm(
 						},
 					]}
 					className={!isEmpty(endTimeText) ? 'formItemWithBullet' : ''}
-					getValueProps={(value): any => ({
+					getValueProps={(value) => ({
 						value: value ? dayjs(value).tz(timezoneInitialValue) : undefined,
 					})}
 				>

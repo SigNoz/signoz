@@ -192,7 +192,12 @@ export function CollapseListContent({
 				),
 			)}
 			{renderItems('Timezone', <Typography>{timezone || '-'}</Typography>)}
-			{renderItems('Repeats', <Typography>{recurrenceInfo(timeframe[0], timeframe[1], repeats)}</Typography>)}
+			{renderItems(
+				'Repeats',
+				<Typography>
+					{recurrenceInfo(timeframe[0], timeframe[1], repeats)}
+				</Typography>,
+			)}
 			{renderItems(
 				'Alerts silenced',
 				alertOptions?.length ? (
