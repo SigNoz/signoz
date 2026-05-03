@@ -148,13 +148,13 @@ func (m *PlannedMaintenance) ShouldSkip(ruleID string, now time.Time) bool {
 		return false
 	}
 
-	// TODO: `In(loc)` conversions seem redundant
 	// If alert is found, we check if it should be skipped based on the schedule
 	loc, err := time.LoadLocation(m.Schedule.Timezone)
 	if err != nil {
 		return false
 	}
 
+	// TODO(jatinderjit): `In(loc)` conversions seem redundant
 	currentTime := now.In(loc)
 	startTime := m.Schedule.StartTime.In(loc)
 	endTime := m.Schedule.EndTime.In(loc)

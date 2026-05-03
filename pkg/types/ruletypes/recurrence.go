@@ -147,7 +147,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		// TODO: if endTime.IsZero() then we should not set the endTime
+		// TODO(jatinderjit): if endTime.IsZero() then we should not set the endTime
 		s.EndTime = time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endTime.Hour(), endTime.Minute(), endTime.Second(), endTime.Nanosecond(), loc)
 	}
 
