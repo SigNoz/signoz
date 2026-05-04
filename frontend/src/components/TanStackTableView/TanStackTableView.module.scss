@@ -49,7 +49,8 @@
 	width: 100%;
 	overflow-x: auto;
 	scrollbar-width: thin;
-	scrollbar-color: var(--bg-slate-300) transparent;
+	scrollbar-color: var(--tanstack-table-scrollbar-color, var(--bg-slate-300))
+		transparent;
 
 	&::-webkit-scrollbar {
 		width: 4px;
@@ -65,12 +66,12 @@
 	}
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--bg-slate-300);
+		background: var(--tanstack-table-scrollbar-color, var(--bg-slate-300));
 		border-radius: 9999px;
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--bg-slate-200);
+		background: var(--tanstack-table-scrollbar-hover-color, var(--bg-slate-200));
 	}
 
 	&.cellTypographySmall {
@@ -135,18 +136,25 @@
 	z-index: 3;
 	border-radius: 8px;
 	padding: 8px 16px;
-	background: var(--l1-background);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	background: var(--tanstack-table-loading-overlay-bg, var(--l1-background));
+	box-shadow: var(
+		--tanstack-table-loading-overlay-shadow,
+		0 2px 8px rgba(0, 0, 0, 0.15)
+	);
 }
 
 :global(.lightMode) .tanstackTableVirtuosoScroll {
-	scrollbar-color: var(--bg-vanilla-300) transparent;
+	scrollbar-color: var(--tanstack-table-scrollbar-color, var(--bg-vanilla-300))
+		transparent;
 
 	&::-webkit-scrollbar-thumb {
-		background: var(--bg-vanilla-300);
+		background: var(--tanstack-table-scrollbar-color, var(--bg-vanilla-300));
 	}
 
 	&::-webkit-scrollbar-thumb:hover {
-		background: var(--bg-vanilla-100);
+		background: var(
+			--tanstack-table-scrollbar-hover-color,
+			var(--bg-vanilla-100)
+		);
 	}
 }

@@ -1,15 +1,3 @@
-.entityProgressBar {
-	display: flex;
-	align-items: center;
-}
-
-.progressBar {
-	flex: 1;
-	margin-right: 8px;
-	margin-bottom: 0;
-	min-width: 100px;
-}
-
 .eventContentContainer {
 	:global(.ant-table) {
 		background: var(--l1-background);

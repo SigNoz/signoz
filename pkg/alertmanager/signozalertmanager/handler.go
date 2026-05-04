@@ -252,6 +252,7 @@ func (handler *handler) CreateChannel(rw http.ResponseWriter, req *http.Request)
 		return
 	}
 
+	// TODO: Move to PostableChannel and binding package
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		render.Error(rw, err)

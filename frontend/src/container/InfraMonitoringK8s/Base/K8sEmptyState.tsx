@@ -7,7 +7,7 @@ import { AlertTriangle, LifeBuoy } from 'lucide-react';
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 import eyesEmojiUrl from '@/assets/Images/eyesEmoji.svg';
 
-import { K8sBaseListEmptyStateContext } from './K8sBaseList';
+import type { K8sBaseListEmptyStateContext } from './K8sBaseList';
 
 import styles from './K8sEmptyState.module.scss';
 

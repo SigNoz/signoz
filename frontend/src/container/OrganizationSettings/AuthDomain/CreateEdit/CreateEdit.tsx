@@ -7,6 +7,7 @@ import {
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
 import {
+	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesRoleMappingDTO,
@@ -57,9 +58,9 @@ interface CreateOrEditProps {
 function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const { isCreate, record, onClose } = props;
 	const [form] = Form.useForm<FormValues>();
-	const [authnProvider, setAuthnProvider] = useState<string>(
-		record?.ssoType || '',
-	);
+	const [authnProvider, setAuthnProvider] = useState<
+		AuthtypesAuthNProviderDTO | ''
+	>(record?.ssoType || '');
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();
@@ -135,6 +136,10 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 		try {
 			await form.validateFields();
 		} catch {
+			return;
+		}
+
+		if (authnProvider === '') {
 			return;
 		}
 

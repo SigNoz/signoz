@@ -9,7 +9,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical } from 'lucide-react';
 
 import { SortState, TableColumnDef } from './types';
 
@@ -177,12 +177,17 @@ function TanStackHeaderRow<TData>({
 									? column.header()
 									: String(column.header || '').replace(/^\w/, (c) => c.toUpperCase())}
 						</span>
-						<span className={headerStyles.tanstackSortIndicator}>
+						<span
+							className={headerStyles.tanstackSortIndicator}
+							data-sort-direction={currentSortDirection || 'none'}
+						>
 							{currentSortDirection === 'asc' ? (
-								<ChevronUp size={SORT_ICON_SIZE} />
+								<ArrowUp size={SORT_ICON_SIZE} />
 							) : currentSortDirection === 'desc' ? (
-								<ChevronDown size={SORT_ICON_SIZE} />
-							) : null}
+								<ArrowDown size={SORT_ICON_SIZE} />
+							) : (
+								<ArrowUpDown size={SORT_ICON_SIZE} />
+							)}
 						</span>
 					</button>
 				) : (

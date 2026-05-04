@@ -1,164 +1,131 @@
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
 import { K8sVolumesData } from './api';
+import { HardDrive } from 'lucide-react';
 
-import styles from './table.module.scss';
+export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
+	return (
+		volume.persistentVolumeClaimName ||
+		volume.meta.k8s_persistentvolumeclaim_name ||
+		''
+	);
+}
 
-export const k8sVolumesColumns: IEntityColumn[] = [
+export function getK8sVolumeItemKey(volume: K8sVolumesData): string {
+	return volume.persistentVolumeClaimName;
+}
+
+export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 	{
-		label: 'Volume Group',
-		value: 'volumeGroup',
 		id: 'volumeGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
+		header: (): React.ReactNode => <EntityGroupHeader title="VOLUME GROUP" />,
+		accessorFn: (row): string => row.persistentVolumeClaimName || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
 	},
 	{
-		label: 'PVC Name',
-		value: 'pvcName',
 		id: 'pvcName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'Namespace Name',
-		value: 'namespaceName',
-		id: 'namespaceName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Volume Capacity',
-		value: 'capacity',
-		id: 'capacity',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Volume Utilization',
-		value: 'usage',
-		id: 'usage',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Volume Available',
-		value: 'available',
-		id: 'available',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-];
-
-export const k8sVolumesColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
-	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> VOLUME GROUP
-			</div>
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="PVC Name"
+				icon={<HardDrive data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'volumeGroup',
-		key: 'volumeGroup',
-		ellipsis: true,
-		width: 150,
-		align: 'left',
-		sorter: false,
+		accessorFn: (row): string => row.persistentVolumeClaimName || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const pvcName = value as string;
+			return (
+				<Tooltip title={pvcName}>
+					<TanStackTable.Text>{pvcName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>PVC Name</div>,
-		dataIndex: 'pvcName',
-		key: 'pvcName',
-		ellipsis: true,
-		width: 120,
-		sorter: false,
-		align: 'left',
+		id: 'namespaceName',
+		header: 'Namespace Name',
+		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		width: { min: 220 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => {
+			const namespaceName = value as string;
+			return (
+				<Tooltip title={namespaceName}>
+					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Namespace Name</div>,
-		dataIndex: 'namespaceName',
-		key: 'namespaceName',
-		ellipsis: true,
-		width: 120,
-		sorter: false,
-		align: 'left',
+		id: 'capacity',
+		header: 'Volume Capacity',
+		accessorFn: (row): number => row.volumeCapacity,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const capacity = value as number;
+			return (
+				<ValidateColumnValueWrapper value={capacity}>
+					<TanStackTable.Text>{formatBytes(capacity)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Volume Capacity</div>,
-		dataIndex: 'capacity',
-		key: 'capacity',
-		ellipsis: true,
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'usage',
+		header: 'Volume Utilization',
+		accessorFn: (row): number => row.volumeUsage,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const usage = value as number;
+			return (
+				<ValidateColumnValueWrapper value={usage}>
+					<TanStackTable.Text>{formatBytes(usage)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Volume Utilization</div>,
-		dataIndex: 'usage',
-		key: 'usage',
-		width: 100,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Volume Available</div>,
-		dataIndex: 'available',
-		key: 'available',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'available',
+		header: 'Volume Available',
+		accessorFn: (row): number => row.volumeAvailable,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const available = value as number;
+			return (
+				<ValidateColumnValueWrapper value={available}>
+					<TanStackTable.Text>{formatBytes(available)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];
-
-export const k8sVolumesRenderRowData = (
-	volume: K8sVolumesData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		volume,
-		() =>
-			volume.persistentVolumeClaimName ||
-			volume.meta.k8s_persistentvolumeclaim_name ||
-			'',
-		groupBy,
-	),
-	itemKey: volume.persistentVolumeClaimName,
-	pvcName: (
-		<Tooltip title={volume.persistentVolumeClaimName}>
-			{volume.persistentVolumeClaimName || ''}
-		</Tooltip>
-	),
-	namespaceName: (
-		<Tooltip title={volume.meta.k8s_namespace_name}>
-			{volume.meta.k8s_namespace_name || ''}
-		</Tooltip>
-	),
-	available: (
-		<ValidateColumnValueWrapper value={volume.volumeAvailable}>
-			{formatBytes(volume.volumeAvailable)}
-		</ValidateColumnValueWrapper>
-	),
-	capacity: (
-		<ValidateColumnValueWrapper value={volume.volumeCapacity}>
-			{formatBytes(volume.volumeCapacity)}
-		</ValidateColumnValueWrapper>
-	),
-	usage: (
-		<ValidateColumnValueWrapper value={volume.volumeUsage}>
-			{formatBytes(volume.volumeUsage)}
-		</ValidateColumnValueWrapper>
-	),
-	volumeGroup: getGroupByEl(volume, groupBy),
-	...volume.meta,
-	groupedByMeta: getGroupedByMeta(volume, groupBy),
-});

@@ -1,4 +1,7 @@
-import { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesAuthNProviderDTO,
+	AuthtypesGettableAuthDomainDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 // API Endpoints
 export const AUTH_DOMAINS_LIST_ENDPOINT = '*/api/v1/domains';
@@ -11,7 +14,7 @@ export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-1',
 	name: 'signoz.io',
 	ssoEnabled: true,
-	ssoType: 'google_auth',
+	ssoType: AuthtypesAuthNProviderDTO.google_auth,
 	googleAuthConfig: {
 		clientId: 'test-client-id',
 		clientSecret: 'test-client-secret',
@@ -26,7 +29,7 @@ export const mockSamlAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-2',
 	name: 'example.com',
 	ssoEnabled: false,
-	ssoType: 'saml',
+	ssoType: AuthtypesAuthNProviderDTO.saml,
 	samlConfig: {
 		samlIdp: 'https://idp.example.com/sso',
 		samlEntity: 'urn:example:idp',
@@ -42,7 +45,7 @@ export const mockOidcAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-3',
 	name: 'corp.io',
 	ssoEnabled: true,
-	ssoType: 'oidc',
+	ssoType: AuthtypesAuthNProviderDTO.oidc,
 	oidcConfig: {
 		issuer: 'https://oidc.corp.io',
 		clientId: 'oidc-client-id',
@@ -58,7 +61,7 @@ export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-4',
 	name: 'enterprise.com',
 	ssoEnabled: true,
-	ssoType: 'saml',
+	ssoType: AuthtypesAuthNProviderDTO.saml,
 	samlConfig: {
 		samlIdp: 'https://idp.enterprise.com/sso',
 		samlEntity: 'urn:enterprise:idp',
@@ -84,7 +87,7 @@ export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO =
 		id: 'domain-5',
 		name: 'direct-role.com',
 		ssoEnabled: true,
-		ssoType: 'oidc',
+		ssoType: AuthtypesAuthNProviderDTO.oidc,
 		oidcConfig: {
 			issuer: 'https://oidc.direct-role.com',
 			clientId: 'direct-role-client-id',
@@ -104,7 +107,7 @@ export const mockOidcWithClaimMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-6',
 	name: 'oidc-claims.com',
 	ssoEnabled: true,
-	ssoType: 'oidc',
+	ssoType: AuthtypesAuthNProviderDTO.oidc,
 	oidcConfig: {
 		issuer: 'https://oidc.claims.com',
 		issuerAlias: 'https://alias.claims.com',
@@ -129,7 +132,7 @@ export const mockSamlWithAttributeMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-7',
 	name: 'saml-attrs.com',
 	ssoEnabled: true,
-	ssoType: 'saml',
+	ssoType: AuthtypesAuthNProviderDTO.saml,
 	samlConfig: {
 		samlIdp: 'https://idp.saml-attrs.com/sso',
 		samlEntity: 'urn:saml-attrs:idp',
@@ -152,7 +155,7 @@ export const mockGoogleAuthWithWorkspaceGroups: AuthtypesGettableAuthDomainDTO =
 		id: 'domain-8',
 		name: 'google-groups.com',
 		ssoEnabled: true,
-		ssoType: 'google_auth',
+		ssoType: AuthtypesAuthNProviderDTO.google_auth,
 		googleAuthConfig: {
 			clientId: 'google-groups-client-id',
 			clientSecret: 'google-groups-client-secret',

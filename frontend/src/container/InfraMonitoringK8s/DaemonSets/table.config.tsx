@@ -1,297 +1,225 @@
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import {
-	EntityProgressBar,
-	formatBytes,
-	ValidateColumnValueWrapper,
-} from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sDaemonSetsData } from './api';
+import { Group } from 'lucide-react';
 
-import styles from './table.module.scss';
+export function getK8sDaemonSetRowKey(daemonSet: K8sDaemonSetsData): string {
+	return (
+		daemonSet.daemonSetName ||
+		daemonSet.meta.k8s_daemonset_name ||
+		`${daemonSet.meta.k8s_namespace_name}-${daemonSet.meta.k8s_daemonset_name}`
+	);
+}
 
-export const k8sDaemonSetsColumns: IEntityColumn[] = [
+export function getK8sDaemonSetItemKey(daemonSet: K8sDaemonSetsData): string {
+	return daemonSet.meta.k8s_daemonset_name;
+}
+
+export const k8sDaemonSetsColumnsConfig: TableColumnDef<K8sDaemonSetsData>[] = [
 	{
-		label: 'DaemonSet Group',
-		value: 'daemonSetGroup',
 		id: 'daemonSetGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
+		header: (): React.ReactNode => <EntityGroupHeader title="DAEMONSET GROUP" />,
+		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
 	},
 	{
-		label: 'DaemonSet Name',
-		value: 'daemonsetName',
 		id: 'daemonsetName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'Namespace Name',
-		value: 'namespaceName',
-		id: 'namespaceName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Available',
-		value: 'available_nodes',
-		id: 'available_nodes',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Desired',
-		value: 'desired_nodes',
-		id: 'desired_nodes',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Req Usage (%)',
-		value: 'cpu_request',
-		id: 'cpu_request',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Limit Usage (%)',
-		value: 'cpu_limit',
-		id: 'cpu_limit',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Usage (cores)',
-		value: 'cpu',
-		id: 'cpu',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Req Usage (%)',
-		value: 'memory_request',
-		id: 'memory_request',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Limit Usage (%)',
-		value: 'memory_limit',
-		id: 'memory_limit',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Usage (WSS)',
-		value: 'memory',
-		id: 'memory',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-];
-
-export const k8sDaemonSetsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
-	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> DAEMONSET GROUP
-			</div>
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="DaemonSet Name"
+				icon={<Group data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'daemonSetGroup',
-		key: 'daemonSetGroup',
-		ellipsis: true,
-		width: 150,
-		align: 'left',
-		sorter: false,
+		accessorFn: (row): string => row.meta.k8s_daemonset_name || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const daemonsetName = value as string;
+			return (
+				<Tooltip title={daemonsetName}>
+					<TanStackTable.Text>{daemonsetName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>DaemonSet Name</div>,
-		dataIndex: 'daemonsetName',
-		key: 'daemonsetName',
-		ellipsis: true,
-		width: 150,
-		sorter: false,
-		align: 'left',
+		id: 'namespaceName',
+		header: 'Namespace Name',
+		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		width: { default: 100 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => {
+			const namespaceName = value as string;
+			return (
+				<Tooltip title={namespaceName}>
+					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Namespace Name</div>,
-		dataIndex: 'namespaceName',
-		key: 'namespaceName',
-		ellipsis: true,
-		width: 80,
-		sorter: false,
-		align: 'left',
+		id: 'available_nodes',
+		header: 'Available',
+		accessorFn: (row): number => row.availableNodes,
+		width: { min: 140 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const availableNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper value={availableNodes}>
+					<TanStackTable.Text>{availableNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Available</div>,
-		dataIndex: 'available_nodes',
-		key: 'available_nodes',
-		width: 50,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
+		id: 'desired_nodes',
+		header: 'Desired',
+		accessorFn: (row): number => row.desiredNodes,
+		width: { min: 140 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const desiredNodes = value as number;
+			return (
+				<ValidateColumnValueWrapper value={desiredNodes}>
+					<TanStackTable.Text>{desiredNodes}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Desired</div>,
-		dataIndex: 'desired_nodes',
-		key: 'desired_nodes',
-		width: 50,
-		sorter: true,
-		align: 'left',
+		id: 'cpu_request',
+		header: 'CPU Req Usage (%)',
+		accessorFn: (row): number => row.cpuRequest,
+		width: { min: 200, default: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuRequest = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={cpuRequest}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="CPU Request"
+				>
+					<EntityProgressBar value={cpuRequest} type="request" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Req Usage (%)</div>,
-		dataIndex: 'cpu_request',
-		key: 'cpu_request',
-		width: 180,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
+		id: 'cpu_limit',
+		header: 'CPU Limit Usage (%)',
+		accessorFn: (row): number => row.cpuLimit,
+		width: { min: 200, default: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuLimit = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={cpuLimit}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="CPU Limit"
+				>
+					<EntityProgressBar value={cpuLimit} type="limit" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Limit Usage (%)</div>,
-		dataIndex: 'cpu_limit',
-		key: 'cpu_limit',
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'cpu',
+		header: 'CPU Usage (cores)',
+		accessorFn: (row): number => row.cpuUsage,
+		width: { min: 190 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpu}>
+					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory_request',
+		header: 'Mem Req Usage (%)',
+		accessorFn: (row): number => row.memoryRequest,
+		width: { min: 190 },
+		enableSort: true,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => {
+			const memoryRequest = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memoryRequest}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="Memory Request"
+				>
+					<EntityProgressBar value={memoryRequest} type="request" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Mem Req Usage (%)</div>,
-		dataIndex: 'memory_request',
-		key: 'memory_request',
-		width: 170,
-		sorter: true,
-		align: 'left',
+		id: 'memory_limit',
+		header: 'Mem Limit Usage (%)',
+		accessorFn: (row): number => row.memoryLimit,
+		width: { min: 180 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryLimit = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memoryLimit}
+					entity={InfraMonitoringEntity.DAEMONSETS}
+					attribute="Memory Limit"
+				>
+					<EntityProgressBar value={memoryLimit} type="limit" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Mem Limit Usage (%)</div>,
-		dataIndex: 'memory_limit',
-		key: 'memory_limit',
-		width: 120,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Mem Usage (WSS)</div>,
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 120,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
+		id: 'memory',
+		header: 'Mem Usage (WSS)',
+		accessorFn: (row): number => row.memoryUsage,
+		width: { min: 160 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memory}>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];
-
-export const k8sDaemonSetsRenderRowData = (
-	entity: K8sDaemonSetsData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		entity,
-		() => entity.daemonSetName || entity.meta.k8s_daemonset_name || '',
-		groupBy,
-	),
-	itemKey: entity.meta.k8s_daemonset_name,
-	daemonsetName: (
-		<Tooltip title={entity.meta.k8s_daemonset_name}>
-			{entity.meta.k8s_daemonset_name || ''}
-		</Tooltip>
-	),
-	namespaceName: (
-		<Tooltip title={entity.meta.k8s_namespace_name}>
-			{entity.meta.k8s_namespace_name || ''}
-		</Tooltip>
-	),
-	cpu_request: (
-		<ValidateColumnValueWrapper
-			value={entity.cpuRequest}
-			entity={InfraMonitoringEntity.DAEMONSETS}
-			attribute="CPU Request"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={entity.cpuRequest} type="request" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	cpu_limit: (
-		<ValidateColumnValueWrapper
-			value={entity.cpuLimit}
-			entity={InfraMonitoringEntity.DAEMONSETS}
-			attribute="CPU Limit"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={entity.cpuLimit} type="limit" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	cpu: (
-		<ValidateColumnValueWrapper value={entity.cpuUsage}>
-			{entity.cpuUsage}
-		</ValidateColumnValueWrapper>
-	),
-	memory_request: (
-		<ValidateColumnValueWrapper
-			value={entity.memoryRequest}
-			entity={InfraMonitoringEntity.DAEMONSETS}
-			attribute="Memory Request"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={entity.memoryRequest} type="request" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	memory_limit: (
-		<ValidateColumnValueWrapper
-			value={entity.memoryLimit}
-			entity={InfraMonitoringEntity.DAEMONSETS}
-			attribute="Memory Limit"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={entity.memoryLimit} type="limit" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	memory: (
-		<ValidateColumnValueWrapper value={entity.memoryUsage}>
-			{formatBytes(entity.memoryUsage)}
-		</ValidateColumnValueWrapper>
-	),
-	available_nodes: (
-		<ValidateColumnValueWrapper value={entity.availableNodes}>
-			{entity.availableNodes}
-		</ValidateColumnValueWrapper>
-	),
-	desired_nodes: (
-		<ValidateColumnValueWrapper value={entity.desiredNodes}>
-			{entity.desiredNodes}
-		</ValidateColumnValueWrapper>
-	),
-	daemonSetGroup: getGroupByEl(entity, groupBy),
-	...entity.meta,
-	groupedByMeta: getGroupedByMeta(entity, groupBy),
-});
