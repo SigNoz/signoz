@@ -30,7 +30,7 @@ var (
 
 type GettableAuthDomain struct {
 	StorableAuthDomain
-	AuthDomainConfig
+	Config            AuthDomainConfig   `json:"config"`
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
@@ -43,7 +43,7 @@ type PostableAuthDomain struct {
 	Name   string           `json:"name"`
 }
 
-type UpdateableAuthDomain struct {
+type UpdatableAuthDomain struct {
 	Config AuthDomainConfig `json:"config"`
 }
 
@@ -121,7 +121,7 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
 		StorableAuthDomain: *authDomain.StorableAuthDomain(),
-		AuthDomainConfig:   *authDomain.AuthDomainConfig(),
+		Config:             *authDomain.AuthDomainConfig(),
 		AuthNProviderInfo:  authNProviderInfo,
 	}
 }

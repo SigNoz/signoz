@@ -8428,7 +8428,7 @@ export type ListAuthDomains200 = {
 };
 
 export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */

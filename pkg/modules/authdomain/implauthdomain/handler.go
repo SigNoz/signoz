@@ -142,7 +142,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := new(authtypes.UpdateableAuthDomain)
+	body := new(authtypes.UpdatableAuthDomain)
 	if err := binding.JSON.BindBody(r.Body, body); err != nil {
 		render.Error(rw, err)
 		return
