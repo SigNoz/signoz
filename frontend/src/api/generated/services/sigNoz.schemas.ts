@@ -4616,6 +4616,11 @@ export interface GlobaltypesAPIKeyConfigDTO {
 export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
+	 * @nullable true
+	 */
+	ai_assistant_url: string | null;
+	/**
+	 * @type string
 	 */
 	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;

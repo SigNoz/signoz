@@ -2494,6 +2494,9 @@ components:
       type: object
     GlobaltypesConfig:
       properties:
+        ai_assistant_url:
+          nullable: true
+          type: string
         external_url:
           type: string
         identN:
@@ -2507,6 +2510,7 @@ components:
       - external_url
       - ingestion_url
       - mcp_url
+      - ai_assistant_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
