@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
+import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import {
@@ -42,6 +43,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 
 	const dashboardId = useDashboardStore((s) => s.dashboardData?.id);
 	const [syncMode] = useDashboardCursorSyncMode(dashboardId, panelMode);
+	const [syncFilterMode] = useSyncTooltipFilterMode(dashboardId);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -141,7 +143,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<BarChart
-					key={syncMode}
+					key={`${syncMode}-${syncFilterMode}`}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
@@ -159,6 +161,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
 					syncMode={syncMode}
+					syncFilterMode={syncFilterMode}
 					renderTooltipFooter={renderTooltipFooter}
 				>
 					<ContextMenu

@@ -8,6 +8,7 @@ import {
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
 	DashboardCursorSync,
+	SyncTooltipFilterMode,
 	TooltipClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -35,6 +36,7 @@ interface UPlotBasedChartProps {
 	legendConfig: LegendConfig;
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
+	syncFilterMode?: SyncTooltipFilterMode;
 	plotRef?: (plot: uPlot | null) => void;
 	onDestroy?: (plot: uPlot) => void;
 	children?: React.ReactNode;

@@ -90,6 +90,31 @@ describe('useDashboardCursorSyncMode', () => {
 		});
 	});
 
+	describe('without a panelMode (e.g. dashboard settings call site)', () => {
+		it('reads the stored value just like DASHBOARD_VIEW does', () => {
+			useDashboardPreferencesStore.setState({
+				preferences: { 'dash-1': { cursorSyncMode: DashboardCursorSync.Tooltip } },
+			});
+
+			const { result } = renderHook(() => useDashboardCursorSyncMode('dash-1'));
+
+			expect(result.current[0]).toBe(DashboardCursorSync.Tooltip);
+		});
+
+		it('writes through the setter to the store', () => {
+			const { result } = renderHook(() => useDashboardCursorSyncMode('dash-1'));
+
+			act(() => {
+				result.current[1](DashboardCursorSync.None);
+			});
+
+			expect(result.current[0]).toBe(DashboardCursorSync.None);
+			expect(useDashboardPreferencesStore.getState().preferences).toStrictEqual({
+				'dash-1': { cursorSyncMode: DashboardCursorSync.None },
+			});
+		});
+	});
+
 	describe.each([[PanelMode.DASHBOARD_EDIT], [PanelMode.STANDALONE_VIEW]])(
 		'in %s mode (cursor sync disabled)',
 		(panelMode) => {

@@ -2,7 +2,11 @@ import uPlot from 'uplot';
 
 import type { ExtendedSeries } from '../../config/types';
 import { syncCursorRegistry } from './syncCursorRegistry';
-import type { TooltipControllerState, TooltipSyncMetadata } from './types';
+import {
+	SyncTooltipFilterMode,
+	type TooltipControllerState,
+	type TooltipSyncMetadata,
+} from './types';
 
 /**
  * Flattens per-query groupBys into a deduped set of dimension keys.
@@ -99,11 +103,15 @@ function applySourceSync({
 }
 
 /**
- * Returns:
- *   null      – cursor off-chart (no-op for tooltip)
- *   []        – either panel has no groupBy, no overlap with the source, or no
- *               receiver series match the source (hide synced tooltip)
- *   number[]  – 1-based indexes of matching receiver series (show only these)
+ * Computes receiver-side series filtering / highlighting for Tooltip sync.
+ *
+ * Returns the indexes that the tooltip render path should treat per
+ * `syncMetadata.filterMode`:
+ *   - Filtered (default): null = no filter, [] = no matches (suppress tooltip),
+ *      number[] = allowed indexes (show only these).
+ *   - All: null = no highlight (show all), number[] = highlight set (show all,
+ *      emphasize matching rows). Never returns [] in this mode so the synced
+ *      tooltip is not suppressed when matches are missing.
  */
 function applyReceiverSync({
 	uPlotInstance,
@@ -123,6 +131,10 @@ function applyReceiverSync({
 	yCrosshairEl.style.display =
 		sourceMetadata?.yAxisUnit === syncMetadata?.yAxisUnit ? '' : 'none';
 
+	const filterMode = syncMetadata?.filterMode ?? SyncTooltipFilterMode.Filtered;
+	const noMatchResult: number[] | null =
+		filterMode === SyncTooltipFilterMode.All ? null : [];
+
 	if (commonKeys.length === 0) {
 		uPlotInstance.setSeries(null, { focus: false });
 		return [];
@@ -136,7 +148,7 @@ function applyReceiverSync({
 	const sourceSeriesMetric = syncCursorRegistry.getActiveSeriesMetric(syncKey);
 	if (sourceSeriesMetric == null) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return [];
+		return noMatchResult;
 	}
 
 	const matchingIdxs = findMatchingSeriesIndexes(
@@ -147,7 +159,7 @@ function applyReceiverSync({
 
 	if (matchingIdxs.length === 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return [];
+		return noMatchResult;
 	}
 
 	uPlotInstance.setSeries(matchingIdxs[0], { focus: true });

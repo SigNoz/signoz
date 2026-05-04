@@ -9,14 +9,18 @@ export function useDashboardCursorSyncMode(
 	dashboardId: string | undefined,
 	panelMode?: PanelMode,
 ): [DashboardCursorSync, (value: DashboardCursorSync) => void] {
-	if (panelMode && panelMode !== PanelMode.DASHBOARD_VIEW) {
-		// Only allow cursor sync modes to be set in the dashboard view mode, as the other modes are used for editing and standalone panel views where cursor sync is not applicable.
-		return [DEFAULT_CURSOR_SYNC_MODE, () => {}];
-	}
-
-	return useDashboardPreference(
+	const [value, setValue] = useDashboardPreference(
 		dashboardId,
 		'cursorSyncMode',
 		DEFAULT_CURSOR_SYNC_MODE,
 	);
+
+	// Chart panels in edit / standalone modes don't participate in cross-panel
+	// sync, so return the default with a no-op setter for them. Callers without
+	// a panelMode (e.g. dashboard settings) read/write the preference normally.
+	if (panelMode && panelMode !== PanelMode.DASHBOARD_VIEW) {
+		return [DEFAULT_CURSOR_SYNC_MODE, (): void => {}];
+	}
+
+	return [value, setValue];
 }
