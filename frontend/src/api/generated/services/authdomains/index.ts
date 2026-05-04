@@ -20,7 +20,7 @@ import type {
 import type {
 	AuthtypesPostableAuthDomainDTO,
 	AuthtypesUpdatableAuthDomainDTO,
-	CreateAuthDomain200,
+	CreateAuthDomain201,
 	DeleteAuthDomainPathParameters,
 	GetAuthDomain200,
 	GetAuthDomainPathParameters,
@@ -126,7 +126,7 @@ export const createAuthDomain = (
 	authtypesPostableAuthDomainDTO: BodyType<AuthtypesPostableAuthDomainDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAuthDomain200>({
+	return GeneratedAPIInstance<CreateAuthDomain201>({
 		url: `/api/v1/domains`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

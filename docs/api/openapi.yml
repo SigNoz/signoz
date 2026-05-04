@@ -7061,7 +7061,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -7074,7 +7074,7 @@ paths:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:

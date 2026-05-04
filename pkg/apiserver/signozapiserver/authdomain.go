@@ -36,7 +36,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		RequestContentType:  "application/json",
 		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),

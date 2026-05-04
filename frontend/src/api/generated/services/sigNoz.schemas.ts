@@ -8350,7 +8350,7 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
+export type CreateAuthDomain201 = {
 	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
