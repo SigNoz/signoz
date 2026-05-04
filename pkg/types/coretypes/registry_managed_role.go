@@ -18,6 +18,12 @@ const (
 
 var ManagedRoleToTransactions = map[string][]Transaction{
 	SigNozAdminRoleName: {
+		// role attach — admin can attach/detach role assignments
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeRole, Kind: KindRole}, WildCardSelectorString)},
+		// user attach — admin can attach roles to any user
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeUser, Kind: KindUser}, WildCardSelectorString)},
+		// serviceaccount attach — admin can attach roles to any SA
+		{Verb: VerbAttach, Object: *MustNewObject(ResourceRef{Type: TypeServiceAccount, Kind: KindServiceAccount}, WildCardSelectorString)},
 		// auth-domain — admin only
 		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindAuthDomain}, WildCardSelectorString)},
 		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindAuthDomain}, WildCardSelectorString)},

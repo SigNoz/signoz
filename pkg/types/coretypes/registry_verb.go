@@ -9,6 +9,7 @@ var Verbs = []Verb{
 	VerbDelete,
 	VerbList,
 	VerbAssignee,
+	VerbAttach,
 }
 
 var (
@@ -18,4 +19,5 @@ var (
 	VerbDelete   = Verb{valuer.NewString("delete"), "deleted"}
 	VerbList     = Verb{valuer.NewString("list"), "listed"}
 	VerbAssignee = Verb{valuer.NewString("assignee"), "assigned"}
+	VerbAttach   = Verb{valuer.NewString("attach"), "attached"}
 )

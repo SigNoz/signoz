@@ -7,7 +7,7 @@ var Resources = []Resource{
 	ResourceServiceAccount,
 	ResourceUser,
 	ResourceMetaResourceRole,
-	ResoureceMetaResourcesRole,
+	ResourceMetaResourcesRole,
 	ResourceMetaResourceNotificationChannel,
 	ResourceMetaResourcesNotificationChannel,
 	ResourceMetaResourceRoutePolicy,
@@ -76,7 +76,7 @@ var (
 	ResourceServiceAccount                                = NewResourceServiceAccount()
 	ResourceUser                                          = NewResourceUser()
 	ResourceMetaResourceRole                              = NewResourceMetaResource(KindRole)
-	ResoureceMetaResourcesRole                            = NewResourceMetaResources(KindRole)
+	ResourceMetaResourcesRole                             = NewResourceMetaResources(KindRole)
 	ResourceMetaResourceNotificationChannel               = NewResourceMetaResource(KindNotificationChannel)
 	ResourceMetaResourcesNotificationChannel              = NewResourceMetaResources(KindNotificationChannel)
 	ResourceMetaResourceRoutePolicy                       = NewResourceMetaResource(KindRoutePolicy)

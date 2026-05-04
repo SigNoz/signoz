@@ -65,9 +65,21 @@ func registerGenerateAuthz(parentCmd *cobra.Command) {
 func runGenerateAuthz(_ context.Context) error {
 	registry := coretypes.NewRegistry()
 
+	allowedResources := map[string]bool{
+		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():    true,
+		coretypes.NewResourceRef(coretypes.ResourceRole).String():              true,
+		coretypes.NewResourceRef(coretypes.ResourceMetaResourcesRole).String(): true,
+	}
+
+	allowedTypes := map[string]bool{}
+
 	refs := registry.ResourceRefs()
 	resources := make([]permissionsTypeResource, 0, len(refs))
 	for _, ref := range refs {
+		if !allowedResources[ref.String()] {
+			continue
+		}
+		allowedTypes[ref.Type.StringValue()] = true
 		resources = append(resources, permissionsTypeResource{
 			Kind: ref.Kind.String(),
 			Type: ref.Type.StringValue(),
@@ -85,6 +97,9 @@ func runGenerateAuthz(_ context.Context) error {
 	for _, verb := range verbs {
 		types := make([]string, 0, len(typesByVerb[verb]))
 		for _, t := range typesByVerb[verb] {
+			if !allowedTypes[t.StringValue()] {
+				continue
+			}
 			types = append(types, t.StringValue())
 		}
 		relations = append(relations, permissionsTypeRelation{
