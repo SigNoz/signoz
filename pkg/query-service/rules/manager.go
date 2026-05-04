@@ -236,7 +236,7 @@ func (m *Manager) MaintenanceStore() ruletypes.MaintenanceStore {
 	return m.maintenanceStore
 }
 
-// TODO: remove (unused)?
+// TODO(jatinderjit): remove (unused)?
 func (m *Manager) Pause(b bool) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
