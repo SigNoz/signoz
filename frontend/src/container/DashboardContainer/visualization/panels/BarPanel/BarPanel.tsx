@@ -18,6 +18,7 @@ import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
 import TooltipFooter from '../components/TooltipFooter';
+import get from 'lodash/get';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -126,7 +127,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		[],
 	);
 	const groupBy = useMemo(() => {
-		return widget.query.builder.queryData?.[0]?.groupBy;
+		return get(widget, 'query.builder.queryData[0].groupBy', []);
 	}, [widget.query]);
 
 	return (

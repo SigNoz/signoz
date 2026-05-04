@@ -36,6 +36,7 @@ function SettingsPage(): JSX.Element {
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
 	const isEditor = user.role === USER_ROLES.EDITOR;
+	const isViewer = user.role === USER_ROLES.VIEWER;
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
@@ -102,6 +103,13 @@ function SettingsPage(): JSX.Element {
 								: item.isEnabled,
 					}));
 				}
+
+				if (isViewer) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
+					}));
+				}
 			}
 
 			if (isEnterpriseSelfHostedUser) {
@@ -132,6 +140,13 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.MCP_SERVER
 								? true
 								: item.isEnabled,
+					}));
+				}
+
+				if (isViewer) {
+					updatedItems = updatedItems.map((item) => ({
+						...item,
+						isEnabled: item.key === ROUTES.MCP_SERVER ? true : item.isEnabled,
 					}));
 				}
 			}
@@ -166,6 +181,7 @@ function SettingsPage(): JSX.Element {
 	}, [
 		isAdmin,
 		isEditor,
+		isViewer,
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
 		isFetchingActiveLicense,
