@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -74,21 +73,4 @@ func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*ruletypes.Pla
 	m.cached = mws
 	m.cacheExpiry = time.Now().Add(maintenanceCacheTTL)
 	return m.cached
-}
-
-// maintenanceMuteStage wraps MaintenanceMuter as a notify.Stage.
-// We implement the stage directly rather than using notify.NewMuteStage to avoid
-// a dependency on the unexported *notify.Metrics field of PipelineBuilder.
-type maintenanceMuteStage struct {
-	muter *MaintenanceMuter
-}
-
-func (s *maintenanceMuteStage) Exec(ctx context.Context, _ *slog.Logger, alerts ...*types.Alert) (context.Context, []*types.Alert, error) {
-	filtered := make([]*types.Alert, 0, len(alerts))
-	for _, a := range alerts {
-		if !s.muter.Mutes(ctx, a.Labels) {
-			filtered = append(filtered, a)
-		}
-	}
-	return ctx, filtered, nil
 }

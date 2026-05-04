@@ -14,17 +14,6 @@
 
 package alertmanagerserver
 
-// pipelineBuilder is a local copy of notify.PipelineBuilder that injects
-// the maintenance mute stage immediately before the receiver stage.
-//
-// We maintain our own copy so we can control exactly where in the pipeline
-// the maintenance stage runs (between the silence stage and the receiver),
-// which is not possible by wrapping the output of the upstream builder.
-//
-// Upstream pipeline order (notify.PipelineBuilder.New, notify.go:444):
-//
-//	GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
-
 import (
 	"time"
 
@@ -38,6 +27,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// pipelineBuilder is a local copy of notify.PipelineBuilder that injects
+// the maintenance mute stage immediately before the receiver stage.
+//
+// We maintain our own copy so we can control exactly where in the pipeline
+// the maintenance stage runs (between the silence stage and the receiver),
+// which is not possible by wrapping the output of the upstream builder.
+//
+// Upstream pipeline order [notify.PipelineBuilder.New]
+//
+//	GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
 type pipelineBuilder struct {
 	metrics *notify.Metrics
 	ff      featurecontrol.Flagger
@@ -76,15 +75,10 @@ func (pb *pipelineBuilder) New(
 	tms := notify.NewTimeMuteStage(intervener, marker, pb.metrics)
 	ss := notify.NewMuteStage(silencer, pb.metrics)
 
-	var mms *maintenanceMuteStage
-	if pb.muter != nil {
-		mms = &maintenanceMuteStage{muter: pb.muter}
-	}
-
 	for name := range receivers {
 		stages := notify.MultiStage{ms, is, tas, tms, ss}
-		if mms != nil {
-			stages = append(stages, mms)
+		if pb.muter != nil {
+			stages = append(stages, notify.NewMuteStage(pb.muter, pb.metrics))
 		}
 		stages = append(stages, createReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics))
 		rs[name] = stages
