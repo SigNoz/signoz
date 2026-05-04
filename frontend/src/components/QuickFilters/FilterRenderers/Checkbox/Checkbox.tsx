@@ -82,10 +82,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	// Check if this filter has active filters in the query
 	const isSomeFilterPresentForCurrentAttribute = useMemo(
 		() =>
-			currentQuery.builder.queryData?.[
-				activeQueryIndex
-			]?.filters?.items?.some((item) =>
-				isKeyMatch(item.key?.key, filter.attributeKey.key),
+			currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items?.some(
+				(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
 			),
 		[currentQuery.builder.queryData, activeQueryIndex, filter.attributeKey.key],
 	);
@@ -126,18 +124,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		},
 	);
 
-	const {
-		data: keyValueSuggestions,
-		isLoading: isLoadingKeyValueSuggestions,
-	} = useGetQueryKeyValueSuggestions({
-		key: filter.attributeKey.key,
-		signal: filter.dataSource || DataSource.LOGS,
-		signalSource: 'meter',
-		options: {
-			enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
-			keepPreviousData: true,
-		},
-	});
+	const { data: keyValueSuggestions, isLoading: isLoadingKeyValueSuggestions } =
+		useGetQueryKeyValueSuggestions({
+			key: filter.attributeKey.key,
+			signal: filter.dataSource || DataSource.LOGS,
+			signalSource: 'meter',
+			options: {
+				enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
+				keepPreviousData: true,
+			},
+		});
 
 	const attributeValues: string[] = useMemo(() => {
 		const dataType = filter.attributeKey.dataType || DataTypes.String;
@@ -282,7 +278,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							idx === activeQueryIndex
 								? item.filters?.items?.filter(
 										(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								  ) || []
+									) || []
 								: [...(item.filters?.items || [])],
 						op: item.filters?.op || 'AND',
 					},

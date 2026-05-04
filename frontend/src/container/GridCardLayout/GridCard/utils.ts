@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import type { NotificationInstance } from 'antd/es/notification/interface';
+import getLocalStorageKey from 'api/browser/localstorage/get';
 import { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -44,8 +45,8 @@ export const getLocalStorageGraphVisibilityState = ({
 		],
 	};
 
-	if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-		const legendGraphFromLocalStore = localStorage.getItem(
+	if (getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
+		const legendGraphFromLocalStore = getLocalStorageKey(
 			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 		);
 		let legendFromLocalStore: {
@@ -77,7 +78,8 @@ export const getLocalStorageGraphVisibilityState = ({
 						newGraphVisibilityStates[i + 1] = item.dataIndex[index].show;
 					}
 				});
-				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
+				visibilityStateAndLegendEntry.graphVisibilityStates =
+					newGraphVisibilityStates;
 			}
 		});
 	}
@@ -94,8 +96,8 @@ export const getGraphVisibilityStateOnDataChange = ({
 		graphVisibilityStates: Array(options.series.length).fill(true),
 		legendEntry: showAllDataSet(options),
 	};
-	if (localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-		const legendGraphFromLocalStore = localStorage.getItem(
+	if (getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
+		const legendGraphFromLocalStore = getLocalStorageKey(
 			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
 		);
 		let legendFromLocalStore: {
@@ -127,7 +129,8 @@ export const getGraphVisibilityStateOnDataChange = ({
 						}
 					}
 				});
-				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
+				visibilityStateAndLegendEntry.graphVisibilityStates =
+					newGraphVisibilityStates;
 			}
 		});
 	}
@@ -170,9 +173,7 @@ interface HandleGraphClickParams {
 	metric?: { [key: string]: string };
 	queryData?: { queryName: string; inFocusOrNot: boolean };
 	widget: Widgets;
-	navigateToExplorerPages: (
-		props: NavigateToExplorerPagesProps,
-	) => Promise<{
+	navigateToExplorerPages: (props: NavigateToExplorerPagesProps) => Promise<{
 		[queryName: string]: {
 			filters: TagFilterItem[];
 			dataSource?: string;
@@ -220,12 +221,12 @@ export const handleGraphClick = async ({
 							(result[key].dataSource as DataSource) === DataSource.TRACES
 								? 'Traces'
 								: 'Logs'
-					  }`
+						}`
 					: `View ${
 							(result[key].dataSource as DataSource) === DataSource.TRACES
 								? 'Traces'
 								: 'Logs'
-					  }: ${key}`,
+						}: ${key}`,
 			onClick: (): void =>
 				navigateToExplorer({
 					filters: [...result[key].filters, ...(customFilters || [])],

@@ -55,7 +55,7 @@ const useHandleTraceFunnelsSort = ({
 						}
 
 						return order === 'ascend' ? aValue - bValue : bValue - aValue;
-				  })
+					})
 				: [],
 		[sortOrder, data],
 	);

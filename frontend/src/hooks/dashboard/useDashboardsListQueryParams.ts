@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import setSessionStorageApi from 'api/browser/sessionstorage/set';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import isEqual from 'lodash-es/isEqual';
@@ -30,22 +31,20 @@ function useDashboardsListQueryParams(): {
 	const pageQueryParam = params.get('page');
 	const searchQueryParam = params.get('search');
 
-	const [
-		dashboardsListQueryParams,
-		setDashboardsListQueryParams,
-	] = useState<IDashboardsListQueryParams>({
-		columnKey:
-			orderColumnKeyQueryParam &&
-			SUPPORTED_COLUMN_KEYS.includes(orderColumnKeyQueryParam)
-				? orderColumnKeyQueryParam
-				: 'updatedAt',
-		order:
-			orderQueryParam && SUPPORTED_ORDER_KEYS.includes(orderQueryParam)
-				? orderQueryParam
-				: 'descend',
-		page: pageQueryParam || '1',
-		search: searchQueryParam || '',
-	});
+	const [dashboardsListQueryParams, setDashboardsListQueryParams] =
+		useState<IDashboardsListQueryParams>({
+			columnKey:
+				orderColumnKeyQueryParam &&
+				SUPPORTED_COLUMN_KEYS.includes(orderColumnKeyQueryParam)
+					? orderColumnKeyQueryParam
+					: 'updatedAt',
+			order:
+				orderQueryParam && SUPPORTED_ORDER_KEYS.includes(orderQueryParam)
+					? orderQueryParam
+					: 'descend',
+			page: pageQueryParam || '1',
+			search: searchQueryParam || '',
+		});
 
 	function updateDashboardsListQueryParams(
 		updatedQueryParams: IDashboardsListQueryParams,
@@ -61,7 +60,7 @@ function useDashboardsListQueryParams(): {
 
 		const queryParamsString = params.toString();
 
-		sessionStorage.setItem(
+		setSessionStorageApi(
 			DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
 			queryParamsString,
 		);

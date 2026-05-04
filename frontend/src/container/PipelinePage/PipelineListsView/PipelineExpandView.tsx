@@ -218,7 +218,7 @@ function PipelineExpandView({
 		({
 			index,
 			moveRow: moveProcessorRow,
-		} as React.HTMLAttributes<unknown>);
+		}) as React.HTMLAttributes<unknown>;
 
 	const getLocales = (): TableLocale => ({
 		emptyText: <span />,

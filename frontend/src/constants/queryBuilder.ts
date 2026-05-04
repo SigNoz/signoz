@@ -267,10 +267,11 @@ export const initialFormulaBuilderFormValues: IBuilderFormula = {
 	legend: '',
 };
 
-export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator = {
-	...initialQueryBuilderFormTracesValues,
-	queryName: TRACE_OPERATOR_QUERY_NAME,
-};
+export const initialQueryBuilderFormTraceOperatorValues: IBuilderTraceOperator =
+	{
+		...initialQueryBuilderFormTracesValues,
+		queryName: TRACE_OPERATOR_QUERY_NAME,
+	};
 
 export const initialQueryPromQLData: IPromQLQuery = {
 	name: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),

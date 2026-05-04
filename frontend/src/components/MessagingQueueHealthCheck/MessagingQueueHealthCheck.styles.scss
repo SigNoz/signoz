@@ -167,22 +167,3 @@
 		padding-right: 8px;
 	}
 }
-
-.lightMode {
-	.config-btn {
-		&.missing-config-btn {
-			background: var(--bg-amber-100);
-			color: var(--bg-amber-500);
-
-			&:hover {
-				color: var(--bg-amber-600) !important;
-			}
-		}
-
-		.missing-config-btn {
-			.config-btn-content {
-				border-right: 1px solid var(--bg-amber-600);
-			}
-		}
-	}
-}

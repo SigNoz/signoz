@@ -37,13 +37,8 @@ function SortableContextLink({
 	onDelete: (contextLink: ContextLinkProps) => void;
 	onEdit: (contextLink: ContextLinkProps) => void;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: contextLink.id });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: contextLink.id });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),

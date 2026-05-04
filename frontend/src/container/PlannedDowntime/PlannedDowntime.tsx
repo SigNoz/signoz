@@ -33,7 +33,11 @@ import './PlannedDowntime.styles.scss';
 dayjs.locale('en');
 
 export function PlannedDowntime(): JSX.Element {
-	const { data: alertsData, isError, isLoading } = useListRules({
+	const {
+		data: alertsData,
+		isError,
+		isLoading,
+	} = useListRules({
 		query: { cacheTime: 0 },
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -43,9 +47,10 @@ export function PlannedDowntime(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
-	const [initialValues, setInitialValues] = useState<
-		Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>
-	>(defautlInitialValues);
+	const [initialValues, setInitialValues] =
+		useState<Partial<RuletypesPlannedMaintenanceDTO & { editMode: boolean }>>(
+			defautlInitialValues,
+		);
 
 	const downtimeSchedules = useListDowntimeSchedules();
 	const alertOptions = React.useMemo(

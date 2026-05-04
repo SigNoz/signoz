@@ -45,8 +45,8 @@ describe('ChangeHistory test', () => {
 		].forEach((text) => expect(getByText(text)).toBeInTheDocument());
 
 		// table content
-		expect(getAllByText('test-user').length).toBe(2);
-		expect(getAllByText('Deployment was successful').length).toBe(2);
+		expect(getAllByText('test-user')).toHaveLength(2);
+		expect(getAllByText('Deployment was successful')).toHaveLength(2);
 	});
 
 	it('test deployment stage and icon based on history data', () => {
@@ -88,6 +88,6 @@ describe('ChangeHistory test', () => {
 		).toBeInTheDocument();
 		expect(getByText('Unknown')).toBeInTheDocument();
 
-		expect(container.querySelectorAll('.ant-table-row').length).toBe(5);
+		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(5);
 	});
 });

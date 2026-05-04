@@ -30,13 +30,8 @@ function SortableFilter({
 	allowDrag: boolean;
 	allowRemove: boolean;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: filter.key });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: filter.key });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),

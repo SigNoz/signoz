@@ -38,7 +38,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
-		// @ts-ignore
+		// @ts-expect-error
 		id: props['data-row-key'],
 	});
 
@@ -102,10 +102,8 @@ function VariablesSettings({
 		null,
 	);
 
-	const [
-		variableEditData,
-		setVariableEditData,
-	] = useState<null | IDashboardVariable>(null);
+	const [variableEditData, setVariableEditData] =
+		useState<null | IDashboardVariable>(null);
 
 	const onDoneVariableViewMode = (): void => {
 		setVariableViewMode(null);
@@ -150,7 +148,7 @@ function VariablesSettings({
 			});
 
 			if (name) {
-				// @ts-ignore
+				// @ts-expect-error
 				variableNamesMap[name] = name;
 			}
 
@@ -393,7 +391,7 @@ function VariablesSettings({
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
-					// @ts-ignore
+					// @ts-expect-error
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],
 						order: index,

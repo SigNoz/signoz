@@ -15,6 +15,7 @@ import { AlertDef, Labels } from 'types/api/alerts/def';
 import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
+import { openInNewTab } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import ChannelSelect from './ChannelSelect';
@@ -58,10 +59,8 @@ function BasicInfo({
 		user.role,
 	);
 
-	const [
-		shouldBroadCastToAllChannels,
-		setShouldBroadCastToAllChannels,
-	] = useState(false);
+	const [shouldBroadCastToAllChannels, setShouldBroadCastToAllChannels] =
+		useState(false);
 
 	useEffect(() => {
 		const hasPreferredChannels =
@@ -87,7 +86,7 @@ function BasicInfo({
 			dataSource: ALERTS_DATA_SOURCE_MAP[alertDef?.alertType as AlertTypes],
 			ruleId: isNewRule ? 0 : alertDef?.id,
 		});
-		window.open(ROUTES.CHANNELS_NEW, '_blank');
+		openInNewTab(ROUTES.CHANNELS_NEW);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 	const hasLoggedEvent = useRef(false);

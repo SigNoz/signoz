@@ -19,7 +19,10 @@
 	background: var(--l1-background);
 
 	padding-bottom: 48px;
-	transition: all 0.08s ease, background 0s, border 0s;
+	transition:
+		all 0.08s ease,
+		background 0s,
+		border 0s;
 
 	.brand-container {
 		padding: 8px 15px;
@@ -295,7 +298,9 @@
 					.nav-section-title-icon {
 						display: flex;
 						align-items: center;
-						transition: opacity 0.08s ease, transform 0.08s ease;
+						transition:
+							opacity 0.08s ease,
+							transform 0.08s ease;
 
 						&.reorder {
 							display: none;
@@ -332,7 +337,10 @@
 
 					display: none;
 
-					transition: all 0.08s ease, background 0s, border 0s;
+					transition:
+						all 0.08s ease,
+						background 0s,
+						border 0s;
 					transition-delay: 0.03s;
 				}
 
@@ -456,7 +464,10 @@
 				width: 54px;
 				// width: 100%; // temp
 
-				transition: all 0.08s ease, background 0s, border 0s;
+				transition:
+					all 0.08s ease,
+					background 0s,
+					border 0s;
 
 				background: linear-gradient(
 					180deg,
@@ -573,7 +584,11 @@
 
 		color: var(--primary-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -586,7 +601,11 @@
 	.sidenav-beta-tag {
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
-		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
+		font-feature-settings:
+			'case' on,
+			'cpsp' on,
+			'dlig' on,
+			'salt' on;
 		font-family: Inter;
 		font-size: 9px;
 		font-style: normal;
@@ -736,7 +755,8 @@
 						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
@@ -916,7 +936,8 @@
 						background: var(--l2-background);
 
 						/* Drop Shadow */
-						box-shadow: 0px 103px 12px 0px rgba(0, 0, 0, 0.01),
+						box-shadow:
+							0px 103px 12px 0px rgba(0, 0, 0, 0.01),
 							0px 66px 18px 0px rgba(0, 0, 0, 0.01),
 							0px 37px 22px 0px rgba(0, 0, 0, 0.03),
 							0px 17px 17px 0px rgba(0, 0, 0, 0.04),
@@ -1023,16 +1044,6 @@
 		padding: 0px !important;
 		width: 360px !important;
 		border-radius: 3px !important;
-
-		// Glass blur
-		// background: rgba(18, 19, 23, 0.6); /* based on #121317 */
-		// backdrop-filter: blur(16px);
-		// -webkit-backdrop-filter: blur(16px);
-		// border: 1px solid color-mix(in srgb, var(--l1-foreground) 8%, transparent);
-		// border-radius: 12px;
-		// box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-		// color: white;
-		// padding: 8px 0;
 
 		.ant-dropdown-menu-item {
 			.ant-dropdown-menu-title-content {
@@ -1283,225 +1294,6 @@
 
 .help-support-dropdown li.ant-dropdown-menu-item-divider {
 	background-color: var(--secondary) !important;
-}
-
-.lightMode {
-	.sideNav {
-		background: var(--l1-background);
-		border-right: 1px solid var(--l1-border);
-
-		.brand {
-			.brand-logo {
-				.brand-logo-name {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.brand-title-section {
-				.license-type {
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-				}
-
-				.version-container {
-					background: var(--l3-background);
-				}
-
-				.version {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-
-		.get-started-nav-items {
-			.get-started-btn {
-				border: 1px solid var(--l1-border);
-				background: var(--l2-background);
-				color: var(--l1-foreground);
-
-				svg {
-					color: var(--l1-foreground);
-				}
-
-				.nav-item-label {
-					color: var(--l1-foreground);
-				}
-
-				// Hover state (light mode)
-				&:hover:not(:disabled) {
-					background: var(--l3-background);
-					border-color: var(--l1-border);
-
-					color: var(--l1-foreground);
-
-					svg {
-						color: var(--l1-foreground);
-					}
-
-					.nav-item-label {
-						color: var(--l1-foreground);
-					}
-				}
-			}
-		}
-
-		.brand {
-			.brand-logo {
-				.brand-logo-name {
-					color: var(--l1-foreground);
-				}
-			}
-		}
-
-		.brand-container {
-			background: transparent;
-		}
-
-		.nav-wrapper {
-			.nav-top-section {
-				.shortcut-nav-items {
-					.nav-section-title {
-						.nav-section-title-icon {
-							&.reorder {
-								&:hover {
-									color: var(--l1-foreground);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			.secondary-nav-items {
-				border-top: 1px solid var(--l1-border);
-
-				background: linear-gradient(
-					180deg,
-					transparent 0%,
-					var(--l1-background) 27.11%
-				);
-
-				.collapse-expand-handlers {
-					svg {
-						color: var(--l2-foreground);
-						fill: var(--l3-background);
-					}
-				}
-			}
-		}
-
-		&.pinned {
-			.nav-wrapper {
-				.nav-top-section {
-					.shortcut-nav-items {
-						.nav-section-title {
-							.nav-section-title-icon {
-								&.reorder {
-									&:hover {
-										color: var(--l1-foreground);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		&:not(.pinned):hover,
-		&.dropdown-open {
-			background: var(--l1-background);
-
-			.nav-wrapper {
-				.nav-top-section {
-					.shortcut-nav-items {
-						.nav-section-title {
-							.nav-section-title-icon {
-								&.reorder {
-									&:hover {
-										color: var(--l1-foreground);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.nav-dropdown-overlay {
-		.ant-dropdown-menu {
-			.ant-dropdown-menu-item {
-				.ant-dropdown-menu-title-content {
-					color: var(--l1-foreground);
-				}
-
-				&:hover:not(.ant-dropdown-menu-item-disabled) {
-					.ant-dropdown-menu-title-content {
-						color: var(--l1-foreground);
-					}
-				}
-			}
-		}
-	}
-
-	.reorder-shortcut-nav-items-modal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--l1-background);
-
-			.ant-modal-header {
-				background: var(--l1-background);
-				border-bottom: 1px solid var(--l1-border);
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l1-foreground);
-				}
-
-				.reorder-shortcut-nav-items-container {
-					border: 1px solid var(--l1-border);
-
-					.reorder-shortcut-nav-item {
-						border-bottom: 1px solid var(--l1-border);
-
-						.reorder-shortcut-nav-item-icon {
-							color: var(--l1-foreground);
-						}
-
-						.reorder-shortcut-nav-item-label {
-							color: var(--l1-foreground);
-						}
-					}
-				}
-
-				.ant-color-picker-trigger {
-					border: 1px solid var(--l1-border);
-					background: var(--l1-background);
-				}
-			}
-
-			.ant-modal-footer {
-				> button {
-					background: var(--primary-background) !important;
-					color: var(--primary-foreground) !important;
-
-					&.secondary-btn {
-						background-color: var(--l3-background) !important;
-						border: 1px solid var(--l1-border) !important;
-
-						color: var(--l1-foreground) !important;
-					}
-				}
-			}
-		}
-
-		.title {
-			color: var(--l1-foreground);
-		}
-	}
 }
 
 .version-tooltip-overlay {

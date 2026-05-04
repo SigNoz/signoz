@@ -27,7 +27,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.AdminAccess(provider.zeusHandler.GetHosts), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/zeus/hosts", handler.New(provider.authZ.ViewAccess(provider.zeusHandler.GetHosts), handler.OpenAPIDef{
 		ID:                  "GetHosts",
 		Tags:                []string{"zeus"},
 		Summary:             "Get host info from Zeus.",
@@ -39,7 +39,7 @@ func (provider *provider) addZeusRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

@@ -325,10 +325,10 @@ const mockUserPreferenceResponse = {
 	},
 };
 
-const mockSpanPercentileErrorResponse = ({
+const mockSpanPercentileErrorResponse = {
 	httpStatusCode: 500,
 	data: null,
-} as unknown) as SuccessResponseV2<GetSpanPercentilesResponseDataProps>;
+} as unknown as SuccessResponseV2<GetSpanPercentilesResponseDataProps>;
 
 describe('SpanDetailsDrawer', () => {
 	let apiCallHistory: any = {};
@@ -978,10 +978,10 @@ describe('SpanDetailsDrawer', () => {
 
 		it('should not display percentile value when API returns non-200 status', async () => {
 			// Mock API response with non-200 status
-			mockGetSpanPercentiles.mockResolvedValue(({
+			mockGetSpanPercentiles.mockResolvedValue({
 				httpStatusCode: 500 as const,
 				data: null,
-			} as unknown) as Awaited<ReturnType<typeof getSpanPercentiles>>);
+			} as unknown as Awaited<ReturnType<typeof getSpanPercentiles>>);
 
 			renderSpanDetailsDrawer();
 

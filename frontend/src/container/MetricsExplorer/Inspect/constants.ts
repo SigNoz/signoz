@@ -39,17 +39,15 @@ export const METRIC_TYPE_TO_ICON_MAP: Record<
 	[MetrictypesTypeDTO.exponentialhistogram]: BarChart,
 };
 
-export const TIME_AGGREGATION_OPTIONS: Record<
-	TimeAggregationOptions,
-	string
-> = {
-	[TimeAggregationOptions.LATEST]: 'Latest',
-	[TimeAggregationOptions.SUM]: 'Sum',
-	[TimeAggregationOptions.AVG]: 'Avg',
-	[TimeAggregationOptions.MIN]: 'Min',
-	[TimeAggregationOptions.MAX]: 'Max',
-	[TimeAggregationOptions.COUNT]: 'Count',
-};
+export const TIME_AGGREGATION_OPTIONS: Record<TimeAggregationOptions, string> =
+	{
+		[TimeAggregationOptions.LATEST]: 'Latest',
+		[TimeAggregationOptions.SUM]: 'Sum',
+		[TimeAggregationOptions.AVG]: 'Avg',
+		[TimeAggregationOptions.MIN]: 'Min',
+		[TimeAggregationOptions.MAX]: 'Max',
+		[TimeAggregationOptions.COUNT]: 'Count',
+	};
 
 export const SPACE_AGGREGATION_OPTIONS: Record<
 	SpaceAggregationOptions,

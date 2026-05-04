@@ -32,17 +32,3 @@
 		justify-content: end;
 	}
 }
-
-.lightMode {
-	.widget-graph {
-		background-color: var(--l1-background);
-		background-image: radial-gradient(var(--l2-foreground) 1px, transparent 0);
-		background-size: 20px 20px;
-
-		.header {
-			.plot-tag {
-				background: var(--l3-background);
-			}
-		}
-	}
-}

@@ -37,17 +37,13 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	// Local state
 	const [searchTerm, setSearchTerm] = useState(urlQuery.get('search') || '');
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-	const [
-		policyDetailsModalState,
-		setPolicyDetailsModalState,
-	] = useState<PolicyDetailsModalState>({
-		mode: null,
-		isOpen: false,
-	});
-	const [
-		selectedRoutingPolicy,
-		setSelectedRoutingPolicy,
-	] = useState<RoutingPolicy | null>(null);
+	const [policyDetailsModalState, setPolicyDetailsModalState] =
+		useState<PolicyDetailsModalState>({
+			mode: null,
+			isOpen: false,
+		});
+	const [selectedRoutingPolicy, setSelectedRoutingPolicy] =
+		useState<RoutingPolicy | null>(null);
 
 	const updateUrlWithSearch = useDebouncedFn((value) => {
 		const searchValue = value as string;
@@ -133,16 +129,12 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	};
 
 	// Create Routing Policy
-	const {
-		mutate: createRoutingPolicy,
-		isLoading: isCreating,
-	} = useCreateRoutingPolicy();
+	const { mutate: createRoutingPolicy, isLoading: isCreating } =
+		useCreateRoutingPolicy();
 
 	// Update Routing Policy
-	const {
-		mutate: updateRoutingPolicy,
-		isLoading: isUpdating,
-	} = useUpdateRoutingPolicy();
+	const { mutate: updateRoutingPolicy, isLoading: isUpdating } =
+		useUpdateRoutingPolicy();
 
 	// Policy Details Modal Action (Create or Update)
 	const handlePolicyDetailsModalAction = (
@@ -212,10 +204,8 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 	}, [policyDetailsModalState.mode, isCreating, isUpdating]);
 
 	// Delete Routing Policy
-	const {
-		mutate: deleteRoutingPolicy,
-		isLoading: isDeletingRoutingPolicy,
-	} = useDeleteRoutingPolicy();
+	const { mutate: deleteRoutingPolicy, isLoading: isDeletingRoutingPolicy } =
+		useDeleteRoutingPolicy();
 
 	const handleDeleteRoutingPolicy = (): void => {
 		if (!selectedRoutingPolicy) {

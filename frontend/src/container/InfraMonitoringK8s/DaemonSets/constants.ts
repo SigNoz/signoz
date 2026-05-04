@@ -30,20 +30,21 @@ export const k8sDaemonSetGetSelectedItemFilters = (
 	],
 });
 
-export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDaemonSetsData>[] = [
-	{
-		label: 'Daemonset Name',
-		getValue: (p): string => p.meta.k8s_daemonset_name,
-	},
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-	{
-		label: 'Namespace Name',
-		getValue: (p): string => p.meta.k8s_namespace_name,
-	},
-];
+export const k8sDaemonSetDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sDaemonSetsData>[] =
+	[
+		{
+			label: 'Daemonset Name',
+			getValue: (p): string => p.meta.k8s_daemonset_name,
+		},
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+		{
+			label: 'Namespace Name',
+			getValue: (p): string => p.meta.k8s_namespace_name,
+		},
+	];
 
 export const k8sDaemonSetInitialFilters = [
 	QUERY_KEYS.K8S_DAEMON_SET_NAME,

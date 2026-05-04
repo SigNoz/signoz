@@ -15,7 +15,7 @@ export const convertDataValueToMs = (
 				});
 
 				return { ...item, values };
-		  })
+			})
 		: [];
 
 	if (convertedData?.payload?.data?.result && convertedResult) {

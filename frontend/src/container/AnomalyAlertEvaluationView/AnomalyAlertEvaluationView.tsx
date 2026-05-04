@@ -30,18 +30,18 @@ function UplotChart({
 
 	useEffect(() => {
 		if (plotInstance.current) {
-			// @ts-ignore
+			// @ts-expect-error
 			plotInstance.current.destroy();
 		}
 
 		if (data && data.length > 0) {
-			// @ts-ignore
+			// @ts-expect-error
 			plotInstance.current = new uPlot(options, data, chartRef.current);
 		}
 
 		return (): void => {
 			if (plotInstance.current) {
-				// @ts-ignore
+				// @ts-expect-error
 				plotInstance.current.destroy();
 			}
 		};
@@ -144,7 +144,7 @@ function AnomalyAlertEvaluationView({
 		? [
 				seriesData[allSeries[0]].data[0], // Shared X-axis
 				...allSeries.map((key) => seriesData[key].data[1]), // Map through Y-axis data for all series
-		  ]
+			]
 		: [];
 
 	const { timezone } = useTimezone();
@@ -229,7 +229,7 @@ function AnomalyAlertEvaluationView({
 								size: 1,
 							},
 						},
-				  ]
+					]
 				: allSeries.map((seriesKey) => ({
 						label: seriesKey,
 						stroke: seriesData[seriesKey].color,
@@ -237,7 +237,7 @@ function AnomalyAlertEvaluationView({
 						show: true,
 						paths: _spline,
 						spanGaps: true,
-				  }))),
+					}))),
 		],
 		scales: {
 			x: {
@@ -275,7 +275,7 @@ function AnomalyAlertEvaluationView({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		handleSearch(value);

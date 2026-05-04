@@ -25,15 +25,14 @@ function ErrorContent({ error, icon }: ErrorContentProps): JSX.Element {
 		errors: errorMessages,
 		code: errorCode,
 		message: errorMessage,
-	} =
-		error && 'error' in error
-			? error?.error?.error || {}
-			: {
-					url: undefined,
-					errors: [],
-					code: error.code || 500,
-					message: error.message || 'Something went wrong',
-			  };
+	} = error && 'error' in error
+		? error?.error?.error || {}
+		: {
+				url: undefined,
+				errors: [],
+				code: error.code || 500,
+				message: error.message || 'Something went wrong',
+			};
 	return (
 		<section className="error-content">
 			{/* Summary Header */}

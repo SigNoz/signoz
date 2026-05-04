@@ -93,9 +93,10 @@ export const QueryV2 = forwardRef(function QueryV2(
 		[dataSource, panelType],
 	);
 
-	const showSpanScopeSelector = useMemo(() => dataSource === DataSource.TRACES, [
-		dataSource,
-	]);
+	const showSpanScopeSelector = useMemo(
+		() => dataSource === DataSource.TRACES,
+		[dataSource],
+	);
 
 	const showInlineQuerySearch = useMemo(() => {
 		if (!showTraceOperator) {
@@ -212,7 +213,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 															icon: <Trash size={14} />,
 															onClick: handleDeleteQuery,
 														},
-												  ]
+													]
 												: []),
 										],
 									}}

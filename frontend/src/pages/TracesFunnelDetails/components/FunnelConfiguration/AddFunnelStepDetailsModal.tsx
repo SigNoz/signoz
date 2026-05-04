@@ -57,7 +57,7 @@ function AddFunnelStepDetailsModal({
 						? {
 								name: stepName || '',
 								description: description || '',
-						  }
+							}
 						: {}),
 				})),
 				timestamp: Date.now(),

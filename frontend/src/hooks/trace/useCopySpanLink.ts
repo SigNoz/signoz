@@ -4,6 +4,7 @@ import { useCopyToClipboard } from 'react-use';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Span } from 'types/api/trace/getTraceV2';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 export const useCopySpanLink = (
 	span?: Span,
@@ -28,7 +29,7 @@ export const useCopySpanLink = (
 				urlQuery.set('spanId', span?.spanId);
 			}
 
-			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
+			const link = getAbsoluteUrl(`${pathname}?${urlQuery.toString()}`);
 
 			setCopy(link);
 			notifications.success({

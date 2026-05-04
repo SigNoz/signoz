@@ -4,7 +4,13 @@ import {
 	notOfTrailResponse,
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
-import { act, render, screen } from 'tests/test-utils';
+import { act, render, screen, getAppContextMock } from 'tests/test-utils';
+import APIError from 'types/api/error';
+import {
+	LicensePlatform,
+	LicenseResModel,
+	LicenseState,
+} from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';
@@ -20,7 +26,7 @@ window.ResizeObserver =
 describe('BillingContainer', () => {
 	jest.setTimeout(30000);
 
-	test('Component should render', async () => {
+	it('Component should render', async () => {
 		render(<BillingContainer />);
 
 		const dataInjection = screen.getByRole('columnheader', {
@@ -61,7 +67,7 @@ describe('BillingContainer', () => {
 			jest.useRealTimers();
 		});
 
-		test('OnTrail', async () => {
+		it('OnTrail', async () => {
 			// Pin "now" so trial end (20 Oct 2023) is tomorrow => "1 days_remaining"
 
 			render(
@@ -73,17 +79,19 @@ describe('BillingContainer', () => {
 			// If the component schedules any setTimeout on mount, flush them:
 			jest.runOnlyPendingTimers();
 
-			expect(await screen.findByText('Free Trial')).toBeInTheDocument();
-			expect(await screen.findByText('billing')).toBeInTheDocument();
-			expect(await screen.findByText(/\$0/i)).toBeInTheDocument();
+			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
+			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();
+			await expect(screen.findByText(/\$0/i)).resolves.toBeInTheDocument();
 
-			expect(
-				await screen.findByText(
+			await expect(
+				screen.findByText(
 					/You are in free trial period. Your free trial will end on 20 Oct 2023/i,
 				),
-			).toBeInTheDocument();
+			).resolves.toBeInTheDocument();
 
-			expect(await screen.findByText(/1 days_remaining/i)).toBeInTheDocument();
+			await expect(
+				screen.findByText(/1 days_remaining/i),
+			).resolves.toBeInTheDocument();
 
 			const upgradeButtons = await screen.findAllByRole('button', {
 				name: /upgrade_plan/i,
@@ -91,13 +99,19 @@ describe('BillingContainer', () => {
 			expect(upgradeButtons).toHaveLength(2);
 			expect(upgradeButtons[1]).toBeInTheDocument();
 
-			expect(await screen.findByText(/checkout_plans/i)).toBeInTheDocument();
-			expect(
-				await screen.findByRole('link', { name: /here/i }),
-			).toBeInTheDocument();
+			await expect(
+				screen.findByText(/checkout_plans/i),
+			).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByRole('link', { name: /here/i }),
+			).resolves.toBeInTheDocument();
+
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
 		});
 
-		test('OnTrail but trialConvertedToSubscription', async () => {
+		it('OnTrail but trialConvertedToSubscription', async () => {
 			await act(async () => {
 				render(
 					<BillingContainer />,
@@ -131,14 +145,92 @@ describe('BillingContainer', () => {
 			});
 			expect(manageBillingButton).toBeInTheDocument();
 
-			const dayRemainingInBillingPeriod = await screen.findByText(
-				/1 days_remaining/i,
-			);
+			const dayRemainingInBillingPeriod =
+				await screen.findByText(/1 days_remaining/i);
 			expect(dayRemainingInBillingPeriod).toBeInTheDocument();
+
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
 		});
 	});
 
-	test('Not on ontrail', async () => {
+	describe('CancelSubscriptionBanner visibility', () => {
+		const baseActiveLicense = getAppContextMock('ADMIN')
+			.activeLicense as LicenseResModel;
+
+		it('should render when license is ACTIVATED and platform is CLOUD', async () => {
+			render(<BillingContainer />);
+			await expect(
+				screen.findByText('Cancel Subscription', { selector: 'span' }),
+			).resolves.toBeInTheDocument();
+		});
+
+		it.each([
+			['EXPIRED', LicenseState.EXPIRED],
+			['TERMINATED', LicenseState.TERMINATED],
+			['CANCELLED', LicenseState.CANCELLED],
+			['EVALUATION_EXPIRED', LicenseState.EVALUATION_EXPIRED],
+			['DEFAULTED', LicenseState.DEFAULTED],
+			['ISSUED', LicenseState.ISSUED],
+			['EVALUATING', LicenseState.EVALUATING],
+		])('should not render when license state is %s', async (_, state) => {
+			render(
+				<BillingContainer />,
+				{},
+				{
+					appContextOverrides: {
+						activeLicense: { ...baseActiveLicense, state },
+					},
+				},
+			);
+			await screen.findByText('billing');
+			expect(
+				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+			).not.toBeInTheDocument();
+		});
+
+		const makeAPIError = (statusCode: number): APIError =>
+			new APIError({
+				httpStatusCode: statusCode as any,
+				error: { code: 'error', message: 'error', url: '', errors: [] },
+			});
+
+		it.each([
+			[
+				'Self-Hosted platform',
+				{
+					activeLicense: {
+						...baseActiveLicense,
+						platform: LicensePlatform.SELF_HOSTED,
+					},
+					activeLicenseFetchError: null,
+				},
+			],
+			[
+				'Community Enterprise user (license API 404)',
+				{
+					activeLicense: null,
+					activeLicenseFetchError: makeAPIError(404),
+				},
+			],
+			[
+				'Community user (license API 501)',
+				{
+					activeLicense: null,
+					activeLicenseFetchError: makeAPIError(501),
+				},
+			],
+		])('should not render for %s', async (_, overrides) => {
+			render(<BillingContainer />, {}, { appContextOverrides: overrides });
+			await screen.findByText('billing');
+			expect(
+				screen.queryByText('Cancel Subscription', { selector: 'span' }),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	it('Not on ontrail', async () => {
 		const { findByText } = render(
 			<BillingContainer />,
 			{},

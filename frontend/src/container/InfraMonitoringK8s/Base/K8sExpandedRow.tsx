@@ -11,10 +11,7 @@ import {
 } from 'antd';
 import { CornerDownRight } from 'lucide-react';
 import { useGlobalTimeStore } from 'store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from 'store/globalTime/utils';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
@@ -68,10 +65,8 @@ export function K8sExpandedRow<T>({
 	const [queryFilters, setFilters] = useInfraMonitoringFilters();
 	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
 
-	const [
-		columnsDefinitions,
-		columnsHidden,
-	] = useInfraMonitoringTableColumnsForPage(entity);
+	const [columnsDefinitions, columnsHidden] =
+		useInfraMonitoringTableColumnsForPage(entity);
 
 	const hiddenColumnIdsForNested = useMemo(
 		() =>
@@ -120,6 +115,9 @@ export function K8sExpandedRow<T>({
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
 	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
 
 	const queryKey = useMemo(() => {
 		return getAutoRefreshQueryKey(selectedTime, [
@@ -128,7 +126,7 @@ export function K8sExpandedRow<T>({
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
 		]);
-	}, [selectedTime, record.key, queryFilters, orderBy]);
+	}, [getAutoRefreshQueryKey, selectedTime, record.key, queryFilters, orderBy]);
 
 	const { data, isFetching, isLoading, isError } = useQuery({
 		queryKey,
@@ -160,17 +158,15 @@ export function K8sExpandedRow<T>({
 
 		// Without handling duplicated keys, the table became unpredictable/unstable
 		const keyCount = new Map<string, number>();
-		return rows.map(
-			(row): K8sRenderedRowData => {
-				const count = keyCount.get(row.key) || 0;
-				keyCount.set(row.key, count + 1);
+		return rows.map((row): K8sRenderedRowData => {
+			const count = keyCount.get(row.key) || 0;
+			keyCount.set(row.key, count + 1);
 
-				if (count > 0) {
-					return { ...row, key: `${row.key}-${count}` };
-				}
-				return row;
-			},
-		);
+			if (count > 0) {
+				return { ...row, key: `${row.key}-${count}` };
+			}
+			return row;
+		});
 	}, [data?.data, renderRowData, groupBy]);
 
 	const openRecordInNewTab = (rowRecord: K8sRenderedRowData): void => {

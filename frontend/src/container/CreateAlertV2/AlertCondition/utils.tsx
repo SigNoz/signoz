@@ -14,6 +14,7 @@ import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
+import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
 import { RoutingPolicyBannerProps } from './types';
@@ -387,7 +388,7 @@ export function NotificationChannelsNotFoundContent({
 							style={{ padding: '0 4px' }}
 							type="link"
 							onClick={(): void => {
-								window.open(ROUTES.CHANNELS_NEW, '_blank');
+								openInNewTab(ROUTES.CHANNELS_NEW);
 							}}
 						>
 							here.

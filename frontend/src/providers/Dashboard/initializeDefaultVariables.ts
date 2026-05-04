@@ -38,7 +38,7 @@ export const initializeDefaultVariables = (
 		const value =
 			variable.type === 'CUSTOM'
 				? commaValuesParser(variable?.customValue || '')
-				: variable?.selectedValue ?? variable?.defaultValue;
+				: (variable?.selectedValue ?? variable?.defaultValue);
 
 		if (!existsInUrl) {
 			updateUrlVariable(

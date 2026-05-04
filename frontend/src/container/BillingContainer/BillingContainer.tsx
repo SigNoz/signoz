@@ -31,12 +31,15 @@ import { isEmpty, pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
+import { getBaseUrl } from 'utils/basePath';
 import { getFormattedDate, getRemainingDays } from 'utils/timeUtils';
 
+import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
 import './BillingContainer.styles.scss';
+import { LicenseState } from 'types/api/licensesV3/getActive';
 
 interface DataType {
 	key: string;
@@ -306,34 +309,32 @@ export default function BillingContainer(): JSX.Element {
 		},
 	);
 
-	const {
-		mutate: manageCreditCard,
-		isLoading: isLoadingManageBilling,
-	} = useMutation(manageCreditCardApi, {
-		onSuccess: (data) => {
-			handleBillingOnSuccess(data);
-		},
-		onError: handleBillingOnError,
-	});
+	const { mutate: manageCreditCard, isLoading: isLoadingManageBilling } =
+		useMutation(manageCreditCardApi, {
+			onSuccess: (data) => {
+				handleBillingOnSuccess(data);
+			},
+			onError: handleBillingOnError,
+		});
 
 	const handleBilling = useCallback(async () => {
 		if (!trialInfo?.trialConvertedToSubscription) {
-			logEvent('Billing : Upgrade Plan', {
+			void logEvent('Billing : Upgrade Plan', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			updateCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		} else {
-			logEvent('Billing : Manage Billing', {
+			void logEvent('Billing : Manage Billing', {
 				user: pick(user, ['email', 'userId', 'name']),
 				org,
 			});
 
 			manageCreditCard({
-				url: window.location.origin,
+				url: getBaseUrl(),
 			});
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -486,7 +487,7 @@ export default function BillingContainer(): JSX.Element {
 								showIcon
 								style={{ marginTop: 12 }}
 							/>
-					  )
+						)
 					: null}
 
 				{isLoading || isFetchingBillingData ? (
@@ -535,6 +536,10 @@ export default function BillingContainer(): JSX.Element {
 
 				{(isLoading || isFetchingBillingData) && renderTableSkeleton()}
 			</div>
+
+			{isCloudUserVal && activeLicense?.state === LicenseState.ACTIVATED && (
+				<CancelSubscriptionBanner />
+			)}
 
 			{!trialInfo?.trialConvertedToSubscription && (
 				<div className="upgrade-plan-benefits">

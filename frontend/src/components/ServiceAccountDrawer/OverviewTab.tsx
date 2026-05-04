@@ -72,7 +72,6 @@ function OverviewTab({
 						id="sa-name"
 						value={localName}
 						onChange={(e): void => onNameChange(e.target.value)}
-						className="sa-drawer__input"
 						placeholder="Enter name"
 					/>
 				)}

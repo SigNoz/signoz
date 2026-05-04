@@ -132,7 +132,9 @@
 
 			.ant-table-thead
 				> tr
-				> th:not(:last-child):not(.ant-table-selection-column):not(.ant-table-row-expand-icon-cell):not([colspan])::before {
+				> th:not(:last-child):not(.ant-table-selection-column):not(
+					.ant-table-row-expand-icon-cell
+				):not([colspan])::before {
 				background-color: transparent;
 			}
 
@@ -143,53 +145,6 @@
 
 		.ant-table-container::after {
 			content: none;
-		}
-	}
-}
-
-.lightMode {
-	.entity-metric-traces-header {
-		.filter-section {
-			border-top: 1px solid var(--l1-border);
-			border-bottom: 1px solid var(--l1-border);
-
-			.ant-select-selector {
-				border-color: var(--l1-border) !important;
-				color: var(--l2-foreground);
-			}
-		}
-	}
-
-	.entity-metric-traces-table {
-		.ant-table {
-			border-radius: 3px;
-			border: 1px solid var(--l1-border);
-
-			.ant-table-thead > tr > th {
-				background: var(--l1-foreground);
-				color: var(--l2-foreground);
-			}
-
-			.ant-table-thead > tr > th:has(.entityname-column-header) {
-				background: var(--l1-foreground);
-			}
-
-			.ant-table-cell {
-				background: var(--l1-foreground);
-				color: var(--l1-foreground);
-			}
-
-			.ant-table-cell:has(.entityname-column-value) {
-				background: var(--l1-foreground);
-			}
-
-			.entityname-column-value {
-				color: var(--l1-foreground);
-			}
-
-			.ant-table-tbody > tr:hover > td {
-				background: rgba(0, 0, 0, 0.04);
-			}
 		}
 	}
 }

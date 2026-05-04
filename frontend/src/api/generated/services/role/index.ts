@@ -471,7 +471,7 @@ export const getObjects = (
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<GetObjects200>({
-		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
+		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'GET',
 		signal,
 	});
@@ -481,7 +481,7 @@ export const getGetObjectsQueryKey = ({
 	id,
 	relation,
 }: GetObjectsPathParameters) => {
-	return [`/api/v1/roles/${id}/relation/${relation}/objects`] as const;
+	return [`/api/v1/roles/${id}/relations/${relation}/objects`] as const;
 };
 
 export const getGetObjectsQueryOptions = <
@@ -574,7 +574,7 @@ export const patchObjects = (
 	authtypesPatchableObjectsDTO: BodyType<AuthtypesPatchableObjectsDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
+		url: `/api/v1/roles/${id}/relations/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		data: authtypesPatchableObjectsDTO,
