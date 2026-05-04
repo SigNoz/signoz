@@ -32,6 +32,9 @@ function PanelWrapper({
 	] as FC<PanelWrapperProps>;
 
 	const groupByPerQuery = useMemo<Record<string, BaseAutocompleteData[]>>(() => {
+		if (!widget.query.builder) {
+			return {};
+		}
 		const { queryData } = widget.query.builder;
 		return queryData.reduce<Record<string, BaseAutocompleteData[]>>(
 			(acc, query) => {
