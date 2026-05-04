@@ -34,24 +34,20 @@ import (
 // the maintenance stage runs (between the silence stage and the receiver),
 // which is not possible by wrapping the output of the upstream builder.
 //
-// Upstream pipeline order [notify.PipelineBuilder.New]
-//
-//	GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
+// Upstream pipeline order:
+// GossipSettle → Inhibit → TimeActive → TimeMute → Silence → [mms] → Receiver
 type pipelineBuilder struct {
 	metrics *notify.Metrics
 	ff      featurecontrol.Flagger
-	muter   *MaintenanceMuter
 }
 
 func newPipelineBuilder(
 	r prometheus.Registerer,
 	ff featurecontrol.Flagger,
-	muter *MaintenanceMuter,
 ) *pipelineBuilder {
 	return &pipelineBuilder{
 		metrics: notify.NewMetrics(r, ff),
 		ff:      ff,
-		muter:   muter,
 	}
 }
 
@@ -64,6 +60,7 @@ func (pb *pipelineBuilder) New(
 	silencer *silence.Silencer,
 	intervener *timeinterval.Intervener,
 	marker types.GroupMarker,
+	muter *MaintenanceMuter,
 	notificationLog notify.NotificationLog,
 	peer notify.Peer,
 ) notify.RoutingStage {
@@ -74,8 +71,7 @@ func (pb *pipelineBuilder) New(
 	tas := notify.NewTimeActiveStage(intervener, marker, pb.metrics)
 	tms := notify.NewTimeMuteStage(intervener, marker, pb.metrics)
 	ss := notify.NewMuteStage(silencer, pb.metrics)
-
-	mms := notify.NewMuteStage(pb.muter, pb.metrics)
+	mms := notify.NewMuteStage(muter, pb.metrics)
 
 	for name := range receivers {
 		stages := notify.MultiStage{ms, is, tas, tms, ss, mms}

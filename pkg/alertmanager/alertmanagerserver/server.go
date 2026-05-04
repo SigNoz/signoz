@@ -63,6 +63,7 @@ type Server struct {
 	silences            *silence.Silences
 	timeIntervals       map[string][]timeinterval.TimeInterval
 	pipelineBuilder     *pipelineBuilder
+	muter               *MaintenanceMuter
 	marker              *alertmanagertypes.MemMarker
 	tmpl                *template.Template
 	wg                  sync.WaitGroup
@@ -203,8 +204,8 @@ func New(
 		return nil, err
 	}
 
-	muter := NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
-	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{}, muter)
+	server.muter = NewMaintenanceMuter(maintenanceStore, orgID, server.logger)
+	server.pipelineBuilder = newPipelineBuilder(signozRegisterer, featurecontrol.NoopFlags{})
 	server.dispatcherMetrics = NewDispatcherMetrics(false, signozRegisterer)
 
 	return server, nil
@@ -214,6 +215,7 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
 		server.inhibitor.Mutes(ctx, labels)
 		server.silencer.Mutes(ctx, labels)
+		server.muter.Mutes(ctx, labels)
 	}, params)
 }
 
@@ -298,6 +300,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 		server.silencer,
 		intervener,
 		server.marker,
+		server.muter,
 		server.nflog,
 		pipelinePeer,
 	)
