@@ -720,6 +720,10 @@ notifications	-  2050
 	animation: spin 1s linear infinite;
 }
 
+.animate-fast-spin {
+	animation: spin 0.5s linear infinite;
+}
+
 // Custom legend tooltip for immediate display
 .legend-tooltip {
 	position: fixed;

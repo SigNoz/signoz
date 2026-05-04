@@ -6,6 +6,8 @@ const mockLogEvent = jest.fn();
 const mockCopyToClipboard = jest.fn();
 const mockHistoryPush = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
+const mockUseGetHosts = jest.fn();
+const mockUseGetTenantLicense = jest.fn();
 const mockToastSuccess = jest.fn();
 const mockToastWarning = jest.fn();
 
@@ -17,6 +19,14 @@ jest.mock('api/common/logEvent', () => ({
 jest.mock('api/generated/services/global', () => ({
 	useGetGlobalConfig: (...args: unknown[]): unknown =>
 		mockUseGetGlobalConfig(...args),
+}));
+
+jest.mock('api/generated/services/zeus', () => ({
+	useGetHosts: (...args: unknown[]): unknown => mockUseGetHosts(...args),
+}));
+
+jest.mock('hooks/useGetTenantLicense', () => ({
+	useGetTenantLicense: (): unknown => mockUseGetTenantLicense(),
 }));
 
 jest.mock('react-use', () => ({
@@ -47,6 +57,23 @@ jest.mock('utils/basePath', () => ({
 }));
 
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
+const CUSTOM_HOST_URL = 'https://myteam.signoz.cloud';
+const DEFAULT_HOST_URL = 'https://default.signoz.cloud';
+
+function setupLicense({
+	isCloudUser = true,
+	isEnterpriseSelfHostedUser = false,
+}: {
+	isCloudUser?: boolean;
+	isEnterpriseSelfHostedUser?: boolean;
+} = {}): void {
+	mockUseGetTenantLicense.mockReturnValue({
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		isCommunityUser: !isCloudUser && !isEnterpriseSelfHostedUser,
+		isCommunityEnterpriseUser: false,
+	});
+}
 
 function setupGlobalConfig({ mcpUrl }: { mcpUrl: string | null }): void {
 	mockUseGetGlobalConfig.mockReturnValue({
@@ -55,7 +82,29 @@ function setupGlobalConfig({ mcpUrl }: { mcpUrl: string | null }): void {
 	});
 }
 
+function setupHosts({
+	hosts = [],
+	isLoading = false,
+	isError = false,
+}: {
+	hosts?: { name?: string; url?: string; is_default?: boolean }[];
+	isLoading?: boolean;
+	isError?: boolean;
+} = {}): void {
+	mockUseGetHosts.mockReturnValue({
+		data: isLoading || isError ? undefined : { data: { hosts } },
+		isLoading,
+		isError,
+	});
+}
+
 describe('MCPServerSettings', () => {
+	beforeEach(() => {
+		// Default: cloud user, hosts loaded but empty → instanceUrl falls back to getBaseUrl()
+		setupLicense();
+		setupHosts();
+	});
+
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
@@ -157,5 +206,146 @@ describe('MCPServerSettings', () => {
 		expect(mockToastSuccess).toHaveBeenCalledWith(
 			'Instance URL copied to clipboard',
 		);
+	});
+
+	describe('instance URL resolution', () => {
+		it('uses the active custom host URL when available', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({
+				hosts: [
+					{ name: 'default', url: DEFAULT_HOST_URL, is_default: true },
+					{ name: 'myteam', url: CUSTOM_HOST_URL, is_default: false },
+				],
+			});
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				CUSTOM_HOST_URL,
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith(CUSTOM_HOST_URL);
+		});
+
+		it('falls back to the default host URL when no custom host exists', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({
+				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
+			});
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				DEFAULT_HOST_URL,
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith(DEFAULT_HOST_URL);
+		});
+
+		it('falls back to browser URL when hosts request errors', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isError: true });
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
+		});
+
+		it('shows URL skeleton while hosts are loading', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isLoading: true });
+
+			render(<MCPServerSettings />);
+
+			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
+			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+		});
+
+		it('does not copy while hosts are still loading', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupHosts({ isLoading: true });
+			userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />);
+
+			expect(
+				screen.queryByRole('button', { name: 'Copy SigNoz instance URL' }),
+			).not.toBeInTheDocument();
+			expect(mockCopyToClipboard).not.toHaveBeenCalled();
+		});
+
+		it('disables the hosts query for non-cloud deployments', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
+
+			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
+
+			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
+			expect(callOptions?.query?.enabled).toBe(false);
+		});
+
+		it('uses browser URL immediately for enterprise self-hosted (no skeleton)', async () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
+			setupHosts({ isLoading: false });
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
+
+			expect(
+				document.querySelector('.ant-skeleton-input'),
+			).not.toBeInTheDocument();
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				'http://localhost',
+			);
+
+			await user.click(
+				screen.getByRole('button', { name: 'Copy SigNoz instance URL' }),
+			);
+
+			expect(mockCopyToClipboard).toHaveBeenCalledWith('http://localhost');
+		});
+
+		it('enables the hosts query for all cloud users including viewers', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: true });
+
+			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
+
+			const callOptions = mockUseGetHosts.mock.calls[0]?.[0];
+			expect(callOptions?.query?.enabled).toBe(true);
+		});
+
+		it('shows instance URL for cloud viewer', () => {
+			setupGlobalConfig({ mcpUrl: MCP_URL });
+			setupLicense({ isCloudUser: true });
+			setupHosts({
+				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
+			});
+
+			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
+
+			expect(
+				document.querySelector('.ant-skeleton-input'),
+			).not.toBeInTheDocument();
+			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
+				DEFAULT_HOST_URL,
+			);
+		});
 	});
 });

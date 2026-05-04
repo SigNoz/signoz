@@ -56,12 +56,6 @@ const assertTimeRangeConsistency = (
 	expect(payload.end).toBe(initialTimeRange.end);
 };
 
-jest.mock('container/QueryBuilder', () => ({
-	QueryBuilder: function MockQuerySection(): JSX.Element {
-		return <div>MockQuerySection</div>;
-	},
-}));
-
 jest.setTimeout(20000);
 
 Object.defineProperty(globalThis, 'matchMedia', {

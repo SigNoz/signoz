@@ -10,10 +10,7 @@ import TanStackTable, {
 import { CornerDownRight } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from 'store/globalTime/utils';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
@@ -122,6 +119,9 @@ export function K8sExpandedRow<T>({
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
 	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
 
 	const queryKey = useMemo(() => {
 		return getAutoRefreshQueryKey(
@@ -133,7 +133,15 @@ export function K8sExpandedRow<T>({
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
 		);
-	}, [selectedTime, entity, groupMeta, rowKey, queryFilters, orderBy]);
+	}, [
+		getAutoRefreshQueryKey,
+		selectedTime,
+		entity,
+		groupMeta,
+		rowKey,
+		queryFilters,
+		orderBy,
+	]);
 
 	const { data, isLoading, isError } = useQuery({
 		queryKey,

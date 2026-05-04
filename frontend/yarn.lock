@@ -5586,10 +5586,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/ui@0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.10.tgz#cdbab838f8cb543cf5b483a86e9d9b65265b81ff"
-  integrity sha512-XLeET+PgSP7heqKMsb9YZOSRT3TpfMPHNQRnY1I4SK8mXSct7BYWwK0Q3Je0uf4Z3aWOcpRYoRUPHWZQBpweFQ==
+"@signozhq/ui@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.12.tgz#b623c1729a0d85532d555fe7e756f3a4207e8e5d"
+  integrity sha512-69XS/j9R+uTNMdupyjki/WK1j0d5K5j0/pJrINGiteQRRrPg/AOMue7v/W6dkLICRhXcz/mgI6tLeT2FAuzKFw==
   dependencies:
     "@chenglou/pretext" "^0.0.5"
     "@radix-ui/react-checkbox" "^1.2.3"
@@ -5611,7 +5611,7 @@
     clsx "^2.1.1"
     cmdk "^1.1.1"
     dayjs "^1.11.10"
-    lodash-es "^4.17.21"
+    lodash-es "^4.18.1"
     motion "^11.11.17"
     next-themes "^0.4.6"
     nuqs "^2.8.9"
@@ -6696,6 +6696,54 @@
   integrity sha512-6i0aC7jV6QzQB8ne1joVZ0eSFIstHsCrobmOtghM11yGlH0j43FKL2UhWdELkyps0zuf7qVTUVCCR+tgSlyLLw==
   dependencies:
     "@types/yargs-parser" "*"
+
+"@typescript/native-preview-darwin-arm64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-darwin-arm64/-/native-preview-darwin-arm64-7.0.0-dev.20260421.2.tgz#8d2a1a9febf3759dcaddc6d5731874f4df01f003"
+  integrity sha512-fHv1r3ZmVo6zxuAIFmuX3w9QxbcauoG0SsWhmDwm6VmRubLlOJIcmTtlmV3JAb9oOnq8LuzZljzT7Q39fSMQDw==
+
+"@typescript/native-preview-darwin-x64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-darwin-x64/-/native-preview-darwin-x64-7.0.0-dev.20260421.2.tgz#1f878dedaf60505d7b67505dbe47b44503593e09"
+  integrity sha512-KWTR6xbW9t+JS7D5DQIzo75pqVXVWUxF9PMv/+S6xsnOjCVd6g0ixHcFpFMJMKSUQpGPr8Z5f7b8ks6LHW01jg==
+
+"@typescript/native-preview-linux-arm64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-linux-arm64/-/native-preview-linux-arm64-7.0.0-dev.20260421.2.tgz#529465d6436de4ee0ed922d7de2e91fb605d7622"
+  integrity sha512-VLMEuml3BhUb+jaL0TXQ4xvVODxJF+RhkI+tBWvlynsJI4khTXEiwWh+wPOJrsfBRYFRMXEu28Odl/HXkYze8w==
+
+"@typescript/native-preview-linux-arm@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-linux-arm/-/native-preview-linux-arm-7.0.0-dev.20260421.2.tgz#cb5abde3e2fed1ed1c1aff1f22338a4f4c1d4a7b"
+  integrity sha512-BWLQO3nemLDSV5PoE5GPHe1dU9Dth77Kv8/cle9Ujcp4LhPo0KincdPqFH/qKeU/xvW25mgFueflZ1nc4rKuww==
+
+"@typescript/native-preview-linux-x64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-linux-x64/-/native-preview-linux-x64-7.0.0-dev.20260421.2.tgz#a8ca0d1ceb4659027878b915276ebcfa0ab93130"
+  integrity sha512-qUrJWTB5/wv4wnRG0TRXElAxc2kykNiRNyEIEqBbLmzDlrcvAW7RRy8MXoY1ZyTiKGMu14itZ3x9oW6+blFpRw==
+
+"@typescript/native-preview-win32-arm64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-win32-arm64/-/native-preview-win32-arm64-7.0.0-dev.20260421.2.tgz#f1165ba01b22697729c16edd6ae4d1629318a7f4"
+  integrity sha512-Rc6NsWlZmCs5YUKVzKgwoBOoRUGsPzct4BDMRX0csD1devLBBc4AbUXWKsJRbpwIAnqMO1ld4sNHEb+wXgfNHQ==
+
+"@typescript/native-preview-win32-x64@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview-win32-x64/-/native-preview-win32-x64-7.0.0-dev.20260421.2.tgz#01724cea15792e06e9543f1d698141b61fc229fc"
+  integrity sha512-GQv1+dya1t6EqF2Cpsb+xoozovdX10JUSf6Kl/8xNkTapzmlHd+uMr+8ku3jIASTxoRGn0Mklgjj3MDKrOTuLg==
+
+"@typescript/native-preview@7.0.0-dev.20260421.2":
+  version "7.0.0-dev.20260421.2"
+  resolved "https://registry.yarnpkg.com/@typescript/native-preview/-/native-preview-7.0.0-dev.20260421.2.tgz#5c22e3118533f394dc2cade1e290680f978ba7b7"
+  integrity sha512-CmajHI25HpVWE9R1XFoxr+cphJPxoYD3eFioQtAvXYkMFKnLdICMS9pXre9Pybizb75ejRxjKD5/CVG055rEIg==
+  optionalDependencies:
+    "@typescript/native-preview-darwin-arm64" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-darwin-x64" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-arm" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-arm64" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-linux-x64" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-win32-arm64" "7.0.0-dev.20260421.2"
+    "@typescript/native-preview-win32-x64" "7.0.0-dev.20260421.2"
 
 "@uiw/codemirror-extensions-basic-setup@4.23.10":
   version "4.23.10"
@@ -13291,6 +13339,11 @@ lodash-es@4, lodash-es@^4.17.21:
   resolved "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz"
   integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
 
+lodash-es@^4.18.1:
+  version "4.18.1"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.18.1.tgz#b962eeb80d9d983a900bf342961fb7418ca10b1d"
+  integrity sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==
+
 lodash.camelcase@^4.3.0:
   version "4.3.0"
   resolved "https://registry.npmjs.org/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz"
@@ -19140,6 +19193,11 @@ use-sidecar@^1.1.3:
   dependencies:
     detect-node-es "^1.1.0"
     tslib "^2.0.0"
+
+use-sync-external-store@1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz#b174bfa65cb2b526732d9f2ac0a408027876f32d"
+  integrity sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==
 
 util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   version "1.0.2"
