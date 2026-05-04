@@ -41,11 +41,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -79,7 +75,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -131,7 +127,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'update',
-			'dashboard:{id}:{version}',
+			'role:{id}:{version}',
 		);
 
 		const mockMatch = {
@@ -166,7 +162,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -201,11 +197,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -236,11 +228,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -278,7 +266,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'update',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -304,7 +292,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(screen.getByText('update')).toBeInTheDocument();
-		expect(screen.getByText('dashboard:123')).toBeInTheDocument();
+		expect(screen.getByText('role:123')).toBeInTheDocument();
 		expect(
 			screen.queryByText('Test Component: test-value'),
 		).not.toBeInTheDocument();
@@ -335,7 +323,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			ComponentWithMultipleProps,
 			'read',
-			'dashboard:*',
+			'role:*',
 		);
 
 		const mockMatch = {
@@ -383,7 +371,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch1 = {
@@ -407,7 +395,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(requestCount).toBe(1);
-		expect(requestedObjects).toContain('dashboard:123');
+		expect(requestedObjects).toContain('role:123');
 
 		unmount();
 
@@ -432,7 +420,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(requestCount).toBe(2);
-		expect(requestedObjects).toContain('dashboard:456');
+		expect(requestedObjects).toContain('role:456');
 	});
 
 	it('should handle different relation types', async () => {
@@ -446,7 +434,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'delete',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
