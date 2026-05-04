@@ -303,7 +303,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			// Wait for skeletons to disappear
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// Verify all metric labels are displayed
@@ -342,7 +342,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			await waitFor(() => {
 				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons.length).toBe(0);
+				expect(skeletons).toHaveLength(0);
 			});
 
 			// When no data, all values should show "-"

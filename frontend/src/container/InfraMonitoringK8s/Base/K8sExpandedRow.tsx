@@ -1,43 +1,40 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { LoadingOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Spin,
-	Table,
-	TableColumnType as ColumnType,
-	Typography,
-} from 'antd';
+import { Button } from '@signozhq/ui';
+import { Typography } from 'antd';
+import TanStackTable, {
+	SortState,
+	TableColumnDef,
+	TanStackTableStateProvider,
+} from 'components/TanStackTableView';
 import { CornerDownRight } from 'lucide-react';
+import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
-import {
-	getAutoRefreshQueryKey,
-	NANO_SECOND_MULTIPLIER,
-} from 'store/globalTime/utils';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
+import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { InfraMonitoringEntity } from '../constants';
 import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
+	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItem,
 } from '../hooks';
-import LoadingContainer from '../LoadingContainer';
-import { K8sBaseFilters, K8sRenderedRowData } from './types';
-import { useInfraMonitoringTableColumnsForPage } from './useInfraMonitoringTableColumnsStore';
+import { K8sBaseFilters } from './types';
 
 import styles from './K8sExpandedRow.module.scss';
 
+const EXPANDED_ROW_LIMIT = 10;
+
 export type K8sExpandedRowProps<T> = {
-	record: K8sRenderedRowData;
+	/** Pre-computed row key from parent table (includes group prefix + duplicate handling) */
+	rowKey: string;
+	/** Group metadata for building filters */
+	groupMeta?: Record<string, string>;
 	entity: InfraMonitoringEntity;
-	tableColumns: ColumnType<K8sRenderedRowData>[];
+	tableColumns: TableColumnDef<T>[];
 	fetchListData: (
 		filters: K8sBaseFilters,
 		signal?: AbortSignal,
@@ -47,47 +44,46 @@ export type K8sExpandedRowProps<T> = {
 		error?: string | null;
 		rawData?: unknown;
 	}>;
-	renderRowData: (
-		record: T,
-		groupBy: BaseAutocompleteData[],
-	) => K8sRenderedRowData;
+	/** Function to get the unique key for a row. */
+	getRowKey?: (record: T) => string;
+	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
+	getItemKey?: (record: T) => string;
 };
 
-export const MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY = 10;
-
 export function K8sExpandedRow<T>({
-	record,
+	rowKey,
+	groupMeta,
 	entity,
 	tableColumns,
 	fetchListData,
-	renderRowData,
+	getRowKey,
+	getItemKey,
 }: K8sExpandedRowProps<T>): JSX.Element {
-	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
-	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
-	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [queryFilters, setFilters] = useInfraMonitoringFilters();
+	const [, setGroupBy] = useInfraMonitoringGroupBy();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
+	const [queryFilters, setFilters] = useInfraMonitoringFiltersK8s();
 	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
+	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
 
-	const [columnsDefinitions, columnsHidden] =
-		useInfraMonitoringTableColumnsForPage(entity);
-
-	const hiddenColumnIdsForNested = useMemo(
-		() =>
-			columnsDefinitions
-				.filter((col) => col.behavior === 'hidden-on-collapse')
-				.map((col) => col.id),
-		[columnsDefinitions],
+	const orderByParamKey = useMemo(
+		() => `orderBy_${rowKey.replace(/[^a-zA-Z0-9]/g, '_')}`,
+		[rowKey],
 	);
-
-	const nestedColumns = useMemo(
-		() =>
-			tableColumns.filter(
-				(c) =>
-					!columnsHidden.includes(c.key?.toString() || '') &&
-					!hiddenColumnIdsForNested.includes(c.key?.toString() || ''),
-			),
-		[tableColumns, columnsHidden, hiddenColumnIdsForNested],
+	const [orderBy, setOrderBy] = useQueryState(
+		orderByParamKey,
+		parseAsJsonNoValidate<SortState | null>()
+			.withDefault(null as never)
+			.withOptions({
+				history: 'push',
+			}),
 	);
+	useEffect(() => {
+		return (): void => {
+			void setOrderBy(null);
+		};
+	}, [setOrderBy]);
+
+	const storageKey = `k8s-${entity}-columns-expanded`;
 
 	const createFiltersForRecord = useCallback((): NonNullable<
 		IBuilderQuery['filters']
@@ -97,45 +93,64 @@ export function K8sExpandedRow<T>({
 			op: 'and',
 		};
 
-		const { groupedByMeta } = record;
+		const metaKeys = groupMeta ?? {};
 
-		for (const key of Object.keys(groupedByMeta)) {
+		for (const key of Object.keys(metaKeys)) {
+			const value = metaKeys[key];
+			// Skip empty values to avoid creating invalid filters
+			if (value === '' || value === undefined || value === null) {
+				continue;
+			}
 			baseFilters.items.push({
 				key: {
 					key,
-					type: null,
+					type: 'resource',
 				},
 				op: '=',
-				value: groupedByMeta[key],
+				value,
 				id: key,
 			});
 		}
 
 		return baseFilters;
-	}, [queryFilters?.items, record]);
+	}, [queryFilters?.items, groupMeta]);
 
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
 	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
+	const getAutoRefreshQueryKey = useGlobalTimeStore(
+		(s) => s.getAutoRefreshQueryKey,
+	);
 
 	const queryKey = useMemo(() => {
-		return getAutoRefreshQueryKey(selectedTime, [
+		return getAutoRefreshQueryKey(
+			selectedTime,
+			entity,
 			'k8sExpandedRow',
-			record.key,
+			JSON.stringify(groupMeta),
+			rowKey,
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-		]);
-	}, [selectedTime, record.key, queryFilters, orderBy]);
+		);
+	}, [
+		getAutoRefreshQueryKey,
+		selectedTime,
+		entity,
+		groupMeta,
+		rowKey,
+		queryFilters,
+		orderBy,
+	]);
 
-	const { data, isFetching, isLoading, isError } = useQuery({
+	const { data, isLoading, isError } = useQuery({
 		queryKey,
-		queryFn: ({ signal }) => {
+		queryFn: async ({ signal }) => {
 			const { minTime, maxTime } = getMinMaxTime();
 
-			return fetchListData(
+			return await fetchListData(
 				{
-					limit: MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY,
+					limit: EXPANDED_ROW_LIMIT,
 					offset: 0,
 					filters: createFiltersForRecord(),
 					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
@@ -146,47 +161,44 @@ export function K8sExpandedRow<T>({
 				signal,
 			);
 		},
+		staleTime: 1000 * 60 * 30,
 		refetchInterval: isRefreshEnabled ? refreshInterval : false,
 	});
 
-	const formattedData = useMemo(() => {
-		if (!data?.data) {
-			return undefined;
-		}
+	const expandedData = data?.data ?? [];
 
-		const rows = data.data.map((item) => renderRowData(item, groupBy));
-
-		// Without handling duplicated keys, the table became unpredictable/unstable
-		const keyCount = new Map<string, number>();
-		return rows.map((row): K8sRenderedRowData => {
-			const count = keyCount.get(row.key) || 0;
-			keyCount.set(row.key, count + 1);
-
-			if (count > 0) {
-				return { ...row, key: `${row.key}-${count}` };
-			}
-			return row;
-		});
-	}, [data?.data, renderRowData, groupBy]);
-
-	const openRecordInNewTab = (rowRecord: K8sRenderedRowData): void => {
-		const newParams = new URLSearchParams(document.location.search);
-		newParams.set('selectedItem', rowRecord.itemKey);
-		openInNewTab(
-			buildAbsolutePath({
-				relativePath: '',
-				urlQueryString: newParams.toString(),
-			}),
-		);
-	};
+	const handleRowClick = useCallback(
+		(_row: T, itemKey: string): void => {
+			setSelectedItem(itemKey);
+		},
+		[setSelectedItem],
+	);
 
 	const handleViewAllClick = (): void => {
 		const filters = createFiltersForRecord();
-		setFilters(filters);
-		setCurrentPage(1);
 		setGroupBy([]);
-		setOrderBy(null);
+		setCurrentPage(1);
+		setFilters(filters);
+		if (orderBy) {
+			setMainOrderBy(orderBy);
+		}
 	};
+
+	const total = data?.total ?? 0;
+	const hasMoreItems = total > EXPANDED_ROW_LIMIT;
+
+	const footerContent = hasMoreItems ? (
+		<Button
+			type="button"
+			color="secondary"
+			variant="outlined"
+			className={styles.viewAllButton}
+			onClick={handleViewAllClick}
+			prefix={<CornerDownRight size={14} />}
+		>
+			View All
+		</Button>
+	) : null;
 
 	return (
 		<div
@@ -197,50 +209,30 @@ export function K8sExpandedRow<T>({
 				<Typography>{data?.error?.toString() || 'Something went wrong'}</Typography>
 			)}
 
-			{isFetching || isLoading ? (
-				<LoadingContainer />
-			) : (
-				<div data-testid="expanded-table">
-					<Table
-						columns={nestedColumns}
-						dataSource={formattedData}
-						pagination={false}
-						scroll={{ x: true }}
-						tableLayout="fixed"
-						showHeader={false}
-						loading={{
-							spinning: isFetching || isLoading,
-							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+			<div data-testid="expanded-table">
+				<TanStackTableStateProvider>
+					<TanStackTable<T>
+						data={expandedData}
+						columns={tableColumns}
+						columnStorageKey={storageKey}
+						isLoading={isLoading}
+						getRowKey={getRowKey}
+						getItemKey={getItemKey}
+						onRowClick={handleRowClick}
+						enableQueryParams={{
+							orderBy: orderByParamKey,
 						}}
-						onRow={(
-							rowRecord: K8sRenderedRowData,
-						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
-							onClick: (event: React.MouseEvent): void => {
-								if (isModifierKeyPressed(event)) {
-									openRecordInNewTab(rowRecord);
-									return;
-								}
-								setSelectedItem(rowRecord.itemKey);
-							},
-							className: styles.expandedClickableRow,
-						})}
+						tableScrollerProps={{
+							className: styles.expandedTable,
+						}}
+						disableVirtualScroll
+						cellTypographySize="medium"
 					/>
-
-					{data?.total && data?.total > MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY && (
-						<div className={styles.expandedTableFooter}>
-							<Button
-								type="default"
-								size="small"
-								className={styles.viewAllButton}
-								onClick={handleViewAllClick}
-							>
-								<CornerDownRight size={14} />
-								View All
-							</Button>
-						</div>
-					)}
-				</div>
-			)}
+				</TanStackTableStateProvider>
+				{!isLoading && expandedData.length > 0 && (
+					<div className={styles.expandedTableFooter}>{footerContent}</div>
+				)}
+			</div>
 		</div>
 	);
 }

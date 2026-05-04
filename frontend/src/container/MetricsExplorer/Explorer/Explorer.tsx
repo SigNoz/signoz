@@ -279,7 +279,7 @@ function Explorer(): JSX.Element {
 		[],
 	);
 
-	const [warning, setWarning] = useState<Warning | undefined>(undefined);
+	const [warning, setWarning] = useState<Warning | undefined>();
 
 	const oneChartPerQueryDisabledTooltip = useMemo(() => {
 		if (splitedQueries.length <= 1) {
@@ -291,7 +291,7 @@ function Explorer(): JSX.Element {
 		if (disableOneChartPerQuery) {
 			return 'One chart per query cannot be disabled for multiple queries with different units.';
 		}
-		return undefined;
+		return;
 	}, [disableOneChartPerQuery, splitedQueries.length, units.length]);
 
 	// Show the y axis unit selector if -

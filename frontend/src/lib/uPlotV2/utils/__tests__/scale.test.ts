@@ -19,7 +19,7 @@ describe('scale utils', () => {
 				limits,
 			});
 
-			expect(result).toEqual(limits);
+			expect(result).toStrictEqual(limits);
 		});
 
 		it('snaps positive limits to powers of the log base when distribution is logarithmic', () => {
@@ -49,7 +49,7 @@ describe('scale utils', () => {
 				logBase: 2,
 			});
 
-			expect(config).toEqual({});
+			expect(config).toStrictEqual({});
 		});
 
 		it('returns linear distribution settings for non-time scales', () => {
@@ -80,13 +80,13 @@ describe('scale utils', () => {
 			const { rangeConfig, hardMinOnly, hardMaxOnly, hasFixedRange } =
 				scaleUtils.getRangeConfig(0, 100, null, null, 0.1, 0.2);
 
-			expect(rangeConfig.min).toEqual({
+			expect(rangeConfig.min).toStrictEqual({
 				pad: 0.1,
 				hard: 0,
 				soft: undefined,
 				mode: 3,
 			});
-			expect(rangeConfig.max).toEqual({
+			expect(rangeConfig.max).toStrictEqual({
 				pad: 0.2,
 				hard: 100,
 				soft: undefined,
@@ -127,7 +127,7 @@ describe('scale utils', () => {
 				'y',
 			);
 
-			expect(result).toEqual([null, null]);
+			expect(result).toStrictEqual([null, null]);
 		});
 
 		it('applies hard min/max for linear scale when only hard limits are set', () => {
@@ -156,7 +156,7 @@ describe('scale utils', () => {
 			const result = rangeFn(u, 10, 20, 'y');
 
 			// After applyHardLimits, the returned range should respect configured min/max
-			expect(result).toEqual([0, 100]);
+			expect(result).toStrictEqual([0, 100]);
 		});
 	});
 
@@ -164,7 +164,7 @@ describe('scale utils', () => {
 		it('returns original soft limits when there are no thresholds', () => {
 			const result = scaleUtils.adjustSoftLimitsWithThresholds(1, 5, [], 'ms');
 
-			expect(result).toEqual({ softMin: 1, softMax: 5 });
+			expect(result).toStrictEqual({ softMin: 1, softMax: 5 });
 		});
 
 		it('expands soft limits to include threshold min/max values', () => {

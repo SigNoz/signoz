@@ -44,6 +44,23 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Get), handler.OpenAPIDef{
+		ID:                  "GetAuthDomain",
+		Tags:                []string{"authdomains"},
+		Summary:             "Get auth domain by ID",
+		Description:         "This endpoint returns an auth domain by ID",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.GettableAuthDomain),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateAuthDomain",
 		Tags:                []string{"authdomains"},

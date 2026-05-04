@@ -51,6 +51,7 @@ jobs:
           - role
           - rootuser
           - serviceaccount
+          - querier_json_body
           - ttl
         sqlstore-provider:
           - postgres
@@ -61,7 +62,7 @@ jobs:
           - 25.5.6
           - 25.12.5
         schema-migrator-version:
-          - v0.142.0
+          - v0.144.3
         postgres-version:
           - 15
     if: |

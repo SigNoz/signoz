@@ -22,9 +22,8 @@ function KeyCreatedPhase({
 				<div className="add-key-modal__key-display">
 					<span className="add-key-modal__key-text">{createdKey.key}</span>
 					<Button
-						variant="outlined"
+						variant="link"
 						color="secondary"
-						size="sm"
 						onClick={onCopy}
 						className="add-key-modal__copy-btn"
 					>

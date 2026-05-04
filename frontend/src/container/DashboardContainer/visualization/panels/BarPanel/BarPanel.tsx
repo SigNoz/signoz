@@ -14,6 +14,7 @@ import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
+import get from 'lodash/get';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -113,6 +114,10 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		uPlotRef.current = plot;
 	}, []);
 
+	const groupBy = useMemo(() => {
+		return get(widget, 'query.builder.queryData[0].groupBy', []);
+	}, [widget.query]);
+
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
@@ -128,6 +133,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
+					groupBy={groupBy}
 					isStackedBarChart={widget.stackedBarChart ?? false}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}

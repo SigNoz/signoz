@@ -1,77 +1,26 @@
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
 import { K8sClusterData, K8sClustersListPayload } from './api';
+import { Boxes } from 'lucide-react';
 
-import styles from './table.module.scss';
-
-export interface K8sClustersRowData {
-	key: string;
-	itemKey: string;
-	clusterUID: string;
-	clusterName: React.ReactNode;
-	cpu: React.ReactNode;
-	cpu_allocatable: React.ReactNode;
-	memory: React.ReactNode;
-	memory_allocatable: React.ReactNode;
-	groupedByMeta?: Record<string, string>;
+export function getK8sClusterRowKey(cluster: K8sClusterData): string {
+	return (
+		cluster.clusterUID ||
+		cluster.meta.k8s_cluster_uid ||
+		cluster.meta.k8s_cluster_name
+	);
 }
 
-export const k8sClustersColumns: IEntityColumn[] = [
-	{
-		label: 'Cluster Group',
-		value: 'clusterGroup',
-		id: 'clusterGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
-	},
-	{
-		label: 'Cluster Name',
-		value: 'clusterName',
-		id: 'clusterName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'CPU Usage (cores)',
-		value: 'cpu',
-		id: 'cpu',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Alloc (cores)',
-		value: 'cpu_allocatable',
-		id: 'cpu_allocatable',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Memory Usage (WSS)',
-		value: 'memory',
-		id: 'memory',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Memory Alloc (bytes)',
-		value: 'memory_allocatable',
-		id: 'memory_allocatable',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-];
+export function getK8sClusterItemKey(cluster: K8sClusterData): string {
+	return cluster.meta.k8s_cluster_name;
+}
 
 export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 	filters: {
@@ -81,103 +30,110 @@ export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const k8sClustersColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sClustersColumnsConfig: TableColumnDef<K8sClusterData>[] = [
 	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> CLUSTER GROUP
-			</div>
+		id: 'clusterGroup',
+		header: (): React.ReactNode => <EntityGroupHeader title="CLUSTER GROUP" />,
+		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
+	},
+	{
+		id: 'clusterName',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Cluster Name"
+				icon={<Boxes data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'clusterGroup',
-		key: 'clusterGroup',
-		ellipsis: true,
-		width: 150,
-		align: 'left',
-		sorter: false,
+		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const clusterName = value as string;
+			return (
+				<Tooltip title={clusterName}>
+					<TanStackTable.Text>{clusterName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Cluster Name</div>,
-		dataIndex: 'clusterName',
-		key: 'clusterName',
-		ellipsis: true,
-		width: 150,
-		sorter: false,
-		align: 'left',
+		id: 'cpu',
+		header: 'CPU Usage (cores)',
+		accessorFn: (row): number => row.cpuUsage,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpu}>
+					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'cpu_allocatable',
+		header: 'CPU Alloc (cores)',
+		accessorFn: (row): number => row.cpuAllocatable,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuAllocatable = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpuAllocatable}>
+					<TanStackTable.Text>{cpuAllocatable}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Alloc (cores)</div>,
-		dataIndex: 'cpu_allocatable',
-		key: 'cpu_allocatable',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory',
+		header: 'Memory Usage (WSS)',
+		accessorFn: (row): number => row.memoryUsage,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memory}>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Memory Usage (WSS)</div>,
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 80,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Memory Allocatable</div>,
-		dataIndex: 'memory_allocatable',
-		key: 'memory_allocatable',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory_allocatable',
+		header: 'Memory Allocatable',
+		accessorFn: (row): number => row.memoryAllocatable,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryAllocatable = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memoryAllocatable}>
+					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];
-
-export const k8sClustersRenderRowData = (
-	cluster: K8sClusterData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		cluster,
-		() =>
-			cluster.clusterUID ||
-			cluster.meta.k8s_cluster_uid ||
-			cluster.meta.k8s_cluster_name,
-		groupBy,
-	),
-	itemKey: cluster.meta.k8s_cluster_name,
-	clusterUID: cluster.clusterUID || cluster.meta.k8s_cluster_uid,
-	clusterName: (
-		<Tooltip title={cluster.meta.k8s_cluster_name}>
-			{cluster.meta.k8s_cluster_name || ''}
-		</Tooltip>
-	),
-	cpu: (
-		<ValidateColumnValueWrapper value={cluster.cpuUsage}>
-			{cluster.cpuUsage}
-		</ValidateColumnValueWrapper>
-	),
-	memory: (
-		<ValidateColumnValueWrapper value={cluster.memoryUsage}>
-			{formatBytes(cluster.memoryUsage)}
-		</ValidateColumnValueWrapper>
-	),
-	cpu_allocatable: (
-		<ValidateColumnValueWrapper value={cluster.cpuAllocatable}>
-			{cluster.cpuAllocatable}
-		</ValidateColumnValueWrapper>
-	),
-	memory_allocatable: (
-		<ValidateColumnValueWrapper value={cluster.memoryAllocatable}>
-			{formatBytes(cluster.memoryAllocatable)}
-		</ValidateColumnValueWrapper>
-	),
-	clusterGroup: getGroupByEl(cluster, groupBy),
-	...cluster.meta,
-	groupedByMeta: getGroupedByMeta(cluster, groupBy),
-});

@@ -36,6 +36,7 @@ type filterExpressionVisitor struct {
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
 	jsonKeyToKey       qbtypes.JsonKeyToFieldFunc
+	bodyJSONEnabled    bool
 	skipResourceFilter bool
 	skipFullTextFilter bool
 	skipFunctionCalls  bool
@@ -56,6 +57,7 @@ type FilterExprVisitorOpts struct {
 	Builder            *sqlbuilder.SelectBuilder
 	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	JsonKeyToKey       qbtypes.JsonKeyToFieldFunc
+	BodyJSONEnabled    bool
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	SkipFunctionCalls  bool
@@ -76,6 +78,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
 		jsonKeyToKey:       opts.JsonKeyToKey,
+		bodyJSONEnabled:    opts.BodyJSONEnabled,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		skipFunctionCalls:  opts.SkipFunctionCalls,
@@ -359,6 +362,10 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
+		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+		}
+
 		return cond
 	}
 
@@ -714,6 +721,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		return ErrorConditionLiteral
 	}
 
+	if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
+		v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
+	}
+
 	return cond
 }
 
@@ -751,8 +762,8 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return ErrorConditionLiteral
 	}
 
-	// filter arrays from keys
-	if BodyJSONQueryEnabled && functionName != "hasToken" {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if v.bodyJSONEnabled && functionName != "hasToken" {
 		filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 		for _, key := range keys {
 			if key.FieldDataType.IsArray() {
@@ -793,7 +804,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			// this is that all other functions only support array fields
 			if key.FieldContext == telemetrytypes.FieldContextBody {
 				var err error
-				if BodyJSONQueryEnabled {
+				if v.bodyJSONEnabled {
 					fieldName, err = v.fieldMapper.FieldFor(v.context, v.startNs, v.endNs, key)
 					if err != nil {
 						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
@@ -936,7 +947,8 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 	// Note: Skip this logic if body json query is enabled so we can look up the key inside fields
 	//
 	// TODO(Piyush): After entire migration this is supposed to be removed.
-	if !BodyJSONQueryEnabled && fieldKey.FieldContext == telemetrytypes.FieldContextBody {
+	// TODO(Tushar): thread orgID here to evaluate correctly
+	if fieldKey.FieldContext == telemetrytypes.FieldContextBody && !v.bodyJSONEnabled {
 		fieldKeysForName = append(fieldKeysForName, &fieldKey)
 	}
 

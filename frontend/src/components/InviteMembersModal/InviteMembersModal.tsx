@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
-import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
+import { ChevronDown, Plus, Trash2, X } from '@signozhq/icons';
 import {
 	Button,
 	Callout,
@@ -294,10 +294,8 @@ function InviteMembersModal({
 							type="error"
 							size="small"
 							showIcon
-							icon={<CircleAlert size={12} />}
-						>
-							{getValidationErrorMessage()}
-						</Callout>
+							title={getValidationErrorMessage()}
+						/>
 					</div>
 				)}
 			</div>

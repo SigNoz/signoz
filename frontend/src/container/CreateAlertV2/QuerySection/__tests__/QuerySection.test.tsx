@@ -333,7 +333,7 @@ describe('QuerySection', () => {
 
 		const result = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(result[0]).toEqual({
+		expect(result[0]).toStrictEqual({
 			id: MOCK_UUID,
 			queryType: EQueryType.QUERY_BUILDER,
 			unit: undefined,
@@ -351,7 +351,7 @@ describe('QuerySection', () => {
 			clickhouse_sql: [initialClickHouseData],
 		});
 
-		expect(result[1]).toEqual({
+		expect(result[1]).toStrictEqual({
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
 			[QueryParams.ruleType]: AlertDetectionTypes.THRESHOLD_ALERT,
 		});
@@ -371,7 +371,7 @@ describe('QuerySection', () => {
 		const [queryArg] =
 			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockUseQueryBuilder.currentQuery,
 			queryType: EQueryType.PROM,
 		});
@@ -425,7 +425,7 @@ describe('QuerySection', () => {
 		const [queryArg] =
 			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithPromQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});
@@ -479,7 +479,7 @@ describe('QuerySection', () => {
 		const [queryArg] =
 			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
-		expect(queryArg).toEqual({
+		expect(queryArg).toStrictEqual({
 			...mockCurrentQueryWithClickhouseSQL,
 			queryType: EQueryType.QUERY_BUILDER,
 		});

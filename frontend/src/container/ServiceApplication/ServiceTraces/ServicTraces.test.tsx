@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from 'tests/test-utils';
 import ServiceTraces from '.';
 
 describe('ServicesTraces', () => {
-	test('Should render the component', async () => {
+	it('Should render the component', async () => {
 		await act(() => {
 			render(<ServiceTraces />);
 		});
@@ -15,7 +15,7 @@ describe('ServicesTraces', () => {
 		expect(errorRateHeader).toBeInTheDocument();
 	});
 
-	test('Should render the Services with Services', async () => {
+	it('Should render the Services with Services', async () => {
 		act(() => {
 			render(<ServiceTraces />);
 		});
@@ -27,7 +27,7 @@ describe('ServicesTraces', () => {
 		expect(p99Latency).toBeInTheDocument();
 	});
 
-	test('Should click on p99 latency and sort the table', async () => {
+	it('Should click on p99 latency and sort the table', async () => {
 		act(() => {
 			render(<ServiceTraces />);
 		});

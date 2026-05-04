@@ -22,30 +22,32 @@ const dotToUnder: Record<string, string> = {
 	'k8s.persistentvolumeclaim.name': 'k8s_persistentvolumeclaim_name',
 };
 
-export function getGroupedByMeta<T extends { meta: Record<string, string> }>(
+export function getGroupedByMeta<T extends { meta?: Record<string, string> }>(
 	itemData: T,
 	groupBy: BaseAutocompleteData[],
 ): Record<string, string> {
 	const result: Record<string, string> = {};
+	const meta = itemData.meta ?? {};
 
 	groupBy.forEach((group) => {
 		const rawKey = group.key as string;
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof itemData.meta;
-		result[rawKey] = (itemData.meta[metaKey] || itemData.meta[rawKey]) ?? '';
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof meta;
+		result[rawKey] = (meta[metaKey] || meta[rawKey]) ?? '';
 	});
 
 	return result;
 }
 
-export function getRowKey<T extends { meta: Record<string, string> }>(
+export function getRowKey<T extends { meta?: Record<string, string> }>(
 	itemData: T,
 	getItemIdentifier: () => string,
 	groupBy: BaseAutocompleteData[],
 ): string {
 	const nodeIdentifier = getItemIdentifier();
+	const meta = itemData.meta ?? {};
 
 	if (groupBy.length === 0) {
-		return nodeIdentifier || JSON.stringify(itemData.meta);
+		return nodeIdentifier || JSON.stringify(meta);
 	}
 
 	const groupedMeta = getGroupedByMeta(itemData, groupBy);
@@ -61,30 +63,32 @@ export function getRowKey<T extends { meta: Record<string, string> }>(
 		return nodeIdentifier;
 	}
 
-	return JSON.stringify(itemData.meta);
+	return JSON.stringify(meta);
 }
 
-export function getGroupByEl<T extends { meta: Record<string, string> }>(
+export function getGroupByEl<T extends { meta?: Record<string, string> }>(
 	itemData: T,
 	groupBy: IBuilderQuery['groupBy'],
 ): React.ReactNode {
 	const groupByValues: string[] = [];
+	const meta = itemData.meta ?? {};
 
 	groupBy.forEach((group) => {
 		const rawKey = group.key as string;
 
 		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof itemData.meta;
-		const value = itemData.meta[metaKey] || itemData.meta[rawKey] || '<no-value>';
+		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof meta;
+		const value = meta[metaKey] || meta[rawKey] || '<no-value>';
 
 		groupByValues.push(value);
 	});
 
 	return (
 		<div className={styles.itemDataGroup}>
-			{groupByValues.map((value) => (
+			{groupByValues.map((value, index) => (
 				<Badge
-					key={value}
+					// oxlint-disable-next-line react/no-array-index-key
+					key={`${index}-${value}`}
 					color="secondary"
 					className={styles.itemDataGroupTagItem}
 				>

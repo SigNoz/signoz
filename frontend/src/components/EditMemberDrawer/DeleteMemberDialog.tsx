@@ -46,6 +46,7 @@ function DeleteMemberDialog({
 				color="destructive"
 				disabled={isDeleting}
 				onClick={onConfirm}
+				loading={isDeleting}
 			>
 				<Trash2 size={12} />
 				{isDeleting ? 'Processing...' : title}
@@ -63,7 +64,6 @@ function DeleteMemberDialog({
 			}}
 			title={title}
 			width="narrow"
-			className="alert-dialog delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={false}
 			footer={footer}

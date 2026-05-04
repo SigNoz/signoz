@@ -50,7 +50,7 @@
     "@signozhq/design-tokens": "2.1.4",
     "@signozhq/icons": "0.1.0",
     "@signozhq/resizable": "0.0.2",
-    "@signozhq/ui": "0.0.10",
+    "@signozhq/ui": "0.0.12",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",
@@ -197,6 +197,7 @@
     "@types/redux-mock-store": "1.0.4",
     "@types/styled-components": "^5.1.4",
     "@types/uuid": "^8.3.1",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
     "autoprefixer": "10.4.19",
     "babel-plugin-styled-components": "^1.12.0",
     "eslint-plugin-sonarjs": "4.0.2",
@@ -211,9 +212,9 @@
     "msw": "1.3.2",
     "npm-run-all": "latest",
     "orval": "7.18.0",
-    "oxfmt": "0.46.0",
-    "oxlint": "1.61.0",
-    "oxlint-tsgolint": "0.21.1",
+    "oxfmt": "0.47.0",
+    "oxlint": "1.62.0",
+    "oxlint-tsgolint": "0.22.1",
     "portfinder-sync": "^0.0.2",
     "postcss": "8.5.6",
     "postcss-scss": "4.0.9",
@@ -230,6 +231,7 @@
     "ts-jest": "29.4.6",
     "ts-node": "^10.2.1",
     "typescript-plugin-css-modules": "5.2.0",
+    "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
     "vite-plugin-image-optimizer": "2.0.3",
@@ -237,9 +239,12 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "oxfmt --check",
-      "oxlint --quiet",
-      "sh scripts/typecheck-staged.sh"
+      "oxlint --fix",
+      "oxfmt --write",
+      "sh -c tsgo --noEmit"
+    ],
+    "*.(scss|css)": [
+      "stylelint"
     ]
   },
   "resolutions": {

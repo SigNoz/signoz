@@ -22,6 +22,8 @@ import type {
 	AuthtypesUpdateableAuthDomainDTO,
 	CreateAuthDomain200,
 	DeleteAuthDomainPathParameters,
+	GetAuthDomain200,
+	GetAuthDomainPathParameters,
 	ListAuthDomains200,
 	RenderErrorResponseDTO,
 	UpdateAuthDomainPathParameters,
@@ -277,6 +279,109 @@ export const useDeleteAuthDomain = <
 
 	return useMutation(mutationOptions);
 };
+/**
+ * This endpoint returns an auth domain by ID
+ * @summary Get auth domain by ID
+ */
+export const getAuthDomain = (
+	{ id }: GetAuthDomainPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetAuthDomain200>({
+		url: `/api/v1/domains/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetAuthDomainQueryKey = ({
+	id,
+}: GetAuthDomainPathParameters) => {
+	return [`/api/v1/domains/${id}`] as const;
+};
+
+export const getGetAuthDomainQueryOptions = <
+	TData = Awaited<ReturnType<typeof getAuthDomain>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetAuthDomainPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAuthDomain>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetAuthDomainQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthDomain>>> = ({
+		signal,
+	}) => getAuthDomain({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getAuthDomain>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetAuthDomainQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getAuthDomain>>
+>;
+export type GetAuthDomainQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get auth domain by ID
+ */
+
+export function useGetAuthDomain<
+	TData = Awaited<ReturnType<typeof getAuthDomain>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ id }: GetAuthDomainPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getAuthDomain>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetAuthDomainQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get auth domain by ID
+ */
+export const invalidateGetAuthDomain = async (
+	queryClient: QueryClient,
+	{ id }: GetAuthDomainPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetAuthDomainQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint updates an auth domain
  * @summary Update auth domain

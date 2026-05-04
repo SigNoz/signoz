@@ -22,6 +22,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -77,6 +79,7 @@ type Handlers struct {
 	AlertmanagerHandler     alertmanager.Handler
 	TraceDetail             tracedetail.Handler
 	RulerHandler            ruler.Handler
+	LLMPricingRuleHandler   llmpricingrule.Handler
 }
 
 func NewHandlers(
@@ -121,5 +124,6 @@ func NewHandlers(
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
+		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(nil, providerSettings),
 	}
 }

@@ -49,7 +49,7 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 		Tags:                []string{"channels"},
 		Summary:             "Create notification channel",
 		Description:         "This endpoint creates a notification channel",
-		Request:             new(alertmanagertypes.Receiver),
+		Request:             new(alertmanagertypes.PostableChannel),
 		RequestContentType:  "application/json",
 		Response:            new(alertmanagertypes.Channel),
 		ResponseContentType: "application/json",

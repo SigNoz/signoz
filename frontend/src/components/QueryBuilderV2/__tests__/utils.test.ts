@@ -22,18 +22,20 @@ describe('convertFiltersToExpression', () => {
 
 	it('should handle empty, null, and undefined inputs', () => {
 		// Test null and undefined
-		expect(convertFiltersToExpression(null as any)).toEqual({ expression: '' });
-		expect(convertFiltersToExpression(undefined as any)).toEqual({
+		expect(convertFiltersToExpression(null as any)).toStrictEqual({
+			expression: '',
+		});
+		expect(convertFiltersToExpression(undefined as any)).toStrictEqual({
 			expression: '',
 		});
 
 		// Test empty filters
-		expect(convertFiltersToExpression({ items: [], op: 'AND' })).toEqual({
+		expect(convertFiltersToExpression({ items: [], op: 'AND' })).toStrictEqual({
 			expression: '',
 		});
 		expect(
 			convertFiltersToExpression({ items: undefined, op: 'AND' } as any),
-		).toEqual({ expression: '' });
+		).toStrictEqual({ expression: '' });
 	});
 
 	it('should convert basic comparison operators with proper value formatting', () => {
@@ -92,7 +94,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service = 'api-gateway' AND status != 'error' AND duration > 100 AND count <= 50 AND is_active = true AND enabled = false AND count = 0 AND regex REGEXP '.*'",
 		});
@@ -124,7 +126,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"message = 'user\\'s data' AND description = '' AND path = '/api/v1/users'",
 		});
@@ -162,7 +164,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service in ['api-gateway', 'user-service', 'auth-service'] AND status in ['success'] AND tags in [] AND name in ['John\\'s', 'Mary\\'s', 'Bob']",
 		});
@@ -224,7 +226,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service NOT IN ['api-gateway', 'user-service'] AND message NOT LIKE 'error' AND path NOT REGEXP '/api/.*' AND service NOT IN ['api-gateway'] AND user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
@@ -268,7 +270,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"user_id exists AND user_id exists AND has(tags, 'production') AND hasAny(tags, ['production', 'staging']) AND hasAll(tags, ['production', 'monitoring'])",
 		});
@@ -312,7 +314,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service = 'api-gateway' AND status = 'success' AND service in ['api-gateway']",
 		});
@@ -362,7 +364,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"service in ['api-gateway', 'user-service'] AND user_id exists AND has(tags, 'production') AND duration > 100 AND status NOT IN ['error', 'timeout'] AND method = 'POST'",
 		});
@@ -412,7 +414,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"count = 0 AND score > 100 AND limit >= 50 AND threshold < 1000 AND max_value <= 999 AND values in ['1', '2', '3', '4', '5']",
 		});
@@ -456,7 +458,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"is_active = true AND is_deleted = false AND email = 'user@example.com' AND description = 'Contains \"quotes\" and \\'apostrophes\\'' AND path = '/api/v1/users/123?filter=true'",
 		});
@@ -506,7 +508,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"has(tags, 'production') AND hasAny(labels, ['env:prod', 'service:api']) AND hasAll(metadata, ['version:1.0', 'team:backend']) AND services in ['api-gateway', 'user-service', 'auth-service', 'payment-service'] AND excluded_services NOT IN ['legacy-service', 'deprecated-service'] AND status_codes in ['200', '201', '400', '500']",
 		});
@@ -544,7 +546,7 @@ describe('convertFiltersToExpression', () => {
 		};
 
 		const result = convertFiltersToExpression(filters);
-		expect(result).toEqual({
+		expect(result).toStrictEqual({
 			expression:
 				"user_id NOT EXISTS AND description NOT CONTAINS 'error' AND NOT has(tags, 'production') AND NOT hasAny(labels, ['env:prod', 'service:api'])",
 		});
@@ -568,7 +570,7 @@ describe('convertFiltersToExpression', () => {
 			undefined,
 		);
 
-		expect(result.filters).toEqual(filters);
+		expect(result.filters).toStrictEqual(filters);
 		expect(result.filter.expression).toBe("service.name = 'test-service'");
 	});
 
@@ -583,7 +585,7 @@ describe('convertFiltersToExpression', () => {
 			undefined,
 		);
 
-		expect(result.filters).toEqual(filters);
+		expect(result.filters).toStrictEqual(filters);
 		expect(result.filter.expression).toBe('');
 	});
 
@@ -611,7 +613,7 @@ describe('convertFiltersToExpression', () => {
 		expect(result.filter).toBeDefined();
 		expect(result.filter.expression).toBe("service.name = 'updated-service'");
 		// Ensure parser can parse the existing query
-		expect(extractQueryPairs(existingQuery)).toEqual(
+		expect(extractQueryPairs(existingQuery)).toStrictEqual(
 			expect.arrayContaining([
 				expect.objectContaining({
 					key: 'service.name',
@@ -805,7 +807,7 @@ describe('convertAggregationToExpression', () => {
 			temporality: 'delta',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
 				timeAggregation: 'avg',
@@ -825,9 +827,11 @@ describe('convertAggregationToExpression', () => {
 			spaceAggregation: 'noop',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'count',
 				spaceAggregation: 'count',
 			},
@@ -841,9 +845,11 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: '',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'sum',
 				spaceAggregation: 'sum',
 			},
@@ -858,7 +864,7 @@ describe('convertAggregationToExpression', () => {
 			alias: 'trace_alias',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count(test_metric)',
 				alias: 'trace_alias',
@@ -874,7 +880,7 @@ describe('convertAggregationToExpression', () => {
 			alias: 'log_alias',
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'avg(test_metric)',
 				alias: 'log_alias',
@@ -889,7 +895,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.TRACES,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
@@ -903,7 +909,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.LOGS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'sum(test_metric)',
 			},
@@ -917,9 +923,11 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
+				reduceTo: undefined,
+				temporality: undefined,
 				timeAggregation: 'max',
 				spaceAggregation: 'max',
 			},
@@ -933,7 +941,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.METRICS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				metricName: 'test_metric',
 				timeAggregation: 'sum',
@@ -951,7 +959,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.TRACES,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
@@ -965,7 +973,7 @@ describe('convertAggregationToExpression', () => {
 			dataSource: DataSource.LOGS,
 		});
 
-		expect(result).toEqual([
+		expect(result).toStrictEqual([
 			{
 				expression: 'count()',
 			},
