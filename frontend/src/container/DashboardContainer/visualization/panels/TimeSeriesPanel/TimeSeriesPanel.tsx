@@ -17,8 +17,6 @@ import get from 'lodash/get';
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
 import '../Panel.styles.scss';
-import { PanelMode } from '../types';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -38,7 +36,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const { timezone } = useTimezone();
 
 	const dashboardId = useDashboardStore((s) => s.dashboardData?.id);
-	const [syncMode] = useDashboardCursorSyncMode(dashboardId);
+	const [syncMode] = useDashboardCursorSyncMode(dashboardId, panelMode);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -121,18 +119,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		return get(widget, 'query.builder.queryData[0].groupBy', []);
 	}, [widget.query]);
 
-	const cursorSyncMode = useMemo(() => {
-		if (panelMode !== PanelMode.DASHBOARD_VIEW) {
-			return DashboardCursorSync.None;
-		}
-		return syncMode;
-	}, [syncMode, panelMode]);
-
 	return (
 		<div className="panel-container" ref={graphRef}>
 			{containerDimensions.width > 0 && containerDimensions.height > 0 && (
 				<TimeSeries
-					key={cursorSyncMode}
+					key={syncMode}
 					config={config}
 					legendConfig={{
 						position: widget?.legendPosition ?? LegendPosition.BOTTOM,
@@ -145,7 +136,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					groupBy={groupBy}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
-					syncMode={cursorSyncMode}
+					syncMode={syncMode}
 					layoutChildren={layoutChildren}
 				>
 					<ContextMenu
