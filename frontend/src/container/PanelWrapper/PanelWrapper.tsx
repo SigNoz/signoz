@@ -1,5 +1,6 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import Spinner from 'components/Spinner';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -29,6 +30,17 @@ function PanelWrapper({
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
 	] as FC<PanelWrapperProps>;
+
+	const groupByPerQuery = useMemo<Record<string, BaseAutocompleteData[]>>(() => {
+		const { queryData } = widget.query.builder;
+		return queryData.reduce<Record<string, BaseAutocompleteData[]>>(
+			(acc, query) => {
+				acc[query.queryName] = query.groupBy ?? [];
+				return acc;
+			},
+			{},
+		);
+	}, [widget]);
 
 	if (!Component) {
 		return <></>;
@@ -60,6 +72,7 @@ function PanelWrapper({
 			customSeries={customSeries}
 			enableDrillDown={enableDrillDown}
 			onColumnWidthsChange={onColumnWidthsChange}
+			groupByPerQuery={groupByPerQuery}
 		/>
 	);
 }

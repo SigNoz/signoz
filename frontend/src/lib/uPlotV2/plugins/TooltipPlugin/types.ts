@@ -40,7 +40,7 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
-	groupBy?: BaseAutocompleteData[];
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 }
 
 export interface TooltipPluginProps {

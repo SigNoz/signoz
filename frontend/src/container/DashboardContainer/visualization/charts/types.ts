@@ -44,7 +44,7 @@ interface UPlotBasedChartProps {
 interface UPlotChartDataProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
-	groupBy?: BaseAutocompleteData[];
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 }
 
 export interface TimeSeriesChartProps

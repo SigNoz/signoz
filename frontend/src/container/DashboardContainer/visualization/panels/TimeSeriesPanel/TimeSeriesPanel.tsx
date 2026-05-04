@@ -13,7 +13,6 @@ import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
-import get from 'lodash/get';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
@@ -28,6 +27,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		onDragSelect,
 		isFullViewMode,
 		onToggleModelHandler,
+		groupByPerQuery,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -117,9 +117,6 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		},
 		[],
 	);
-	const groupBy = useMemo(() => {
-		return get(widget, 'query.builder.queryData[0].groupBy', []);
-	}, [widget.query]);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
@@ -134,7 +131,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
-					groupBy={groupBy}
+					groupByPerQuery={groupByPerQuery}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
