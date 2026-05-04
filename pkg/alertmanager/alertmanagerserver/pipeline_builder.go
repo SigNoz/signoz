@@ -75,16 +75,10 @@ func (pb *pipelineBuilder) New(
 	tms := notify.NewTimeMuteStage(intervener, marker, pb.metrics)
 	ss := notify.NewMuteStage(silencer, pb.metrics)
 
-	var mms *notify.MuteStage
-	if pb.muter != nil {
-		mms = notify.NewMuteStage(pb.muter, pb.metrics)
-	}
+	mms := notify.NewMuteStage(pb.muter, pb.metrics)
 
 	for name := range receivers {
-		stages := notify.MultiStage{ms, is, tas, tms, ss}
-		if mms != nil {
-			stages = append(stages, mms)
-		}
+		stages := notify.MultiStage{ms, is, tas, tms, ss, mms}
 		stages = append(stages, createReceiverStage(name, receivers[name], wait, notificationLog, pb.metrics))
 		rs[name] = stages
 	}

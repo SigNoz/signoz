@@ -10,9 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -23,9 +28,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func newTestMaintenanceStore() ruletypes.MaintenanceStore {
+	ss := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
+	return sqlrulestore.NewMaintenanceStore(ss)
+}
+
 func TestServerSetConfigAndStop(t *testing.T) {
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, nil)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -37,7 +47,7 @@ func TestServerSetConfigAndStop(t *testing.T) {
 
 func TestServerTestReceiverTypeWebhook(t *testing.T) {
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, nil)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), NewConfig(), "1", alertmanagertypestest.NewStateStore(), notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(alertmanagertypes.GlobalConfig{}, alertmanagertypes.RouteConfig{GroupInterval: 1 * time.Minute, RepeatInterval: 1 * time.Minute, GroupWait: 1 * time.Minute}, "1")
@@ -85,7 +95,7 @@ func TestServerPutAlerts(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, nil)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
@@ -133,7 +143,7 @@ func TestServerTestAlert(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, nil)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
@@ -238,7 +248,7 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 	srvCfg := NewConfig()
 	srvCfg.Route.GroupInterval = 1 * time.Second
 	notificationManager := nfmanagertest.NewMock()
-	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, nil)
+	server, err := New(context.Background(), slog.New(slog.DiscardHandler), prometheus.NewRegistry(), srvCfg, "1", stateStore, notificationManager, newTestMaintenanceStore())
 	require.NoError(t, err)
 
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, "1")
