@@ -65,10 +65,6 @@ function SignUp(): JSX.Element {
 		(async (): Promise<void> => {
 			try {
 				const values = form.getFieldsValue();
-				if (values.password !== values.confirmPassword) {
-					setConfirmPasswordTouched(true);
-					return;
-				}
 				setLoading(true);
 				setFormError(null);
 
