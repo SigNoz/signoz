@@ -232,6 +232,7 @@
     "ts-jest": "29.4.6",
     "ts-node": "^10.2.1",
     "typescript-plugin-css-modules": "5.2.0",
+    "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
     "vite-plugin-image-optimizer": "2.0.3",
