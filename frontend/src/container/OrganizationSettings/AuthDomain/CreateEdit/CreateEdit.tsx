@@ -60,7 +60,7 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [authnProvider, setAuthnProvider] = useState<
 		AuthtypesAuthNProviderDTO | ''
-	>(record?.ssoType || '');
+	>(record?.config?.ssoType || '');
 
 	const { showErrorModal } = useErrorModal();
 	const { featureFlags } = useAppContext();

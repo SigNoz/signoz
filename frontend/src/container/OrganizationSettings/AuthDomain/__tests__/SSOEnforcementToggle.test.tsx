@@ -55,7 +55,10 @@ describe('SSOEnforcementToggle', () => {
 		render(
 			<SSOEnforcementToggle
 				isDefaultChecked={false}
-				record={{ ...mockGoogleAuthDomain, ssoEnabled: false }}
+				record={{
+					...mockGoogleAuthDomain,
+					config: { ...mockGoogleAuthDomain.config, ssoEnabled: false },
+				}}
 			/>,
 		);
 
