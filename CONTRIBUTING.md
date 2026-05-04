@@ -4,8 +4,6 @@ Thank you for your interest in contributing to our project! We greatly value fee
 
 ## How can I contribute?
 
-
-
 ### Finding Issues to Work On
 - Check our [existing open issues](https://github.com/SigNoz/signoz/issues?q=is%3Aopen+is%3Aissue)
 - Look for [good first issues](https://github.com/SigNoz/signoz/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to start with
@@ -68,8 +66,6 @@ Before you begin, please take a moment to ensure your contribution is not alread
 *   **Search the Issue Tracker**: Use the [GitHub search](https://github.com/SigNoz/signoz/issues) to verify if the bug or feature request has already been logged.
 *   **Review Open Pull Requests**: Check [active PRs](https://github.com/SigNoz/signoz/pulls) to see if there's an ongoing effort that addresses the issue.
 *   **Avoid Duplicates**: If you find an existing issue or PR, please add your comments, additional context, or reactions there rather than creating a new one.
-
-
 
 ## How can I contribute to other repositories?
 
