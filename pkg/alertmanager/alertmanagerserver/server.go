@@ -26,7 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 // This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
@@ -64,7 +64,7 @@ type Server struct {
 	timeIntervals       map[string][]timeinterval.TimeInterval
 	pipelineBuilder     *pipelineBuilder
 	muter               *MaintenanceMuter
-	marker              *alertmanagertypes.MemMarker
+	marker              *types.MemMarker
 	tmpl                *template.Template
 	wg                  sync.WaitGroup
 	stopc               chan struct{}
@@ -93,7 +93,7 @@ func New(
 	signozRegisterer := prometheus.WrapRegistererWithPrefix("signoz_", registry)
 	signozRegisterer = prometheus.WrapRegistererWith(prometheus.Labels{"org_id": server.orgID}, signozRegisterer)
 	// initialize marker
-	server.marker = alertmanagertypes.NewMarker(signozRegisterer)
+	server.marker = types.NewMarker(signozRegisterer)
 
 	// get silences for initial state
 	state, err := server.stateStore.Get(ctx, server.orgID)
