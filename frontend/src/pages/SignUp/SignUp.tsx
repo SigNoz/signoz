@@ -66,6 +66,7 @@ function SignUp(): JSX.Element {
 			try {
 				const values = form.getFieldsValue();
 				if (values.password !== values.confirmPassword) {
+					setConfirmPasswordTouched(true);
 					return;
 				}
 				setLoading(true);
@@ -156,11 +157,11 @@ function SignUp(): JSX.Element {
 								<FormContainer.Item
 									name="confirmPassword"
 									validateTrigger="onBlur"
-									validateStatus={showPasswordMismatchError ? 'error' : ''}
+									validateStatus={showPasswordMismatchError ? 'error' : undefined}
 									help={
 										showPasswordMismatchError
 											? "Passwords don't match. Please try again."
-											: ''
+											: undefined
 									}
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
