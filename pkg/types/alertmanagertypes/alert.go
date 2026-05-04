@@ -170,6 +170,7 @@ func NewGettableAlertsFromAlertProvider(
 	cfg *Config,
 	getAlertStatusFunc func(model.Fingerprint) types.AlertStatus,
 	setAlertStatusFunc func(model.LabelSet),
+	mutedByFunc func(model.LabelSet) []string,
 	params GettableAlertsParams,
 ) (GettableAlerts, error) {
 	res := GettableAlerts{}
@@ -219,7 +220,7 @@ func NewGettableAlertsFromAlertProvider(
 			continue
 		}
 
-		alert := v2.AlertToOpenAPIAlert(alertData, getAlertStatusFunc(alertData.Fingerprint()), receivers, nil)
+		alert := v2.AlertToOpenAPIAlert(alertData, getAlertStatusFunc(alertData.Fingerprint()), receivers, mutedByFunc(alertData.Labels))
 
 		res = append(res, alert)
 	}

@@ -48,6 +48,25 @@ func (m *MaintenanceMuter) Mutes(ctx context.Context, lset model.LabelSet) bool 
 	return false
 }
 
+// MutedBy returns the IDs of all active maintenance windows currently
+// suppressing the alert identified by lset. It is used to populate the
+// `mutedBy` field on the v2 API alert response so that maintenance-suppressed
+// alerts surface as `state=suppressed` in GetAlerts responses.
+func (m *MaintenanceMuter) MutedBy(ctx context.Context, lset model.LabelSet) []string {
+	ruleID := string(lset[ruletypes.AlertRuleIDLabel])
+	if ruleID == "" {
+		return nil
+	}
+	var ids []string
+	now := time.Now()
+	for _, mw := range m.getMaintenances(ctx) {
+		if mw.ShouldSkip(ruleID, now) {
+			ids = append(ids, mw.ID.String())
+		}
+	}
+	return ids
+}
+
 func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*ruletypes.PlannedMaintenance {
 	m.mu.RLock()
 	if time.Now().Before(m.cacheExpiry) {

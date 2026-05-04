@@ -212,11 +212,17 @@ func New(
 }
 
 func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
-	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
-		server.inhibitor.Mutes(ctx, labels)
-		server.silencer.Mutes(ctx, labels)
-		server.muter.Mutes(ctx, labels)
-	}, params)
+	return alertmanagertypes.NewGettableAlertsFromAlertProvider(
+		server.alerts, server.alertmanagerConfig, server.marker.Status,
+		func(labels model.LabelSet) {
+			server.inhibitor.Mutes(ctx, labels)
+			server.silencer.Mutes(ctx, labels)
+		},
+		func(labels model.LabelSet) []string {
+			return server.muter.MutedBy(ctx, labels)
+		},
+		params,
+	)
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
