@@ -9,10 +9,9 @@ import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
+import styles from './GeneralSettings.module.scss';
 import { Button } from './styles';
 import { Base64Icons } from './utils';
-
-import './GeneralSettings.styles.scss';
 
 const { Option } = Select;
 
@@ -106,8 +105,8 @@ function GeneralDashboardSettings(): JSX.Element {
 	};
 
 	return (
-		<div className="overview-content">
-			<Col className="overview-settings">
+		<div className={styles.overviewContent}>
+			<Col className={styles.overviewSettings}>
 				<Space
 					direction="vertical"
 					style={{
@@ -118,27 +117,29 @@ function GeneralDashboardSettings(): JSX.Element {
 					}}
 				>
 					<div>
-						<Typography style={{ marginBottom: '0.5rem' }} className="dashboard-name">
-							Dashboard Name
-						</Typography>
-						<section className="name-icon-input">
+						<Typography className={styles.dashboardName}>Dashboard Name</Typography>
+						<section className={styles.nameIconInput}>
 							<Select
 								defaultActiveFirstOption
 								data-testid="dashboard-image"
 								suffixIcon={null}
-								rootClassName="dashboard-image-input"
+								rootClassName={styles.dashboardImageInput}
 								value={updatedImage}
 								onChange={(value: string): void => setUpdatedImage(value)}
 							>
 								{Base64Icons.map((icon) => (
 									<Option value={icon} key={icon}>
-										<img src={icon} alt="dashboard-icon" className="list-item-image" />
+										<img
+											src={icon}
+											alt="dashboard-icon"
+											className={styles.listItemImage}
+										/>
 									</Option>
 								))}
 							</Select>
 							<Input
 								data-testid="dashboard-name"
-								className="dashboard-name-input"
+								className={styles.dashboardNameInput}
 								value={updatedTitle}
 								onChange={(e): void => setUpdatedTitle(e.target.value)}
 							/>
@@ -146,31 +147,27 @@ function GeneralDashboardSettings(): JSX.Element {
 					</div>
 
 					<div>
-						<Typography style={{ marginBottom: '0.5rem' }} className="dashboard-name">
-							Description
-						</Typography>
+						<Typography className={styles.dashboardName}>Description</Typography>
 						<Input.TextArea
 							data-testid="dashboard-desc"
 							rows={6}
 							value={updatedDescription}
-							className="description-text-area"
+							className={styles.descriptionTextArea}
 							onChange={(e): void => setUpdatedDescription(e.target.value)}
 						/>
 					</div>
 					<div>
-						<Typography style={{ marginBottom: '0.5rem' }} className="dashboard-name">
-							Tags
-						</Typography>
+						<Typography className={styles.dashboardName}>Tags</Typography>
 						<AddTags tags={updatedTags} setTags={setUpdatedTags} />
 					</div>
 				</Space>
 			</Col>
-			<Col className="overview-settings cross-panel-sync">
-				<div className="cross-panel-sync__info">
-					<Typography.Text className="cross-panel-sync__title">
+			<Col className={`${styles.overviewSettings} ${styles.crossPanelSync}`}>
+				<div className={styles.crossPanelSyncInfo}>
+					<Typography.Text className={styles.crossPanelSyncTitle}>
 						Cross-Panel Sync
 					</Typography.Text>
-					<Typography.Text className="cross-panel-sync__description">
+					<Typography.Text className={styles.crossPanelSyncDescription}>
 						Sync crosshair and tooltip across all the dashboard panels
 					</Typography.Text>
 				</div>
@@ -188,21 +185,21 @@ function GeneralDashboardSettings(): JSX.Element {
 				</Radio.Group>
 			</Col>
 			{numberOfUnsavedChanges > 0 && (
-				<div className="overview-settings-footer">
-					<div className="unsaved">
-						<div className="unsaved-dot" />
-						<Typography.Text className="unsaved-changes">
+				<div className={styles.overviewSettingsFooter}>
+					<div className={styles.unsaved}>
+						<div className={styles.unsavedDot} />
+						<Typography.Text className={styles.unsavedChanges}>
 							{numberOfUnsavedChanges} unsaved change
 							{numberOfUnsavedChanges > 1 && 's'}
 						</Typography.Text>
 					</div>
-					<div className="footer-action-btns">
+					<div className={styles.footerActionBtns}>
 						<Button
 							disabled={updateDashboardMutation.isLoading}
 							icon={<X size={14} />}
 							onClick={discardHandler}
 							type="text"
-							className="discard-btn"
+							className={styles.discardBtn}
 						>
 							Discard
 						</Button>
@@ -216,7 +213,7 @@ function GeneralDashboardSettings(): JSX.Element {
 							data-testid="save-dashboard-config"
 							onClick={onSaveHandler}
 							type="primary"
-							className="save-btn"
+							className={styles.saveBtn}
 						>
 							{t('save')}
 						</Button>
