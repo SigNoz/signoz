@@ -3,9 +3,8 @@ import { createContext, useContext } from 'react';
 
 import type { QuerySearchV2ContextValue } from './QuerySearchV2.store';
 
-export const QuerySearchV2Context = createContext<QuerySearchV2ContextValue | null>(
-	null,
-);
+export const QuerySearchV2Context =
+	createContext<QuerySearchV2ContextValue | null>(null);
 
 export function useQuerySearchV2Context(): QuerySearchV2ContextValue {
 	const context = useContext(QuerySearchV2Context);
