@@ -94,8 +94,8 @@ function CancelSubscriptionBanner(): JSX.Element {
 						<span className={styles.title}>Cancel your subscription</span>
 					</div>
 					<span className={styles.subtitle}>
-						If you cancel your SigNoz subscription, your data will be deleted after
-						the retention period.
+						When you cancel your SigNoz subscription, all your data will be deleted
+						immediately and removed from our servers.
 					</span>
 				</div>
 				<Button
@@ -119,8 +119,7 @@ function CancelSubscriptionBanner(): JSX.Element {
 				<div className={styles.dialogBody}>
 					<p className={styles.dialogDescription}>
 						Cancelling your subscription would stop your data from being ingested to
-						SigNoz. All data that has been already sent will be deleted after the
-						retention period.
+						SigNoz. All the data that has been already sent will also be deleted.
 					</p>
 					<p className={styles.dialogConfirmLabel}>
 						Type <code>cancel</code> to confirm the cancellation.
