@@ -17,7 +17,7 @@ type addLabelExpressionToPlannedMaintenance struct {
 
 func NewAddLabelExpressionToPlannedMaintenanceFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("add_label_expression_to_planned_maintenance"),
+		factory.MustNewName("add_label_expr_to_planned"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 			return &addLabelExpressionToPlannedMaintenance{
 				sqlstore:  sqlstore,
