@@ -1,6 +1,7 @@
 import { Tag, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Pin, PinOff } from 'lucide-react';
+import { useState } from 'react';
 
 import { SidebarItem } from '../sideNav.types';
 
@@ -28,6 +29,7 @@ export default function NavItem({
 	shortcut?: string;
 }): JSX.Element {
 	const { label, icon, isBeta, isNew } = item;
+	const [isPinHovered, setIsPinHovered] = useState(false);
 
 	const handleTogglePinClick = (
 		event: React.MouseEvent<SVGSVGElement, MouseEvent>,
@@ -43,7 +45,11 @@ export default function NavItem({
 	);
 
 	return (
-		<Tooltip title={tooltipTitle} placement="right" mouseEnterDelay={0.5}>
+		<Tooltip
+			title={isPinHovered ? null : tooltipTitle}
+			placement="right"
+			mouseEnterDelay={0.5}
+		>
 			<div
 				className={cx(
 					'nav-item',
@@ -86,6 +92,8 @@ export default function NavItem({
 								size={12}
 								className="nav-item-pin-icon"
 								onClick={handleTogglePinClick}
+								onMouseEnter={(): void => setIsPinHovered(true)}
+								onMouseLeave={(): void => setIsPinHovered(false)}
 								color="var(--Vanilla-400, #c0c1c3)"
 							/>
 						</Tooltip>
@@ -97,6 +105,8 @@ export default function NavItem({
 								size={12}
 								className="nav-item-pin-icon"
 								onClick={handleTogglePinClick}
+								onMouseEnter={(): void => setIsPinHovered(true)}
+								onMouseLeave={(): void => setIsPinHovered(false)}
 								color="var(--Vanilla-400, #c0c1c3)"
 							/>
 						</Tooltip>
