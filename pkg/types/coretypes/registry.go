@@ -17,12 +17,12 @@ var resourcesByRef = func() map[string]Resource {
 		out[ResourceRef{Type: r.Type(), Kind: r.Kind()}.String()] = r
 	}
 	return out
-}()
+}
 
 // NewResourceFromTypeAndKind looks up the canonical Resource for a (Type, Kind)
 // pair from the static Resources slice. Returns an error if no match exists.
 func NewResourceFromTypeAndKind(typed Type, kind Kind) (Resource, error) {
-	if resource, ok := resourcesByRef[ResourceRef{Type: typed, Kind: kind}.String()]; ok {
+	if resource, ok := resourcesByRef()[ResourceRef{Type: typed, Kind: kind}.String()]; ok {
 		return resource, nil
 	}
 	return nil, errors.Newf(errors.TypeNotFound, ErrCodeResourceNotFound, "no resource found for type %s and kind %s", typed.StringValue(), kind.String())

@@ -81,9 +81,8 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindSubscription}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindSubscription}, WildCardSelectorString)},
 		// organization — admin only
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrganization}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrganization}, WildCardSelectorString)},
-		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindOrganization}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeOrganization, Kind: KindOrganization}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeOrganization, Kind: KindOrganization}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindOrganization}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindOrganization}, WildCardSelectorString)},
 		// org-preference — admin only
@@ -99,15 +98,15 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindPublicDashboard}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindPublicDashboard}, WildCardSelectorString)},
 		// role — admin only
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRole}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRole}, WildCardSelectorString)},
-		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindRole}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeRole, Kind: KindRole}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeRole, Kind: KindRole}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeRole, Kind: KindRole}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindRole}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindRole}, WildCardSelectorString)},
 		// serviceaccount — admin only
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindServiceAccount}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindServiceAccount}, WildCardSelectorString)},
-		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindServiceAccount}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeServiceAccount, Kind: KindServiceAccount}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeServiceAccount, Kind: KindServiceAccount}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeServiceAccount, Kind: KindServiceAccount}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindServiceAccount}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindServiceAccount}, WildCardSelectorString)},
 		// session — admin can revoke and list
@@ -115,9 +114,9 @@ var ManagedRoleToTransactions = map[string][]Transaction{
 		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindSession}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindSession}, WildCardSelectorString)},
 		// user — admin only
-		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUser}, WildCardSelectorString)},
-		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUser}, WildCardSelectorString)},
-		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeMetaResource, Kind: KindUser}, WildCardSelectorString)},
+		{Verb: VerbRead, Object: *MustNewObject(ResourceRef{Type: TypeUser, Kind: KindUser}, WildCardSelectorString)},
+		{Verb: VerbUpdate, Object: *MustNewObject(ResourceRef{Type: TypeUser, Kind: KindUser}, WildCardSelectorString)},
+		{Verb: VerbDelete, Object: *MustNewObject(ResourceRef{Type: TypeUser, Kind: KindUser}, WildCardSelectorString)},
 		{Verb: VerbCreate, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindUser}, WildCardSelectorString)},
 		{Verb: VerbList, Object: *MustNewObject(ResourceRef{Type: TypeMetaResources, Kind: KindUser}, WildCardSelectorString)},
 		// dashboard — full CRUD (also held by editor)

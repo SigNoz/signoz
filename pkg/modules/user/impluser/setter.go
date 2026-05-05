@@ -720,7 +720,7 @@ func (module *setter) CreateFirstUser(ctx context.Context, organization *types.O
 			return err
 		}
 
-		err = module.CreateUser(ctx, user, root.WithFactorPassword(password), root.WithRoleNames(roleNames))
+		err = module.createUserWithoutGrant(ctx, user, root.WithFactorPassword(password), root.WithRoleNames(roleNames))
 		if err != nil {
 			return err
 		}

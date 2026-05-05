@@ -92,8 +92,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error) {
 			return signoz.NewAuthNs(ctx, providerSettings, store, licensing)
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, _ licensing.Licensing, _ []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
-			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, config authz.Config, _ licensing.Licensing, _ []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore, config)
 			if err != nil {
 				return nil, err
 			}
