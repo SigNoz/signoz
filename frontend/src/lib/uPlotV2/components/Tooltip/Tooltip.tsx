@@ -25,9 +25,16 @@ export default function Tooltip({
 
 	const showHeader = showTooltipHeader || activeItem != null;
 	// With a single series the active item is fully represented in the header —
-	// hide the divider and list to avoid showing a duplicate row.
-	const showList = tooltipContent.length > 1;
-	const showDivider = showList && showHeader;
+	// hide the divider and list to avoid showing a duplicate row. When there is
+	// no active item (e.g. a sync-driven tooltip with no focused series), still
+	// render the row so the value is visible.
+	const showList =
+		tooltipContent.length > 1 ||
+		(tooltipContent.length === 1 && activeItem == null);
+	// Divider separates the active row rendered inside the header from the list.
+	// With no active item, the header is just a timestamp and the divider would
+	// sit directly under it without visual purpose.
+	const showDivider = showList && showHeader && activeItem != null;
 
 	return (
 		<div
