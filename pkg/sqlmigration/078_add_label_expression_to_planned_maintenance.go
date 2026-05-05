@@ -66,5 +66,32 @@ func (migration *addLabelExpressionToPlannedMaintenance) Up(ctx context.Context,
 }
 
 func (migration *addLabelExpressionToPlannedMaintenance) Down(ctx context.Context, db *bun.DB) error {
-	return nil
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance"))
+	if err != nil {
+		return err
+	}
+
+	column := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("label_expression"),
+		DataType: sqlschema.DataTypeText,
+		Nullable: true,
+	}
+
+	sqls := migration.sqlschema.Operator().DropColumn(table, column)
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
