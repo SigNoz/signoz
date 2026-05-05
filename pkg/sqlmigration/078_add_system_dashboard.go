@@ -40,22 +40,11 @@ func (migration *addSystemDashboard) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, "dashboard")
-	if err != nil {
+	// Add the `source` column directly via ALTER TABLE, not sqlschema.Operator().AddColumn.
+	// when a column is not nullable the process is CREATE temp + copy + DROP original + RENAME.
+	// When DROP happens it fails the foreign key from public_dashboard.dashboard_id
+	if _, err := tx.ExecContext(ctx, "ALTER TABLE dashboard ADD COLUMN source TEXT NOT NULL DEFAULT ''"); err != nil {
 		return err
-	}
-
-	column := &sqlschema.Column{
-		Name:     sqlschema.ColumnName("source"),
-		DataType: sqlschema.DataTypeText,
-		Nullable: false,
-	}
-
-	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, "")
-	for _, sql := range sqls {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-			return err
-		}
 	}
 
 	// We activate this part of code once we add default value for the overview page.
