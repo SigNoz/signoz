@@ -16,9 +16,18 @@ export const TOOLTIP_OFFSET = 10;
 export const DEFAULT_PIN_TOOLTIP_KEY = 'p';
 
 export enum DashboardCursorSync {
-	Crosshair,
-	None,
-	Tooltip,
+	Crosshair = 'crosshair',
+	None = 'none',
+	Tooltip = 'tooltip',
+}
+
+/**
+ * Controls whether a synced tooltip filters series by groupBy intersection
+ * or shows every series with the matching ones highlighted.
+ */
+export enum SyncTooltipFilterMode {
+	Filtered = 'filtered',
+	All = 'all',
 }
 
 export interface TooltipViewState {
@@ -40,7 +49,8 @@ export interface TooltipLayoutInfo {
 
 export interface TooltipSyncMetadata {
 	yAxisUnit?: string;
-	groupBy?: BaseAutocompleteData[];
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
+	filterMode?: SyncTooltipFilterMode;
 }
 
 export interface TooltipPluginProps {

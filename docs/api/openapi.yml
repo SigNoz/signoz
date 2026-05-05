@@ -301,34 +301,20 @@ components:
           type: string
       type: object
     AuthtypesGettableAuthDomain:
-      oneOf:
-      - $ref: '#/components/schemas/AuthtypesSamlConfig'
-      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
-      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
       properties:
         authNProviderInfo:
           $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
         createdAt:
           format: date-time
           type: string
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
         id:
           type: string
         name:
           type: string
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
         orgId:
           type: string
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
-          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         updatedAt:
           format: date-time
           type: string
@@ -533,7 +519,7 @@ components:
       - relation
       - object
       type: object
-    AuthtypesUpdateableAuthDomain:
+    AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
@@ -7052,20 +7038,20 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -7221,7 +7207,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
       responses:
         "204":
           description: No Content

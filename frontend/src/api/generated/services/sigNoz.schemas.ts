@@ -1641,109 +1641,32 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 	url?: string;
 }
 
-export type AuthtypesGettableAuthDomainDTO =
-	| (AuthtypesSamlConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  })
-	| (AuthtypesGoogleConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  })
-	| (AuthtypesOIDCConfigDTO & {
-			authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			createdAt?: Date;
-			googleAuthConfig?: AuthtypesGoogleConfigDTO;
-			/**
-			 * @type string
-			 */
-			id: string;
-			/**
-			 * @type string
-			 */
-			name?: string;
-			oidcConfig?: AuthtypesOIDCConfigDTO;
-			/**
-			 * @type string
-			 */
-			orgId?: string;
-			roleMapping?: AuthtypesRoleMappingDTO;
-			samlConfig?: AuthtypesSamlConfigDTO;
-			/**
-			 * @type boolean
-			 */
-			ssoEnabled?: boolean;
-			ssoType?: AuthtypesAuthNProviderDTO;
-			/**
-			 * @type string
-			 * @format date-time
-			 */
-			updatedAt?: Date;
-	  });
+export interface AuthtypesGettableAuthDomainDTO {
+	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	config?: AuthtypesAuthDomainConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
 
 export interface AuthtypesGettableTokenDTO {
 	/**
@@ -2010,7 +1933,7 @@ export interface AuthtypesTransactionDTO {
 	relation: AuthtypesRelationDTO;
 }
 
-export interface AuthtypesUpdateableAuthDomainDTO {
+export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
@@ -8413,8 +8336,8 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */

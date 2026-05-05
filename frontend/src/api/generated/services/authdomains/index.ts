@@ -19,8 +19,8 @@ import type {
 
 import type {
 	AuthtypesPostableAuthDomainDTO,
-	AuthtypesUpdateableAuthDomainDTO,
-	CreateAuthDomain200,
+	AuthtypesUpdatableAuthDomainDTO,
+	CreateAuthDomain201,
 	DeleteAuthDomainPathParameters,
 	GetAuthDomain200,
 	GetAuthDomainPathParameters,
@@ -126,7 +126,7 @@ export const createAuthDomain = (
 	authtypesPostableAuthDomainDTO: BodyType<AuthtypesPostableAuthDomainDTO>,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<CreateAuthDomain200>({
+	return GeneratedAPIInstance<CreateAuthDomain201>({
 		url: `/api/v1/domains`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -388,13 +388,13 @@ export const invalidateGetAuthDomain = async (
  */
 export const updateAuthDomain = (
 	{ id }: UpdateAuthDomainPathParameters,
-	authtypesUpdateableAuthDomainDTO: BodyType<AuthtypesUpdateableAuthDomainDTO>,
+	authtypesUpdatableAuthDomainDTO: BodyType<AuthtypesUpdatableAuthDomainDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/domains/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: authtypesUpdateableAuthDomainDTO,
+		data: authtypesUpdatableAuthDomainDTO,
 	});
 };
 
@@ -407,7 +407,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -416,7 +416,7 @@ export const getUpdateAuthDomainMutationOptions = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {
@@ -433,7 +433,7 @@ export const getUpdateAuthDomainMutationOptions = <
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -448,7 +448,7 @@ export type UpdateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAuthDomain>>
 >;
 export type UpdateAuthDomainMutationBody =
-	BodyType<AuthtypesUpdateableAuthDomainDTO>;
+	BodyType<AuthtypesUpdatableAuthDomainDTO>;
 export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -463,7 +463,7 @@ export const useUpdateAuthDomain = <
 		TError,
 		{
 			pathParams: UpdateAuthDomainPathParameters;
-			data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+			data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 		},
 		TContext
 	>;
@@ -472,7 +472,7 @@ export const useUpdateAuthDomain = <
 	TError,
 	{
 		pathParams: UpdateAuthDomainPathParameters;
-		data: BodyType<AuthtypesUpdateableAuthDomainDTO>;
+		data: BodyType<AuthtypesUpdatableAuthDomainDTO>;
 	},
 	TContext
 > => {

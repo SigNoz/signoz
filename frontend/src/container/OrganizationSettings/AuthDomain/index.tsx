@@ -158,7 +158,7 @@ function AuthDomain(): JSX.Element {
 							onClick={(): void => setRecord(record)}
 							variant="link"
 						>
-							Configure {SSOType.get(record.ssoType || '')}
+							Configure {SSOType.get(record.config?.ssoType || '')}
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"

@@ -18,6 +18,7 @@ import {
 import {
 	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
+	SyncTooltipFilterMode,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -32,7 +33,6 @@ import {
 import { Events } from 'constants/events';
 
 import Styles from './TooltipPlugin.module.scss';
-import { getAbsoluteUrl } from 'utils/basePath';
 
 // Delay before hiding an unpinned tooltip when the cursor briefly leaves
 // the plot – this avoids flicker when moving between nearby points.
@@ -199,10 +199,14 @@ export default function TooltipPlugin({
 			if (!controller.hoverActive || !plot) {
 				return null;
 			}
-			// In Tooltip sync mode, suppress the receiver tooltip entirely when
-			// no receiver series match the source panel's focused series.
+			const filterMode =
+				syncMetadata?.filterMode ?? SyncTooltipFilterMode.Filtered;
+			// In Filtered Tooltip sync mode, suppress the receiver tooltip entirely
+			// when no receiver series match the source panel's focused series. In
+			// All mode the tooltip still renders with every series visible.
 			if (
 				syncTooltipWithDashboard &&
+				filterMode === SyncTooltipFilterMode.Filtered &&
 				controller.cursorDrivenBySync &&
 				Array.isArray(controller.syncedSeriesIndexes) &&
 				controller.syncedSeriesIndexes.length === 0
@@ -217,6 +221,7 @@ export default function TooltipPlugin({
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
 				syncedSeriesIndexes: controller.syncedSeriesIndexes,
+				syncFilterMode: filterMode,
 			});
 		}
 
@@ -304,7 +309,7 @@ export default function TooltipPlugin({
 			if (event.key === 'Escape') {
 				if (controller.pinned) {
 					logEvent(Events.TOOLTIP_UNPINNED, {
-						path: getAbsoluteUrl(window.location.pathname),
+						id: config.getId(),
 					});
 					dismissTooltip();
 				}
@@ -318,7 +323,7 @@ export default function TooltipPlugin({
 			// Toggle off: P pressed while already pinned.
 			if (controller.pinned) {
 				logEvent(Events.TOOLTIP_UNPINNED, {
-					path: getAbsoluteUrl(window.location.pathname),
+					id: config.getId(),
 				});
 				dismissTooltip();
 				return;
@@ -352,7 +357,7 @@ export default function TooltipPlugin({
 			controller.clickData = buildClickData(syntheticEvent, plot);
 			controller.pinned = true;
 			logEvent(Events.TOOLTIP_PINNED, {
-				path: getAbsoluteUrl(window.location.pathname),
+				id: config.getId(),
 			});
 			scheduleRender(true);
 		};
