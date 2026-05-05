@@ -637,7 +637,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const NAVIGATION_SHORTCUT_MAP = useMemo(
 		() =>
 			[
-				{ shortcut: GlobalShortcuts.NavigateToHome, route: ROUTES.HOME },
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToHome, 
+					route: ROUTES.HOME 
+				},
 				{
 					shortcut: GlobalShortcuts.NavigateToServices,
 					route: ROUTES.APPLICATION,
@@ -646,7 +649,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					shortcut: GlobalShortcuts.NavigateToTraces,
 					route: ROUTES.TRACES_EXPLORER,
 				},
-				{ shortcut: GlobalShortcuts.NavigateToLogs, route: ROUTES.LOGS },
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToLogs, 
+					route: ROUTES.LOGS 
+				},
 				{
 					shortcut: GlobalShortcuts.NavigateToDashboards,
 					route: ROUTES.ALL_DASHBOARD,
@@ -683,7 +689,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					shortcut: GlobalShortcuts.NavigateToMetricsViews,
 					route: ROUTES.METRICS_EXPLORER_VIEWS,
 				},
-				{ shortcut: GlobalShortcuts.NavigateToSettings, route: ROUTES.SETTINGS },
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToSettings, 
+					route: ROUTES.SETTINGS 
+				},
 				{
 					shortcut: GlobalShortcuts.NavigateToSettingsIngestion,
 					route: ROUTES.INGESTION_SETTINGS,
