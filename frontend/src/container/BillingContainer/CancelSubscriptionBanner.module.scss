@@ -1,7 +1,7 @@
 .banner {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	padding: var(--padding-4);
 	border-radius: 4px;
 	border: 1px solid var(--l1-border);
