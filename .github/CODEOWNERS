@@ -107,6 +107,7 @@ go.mod @therealpandey
 /pkg/modules/organization/ @therealpandey
 /pkg/modules/authdomain/ @therealpandey
 /pkg/modules/role/ @therealpandey
+/pkg/types/coretypes/ @therealpandey @vikrantgupta25
 
 # IdentN Owners
 
