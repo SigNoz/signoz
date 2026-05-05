@@ -1,6 +1,10 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
-import { LegendConfig, TooltipRenderArgs } from 'lib/uPlotV2/components/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendConfig,
+	TooltipRenderArgs,
+} from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
 	DashboardCursorSync,
@@ -21,6 +25,7 @@ interface BaseChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
 }
@@ -39,7 +44,7 @@ interface UPlotBasedChartProps {
 interface UPlotChartDataProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
-	groupBy?: BaseAutocompleteData[];
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 }
 
 export interface TimeSeriesChartProps

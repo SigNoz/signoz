@@ -55,7 +55,7 @@ const SERVICE_NAME_KEY: BaseAutocompleteData = {
 };
 
 const groupByService: TooltipSyncMetadata = {
-	groupBy: [SERVICE_NAME_KEY],
+	groupByPerQuery: { queryName: [SERVICE_NAME_KEY] },
 };
 
 function seedSourcePanel(activeMetric: Record<string, string>): void {

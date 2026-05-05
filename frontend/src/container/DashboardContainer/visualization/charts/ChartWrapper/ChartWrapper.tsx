@@ -33,7 +33,7 @@ export default function ChartWrapper({
 	children,
 	layoutChildren,
 	yAxisUnit,
-	groupBy,
+	groupByPerQuery,
 	customTooltip,
 	pinnedTooltipElement,
 	'data-testid': testId,
@@ -69,9 +69,9 @@ export default function ChartWrapper({
 	const syncMetadata = useMemo(
 		() => ({
 			yAxisUnit,
-			groupBy,
+			groupByPerQuery,
 		}),
-		[yAxisUnit, groupBy],
+		[yAxisUnit, groupByPerQuery],
 	);
 
 	return (
