@@ -2,12 +2,16 @@ import { useCallback } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import {
+	DashboardCursorSync,
+	SyncTooltipFilterMode,
+} from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 // Per-dashboard preferences persisted in localStorage. Add new preference
 // fields here as they are introduced.
 export type DashboardPreferences = {
 	cursorSyncMode?: DashboardCursorSync;
+	syncTooltipFilterMode?: SyncTooltipFilterMode;
 };
 
 interface DashboardPreferencesState {

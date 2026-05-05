@@ -29,6 +29,7 @@ export default function ChartWrapper({
 	onClick,
 	syncMode,
 	syncKey,
+	syncFilterMode,
 	onDestroy = noop,
 	children,
 	layoutChildren,
@@ -70,8 +71,9 @@ export default function ChartWrapper({
 		() => ({
 			yAxisUnit,
 			groupByPerQuery,
+			filterMode: syncFilterMode,
 		}),
-		[yAxisUnit, groupByPerQuery],
+		[yAxisUnit, groupByPerQuery, syncFilterMode],
 	);
 
 	return (

@@ -58,7 +58,7 @@ export default function TooltipList({
 				style={{ height }}
 				totalListHeightChanged={setTotalListHeight}
 				itemContent={(_, item): JSX.Element => (
-					<TooltipItem item={item} isItemActive={false} />
+					<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
 				)}
 			/>
 		</div>

@@ -18,6 +18,7 @@ import {
 import {
 	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
+	SyncTooltipFilterMode,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -198,10 +199,14 @@ export default function TooltipPlugin({
 			if (!controller.hoverActive || !plot) {
 				return null;
 			}
-			// In Tooltip sync mode, suppress the receiver tooltip entirely when
-			// no receiver series match the source panel's focused series.
+			const filterMode =
+				syncMetadata?.filterMode ?? SyncTooltipFilterMode.Filtered;
+			// In Filtered Tooltip sync mode, suppress the receiver tooltip entirely
+			// when no receiver series match the source panel's focused series. In
+			// All mode the tooltip still renders with every series visible.
 			if (
 				syncTooltipWithDashboard &&
+				filterMode === SyncTooltipFilterMode.Filtered &&
 				controller.cursorDrivenBySync &&
 				Array.isArray(controller.syncedSeriesIndexes) &&
 				controller.syncedSeriesIndexes.length === 0
@@ -216,6 +221,7 @@ export default function TooltipPlugin({
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
 				syncedSeriesIndexes: controller.syncedSeriesIndexes,
+				syncFilterMode: filterMode,
 			});
 		}
 

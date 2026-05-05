@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Col, Input, Radio, Select, Space, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
+import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import {
+	DashboardCursorSync,
+	SyncTooltipFilterMode,
+} from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
@@ -12,6 +16,9 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import styles from './GeneralSettings.module.scss';
 import { Button } from './styles';
 import { Base64Icons } from './utils';
+import logEvent from 'api/common/logEvent';
+import { Events } from 'constants/events';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 const { Option } = Select;
 
@@ -23,6 +30,9 @@ function GeneralDashboardSettings(): JSX.Element {
 	const [cursorSyncMode, setCursorSyncMode] = useDashboardCursorSyncMode(
 		dashboardData?.id,
 	);
+
+	const [syncTooltipFilterMode, setSyncTooltipFilterMode] =
+		useSyncTooltipFilterMode(dashboardData?.id);
 
 	const selectedData = dashboardData?.data;
 
@@ -162,27 +172,60 @@ function GeneralDashboardSettings(): JSX.Element {
 					</div>
 				</Space>
 			</Col>
-			<Col className={`${styles.overviewSettings} ${styles.crossPanelSync}`}>
-				<div className={styles.crossPanelSyncInfo}>
-					<Typography.Text className={styles.crossPanelSyncTitle}>
-						Cross-Panel Sync
-					</Typography.Text>
-					<Typography.Text className={styles.crossPanelSyncDescription}>
-						Sync crosshair and tooltip across all the dashboard panels
-					</Typography.Text>
+			<Col className={`${styles.overviewSettings} ${styles.crossPanelSyncGroup}`}>
+				<Typography.Text className={styles.crossPanelSyncSectionTitle}>
+					Cross-Panel Sync
+				</Typography.Text>
+				<div className={styles.crossPanelSyncRow}>
+					<div className={styles.crossPanelSyncInfo}>
+						<Typography.Text className={styles.crossPanelSyncTitle}>
+							Sync Mode
+						</Typography.Text>
+						<Typography.Text className={styles.crossPanelSyncDescription}>
+							Sync crosshair and tooltip across all the dashboard panels
+						</Typography.Text>
+					</div>
+					<Radio.Group
+						value={cursorSyncMode}
+						onChange={(e): void => {
+							setCursorSyncMode(e.target.value as DashboardCursorSync);
+						}}
+					>
+						<Radio.Button value={DashboardCursorSync.None}>No Sync</Radio.Button>
+						<Radio.Button value={DashboardCursorSync.Crosshair}>
+							Crosshair
+						</Radio.Button>
+						<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
+					</Radio.Group>
 				</div>
-				<Radio.Group
-					value={cursorSyncMode}
-					onChange={(e): void => {
-						setCursorSyncMode(e.target.value as DashboardCursorSync);
-					}}
-				>
-					<Radio.Button value={DashboardCursorSync.None}>No Sync</Radio.Button>
-					<Radio.Button value={DashboardCursorSync.Crosshair}>
-						Crosshair
-					</Radio.Button>
-					<Radio.Button value={DashboardCursorSync.Tooltip}>Tooltip</Radio.Button>
-				</Radio.Group>
+				{cursorSyncMode === DashboardCursorSync.Tooltip && (
+					<div className={styles.crossPanelSyncRow}>
+						<div className={styles.crossPanelSyncInfo}>
+							<Typography.Text className={styles.crossPanelSyncTitle}>
+								Synced Tooltip Series
+							</Typography.Text>
+							<Typography.Text className={styles.crossPanelSyncDescription}>
+								Show only series that intersect on group-by, or every series with the
+								matching ones highlighted
+							</Typography.Text>
+						</div>
+						<Radio.Group
+							value={syncTooltipFilterMode}
+							onChange={(e): void => {
+								logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
+									path: getAbsoluteUrl(window.location.pathname),
+									mode: e.target.value,
+								});
+								setSyncTooltipFilterMode(e.target.value as SyncTooltipFilterMode);
+							}}
+						>
+							<Radio.Button value={SyncTooltipFilterMode.All}>All</Radio.Button>
+							<Radio.Button value={SyncTooltipFilterMode.Filtered}>
+								Filtered
+							</Radio.Button>
+						</Radio.Group>
+					</div>
+				)}
 			</Col>
 			{numberOfUnsavedChanges > 0 && (
 				<div className={styles.overviewSettingsFooter}>

@@ -10,12 +10,31 @@
 	padding: 16px !important;
 }
 
-.crossPanelSync {
+.crossPanelSyncGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.crossPanelSyncSectionTitle {
+	color: var(--l1-foreground);
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+}
+
+.crossPanelSyncRow {
 	display: flex;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
 	gap: 16px;
+
+	& + & {
+		padding-top: 16px;
+		border-top: 1px solid var(--l1-border);
+	}
 }
 
 .crossPanelSyncInfo {
