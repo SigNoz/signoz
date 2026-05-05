@@ -25,7 +25,7 @@ func NewSQLStore(store sqlstore.SQLStore, config authz.Config) (storage.OpenFGAD
 		}
 
 		return postgres.NewWithDB(pgStore.Pool(), nil, &sqlcommon.Config{
-			MaxTuplesPerWriteField: 100,
+			MaxTuplesPerWriteField: config.OpenFGA.MaxTuplesPerWrite,
 			MaxTypesPerModelField:  100,
 		})
 	}
