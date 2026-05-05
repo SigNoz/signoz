@@ -41,3 +41,8 @@
 	line-height: var(--line-height-relaxed);
 	color: var(--l2-foreground);
 }
+
+.cancelButton {
+	background: var(--secondary-background);
+	border: 1px solid var(--l1-border);
+}
