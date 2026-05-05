@@ -63,12 +63,20 @@ export interface TooltipRenderArgs {
 	syncedSeriesIndexes?: number[] | null;
 }
 
+export interface IRenderTooltipFooterArgs {
+	pinKey?: string;
+	isPinned: boolean;
+	dismiss: () => void;
+}
+
 export interface BaseTooltipProps {
+	id: string;
 	showTooltipHeader?: boolean;
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => ReactNode;
 	timezone?: Timezone;
 }
 

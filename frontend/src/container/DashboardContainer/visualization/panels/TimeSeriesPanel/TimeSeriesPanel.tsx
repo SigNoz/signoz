@@ -1,20 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
-import get from 'lodash/get';
 
 import { prepareChartData, prepareUPlotConfig } from '../TimeSeriesPanel/utils';
 
 import '../Panel.styles.scss';
+import TooltipFooter from '../components/TooltipFooter';
 
 function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -24,6 +27,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		onDragSelect,
 		isFullViewMode,
 		onToggleModelHandler,
+		groupByPerQuery,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -105,9 +109,14 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		widget.decimalPrecision,
 	]);
 
-	const groupBy = useMemo(() => {
-		return get(widget, 'query.builder.queryData[0].groupBy', []);
-	}, [widget.query]);
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => {
+			return (
+				<TooltipFooter id={widget.id} isPinned={isPinned} dismiss={dismiss} />
+			);
+		},
+		[],
+	);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
@@ -122,10 +131,11 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					data={chartData as uPlot.AlignedData}
-					groupBy={groupBy}
+					groupByPerQuery={groupByPerQuery}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
+					renderTooltipFooter={renderTooltipFooter}
 				>
 					<ContextMenu
 						coordinates={coordinates}

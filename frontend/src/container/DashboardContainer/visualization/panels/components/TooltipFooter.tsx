@@ -7,22 +7,25 @@ import Styles from './TooltipFooter.module.scss';
 import { MousePointerClick } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
-import { getAbsoluteUrl } from 'utils/basePath';
 
 interface TooltipFooterProps {
+	id: string;
 	pinKey?: string;
 	isPinned: boolean;
+	canDrilldown?: boolean;
 	dismiss: () => void;
 }
 
 export default function TooltipFooter({
+	id,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	isPinned,
+	canDrilldown = true,
 	dismiss,
 }: TooltipFooterProps): JSX.Element {
 	const handleUnpinClick = (): void => {
 		logEvent(Events.TOOLTIP_UNPINNED, {
-			path: getAbsoluteUrl(window.location.pathname),
+			id: id,
 		});
 		dismiss();
 	};
@@ -43,12 +46,14 @@ export default function TooltipFooter({
 					</div>
 				) : (
 					<div className={Styles.hintList}>
-						<div className={Styles.hint} data-active="false">
-							<Kbd>
-								<MousePointerClick size={12} />
-							</Kbd>
-							<span>Click to drilldown</span>
-						</div>
+						{canDrilldown && (
+							<div className={Styles.hint} data-active="false">
+								<Kbd>
+									<MousePointerClick size={12} />
+								</Kbd>
+								<span>Click to drilldown</span>
+							</div>
+						)}
 						<div className={Styles.hint} data-active="false">
 							<span>Press</span>
 							<Kbd>{pinKey.toUpperCase()}</Kbd>

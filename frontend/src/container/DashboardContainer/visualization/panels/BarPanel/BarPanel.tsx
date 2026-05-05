@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
+import {
+	IRenderTooltipFooterArgs,
+	LegendPosition,
+} from 'lib/uPlotV2/components/types';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
@@ -14,7 +17,7 @@ import { usePanelContextMenu } from '../../hooks/usePanelContextMenu';
 import { prepareBarPanelConfig, prepareBarPanelData } from './utils';
 
 import '../Panel.styles.scss';
-import get from 'lodash/get';
+import TooltipFooter from '../components/TooltipFooter';
 
 function BarPanel(props: PanelWrapperProps): JSX.Element {
 	const {
@@ -24,6 +27,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		onDragSelect,
 		isFullViewMode,
 		onToggleModelHandler,
+		groupByPerQuery,
 	} = props;
 	const uPlotRef = useRef<uPlot | null>(null);
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -114,9 +118,14 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		uPlotRef.current = plot;
 	}, []);
 
-	const groupBy = useMemo(() => {
-		return get(widget, 'query.builder.queryData[0].groupBy', []);
-	}, [widget.query]);
+	const renderTooltipFooter = useCallback(
+		({ isPinned, dismiss }: IRenderTooltipFooterArgs) => {
+			return (
+				<TooltipFooter id={widget.id} isPinned={isPinned} dismiss={dismiss} />
+			);
+		},
+		[],
+	);
 
 	return (
 		<div className="panel-container" ref={graphRef}>
@@ -133,11 +142,12 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 					width={containerDimensions.width}
 					height={containerDimensions.height}
 					layoutChildren={layoutChildren}
-					groupBy={groupBy}
+					groupByPerQuery={groupByPerQuery}
 					isStackedBarChart={widget.stackedBarChart ?? false}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					timezone={timezone}
+					renderTooltipFooter={renderTooltipFooter}
 				>
 					<ContextMenu
 						coordinates={coordinates}

@@ -2,19 +2,19 @@ import { useMemo } from 'react';
 import cx from 'classnames';
 
 import { TooltipProps } from '../types';
-import TooltipFooter from './components/TooltipFooter/TooltipFooter';
 import TooltipHeader from './components/TooltipHeader/TooltipHeader';
 import TooltipList from './components/TooltipList/TooltipList';
 
 import Styles from './Tooltip.module.scss';
 
 export default function Tooltip({
+	id,
 	uPlotInstance,
 	timezone,
 	content,
 	showTooltipHeader = true,
 	isPinned,
-	canPinTooltip,
+	renderTooltipFooter,
 	dismiss,
 }: TooltipProps): JSX.Element {
 	const tooltipContent = useMemo(() => content ?? [], [content]);
@@ -31,7 +31,9 @@ export default function Tooltip({
 
 	return (
 		<div
-			className={cx(Styles.container, isPinned && Styles.pinned)}
+			className={cx(Styles.container, {
+				[Styles.pinned]: isPinned,
+			})}
 			data-testid="uplot-tooltip-container"
 		>
 			{showHeader && (
@@ -46,9 +48,9 @@ export default function Tooltip({
 
 			{showDivider && <span className={Styles.divider} />}
 
-			{showList && <TooltipList content={tooltipContent} />}
+			{showList && <TooltipList id={id} content={tooltipContent} />}
 
-			{canPinTooltip && <TooltipFooter isPinned={isPinned} dismiss={dismiss} />}
+			{renderTooltipFooter && renderTooltipFooter({ isPinned, dismiss })}
 		</div>
 	);
 }
