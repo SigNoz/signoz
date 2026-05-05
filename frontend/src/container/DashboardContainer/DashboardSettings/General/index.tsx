@@ -16,6 +16,9 @@ import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import styles from './GeneralSettings.module.scss';
 import { Button } from './styles';
 import { Base64Icons } from './utils';
+import logEvent from 'api/common/logEvent';
+import { Events } from 'constants/events';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 const { Option } = Select;
 
@@ -209,13 +212,17 @@ function GeneralDashboardSettings(): JSX.Element {
 						<Radio.Group
 							value={syncTooltipFilterMode}
 							onChange={(e): void => {
+								logEvent(Events.TOOLTIP_SYNC_MODE_CHANGED, {
+									path: getAbsoluteUrl(window.location.pathname),
+									mode: e.target.value,
+								});
 								setSyncTooltipFilterMode(e.target.value as SyncTooltipFilterMode);
 							}}
 						>
+							<Radio.Button value={SyncTooltipFilterMode.All}>All</Radio.Button>
 							<Radio.Button value={SyncTooltipFilterMode.Filtered}>
 								Filtered
 							</Radio.Button>
-							<Radio.Button value={SyncTooltipFilterMode.All}>All</Radio.Button>
 						</Radio.Group>
 					</div>
 				)}

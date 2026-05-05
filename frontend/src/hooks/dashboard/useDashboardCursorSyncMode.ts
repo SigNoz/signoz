@@ -9,12 +9,6 @@ export function useDashboardCursorSyncMode(
 	dashboardId: string | undefined,
 	panelMode?: PanelMode,
 ): [DashboardCursorSync, (value: DashboardCursorSync) => void] {
-	const [value, setValue] = useDashboardPreference(
-		dashboardId,
-		'cursorSyncMode',
-		DEFAULT_CURSOR_SYNC_MODE,
-	);
-
 	// Chart panels in edit / standalone modes don't participate in cross-panel
 	// sync, so return the default with a no-op setter for them. Callers without
 	// a panelMode (e.g. dashboard settings) read/write the preference normally.
@@ -22,5 +16,9 @@ export function useDashboardCursorSyncMode(
 		return [DEFAULT_CURSOR_SYNC_MODE, (): void => {}];
 	}
 
-	return [value, setValue];
+	return useDashboardPreference(
+		dashboardId,
+		'cursorSyncMode',
+		DEFAULT_CURSOR_SYNC_MODE,
+	);
 }
