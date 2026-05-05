@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { SolidInfoCircle, X } from '@signozhq/icons';
-import { Button, DialogWrapper } from '@signozhq/ui';
+import { SolidInfoCircle, Undo2, X } from '@signozhq/icons';
+import { Button, DialogWrapper, Input } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
@@ -11,6 +11,7 @@ import { Color } from '@signozhq/design-tokens';
 
 function CancelSubscriptionBanner(): JSX.Element {
 	const [open, setOpen] = useState(false);
+	const [confirmText, setConfirmText] = useState('');
 	const { user, org } = useAppContext();
 
 	const handleOpenCancelDialog = (): void => {
@@ -54,6 +55,12 @@ function CancelSubscriptionBanner(): JSX.Element {
 		link.href = `mailto:cloud-support@signoz.io?subject=${subject}&body=${body}`;
 		link.click();
 		setOpen(false);
+		setConfirmText('');
+	};
+
+	const handleClose = (): void => {
+		setOpen(false);
+		setConfirmText('');
 	};
 
 	const footer = (
@@ -61,12 +68,19 @@ function CancelSubscriptionBanner(): JSX.Element {
 			<Button
 				variant="solid"
 				color="secondary"
-				onClick={(): void => setOpen(false)}
+				prefix={<Undo2 size={14} />}
+				onClick={handleClose}
 			>
-				Keep Subscription
+				Go back
 			</Button>
-			<Button variant="solid" color="destructive" onClick={handleContactSupport}>
-				Contact Support
+			<Button
+				variant="solid"
+				color="destructive"
+				prefix={<X size={14} />}
+				disabled={confirmText !== 'cancel'}
+				onClick={handleContactSupport}
+			>
+				Cancel subscription
 			</Button>
 		</>
 	);
@@ -96,16 +110,27 @@ function CancelSubscriptionBanner(): JSX.Element {
 			</div>
 			<DialogWrapper
 				open={open}
-				onOpenChange={setOpen}
-				title="Cancel your subscription"
+				onOpenChange={handleClose}
+				title="Cancel your subscription?"
 				width="narrow"
 				showCloseButton={false}
 				footer={footer}
 			>
-				<p className={styles.dialogBody}>
-					To cancel your SigNoz subscription, please reach out to our support team.
-					We&apos;ll be happy to assist you.
-				</p>
+				<div className={styles.dialogBody}>
+					<p className={styles.dialogDescription}>
+						Cancelling your subscription would stop your data from being ingested to
+						SigNoz. All data that has been already sent will be deleted after the
+						retention period.
+					</p>
+					<p className={styles.dialogConfirmLabel}>
+						Type <code>cancel</code> to confirm the cancellation.
+					</p>
+					<Input
+						placeholder="Enter the word cancel..."
+						value={confirmText}
+						onChange={(e): void => setConfirmText(e.target.value)}
+					/>
+				</div>
 			</DialogWrapper>
 		</>
 	);
