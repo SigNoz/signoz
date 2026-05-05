@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from '@signozhq/icons';
+import { SolidInfoCircle, X } from '@signozhq/icons';
 import { Button, DialogWrapper } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { pick } from 'lodash-es';
@@ -7,6 +7,7 @@ import { useAppContext } from 'providers/App/App';
 import { getBaseUrl } from 'utils/basePath';
 
 import styles from './CancelSubscriptionBanner.module.scss';
+import { Color } from '@signozhq/design-tokens';
 
 function CancelSubscriptionBanner(): JSX.Element {
 	const [open, setOpen] = useState(false);
@@ -74,12 +75,18 @@ function CancelSubscriptionBanner(): JSX.Element {
 		<>
 			<div className={styles.banner}>
 				<div className={styles.info}>
-					<span className={styles.title}>Cancel Subscription</span>
-					<span className={styles.subtitle}>Cancel your SigNoz subscription.</span>
+					<div className={styles.titleRow}>
+						<SolidInfoCircle color={Color.BG_SAKURA_500} size={12} />
+						<span className={styles.title}>Cancel your subscription</span>
+					</div>
+					<span className={styles.subtitle}>
+						If you cancel your SigNoz subscription, your data will be deleted after
+						the retention period.
+					</span>
 				</div>
 				<Button
 					variant="solid"
-					color="destructive"
+					color="secondary"
 					prefix={<X size={12} />}
 					onClick={handleOpenCancelDialog}
 				>
