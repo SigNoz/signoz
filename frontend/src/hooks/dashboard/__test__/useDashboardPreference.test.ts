@@ -127,3 +127,75 @@ describe('useDashboardPreference', () => {
 		});
 	});
 });
+
+describe('useDashboardPreferencesStore.removePreferences', () => {
+	beforeEach(() => {
+		useDashboardPreferencesStore.setState({ preferences: {} });
+	});
+
+	it('removes the preferences for the given dashboardId', () => {
+		useDashboardPreferencesStore.setState({
+			preferences: {
+				'dash-1': { cursorSyncMode: DashboardCursorSync.Tooltip },
+			},
+		});
+
+		act(() => {
+			useDashboardPreferencesStore.getState().removePreferences('dash-1');
+		});
+
+		expect(useDashboardPreferencesStore.getState().preferences).toStrictEqual({});
+	});
+
+	it('leaves other dashboards untouched', () => {
+		useDashboardPreferencesStore.setState({
+			preferences: {
+				'dash-1': { cursorSyncMode: DashboardCursorSync.Tooltip },
+				'dash-2': { cursorSyncMode: DashboardCursorSync.None },
+			},
+		});
+
+		act(() => {
+			useDashboardPreferencesStore.getState().removePreferences('dash-1');
+		});
+
+		expect(useDashboardPreferencesStore.getState().preferences).toStrictEqual({
+			'dash-2': { cursorSyncMode: DashboardCursorSync.None },
+		});
+	});
+
+	it('is a no-op when the dashboardId is not present', () => {
+		const initial = {
+			'dash-2': { cursorSyncMode: DashboardCursorSync.Tooltip },
+		};
+		useDashboardPreferencesStore.setState({ preferences: initial });
+		const before = useDashboardPreferencesStore.getState().preferences;
+
+		act(() => {
+			useDashboardPreferencesStore.getState().removePreferences('dash-1');
+		});
+
+		// Identity-preserving so subscribers reading `preferences` don't re-render.
+		expect(useDashboardPreferencesStore.getState().preferences).toBe(before);
+	});
+
+	it('causes subsequent reads via useDashboardPreference to fall back to the default', () => {
+		useDashboardPreferencesStore.setState({
+			preferences: {
+				'dash-1': { cursorSyncMode: DashboardCursorSync.Tooltip },
+			},
+		});
+
+		const { result } = renderHook(() =>
+			useDashboardPreference('dash-1', 'cursorSyncMode', DEFAULT_MODE),
+		);
+
+		expect(result.current[0]).toBe(DashboardCursorSync.Tooltip);
+
+		act(() => {
+			useDashboardPreferencesStore.getState().removePreferences('dash-1');
+		});
+
+		expect(result.current[0]).toBe(DEFAULT_MODE);
+	});
+});

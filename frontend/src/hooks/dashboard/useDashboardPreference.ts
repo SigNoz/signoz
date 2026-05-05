@@ -21,6 +21,7 @@ interface DashboardPreferencesState {
 		key: K,
 		value: NonNullable<DashboardPreferences[K]>,
 	) => void;
+	removePreferences: (dashboardId: string) => void;
 }
 
 export const useDashboardPreferencesStore = create<DashboardPreferencesState>()(
@@ -37,6 +38,15 @@ export const useDashboardPreferencesStore = create<DashboardPreferencesState>()(
 						},
 					},
 				}));
+			},
+			removePreferences: (dashboardId): void => {
+				set((state) => {
+					if (!(dashboardId in state.preferences)) {
+						return state;
+					}
+					const { [dashboardId]: _, ...rest } = state.preferences;
+					return { preferences: rest };
+				});
 			},
 		}),
 		{ name: LOCALSTORAGE.DASHBOARD_PREFERENCES },
