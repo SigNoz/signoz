@@ -169,7 +169,6 @@ func (store *store) ListPublic(ctx context.Context, orgID valuer.UUID) ([]*dashb
 	return storable, nil
 }
 
-// Update works for user dashboards (Source = "") and system dashboards (Source = "ai-o11y-overview").
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashboard *dashboardtypes.StorableDashboard) error {
 	_, err := store.
 		sqlstore.
@@ -178,7 +177,6 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storableDashb
 		Model(storableDashboard).
 		WherePK().
 		Where("org_id = ?", orgID).
-		Where("source = ?", storableDashboard.Source).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", storableDashboard.ID)

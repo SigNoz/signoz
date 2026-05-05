@@ -30,13 +30,6 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, source dashboa
 // Update applies the new payload as last-writer-wins. The Get and Update run inside one transaction so a
 // concurrent Reset cannot interleave and leave the response with a stale id from before the reset.
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, dashboard *dashboardtypes.Dashboard) (*dashboardtypes.Dashboard, error) {
-	if dashboard == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is required")
-	}
-	if dashboard.Data == nil {
-		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard.Data is required")
-	}
-
 	var updated *dashboardtypes.Dashboard
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		existing, err := module.store.GetBySource(ctx, orgID, string(source))

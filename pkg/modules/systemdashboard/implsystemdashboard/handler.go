@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -65,10 +64,8 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), parseSource(r), &dashboardtypes.Dashboard{
-		Data:          data,
-		UserAuditable: types.UserAuditable{UpdatedBy: claims.Email},
-	})
+	dashboard, err := handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), parseSource(r),
+		dashboardtypes.NewDashboardFromUpdatable(data, claims.Email))
 	if err != nil {
 		render.Error(rw, err)
 		return

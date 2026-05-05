@@ -116,6 +116,15 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 	}, nil
 }
 
+func NewDashboardFromUpdatable(data UpdatableDashboard, updatedBy string) *Dashboard {
+	return &Dashboard{
+		Data: data,
+		UserAuditable: types.UserAuditable{
+			UpdatedBy: updatedBy,
+		},
+	}
+}
+
 func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) *Dashboard {
 	return &Dashboard{
 		ID: storableDashboard.ID.StringValue(),
