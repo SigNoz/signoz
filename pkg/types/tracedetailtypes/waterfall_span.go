@@ -71,7 +71,7 @@ type WaterfallSpan struct {
 	ParentSpanID string            `json:"parent_span_id"`
 	Resource     map[string]string `json:"resource"`
 	SpanID       string            `json:"span_id"`
-	TimeUnixNano uint64            `json:"timestamp"`
+	TimeUnixNano uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
 
