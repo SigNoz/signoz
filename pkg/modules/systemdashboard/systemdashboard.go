@@ -11,7 +11,7 @@ import (
 type Module interface {
 	Get(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source) (*dashboardtypes.Dashboard, error)
 	Update(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, dashboard *dashboardtypes.Dashboard) (*dashboardtypes.Dashboard, error)
-	Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source) (*dashboardtypes.Dashboard, error)
+	Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error)
 	SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
 }
 

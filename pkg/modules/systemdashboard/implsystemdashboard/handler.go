@@ -84,7 +84,7 @@ func (handler *handler) Reset(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dashboard, err := handler.module.Reset(ctx, valuer.MustNewUUID(claims.OrgID), parseSource(r))
+	dashboard, err := handler.module.Reset(ctx, valuer.MustNewUUID(claims.OrgID), parseSource(r), claims.UserID)
 	if err != nil {
 		render.Error(rw, err)
 		return

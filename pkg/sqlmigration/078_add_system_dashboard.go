@@ -9,9 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type addSystemDashboard struct {
@@ -61,45 +58,48 @@ func (migration *addSystemDashboard) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	var orgIDs []string
-	if err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
-		return err
-	}
-
-	for _, rawOrgID := range orgIDs {
-		orgID, err := valuer.NewUUID(rawOrgID)
-		if err != nil {
-			return err
-		}
-
-		for _, source := range dashboardtypes.SystemSources {
-			count, err := tx.NewSelect().
-				Model((*dashboardtypes.StorableDashboard)(nil)).
-				Where("org_id = ?", orgID).
-				Where("source = ?", string(source)).
-				Count(ctx)
-			if err != nil {
-				return err
-			}
-			if count > 0 {
-				continue
-			}
-
-			dashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
-			if err != nil {
-				return err
-			}
-
-			storable, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
-			if err != nil {
-				return err
-			}
-
-			if _, err := tx.NewInsert().Model(storable).Exec(ctx); err != nil {
-				return err
-			}
-		}
-	}
+	// We activate this part of code once we add default value for the overview page.
+	// add source column to the dashboard table.
+	// do not iterate over orgs.
+	// var orgIDs []string
+	// if err := tx.NewSelect().Model((*types.Organization)(nil)).Column("id").Scan(ctx, &orgIDs); err != nil {
+	// 	return err
+	// }
+	//
+	// for _, rawOrgID := range orgIDs {
+	// 	orgID, err := valuer.NewUUID(rawOrgID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	for _, source := range dashboardtypes.SystemSources {
+	// 		count, err := tx.NewSelect().
+	// 			Model((*dashboardtypes.StorableDashboard)(nil)).
+	// 			Where("org_id = ?", orgID).
+	// 			Where("source = ?", string(source)).
+	// 			Count(ctx)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		if count > 0 {
+	// 			continue
+	// 		}
+	//
+	// 		dashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		storable, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	//
+	// 		if _, err := tx.NewInsert().Model(storable).Exec(ctx); err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// }
 
 	if err := tx.Commit(); err != nil {
 		return err

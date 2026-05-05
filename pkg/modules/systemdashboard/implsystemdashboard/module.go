@@ -55,7 +55,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, source dash
 	return updated, nil
 }
 
-func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source) (*dashboardtypes.Dashboard, error) {
+func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
 	var reset *dashboardtypes.Dashboard
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		defaultDashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
@@ -81,7 +81,7 @@ func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashb
 		}
 
 		existing.Data = defaultDashboard.Data
-		existing.UpdatedBy = "system"
+		existing.UpdatedBy = updatedBy
 		existing.UpdatedAt = time.Now()
 
 		if err := module.store.Update(ctx, orgID, existing); err != nil {
