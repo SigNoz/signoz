@@ -19,9 +19,9 @@ import {
 	k8sDaemonSetInitialLogTracesFilter,
 } from './constants';
 import {
-	k8sDaemonSetsColumns,
+	getK8sDaemonSetItemKey,
+	getK8sDaemonSetRowKey,
 	k8sDaemonSetsColumnsConfig,
-	k8sDaemonSetsRenderRowData,
 } from './table.config';
 
 function K8sDaemonSetsList({
@@ -91,10 +91,10 @@ function K8sDaemonSetsList({
 			<K8sBaseList<K8sDaemonSetsData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.DAEMONSETS}
-				tableColumnsDefinitions={k8sDaemonSetsColumns}
 				tableColumns={k8sDaemonSetsColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sDaemonSetsRenderRowData}
+				getRowKey={getK8sDaemonSetRowKey}
+				getItemKey={getK8sDaemonSetItemKey}
 				eventCategory={InfraMonitoringEvents.DaemonSet}
 			/>
 

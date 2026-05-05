@@ -1,68 +1,21 @@
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
 import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
+import { FilePenLine } from 'lucide-react';
 
-import styles from './table.module.scss';
-
-export interface K8sNamespacesRowData {
-	key: string;
-	itemKey: string;
-	namespaceUID: string;
-	namespaceName: React.ReactNode;
-	clusterName: string;
-	cpu: React.ReactNode;
-	memory: React.ReactNode;
-	groupedByMeta?: Record<string, string>;
+export function getK8sNamespaceRowKey(namespace: K8sNamespacesData): string {
+	return namespace.namespaceName || namespace.meta.k8s_namespace_name;
 }
 
-export const k8sNamespacesColumns: IEntityColumn[] = [
-	{
-		label: 'Namespace Group',
-		value: 'namespaceGroup',
-		id: 'namespaceGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
-	},
-	{
-		label: 'Namespace Name',
-		value: 'namespaceName',
-		id: 'namespaceName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'Cluster Name',
-		value: 'clusterName',
-		id: 'clusterName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Usage (cores)',
-		value: 'cpu',
-		id: 'cpu',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Memory Usage (WSS)',
-		value: 'memory',
-		id: 'memory',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-];
+export function getK8sNamespaceItemKey(namespace: K8sNamespacesData): string {
+	return namespace.meta.k8s_namespace_name;
+}
 
 export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
 	filters: {
@@ -72,84 +25,90 @@ export const getK8sNamespacesListQuery = (): K8sNamespacesListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const k8sNamespacesColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sNamespacesColumnsConfig: TableColumnDef<K8sNamespacesData>[] = [
 	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> NAMESPACE GROUP
-			</div>
+		id: 'namespaceGroup',
+		header: (): React.ReactNode => <EntityGroupHeader title="NAMESPACE GROUP" />,
+		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
+	},
+	{
+		id: 'namespaceName',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Namespace Name"
+				icon={<FilePenLine data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'namespaceGroup',
-		key: 'namespaceGroup',
-		ellipsis: true,
-		width: 150,
-		align: 'left',
-		sorter: false,
+		accessorFn: (row): string => row.namespaceName || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const namespaceName = value as string;
+			return (
+				<Tooltip title={namespaceName}>
+					<TanStackTable.Text>{namespaceName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Namespace Name</div>,
-		dataIndex: 'namespaceName',
-		key: 'namespaceName',
-		ellipsis: true,
-		width: 120,
-		sorter: false,
-		align: 'left',
+		id: 'clusterName',
+		header: 'Cluster Name',
+		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		width: { default: 150 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
 	},
 	{
-		title: <div>Cluster Name</div>,
-		dataIndex: 'clusterName',
-		key: 'clusterName',
-		ellipsis: true,
-		width: 120,
-		sorter: false,
-		align: 'left',
+		id: 'cpu',
+		header: 'CPU Usage (cores)',
+		accessorFn: (row): number => row.cpuUsage,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpu}>
+					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 100,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Mem Usage (WSS)</div>,
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'memory',
+		header: 'Mem Usage (WSS)',
+		accessorFn: (row): number => row.memoryUsage,
+		width: { min: 220 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memory}>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];
-
-export const k8sNamespacesRenderRowData = (
-	namespace: K8sNamespacesData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		namespace,
-		() => namespace.namespaceName || namespace.meta.k8s_namespace_name,
-		groupBy,
-	),
-	itemKey: namespace.meta.k8s_namespace_name,
-	namespaceUID: namespace.namespaceName,
-	namespaceName: (
-		<Tooltip title={namespace.namespaceName}>
-			{namespace.namespaceName || ''}
-		</Tooltip>
-	),
-	clusterName: namespace.meta.k8s_cluster_name,
-	cpu: (
-		<ValidateColumnValueWrapper value={namespace.cpuUsage}>
-			{namespace.cpuUsage}
-		</ValidateColumnValueWrapper>
-	),
-	memory: (
-		<ValidateColumnValueWrapper value={namespace.memoryUsage}>
-			{formatBytes(namespace.memoryUsage)}
-		</ValidateColumnValueWrapper>
-	),
-	namespaceGroup: getGroupByEl(namespace, groupBy),
-	...namespace.meta,
-	groupedByMeta: getGroupedByMeta(namespace, groupBy),
-});

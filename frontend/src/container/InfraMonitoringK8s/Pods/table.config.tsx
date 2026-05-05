@@ -1,328 +1,207 @@
-import React from 'react';
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import {
-	EntityProgressBar,
-	formatBytes,
-	ValidateColumnValueWrapper,
-} from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sPodsData } from './api';
+import { Container } from 'lucide-react';
 
-import styles from './table.module.scss';
-
-export interface K8sPodsRowData {
-	key: string;
-	podName: React.ReactNode;
-	podUID: string;
-	cpu_request: React.ReactNode;
-	cpu_limit: React.ReactNode;
-	cpu: React.ReactNode;
-	memory_request: React.ReactNode;
-	memory_limit: React.ReactNode;
-	memory: React.ReactNode;
-	restarts: React.ReactNode;
-	groupedByMeta?: any;
+export function getK8sPodRowKey(pod: K8sPodsData): string {
+	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
 }
 
-export const k8sPodColumns: IEntityColumn[] = [
+export function getK8sPodItemKey(pod: K8sPodsData): string {
+	return pod.podUID;
+}
+
+export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 	{
-		label: 'Pod Group',
-		value: 'podGroup',
 		id: 'podGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
+		header: (): React.ReactNode => <EntityGroupHeader title="POD GROUP" />,
+		accessorFn: (row): string => row.meta.k8s_pod_name || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
 	},
 	{
-		label: 'Pod name',
-		value: 'podName',
 		id: 'podName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'CPU Req Usage (%)',
-		value: 'cpu_request',
-		id: 'cpu_request',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Limit Usage (%)',
-		value: 'cpu_limit',
-		id: 'cpu_limit',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Usage (cores)',
-		value: 'cpu',
-		id: 'cpu',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Req Usage (%)',
-		value: 'memory_request',
-		id: 'memory_request',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Limit Usage (%)',
-		value: 'memory_limit',
-		id: 'memory_limit',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Mem Usage (WSS)',
-		value: 'memory',
-		id: 'memory',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Namespace name',
-		value: 'namespace',
-		id: 'namespace',
-		canBeHidden: true,
-		defaultVisibility: false,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Node name',
-		value: 'node',
-		id: 'node',
-		canBeHidden: true,
-		defaultVisibility: false,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Cluster name',
-		value: 'cluster',
-		id: 'cluster',
-		canBeHidden: true,
-		defaultVisibility: false,
-		behavior: 'always-visible',
-	},
-	// TODO - Re-enable the column once backend issue is fixed
-	// {
-	// 	label: 'Restarts',
-	// 	value: 'restarts',
-	// 	id: 'restarts',
-	// 	canRemove: false,
-	// },
-];
-
-export const k8sPodColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
-	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> POD GROUP
-			</div>
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Pod Name"
+				icon={<Container data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'podGroup',
-		key: 'podGroup',
-		ellipsis: true,
-		width: 180,
-		sorter: false,
+		accessorFn: (row): string => row.meta.k8s_pod_name || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const podName = value as string;
+			return (
+				<Tooltip title={podName}>
+					<TanStackTable.Text>{podName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Pod Name</div>,
-		dataIndex: 'podName',
-		key: 'podName',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
+		id: 'cpu_request',
+		header: 'CPU Req Usage (%)',
+		accessorFn: (row): number => row.podCPURequest,
+		width: { min: 210 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuRequest = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={cpuRequest}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="CPU Request"
+				>
+					<EntityProgressBar value={cpuRequest} type="request" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Req Usage (%)</div>,
-		dataIndex: 'cpu_request',
-		key: 'cpu_request',
-		width: 180,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
+		id: 'cpu_limit',
+		header: 'CPU Limit Usage (%)',
+		accessorFn: (row): number => row.podCPULimit,
+		width: { min: 210 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuLimit = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={cpuLimit}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="CPU Limit"
+				>
+					<EntityProgressBar value={cpuLimit} type="limit" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Limit Usage (%)</div>,
-		dataIndex: 'cpu_limit',
-		key: 'cpu_limit',
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'cpu',
+		header: 'CPU Usage (cores)',
+		accessorFn: (row): number => row.podCPU,
+		width: { min: 210 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpu}>
+					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory_request',
+		header: 'Mem Req Usage (%)',
+		accessorFn: (row): number => row.podMemoryRequest,
+		width: { min: 210 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryRequest = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memoryRequest}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="Memory Request"
+				>
+					<EntityProgressBar value={memoryRequest} type="request" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Mem Req Usage (%)</div>,
-		dataIndex: 'memory_request',
-		key: 'memory_request',
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'memory_limit',
+		header: 'Mem Limit Usage (%)',
+		accessorFn: (row): number => row.podMemoryLimit,
+		width: { min: 210 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryLimit = value as number;
+			return (
+				<ValidateColumnValueWrapper
+					value={memoryLimit}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="Memory Limit"
+				>
+					<EntityProgressBar value={memoryLimit} type="limit" />
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Mem Limit Usage (%)</div>,
-		dataIndex: 'memory_limit',
-		key: 'memory_limit',
-		width: 120,
-		sorter: true,
-		align: 'left',
+		id: 'memory',
+		header: 'Mem Usage (WSS)',
+		accessorFn: (row): number => row.podMemory,
+		width: { min: 210, default: '100%' },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memory}>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Mem Usage (WSS)</div>,
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 120,
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
+		id: 'namespace',
+		header: 'Namespace',
+		accessorFn: (row): string => row.meta.k8s_namespace_name || '',
+		width: { default: 100 },
+		enableSort: false,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
 	},
 	{
-		title: <div>Namespace</div>,
-		dataIndex: 'namespace',
-		key: 'namespace',
-		width: 100,
-		sorter: false,
-		ellipsis: true,
-		align: 'left',
+		id: 'node',
+		header: 'Node',
+		accessorFn: (row): string => row.meta.k8s_node_name || '',
+		width: { default: 100 },
+		enableSort: false,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
 	},
 	{
-		title: <div>Node</div>,
-		dataIndex: 'node',
-		key: 'node',
-		width: 100,
-		sorter: false,
-		ellipsis: true,
-		align: 'left',
+		id: 'cluster',
+		header: 'Cluster',
+		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		width: { default: 100 },
+		enableSort: false,
+		defaultVisibility: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
 	},
-	{
-		title: <div>Cluster</div>,
-		dataIndex: 'cluster',
-		key: 'cluster',
-		width: 100,
-		sorter: false,
-		ellipsis: true,
-		align: 'left',
-	},
-	// TODO - Re-enable the column once backend issue is fixed
-	// {
-	// 	title: (
-	// 		<div className="column-header">
-	// 			<Tooltip title="Container Restarts">Restarts</Tooltip>
-	// 		</div>
-	// 	),
-	// 	dataIndex: 'restarts',
-	// 	key: 'restarts',
-	// 	width: 40,
-	// 	ellipsis: true,
-	// 	sorter: true,
-	// 	align: 'left',
-	// 	className: `column ${columnProgressBarClassName}`,
-	// },
 ];
-
-export const k8sPodRenderRowData = (
-	pod: K8sPodsData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		pod,
-		() => pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name,
-		groupBy,
-	),
-	itemKey: pod.podUID,
-	podName: (
-		<Tooltip title={pod.meta.k8s_pod_name || ''}>
-			{pod.meta.k8s_pod_name || ''}
-		</Tooltip>
-	),
-	podUID: pod.podUID || '',
-	cpu_request: (
-		<ValidateColumnValueWrapper
-			value={pod.podCPURequest}
-			entity={InfraMonitoringEntity.PODS}
-			attribute="CPU Request"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={pod.podCPURequest} type="request" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	cpu_limit: (
-		<ValidateColumnValueWrapper
-			value={pod.podCPULimit}
-			entity={InfraMonitoringEntity.PODS}
-			attribute="CPU Limit"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={pod.podCPULimit} type="limit" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	cpu: (
-		<ValidateColumnValueWrapper value={pod.podCPU}>
-			{pod.podCPU}
-		</ValidateColumnValueWrapper>
-	),
-	memory_request: (
-		<ValidateColumnValueWrapper
-			value={pod.podMemoryRequest}
-			entity={InfraMonitoringEntity.PODS}
-			attribute="Memory Request"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={pod.podMemoryRequest} type="request" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	memory_limit: (
-		<ValidateColumnValueWrapper
-			value={pod.podMemoryLimit}
-			entity={InfraMonitoringEntity.PODS}
-			attribute="Memory Limit"
-		>
-			<div className={styles.progressBar}>
-				<EntityProgressBar value={pod.podMemoryLimit} type="limit" />
-			</div>
-		</ValidateColumnValueWrapper>
-	),
-	memory: (
-		<ValidateColumnValueWrapper value={pod.podMemory}>
-			{formatBytes(pod.podMemory)}
-		</ValidateColumnValueWrapper>
-	),
-	restarts: (
-		<ValidateColumnValueWrapper value={pod.restartCount}>
-			{pod.restartCount}
-		</ValidateColumnValueWrapper>
-	),
-	namespace: pod.meta.k8s_namespace_name,
-	node: pod.meta.k8s_node_name,
-	cluster: pod.meta.k8s_cluster_name,
-	meta: pod.meta,
-	podGroup: getGroupByEl(pod, groupBy),
-	...pod.meta,
-	groupedByMeta: getGroupedByMeta(pod, groupBy),
-});

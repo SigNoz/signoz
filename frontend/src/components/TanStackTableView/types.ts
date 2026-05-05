@@ -107,6 +107,8 @@ export type TableRowContext<TData> = {
 	columnOrderKey: string;
 	/** Column visibility key for memo invalidation on visibility change */
 	columnVisibilityKey: string;
+	/** Enable alternating row background colors (zebra striping) */
+	enableAlternatingRowColors?: boolean;
 };
 
 export type PaginationProps = {
@@ -116,10 +118,10 @@ export type PaginationProps = {
 };
 
 export type TanstackTableQueryParamsConfig = {
-	page: string;
-	limit: string;
-	orderBy: string;
-	expanded: string;
+	page?: string;
+	limit?: string;
+	orderBy?: string;
+	expanded?: string;
 };
 
 export type TanStackTableProps<TData> = {
@@ -137,6 +139,7 @@ export type TanStackTableProps<TData> = {
 	skeletonRowCount?: number;
 	enableQueryParams?: boolean | string | TanstackTableQueryParamsConfig;
 	pagination?: PaginationProps;
+	paginationClassname?: string;
 	onEndReached?: (index: number) => void;
 	/** Function to get the unique key for a row (before duplicate handling).
 	 * When set, enables automatic duplicate key detection and group-aware key composition. */
@@ -176,6 +179,10 @@ export type TanStackTableProps<TData> = {
 	prefixPaginationContent?: ReactNode;
 	/** Content rendered after the pagination controls */
 	suffixPaginationContent?: ReactNode;
+	/** Enable alternating row background colors (zebra striping) */
+	enableAlternatingRowColors?: boolean;
+	/** Disable virtual scrolling and render all rows at once. Cannot be used with onEndReached. */
+	disableVirtualScroll?: boolean;
 };
 
 export type TanStackTableHandle = TableVirtuosoHandle & {

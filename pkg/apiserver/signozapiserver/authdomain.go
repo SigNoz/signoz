@@ -34,13 +34,30 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates an auth domain",
 		Request:             new(authtypes.PostableAuthDomain),
 		RequestContentType:  "application/json",
-		Response:            new(authtypes.GettableAuthDomain),
+		Response:            new(types.Identifiable),
 		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
+		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
 		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/domains/{id}", handler.New(provider.authZ.AdminAccess(provider.authDomainHandler.Get), handler.OpenAPIDef{
+		ID:                  "GetAuthDomain",
+		Tags:                []string{"authdomains"},
+		Summary:             "Get auth domain by ID",
+		Description:         "This endpoint returns an auth domain by ID",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(authtypes.GettableAuthDomain),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
@@ -49,7 +66,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 		Tags:                []string{"authdomains"},
 		Summary:             "Update auth domain",
 		Description:         "This endpoint updates an auth domain",
-		Request:             new(authtypes.UpdateableAuthDomain),
+		Request:             new(authtypes.UpdatableAuthDomain),
 		RequestContentType:  "application/json",
 		Response:            nil,
 		ResponseContentType: "",

@@ -43,7 +43,7 @@ import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 } from './hooks';
@@ -60,7 +60,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 

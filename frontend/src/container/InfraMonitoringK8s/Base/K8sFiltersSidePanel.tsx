@@ -1,57 +1,98 @@
+import { useMemo } from 'react';
 import { Button, DrawerWrapper } from '@signozhq/ui';
-
-import { InfraMonitoringEntity } from '../constants';
 import {
-	useInfraMonitoringTableColumnsForPage,
-	useInfraMonitoringTableColumnsStore,
-} from './useInfraMonitoringTableColumnsStore';
+	hideColumn,
+	showColumn,
+	TableColumnDef,
+	useHiddenColumnIds,
+} from 'components/TanStackTableView';
 
 import styles from './K8sFiltersSidePanel.module.scss';
 
-function K8sFiltersSidePanel({
+type ColumnPickerItem = {
+	id: string;
+	label: string;
+	canBeHidden: boolean;
+	visibilityBehavior:
+		| 'hidden-on-expand'
+		| 'hidden-on-collapse'
+		| 'always-visible';
+};
+
+/**
+ * Converts TableColumnDef to column picker item format
+ */
+function toColumnPickerItems<T>(
+	columns: TableColumnDef<T>[],
+): ColumnPickerItem[] {
+	return columns.map((col) => ({
+		id: col.id,
+		label: typeof col.header === 'string' ? col.header : col.id,
+		canBeHidden: col.canBeHidden !== false && col.enableRemove !== false,
+		visibilityBehavior: col.visibilityBehavior ?? 'always-visible',
+	}));
+}
+
+function K8sFiltersSidePanel<TData>({
 	open,
 	onClose,
-	entity,
+	columns,
+	storageKey,
 }: {
 	open: boolean;
 	onClose: () => void;
-	entity: InfraMonitoringEntity;
+	columns: TableColumnDef<TData>[];
+	storageKey: string;
 }): JSX.Element {
-	const addColumn = useInfraMonitoringTableColumnsStore(
-		(state) => state.addColumn,
+	const columnPickerItems = useMemo(
+		() => toColumnPickerItems(columns),
+		[columns],
 	);
-	const removeColumn = useInfraMonitoringTableColumnsStore(
-		(state) => state.removeColumn,
+	const hiddenColumnIds = useHiddenColumnIds(storageKey);
+
+	const addedColumns = useMemo(
+		() =>
+			columnPickerItems.filter(
+				(column) =>
+					!hiddenColumnIds.includes(column.id) &&
+					column.visibilityBehavior !== 'hidden-on-collapse',
+			),
+		[columnPickerItems, hiddenColumnIds],
 	);
 
-	const [columns, columnsHidden] = useInfraMonitoringTableColumnsForPage(entity);
+	const hiddenColumns = useMemo(
+		() =>
+			columnPickerItems.filter((column) => hiddenColumnIds.includes(column.id)),
+		[columnPickerItems, hiddenColumnIds],
+	);
+
+	const handleRemoveColumn = (columnId: string): void => {
+		hideColumn(storageKey, columnId);
+	};
+
+	const handleAddColumn = (columnId: string): void => {
+		showColumn(storageKey, columnId);
+	};
 
 	const drawerContent = (
 		<>
 			<div className={styles.columnsTitle}>Added Columns (Click to remove)</div>
 
 			<div className={styles.columnsList}>
-				{columns
-					.filter(
-						(column) =>
-							!columnsHidden.includes(column.id) &&
-							column.behavior !== 'hidden-on-collapse',
-					)
-					.map((column) => (
-						<div className={styles.columnItem} key={column.value}>
-							{/*<GripVertical size={16} /> TODO: Add support back when update the table component */}
-							<Button
-								variant="ghost"
-								color="none"
-								className={styles.columnItem}
-								disabled={!column.canBeHidden}
-								data-testid={`remove-column-${column.id}`}
-								onClick={(): void => removeColumn(entity, column.id)}
-							>
-								{column.label}
-							</Button>
-						</div>
-					))}
+				{addedColumns.map((column) => (
+					<div className={styles.columnItem} key={column.id}>
+						<Button
+							variant="ghost"
+							color="none"
+							className={styles.columnItem}
+							disabled={!column.canBeHidden}
+							data-testid={`remove-column-${column.id}`}
+							onClick={(): void => handleRemoveColumn(column.id)}
+						>
+							{column.label}
+						</Button>
+					</div>
+				))}
 			</div>
 
 			<div className={styles.horizontalDivider} />
@@ -59,23 +100,21 @@ function K8sFiltersSidePanel({
 			<div className={styles.columnsTitle}>Other Columns (Click to add)</div>
 
 			<div className={styles.columnsList}>
-				{columns
-					.filter((column) => columnsHidden.includes(column.id))
-					.map((column) => (
-						<div className={styles.columnItem} key={column.value}>
-							<Button
-								variant="ghost"
-								color="none"
-								className={styles.columnItem}
-								data-can-be-added="true"
-								data-testid={`add-column-${column.id}`}
-								onClick={(): void => addColumn(entity, column.id)}
-								tabIndex={0}
-							>
-								{column.label}
-							</Button>
-						</div>
-					))}
+				{hiddenColumns.map((column) => (
+					<div className={styles.columnItem} key={column.id}>
+						<Button
+							variant="ghost"
+							color="none"
+							className={styles.columnItem}
+							data-can-be-added="true"
+							data-testid={`add-column-${column.id}`}
+							onClick={(): void => handleAddColumn(column.id)}
+							tabIndex={0}
+						>
+							{column.label}
+						</Button>
+					</div>
+				))}
 			</div>
 		</>
 	);

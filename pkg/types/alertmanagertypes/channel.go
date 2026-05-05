@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/swaggest/jsonschema-go"
 	"github.com/uptrace/bun"
 )
 
@@ -27,6 +29,18 @@ var (
 type Channels = []*Channel
 
 type GettableChannels = []*Channel
+
+// TODO: the oneOf emitted by JSONSchema is not the shape OpenAPI wants for a
+// discriminated union. OpenAPI's discriminator requires every oneOf branch to
+// be a $ref to a named component and a sibling property whose value selects
+// the variant. Our payload instead uses the *presence* of one of the 18
+// *_configs arrays to imply the type, so no discriminator can be attached.
+// Refactor PostableChannel into a {name, type, config} envelope (see
+// ruletypes.RuleThresholdData for the pattern) so each notification kind
+// becomes a named component and the discriminator can be wired up properly.
+type PostableChannel struct {
+	Receiver
+}
 
 // Channel represents a single receiver of the alertmanager config.
 type Channel struct {
@@ -182,4 +196,31 @@ func (c *Channel) Update(receiver Receiver) error {
 	c.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (PostableChannel) JSONSchema() (jsonschema.Schema, error) {
+	type alias PostableChannel
+	reflector := &jsonschema.Reflector{}
+
+	schema, err := reflector.Reflect(alias{}, jsonschema.DefinitionsPrefix("#/components/schemas/"))
+	if err != nil {
+		return jsonschema.Schema{}, err
+	}
+
+	schema.WithRequired("name")
+
+	var oneOf []jsonschema.SchemaOrBool
+	receiverType := reflect.TypeOf(Receiver{})
+	for i := 0; i < receiverType.NumField(); i++ {
+		jsonTag := strings.Split(receiverType.Field(i).Tag.Get("json"), ",")[0]
+		if !strings.HasSuffix(jsonTag, "_configs") {
+			continue
+		}
+		branch := (&jsonschema.Schema{}).WithRequired(jsonTag)
+		oneOf = append(oneOf, branch.ToSchemaOrBool())
+	}
+
+	schema.WithOneOf(oneOf...)
+
+	return schema, nil
 }

@@ -96,6 +96,122 @@ components:
       - createdAt
       - updatedAt
       type: object
+    AlertmanagertypesPostableChannel:
+      oneOf:
+      - required:
+        - discord_configs
+      - required:
+        - email_configs
+      - required:
+        - incidentio_configs
+      - required:
+        - pagerduty_configs
+      - required:
+        - slack_configs
+      - required:
+        - webhook_configs
+      - required:
+        - opsgenie_configs
+      - required:
+        - wechat_configs
+      - required:
+        - pushover_configs
+      - required:
+        - victorops_configs
+      - required:
+        - sns_configs
+      - required:
+        - telegram_configs
+      - required:
+        - webex_configs
+      - required:
+        - msteams_configs
+      - required:
+        - msteamsv2_configs
+      - required:
+        - jira_configs
+      - required:
+        - rocketchat_configs
+      - required:
+        - mattermost_configs
+      properties:
+        discord_configs:
+          items:
+            $ref: '#/components/schemas/ConfigDiscordConfig'
+          type: array
+        email_configs:
+          items:
+            $ref: '#/components/schemas/ConfigEmailConfig'
+          type: array
+        incidentio_configs:
+          items:
+            $ref: '#/components/schemas/ConfigIncidentioConfig'
+          type: array
+        jira_configs:
+          items:
+            $ref: '#/components/schemas/ConfigJiraConfig'
+          type: array
+        mattermost_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMattermostConfig'
+          type: array
+        msteams_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsConfig'
+          type: array
+        msteamsv2_configs:
+          items:
+            $ref: '#/components/schemas/ConfigMSTeamsV2Config'
+          type: array
+        name:
+          type: string
+        opsgenie_configs:
+          items:
+            $ref: '#/components/schemas/ConfigOpsGenieConfig'
+          type: array
+        pagerduty_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPagerdutyConfig'
+          type: array
+        pushover_configs:
+          items:
+            $ref: '#/components/schemas/ConfigPushoverConfig'
+          type: array
+        rocketchat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigRocketchatConfig'
+          type: array
+        slack_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSlackConfig'
+          type: array
+        sns_configs:
+          items:
+            $ref: '#/components/schemas/ConfigSNSConfig'
+          type: array
+        telegram_configs:
+          items:
+            $ref: '#/components/schemas/ConfigTelegramConfig'
+          type: array
+        victorops_configs:
+          items:
+            $ref: '#/components/schemas/ConfigVictorOpsConfig'
+          type: array
+        webex_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebexConfig'
+          type: array
+        webhook_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWebhookConfig'
+          type: array
+        wechat_configs:
+          items:
+            $ref: '#/components/schemas/ConfigWechatConfig'
+          type: array
+      required:
+      - name
+      type: object
     AlertmanagertypesPostableRoutePolicy:
       properties:
         channels:
@@ -133,6 +249,10 @@ components:
           type: string
       type: object
     AuthtypesAuthDomainConfig:
+      oneOf:
+      - $ref: '#/components/schemas/AuthtypesSamlConfig'
+      - $ref: '#/components/schemas/AuthtypesGoogleConfig'
+      - $ref: '#/components/schemas/AuthtypesOIDCConfig'
       properties:
         googleAuthConfig:
           $ref: '#/components/schemas/AuthtypesGoogleConfig'
@@ -145,8 +265,15 @@ components:
         ssoEnabled:
           type: boolean
         ssoType:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
+    AuthtypesAuthNProvider:
+      enum:
+      - google_auth
+      - saml
+      - email_password
+      - oidc
+      type: string
     AuthtypesAuthNProviderInfo:
       properties:
         relayStatePath:
@@ -169,7 +296,7 @@ components:
     AuthtypesCallbackAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
         url:
           type: string
       type: object
@@ -177,26 +304,16 @@ components:
       properties:
         authNProviderInfo:
           $ref: '#/components/schemas/AuthtypesAuthNProviderInfo'
+        config:
+          $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
         createdAt:
           format: date-time
           type: string
-        googleAuthConfig:
-          $ref: '#/components/schemas/AuthtypesGoogleConfig'
         id:
           type: string
         name:
           type: string
-        oidcConfig:
-          $ref: '#/components/schemas/AuthtypesOIDCConfig'
         orgId:
-          type: string
-        roleMapping:
-          $ref: '#/components/schemas/AuthtypesRoleMapping'
-        samlConfig:
-          $ref: '#/components/schemas/AuthtypesSamlConfig'
-        ssoEnabled:
-          type: boolean
-        ssoType:
           type: string
         updatedAt:
           format: date-time
@@ -323,7 +440,7 @@ components:
     AuthtypesPasswordAuthNSupport:
       properties:
         provider:
-          type: string
+          $ref: '#/components/schemas/AuthtypesAuthNProvider'
       type: object
     AuthtypesPatchableObjects:
       properties:
@@ -458,7 +575,7 @@ components:
       - relation
       - object
       type: object
-    AuthtypesUpdateableAuthDomain:
+    AuthtypesUpdatableAuthDomain:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
@@ -2363,6 +2480,9 @@ components:
       type: object
     GlobaltypesConfig:
       properties:
+        ai_assistant_url:
+          nullable: true
+          type: string
         external_url:
           type: string
         identN:
@@ -2376,6 +2496,7 @@ components:
       - external_url
       - ingestion_url
       - mcp_url
+      - ai_assistant_url
       type: object
     GlobaltypesIdentNConfig:
       properties:
@@ -5665,7 +5786,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfigReceiver'
+              $ref: '#/components/schemas/AlertmanagertypesPostableChannel'
       responses:
         "201":
           content:
@@ -6944,20 +7065,20 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthtypesPostableAuthDomain'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                    $ref: '#/components/schemas/TypesIdentifiable'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
+          description: Created
         "400":
           content:
             application/json:
@@ -7042,6 +7163,63 @@ paths:
       summary: Delete auth domain
       tags:
       - authdomains
+    get:
+      deprecated: false
+      description: This endpoint returns an auth domain by ID
+      operationId: GetAuthDomain
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesGettableAuthDomain'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get auth domain by ID
+      tags:
+      - authdomains
     put:
       deprecated: false
       description: This endpoint updates an auth domain
@@ -7056,7 +7234,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesUpdateableAuthDomain'
+              $ref: '#/components/schemas/AuthtypesUpdatableAuthDomain'
       responses:
         "204":
           description: No Content

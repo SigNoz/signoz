@@ -43,11 +43,11 @@ function SSOEnforcementToggle({
 				data: {
 					config: {
 						ssoEnabled: checked,
-						ssoType: record.ssoType,
-						googleAuthConfig: record.googleAuthConfig,
-						oidcConfig: record.oidcConfig,
-						samlConfig: record.samlConfig,
-						roleMapping: record.roleMapping,
+						ssoType: record.config?.ssoType,
+						googleAuthConfig: record.config?.googleAuthConfig,
+						oidcConfig: record.config?.oidcConfig,
+						samlConfig: record.config?.samlConfig,
+						roleMapping: record.config?.roleMapping,
 					},
 				},
 			},

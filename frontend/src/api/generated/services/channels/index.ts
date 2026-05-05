@@ -18,6 +18,7 @@ import type {
 } from 'react-query';
 
 import type {
+	AlertmanagertypesPostableChannelDTO,
 	ConfigReceiverDTO,
 	CreateChannel201,
 	DeleteChannelByIDPathParameters,
@@ -122,14 +123,14 @@ export const invalidateListChannels = async (
  * @summary Create notification channel
  */
 export const createChannel = (
-	configReceiverDTO: BodyType<ConfigReceiverDTO>,
+	alertmanagertypesPostableChannelDTO: BodyType<AlertmanagertypesPostableChannelDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateChannel201>({
 		url: `/api/v1/channels`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: configReceiverDTO,
+		data: alertmanagertypesPostableChannelDTO,
 		signal,
 	});
 };
@@ -141,13 +142,13 @@ export const getCreateChannelMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createChannel>>,
 		TError,
-		{ data: BodyType<ConfigReceiverDTO> },
+		{ data: BodyType<AlertmanagertypesPostableChannelDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createChannel>>,
 	TError,
-	{ data: BodyType<ConfigReceiverDTO> },
+	{ data: BodyType<AlertmanagertypesPostableChannelDTO> },
 	TContext
 > => {
 	const mutationKey = ['createChannel'];
@@ -161,7 +162,7 @@ export const getCreateChannelMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createChannel>>,
-		{ data: BodyType<ConfigReceiverDTO> }
+		{ data: BodyType<AlertmanagertypesPostableChannelDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -174,7 +175,8 @@ export const getCreateChannelMutationOptions = <
 export type CreateChannelMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createChannel>>
 >;
-export type CreateChannelMutationBody = BodyType<ConfigReceiverDTO>;
+export type CreateChannelMutationBody =
+	BodyType<AlertmanagertypesPostableChannelDTO>;
 export type CreateChannelMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -187,13 +189,13 @@ export const useCreateChannel = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createChannel>>,
 		TError,
-		{ data: BodyType<ConfigReceiverDTO> },
+		{ data: BodyType<AlertmanagertypesPostableChannelDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createChannel>>,
 	TError,
-	{ data: BodyType<ConfigReceiverDTO> },
+	{ data: BodyType<AlertmanagertypesPostableChannelDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateChannelMutationOptions(options);

@@ -3,8 +3,10 @@ package ruletypes
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"reflect"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -73,10 +75,16 @@ type Recurrence struct {
 }
 
 func (r *Recurrence) Scan(src interface{}) error {
-	if data, ok := src.([]byte); ok {
+	switch data := src.(type) {
+	case []byte:
 		return json.Unmarshal(data, r)
+	case string:
+		return json.Unmarshal([]byte(data), r)
+	case nil:
+		return nil
+	default:
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "recurrence: (unsupported \"%s\")", reflect.TypeOf(data).String())
 	}
-	return nil
 }
 
 func (r *Recurrence) Value() (driver.Value, error) {

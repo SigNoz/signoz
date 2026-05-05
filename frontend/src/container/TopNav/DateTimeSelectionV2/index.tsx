@@ -17,7 +17,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import {
 	useGlobalTimeQueryInvalidate,
 	useIsGlobalTimeQueryRefreshing,
-} from 'hooks/globalTime';
+} from 'store/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -101,14 +101,14 @@ function DateTimeSelection({
 	if (modalInitialStartTime !== undefined) {
 		initialModalStartTime = modalInitialStartTime;
 	} else if (searchStartTime) {
-		initialModalStartTime = parseInt(searchStartTime, 10);
+		initialModalStartTime = Number.parseInt(searchStartTime, 10);
 	}
 
 	let initialModalEndTime = 0;
 	if (modalInitialEndTime !== undefined) {
 		initialModalEndTime = modalInitialEndTime;
 	} else if (searchEndTime) {
-		initialModalEndTime = parseInt(searchEndTime, 10);
+		initialModalEndTime = Number.parseInt(searchEndTime, 10);
 	}
 
 	const [modalStartTime, setModalStartTime] = useState<number>(
@@ -159,9 +159,11 @@ function DateTimeSelection({
 	const getTime = useCallback((): [number, number] | undefined => {
 		if (searchEndTime && searchStartTime) {
 			const startDate = dayjs(
-				new Date(parseInt(getTimeString(searchStartTime), 10)),
+				new Date(Number.parseInt(getTimeString(searchStartTime), 10)),
 			);
-			const endDate = dayjs(new Date(parseInt(getTimeString(searchEndTime), 10)));
+			const endDate = dayjs(
+				new Date(Number.parseInt(getTimeString(searchEndTime), 10)),
+			);
 
 			return [startDate.toDate().getTime() || 0, endDate.toDate().getTime() || 0];
 		}
