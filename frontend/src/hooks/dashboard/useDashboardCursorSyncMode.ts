@@ -9,7 +9,7 @@ export function useDashboardCursorSyncMode(
 	dashboardId: string | undefined,
 	panelMode?: PanelMode,
 ): [DashboardCursorSync, (value: DashboardCursorSync) => void] {
-	if (panelMode !== PanelMode.DASHBOARD_VIEW) {
+	if (panelMode && panelMode !== PanelMode.DASHBOARD_VIEW) {
 		// Only allow cursor sync modes to be set in the dashboard view mode, as the other modes are used for editing and standalone panel views where cursor sync is not applicable.
 		return [DEFAULT_CURSOR_SYNC_MODE, () => {}];
 	}
