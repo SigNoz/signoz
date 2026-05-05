@@ -7718,7 +7718,7 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	timestamp?: number;
+	time_unix?: number;
 	/**
 	 * @type string
 	 */

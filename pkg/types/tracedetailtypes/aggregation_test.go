@@ -13,7 +13,7 @@ func mkASpan(id string, resource map[string]string, attributes map[string]any, s
 		SpanID:       id,
 		Resource:     resource,
 		Attributes:   attributes,
-		TimeUnixNano: startNs,
+		TimeUnix:     startNs,
 		DurationNano: durationNs,
 		Children:     make([]*WaterfallSpan, 0),
 	}
@@ -25,11 +25,11 @@ func buildTraceFromSpans(spans ...*WaterfallSpan) *WaterfallTrace {
 	initialized := false
 	for _, s := range spans {
 		spanMap[s.SpanID] = s
-		if !initialized || s.TimeUnixNano < startTime {
-			startTime = s.TimeUnixNano
+		if !initialized || s.TimeUnix < startTime {
+			startTime = s.TimeUnix
 			initialized = true
 		}
-		if end := s.TimeUnixNano + s.DurationNano; end > endTime {
+		if end := s.TimeUnix + s.DurationNano; end > endTime {
 			endTime = end
 		}
 	}

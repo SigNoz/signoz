@@ -5321,7 +5321,7 @@ components:
         sub_tree_node_count:
           minimum: 0
           type: integer
-        timestamp:
+        time_unix:
           minimum: 0
           type: integer
         trace_id:
