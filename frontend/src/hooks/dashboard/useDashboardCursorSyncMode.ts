@@ -3,8 +3,6 @@ import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { useDashboardPreference } from './useDashboardPreference';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 
-const DEFAULT_CURSOR_SYNC_MODE = DashboardCursorSync.Crosshair;
-
 const NOOP = (): void => {};
 
 export function useDashboardCursorSyncMode(
@@ -14,14 +12,14 @@ export function useDashboardCursorSyncMode(
 	const [value, setValue] = useDashboardPreference(
 		dashboardId,
 		'cursorSyncMode',
-		DEFAULT_CURSOR_SYNC_MODE,
+		DashboardCursorSync.Crosshair,
 	);
 
 	// Chart panels in edit / standalone modes don't participate in cross-panel
 	// sync, so surface the default with a no-op setter for them. Callers without
 	// a panelMode (e.g. dashboard settings) read/write the preference normally.
 	if (panelMode && panelMode !== PanelMode.DASHBOARD_VIEW) {
-		return [DEFAULT_CURSOR_SYNC_MODE, NOOP];
+		return [DashboardCursorSync.None, NOOP];
 	}
 
 	return [value, setValue];
