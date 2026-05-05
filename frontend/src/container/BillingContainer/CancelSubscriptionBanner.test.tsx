@@ -17,7 +17,7 @@ describe('CancelSubscriptionBanner', () => {
 		).toBeInTheDocument();
 		expect(
 			screen.getByText(
-				/If you cancel your SigNoz subscription, your data will be deleted/i,
+				/When you cancel your SigNoz subscription, all your data will be deleted/i,
 			),
 		).toBeInTheDocument();
 	});
