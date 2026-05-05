@@ -253,7 +253,7 @@ func (m *PlannedMaintenance) isScheduleActive(now time.Time) bool {
 func evalLabelExpression(expression string, lset model.LabelSet) bool {
 	env := make(map[string]interface{}, len(lset))
 	for k, v := range lset {
-		env[string(k)] = v
+		env[string(k)] = string(v)
 	}
 	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
 	if err != nil {
