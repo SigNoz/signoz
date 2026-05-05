@@ -7715,6 +7715,11 @@ export interface TracedetailtypesWaterfallSpanDTO {
 	 */
 	sub_tree_node_count?: number;
 	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timestamp?: number;
+	/**
 	 * @type string
 	 */
 	trace_id?: string;
