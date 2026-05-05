@@ -24,16 +24,14 @@ export default function Tooltip({
 	);
 
 	const showHeader = showTooltipHeader || activeItem != null;
-	// With a single series the active item is fully represented in the header —
-	// hide the divider and list to avoid showing a duplicate row. When there is
-	// no active item (e.g. a sync-driven tooltip with no focused series), still
-	// render the row so the value is visible.
+	// A single row collapses into the header when it's the active item, but
+	// must stay in the list when there's no active item (e.g. sync-driven
+	// tooltips with no focused series) — otherwise the row would vanish.
 	const showList =
 		tooltipContent.length > 1 ||
 		(tooltipContent.length === 1 && activeItem == null);
-	// Divider separates the active row rendered inside the header from the list.
-	// With no active item, the header is just a timestamp and the divider would
-	// sit directly under it without visual purpose.
+	// The divider separates the active row in the header from the list; with
+	// no active item it has nothing to separate.
 	const showDivider = showList && showHeader && activeItem != null;
 
 	return (
