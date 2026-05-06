@@ -353,7 +353,9 @@ test.describe('Dashboards List Page', () => {
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 		const tooltip = page.getByRole('tooltip');
 		await expect(tooltip).toBeVisible();
 
@@ -380,7 +382,9 @@ test.describe('Dashboards List Page', () => {
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 		await page
 			.getByRole('tooltip')
 			.getByRole('button', { name: 'View' })
@@ -398,7 +402,9 @@ test.describe('Dashboards List Page', () => {
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 
 		// Use page.context() — the auth fixture creates its own context per
 		// test, which is not the same as the default `context` fixture.
@@ -428,7 +434,9 @@ test.describe('Dashboards List Page', () => {
 			.context()
 			.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 		await page
 			.getByRole('tooltip')
 			.getByRole('button', { name: 'Copy Link' })
@@ -452,7 +460,9 @@ test.describe('Dashboards List Page', () => {
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 
 		const [download] = await Promise.all([
 			page.waitForEvent('download'),
@@ -474,7 +484,9 @@ test.describe('Dashboards List Page', () => {
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
 		await expect(page.getByRole('tooltip')).toBeVisible();
 
 		await page.getByRole('heading', { name: 'Dashboards', level: 1 }).click();
@@ -599,7 +611,14 @@ test.describe('Dashboards List Page', () => {
 
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-		await page.getByTestId('dashboard-action-icon').first().click();
+		// Scroll the row into view before clicking — when the workspace has
+		// accumulated dashboards the search-filtered row can land below the
+		// viewport, and Playwright's auto-scroll on click is not always enough
+		// when there is a sticky header above.
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
+
 		// Ant's Popover positions the tooltip below the row — when the row is
 		// near the viewport bottom the option ends up just off-screen. Force
 		// the click; the element is already attached and Ant handles the rest.
@@ -627,7 +646,14 @@ test.describe('Dashboards List Page', () => {
 
 		await gotoList(page);
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-		await page.getByTestId('dashboard-action-icon').first().click();
+		// Scroll the row into view before clicking — when the workspace has
+		// accumulated dashboards the search-filtered row can land below the
+		// viewport, and Playwright's auto-scroll on click is not always enough
+		// when there is a sticky header above.
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
+
 		// Ant's Popover positions the tooltip below the row — when the row is
 		// near the viewport bottom the option ends up just off-screen. Force
 		// the click; the element is already attached and Ant handles the rest.
@@ -651,7 +677,14 @@ test.describe('Dashboards List Page', () => {
 		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
 		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
 
-		await page.getByTestId('dashboard-action-icon').first().click();
+		// Scroll the row into view before clicking — when the workspace has
+		// accumulated dashboards the search-filtered row can land below the
+		// viewport, and Playwright's auto-scroll on click is not always enough
+		// when there is a sticky header above.
+		const actionIcon = page.getByTestId('dashboard-action-icon').first();
+		await actionIcon.scrollIntoViewIfNeeded();
+		await actionIcon.click();
+
 		// Ant's Popover positions the tooltip below the row — when the row is
 		// near the viewport bottom the option ends up just off-screen. Force
 		// the click; the element is already attached and Ant handles the rest.
