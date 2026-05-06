@@ -97,7 +97,21 @@ Each spec follows these principles:
 1. **Directory per feature**: `tests/e2e/tests/<feature>/*.spec.ts`. Cross-resource junction concerns (e.g. cascade-delete) go in their own file, not packed into one giant spec.
 2. **Test titles use `TC-NN`**: `test('TC-01 alerts page — tabs render', ...)`. Preserves ordering at a glance and maps to external coverage tracking.
 3. **UI-first**: drive flows through the UI. Playwright traces capture every BE request/response the UI triggers, so asserting on UI outcomes implicitly validates BE contracts. Reach for direct `page.request.*` only when the test's *purpose* is asserting a response contract (use `page.waitForResponse` on a UI click) or when a specific UI step is structurally flaky (e.g. Ant DatePicker calendar-cell indices) — and even then try UI first.
-4. **Self-contained state**: each spec creates what it needs and cleans up in `try/finally`. No global pre-seeding fixtures.
+4. **Self-contained state**: each spec seeds its own data and cleans up at suite teardown. The pytest harness creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two patterns work:
+    - **Per-test seed + cleanup in `try / finally`** — small specs where each test owns its data.
+    - **Suite-level seed + `afterAll` teardown** — preferred for larger specs. Each `createDashboard(...)` call adds the resulting ID to a module-level `Set<string>`, and one `test.afterAll(...)` deletes everything in the set. See `tests/e2e/tests/dashboards/dashboards-list.spec.ts` for the full pattern. `test.beforeAll` / `test.afterAll` cannot use `authedPage` directly (it's test-scoped); use `newAuthedContext(browser)` from `fixtures/auth.ts` instead — it reuses the per-worker storage cache so no extra login happens.
+5. **Seed via API when the UI flow is multi-step or brittle.** The frontend stores its JWT in `localStorage` under `AUTH_TOKEN`; `page.request.*` inherits the auth fixture's storage state. A typical pattern:
+    ```ts
+    const token = await page.evaluate(
+      () => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
+    );
+    await page.request.post('/api/v1/dashboards', {
+      data: { title: 'my-name', uploadedGrafana: false },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    ```
+    This is faster and more reliable than a multi-step UI seed. Reach for the UI flow only when the test's *purpose* is asserting that flow.
+6. **Reusable fixture data lives in `tests/e2e/fixtures/`.** For example, `apm-metrics.json` is a real dashboard payload that specs import and `POST` to `/api/v1/dashboards` to seed a richly-tagged dashboard for search/list tests.
 
 ## How to write an E2E test?
 
@@ -155,12 +169,22 @@ test('TC-02 alerts list — create, toggle, delete', async ({ authedPage: page }
 
 ### Locator priority
 
-1. `getByRole('button', { name: 'Submit' })`
-2. `getByLabel('Email')`
-3. `getByPlaceholder('...')`
-4. `getByText('...')`
-5. `getByTestId('...')`
+1. `getByTestId('...')` — preferred when the source exposes one. Stable, app-author-provided handle that survives copy-edits.
+2. `getByRole('button', { name: 'Submit' })`
+3. `getByLabel('Email')`
+4. `getByPlaceholder('...')`
+5. `getByText('...')`
 6. `locator('.ant-select')` — last resort (Ant Design dropdowns often have no semantic alternative)
+
+## Agents
+
+Three Claude agents in `.claude/agents/` accelerate writing and maintaining E2E specs:
+
+- **`playwright-test-planner`** — explores a feature in a real browser plus the local frontend source and writes a test plan to `tests/e2e/specs/<feature>-test-plan.md`.
+- **`playwright-test-generator`** — converts a test plan into Playwright spec files under `tests/e2e/tests/<feature>/`. Drives each scenario through MCP browser tools and emits TC-NN-titled tests using the `authedPage` fixture and the API-seed pattern.
+- **`playwright-test-healer`** — runs failing specs, debugs them with snapshots / console / network introspection, and edits the spec to fix selector drift, timing, or state-leak issues.
+
+The agents rely on the Playwright-test MCP server (`mcp__playwright-test__*` tools). Configure it in your Claude MCP settings; the permission allowlist lives in [.claude/settings.local.json](../../../.claude/settings.local.json).
 
 ## How to run E2E tests?
 
