@@ -24,6 +24,43 @@
 	line-height: 20px;
 }
 
+.crossPanelSyncSectionHeader {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	align-self: flex-start;
+}
+
+.crossPanelSyncInfoIcon {
+	cursor: help;
+	color: var(--l3-foreground);
+}
+
+.crossPanelSyncTooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	max-width: 300px;
+}
+
+.crossPanelSyncTooltipTitle {
+	font-size: 14px;
+}
+
+.crossPanelSyncTooltipDescription {
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.crossPanelSyncTooltipDocLink {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	color: var(--primary-background);
+	font-size: 12px;
+	margin-top: 4px;
+}
+
 .crossPanelSyncRow {
 	display: flex;
 	flex-direction: row;
