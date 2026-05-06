@@ -3,9 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Badge, Button as SignozButton } from '@signozhq/ui';
+import { Badge, Button } from '@signozhq/ui';
 import {
-	Button,
 	Col,
 	Collapse,
 	DatePicker,
@@ -990,13 +989,17 @@ function MultiIngestionSettings(): JSX.Element {
 								</div>
 								<div className="action-btn">
 									<Button
-										className="periscope-btn ghost"
-										icon={<PenLine size={14} />}
+										variant="link"
+										size="icon"
+										color="secondary"
+										suffix={<PenLine size={14} />}
 										onClick={onEditKey}
 									/>
 									<Button
-										className="periscope-btn ghost"
-										icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										variant="link"
+										size="icon"
+										color="danger"
+										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
 										onClick={onDeleteKey}
 									/>
 								</div>
@@ -1102,16 +1105,20 @@ function MultiIngestionSettings(): JSX.Element {
 																{hasLimits(signalName) ? (
 																	<>
 																		<Button
-																			className="periscope-btn ghost"
-																			icon={<PenLine size={14} />}
+																			variant="link"
+																			size="icon"
+																			color="secondary"
+																			prefix={<PenLine size={14} />}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
 																			onClick={onEditSignalLimit}
 																		/>
 																		<Button
-																			className="periscope-btn ghost"
-																			icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			variant="link"
+																			size="icon"
+																			color="danger"
+																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1120,10 +1127,10 @@ function MultiIngestionSettings(): JSX.Element {
 																	</>
 																) : (
 																	<Button
-																		className="periscope-btn"
-																		size="small"
-																		shape="round"
-																		icon={<PlusIcon size={14} />}
+																		variant="link"
+																		size="sm"
+																		color="secondary"
+																		prefix={<PlusIcon size={14} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
 																	>
@@ -1356,9 +1363,8 @@ function MultiIngestionSettings(): JSX.Element {
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
 																					<Button
-																						type="primary"
-																						className="periscope-btn primary"
-																						size="small"
+																						variant="solid"
+																						size="sm"
 																						disabled={
 																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																						}
@@ -1370,9 +1376,9 @@ function MultiIngestionSettings(): JSX.Element {
 																						Save
 																					</Button>
 																					<Button
-																						type="default"
-																						className="periscope-btn"
-																						size="small"
+																						variant="outlined"
+																						color="secondary"
+																						size="sm"
 																						disabled={
 																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																						}
@@ -1447,10 +1453,10 @@ function MultiIngestionSettings(): JSX.Element {
 																				testId={`set-alert-btn-${signalName}`}
 																				className="set-alert-btn"
 																			>
-																				<SignozButton onClick={onCreateSignalAlert} size="sm">
+																				<Button onClick={onCreateSignalAlert} size="sm">
 																					<BellPlus size={12} />
 																					Set alert
-																				</SignozButton>
+																				</Button>
 																			</Badge>
 																		)}
 																	</div>
@@ -1631,7 +1637,12 @@ function MultiIngestionSettings(): JSX.Element {
 									}
 									placement="topLeft"
 								>
-									<Button type="text" icon={<TriangleAlert size={14} />} />
+									<Button
+										variant="ghost"
+										size="icon"
+										color="secondary"
+										prefix={<TriangleAlert size={14} />}
+									/>
 								</Tooltip>
 							)}
 						</div>
@@ -1647,11 +1658,12 @@ function MultiIngestionSettings(): JSX.Element {
 					/>
 
 					<Button
+						variant="solid"
 						className="add-new-ingestion-key-btn"
-						type="primary"
+						prefix={<Plus size={14} />}
 						onClick={showAddModal}
 					>
-						<Plus size={14} /> New Ingestion key
+						New Ingestion key
 					</Button>
 				</div>
 
@@ -1684,15 +1696,19 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideDeleteViewModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
 						className="delete-btn"
@@ -1720,15 +1736,19 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideDeleteLimitModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
 						className="delete-btn"
@@ -1759,18 +1779,18 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideEditViewModal}
-						className="periscope-btn cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
-						className="periscope-btn primary"
 						key="submit"
-						type="primary"
+						variant="solid"
+						prefix={<Check size={14} />}
 						loading={isLoadingUpdateAPIKey}
-						icon={<Check size={14} />}
 						onClick={onUpdateApiKey}
 					>
 						Update Ingestion Key
@@ -1827,18 +1847,18 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideAddViewModal}
-						className="periscope-btn cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
-						className="periscope-btn primary"
-						test-id="create-new-key"
 						key="submit"
-						type="primary"
-						icon={<Check size={14} />}
+						variant="solid"
+						testId="create-new-key"
+						prefix={<Check size={14} />}
 						loading={isLoadingCreateAPIKey}
 						onClick={onCreateIngestionKey}
 					>
