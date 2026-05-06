@@ -202,9 +202,7 @@ test.describe('Dashboards List Page', () => {
 	// `sortHandle` in DashboardsList.tsx hard-codes `order: 'descend'` —
 	// ascending mode is not yet implemented in any code path.
 
-	test('TC-09 default load has no sort params', async ({
-		authedPage: page,
-	}) => {
+	test('TC-09 default load has no sort params', async ({ authedPage: page }) => {
 		await gotoDashboardsList(page);
 
 		await expect(page).toHaveURL('/dashboard');
@@ -312,9 +310,7 @@ test.describe('Dashboards List Page', () => {
 		await seed(page, name);
 
 		await gotoDashboardsList(page);
-		await page
-			.context()
-			.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
 		const tooltip = await openDashboardActionMenu(page, name);
 		await tooltip.getByRole('button', { name: 'Copy Link' }).click();
@@ -388,9 +384,7 @@ test.describe('Dashboards List Page', () => {
 		await page.getByTestId('create-dashboard-menu-cta').click();
 
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
-		await expect(
-			page.getByText('Configure your new dashboard'),
-		).toBeVisible();
+		await expect(page.getByText('Configure your new dashboard')).toBeVisible();
 		// "Configure" appears twice on the new-dashboard onboarding state — once
 		// in the toolbar and once in the empty-state section. The test only
 		// needs to confirm the onboarding rendered, so .first() is sufficient.
