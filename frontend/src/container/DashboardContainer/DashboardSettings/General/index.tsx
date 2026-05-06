@@ -10,7 +10,7 @@ import {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { isEqual } from 'lodash-es';
-import { Check, ExternalLink, Info, X } from 'lucide-react';
+import { Check, ExternalLink, Info, X } from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
 import styles from './GeneralSettings.module.scss';
