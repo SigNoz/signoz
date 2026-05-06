@@ -7,6 +7,7 @@ import {
 	useEffect,
 	useMemo,
 	useReducer,
+	useRef,
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -155,6 +156,8 @@ export function CreateAlertProvider(
 		[redirectWithQueryBuilderData],
 	);
 
+	const ruleNameAppliedRef = useRef(false);
+
 	useEffect(() => {
 		setCreateAlertState({
 			slice: CreateAlertSlice.THRESHOLD,
@@ -193,7 +196,8 @@ export function CreateAlertProvider(
 			});
 		}
 
-		if (ruleNameFromURL) {
+		if (ruleNameFromURL && !ruleNameAppliedRef.current) {
+			ruleNameAppliedRef.current = true;
 			setCreateAlertState({
 				slice: CreateAlertSlice.BASIC,
 				action: {

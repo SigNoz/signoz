@@ -346,16 +346,8 @@ describe('MultiIngestionSettings Page', () => {
 
 		await screen.findByText('LIMITS');
 
-		// Click the edit (pencil) button for the logs limit
-		const editButtons = screen.getAllByRole('button', { name: '' });
-		const logsEditBtn = editButtons.find(
-			(btn) =>
-				btn.closest('.signal')?.querySelector('.signal-name')?.textContent ===
-				'logs',
-		);
-		if (logsEditBtn) {
-			await user.click(logsEditBtn);
-		}
+		const logsEditBtn = screen.getByRole('button', { name: 'Edit logs limit' });
+		await user.click(logsEditBtn);
 
 		await waitFor(() => {
 			expect(

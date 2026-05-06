@@ -993,12 +993,13 @@ function MultiIngestionSettings(): JSX.Element {
 										size="icon"
 										color="secondary"
 										suffix={<PenLine size={14} />}
+										aria-label="Edit ingestion key"
 										onClick={onEditKey}
 									/>
 									<Button
 										variant="link"
 										size="icon"
-										color="danger"
+										color="destructive"
 										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
 										onClick={onDeleteKey}
 									/>
@@ -1109,6 +1110,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			size="icon"
 																			color="secondary"
 																			prefix={<PenLine size={14} />}
+																			aria-label={`Edit ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1117,8 +1119,9 @@ function MultiIngestionSettings(): JSX.Element {
 																		<Button
 																			variant="link"
 																			size="icon"
-																			color="danger"
+																			color="destructive"
 																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			aria-label={`Delete ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1642,6 +1645,7 @@ function MultiIngestionSettings(): JSX.Element {
 										size="icon"
 										color="secondary"
 										prefix={<TriangleAlert size={14} />}
+										aria-label="Ingestion URL error details"
 									/>
 								</Tooltip>
 							)}
