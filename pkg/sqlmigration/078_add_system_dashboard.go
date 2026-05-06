@@ -31,6 +31,12 @@ func (migration *addSystemDashboard) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *addSystemDashboard) Up(ctx context.Context, db *bun.DB) error {
+	// Disable foreign keys for the duration of the migration.
+	// pattern is used in migration 029_drop_groups.
+	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, false); err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -40,11 +46,22 @@ func (migration *addSystemDashboard) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// Add the `source` column directly via ALTER TABLE, not sqlschema.Operator().AddColumn.
-	// when a column is not nullable the process is CREATE temp + copy + DROP original + RENAME.
-	// When DROP happens it fails the foreign key from public_dashboard.dashboard_id
-	if _, err := tx.ExecContext(ctx, "ALTER TABLE dashboard ADD COLUMN source TEXT NOT NULL DEFAULT ''"); err != nil {
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, "dashboard")
+	if err != nil {
 		return err
+	}
+
+	column := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("source"),
+		DataType: sqlschema.DataTypeText,
+		Nullable: false,
+	}
+
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, "")
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	// We activate this part of code once we add default value for the overview page.
@@ -91,6 +108,11 @@ func (migration *addSystemDashboard) Up(ctx context.Context, db *bun.DB) error {
 	// }
 
 	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	// Re-enable foreign keys.
+	if err := migration.sqlstore.Dialect().ToggleForeignKeyConstraint(ctx, db, true); err != nil {
 		return err
 	}
 
