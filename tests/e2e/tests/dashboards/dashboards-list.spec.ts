@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
-import { newAdminContext } from '../../utils/auth';
+import { newAdminContext } from '../../helpers/auth';
 import {
 	APM_METRICS_TITLE,
 	authToken,
@@ -13,7 +13,7 @@ import {
 	importApmMetricsDashboardViaUI,
 	openDashboardActionMenu,
 	SEARCH_PLACEHOLDER,
-} from '../../utils/dashboards';
+} from '../../helpers/dashboards';
 
 // Tests in this file mutate the dashboard list (create / delete). Run them
 // serially within the worker so state from one test does not leak into
@@ -61,7 +61,7 @@ test.afterAll(async ({ browser }) => {
 	const page = await ctx.newPage();
 	try {
 		const token = await authToken(page);
-		for (const id of [...seedIds]) {
+		for (const id of seedIds) {
 			await deleteDashboardViaApi(ctx.request, id, token);
 			seedIds.delete(id);
 		}
@@ -395,11 +395,15 @@ test.describe('Dashboards List Page', () => {
 			page.getByRole('button', { name: /New Panel/ }).first(),
 		).toBeVisible();
 
-		// Register the UI-created dashboard with the suite teardown.
+		// Register the UI-created dashboard with the suite teardown. After a
+		// successful "Create dashboard" the row must exist — assert that and
+		// then unconditionally register, so the test contains no `if`.
 		const sampleId = await findDashboardIdByTitle(page, DEFAULT_DASHBOARD_TITLE);
-		if (sampleId) {
-			seedIds.add(sampleId);
-		}
+		expect(
+			sampleId,
+			`${DEFAULT_DASHBOARD_TITLE} not found after UI create`,
+		).toBeDefined();
+		seedIds.add(sampleId as string);
 	});
 
 	test('TC-20 Import JSON dialog opens with code editor and upload button', async ({

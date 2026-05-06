@@ -2,14 +2,12 @@ import path from 'path';
 
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 
-import apmMetricsTemplate from '../fixtures/apm-metrics.json';
+import apmMetricsTemplate from '../testdata/apm-metrics.json';
 
-const APM_METRICS_FIXTURE_PATH = path.resolve(
-	__dirname,
-	'../fixtures/apm-metrics.json',
-);
-
-// ─── Constants exposed to tests ──────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────
+//
+// UI strings and well-known values referenced both within this file and by
+// specs. Centralised here so a copy-edit in the app updates one place.
 
 export const DASHBOARDS_LIST_PATH = '/dashboard';
 export const SEARCH_PLACEHOLDER = 'Search by name, description, or tags...';
@@ -18,9 +16,14 @@ export const LIST_HEADING = 'Dashboards';
 /** Title the "Create dashboard" dropdown option assigns by default. */
 export const DEFAULT_DASHBOARD_TITLE = 'Sample Title';
 
-/** Title of the APM Metrics dashboard imported from the JSON fixture. */
+/** Title of the APM Metrics dashboard imported from the JSON test fixture. */
 export const APM_METRICS_TITLE = (apmMetricsTemplate as { title: string })
 	.title;
+
+const APM_METRICS_TESTDATA_PATH = path.resolve(
+	__dirname,
+	'../testdata/apm-metrics.json',
+);
 
 // ─── Auth ────────────────────────────────────────────────────────────────
 
@@ -106,7 +109,7 @@ export async function importApmMetricsDashboardViaUI(
 	// the Monaco editor rather than being POSTed by Ant.
 	await dialog
 		.locator('input[type="file"]')
-		.setInputFiles(APM_METRICS_FIXTURE_PATH);
+		.setInputFiles(APM_METRICS_TESTDATA_PATH);
 
 	await dialog.getByRole('button', { name: 'Import and Next' }).click();
 

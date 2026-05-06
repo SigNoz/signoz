@@ -24,9 +24,9 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
 - **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two cleanup shapes are valid; pick based on the spec size:
   - **Per-test `try / finally`** — small specs (~ <10 scenarios) where each test owns its data.
   - **Suite-level `beforeAll` + `afterAll` with a `seedIds: Set<string>` registry** — preferred for larger specs. Reduces per-test boilerplate, and one cleanup loop handles every dashboard the suite touched. See [tests/e2e/tests/dashboards/dashboards-list.spec.ts](../../tests/e2e/tests/dashboards/dashboards-list.spec.ts) for the canonical shape.
-- **Reuse helpers from `tests/e2e/utils/`.** Don't reinvent. The current set:
-  - [`utils/auth.ts`](../../tests/e2e/utils/auth.ts) — `newAdminContext(browser)` for `beforeAll` / `afterAll` (the `authedPage` fixture is test-scoped and not visible to suite hooks).
-  - [`utils/dashboards.ts`](../../tests/e2e/utils/dashboards.ts) — `authToken`, `gotoDashboardsList`, `createDashboardViaApi`, `importApmMetricsDashboardViaUI`, `deleteDashboardViaApi`, `findDashboardIdByTitle`, `openDashboardActionMenu`, plus the constants (`SEARCH_PLACEHOLDER`, `APM_METRICS_TITLE`, `DEFAULT_DASHBOARD_TITLE`).
+- **Reuse helpers from `tests/e2e/helpers/`.** Don't reinvent. The current set:
+  - [`helpers/auth.ts`](../../tests/e2e/helpers/auth.ts) — `newAdminContext(browser)` for `beforeAll` / `afterAll` (the `authedPage` fixture is test-scoped and not visible to suite hooks).
+  - [`helpers/dashboards.ts`](../../tests/e2e/helpers/dashboards.ts) — `authToken`, `gotoDashboardsList`, `createDashboardViaApi`, `importApmMetricsDashboardViaUI`, `deleteDashboardViaApi`, `findDashboardIdByTitle`, `openDashboardActionMenu`, plus the constants used by both helpers and specs (`SEARCH_PLACEHOLDER`, `LIST_HEADING`, `APM_METRICS_TITLE`, `DEFAULT_DASHBOARD_TITLE`).
 - **Seed via API when the UI flow is multi-step or brittle.** Implementation lives in `createDashboardViaApi` — use it. `page.request.*` does **not** auto-attach `Authorization`; the helpers handle that for you. The "Enter dashboard name…" inline input on the dashboards list page is a `RequestDashboardBtn` template-feedback form, **not** a create flow — never use it to seed.
 - **Reusable JSON fixtures live in [tests/e2e/fixtures/](../../tests/e2e/fixtures/).** `apm-metrics.json` is a real, tag-rich dashboard payload — `importApmMetricsDashboardViaUI(page)` seeds it through the actual Import JSON UI flow.
 - **Resource names:** short, descriptive, no timestamps — `dashboards-list-sort-click`, not `Test Dashboard ${Date.now()}`. Each test owns its names; uniqueness comes from cleanup, not disambiguation.
@@ -84,13 +84,13 @@ You produce (suite-level shape, preferred for files with multiple scenarios):
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
-import { newAdminContext } from '../../utils/auth';
+import { newAdminContext } from '../../helpers/auth';
 import {
   authToken,
   createDashboardViaApi,
   deleteDashboardViaApi,
   gotoDashboardsList,
-} from '../../utils/dashboards';
+} from '../../helpers/dashboards';
 
 test.describe.configure({ mode: 'serial' });
 

@@ -20,7 +20,7 @@ You will:
    - The frontend stores its JWT in `localStorage` under `AUTH_TOKEN` and the API requires `Authorization: Bearer <token>` for protected endpoints. Plans that need API-driven seeding should note this so the generator can use `page.request.*`.
 
 2. **Check what's already wired up.**
-   - [tests/e2e/utils/dashboards.ts](../../tests/e2e/utils/dashboards.ts) and [tests/e2e/utils/auth.ts](../../tests/e2e/utils/auth.ts) hold reusable helpers (`createDashboardViaApi`, `gotoDashboardsList`, `openDashboardActionMenu`, `newAdminContext`, `importApmMetricsDashboardViaUI`, etc.). When the plan touches dashboards, reference these by name in the steps so the generator can reuse them rather than reinvent.
+   - [tests/e2e/helpers/dashboards.ts](../../tests/e2e/helpers/dashboards.ts) and [tests/e2e/helpers/auth.ts](../../tests/e2e/helpers/auth.ts) hold reusable helpers (`createDashboardViaApi`, `gotoDashboardsList`, `openDashboardActionMenu`, `newAdminContext`, `importApmMetricsDashboardViaUI`, etc.). When the plan touches dashboards, reference these by name in the steps so the generator can reuse them rather than reinvent.
    - [tests/e2e/fixtures/apm-metrics.json](../../tests/e2e/fixtures/apm-metrics.json) is a real-world dashboard payload (rich tags, panels, description) suitable as a seed fixture — note in the plan if a scenario benefits from it.
 
 3. **Navigate and explore**
