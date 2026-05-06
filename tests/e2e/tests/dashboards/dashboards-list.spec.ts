@@ -1,32 +1,19 @@
-import type { Browser, BrowserContext, Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-import apmMetricsTemplate from '../../fixtures/apm-metrics.json';
 import { expect, test } from '../../fixtures/auth';
-
-// Spec-local login — used only by `beforeAll` / `afterAll` because the
-// `authedPage` fixture is test-scoped and not visible to suite hooks. Each
-// hook does one fresh login (~1s) per worker; we deliberately do not import
-// or modify the per-worker storage cache from `fixtures/auth.ts`.
-async function newAdminContext(browser: Browser): Promise<BrowserContext> {
-	const email = process.env.SIGNOZ_E2E_USERNAME;
-	const password = process.env.SIGNOZ_E2E_PASSWORD;
-	if (!email || !password) {
-		throw new Error(
-			'SIGNOZ_E2E_USERNAME / SIGNOZ_E2E_PASSWORD must be set ' +
-				'(pytest bootstrap writes them to .env.local).',
-		);
-	}
-	const ctx = await browser.newContext();
-	const page = await ctx.newPage();
-	await page.goto('/login?password=Y');
-	await page.getByTestId('email').fill(email);
-	await page.getByTestId('initiate_login').click();
-	await page.getByTestId('password').fill(password);
-	await page.getByRole('button', { name: 'Sign in with Password' }).click();
-	await page.waitForURL((url) => !url.pathname.startsWith('/login'));
-	await page.close();
-	return ctx;
-}
+import { newAdminContext } from '../../utils/auth';
+import {
+	APM_METRICS_TITLE,
+	authToken,
+	createDashboardViaApi,
+	DEFAULT_DASHBOARD_TITLE,
+	deleteDashboardViaApi,
+	findDashboardIdByTitle,
+	gotoDashboardsList,
+	importApmMetricsDashboardViaUI,
+	openDashboardActionMenu,
+	SEARCH_PLACEHOLDER,
+} from '../../utils/dashboards';
 
 // Tests in this file mutate the dashboard list (create / delete). Run them
 // serially within the worker so state from one test does not leak into
@@ -34,106 +21,33 @@ async function newAdminContext(browser: Browser): Promise<BrowserContext> {
 // fullyParallel setting.
 test.describe.configure({ mode: 'serial' });
 
-const SEARCH_PLACEHOLDER = 'Search by name, description, or tags...';
-
-// ─── Suite-level seed & teardown ─────────────────────────────────────────
+// ─── Suite-level seed registry ───────────────────────────────────────────
 //
-// The pytest harness creates a fresh stack with zero dashboards. Tests seed
-// what they need via the API and register the resulting IDs in `seedIds`.
-// One `afterAll` deletes everything in `seedIds` at the end of the suite —
-// individual tests do not need their own `try / finally` cleanup blocks.
+// Every dashboard a test creates is recorded here, and one `afterAll`
+// deletes the lot at suite teardown. Individual tests do not need their
+// own `try / finally` cleanup blocks.
 const seedIds = new Set<string>();
-
-// Names a test wants to assert on. Stable, descriptive, no timestamps.
-const APM_METRICS_TITLE = (apmMetricsTemplate as { title: string }).title;
 const BASE_FIXTURE_TITLE = 'dashboards-list-base-fixture';
 
-// Reads the JWT that the auth fixture stored in localStorage after login.
-// `page.request.*` requires the page to first navigate to the SigNoz origin
-// so localStorage is populated from the storageState the context was created
-// with.
-async function authToken(page: Page): Promise<string> {
-	if (!page.url().startsWith('http')) {
-		await page.goto('/dashboard');
-	}
-	return page.evaluate(
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		() => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
-	);
-}
-
-async function postDashboard(
-	page: Page,
-	body: Record<string, unknown>,
-): Promise<string> {
-	const token = await authToken(page);
-	const res = await page.request.post('/api/v1/dashboards', {
-		data: body,
-		headers: { Authorization: `Bearer ${token}` },
-	});
-	if (!res.ok()) {
-		throw new Error(`POST /dashboards ${res.status()}: ${await res.text()}`);
-	}
-	const json = (await res.json()) as { data: { id: string } };
-	const id = json.data.id;
+/** Seed a dashboard via API and register it for suite cleanup. */
+async function seed(page: Page, title: string): Promise<string> {
+	const id = await createDashboardViaApi(page, title);
 	seedIds.add(id);
 	return id;
 }
 
-// Seed a minimal named dashboard via API. Tracks the ID for suite teardown.
-async function createDashboard(page: Page, title: string): Promise<string> {
-	return postDashboard(page, { title, uploadedGrafana: false });
-}
-
-// Seed the full APM Metrics dashboard from the JSON fixture (title + tags +
-// description + panels). Used by tests that want to assert on richer row
-// content (multi-tag rendering, description, etc.).
-async function importApmMetricsDashboard(page: Page): Promise<string> {
-	return postDashboard(page, {
-		...(apmMetricsTemplate as Record<string, unknown>),
-		uploadedGrafana: false,
-	});
-}
-
-// The page heading is the only element that's always present — independent
-// of whether the workspace has dashboards (list view) or is empty (zero-state).
-async function gotoList(page: Page): Promise<void> {
-	await page.goto('/dashboard');
-	await page
-		.getByRole('heading', { name: 'Dashboards', level: 1 })
-		.waitFor({ state: 'visible' });
-}
-
-// Find a dashboard ID by title via the list API.
-async function findDashboardIdByTitle(
-	page: Page,
-	title: string,
-): Promise<string | undefined> {
-	const token = await authToken(page);
-	const res = await page.request.get('/api/v1/dashboards', {
-		headers: { Authorization: `Bearer ${token}` },
-	});
-	if (!res.ok()) {
-		return undefined;
-	}
-	const body = (await res.json()) as {
-		data: Array<{ id: string; data: { title: string } }>;
-	};
-	return body.data.find((d) => d.data.title === title)?.id;
-}
-
-// ─── beforeAll / afterAll ────────────────────────────────────────────────
-
 test.beforeAll(async ({ browser }) => {
-	// Seed the two persistent fixtures the read-only tests rely on:
-	//   - APM Metrics — a richer, real-world dashboard imported from JSON
-	//   - A minimal base dashboard — used by tests that just need the list
-	//     to be non-empty so the search input / sort button render
+	// Persistent fixtures the read-only tests rely on:
+	//   - A minimal base dashboard — keeps the list non-empty so the search
+	//     input / sort button render. Seeded first via API so the workspace
+	//     is populated before the UI import flow runs.
+	//   - APM Metrics — a richer, real-world dashboard imported through the
+	//     real Import JSON UI flow (file upload + Monaco editor + submit).
 	const ctx = await newAdminContext(browser);
 	const page = await ctx.newPage();
 	try {
-		await importApmMetricsDashboard(page);
-		await createDashboard(page, BASE_FIXTURE_TITLE);
+		seedIds.add(await createDashboardViaApi(page, BASE_FIXTURE_TITLE));
+		seedIds.add(await importApmMetricsDashboardViaUI(page));
 	} finally {
 		await ctx.close();
 	}
@@ -148,11 +62,7 @@ test.afterAll(async ({ browser }) => {
 	try {
 		const token = await authToken(page);
 		for (const id of [...seedIds]) {
-			await ctx.request
-				.delete(`/api/v1/dashboards/${id}`, {
-					headers: { Authorization: `Bearer ${token}` },
-				})
-				.catch(() => undefined);
+			await deleteDashboardViaApi(ctx.request, id, token);
 			seedIds.delete(id);
 		}
 	} finally {
@@ -166,7 +76,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-01 page chrome and core controls render', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 
 		await expect(page).toHaveURL('/dashboard');
 		await expect(page).toHaveTitle('SigNoz | All Dashboards');
@@ -178,9 +88,7 @@ test.describe('Dashboards List Page', () => {
 			page.getByText('Create and manage dashboards for your workspace.'),
 		).toBeVisible();
 
-		await expect(
-			page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }),
-		).toBeVisible();
+		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toBeVisible();
 		await expect(page.getByText('All Dashboards')).toBeVisible();
 		await expect(page.getByTestId('sort-by')).toBeVisible();
 
@@ -193,14 +101,14 @@ test.describe('Dashboards List Page', () => {
 	test('TC-02 row shows thumbnail and creator email', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page
 			.getByAltText('dashboard-image')
 			.first()
 			.waitFor({ state: 'visible' });
 
 		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
-		// Creator email — admin@integration.test contains '@'
+		// Creator email — admin@integration.test contains '@'.
 		await expect(page.getByText(/@/).first()).toBeVisible();
 	});
 
@@ -210,10 +118,10 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-search-title';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		const search = page.getByRole('textbox', { name: SEARCH_PLACEHOLDER });
+		await gotoDashboardsList(page);
+		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
 		await search.fill(name);
 		await expect(page).toHaveURL(new RegExp(`search=${name}`));
@@ -225,10 +133,10 @@ test.describe('Dashboards List Page', () => {
 	test('TC-04 search by tag returns the APM Metrics dashboard', async ({
 		authedPage: page,
 	}) => {
-		// APM Metrics is imported from JSON and carries multiple tags. We search
-		// by one of them ("apm") and expect the imported dashboard to surface.
-		await gotoList(page);
-		const search = page.getByRole('textbox', { name: SEARCH_PLACEHOLDER });
+		// APM Metrics carries multiple tags — searching by one of them ("apm")
+		// surfaces the imported dashboard.
+		await gotoDashboardsList(page);
+		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
 		await search.fill('apm');
 		await expect(page).toHaveURL(/search=apm/);
@@ -239,31 +147,29 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-search-deeplink';
-		await createDashboard(page, name);
+		await seed(page, name);
 
 		await page.goto(`/dashboard?search=${name}`);
 		await page
 			.getByRole('heading', { name: 'Dashboards', level: 1 })
 			.waitFor({ state: 'visible' });
 
-		await expect(
-			page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }),
-		).toHaveValue(name);
+		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(name);
 		await expect(page.getByText(name).first()).toBeVisible();
 	});
 
 	test('TC-06 clearing search restores the full list', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
-		const search = page.getByRole('textbox', { name: SEARCH_PLACEHOLDER });
+		await gotoDashboardsList(page);
+		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
 		await search.fill('apm');
 		await expect(page).toHaveURL(/search=apm/);
 
 		await search.fill('');
 		// The app keeps the empty `search=` param in the URL — assert that no
-		// non-empty value remains, and that rows are rendered again.
+		// non-empty value remains and that rows are rendered again.
 		await expect(page).not.toHaveURL(/search=[^&]/);
 		await expect(search).toHaveValue('');
 		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
@@ -272,8 +178,8 @@ test.describe('Dashboards List Page', () => {
 	test('TC-07 search with no matching results shows empty state', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
-		const search = page.getByRole('textbox', { name: SEARCH_PLACEHOLDER });
+		await gotoDashboardsList(page);
+		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
 		await search.fill('xyznonexistent999');
 
@@ -283,8 +189,8 @@ test.describe('Dashboards List Page', () => {
 	});
 
 	test('TC-08 search is case-insensitive', async ({ authedPage: page }) => {
-		await gotoList(page);
-		const search = page.getByRole('textbox', { name: SEARCH_PLACEHOLDER });
+		await gotoDashboardsList(page);
+		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
 		await search.fill(APM_METRICS_TITLE.toLowerCase());
 		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
@@ -293,16 +199,13 @@ test.describe('Dashboards List Page', () => {
 
 	// ─── Sorting ─────────────────────────────────────────────────────────────
 	//
-	// Known behaviour (verified against the running app):
-	//   - Fresh load: no sort params in URL; list is already descending (server default)
-	//   - First selection: URL gains ?columnKey=updatedAt&order=descend
-	//   - `sortHandle` in DashboardsList.tsx hard-codes `order: 'descend'` —
-	//     ascending mode is not yet implemented in any code path
+	// `sortHandle` in DashboardsList.tsx hard-codes `order: 'descend'` —
+	// ascending mode is not yet implemented in any code path.
 
 	test('TC-09 default load has no sort params', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 
 		await expect(page).toHaveURL('/dashboard');
 		await expect(page).not.toHaveURL(/columnKey/);
@@ -314,7 +217,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-10 selecting "Last updated" adds columnKey=updatedAt&order=descend to URL', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 
 		await expect(page).not.toHaveURL(/columnKey/);
 		await page.getByTestId('sort-by').click();
@@ -330,7 +233,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-11 selecting "Last created" also yields order=descend (ascending not yet implemented)', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 
 		await page.getByTestId('sort-by').click();
 		const lastCreated = page.getByTestId('sort-by-last-created');
@@ -348,15 +251,10 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-actions-menu';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-		const tooltip = page.getByRole('tooltip');
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
 		await expect(tooltip).toBeVisible();
 
 		await expect(tooltip.getByRole('button', { name: 'View' })).toBeVisible();
@@ -369,7 +267,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(
 			tooltip.getByRole('button', { name: 'Export JSON' }),
 		).toBeVisible();
-		// Delete is rendered as a generic, not a button
+		// Delete is rendered as a generic, not a button.
 		await expect(tooltip.getByText('Delete dashboard')).toBeVisible();
 	});
 
@@ -377,18 +275,11 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-view';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-		await page
-			.getByRole('tooltip')
-			.getByRole('button', { name: 'View' })
-			.click();
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
+		await tooltip.getByRole('button', { name: 'View' }).click();
 
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
@@ -397,23 +288,16 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-newtab';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
 
 		// Use page.context() — the auth fixture creates its own context per
 		// test, which is not the same as the default `context` fixture.
 		const [newPage] = await Promise.all([
 			page.context().waitForEvent('page'),
-			page
-				.getByRole('tooltip')
-				.getByRole('button', { name: 'Open in New Tab' })
-				.click(),
+			tooltip.getByRole('button', { name: 'Open in New Tab' }).click(),
 		]);
 
 		await newPage.waitForLoadState();
@@ -425,22 +309,15 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-copy';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
+		await gotoDashboardsList(page);
 		await page
 			.context()
 			.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-		await page
-			.getByRole('tooltip')
-			.getByRole('button', { name: 'Copy Link' })
-			.click();
+		const tooltip = await openDashboardActionMenu(page, name);
+		await tooltip.getByRole('button', { name: 'Copy Link' }).click();
 
 		await expect(page.getByText(/copied|success/i)).toBeVisible();
 
@@ -455,21 +332,14 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-export';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
 
 		const [download] = await Promise.all([
 			page.waitForEvent('download'),
-			page
-				.getByRole('tooltip')
-				.getByRole('button', { name: 'Export JSON' })
-				.click(),
+			tooltip.getByRole('button', { name: 'Export JSON' }).click(),
 		]);
 
 		expect(download.suggestedFilename()).toMatch(/\.json$/);
@@ -479,14 +349,10 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-dismiss';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
+		await gotoDashboardsList(page);
+		await openDashboardActionMenu(page, name);
 		await expect(page.getByRole('tooltip')).toBeVisible();
 
 		await page.getByRole('heading', { name: 'Dashboards', level: 1 }).click();
@@ -504,7 +370,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-18 New dashboard dropdown shows exactly three options', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page.getByTestId('new-dashboard-cta').click();
 
 		const menu = page.getByRole('menu');
@@ -517,7 +383,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-19 Create dashboard dropdown option creates a dashboard with the default name', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('create-dashboard-menu-cta').click();
 
@@ -536,7 +402,7 @@ test.describe('Dashboards List Page', () => {
 		).toBeVisible();
 
 		// Register the UI-created dashboard with the suite teardown.
-		const sampleId = await findDashboardIdByTitle(page, 'Sample Title');
+		const sampleId = await findDashboardIdByTitle(page, DEFAULT_DASHBOARD_TITLE);
 		if (sampleId) {
 			seedIds.add(sampleId);
 		}
@@ -545,7 +411,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-20 Import JSON dialog opens with code editor and upload button', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 
@@ -566,7 +432,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-21 Import JSON dialog closes on Escape without creating a dashboard', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 		const dialog = page.getByRole('dialog');
@@ -585,7 +451,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-22 Import JSON dialog closes on clicking the close button', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
 
@@ -607,25 +473,19 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirm';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-		// Scroll the row into view before clicking — when the workspace has
-		// accumulated dashboards the search-filtered row can land below the
-		// viewport, and Playwright's auto-scroll on click is not always enough
-		// when there is a sticky header above.
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-
-		// Ant's Popover positions the tooltip below the row — when the row is
-		// near the viewport bottom the option ends up just off-screen. Force
-		// the click; the element is already attached and Ant handles the rest.
-		await page
-			.getByRole('tooltip')
-			.getByText('Delete dashboard')
-			.click({ force: true });
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
+		// Ant's Popover can position the tooltip so the "Delete dashboard"
+		// item ends up outside the viewport (especially in CI, where font
+		// rendering shifts layout subtly). `click({ force: true })` skips
+		// actionability checks but Playwright still requires the click
+		// coordinates to land inside the viewport. `dispatchEvent('click')`
+		// fires the synthetic event directly on the DOM node — React's
+		// onClick handler runs normally — and bypasses coordinate checks
+		// entirely. This is the robust fix for Ant Popover positioning.
+		await tooltip.getByText('Delete dashboard').dispatchEvent('click');
 
 		const dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
@@ -642,25 +502,11 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-cancel';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-		// Scroll the row into view before clicking — when the workspace has
-		// accumulated dashboards the search-filtered row can land below the
-		// viewport, and Playwright's auto-scroll on click is not always enough
-		// when there is a sticky header above.
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-
-		// Ant's Popover positions the tooltip below the row — when the row is
-		// near the viewport bottom the option ends up just off-screen. Force
-		// the click; the element is already attached and Ant handles the rest.
-		await page
-			.getByRole('tooltip')
-			.getByText('Delete dashboard')
-			.click({ force: true });
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
+		await tooltip.getByText('Delete dashboard').dispatchEvent('click');
 		await expect(page.getByRole('dialog')).toBeVisible();
 
 		await page.getByRole('button', { name: 'Cancel' }).click();
@@ -671,27 +517,11 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirmed';
-		const id = await createDashboard(page, name);
+		const id = await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
-		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
-
-		// Scroll the row into view before clicking — when the workspace has
-		// accumulated dashboards the search-filtered row can land below the
-		// viewport, and Playwright's auto-scroll on click is not always enough
-		// when there is a sticky header above.
-		const actionIcon = page.getByTestId('dashboard-action-icon').first();
-		await actionIcon.scrollIntoViewIfNeeded();
-		await actionIcon.click();
-
-		// Ant's Popover positions the tooltip below the row — when the row is
-		// near the viewport bottom the option ends up just off-screen. Force
-		// the click; the element is already attached and Ant handles the rest.
-		await page
-			.getByRole('tooltip')
-			.getByText('Delete dashboard')
-			.click({ force: true });
+		await gotoDashboardsList(page);
+		const tooltip = await openDashboardActionMenu(page, name);
+		await tooltip.getByText('Delete dashboard').dispatchEvent('click');
 
 		const dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
@@ -707,8 +537,8 @@ test.describe('Dashboards List Page', () => {
 		await expect(dialog).not.toBeVisible();
 
 		// After deletion, searching for the name should return no results.
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
+		await gotoDashboardsList(page);
+		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(name);
 		await expect(page.getByAltText('dashboard-image')).toHaveCount(0);
 
 		// The UI delete already removed the resource — drop it from the
@@ -722,10 +552,10 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-row-click';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
+		await gotoDashboardsList(page);
+		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(name);
 
 		await page.getByAltText('dashboard-image').first().click();
 
@@ -736,10 +566,10 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-breadcrumb';
-		await createDashboard(page, name);
+		await seed(page, name);
 
-		await gotoList(page);
-		await page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }).fill(name);
+		await gotoDashboardsList(page);
+		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(name);
 
 		await page.getByAltText('dashboard-image').first().click();
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
@@ -770,10 +600,8 @@ test.describe('Dashboards List Page', () => {
 	test('TC-29 search term updates the URL in real time', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
-		await page
-			.getByRole('textbox', { name: SEARCH_PLACEHOLDER })
-			.fill('realtime');
+		await gotoDashboardsList(page);
+		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill('realtime');
 		await expect(page).toHaveURL(/search=realtime/);
 	});
 
@@ -781,7 +609,7 @@ test.describe('Dashboards List Page', () => {
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-back-search';
-		await createDashboard(page, name);
+		await seed(page, name);
 
 		await page.goto(`/dashboard?search=${name}`);
 		await page
@@ -793,15 +621,13 @@ test.describe('Dashboards List Page', () => {
 
 		await page.goBack();
 		await expect(page).toHaveURL(new RegExp(`search=${name}`));
-		await expect(
-			page.getByRole('textbox', { name: SEARCH_PLACEHOLDER }),
-		).toHaveValue(name);
+		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(name);
 	});
 
 	test('TC-31 sort params appear in URL only after interacting with the sort button', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		await expect(page).not.toHaveURL(/columnKey/);
 
 		await page.getByTestId('sort-by').click();
@@ -823,7 +649,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-32 feedback button is visible and stays on the page when clicked', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		const feedback = page.getByRole('button', { name: 'Feedback' });
 		await expect(feedback).toBeVisible();
 
@@ -834,7 +660,7 @@ test.describe('Dashboards List Page', () => {
 	test('TC-33 share button is visible and stays on the page when clicked', async ({
 		authedPage: page,
 	}) => {
-		await gotoList(page);
+		await gotoDashboardsList(page);
 		const share = page.getByRole('button', { name: 'Share' });
 		await expect(share).toBeVisible();
 
