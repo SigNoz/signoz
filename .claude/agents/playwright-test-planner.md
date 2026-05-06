@@ -19,19 +19,23 @@ You will:
      - API endpoints the UI calls — these inform what cleanup endpoints exist for `try/finally` teardown
    - The frontend stores its JWT in `localStorage` under `AUTH_TOKEN` and the API requires `Authorization: Bearer <token>` for protected endpoints. Plans that need API-driven seeding should note this so the generator can use `page.request.*`.
 
-2. **Navigate and explore**
+2. **Check what's already wired up.**
+   - [tests/e2e/utils/dashboards.ts](../../tests/e2e/utils/dashboards.ts) and [tests/e2e/utils/auth.ts](../../tests/e2e/utils/auth.ts) hold reusable helpers (`createDashboardViaApi`, `gotoDashboardsList`, `openDashboardActionMenu`, `newAdminContext`, `importApmMetricsDashboardViaUI`, etc.). When the plan touches dashboards, reference these by name in the steps so the generator can reuse them rather than reinvent.
+   - [tests/e2e/fixtures/apm-metrics.json](../../tests/e2e/fixtures/apm-metrics.json) is a real-world dashboard payload (rich tags, panels, description) suitable as a seed fixture — note in the plan if a scenario benefits from it.
+
+3. **Navigate and explore**
    - Invoke `planner_setup_page` once before any other browser tool.
    - Use `browser_snapshot` to read the page's accessibility tree. **Do not take screenshots unless absolutely necessary** — snapshots are cheaper and more legible.
    - Drive each flow end-to-end: happy path, error states, edge cases, URL deep-linking, browser-back behaviour.
 
-3. **Design comprehensive scenarios**
+4. **Design comprehensive scenarios**
    - Happy path
    - Edge cases and boundary conditions (empty state, single item, > pagination threshold)
    - Error handling and validation
    - URL state and deep-linking
    - Cross-flow regressions (e.g. searching while paginated)
 
-4. **Structure the test plan**
+5. **Structure the test plan**
 
    Each scenario must include:
    - **TC-NN** title — `TC-NN <short description>` (matches the naming this repo uses for test titles).
@@ -40,8 +44,9 @@ You will:
    - Expected outcomes per step.
    - Cleanup notes (what gets created and how to remove it — usually via API).
 
-5. **Save the plan**
-   - Default location: `tests/e2e/specs/<feature>-test-plan.md` — create the directory if it doesn't exist.
+6. **Save the plan**
+   - Default location: `tests/e2e/specs/<feature>/<feature>-test-plan.md` — one directory per feature, the test plan and any related QA checklists live alongside each other.
+   - QA checklists (manual verification runbooks distinct from the TC-NN plan) go under `tests/e2e/specs/<feature>/checklists/<feature>-functional-checklist.md`. See [tests/e2e/specs/dashboards/checklists/dashboards-list-functional-checklist.md](../../tests/e2e/specs/dashboards/checklists/dashboards-list-functional-checklist.md) for shape.
    - Use clear headings, numbered steps, and a top-level "Application Overview" section.
    - At the top of the file, list any pre-existing limitations (e.g. "ascending sort not yet implemented") so the generator emits them as `// known behaviour` comments rather than failing assertions.
 
@@ -88,7 +93,7 @@ The dashboards list page (`/dashboard`) lists all dashboards in the workspace. F
 **Quality bar:**
 - Steps must be specific enough that any tester (or the generator agent) can follow without ambiguity.
 - Include negative scenarios — empty state, no-match search, validation errors.
-- Each scenario must own its preconditions and cleanup. **No global test fixtures** — that's incompatible with the parallel-by-default Playwright config.
+- Each scenario must own its preconditions and cleanup. **Do not invent cross-file global fixtures** — they break parallel-by-file execution. Suite-level `beforeAll` / `afterAll` *within* a single spec file is fine and is the preferred shape for files with > ~10 scenarios; per-test `try / finally` is fine for smaller specs.
 - Prefer stable `data-testid` attributes when noting locators; fall back to ARIA roles or accessible names; treat CSS selectors as last resort.
 
-**Output format:** a single Markdown file under `tests/e2e/specs/<feature>-test-plan.md` ready to hand to the generator agent.
+**Output format:** a single Markdown file under `tests/e2e/specs/<feature>/<feature>-test-plan.md` ready to hand to the generator agent.

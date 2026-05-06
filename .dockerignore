@@ -8,7 +8,6 @@ sample-apps
 
 # frontend
 **/node_modules
-frontend/build
 
 # local env files (tracked example.env templates are unaffected)
 **/.env

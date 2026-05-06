@@ -21,18 +21,14 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
   });
   ```
 - **Test titles:** `TC-NN <short description>` — matches the planner's IDs.
-- **Self-contained state:** every test seeds what it needs and cleans up in `try / finally`. The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data.
-- **Seed via API when the UI flow is multi-step or brittle.** The frontend stores its JWT in `localStorage` under `AUTH_TOKEN`; `page.request.*` inherits the auth fixture's storage state, so:
-  ```ts
-  const token = await page.evaluate(
-    () => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
-  );
-  await page.request.post('/api/v1/dashboards', {
-    data: { title: 'my-name', uploadedGrafana: false },
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  ```
-  This is faster, more reliable, and within the e2e.md "drop to `page.request.*` when the UI can't reach what you need" rule.
+- **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two cleanup shapes are valid; pick based on the spec size:
+  - **Per-test `try / finally`** — small specs (~ <10 scenarios) where each test owns its data.
+  - **Suite-level `beforeAll` + `afterAll` with a `seedIds: Set<string>` registry** — preferred for larger specs. Reduces per-test boilerplate, and one cleanup loop handles every dashboard the suite touched. See [tests/e2e/tests/dashboards/dashboards-list.spec.ts](../../tests/e2e/tests/dashboards/dashboards-list.spec.ts) for the canonical shape.
+- **Reuse helpers from `tests/e2e/utils/`.** Don't reinvent. The current set:
+  - [`utils/auth.ts`](../../tests/e2e/utils/auth.ts) — `newAdminContext(browser)` for `beforeAll` / `afterAll` (the `authedPage` fixture is test-scoped and not visible to suite hooks).
+  - [`utils/dashboards.ts`](../../tests/e2e/utils/dashboards.ts) — `authToken`, `gotoDashboardsList`, `createDashboardViaApi`, `importApmMetricsDashboardViaUI`, `deleteDashboardViaApi`, `findDashboardIdByTitle`, `openDashboardActionMenu`, plus the constants (`SEARCH_PLACEHOLDER`, `APM_METRICS_TITLE`, `DEFAULT_DASHBOARD_TITLE`).
+- **Seed via API when the UI flow is multi-step or brittle.** Implementation lives in `createDashboardViaApi` — use it. `page.request.*` does **not** auto-attach `Authorization`; the helpers handle that for you. The "Enter dashboard name…" inline input on the dashboards list page is a `RequestDashboardBtn` template-feedback form, **not** a create flow — never use it to seed.
+- **Reusable JSON fixtures live in [tests/e2e/fixtures/](../../tests/e2e/fixtures/).** `apm-metrics.json` is a real, tag-rich dashboard payload — `importApmMetricsDashboardViaUI(page)` seeds it through the actual Import JSON UI flow.
 - **Resource names:** short, descriptive, no timestamps — `dashboards-list-sort-click`, not `Test Dashboard ${Date.now()}`. Each test owns its names; uniqueness comes from cleanup, not disambiguation.
 - **Serial mode** when tests in a file mutate the same list page:
   ```ts
@@ -81,68 +77,78 @@ For a plan section:
 **Cleanup:** delete the seeded dashboard via API.
 ```
 
-You produce:
+You produce (suite-level shape, preferred for files with multiple scenarios):
 
 ```ts
 // tests/e2e/tests/dashboards/dashboards-list.spec.ts
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
+import { newAdminContext } from '../../utils/auth';
+import {
+  authToken,
+  createDashboardViaApi,
+  deleteDashboardViaApi,
+  gotoDashboardsList,
+} from '../../utils/dashboards';
 
 test.describe.configure({ mode: 'serial' });
 
-async function authToken(page: Page): Promise<string> {
-  if (!page.url().startsWith('http')) {
-    await page.goto('/dashboard');
+const seedIds = new Set<string>();
+
+async function seed(page: Page, title: string): Promise<string> {
+  const id = await createDashboardViaApi(page, title);
+  seedIds.add(id);
+  return id;
+}
+
+test.afterAll(async ({ browser }) => {
+  if (seedIds.size === 0) return;
+  const ctx = await newAdminContext(browser);
+  const page = await ctx.newPage();
+  try {
+    const token = await authToken(page);
+    for (const id of [...seedIds]) {
+      await deleteDashboardViaApi(ctx.request, id, token);
+      seedIds.delete(id);
+    }
+  } finally {
+    await ctx.close();
   }
-  return page.evaluate(
-    () => (globalThis as any).localStorage.getItem('AUTH_TOKEN') || '',
-  );
-}
-
-async function createDashboard(page: Page, title: string): Promise<string> {
-  const token = await authToken(page);
-  const res = await page.request.post('/api/v1/dashboards', {
-    data: { title, uploadedGrafana: false },
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok()) throw new Error(`createDashboard ${res.status()}`);
-  return ((await res.json()) as { data: { id: string } }).data.id;
-}
-
-async function deleteDashboard(page: Page, id: string): Promise<void> {
-  const token = await authToken(page);
-  await page.request.delete(`/api/v1/dashboards/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-}
+});
 
 test.describe('Dashboards List Page', () => {
   test('TC-01 page chrome and core controls render', async ({
     authedPage: page,
   }) => {
-    const id = await createDashboard(page, 'dashboards-list-chrome');
-    try {
-      // 1. Navigate to /dashboard
-      await page.goto('/dashboard');
+    await seed(page, 'dashboards-list-chrome');
 
-      // 2. Verify the page title
-      await expect(page).toHaveTitle('SigNoz | All Dashboards');
+    // 1. Navigate to /dashboard
+    await gotoDashboardsList(page);
 
-      // 3. Verify the heading is visible
-      await expect(
-        page.getByRole('heading', { name: 'Dashboards', level: 1 }),
-      ).toBeVisible();
-    } finally {
-      await deleteDashboard(page, id);
-    }
+    // 2. Verify the page title
+    await expect(page).toHaveTitle('SigNoz | All Dashboards');
+
+    // 3. Verify the heading is visible
+    await expect(
+      page.getByRole('heading', { name: 'Dashboards', level: 1 }),
+    ).toBeVisible();
   });
 });
 ```
+
+# Known UI gotchas (apply when relevant)
+
+- **Ant Popover positioning vs viewport.** Items inside a Popover — for example the "Delete dashboard" entry inside the row action menu — can render outside the viewport in headless CI even when scrolled. `click({ force: true })` skips actionability checks but Playwright still requires the click coordinates to land inside the viewport. Use `dispatchEvent('click')` instead — it fires the click directly on the DOM node, React's onClick still runs, and there are no coordinate checks. Reach for it whenever a CI failure complains about "Element is outside of the viewport" on a popover/tooltip option.
+- **Sticky-header rows below the fold.** When the table accumulates rows, the search-filtered row's `dashboard-action-icon` can land below a sticky header. Always `await actionIcon.scrollIntoViewIfNeeded()` before clicking. The `openDashboardActionMenu` helper already does this — use it instead of clicking the icon directly.
+- **React Query mutations vs navigation.** UI delete clicks fire an async DELETE through React Query. Navigating away before the mutation completes cancels it. Pair the click with `page.waitForResponse((r) => r.request().method() === 'DELETE' && /\/dashboards\//.test(r.url()))` and `await expect(dialog).not.toBeVisible()` before the next `page.goto(...)`.
+- **Monaco editor swallows Escape.** Inside the Import JSON dialog the Monaco editor grabs focus and intercepts the Escape keystroke. Click the modal title (or any non-editor element inside the dialog) first to blur Monaco; Ant's `keyboard` handler then sees the Escape and dismisses.
+- **Empty zero-state hides controls.** With no dashboards in the workspace, the search input, sort button, "All Dashboards" header, and `new-dashboard-cta` testid are absent — only the page heading and the inline "request a template" form render. Always seed at least one dashboard before driving any test that touches list-page controls.
 
 # Quality bar
 
 - Every test runs end-to-end against a fresh stack. If you can't run it green from a fresh `test_setup`, it's not done.
 - Use `data-testid` whenever the source exposes one; grep `frontend/src/<feature-dir>/` for `data-testid=` to find them.
-- If a step depends on UI behaviour you can't verify (e.g. clipboard, downloads), use the matching Playwright primitive (`page.waitForEvent('download')`, `context.grantPermissions`).
-- If the page renders differently when the workspace is empty vs non-empty, **always** seed before driving the test — otherwise locators based on the non-empty layout will time out.
+- If a step depends on UI behaviour you can't verify (e.g. clipboard, downloads), use the matching Playwright primitive (`page.waitForEvent('download')`, `page.context().grantPermissions(...)` — note `page.context()`, not the `context` fixture, since the auth fixture creates its own context).
+- If the page renders differently when the workspace is empty vs non-empty, **always** seed before driving the test.
+- Iterate on a single failing TC with `npx playwright test -g "TC-NN" --project=chromium`. Use `--last-failed` after a multi-failure run to replay only what failed.
