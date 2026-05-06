@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
+import { Badge, Button as SignozButton } from '@signozhq/ui';
 import {
 	Button,
 	Col,
@@ -394,7 +395,7 @@ function MultiIngestionSettings(): JSX.Element {
 						notifications.success({
 							message: 'Ingestion key deleted successfully',
 						});
-						refetchAPIKeys();
+						void refetchAPIKeys();
 						setIsDeleteModalOpen(false);
 					},
 					onError: (error) => {
@@ -426,7 +427,7 @@ function MultiIngestionSettings(): JSX.Element {
 								notifications.success({
 									message: 'Ingestion key updated successfully',
 								});
-								refetchAPIKeys();
+								void refetchAPIKeys();
 								setIsEditModalOpen(false);
 							},
 							onError: (error) => {
@@ -466,7 +467,7 @@ function MultiIngestionSettings(): JSX.Element {
 								setActiveAPIKey(null);
 								setUpdatedTags([]);
 								hideAddViewModal();
-								refetchAPIKeys();
+								void refetchAPIKeys();
 							},
 							onError: (error) => {
 								showErrorNotification(notifications, error as AxiosError);
@@ -630,13 +631,14 @@ function MultiIngestionSettings(): JSX.Element {
 				onSuccess: () => {
 					notifications.success({
 						message: 'Limit created successfully',
+						description: "Set up an alert to know when you're close to hitting it.",
 					});
 					setActiveSignal(null);
 					setActiveAPIKey(null);
 					setIsEditAddLimitOpen(false);
 					setUpdatedTags([]);
 					hideAddViewModal();
-					refetchAPIKeys();
+					void refetchAPIKeys();
 					setHasCreateLimitForIngestionKeyError(false);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
@@ -733,13 +735,14 @@ function MultiIngestionSettings(): JSX.Element {
 				onSuccess: () => {
 					notifications.success({
 						message: 'Limit updated successfully',
+						description: "Set up an alert to know when you're close to hitting it.",
 					});
 					setActiveSignal(null);
 					setActiveAPIKey(null);
 					setIsEditAddLimitOpen(false);
 					setUpdatedTags([]);
 					hideAddViewModal();
-					refetchAPIKeys();
+					void refetchAPIKeys();
 					setHasUpdateLimitForIngestionKeyError(false);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
@@ -824,7 +827,7 @@ function MultiIngestionSettings(): JSX.Element {
 						});
 						setIsDeleteModalOpen(false);
 						setIsDeleteLimitModalOpen(false);
-						refetchAPIKeys();
+						void refetchAPIKeys();
 					},
 					onError: (error) => {
 						showErrorNotification(notifications, error as AxiosError);
@@ -1351,31 +1354,36 @@ function MultiIngestionSettings(): JSX.Element {
 																		activeSignal.signal === signalName &&
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
-																				<Button
-																					type="primary"
-																					className="periscope-btn primary"
-																					size="small"
-																					disabled={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					loading={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					onClick={onSaveSignalLimit}
-																				>
-																					Save
-																				</Button>
-																				<Button
-																					type="default"
-																					className="periscope-btn"
-																					size="small"
-																					disabled={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					onClick={handleDiscardSaveLimit}
-																				>
-																					Discard
-																				</Button>
+																				<div className="signal-limit-save-discard-actions">
+																					<Button
+																						type="primary"
+																						className="periscope-btn primary"
+																						size="small"
+																						disabled={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						loading={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						onClick={onSaveSignalLimit}
+																					>
+																						Save
+																					</Button>
+																					<Button
+																						type="default"
+																						className="periscope-btn"
+																						size="small"
+																						disabled={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						onClick={handleDiscardSaveLimit}
+																					>
+																						Discard
+																					</Button>
+																					<span className="signal-limit-alert-helper">
+																						You can set up an alert after saving
+																					</span>
+																				</div>
 																			</div>
 																		)}
 																</Form>
@@ -1432,19 +1440,18 @@ function MultiIngestionSettings(): JSX.Element {
 																			limit?.config?.day?.size !== undefined) ||
 																			(signalCfg.usesCount &&
 																				limit?.config?.day?.count !== undefined)) && (
-																			<Tooltip
-																				title="Set alert on this limit"
-																				placement="top"
-																				arrow={false}
+																			<Badge
+																				asChild
+																				color="cherry"
+																				variant="outline"
+																				testId={`set-alert-btn-${signalName}`}
+																				className="set-alert-btn"
 																			>
-																				<Button
-																					icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
-																					className="set-alert-btn periscope-btn ghost"
-																					type="text"
-																					data-testid={`set-alert-btn-${signalName}`}
-																					onClick={onCreateSignalAlert}
-																				/>
-																			</Tooltip>
+																				<SignozButton onClick={onCreateSignalAlert} size="sm">
+																					<BellPlus size={12} />
+																					Set alert
+																				</SignozButton>
+																			</Badge>
 																		)}
 																	</div>
 
@@ -1865,7 +1872,7 @@ function MultiIngestionSettings(): JSX.Element {
 						]}
 						validateTrigger="onBlur"
 					>
-						<Input placeholder="Enter Ingestion Key name" autoFocus />
+						<Input placeholder="Enter Ingestion Key name" />
 					</Form.Item>
 
 					<Form.Item

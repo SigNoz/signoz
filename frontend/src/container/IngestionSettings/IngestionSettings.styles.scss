@@ -443,7 +443,25 @@
 
 				.signal-limit-save-discard {
 					display: flex;
-					gap: 8px;
+					gap: var(--spacing-4);
+
+					.signal-limit-save-discard-actions {
+						display: flex;
+						align-items: center;
+						gap: var(--spacing-4);
+					}
+
+					.signal-limit-alert-helper {
+						display: flex;
+						align-items: center;
+						gap: var(--spacing-2);
+						font-size: var(--paragraph-small-400-font-size);
+						color: var(--l2-foreground);
+						border-bottom: 1px dashed var(--l2-foreground);
+						padding-bottom: 1px;
+						font-style: italic;
+						margin-left: var(--spacing-6);
+					}
 				}
 			}
 		}
