@@ -108,7 +108,11 @@ export const interceptorRejected = async (
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
 
+			const isNoAuthMode =
+				getLocalStorageApi(LOCALSTORAGE.IS_NO_AUTH_MODE) === 'true';
+
 			if (
+				!isNoAuthMode &&
 				response.status === 401 &&
 				// if the session rotate call or the create session errors out with 401 or the delete sessions call returns 401 then we do not retry!
 				response.config.url !== '/sessions/rotate' &&
@@ -140,16 +144,20 @@ export const interceptorRejected = async (
 						return await Promise.resolve(reResponse);
 					} catch (error) {
 						if ((error as AxiosError)?.response?.status === 401) {
-							Logout();
+							void Logout();
 						}
 					}
 				} catch (error) {
-					Logout();
+					void Logout();
 				}
 			}
 
-			if (response.status === 401 && response.config.url === '/sessions/rotate') {
-				Logout();
+			if (
+				!isNoAuthMode &&
+				response.status === 401 &&
+				response.config.url === '/sessions/rotate'
+			) {
+				void Logout();
 			}
 		}
 		return await Promise.reject(value);

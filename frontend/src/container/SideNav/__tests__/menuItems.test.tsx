@@ -5,6 +5,7 @@ const BASE_PARAMS = {
 	isWorkspaceBlocked: false,
 	isEnterpriseSelfHostedUser: false,
 	isCommunityEnterpriseUser: false,
+	isNoAuthMode: false,
 };
 
 describe('getUserSettingsDropdownMenuItems', () => {
@@ -70,5 +71,16 @@ describe('getUserSettingsDropdownMenuItems', () => {
 		expect(keys[2]).toBe('workspace');
 		expect(keys[3]).toBe('account');
 		expect(keys[keys.length - 1]).toBe('logout');
+	});
+
+	it('omits sign out and its preceding divider when isNoAuthMode=true', () => {
+		const items =
+			getUserSettingsDropdownMenuItems({ ...BASE_PARAMS, isNoAuthMode: true }) ??
+			[];
+		const keys = items.map((item: any) => item.key ?? item.type);
+
+		expect(keys).not.toContain('logout');
+		// the trailing divider before logout should also be gone
+		expect(keys[keys.length - 1]).toBe('keyboard-shortcuts');
 	});
 });
