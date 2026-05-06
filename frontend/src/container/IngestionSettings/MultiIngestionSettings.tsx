@@ -889,11 +889,18 @@ function MultiIngestionSettings(): JSX.Element {
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
 		thresholds[0].thresholdValue = threshold;
 
+		const keyName = APIKey.name?.trim();
+		const ruleName = keyName
+			? `${keyName} - daily ${signal.signal} ingestion limit`
+			: `Daily ${signal.signal} ingestion limit`;
+
 		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
 		}=${encodeURIComponent(stringifiedQuery)}&${
 			QueryParams.thresholds
-		}=${encodeURIComponent(JSON.stringify(thresholds))}`;
+		}=${encodeURIComponent(JSON.stringify(thresholds))}&${
+			QueryParams.ruleName
+		}=${encodeURIComponent(ruleName)}`;
 
 		history.push(URL);
 	};

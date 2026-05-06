@@ -123,6 +123,7 @@ export function CreateAlertProvider(
 	const location = useLocation();
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
+	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -191,7 +192,17 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, thresholdsFromURL]);
+
+		if (ruleNameFromURL) {
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_ALERT_NAME',
+					payload: ruleNameFromURL,
+				},
+			});
+		}
+	}, [alertType, thresholdsFromURL, ruleNameFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
