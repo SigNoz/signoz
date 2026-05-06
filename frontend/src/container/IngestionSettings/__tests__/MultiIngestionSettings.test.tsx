@@ -250,6 +250,120 @@ describe('MultiIngestionSettings Page', () => {
 		);
 	});
 
+	it('shows "Set alert" badge text when a daily limit is configured', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		const response: TestGatewayIngestionKeysResponse = {
+			status: 'success',
+			data: {
+				keys: [
+					{
+						name: 'Key With Limit',
+						expires_at: new Date(TEST_EXPIRES_AT),
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
+						tags: [],
+						limits: [
+							{
+								id: 'l1',
+								signal: 'metrics',
+								config: { day: { count: 1000 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
+		};
+
+		server.use(
+			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(response)),
+			),
+		);
+
+		render(<MultiIngestionSettings />, undefined, {
+			initialRoute: INGESTION_SETTINGS_ROUTE,
+		});
+
+		await screen.findByText('Key With Limit');
+		const expandButton = screen.getByRole('button', {
+			name: /right Key With Limit/i,
+		});
+		await user.click(expandButton);
+
+		await screen.findByText('LIMITS');
+		expect(screen.getByText('Set alert')).toBeInTheDocument();
+	});
+
+	it('shows helper text when editing a limit', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		const response: TestGatewayIngestionKeysResponse = {
+			status: 'success',
+			data: {
+				keys: [
+					{
+						name: 'Key Edit Limit',
+						expires_at: new Date(TEST_EXPIRES_AT),
+						value: 'secret',
+						workspace_id: TEST_WORKSPACE_ID,
+						id: 'k1',
+						created_at: new Date(TEST_CREATED_UPDATED),
+						updated_at: new Date(TEST_CREATED_UPDATED),
+						tags: [],
+						limits: [
+							{
+								id: 'l1',
+								signal: 'logs',
+								config: { day: { size: 1073741824 } },
+							},
+						],
+					},
+				],
+				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
+			},
+		};
+
+		server.use(
+			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(response)),
+			),
+		);
+
+		render(<MultiIngestionSettings />, undefined, {
+			initialRoute: INGESTION_SETTINGS_ROUTE,
+		});
+
+		await screen.findByText('Key Edit Limit');
+		const expandButton = screen.getByRole('button', {
+			name: /right Key Edit Limit/i,
+		});
+		await user.click(expandButton);
+
+		await screen.findByText('LIMITS');
+
+		// Click the edit (pencil) button for the logs limit
+		const editButtons = screen.getAllByRole('button', { name: '' });
+		const logsEditBtn = editButtons.find(
+			(btn) =>
+				btn.closest('.signal')?.querySelector('.signal-name')?.textContent ===
+				'logs',
+		);
+		if (logsEditBtn) {
+			await user.click(logsEditBtn);
+		}
+
+		await waitFor(() => {
+			expect(
+				screen.getByText('You can set up an alert after saving'),
+			).toBeInTheDocument();
+		});
+	});
+
 	it('switches to search API when search text is entered', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
