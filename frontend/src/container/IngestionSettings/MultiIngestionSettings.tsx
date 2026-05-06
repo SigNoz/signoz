@@ -20,8 +20,8 @@ import {
 	TableProps as AntDTableProps,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {

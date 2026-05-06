@@ -112,8 +112,10 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
               title="learn_more"
             />
             <div>
-              <article
-                class="ant-typography css-dev-only-do-not-override-2i2tap"
+              <p
+                class="_typography_ulrzs_1"
+                data-slot="typography"
+                data-variant="text"
               >
                 learn_more 
                 <a
@@ -123,7 +125,7 @@ exports[`PipelinePage container test should render PipelinePageLayout section 1`
                 >
                   here
                 </a>
-              </article>
+              </p>
             </div>
           </div>
         </div>

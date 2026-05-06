@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import getDisks from 'api/disks/getDisks';
 import getRetentionPeriodApi from 'api/settings/getRetention';
 import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';

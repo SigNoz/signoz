@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Card, Flex, Table, Typography } from 'antd';
+import { Card, Flex, Table } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import { InspectMetricsSeries } from './types';
 import { TableViewProps } from './types';

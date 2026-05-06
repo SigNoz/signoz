@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -51,13 +52,13 @@ function LinkedSpans(props: LinkedSpansProps): JSX.Element {
 				const link = getLink(item);
 				return (
 					<div className="item" key={item.spanId}>
-						<Typography.Text className="item-key" ellipsis>
+						<Typography.Text className="item-key" truncate={1}>
 							Linked Span ID
 						</Typography.Text>
 						<div className="value-wrapper">
 							<Tooltip title={item.spanId}>
 								{link ? (
-									<Typography.Link href={link} className="item-value" ellipsis>
+									<Typography.Link href={link} className="item-value" truncate={1}>
 										{item.spanId}
 									</Typography.Link>
 								) : (

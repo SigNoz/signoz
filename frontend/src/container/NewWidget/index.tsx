@@ -12,7 +12,8 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from '@signozhq/ui';
-import { Flex, Modal, Space, Typography } from 'antd';
+import { Flex, Modal, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';

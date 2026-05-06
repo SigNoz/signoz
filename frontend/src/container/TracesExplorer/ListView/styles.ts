@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const tableStyles: CSSProperties = {

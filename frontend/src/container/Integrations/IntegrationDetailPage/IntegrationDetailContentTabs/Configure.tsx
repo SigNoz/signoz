@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';

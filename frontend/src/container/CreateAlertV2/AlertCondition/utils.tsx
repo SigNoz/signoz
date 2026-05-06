@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps, Switch, Typography } from 'antd';
+import { Button, Flex, SelectProps, Switch } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';

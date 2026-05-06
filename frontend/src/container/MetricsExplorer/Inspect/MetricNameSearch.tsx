@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { MetricNameSelector } from 'container/QueryBuilder/filters';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';

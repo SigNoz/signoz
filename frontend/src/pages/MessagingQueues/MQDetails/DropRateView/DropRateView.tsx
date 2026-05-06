@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Table, Typography } from 'antd';
+import { Table } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
@@ -103,12 +104,12 @@ export function getColumns(
 											{item}
 										</Typography.Text>
 										{shouldShowMore && (
-											<Typography
+											<Typography.Text
 												onClick={(): void => handleShowMore(index)}
 												className="remaing-count"
 											>
 												+ {remainingCount} more
-											</Typography>
+											</Typography.Text>
 										)}
 									</div>
 								);

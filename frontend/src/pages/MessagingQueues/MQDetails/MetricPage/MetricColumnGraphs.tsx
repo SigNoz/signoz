@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Widgets } from 'types/api/dashboard/getAll';

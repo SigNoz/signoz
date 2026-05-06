@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import get from 'api/channels/get';
 import Spinner from 'components/Spinner';
 import {

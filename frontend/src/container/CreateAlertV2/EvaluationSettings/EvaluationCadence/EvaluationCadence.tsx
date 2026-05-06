@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Input, Select, Tooltip, Typography } from 'antd';
+import { Input, Select, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Info } from 'lucide-react';
 
 import { useCreateAlertState } from '../../context';

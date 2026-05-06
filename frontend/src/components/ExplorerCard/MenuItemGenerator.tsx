@@ -1,6 +1,7 @@
 import { MouseEvent, useCallback } from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
-import { Col, Row, Tooltip, Typography } from 'antd';
+import { Col, Row, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
@@ -81,7 +82,7 @@ function MenuItemGenerator({
 						</Tooltip>
 					</Row>
 					<Row>
-						<Typography.Text type="secondary">Created by {createdBy}</Typography.Text>
+						<Typography.Text color="muted">Created by {createdBy}</Typography.Text>
 					</Row>
 				</Col>
 				<Col span={2}>

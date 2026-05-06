@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Skeleton, Tooltip, Typography } from 'antd';
+import { Progress, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
@@ -37,28 +38,16 @@ function EndPointMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						Rate
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						ERROR %
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						LAST USED
 					</Typography.Text>
 				</div>

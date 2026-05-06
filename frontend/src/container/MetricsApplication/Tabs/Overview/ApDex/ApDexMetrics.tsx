@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import TextToolTip from 'components/TextToolTip';
 import {
 	apDexToolTipText,

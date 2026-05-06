@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { Button } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';

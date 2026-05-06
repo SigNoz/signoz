@@ -1,6 +1,7 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { HostListPayload } from 'api/infraMonitoring/getHostLists';
 import {
 	FiltersType,
@@ -24,7 +25,7 @@ export function HostnameCell({
 	}
 	return (
 		<div className="hostname-cell-missing">
-			<Typography.Text type="secondary" className="hostname-cell-placeholder">
+			<Typography.Text color="muted" className="hostname-cell-placeholder">
 				-
 			</Typography.Text>
 			<Tooltip

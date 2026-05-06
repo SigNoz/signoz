@@ -1,14 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Form,
-	FormInstance,
-	Input,
-	Select,
-	Space,
-	Typography,
-} from 'antd';
+import { Button, Form, FormInstance, Input, Select, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 import { InviteMemberFormValues } from '../utils';

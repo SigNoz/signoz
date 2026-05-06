@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Collapse, Input, Modal, Typography } from 'antd';
+import { Collapse, Input, Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from 'lucide-react';
 import { Span } from 'types/api/trace/getTraceV2';

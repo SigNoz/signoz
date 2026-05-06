@@ -1,5 +1,6 @@
 import { FunctionComponent } from 'react';
-import { Button, Select, SelectProps, Space, Typography } from 'antd';
+import { Button, Select, SelectProps, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const DashboardSelect: FunctionComponent<SelectProps> = styled(
