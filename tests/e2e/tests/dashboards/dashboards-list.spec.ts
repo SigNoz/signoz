@@ -551,23 +551,24 @@ test.describe('Dashboards List Page', () => {
 		).toBeVisible();
 	});
 
-	// known: the Import JSON dialog does not close on Escape in the current
-	// build — the Monaco editor inside the modal intercepts the keystroke. The
-	// close-button path is covered by TC-22.
-	test.fixme(
-		'TC-21 Import JSON dialog closes on Escape without creating a dashboard',
-		async ({ authedPage: page }) => {
-			await gotoList(page);
-			await page.getByTestId('new-dashboard-cta').click();
-			await page.getByTestId('import-json-menu-cta').click();
-			await expect(page.getByRole('dialog')).toBeVisible();
+	test('TC-21 Import JSON dialog closes on Escape without creating a dashboard', async ({
+		authedPage: page,
+	}) => {
+		await gotoList(page);
+		await page.getByTestId('new-dashboard-cta').click();
+		await page.getByTestId('import-json-menu-cta').click();
+		const dialog = page.getByRole('dialog');
+		await expect(dialog).toBeVisible();
 
-			await page.keyboard.press('Escape');
+		// The Monaco editor inside the modal grabs focus on mount and swallows
+		// Escape. Click the modal title first to blur Monaco; then Ant's Modal
+		// `keyboard` handler picks up the Escape and dismisses the dialog.
+		await dialog.getByText('Import Dashboard JSON').click();
+		await page.keyboard.press('Escape');
 
-			await expect(page.getByRole('dialog')).not.toBeVisible();
-			await expect(page).toHaveURL(/\/dashboard($|\?)/);
-		},
-	);
+		await expect(dialog).not.toBeVisible();
+		await expect(page).toHaveURL(/\/dashboard($|\?)/);
+	});
 
 	test('TC-22 Import JSON dialog closes on clicking the close button', async ({
 		authedPage: page,
@@ -715,19 +716,21 @@ test.describe('Dashboards List Page', () => {
 		).toBeVisible();
 	});
 
-	// known: the sidebar renders icon-only nav items with no stable
-	// testid / aria-label per item; the "Dashboards" entry is reachable only
-	// via hover tooltip which isn't reliable in headless mode. Re-enable when
-	// the sidebar exposes per-item testids.
-	test.fixme(
-		'TC-28 sidebar Dashboards link navigates to the list page',
-		async ({ authedPage: page }) => {
-			await page.goto('/home');
-			await page.getByRole('link', { name: 'Dashboards' }).click();
-			await expect(page).toHaveURL(/\/dashboard/);
-			await expect(page).toHaveTitle('SigNoz | All Dashboards');
-		},
-	);
+	test('TC-28 sidebar Dashboards link navigates to the list page', async ({
+		authedPage: page,
+	}) => {
+		await page.goto('/home');
+		// Sidebar items are <div class="nav-item"> with the label as visible
+		// text — they're not <a role="link">, so getByRole won't reach them.
+		// Filter on the exact label to avoid matching nested items that
+		// happen to contain the substring.
+		await page
+			.locator('.nav-item')
+			.filter({ hasText: /^Dashboards$/ })
+			.click();
+		await expect(page).toHaveURL(/\/dashboard/);
+		await expect(page).toHaveTitle('SigNoz | All Dashboards');
+	});
 
 	// ─── URL state and deep linking ──────────────────────────────────────────
 
