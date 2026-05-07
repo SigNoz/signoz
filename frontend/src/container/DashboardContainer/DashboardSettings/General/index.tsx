@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Col, Input, Radio, Select, Space, Typography } from 'antd';
+import { Col, Input, Radio, Select, Space, Tooltip, Typography } from 'antd';
 import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddTags';
 import { useDashboardCursorSyncMode } from 'hooks/dashboard/useDashboardCursorSyncMode';
 import { useSyncTooltipFilterMode } from 'hooks/dashboard/useSyncTooltipFilterMode';
@@ -10,7 +10,7 @@ import {
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { isEqual } from 'lodash-es';
-import { Check, X } from 'lucide-react';
+import { Check, ExternalLink, Info, X } from '@signozhq/icons';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
 import styles from './GeneralSettings.module.scss';
@@ -173,9 +173,36 @@ function GeneralDashboardSettings(): JSX.Element {
 				</Space>
 			</Col>
 			<Col className={`${styles.overviewSettings} ${styles.crossPanelSyncGroup}`}>
-				<Typography.Text className={styles.crossPanelSyncSectionTitle}>
-					Cross-Panel Sync
-				</Typography.Text>
+				<div className={styles.crossPanelSyncSectionHeader}>
+					<Typography.Text className={styles.crossPanelSyncSectionTitle}>
+						Cross-Panel Sync
+					</Typography.Text>
+					<Tooltip
+						title={
+							<div className={styles.crossPanelSyncTooltipContent}>
+								<strong className={styles.crossPanelSyncTooltipTitle}>
+									Cross-Panel Sync
+								</strong>
+								<span className={styles.crossPanelSyncTooltipDescription}>
+									Sync crosshair and tooltip across all the dashboard panels
+								</span>
+								<a
+									href="https://signoz.io/docs/dashboards/interactivity/#cross-panel-sync"
+									target="_blank"
+									rel="noopener noreferrer"
+									className={styles.crossPanelSyncTooltipDocLink}
+								>
+									Learn more
+									<ExternalLink size={12} />
+								</a>
+							</div>
+						}
+						placement="top"
+						mouseEnterDelay={0.5}
+					>
+						<Info size={14} className={styles.crossPanelSyncInfoIcon} />
+					</Tooltip>
+				</div>
 				<div className={styles.crossPanelSyncRow}>
 					<div className={styles.crossPanelSyncInfo}>
 						<Typography.Text className={styles.crossPanelSyncTitle}>

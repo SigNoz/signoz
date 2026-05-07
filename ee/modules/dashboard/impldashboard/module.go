@@ -14,7 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -88,7 +88,7 @@ func (module *module) GetDashboardByPublicID(ctx context.Context, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
-func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id valuer.UUID, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 	orgIDs := make([]string, len(orgs))
 	for idx, org := range orgs {
 		orgIDs[idx] = org.ID.StringValue()
@@ -99,9 +99,9 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 		return nil, valuer.UUID{}, err
 	}
 
-	return []authtypes.Selector{
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, id.StringValue()),
-		authtypes.MustNewSelector(authtypes.TypeMetaResource, authtypes.WildCardSelectorString),
+	return []coretypes.Selector{
+		coretypes.TypeMetaResource.MustSelector(id.StringValue()),
+		coretypes.TypeMetaResource.MustSelector(coretypes.WildCardSelectorString),
 	}, storableDashboard.OrgID, nil
 }
 
@@ -215,28 +215,6 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, isAdmin, lock)
-}
-
-func (module *module) MustGetTypeables() []authtypes.Typeable {
-	return module.pkgDashboardModule.MustGetTypeables()
-}
-
-func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
-	return map[string][]*authtypes.Transaction{
-		authtypes.SigNozAnonymousRoleName: {
-			{
-				ID:       valuer.GenerateUUID(),
-				Relation: authtypes.RelationRead,
-				Object: *authtypes.MustNewObject(
-					authtypes.Resource{
-						Type: authtypes.TypeMetaResource,
-						Name: dashboardtypes.TypeableMetaResourcePublicDashboard.Name(),
-					},
-					authtypes.MustNewSelector(authtypes.TypeMetaResource, "*"),
-				),
-			},
-		},
-	}
 }
 
 func (module *module) deletePublic(ctx context.Context, _ valuer.UUID, dashboardID valuer.UUID) error {

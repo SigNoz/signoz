@@ -1,12 +1,18 @@
 import type {
-	AuthtypesGettableObjectsDTO,
-	AuthtypesGettableResourcesDTO,
+	CoretypesResourceRefDTO,
+	CoretypesObjectGroupDTO,
+	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import type {
 	PermissionConfig,
 	ResourceDefinition,
 } from '../PermissionSidePanel/PermissionSidePanel.types';
+
+type AuthzResources = {
+	resources: CoretypesResourceRefDTO[];
+	relations: Record<string, string[]>;
+};
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
 import {
 	buildConfig,
@@ -33,17 +39,17 @@ jest.mock('../RoleDetails/constants', () => {
 	};
 });
 
-const dashboardResource: AuthtypesGettableResourcesDTO['resources'][number] = {
-	name: 'dashboard',
-	type: 'metaresource',
+const dashboardResource: AuthzResources['resources'][number] = {
+	kind: 'dashboard',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
-const alertResource: AuthtypesGettableResourcesDTO['resources'][number] = {
-	name: 'alert',
-	type: 'metaresource',
+const alertResource: AuthzResources['resources'][number] = {
+	kind: 'alert',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
-const baseAuthzResources: AuthtypesGettableResourcesDTO = {
+const baseAuthzResources: AuthzResources = {
 	resources: [dashboardResource, alertResource],
 	relations: {
 		create: ['metaresource'],
@@ -220,7 +226,7 @@ describe('buildPatchPayload', () => {
 
 describe('objectsToPermissionConfig', () => {
 	it('maps a wildcard selector to ALL scope', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: ['*'] },
 		];
 
@@ -233,7 +239,7 @@ describe('objectsToPermissionConfig', () => {
 	});
 
 	it('maps specific selectors to ONLY_SELECTED scope with the IDs', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
 		];
 
@@ -338,7 +344,7 @@ describe('buildConfig', () => {
 
 describe('derivePermissionTypes', () => {
 	it('derives one PermissionType per relation key with correct key and capitalised label', () => {
-		const relations: AuthtypesGettableResourcesDTO['relations'] = {
+		const relations: AuthzResources['relations'] = {
 			create: ['metaresource'],
 			read: ['metaresource'],
 			delete: ['metaresource'],

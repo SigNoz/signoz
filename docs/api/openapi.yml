@@ -321,35 +321,6 @@ components:
       required:
       - id
       type: object
-    AuthtypesGettableObjects:
-      properties:
-        resource:
-          $ref: '#/components/schemas/AuthtypesResource'
-        selectors:
-          items:
-            type: string
-          type: array
-      required:
-      - resource
-      - selectors
-      type: object
-    AuthtypesGettableResources:
-      properties:
-        relations:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          nullable: true
-          type: object
-        resources:
-          items:
-            $ref: '#/components/schemas/AuthtypesResource'
-          type: array
-      required:
-      - resources
-      - relations
-      type: object
     AuthtypesGettableToken:
       properties:
         accessToken:
@@ -366,9 +337,9 @@ components:
         authorized:
           type: boolean
         object:
-          $ref: '#/components/schemas/AuthtypesObject'
+          $ref: '#/components/schemas/CoretypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
@@ -416,16 +387,6 @@ components:
         issuerAlias:
           type: string
       type: object
-    AuthtypesObject:
-      properties:
-        resource:
-          $ref: '#/components/schemas/AuthtypesResource'
-        selector:
-          type: string
-      required:
-      - resource
-      - selector
-      type: object
     AuthtypesOrgSessionContext:
       properties:
         authNSupport:
@@ -441,22 +402,6 @@ components:
       properties:
         provider:
           $ref: '#/components/schemas/AuthtypesAuthNProvider'
-      type: object
-    AuthtypesPatchableObjects:
-      properties:
-        additions:
-          items:
-            $ref: '#/components/schemas/AuthtypesGettableObjects'
-          nullable: true
-          type: array
-        deletions:
-          items:
-            $ref: '#/components/schemas/AuthtypesGettableObjects'
-          nullable: true
-          type: array
-      required:
-      - additions
-      - deletions
       type: object
     AuthtypesPatchableRole:
       properties:
@@ -495,16 +440,15 @@ components:
         refreshToken:
           type: string
       type: object
-    AuthtypesResource:
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-      required:
-      - name
-      - type
-      type: object
+    AuthtypesRelation:
+      enum:
+      - create
+      - read
+      - update
+      - delete
+      - list
+      - assignee
+      type: string
     AuthtypesRole:
       properties:
         createdAt:
@@ -568,9 +512,9 @@ components:
     AuthtypesTransaction:
       properties:
         object:
-          $ref: '#/components/schemas/AuthtypesObject'
+          $ref: '#/components/schemas/CoretypesObject'
         relation:
-          type: string
+          $ref: '#/components/schemas/AuthtypesRelation'
       required:
       - relation
       - object
@@ -2205,6 +2149,64 @@ components:
         to_user:
           type: string
       type: object
+    CoretypesObject:
+      properties:
+        resource:
+          $ref: '#/components/schemas/CoretypesResourceRef'
+        selector:
+          type: string
+      required:
+      - resource
+      - selector
+      type: object
+    CoretypesObjectGroup:
+      properties:
+        resource:
+          $ref: '#/components/schemas/CoretypesResourceRef'
+        selectors:
+          items:
+            type: string
+          type: array
+      required:
+      - resource
+      - selectors
+      type: object
+    CoretypesPatchableObjects:
+      properties:
+        additions:
+          items:
+            $ref: '#/components/schemas/CoretypesObjectGroup'
+          nullable: true
+          type: array
+        deletions:
+          items:
+            $ref: '#/components/schemas/CoretypesObjectGroup'
+          nullable: true
+          type: array
+      required:
+      - additions
+      - deletions
+      type: object
+    CoretypesResourceRef:
+      properties:
+        kind:
+          type: string
+        type:
+          $ref: '#/components/schemas/CoretypesType'
+      required:
+      - type
+      - kind
+      type: object
+    CoretypesType:
+      enum:
+      - user
+      - serviceaccount
+      - anonymous
+      - role
+      - organization
+      - metaresource
+      - metaresources
+      type: string
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -5431,6 +5433,9 @@ components:
         sub_tree_node_count:
           minimum: 0
           type: integer
+        time_unix:
+          minimum: 0
+          type: integer
         trace_id:
           type: string
         trace_state:
@@ -5809,35 +5814,6 @@ paths:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
       summary: Check permissions
-      tags:
-      - authz
-  /api/v1/authz/resources:
-    get:
-      deprecated: false
-      description: Gets all the available resources
-      operationId: AuthzResources
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/AuthtypesGettableResources'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get resources
       tags:
       - authz
   /api/v1/channels:
@@ -9063,7 +9039,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/AuthtypesGettableObjects'
+                      $ref: '#/components/schemas/CoretypesObjectGroup'
                     type: array
                   status:
                     type: string
@@ -9136,7 +9112,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthtypesPatchableObjects'
+              $ref: '#/components/schemas/CoretypesPatchableObjects'
       responses:
         "204":
           content:

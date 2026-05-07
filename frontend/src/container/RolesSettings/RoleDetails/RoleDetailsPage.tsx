@@ -4,7 +4,6 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Table2, Trash2, Users } from '@signozhq/icons';
 import { Button, toast, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Skeleton } from 'antd';
-import { useAuthzResources } from 'api/generated/services/authz';
 import {
 	getGetObjectsQueryKey,
 	useDeleteRole,
@@ -12,6 +11,9 @@ import {
 	useGetRole,
 	usePatchObjects,
 } from 'api/generated/services/role';
+import permissionsType from 'hooks/useAuthZ/permissions.type';
+
+import type { AuthzResources } from '../utils';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
@@ -52,10 +54,7 @@ function RoleDetailsPage(): JSX.Element {
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
-	const { data: authzResourcesResponse } = useAuthzResources({
-		query: { enabled: true },
-	});
-	const authzResources = authzResourcesResponse?.data ?? null;
+	const authzResources = permissionsType.data as unknown as AuthzResources;
 
 	// Extract channelId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
@@ -94,7 +93,7 @@ function RoleDetailsPage(): JSX.Element {
 
 	const initialConfig = useMemo(() => {
 		if (!objectsData?.data || !activePermission) {
-			return undefined;
+			return;
 		}
 		return objectsToPermissionConfig(
 			objectsData.data,

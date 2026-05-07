@@ -1,8 +1,8 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui';
 import type {
-	AuthtypesGettableObjectsDTO,
-	AuthtypesGettableResourcesDTO,
+	CoretypesResourceRefDTO,
+	CoretypesObjectGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { capitalize } from 'lodash-es';
@@ -19,6 +19,11 @@ import {
 	PERMISSION_ICON_MAP,
 } from './RoleDetails/constants';
 
+export type AuthzResources = {
+	resources: ReadonlyArray<CoretypesResourceRefDTO>;
+	relations: Readonly<Record<string, ReadonlyArray<string>>>;
+};
+
 export interface PermissionType {
 	key: string;
 	label: string;
@@ -29,11 +34,11 @@ export interface PatchPayloadOptions {
 	newConfig: PermissionConfig;
 	initialConfig: PermissionConfig;
 	resources: ResourceDefinition[];
-	authzRes: AuthtypesGettableResourcesDTO;
+	authzRes: AuthzResources;
 }
 
 export function derivePermissionTypes(
-	relations: AuthtypesGettableResourcesDTO['relations'] | null,
+	relations: AuthzResources['relations'] | null,
 ): PermissionType[] {
 	const iconSize = { size: 14 };
 
@@ -55,7 +60,7 @@ export function derivePermissionTypes(
 }
 
 export function deriveResourcesForRelation(
-	authzResources: AuthtypesGettableResourcesDTO | null,
+	authzResources: AuthzResources | null,
 	relation: string,
 ): ResourceDefinition[] {
 	if (!authzResources?.relations) {
@@ -65,19 +70,19 @@ export function deriveResourcesForRelation(
 	return authzResources.resources
 		.filter((r) => supportedTypes.includes(r.type))
 		.map((r) => ({
-			id: r.name,
-			label: capitalize(r.name).replace(/_/g, ' '),
+			id: r.kind,
+			label: capitalize(r.kind).replaceAll('_', ' '),
 			options: [],
 		}));
 }
 
 export function objectsToPermissionConfig(
-	objects: AuthtypesGettableObjectsDTO[],
+	objects: CoretypesObjectGroupDTO[],
 	resources: ResourceDefinition[],
 ): PermissionConfig {
 	const config: PermissionConfig = {};
 	for (const res of resources) {
-		const obj = objects.find((o) => o.resource.name === res.id);
+		const obj = objects.find((o) => o.resource.kind === res.id);
 		if (!obj) {
 			config[res.id] = {
 				scope: PermissionScope.ONLY_SELECTED,
@@ -101,19 +106,19 @@ export function buildPatchPayload({
 	resources,
 	authzRes,
 }: PatchPayloadOptions): {
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	deletions: AuthtypesGettableObjectsDTO[] | null;
+	additions: CoretypesObjectGroupDTO[] | null;
+	deletions: CoretypesObjectGroupDTO[] | null;
 } {
 	if (!authzRes) {
 		return { additions: null, deletions: null };
 	}
-	const additions: AuthtypesGettableObjectsDTO[] = [];
-	const deletions: AuthtypesGettableObjectsDTO[] = [];
+	const additions: CoretypesObjectGroupDTO[] = [];
+	const deletions: CoretypesObjectGroupDTO[] = [];
 
 	for (const res of resources) {
 		const initial = initialConfig[res.id];
 		const current = newConfig[res.id];
-		const resourceDef = authzRes.resources.find((r) => r.name === res.id);
+		const resourceDef = authzRes.resources.find((r) => r.kind === res.id);
 		if (!resourceDef) {
 			continue;
 		}
