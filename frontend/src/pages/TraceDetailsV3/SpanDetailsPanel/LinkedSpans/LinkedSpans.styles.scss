@@ -1,0 +1,34 @@
+.linked-spans {
+	position: relative;
+
+	&__toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		color: inherit;
+		font: inherit;
+	}
+
+	&__label {
+		white-space: nowrap;
+	}
+
+	&__chevron {
+		transition: transform 0.15s ease;
+
+		&--open {
+			transform: rotate(90deg);
+		}
+	}
+
+	&__list {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 12px 0;
+	}
+}

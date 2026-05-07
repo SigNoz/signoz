@@ -589,6 +589,16 @@ function TanStackTableInner<TData>(
 					{showPagination && pagination && (
 						<div className={cx(viewStyles.paginationContainer, paginationClassname)}>
 							{prefixPaginationContent}
+							{pagination.showTotalCount && effectiveTotalCount > 0 && (
+								<span
+									className={viewStyles.paginationTotalCount}
+									data-testid="pagination-total-count"
+								>
+									Showing {(page - 1) * limit + 1} -{' '}
+									{Math.min(page * limit, effectiveTotalCount)} of {effectiveTotalCount}
+									{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
+								</span>
+							)}
 							<Pagination
 								current={page}
 								pageSize={limit}
