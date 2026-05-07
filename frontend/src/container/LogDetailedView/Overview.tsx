@@ -2,7 +2,8 @@ import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
-import { Collapse, Divider, Input, Switch, Tag } from 'antd';
+import { Switch } from '@signozhq/ui';
+import { Collapse, Divider, Input, Tag } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
 import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
@@ -136,7 +137,7 @@ function Overview({
 								<div className="log-switch">
 									<div className="wrap-word-switch">
 										<Typography.Text>Wrap text</Typography.Text>
-										<Switch checked={isWrapWord} onChange={handleWrapWord} size="small" />
+										<Switch value={isWrapWord} onChange={handleWrapWord} />
 									</div>
 								</div>
 							</div>

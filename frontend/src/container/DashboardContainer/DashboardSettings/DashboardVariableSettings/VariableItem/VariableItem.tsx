@@ -5,7 +5,8 @@ import { useQuery } from 'react-query';
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Collapse, Input, Select, Switch, Tag } from 'antd';
+import { Button, Collapse, Input, Select, Tag } from 'antd';
+import { Switch } from '@signozhq/ui';
 import { Typography } from '@signozhq/ui/typography';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import cx from 'classnames';
@@ -763,7 +764,7 @@ function VariableItem({
 									</Typography>
 								</LabelContainer>
 								<Switch
-									checked={variableMultiSelect}
+									value={variableMultiSelect}
 									onChange={(e): void => {
 										setVariableMultiSelect(e);
 										if (!e) {
@@ -780,7 +781,7 @@ function VariableItem({
 										</Typography>
 									</LabelContainer>
 									<Switch
-										checked={variableShowALLOption}
+										value={variableShowALLOption}
 										onChange={(e): void => setVariableShowALLOption(e)}
 									/>
 								</VariableItemRow>

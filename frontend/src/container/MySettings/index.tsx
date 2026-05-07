@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { Radio, RadioChangeEvent, Switch, Tag } from 'antd';
+import { Radio, RadioChangeEvent, Tag } from 'antd';
+import { Switch } from '@signozhq/ui';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
@@ -218,10 +219,10 @@ function MySettings(): JSX.Element {
 						<div className="user-preference-section-content-item-title-action">
 							Keep the primary sidebar always open{' '}
 							<Switch
-								checked={sideNavPinned}
+								value={sideNavPinned}
 								onChange={handleSideNavPinnedChange}
-								loading={isUpdatingUserPreference}
-								data-testid="side-nav-pinned-switch"
+								disabled={isUpdatingUserPreference}
+								testId="side-nav-pinned-switch"
 							/>
 						</div>
 
