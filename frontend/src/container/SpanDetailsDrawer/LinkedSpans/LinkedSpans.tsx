@@ -4,6 +4,7 @@ import { Typography } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { Span } from 'types/api/trace/getTraceV2';
+import { withBasePath } from 'utils/basePath';
 
 import NoData from '../NoData/NoData';
 
@@ -26,11 +27,13 @@ function LinkedSpans(props: LinkedSpansProps): JSX.Element {
 		if (!item.traceId || !item.spanId) {
 			return null;
 		}
-		return `${ROUTES.TRACE}/${item.traceId}${formUrlParams({
-			spanId: item.spanId,
-			levelUp: 0,
-			levelDown: 0,
-		})}`;
+		return withBasePath(
+			`${ROUTES.TRACE}/${item.traceId}${formUrlParams({
+				spanId: item.spanId,
+				levelUp: 0,
+				levelDown: 0,
+			})}`,
+		);
 	}, []);
 
 	// Filter out CHILD_OF references as they are parent-child relationships
