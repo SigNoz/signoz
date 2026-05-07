@@ -82,19 +82,15 @@ tests/
     ├── bootstrap/
     │   └── setup.py           # test_setup / test_teardown — pytest lifecycle
     ├── fixtures/              # Playwright test fixtures (test.extend) only
-    │   └── auth.ts            # authedPage Playwright fixture + per-worker storageState cache
-    ├── helpers/               # function helpers + the constants they share with specs
-    │   ├── auth.ts            # newAdminContext(browser) for beforeAll/afterAll
-    │   └── dashboards.ts      # gotoDashboardsList, createDashboardViaApi, openDashboardActionMenu, plus SEARCH_PLACEHOLDER, APM_METRICS_TITLE…
-    ├── testdata/              # static data files (JSON) used by helpers and specs
-    │   └── apm-metrics.json   # real APM dashboard payload — seed via importApmMetricsDashboardViaUI
-    ├── specs/                 # human-readable test plans + QA checklists per feature
-    │   └── dashboards/
-    │       ├── dashboards-list-test-plan.md
-    │       └── checklists/
+    │   └── auth.ts
+    ├── helpers/               # function helpers + the constants they share with tests
+    │   ├── auth.ts
+    │   └── dashboards.ts
+    ├── testdata/              # static data files (JSON) used by helpers and tests
+    │   └── apm-metrics.json   # (example)
     ├── tests/                 # Playwright .spec.ts files, one dir per feature area
     │   └── alerts/
-    │       └── alerts.spec.ts
+    │       └── alerts.spec.ts # (example)
     └── artifacts/             # per-run output (gitignored)
         ├── html/              # HTML reporter output
         ├── json/              # JSON reporter output
@@ -106,8 +102,8 @@ tests/
 These two folders look similar but mean different things:
 
 - **`fixtures/`** holds *Playwright test fixtures* (created via `test.extend({...})`). By the canonical definition, a fixture is "a consistent, predefined set of data, objects, or environmental conditions used to ensure tests run in a stable state" — i.e. setup/teardown that runs *automatically* around each test or worker. `auth.ts` matches: it extends Playwright's `test` with an `authedPage` that's logged-in before every test runs and torn down after. If the only thing in this folder ever is `auth.ts`, that's fine — fixtures are a deliberately small surface.
-- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This includes both behaviour helpers (`gotoDashboardsList(page)`, `createDashboardViaApi(page, title)`, `openDashboardActionMenu(page, name)`, `newAdminContext(browser)`) and the constants those helpers and the specs both refer to (`SEARCH_PLACEHOLDER`, `LIST_HEADING`, `DEFAULT_DASHBOARD_TITLE`, `APM_METRICS_TITLE`). Constants live next to the helpers that use them so a single import line in a spec covers both.
-- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — currently just `apm-metrics.json`, the real dashboard payload that `importApmMetricsDashboardViaUI` uploads through the UI.
+- **`helpers/`** holds plain function helpers that you call *explicitly* from a test or hook — they don't extend Playwright's `test`. This covers both behaviour helpers (e.g. `gotoDashboardsList(page)`) and the constants those helpers and the tests both refer to (e.g. `SEARCH_PLACEHOLDER`). Constants live next to the helpers that use them so a single import line in a test covers both.
+- **`testdata/`** holds static data files (typically JSON / YAML) consumed by the helpers — for example, `apm-metrics.json`, a real dashboard payload uploaded through the UI by an importer helper.
 
 Rule of thumb: if it's a `test.extend` fixture, put it in `fixtures/`. If it's a function you call explicitly (or a constant the function uses), put it in `helpers/`. If it's a static file the helpers read, put it in `testdata/`.
 
@@ -199,7 +195,7 @@ test('TC-02 alerts list — create, toggle, delete', async ({ authedPage: page }
 
 Three Claude agents in `.claude/agents/` accelerate writing and maintaining E2E specs:
 
-- **`playwright-test-planner`** — explores a feature in a real browser plus the local frontend source and writes a test plan to `tests/e2e/specs/<feature>-test-plan.md`.
+- **`playwright-test-planner`** — explores a feature in a real browser plus the local frontend source and writes a test plan as a scratch markdown file (under `tests/e2e/specs/`, which is gitignored — plans are working artifacts for the generator, not committed docs).
 - **`playwright-test-generator`** — converts a test plan into Playwright spec files under `tests/e2e/tests/<feature>/`. Drives each scenario through MCP browser tools and emits TC-NN-titled tests using the `authedPage` fixture and the API-seed pattern.
 - **`playwright-test-healer`** — runs failing specs, debugs them with snapshots / console / network introspection, and edits the spec to fix selector drift, timing, or state-leak issues.
 

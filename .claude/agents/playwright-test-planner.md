@@ -44,11 +44,13 @@ You will:
    - Expected outcomes per step.
    - Cleanup notes (what gets created and how to remove it — usually via API).
 
-6. **Save the plan**
-   - Default location: `tests/e2e/specs/<feature>/<feature>-test-plan.md` — one directory per feature, the test plan and any related QA checklists live alongside each other.
-   - QA checklists (manual verification runbooks distinct from the TC-NN plan) go under `tests/e2e/specs/<feature>/checklists/<feature>-functional-checklist.md`. See [tests/e2e/specs/dashboards/checklists/dashboards-list-functional-checklist.md](../../tests/e2e/specs/dashboards/checklists/dashboards-list-functional-checklist.md) for shape.
+6. **Save the plan and the checklist**
+   - **Plan:** `tests/e2e/specs/<feature>/<feature>-test-plan.md`. **`tests/e2e/specs/` is gitignored** — plans are scratch artifacts: working input for the generator, regenerable, not committed. Don't treat them as durable documentation. The committed tests are the source of truth.
+   - **Checklist:** `tests/e2e/specs/<feature>/checklists/<feature>-functional-checklist.md`. A manual-verification runbook that mirrors the TC list one-to-one (one checkbox per TC) for QA hand-off. Same gitignore, same scratch status.
+   - **The checklist must stay in sync with the TCs.** When you regenerate the plan, regenerate the checklist alongside it — they share TC IDs and titles, and the checklist ordering must match. If the existing spec under `tests/e2e/tests/<feature>/` has more / fewer / different TCs than the prior plan, the spec is authoritative: re-derive plan and checklist from it.
+   - **On re-runs against an evolved feature:** read the existing `.spec.ts` files first. Treat the committed tests as ground truth; produce a plan and checklist that reflect *what is currently in the spec*, not what the prior plan said. This is how the planner handles TC additions, deletions, merges, and renumbering performed by the generator or healer.
    - Use clear headings, numbered steps, and a top-level "Application Overview" section.
-   - At the top of the file, list any pre-existing limitations (e.g. "ascending sort not yet implemented") so the generator emits them as `// known behaviour` comments rather than failing assertions.
+   - At the top of the plan, list any pre-existing limitations (e.g. "ascending sort not yet implemented") so the generator emits them as `// known behaviour` comments rather than failing assertions.
 
 <example-spec>
 # Dashboards List Page — Test Plan
@@ -99,4 +101,4 @@ The dashboards list page (`/dashboard`) lists all dashboards in the workspace. F
 - **Collapse near-duplicates.** Two TCs that differ only in input value (search by title vs search by description, when the underlying code path is the same) should merge into one parameterised scenario unless each input genuinely exercises a distinct branch. Prefer one assertion-rich TC over three thin ones.
 - **Smoke-checks aren't TCs.** "Heading is visible" belongs as the first assertion inside a real scenario, not as its own numbered case.
 
-**Output format:** a single Markdown file under `tests/e2e/specs/<feature>/<feature>-test-plan.md` ready to hand to the generator agent.
+**Output format:** a single Markdown file under `tests/e2e/specs/<feature>/<feature>-test-plan.md` (gitignored scratch path) ready to hand to the generator agent. The file is regenerable; once the spec is written, the plan can be discarded.

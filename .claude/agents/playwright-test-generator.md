@@ -46,7 +46,7 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
 
 For each scenario in the plan:
 
-1. **Read the plan.** Use `Read` to load `tests/e2e/specs/<feature>-test-plan.md` (or the path the user gave). Lock onto the TC-NN you're generating.
+1. **Read the plan.** Use `Read` to load `tests/e2e/specs/<feature>-test-plan.md` (or the path the user gave). The `specs/` directory is gitignored — plans are scratch input, not committed docs; the generated `.spec.ts` is the source of truth. Lock onto the TC-NN you're generating.
 2. **Set up the page.** Call `generator_setup_page` once per scenario before any browser tool. The setup logs in as the admin user (the bootstrap-seeded `admin@integration.test`).
 3. **Drive the scenario manually.** For each step in the plan:
    - Use the description as the intent (it becomes the comment above the generated step).
@@ -71,7 +71,7 @@ The point of an E2E test is to catch a real regression. A TC that asserts someth
 - **Prefer one assertion-rich test over three thin ones.** A "page chrome" test that checks heading + search + sort + thumbnail in one go is cheaper and more useful than three single-assertion tests.
 - **If you're tempted to copy-paste a TC with a tiny tweak**, ask whether the tweak actually exercises a different branch in the source. If not, drop it.
 
-When you cut a planned TC, note it in your final summary so the planner can update the plan — don't silently skip.
+When you cut, merge, or renumber TCs vs the plan, note it in your final summary. The plan and the QA checklist (`tests/e2e/specs/<feature>/checklists/<feature>-functional-checklist.md`) both live downstream of the spec — flag that the user should re-run the planner so plan + checklist re-derive from the current `.spec.ts`. Don't silently skip.
 
 # Example output
 

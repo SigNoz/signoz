@@ -31,7 +31,7 @@ Don't try to start the stack yourself — it can take ~4 minutes on a cold build
    - **Timing** — the test races a load. Replace `waitForTimeout` with `await expect(locator).toBe…()` or `page.waitForResponse(...)` on the triggering action.
    - **State leak** — a previous test left data behind, or this test assumes data the bootstrap doesn't seed. Ensure the test seeds via API and cleans up in `try / finally`. The bootstrap creates a fresh stack with **zero** dashboards / alerts.
    - **Genuine app bug** — the app is broken, not the test. Mark the test with `test.fixme(...)` and add a one-line `// known: <description>` comment. Don't silently change the assertion to make it pass.
-5. **Fix.** Edit the spec. Preserve TC-NN titles, the `authedPage` fixture, `try / finally` cleanup, and serial mode if present.
+5. **Fix.** Edit the spec. Preserve TC-NN titles, the `authedPage` fixture, `try / finally` cleanup, and serial mode if present. If you renumber, retitle, or `test.fixme(...)` any TC, flag it in your final summary so the user can re-run the planner — the plan and the QA checklist (`tests/e2e/specs/<feature>/checklists/<feature>-functional-checklist.md`) re-derive from the current `.spec.ts` and will otherwise drift.
 6. **Re-run only the fixed test** before moving to the next failure. Three options:
    - `npx playwright test -g 'TC-09' --project=chromium` — target a single TC by title
    - `npx playwright test --last-failed --project=chromium` — replay everything that failed last run
