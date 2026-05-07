@@ -58,9 +58,6 @@ jobs:
           - sqlite
         sqlite-mode:
           - wal
-        sqlite-transaction-mode:
-          - deferred
-          - immediate
         clickhouse-version:
           - 25.5.6
           - 25.12.5
@@ -68,11 +65,6 @@ jobs:
           - v0.144.3
         postgres-version:
           - 15
-        exclude:
-          - sqlstore-provider: postgres
-            sqlite-mode: wal
-          - sqlstore-provider: postgres
-            sqlite-transaction-mode: immediate
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
@@ -117,5 +109,4 @@ jobs:
             --sqlite-mode ${{matrix.sqlite-mode}} \
             --postgres-version ${{matrix.postgres-version}} \
             --clickhouse-version ${{matrix.clickhouse-version}} \
-            --sqlite-transaction-mode ${{matrix.sqlite-transaction-mode}} \
             --schema-migrator-version ${{matrix.schema-migrator-version}}
