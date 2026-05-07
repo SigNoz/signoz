@@ -1,7 +1,13 @@
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import { LimitProps } from 'types/api/ingestionKeys/limits/types';
 import {
 	AllIngestionKeyProps,
@@ -40,6 +46,16 @@ const TEST_EXPIRES_AT = '2030-01-01T00:00:00Z';
 const TEST_WORKSPACE_ID = 'w1';
 const INGESTION_SETTINGS_ROUTE = '/ingestion-settings';
 
+const GLOBAL_CONFIG_RESPONSE = {
+	status: 'success',
+	data: {
+		external_url: '',
+		ingestion_url: 'http://ingest.example.com',
+		ai_assistant_url: null,
+		mcp_url: null,
+	},
+};
+
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
 		mockPush.mockClear();
@@ -71,11 +87,6 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('navigates to create alert with metrics count threshold', async () => {
-		// Increase timeout - test involves multiple user interactions and async waits
-		// that can exceed 5s default under heavy load (full test suite)
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		// Arrange API response with a metrics daily count limit so the alert button is visible
 		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
 			data: {
@@ -103,59 +114,48 @@ describe('MultiIngestionSettings Page', () => {
 		};
 
 		server.use(
+			rest.get('*/api/v1/global/config*', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(GLOBAL_CONFIG_RESPONSE)),
+			),
 			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(response)),
 			),
 		);
 
-		// Render with initial route to test navigation
 		render(<MultiIngestionSettings />, undefined, {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
-		// Wait for ingestion key to load and expand the row to show limits
 		await screen.findByText('Key One');
-		const expandButton = screen.getByRole('button', { name: /right Key One/i });
-		await user.click(expandButton);
+		fireEvent.click(screen.getByRole('button', { name: /right Key One/i }));
 
-		// Wait for limits section to render and click metrics alert button by test id
 		await screen.findByText('LIMITS');
-		const metricsAlertBtn = (await screen.findByTestId(
-			'set-alert-btn-metrics',
-		)) as HTMLButtonElement;
-		await user.click(metricsAlertBtn);
+		fireEvent.click(
+			(await screen.findByTestId('set-alert-btn-metrics')) as HTMLButtonElement,
+		);
 
-		// Wait for navigation to occur
 		await waitFor(() => {
 			expect(mockPush).toHaveBeenCalledTimes(1);
 		});
 
-		// Assert: navigation occurred with correct query parameters
 		const navigationCall = mockPush.mock.calls[0][0] as string;
-
-		// Check URL contains alerts/new route
 		expect(navigationCall).toContain('/alerts/new');
 
-		// Parse query parameters
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
 
 		const thresholds = JSON.parse(urlParams.get(QueryParams.thresholds) || '{}');
 		expect(thresholds).toBeDefined();
 		expect(thresholds[0].thresholdValue).toBe(1000);
 
-		// Verify compositeQuery parameter exists and contains correct data
 		const compositeQuery = JSON.parse(
 			urlParams.get(QueryParams.compositeQuery) || '{}',
 		);
 		expect(compositeQuery.builder).toBeDefined();
 		expect(compositeQuery.builder.queryData).toBeDefined();
 
-		// Check that the query contains the correct filter expression for the key
 		const firstQueryData = compositeQuery.builder.queryData[0];
 		expect(firstQueryData.filter.expression).toContain(
 			"signoz.workspace.key.id='k1'",
 		);
-
-		// Verify metric name for metrics signal
 		expect(firstQueryData.aggregations[0].metricName).toBe(
 			'signoz.meter.metric.datapoint.count',
 		);
@@ -250,15 +250,14 @@ describe('MultiIngestionSettings Page', () => {
 		);
 	});
 
-	it('shows "Set alert" badge text when a daily limit is configured', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
+	it('shows alert CTAs in view mode and helper text in edit mode for configured limits', async () => {
+		const KEY_NAME = 'Key With Limits';
 		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
 			data: {
 				keys: [
 					{
-						name: 'Key With Limit',
+						name: KEY_NAME,
 						expires_at: new Date(TEST_EXPIRES_AT),
 						value: 'secret',
 						workspace_id: TEST_WORKSPACE_ID,
@@ -272,52 +271,8 @@ describe('MultiIngestionSettings Page', () => {
 								signal: 'metrics',
 								config: { day: { count: 1000 } },
 							},
-						],
-					},
-				],
-				_pagination: { page: 1, per_page: 10, pages: 1, total: 1 },
-			},
-		};
-
-		server.use(
-			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json(response)),
-			),
-		);
-
-		render(<MultiIngestionSettings />, undefined, {
-			initialRoute: INGESTION_SETTINGS_ROUTE,
-		});
-
-		await screen.findByText('Key With Limit');
-		const expandButton = screen.getByRole('button', {
-			name: /right Key With Limit/i,
-		});
-		await user.click(expandButton);
-
-		await screen.findByText('LIMITS');
-		expect(screen.getByText('Set alert')).toBeInTheDocument();
-	});
-
-	it('shows helper text when editing a limit', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		const response: TestGatewayIngestionKeysResponse = {
-			status: 'success',
-			data: {
-				keys: [
-					{
-						name: 'Key Edit Limit',
-						expires_at: new Date(TEST_EXPIRES_AT),
-						value: 'secret',
-						workspace_id: TEST_WORKSPACE_ID,
-						id: 'k1',
-						created_at: new Date(TEST_CREATED_UPDATED),
-						updated_at: new Date(TEST_CREATED_UPDATED),
-						tags: [],
-						limits: [
 							{
-								id: 'l1',
+								id: 'l2',
 								signal: 'logs',
 								config: { day: { size: 1073741824 } },
 							},
@@ -329,6 +284,9 @@ describe('MultiIngestionSettings Page', () => {
 		};
 
 		server.use(
+			rest.get('*/api/v1/global/config*', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(GLOBAL_CONFIG_RESPONSE)),
+			),
 			rest.get('*/api/v2/gateway/ingestion_keys*', (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(response)),
 			),
@@ -338,22 +296,18 @@ describe('MultiIngestionSettings Page', () => {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
 
-		await screen.findByText('Key Edit Limit');
-		const expandButton = screen.getByRole('button', {
-			name: /right Key Edit Limit/i,
-		});
-		await user.click(expandButton);
-
+		await screen.findByText(KEY_NAME);
+		fireEvent.click(
+			screen.getByRole('button', { name: new RegExp(`right ${KEY_NAME}`, 'i') }),
+		);
 		await screen.findByText('LIMITS');
 
-		const logsEditBtn = screen.getByRole('button', { name: 'Edit logs limit' });
-		await user.click(logsEditBtn);
+		expect(screen.getAllByText('Set alert').length).toBeGreaterThan(0);
 
-		await waitFor(() => {
-			expect(
-				screen.getByText('You can set up an alert after saving'),
-			).toBeInTheDocument();
-		});
+		fireEvent.click(screen.getByRole('button', { name: 'Edit logs limit' }));
+		expect(
+			screen.getByText('You can set up an alert after saving'),
+		).toBeInTheDocument();
 	});
 
 	it('switches to search API when search text is entered', async () => {
@@ -403,6 +357,9 @@ describe('MultiIngestionSettings Page', () => {
 		const searchHandler = jest.fn();
 
 		server.use(
+			rest.get('*/api/v1/global/config*', (_req, res, ctx) =>
+				res(ctx.status(200), ctx.json(GLOBAL_CONFIG_RESPONSE)),
+			),
 			rest.get('*/api/v2/gateway/ingestion_keys', (req, res, ctx) => {
 				if (req.url.pathname.endsWith('/search')) {
 					return undefined;
