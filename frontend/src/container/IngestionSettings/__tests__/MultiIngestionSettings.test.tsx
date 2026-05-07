@@ -71,6 +71,8 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('navigates to create alert with metrics count threshold', async () => {
+		// Increase timeout - test involves multiple user interactions and async waits
+		// that can exceed 5s default under heavy load (full test suite)
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		// Arrange API response with a metrics daily count limit so the alert button is visible
@@ -157,7 +159,7 @@ describe('MultiIngestionSettings Page', () => {
 		expect(firstQueryData.aggregations[0].metricName).toBe(
 			'signoz.meter.metric.datapoint.count',
 		);
-	});
+	}, 15000);
 
 	// skipping the flaky test
 	it.skip('navigates to create alert for logs with size threshold', async () => {
