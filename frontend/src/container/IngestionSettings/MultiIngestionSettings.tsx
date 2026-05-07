@@ -41,6 +41,7 @@ import {
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
@@ -98,9 +99,30 @@ const COUNT_MULTIPLIER = {
 };
 
 const SIGNALS_CONFIG = [
-	{ name: 'logs', usesSize: true, usesCount: false },
-	{ name: 'traces', usesSize: true, usesCount: false },
-	{ name: 'metrics', usesSize: false, usesCount: true },
+	{
+		name: 'logs',
+		usesSize: true,
+		usesCount: false,
+		metricName: 'signoz.meter.log.size',
+		yAxisUnit: UniversalYAxisUnit.BYTES_IEC,
+		thresholdUnit: UniversalYAxisUnit.GIBIBYTES,
+	},
+	{
+		name: 'traces',
+		usesSize: true,
+		usesCount: false,
+		metricName: 'signoz.meter.span.size',
+		yAxisUnit: UniversalYAxisUnit.BYTES_IEC,
+		thresholdUnit: UniversalYAxisUnit.GIBIBYTES,
+	},
+	{
+		name: 'metrics',
+		usesSize: false,
+		usesCount: true,
+		metricName: 'signoz.meter.metric.datapoint.count',
+		yAxisUnit: UniversalYAxisUnit.COUNT,
+		thresholdUnit: UniversalYAxisUnit.COUNT,
+	},
 ];
 
 // Using any type here because antd's DatePicker expects its own internal Dayjs type
@@ -842,29 +864,22 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
-		let metricName = '';
-
-		switch (signal.signal) {
-			case 'metrics':
-				metricName = 'signoz.meter.metric.datapoint.count';
-				break;
-			case 'traces':
-				metricName = 'signoz.meter.span.size';
-				break;
-			case 'logs':
-				metricName = 'signoz.meter.log.size';
-				break;
-			default:
-				return;
+		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
+		if (!signalCfg) {
+			return;
 		}
 
-		const threshold =
-			signal.signal === 'metrics'
-				? signal.config?.day?.count || 0
-				: signal.config?.day?.size || 0;
+		const { metricName, yAxisUnit, thresholdUnit } = signalCfg;
+
+		// Size signals store the limit in bytes but the user entered GiB; pass the GiB
+		// value so the threshold reads "400 GiB" while the chart Y-axis stays in bytes.
+		const thresholdValue = signalCfg.usesCount
+			? signal.config?.day?.count || 0
+			: bytesToGb(signal.config?.day?.size);
 
 		const query = {
 			...initialQueryMeterWithType,
+			unit: yAxisUnit,
 			builder: {
 				...initialQueryMeterWithType.builder,
 				queryData: [
@@ -889,7 +904,8 @@ function MultiIngestionSettings(): JSX.Element {
 		const stringifiedQuery = JSON.stringify(query);
 
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
-		thresholds[0].thresholdValue = threshold;
+		thresholds[0].thresholdValue = thresholdValue;
+		thresholds[0].unit = thresholdUnit;
 
 		const keyName = APIKey.name?.trim();
 		const ruleName = keyName
@@ -902,7 +918,9 @@ function MultiIngestionSettings(): JSX.Element {
 			QueryParams.thresholds
 		}=${encodeURIComponent(JSON.stringify(thresholds))}&${
 			QueryParams.ruleName
-		}=${encodeURIComponent(ruleName)}`;
+		}=${encodeURIComponent(ruleName)}&${
+			QueryParams.yAxisUnit
+		}=${encodeURIComponent(yAxisUnit)}`;
 
 		history.push(URL);
 	};
@@ -1130,10 +1148,10 @@ function MultiIngestionSettings(): JSX.Element {
 																	</>
 																) : (
 																	<Button
-																		variant="link"
+																		variant="outlined"
 																		size="sm"
 																		color="secondary"
-																		prefix={<PlusIcon size={14} />}
+																		prefix={<PlusIcon size={12} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
 																	>

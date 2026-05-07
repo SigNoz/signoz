@@ -125,6 +125,7 @@ export function CreateAlertProvider(
 	const queryParams = new URLSearchParams(location.search);
 	const thresholdsFromURL = queryParams.get(QueryParams.thresholds);
 	const ruleNameFromURL = queryParams.get(QueryParams.ruleName);
+	const yAxisUnitFromURL = queryParams.get(QueryParams.yAxisUnit);
 
 	const [alertType, setAlertType] = useState<AlertTypes>(() => {
 		if (isEditMode) {
@@ -157,6 +158,7 @@ export function CreateAlertProvider(
 	);
 
 	const ruleNameAppliedRef = useRef(false);
+	const yAxisUnitAppliedRef = useRef(false);
 
 	useEffect(() => {
 		setCreateAlertState({
@@ -206,7 +208,18 @@ export function CreateAlertProvider(
 				},
 			});
 		}
-	}, [alertType, thresholdsFromURL, ruleNameFromURL]);
+
+		if (yAxisUnitFromURL && !yAxisUnitAppliedRef.current) {
+			yAxisUnitAppliedRef.current = true;
+			setCreateAlertState({
+				slice: CreateAlertSlice.BASIC,
+				action: {
+					type: 'SET_Y_AXIS_UNIT',
+					payload: yAxisUnitFromURL,
+				},
+			});
+		}
+	}, [alertType, thresholdsFromURL, ruleNameFromURL, yAxisUnitFromURL]);
 
 	useEffect(() => {
 		if (isEditMode && initialAlertState) {
