@@ -18,7 +18,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
-import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
@@ -48,6 +47,7 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
+import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -563,7 +563,9 @@ function LogDetailInner({
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
+				{selectedView === VIEW_TYPES.JSON && (
+					<JsonView data={LogJsonData} height="68vh" />
+				)}
 
 				{selectedView === VIEW_TYPES.CONTEXT && (
 					<ContextView
