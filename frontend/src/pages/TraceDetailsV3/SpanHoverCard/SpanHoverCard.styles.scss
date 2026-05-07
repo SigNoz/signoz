@@ -1,0 +1,28 @@
+.span-hover-card-popover {
+	.ant-popover-inner {
+		background-color: rgba(30, 30, 30, 0.95);
+		padding: 8px 12px;
+		border-radius: 4px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+		border: none;
+	}
+
+	.ant-popover-inner-content {
+		padding: 0;
+	}
+}
+
+.span-hover-card-content {
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	color: #fff;
+
+	&__name {
+		font-weight: 600;
+		margin-bottom: 4px;
+	}
+
+	&__row {
+		line-height: 1.5;
+	}
+}

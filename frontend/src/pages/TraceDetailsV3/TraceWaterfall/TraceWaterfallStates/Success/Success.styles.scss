@@ -1,0 +1,553 @@
+.waterfall-loading-bar {
+	height: 2px;
+	background: var(--primary);
+	animation: waterfall-loading 1.5s ease-in-out infinite;
+	flex-shrink: 0;
+}
+
+@keyframes waterfall-loading {
+	0% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: left;
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+	100% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: right;
+	}
+}
+
+.success-content {
+	overflow-y: hidden;
+	overflow-x: hidden;
+	max-width: 100%;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	.missing-spans {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 44px;
+		margin: 16px;
+		padding: 12px;
+		border-radius: 4px;
+		background: rgba(69, 104, 220, 0.1);
+
+		.left-info {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+
+			.text {
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+
+		.right-info {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			flex-direction: row-reverse;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+
+		.right-info:hover {
+			background-color: unset;
+			color: var(--bg-robin-200);
+		}
+	}
+
+	.waterfall-split-panel {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding: 0px 20px 0px 20px;
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+	}
+
+	.waterfall-split-header {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		height: 25px;
+		background-color: var(--bg-ink-500);
+
+		.sidebar-header {
+			flex-shrink: 0;
+		}
+
+		.resize-handle-header {
+			width: 4px;
+			flex-shrink: 0;
+		}
+
+		.timeline-header {
+			flex: 1;
+			overflow: hidden;
+			padding: 0 15px;
+		}
+	}
+
+	.waterfall-split-body {
+		display: flex;
+		position: relative;
+	}
+
+	.waterfall-sidebar {
+		overflow-x: auto;
+		overflow-y: hidden;
+		flex-shrink: 0;
+		border-right: 1px solid var(--bg-slate-400);
+
+		.resizable-box__content {
+			overflow-x: auto;
+			overflow-y: hidden;
+
+			&::-webkit-scrollbar {
+				height: 0;
+			}
+
+			scrollbar-width: none;
+		}
+
+		&::-webkit-scrollbar {
+			height: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--bg-slate-400);
+			border-radius: 4px;
+		}
+	}
+
+	.span-tree-table {
+		position: relative;
+		border-collapse: collapse;
+
+		.span-tree-row {
+			display: flex;
+			align-items: center;
+		}
+
+		.span-tree-cell {
+			display: flex;
+			width: 100%;
+			height: 28px;
+			align-items: center;
+			overflow: visible;
+			padding: 0;
+		}
+
+		.span-tree-row:hover,
+		.span-tree-row.hovered-span {
+			border-radius: 4px;
+			background: rgba(171, 189, 255, 0.06) !important;
+
+			.span-overview {
+				background: unset !important;
+			}
+		}
+	}
+
+	.sidebar-resize-handle {
+		width: 4px;
+		flex-shrink: 0;
+		cursor: col-resize;
+		user-select: none;
+		touch-action: none;
+		background: transparent;
+		transition: background 0.15s ease;
+		z-index: 1;
+
+		&:hover,
+		&:active {
+			background: rgba(35, 196, 248, 0.2);
+		}
+	}
+
+	.waterfall-timeline {
+		flex: 1;
+		position: relative;
+		overflow: hidden;
+
+		.timeline-row {
+			display: flex;
+			align-items: center;
+		}
+
+		.timeline-row:hover,
+		.timeline-row.hovered-span {
+			border-radius: 4px;
+			background: rgba(171, 189, 255, 0.06) !important;
+		}
+	}
+
+	// Shared span component styles (used in both panels)
+	.span-overview {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		height: 100%;
+		width: 100%;
+		cursor: pointer;
+		position: relative;
+		white-space: nowrap;
+
+		.tree-indent {
+			display: inline-block;
+			flex-shrink: 0;
+		}
+
+		.tree-line {
+			position: absolute;
+			background-color: var(--bg-slate-400);
+			pointer-events: none;
+		}
+
+		.tree-connector {
+			position: absolute;
+			width: 11px;
+			height: 50%;
+			border-left: 1px solid var(--bg-slate-400);
+			border-bottom: 1px solid var(--bg-slate-400);
+			border-bottom-left-radius: 6px;
+			pointer-events: none;
+		}
+
+		.tree-arrow {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			flex-shrink: 0;
+			cursor: pointer;
+			color: var(--bg-vanilla-400);
+
+			&.no-children {
+				cursor: default;
+				width: 18px;
+				height: 18px;
+			}
+		}
+
+		.tree-icon {
+			display: inline-block;
+			width: 7px;
+			height: 7px;
+			border-radius: 50%;
+			flex-shrink: 0;
+			margin: 0 6px;
+
+			&.is-error {
+				box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
+			}
+		}
+
+		.tree-label {
+			color: #fff;
+			font-family: 'Inter';
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 28px;
+			letter-spacing: 0.01em;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			flex: 1;
+			min-width: 0;
+		}
+
+		.span-row-actions {
+			position: sticky;
+			right: 0;
+			display: flex;
+			align-items: center;
+			gap: 2px;
+			margin-left: auto;
+			padding-right: 4px;
+			padding-left: 8px;
+			flex-shrink: 0;
+			height: 100%;
+			background: linear-gradient(to left, var(--bg-ink-500) 60%, transparent);
+			z-index: 2;
+			opacity: 0;
+			pointer-events: none;
+
+			.span-action-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 22px;
+				height: 22px;
+				border-radius: 2px;
+				cursor: pointer;
+				color: var(--bg-vanilla-400);
+				background: transparent;
+				border: none;
+				padding: 0;
+
+				&:hover {
+					background: var(--bg-slate-400);
+				}
+			}
+		}
+
+		&:hover .span-row-actions {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+
+	// Also show action buttons when hovering the tree row (parent of span-overview)
+	.span-tree-row:hover .span-row-actions,
+	.span-tree-row.hovered-span .span-row-actions {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.span-duration {
+		display: flex;
+		align-items: center;
+		height: 28px;
+		position: relative;
+		width: 100%;
+		padding: 0 15px;
+		cursor: pointer;
+
+		.span-bar {
+			position: absolute;
+			height: 18px;
+			top: 5px;
+			border-radius: 2px;
+			display: flex;
+			align-items: center;
+			padding: 0 8px;
+			overflow: hidden;
+			cursor: pointer;
+			white-space: nowrap;
+			color: rgba(0, 0, 0, 0.9);
+			background-color: var(--span-color);
+			border: 1px solid transparent;
+
+			.span-info {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				width: 100%;
+				overflow: hidden;
+				z-index: 1;
+
+				.span-name {
+					font-weight: 500;
+					font-size: 11px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					flex-grow: 1;
+					min-width: 0;
+				}
+
+				.span-duration-text {
+					color: inherit;
+					opacity: 0.8;
+					font-size: 10px;
+					margin-left: 8px;
+					flex-shrink: 0;
+				}
+			}
+		}
+
+		.event-dot {
+			position: absolute;
+			top: 50%;
+			transform: translate(-50%, -50%) rotate(45deg);
+			width: 5px;
+			height: 5px;
+			background-color: var(--event-dot-bg, var(--bg-robin-500));
+			border: 1px solid var(--event-dot-border, var(--bg-robin-600));
+			cursor: pointer;
+			z-index: 1;
+
+			&.error {
+				background-color: var(--bg-cherry-500);
+				border-color: var(--bg-cherry-600);
+			}
+
+			&:hover {
+				transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
+			}
+		}
+	}
+
+	// Hover state: static stripe pattern + border
+	.timeline-row:hover .span-bar,
+	.timeline-row.hovered-span .span-bar {
+		color: var(--span-color);
+		background-color: rgba(var(--span-color-rgb), 0.1);
+		border: 1px solid rgba(var(--span-color-rgb), 0.2);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 10px,
+			rgba(var(--span-color-rgb), 0.04) 10px,
+			rgba(var(--span-color-rgb), 0.04) 20px
+		);
+	}
+
+	// Selected state: stripe pattern + dashed border
+	.interested-span .span-bar,
+	.selected-non-matching-span .span-bar {
+		color: var(--span-color);
+		background-color: rgba(var(--span-color-rgb), 0.1);
+		border: 1px dashed var(--span-color);
+		background-image: repeating-linear-gradient(
+			-45deg,
+			transparent,
+			transparent 10px,
+			rgba(var(--span-color-rgb), 0.04) 10px,
+			rgba(var(--span-color-rgb), 0.04) 20px
+		);
+	}
+
+	// Shared state classes for both panels
+	.interested-span,
+	.selected-non-matching-span {
+		border-radius: 4px;
+		background: rgba(171, 189, 255, 0.06) !important;
+	}
+
+	.dimmed-span {
+		opacity: 0.4;
+	}
+	.highlighted-span {
+		opacity: 1;
+	}
+
+	.selected-non-matching-span {
+		.tree-label {
+			opacity: 0.5;
+		}
+	}
+}
+
+.span-dets {
+	.related-logs {
+		display: flex;
+		width: 160px;
+		padding: 4px 8px;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+		border-radius: 2px;
+		border: 1px solid var(--Slate-400, #1d212d);
+		background: var(--Slate-500, #161922);
+		box-shadow: none;
+	}
+}
+
+.lightMode {
+	.success-content {
+		.span-overview {
+			.tree-arrow {
+				color: var(--bg-ink-400);
+			}
+
+			.tree-label {
+				color: var(--bg-ink-400);
+			}
+
+			.tree-line {
+				background-color: var(--bg-vanilla-400);
+			}
+
+			.tree-connector {
+				border-color: var(--bg-vanilla-400);
+			}
+
+			.span-row-actions {
+				background: linear-gradient(
+					to left,
+					var(--bg-vanilla-100) 60%,
+					transparent
+				);
+
+				.span-action-btn {
+					color: var(--bg-ink-400);
+
+					&:hover {
+						background: var(--bg-vanilla-300);
+					}
+				}
+			}
+		}
+
+		.interested-span {
+			border-radius: 4px;
+			background: var(--bg-vanilla-300);
+		}
+
+		.span-duration .span-bar {
+			color: rgba(255, 255, 255, 0.9);
+		}
+
+		// Light mode hover/selected: span color must override the white default above
+		.timeline-row:hover .span-bar,
+		.timeline-row.hovered-span .span-bar {
+			color: var(--span-color);
+		}
+
+		.interested-span .span-bar,
+		.selected-non-matching-span .span-bar {
+			color: var(--span-color);
+		}
+
+		.waterfall-sidebar {
+			border-right: 1px solid var(--bg-vanilla-300);
+		}
+
+		.waterfall-split-header {
+			background-color: var(--bg-vanilla-200) !important;
+		}
+	}
+	.span-dets {
+		.related-logs {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
+		}
+	}
+}

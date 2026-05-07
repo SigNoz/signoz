@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useQueries, UseQueryResult } from 'react-query';
-import { Card, Col, Row, Skeleton, Typography } from 'antd';
+import { Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -146,16 +146,16 @@ function PodMetrics({
 	};
 
 	return (
-		<Row gutter={24}>
+		<div className="infra-metrics-grid">
 			{queries.map((query, idx) => (
-				<Col span={12} key={podWidgetInfo[idx].title}>
+				<div key={podWidgetInfo[idx].title}>
 					<Typography.Text>{podWidgetInfo[idx].title}</Typography.Text>
 					<Card bordered className="infra-metrics-card" ref={graphRef}>
 						{renderCardContent(query, idx)}
 					</Card>
-				</Col>
+				</div>
 			))}
-		</Row>
+		</div>
 	);
 }
 

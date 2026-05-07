@@ -1,0 +1,60 @@
+.event-tooltip-content {
+	font-family: Inter, sans-serif;
+	font-size: 12px;
+	color: #fff;
+	max-width: 300px;
+
+	&__header {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		background: rgba(255, 255, 255, 0.1);
+		border-radius: 3px;
+		padding: 2px 6px;
+		font-size: 10px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		color: rgba(255, 255, 255, 0.7);
+		margin-bottom: 6px;
+	}
+
+	&__name {
+		font-weight: 600;
+		margin-bottom: 2px;
+		color: rgb(14, 165, 233);
+
+		&.error {
+			color: rgb(239, 68, 68);
+		}
+	}
+
+	&__time {
+		font-size: 11px;
+		opacity: 0.8;
+		margin-bottom: 4px;
+	}
+
+	&__divider {
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		margin: 6px 0;
+	}
+
+	&__attributes {
+		font-size: 11px;
+	}
+
+	&__kv {
+		margin-bottom: 2px;
+		line-height: 1.4;
+		word-break: break-all;
+	}
+
+	&__key {
+		opacity: 0.6;
+	}
+
+	&__value {
+		opacity: 0.9;
+	}
+}

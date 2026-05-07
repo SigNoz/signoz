@@ -33,6 +33,125 @@ const themeColors = {
 		purple: '#800080',
 		cyan: '#00FFFF',
 	},
+	traceDetailColorsV3: {
+		// Blues
+		dodgerBlue: '#2F80ED',
+		royalBlue: '#3366E6',
+		steelBlue: '#4682B4',
+
+		// Teals / Cyans
+		turquoise: '#00CEC9',
+		lagoon: '#1ABC9C',
+		cyanBright: '#22A6F2',
+
+		// Greens
+		emeraldGreen: '#27AE60',
+		mediumSeaGreen: '#3CB371',
+		limeGreen: '#A3E635',
+
+		// Yellows / Golds
+		festivalYellow: '#F2C94C',
+		sunflower: '#FFD93D',
+		warmAmber: '#FFCA28',
+
+		// Purples / Violets
+		mediumPurple: '#BB6BD9',
+		royalPurple: '#9B51E0',
+		orchid: '#DA77F2',
+
+		// Accent
+		neonViolet: '#C77DFF',
+		electricPurple: '#6C5CE7',
+		arcticBlue: '#48DBFB',
+
+		// Blues extended
+		blue1: '#1F63E0',
+		blue2: '#3A7AED',
+		blue3: '#5A9DF5',
+		blue4: '#2874A6',
+		blue5: '#2E86C1',
+		blue6: '#3498DB',
+
+		// Cyans
+		cyan1: '#00B0AA',
+		cyan2: '#33D6C2',
+		cyan3: '#66E9DA',
+
+		// Greens extended
+		green1: '#1E8449',
+		green2: '#2ECC71',
+		green3: '#58D68D',
+		green4: '#229954',
+		green5: '#27AE60',
+		green6: '#52BE80',
+
+		// Forest
+		forest1: '#27AE60',
+		forest2: '#2ECC71',
+		forest3: '#58D68D',
+
+		// Lime
+		lime1: '#A3E635',
+		lime2: '#B9F18D',
+		lime3: '#D4FFB0',
+
+		// Teals
+		teal1: '#009688',
+		teal2: '#1ABC9C',
+		teal3: '#48C9B0',
+		teal4: '#1ABC9C',
+		teal5: '#48C9B0',
+		teal6: '#76D7C4',
+
+		// Yellows
+		yellow1: '#F1C40F',
+		yellow2: '#F7DC6F',
+		yellow3: '#F9E79F',
+
+		// Gold
+		gold1: '#F39C12',
+		gold2: '#F1C40F',
+		gold3: '#F7DC6F',
+		gold4: '#B7950B',
+		gold5: '#F1C40F',
+		gold6: '#F4D03F',
+
+		// Mustard
+		mustard1: '#F1C40F',
+		mustard2: '#F7DC6F',
+		mustard3: '#F9E79F',
+
+		// Aqua
+		aqua1: '#00BFFF',
+		aqua2: '#1E90FF',
+		aqua3: '#63B8FF',
+
+		// Purple extended
+		purple1: '#8E44AD',
+		purple2: '#9B59B6',
+		purple3: '#BB8FCE',
+
+		violet1: '#8E44AD',
+		violet2: '#9B59B6',
+		violet3: '#BB8FCE',
+		violet4: '#7D3C98',
+		violet5: '#8E44AD',
+		violet6: '#9B59B6',
+
+		// Lavender
+		lavender1: '#9B59B6',
+		lavender2: '#AF7AC5',
+		lavender3: '#C39BD3',
+
+		// Oranges (safe ones, not red-ish)
+		orange4: '#D35400',
+		orange5: '#E67E22',
+		orange6: '#EB984E',
+
+		coral1: '#E67E22',
+		coral2: '#F39C12',
+		coral3: '#F5B041',
+	},
 	chartcolors: {
 		// Blues (3)
 		dodgerBlue: '#2F80ED',
