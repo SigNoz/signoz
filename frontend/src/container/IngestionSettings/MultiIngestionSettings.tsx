@@ -909,8 +909,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 		const keyName = APIKey.name?.trim();
 		const ruleName = keyName
-			? `${keyName} - daily ${signal.signal} ingestion limit`
-			: `Daily ${signal.signal} ingestion limit`;
+			? `[ingestion][${signal.signal}] ${keyName} has exceeded daily ingestion limit`
+			: `[ingestion][${signal.signal}] ${signal.signal} has exceeded daily ingestion limit`;
 
 		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
