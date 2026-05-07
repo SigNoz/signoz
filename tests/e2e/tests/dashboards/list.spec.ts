@@ -98,23 +98,9 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByRole('button', { name: 'Share' })).toBeVisible();
 	});
 
-	test('TC-02 row shows thumbnail and creator email', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-		await page
-			.getByAltText('dashboard-image')
-			.first()
-			.waitFor({ state: 'visible' });
-
-		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
-		// Creator email — admin@integration.test contains '@'.
-		await expect(page.getByText(/@/).first()).toBeVisible();
-	});
-
 	// ─── Search functionality ────────────────────────────────────────────────
 
-	test('TC-03 search by title returns matching dashboard', async ({
+	test('TC-02 search by title returns matching dashboard', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-search-title';
@@ -130,11 +116,12 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByText(name).first()).toBeVisible();
 	});
 
-	test('TC-04 search by tag returns the APM Metrics dashboard', async ({
+	test('TC-03 search by tag returns the APM Metrics dashboard', async ({
 		authedPage: page,
 	}) => {
 		// APM Metrics carries multiple tags — searching by one of them ("apm")
-		// surfaces the imported dashboard.
+		// surfaces the imported dashboard. This exercises the tag-match branch
+		// in the filter, distinct from title-match.
 		await gotoDashboardsList(page);
 		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
@@ -143,7 +130,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByText(APM_METRICS_TITLE).first()).toBeVisible();
 	});
 
-	test('TC-05 direct navigation with ?search= pre-fills the input and filters results', async ({
+	test('TC-04 direct navigation with ?search= pre-fills the input and filters results', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-search-deeplink';
@@ -158,7 +145,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByText(name).first()).toBeVisible();
 	});
 
-	test('TC-06 clearing search restores the full list', async ({
+	test('TC-05 clearing search restores the full list', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -175,7 +162,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
 	});
 
-	test('TC-07 search with no matching results shows empty state', async ({
+	test('TC-06 search with no matching results shows empty state', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -188,7 +175,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(search).toHaveValue('xyznonexistent999');
 	});
 
-	test('TC-08 search is case-insensitive', async ({ authedPage: page }) => {
+	test('TC-07 search is case-insensitive', async ({ authedPage: page }) => {
 		await gotoDashboardsList(page);
 		const search = page.getByPlaceholder(SEARCH_PLACEHOLDER);
 
@@ -200,52 +187,33 @@ test.describe('Dashboards List Page', () => {
 	// ─── Sorting ─────────────────────────────────────────────────────────────
 	//
 	// `sortHandle` in DashboardsList.tsx hard-codes `order: 'descend'` —
-	// ascending mode is not yet implemented in any code path.
+	// ascending mode is not yet implemented. Both sort options ride the same
+	// descending-only path, so one parameterised test covers them.
 
-	test('TC-09 default load has no sort params', async ({ authedPage: page }) => {
-		await gotoDashboardsList(page);
-
-		await expect(page).toHaveURL('/dashboard');
-		await expect(page).not.toHaveURL(/columnKey/);
-		await expect(page).not.toHaveURL(/order/);
-
-		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
-	});
-
-	test('TC-10 selecting "Last updated" adds columnKey=updatedAt&order=descend to URL', async ({
+	test('TC-08 sort options write columnKey & order=descend to the URL', async ({
 		authedPage: page,
 	}) => {
-		await gotoDashboardsList(page);
+		for (const [optionTestId, columnKey] of [
+			['sort-by-last-updated', 'updatedAt'],
+			['sort-by-last-created', 'createdAt'],
+		] as const) {
+			await gotoDashboardsList(page);
+			await expect(page).not.toHaveURL(/columnKey/);
 
-		await expect(page).not.toHaveURL(/columnKey/);
-		await page.getByTestId('sort-by').click();
-		const lastUpdated = page.getByTestId('sort-by-last-updated');
-		await lastUpdated.waitFor({ state: 'visible' });
-		await lastUpdated.click();
+			await page.getByTestId('sort-by').click();
+			const option = page.getByTestId(optionTestId);
+			await option.waitFor({ state: 'visible' });
+			await option.click();
 
-		await expect(page).toHaveURL(/columnKey=updatedAt/);
-		await expect(page).toHaveURL(/order=descend/);
-		await expect(page.getByAltText('dashboard-image').first()).toBeVisible();
-	});
-
-	test('TC-11 selecting "Last created" also yields order=descend (ascending not yet implemented)', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-
-		await page.getByTestId('sort-by').click();
-		const lastCreated = page.getByTestId('sort-by-last-created');
-		await lastCreated.waitFor({ state: 'visible' });
-		await lastCreated.click();
-
-		await expect(page).toHaveURL(/columnKey=createdAt/);
-		await expect(page).toHaveURL(/order=descend/);
-		await expect(page).not.toHaveURL(/order=ascend/);
+			await expect(page).toHaveURL(new RegExp(`columnKey=${columnKey}`));
+			await expect(page).toHaveURL(/order=descend/);
+			await expect(page).not.toHaveURL(/order=ascend/);
+		}
 	});
 
 	// ─── Row actions (context menu) ──────────────────────────────────────────
 
-	test('TC-12 admin sees all five options in the action menu', async ({
+	test('TC-09 admin sees all five options in the action menu', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-actions-menu';
@@ -269,7 +237,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(tooltip.getByText('Delete dashboard')).toBeVisible();
 	});
 
-	test('TC-13 view action navigates to the dashboard detail page', async ({
+	test('TC-10 view action navigates to the dashboard detail page', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-view';
@@ -282,7 +250,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-14 open in new tab opens the dashboard in a new browser tab', async ({
+	test('TC-11 open in new tab opens the dashboard in a new browser tab', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-newtab';
@@ -303,7 +271,7 @@ test.describe('Dashboards List Page', () => {
 		await newPage.close();
 	});
 
-	test('TC-15 copy link copies the dashboard URL to the clipboard', async ({
+	test('TC-12 copy link copies the dashboard URL to the clipboard', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-copy';
@@ -324,7 +292,7 @@ test.describe('Dashboards List Page', () => {
 		expect(clipboardText).toMatch(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-16 export JSON downloads the dashboard as a JSON file', async ({
+	test('TC-13 export JSON downloads the dashboard as a JSON file', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-export';
@@ -341,7 +309,7 @@ test.describe('Dashboards List Page', () => {
 		expect(download.suggestedFilename()).toMatch(/\.json$/);
 	});
 
-	test('TC-17 action menu closes when clicking outside the popover', async ({
+	test('TC-14 action menu closes when clicking outside the popover', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-action-dismiss';
@@ -363,7 +331,7 @@ test.describe('Dashboards List Page', () => {
 	// `RequestDashboardBtn` (template-request feedback form), not a create
 	// flow. The only UI create path is the "New dashboard" dropdown.
 
-	test('TC-18 New dashboard dropdown shows exactly three options', async ({
+	test('TC-15 New dashboard dropdown shows exactly three options', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -376,7 +344,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(menu.getByTestId('view-templates-menu-cta')).toBeVisible();
 	});
 
-	test('TC-19 Create dashboard dropdown option creates a dashboard with the default name', async ({
+	test('TC-16 Create dashboard dropdown option creates a dashboard with the default name', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -406,7 +374,7 @@ test.describe('Dashboards List Page', () => {
 		seedIds.add(sampleId as string);
 	});
 
-	test('TC-20 Import JSON dialog opens with code editor and upload button', async ({
+	test('TC-17 Import JSON dialog opens with code editor and upload button', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
@@ -427,37 +395,29 @@ test.describe('Dashboards List Page', () => {
 		).toBeVisible();
 	});
 
-	test('TC-21 Import JSON dialog closes on Escape without creating a dashboard', async ({
+	test('TC-18 Import JSON dialog dismisses via Escape and via the close button', async ({
 		authedPage: page,
 	}) => {
 		await gotoDashboardsList(page);
+
+		// Escape path — Monaco grabs focus on mount and swallows Escape; click
+		// the modal title first to blur Monaco so Ant's Modal `keyboard`
+		// handler picks up the keystroke.
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
-		const dialog = page.getByRole('dialog');
+		let dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
-
-		// The Monaco editor inside the modal grabs focus on mount and swallows
-		// Escape. Click the modal title first to blur Monaco; then Ant's Modal
-		// `keyboard` handler picks up the Escape and dismisses the dialog.
 		await dialog.getByText('Import Dashboard JSON').click();
 		await page.keyboard.press('Escape');
-
 		await expect(dialog).not.toBeVisible();
 		await expect(page).toHaveURL(/\/dashboard($|\?)/);
-	});
 
-	test('TC-22 Import JSON dialog closes on clicking the close button', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
+		// Close-button path — re-open and dismiss via the X.
 		await page.getByTestId('new-dashboard-cta').click();
 		await page.getByTestId('import-json-menu-cta').click();
-
-		const dialog = page.getByRole('dialog');
+		dialog = page.getByRole('dialog');
 		await expect(dialog).toBeVisible();
-
 		await dialog.getByRole('button', { name: /close/i }).click();
-
 		await expect(dialog).not.toBeVisible();
 		await expect(page).toHaveURL(/\/dashboard($|\?)/);
 	});
@@ -467,7 +427,7 @@ test.describe('Dashboards List Page', () => {
 	// Known behaviour: clicking Cancel in the confirmation dialog navigates to
 	// the dashboard detail page rather than staying on the list.
 
-	test('TC-23 delete confirmation dialog shows dashboard name with Cancel and Delete buttons', async ({
+	test('TC-19 delete confirmation dialog shows dashboard name with Cancel and Delete buttons', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirm';
@@ -496,7 +456,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(dialog.getByRole('button', { name: 'Delete' })).toBeVisible();
 	});
 
-	test('TC-24 cancelling delete navigates to the dashboard detail page (known behaviour)', async ({
+	test('TC-20 cancelling delete navigates to the dashboard detail page (known behaviour)', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-cancel';
@@ -511,7 +471,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-25 confirming delete removes the dashboard from the list', async ({
+	test('TC-21 confirming delete removes the dashboard from the list', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-delete-confirmed';
@@ -546,7 +506,7 @@ test.describe('Dashboards List Page', () => {
 
 	// ─── Row click navigation ────────────────────────────────────────────────
 
-	test('TC-26 clicking a dashboard row navigates to the detail page', async ({
+	test('TC-22 clicking a dashboard row navigates to the detail page', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-row-click';
@@ -560,24 +520,7 @@ test.describe('Dashboards List Page', () => {
 		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
 	});
 
-	test('TC-27 dashboard detail page shows the breadcrumb after row click', async ({
-		authedPage: page,
-	}) => {
-		const name = 'dashboards-list-breadcrumb';
-		await seed(page, name);
-
-		await gotoDashboardsList(page);
-		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill(name);
-
-		await page.getByAltText('dashboard-image').first().click();
-		await expect(page).toHaveURL(/\/dashboard\/[0-9a-f-]+/);
-
-		await expect(
-			page.getByRole('button', { name: /Dashboard \// }),
-		).toBeVisible();
-	});
-
-	test('TC-28 sidebar Dashboards link navigates to the list page', async ({
+	test('TC-23 sidebar Dashboards link navigates to the list page', async ({
 		authedPage: page,
 	}) => {
 		await page.goto('/home');
@@ -595,15 +538,7 @@ test.describe('Dashboards List Page', () => {
 
 	// ─── URL state and deep linking ──────────────────────────────────────────
 
-	test('TC-29 search term updates the URL in real time', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-		await page.getByPlaceholder(SEARCH_PLACEHOLDER).fill('realtime');
-		await expect(page).toHaveURL(/search=realtime/);
-	});
-
-	test('TC-30 browser Back after navigating to a dashboard restores search state', async ({
+	test('TC-24 browser Back after navigating to a dashboard restores search state', async ({
 		authedPage: page,
 	}) => {
 		const name = 'dashboards-list-back-search';
@@ -622,47 +557,14 @@ test.describe('Dashboards List Page', () => {
 		await expect(page.getByPlaceholder(SEARCH_PLACEHOLDER)).toHaveValue(name);
 	});
 
-	test('TC-31 sort params appear in URL only after interacting with the sort button', async ({
+	test('TC-25 direct navigation with sort params honours them on load', async ({
 		authedPage: page,
 	}) => {
-		await gotoDashboardsList(page);
-		await expect(page).not.toHaveURL(/columnKey/);
-
-		await page.getByTestId('sort-by').click();
-		await page.getByTestId('sort-by-last-updated').click();
-		await expect(page).toHaveURL(/columnKey=updatedAt/);
-		await expect(page).toHaveURL(/order=descend/);
-
-		// Direct navigation with sort params should honour them on load.
 		await page.goto('/dashboard?columnKey=updatedAt&order=descend');
 		await page
 			.getByRole('heading', { name: 'Dashboards', level: 1 })
 			.waitFor({ state: 'visible' });
 		await expect(page).toHaveURL(/columnKey=updatedAt/);
 		await expect(page).toHaveURL(/order=descend/);
-	});
-
-	// ─── Page header actions ─────────────────────────────────────────────────
-
-	test('TC-32 feedback button is visible and stays on the page when clicked', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-		const feedback = page.getByRole('button', { name: 'Feedback' });
-		await expect(feedback).toBeVisible();
-
-		await feedback.click();
-		await expect(page).toHaveURL(/\/dashboard/);
-	});
-
-	test('TC-33 share button is visible and stays on the page when clicked', async ({
-		authedPage: page,
-	}) => {
-		await gotoDashboardsList(page);
-		const share = page.getByRole('button', { name: 'Share' });
-		await expect(share).toBeVisible();
-
-		await share.click();
-		await expect(page).toHaveURL(/\/dashboard/);
 	});
 });

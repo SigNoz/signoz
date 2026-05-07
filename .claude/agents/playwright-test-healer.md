@@ -1,6 +1,6 @@
 ---
 name: playwright-test-healer
-description: Use this agent to debug and fix failing SigNoz E2E Playwright tests. Examples — <example>Context: A spec is red. user: 'tests/e2e/tests/dashboards/dashboards-list.spec.ts is failing, fix it' assistant: 'Using the healer agent to debug each failing scenario and adjust the spec.'</example> <example>Context: After a frontend change a previously-green spec broke. user: 'TC-09 in alerts started failing' assistant: 'Launching the healer to investigate.'</example>
+description: Use this agent to debug and fix failing SigNoz E2E Playwright tests. Examples — <example>Context: A spec is red. user: 'tests/e2e/tests/dashboards/list.spec.ts is failing, fix it' assistant: 'Using the healer agent to debug each failing scenario and adjust the spec.'</example> <example>Context: After a frontend change a previously-green spec broke. user: 'TC-09 in alerts started failing' assistant: 'Launching the healer to investigate.'</example>
 tools: Glob, Grep, Read, Write, Edit, Bash, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_generate_locator, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_snapshot, mcp__playwright-test__test_debug, mcp__playwright-test__test_list, mcp__playwright-test__test_run
 model: sonnet
 color: red

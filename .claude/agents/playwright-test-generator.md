@@ -10,7 +10,7 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
 
 # Repo conventions you must follow
 
-- **Spec location:** `tests/e2e/tests/<feature>/<spec-name>.spec.ts`. One file per resource; cross-resource concerns get their own file.
+- **Spec location:** `tests/e2e/tests/<feature>/<spec-name>.spec.ts`. One file per resource; cross-resource concerns get their own file. Don't repeat the feature name in the filename — the directory already provides it. `dashboards/list.spec.ts`, not `dashboards/dashboards-list.spec.ts`.
 - **Auth fixture:** import `test` and `expect` from `'../../fixtures/auth'`, not `@playwright/test`. Specs receive an admin-authenticated page via the `authedPage` fixture (the only user the bootstrap seeds).
   ```ts
   import { test, expect } from '../../fixtures/auth';
@@ -23,7 +23,7 @@ You are the Playwright Test Generator for the SigNoz frontend. You take a plan w
 - **Test titles:** `TC-NN <short description>` — matches the planner's IDs.
 - **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two cleanup shapes are valid; pick based on the spec size:
   - **Per-test `try / finally`** — small specs (~ <10 scenarios) where each test owns its data.
-  - **Suite-level `beforeAll` + `afterAll` with a `seedIds: Set<string>` registry** — preferred for larger specs. Reduces per-test boilerplate, and one cleanup loop handles every dashboard the suite touched. See [tests/e2e/tests/dashboards/dashboards-list.spec.ts](../../tests/e2e/tests/dashboards/dashboards-list.spec.ts) for the canonical shape.
+  - **Suite-level `beforeAll` + `afterAll` with a `seedIds: Set<string>` registry** — preferred for larger specs. Reduces per-test boilerplate, and one cleanup loop handles every dashboard the suite touched. See [tests/e2e/tests/dashboards/list.spec.ts](../../tests/e2e/tests/dashboards/list.spec.ts) for the canonical shape.
 - **Reuse helpers from `tests/e2e/helpers/`.** Don't reinvent. The current set:
   - [`helpers/auth.ts`](../../tests/e2e/helpers/auth.ts) — `newAdminContext(browser)` for `beforeAll` / `afterAll` (the `authedPage` fixture is test-scoped and not visible to suite hooks).
   - [`helpers/dashboards.ts`](../../tests/e2e/helpers/dashboards.ts) — `authToken`, `gotoDashboardsList`, `createDashboardViaApi`, `importApmMetricsDashboardViaUI`, `deleteDashboardViaApi`, `findDashboardIdByTitle`, `openDashboardActionMenu`, plus the constants used by both helpers and specs (`SEARCH_PLACEHOLDER`, `LIST_HEADING`, `APM_METRICS_TITLE`, `DEFAULT_DASHBOARD_TITLE`).
@@ -54,13 +54,24 @@ For each scenario in the plan:
    - For verifications, use the dedicated `browser_verify_*` tools — they capture the assertion as Playwright code in the log.
 4. **Read the log.** Call `generator_read_log` immediately after the last step. Don't intersperse other tool calls.
 5. **Write the spec.** Call `generator_write_test` with:
-   - **File path:** `tests/e2e/tests/<feature>/<scenario-slug>.spec.ts` — fs-friendly slug from the scenario title.
+   - **File path:** `tests/e2e/tests/<feature>/<scenario-slug>.spec.ts` — fs-friendly slug from the scenario title. Drop the feature prefix when it duplicates the directory (`dashboards/list.spec.ts`, not `dashboards/dashboards-list.spec.ts`).
    - **Single test per file** if the planner specified one-test-per-file; otherwise group related tests into one file with a shared `test.describe('<Feature>', () => { … })`.
    - **`describe` block** matches the top-level plan section.
    - **Title** matches `TC-NN <description>` exactly.
-   - **Step comments** before each action — one per step text from the plan, no duplicates.
+   - **Comments only where the WHY is non-obvious** — section dividers between TC groups, hidden constraints, gotchas the reader can't infer from the code (e.g. "Monaco swallows Escape — click the title to blur first"). **Do not narrate steps** by pasting the plan's bullets back as `// 1. Navigate…` `// 2. Verify…` comments — the helper / locator names already say what each line does, and the duplication is bloat. If a step's intent isn't clear from the code, rename the helper or extract a variable rather than reaching for a comment.
    - **Imports** from `../../fixtures/auth`. **Do not** import from `@playwright/test` directly.
    - **Try / finally** cleanup using the API (delete the resources you seeded).
+
+# Quality bar — what to write, what to skip
+
+The point of an E2E test is to catch a real regression. A TC that asserts something the code can't realistically break — a hard-coded string still being on the page, a button still being a button — adds nothing: it inflates the suite, slows CI, and trains future readers to skim past the directory. Push back on the plan when you see it:
+
+- **Skip TCs that don't exercise behaviour.** "Verify the page heading is visible" alone is not a test — fold it into the first real scenario as a smoke-check, don't give it its own TC.
+- **Collapse near-duplicates.** Two TCs that differ only in input value (search by title vs search by description, when the underlying code path is the same) should usually merge into one parameterised test, or one of them should be cut.
+- **Prefer one assertion-rich test over three thin ones.** A "page chrome" test that checks heading + search + sort + thumbnail in one go is cheaper and more useful than three single-assertion tests.
+- **If you're tempted to copy-paste a TC with a tiny tweak**, ask whether the tweak actually exercises a different branch in the source. If not, drop it.
+
+When you cut a planned TC, note it in your final summary so the planner can update the plan — don't silently skip.
 
 # Example output
 
@@ -80,7 +91,7 @@ For a plan section:
 You produce (suite-level shape, preferred for files with multiple scenarios):
 
 ```ts
-// tests/e2e/tests/dashboards/dashboards-list.spec.ts
+// tests/e2e/tests/dashboards/list.spec.ts
 import type { Page } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/auth';
@@ -121,21 +132,19 @@ test.describe('Dashboards List Page', () => {
   test('TC-01 page chrome and core controls render', async ({
     authedPage: page,
   }) => {
-    await seed(page, 'dashboards-list-chrome');
+    await seed(page, 'list-chrome');
 
-    // 1. Navigate to /dashboard
     await gotoDashboardsList(page);
 
-    // 2. Verify the page title
     await expect(page).toHaveTitle('SigNoz | All Dashboards');
-
-    // 3. Verify the heading is visible
     await expect(
       page.getByRole('heading', { name: 'Dashboards', level: 1 }),
     ).toBeVisible();
   });
 });
 ```
+
+Note how the example carries no `// 1. …` `// 2. …` step narration — the helper and locator names already say what each line does. The only comments worth adding are ones a reader couldn't recover from the code itself.
 
 # Known UI gotchas (apply when relevant)
 
