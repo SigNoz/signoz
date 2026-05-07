@@ -2547,7 +2547,8 @@ components:
           format: double
           type: number
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
         status:
@@ -2618,7 +2619,8 @@ components:
         condition:
           $ref: '#/components/schemas/InframonitoringtypesNodeCondition'
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
         nodeCPU:
@@ -2705,7 +2707,8 @@ components:
     InframonitoringtypesPodRecord:
       properties:
         meta:
-          additionalProperties: {}
+          additionalProperties:
+            type: string
           nullable: true
           type: object
         podAge:

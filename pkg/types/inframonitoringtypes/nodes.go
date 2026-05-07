@@ -25,15 +25,15 @@ type NodeCountsByReadiness struct {
 }
 
 type NodeRecord struct {
-	NodeName              string                 `json:"nodeName" required:"true"`
-	Condition             NodeCondition          `json:"condition" required:"true"`
-	NodeCountsByReadiness NodeCountsByReadiness  `json:"nodeCountsByReadiness" required:"true"`
-	PodCountsByPhase      PodCountsByPhase       `json:"podCountsByPhase" required:"true"`
-	NodeCPU               float64                `json:"nodeCPU" required:"true"`
-	NodeCPUAllocatable    float64                `json:"nodeCPUAllocatable" required:"true"`
-	NodeMemory            float64                `json:"nodeMemory" required:"true"`
-	NodeMemoryAllocatable float64                `json:"nodeMemoryAllocatable" required:"true"`
-	Meta                  map[string]interface{} `json:"meta" required:"true"`
+	NodeName              string                `json:"nodeName" required:"true"`
+	Condition             NodeCondition         `json:"condition" required:"true"`
+	NodeCountsByReadiness NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
+	PodCountsByPhase      PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
+	NodeCPU               float64               `json:"nodeCPU" required:"true"`
+	NodeCPUAllocatable    float64               `json:"nodeCPUAllocatable" required:"true"`
+	NodeMemory            float64               `json:"nodeMemory" required:"true"`
+	NodeMemoryAllocatable float64               `json:"nodeMemoryAllocatable" required:"true"`
+	Meta                  map[string]string     `json:"meta" required:"true"`
 }
 
 // PostableNodes is the request body for the v2 nodes list API.

@@ -4579,7 +4579,7 @@ export interface InframonitoringtypesHostFilterDTO {
  * @nullable
  */
 export type InframonitoringtypesHostRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesHostRecordDTO {
@@ -4672,7 +4672,7 @@ export interface InframonitoringtypesNodeCountsByReadinessDTO {
  * @nullable
  */
 export type InframonitoringtypesNodeRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesNodeRecordDTO {
@@ -4764,7 +4764,7 @@ export enum InframonitoringtypesPodPhaseDTO {
  * @nullable
  */
 export type InframonitoringtypesPodRecordDTOMeta = {
-	[key: string]: unknown;
+	[key: string]: string;
 } | null;
 
 export interface InframonitoringtypesPodRecordDTO {

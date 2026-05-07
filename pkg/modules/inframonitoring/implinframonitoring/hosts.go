@@ -174,7 +174,7 @@ func buildHostRecords(
 			Wait:              -1,
 			Load15:            -1,
 			DiskUsage:         -1,
-			Meta:              map[string]any{},
+			Meta:              map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
