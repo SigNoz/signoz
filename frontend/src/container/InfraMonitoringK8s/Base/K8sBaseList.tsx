@@ -286,6 +286,8 @@ export function K8sBaseList<T extends K8sEntityData>({
 						total: totalCount,
 						defaultLimit: 10,
 						defaultPage: 1,
+						showTotalCount: true,
+						totalCountLabel: entity.charAt(0).toUpperCase() + entity.slice(1),
 					}}
 					paginationClassname={styles.paginationContainer}
 				/>

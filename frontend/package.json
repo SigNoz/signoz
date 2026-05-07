@@ -239,9 +239,11 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "oxlint --fix",
-      "oxfmt --write",
       "sh -c tsgo --noEmit"
+    ],
+    "*.(js|jsx|ts|tsx|scss|css)": [
+      "oxlint --fix --quiet --no-error-on-unmatched-pattern",
+      "oxfmt --write"
     ],
     "*.(scss|css)": [
       "stylelint"
