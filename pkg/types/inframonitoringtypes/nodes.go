@@ -8,41 +8,36 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-type Pods struct {
+type Nodes struct {
 	Type                   ResponseType           `json:"type" required:"true"`
-	Records                []PodRecord            `json:"records" required:"true"`
+	Records                []NodeRecord           `json:"records" required:"true"`
 	Total                  int                    `json:"total" required:"true"`
 	RequiredMetricsCheck   RequiredMetricsCheck   `json:"requiredMetricsCheck" required:"true"`
 	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention" required:"true"`
 	Warning                *qbtypes.QueryWarnData `json:"warning,omitempty"`
 }
 
-// PodCountsByPhase buckets pod counts by their latest phase in the time window.
-// Reusable across record types (pod / namespace / cluster).
-type PodCountsByPhase struct {
-	Pending   int `json:"pending" required:"true"`
-	Running   int `json:"running" required:"true"`
-	Succeeded int `json:"succeeded" required:"true"`
-	Failed    int `json:"failed" required:"true"`
-	Unknown   int `json:"unknown" required:"true"`
+// NodeCountsByReadiness buckets node counts by their latest k8s.node.condition_ready
+// value in the time window. Reusable across record types (node / cluster).
+type NodeCountsByReadiness struct {
+	Ready    int `json:"ready" required:"true"`
+	NotReady int `json:"notReady" required:"true"`
 }
 
-type PodRecord struct {
-	PodUID           string            `json:"podUID" required:"true"`
-	PodCPU           float64           `json:"podCPU" required:"true"`
-	PodCPURequest    float64           `json:"podCPURequest" required:"true"`
-	PodCPULimit      float64           `json:"podCPULimit" required:"true"`
-	PodMemory        float64           `json:"podMemory" required:"true"`
-	PodMemoryRequest float64           `json:"podMemoryRequest" required:"true"`
-	PodMemoryLimit   float64           `json:"podMemoryLimit" required:"true"`
-	PodPhase         PodPhase          `json:"podPhase" required:"true"`
-	PodCountsByPhase PodCountsByPhase  `json:"podCountsByPhase" required:"true"`
-	PodAge           int64             `json:"podAge" required:"true"`
-	Meta             map[string]string `json:"meta" required:"true"`
+type NodeRecord struct {
+	NodeName              string                `json:"nodeName" required:"true"`
+	Condition             NodeCondition         `json:"condition" required:"true"`
+	NodeCountsByReadiness NodeCountsByReadiness `json:"nodeCountsByReadiness" required:"true"`
+	PodCountsByPhase      PodCountsByPhase      `json:"podCountsByPhase" required:"true"`
+	NodeCPU               float64               `json:"nodeCPU" required:"true"`
+	NodeCPUAllocatable    float64               `json:"nodeCPUAllocatable" required:"true"`
+	NodeMemory            float64               `json:"nodeMemory" required:"true"`
+	NodeMemoryAllocatable float64               `json:"nodeMemoryAllocatable" required:"true"`
+	Meta                  map[string]string     `json:"meta" required:"true"`
 }
 
-// PostablePods is the request body for the v2 pods list API.
-type PostablePods struct {
+// PostableNodes is the request body for the v2 nodes list API.
+type PostableNodes struct {
 	Start   int64                `json:"start" required:"true"`
 	End     int64                `json:"end" required:"true"`
 	Filter  *qbtypes.Filter      `json:"filter"`
@@ -52,8 +47,8 @@ type PostablePods struct {
 	Limit   int                  `json:"limit" required:"true"`
 }
 
-// Validate ensures PostablePods contains acceptable values.
-func (req *PostablePods) Validate() error {
+// Validate ensures PostableNodes contains acceptable values.
+func (req *PostableNodes) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -92,7 +87,7 @@ func (req *PostablePods) Validate() error {
 	}
 
 	if req.OrderBy != nil {
-		if !slices.Contains(PodsValidOrderByKeys, req.OrderBy.Key.Name) {
+		if !slices.Contains(NodesValidOrderByKeys, req.OrderBy.Key.Name) {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid order by key: %s", req.OrderBy.Key.Name)
 		}
 		if req.OrderBy.Direction != qbtypes.OrderDirectionAsc && req.OrderBy.Direction != qbtypes.OrderDirectionDesc {
@@ -104,12 +99,12 @@ func (req *PostablePods) Validate() error {
 }
 
 // UnmarshalJSON validates input immediately after decoding.
-func (req *PostablePods) UnmarshalJSON(data []byte) error {
-	type raw PostablePods
+func (req *PostableNodes) UnmarshalJSON(data []byte) error {
+	type raw PostableNodes
 	var decoded raw
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		return err
 	}
-	*req = PostablePods(decoded)
+	*req = PostableNodes(decoded)
 	return req.Validate()
 }
