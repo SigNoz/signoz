@@ -11,9 +11,7 @@ import {
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	getGetServiceAccountRolesQueryKey,
 	getListServiceAccountsQueryKey,
-	useDeleteServiceAccountRole,
 	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
@@ -40,7 +38,7 @@ import {
 	useQueryState,
 } from 'nuqs';
 import APIError from 'types/api/error';
-import { retryOn429, toAPIError } from 'utils/errorUtils';
+import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
@@ -95,7 +93,7 @@ function ServiceAccountDrawer({
 		parseAsBoolean.withDefault(false),
 	);
 	const [localName, setLocalName] = useState('');
-	const [localRole, setLocalRole] = useState('');
+	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
 
@@ -143,7 +141,7 @@ function ServiceAccountDrawer({
 		if (!account?.id) {
 			roleSessionRef.current = null;
 		} else if (account.id !== roleSessionRef.current && !isRolesLoading) {
-			setLocalRole(currentRoles[0]?.id ?? '');
+			setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
 			roleSessionRef.current = account.id;
 		}
 	}, [account?.id, currentRoles, isRolesLoading]);
@@ -154,7 +152,13 @@ function ServiceAccountDrawer({
 	const isDirty =
 		account !== null &&
 		(localName !== (account.name ?? '') ||
-			localRole !== (currentRoles[0]?.id ?? ''));
+			JSON.stringify([...localRoles].sort()) !==
+				JSON.stringify(
+					currentRoles
+						.map((r) => r.id)
+						.filter(Boolean)
+						.sort(),
+				));
 
 	const {
 		roles: availableRoles,
@@ -182,27 +186,6 @@ function ServiceAccountDrawer({
 
 	// the retry for this mutation is safe due to the api being idempotent on backend
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
-		mutation: {
-			retry: retryOn429,
-		},
-	});
-
-	const executeRolesOperation = useCallback(
-		async (accountId: string): Promise<RoleUpdateFailure[]> => {
-			if (localRole === '' && currentRoles[0]?.id) {
-				await deleteRole({
-					pathParams: { id: accountId, rid: currentRoles[0].id },
-				});
-				await queryClient.invalidateQueries(
-					getGetServiceAccountRolesQueryKey({ id: accountId }),
-				);
-				return [];
-			}
-			return applyDiff([localRole].filter(Boolean), availableRoles);
-		},
-		[localRole, currentRoles, availableRoles, applyDiff, deleteRole, queryClient],
-	);
 
 	const retryNameUpdate = useCallback(async (): Promise<void> => {
 		if (!account) {
@@ -270,7 +253,7 @@ function ServiceAccountDrawer({
 
 	const retryRolesUpdate = useCallback(async (): Promise<void> => {
 		try {
-			const failures = await executeRolesOperation(selectedAccountId ?? '');
+			const failures = await applyDiff([...localRoles], availableRoles);
 			if (failures.length === 0) {
 				setSaveErrors((prev) => prev.filter((e) => e.context !== 'Roles update'));
 			} else {
@@ -286,7 +269,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [selectedAccountId, executeRolesOperation, failuresToSaveErrors]);
+	}, [localRoles, availableRoles, applyDiff, failuresToSaveErrors]);
 
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
@@ -305,7 +288,7 @@ function ServiceAccountDrawer({
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
 				namePromise,
-				executeRolesOperation(account.id),
+				applyDiff([...localRoles], availableRoles),
 			]);
 
 			const errors: SaveError[] = [];
@@ -346,8 +329,10 @@ function ServiceAccountDrawer({
 		account,
 		isDirty,
 		localName,
+		localRoles,
+		availableRoles,
 		updateMutateAsync,
-		executeRolesOperation,
+		applyDiff,
 		refetchAccount,
 		onSuccess,
 		queryClient,
@@ -446,9 +431,9 @@ function ServiceAccountDrawer({
 								account={account}
 								localName={localName}
 								onNameChange={handleNameChange}
-								localRole={localRole}
-								onRoleChange={(role): void => {
-									setLocalRole(role ?? '');
+								localRoles={localRoles}
+								onRolesChange={(roles): void => {
+									setLocalRoles(roles);
 									clearRoleErrors();
 								}}
 								isDisabled={isDeleted}

@@ -15,8 +15,8 @@ interface OverviewTabProps {
 	account: ServiceAccountRow;
 	localName: string;
 	onNameChange: (v: string) => void;
-	localRole: string;
-	onRoleChange: (v: string | undefined) => void;
+	localRoles: string[];
+	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
@@ -30,8 +30,8 @@ function OverviewTab({
 	account,
 	localName,
 	onNameChange,
-	localRole,
-	onRoleChange,
+	localRoles,
+	onRolesChange,
 	isDisabled,
 	availableRoles,
 	rolesLoading,
@@ -94,10 +94,15 @@ function OverviewTab({
 				{isDisabled ? (
 					<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 						<div className="sa-drawer__disabled-roles">
-							{localRole ? (
-								<Badge color="vanilla">
-									{availableRoles.find((r) => r.id === localRole)?.name ?? localRole}
-								</Badge>
+							{localRoles.length > 0 ? (
+								localRoles.map((roleId) => {
+									const role = availableRoles.find((r) => r.id === roleId);
+									return (
+										<Badge key={roleId} color="vanilla">
+											{role?.name ?? roleId}
+										</Badge>
+									);
+								})
 							) : (
 								<span className="sa-drawer__input-text">—</span>
 							)}
@@ -107,14 +112,15 @@ function OverviewTab({
 				) : (
 					<RolesSelect
 						id="sa-roles"
+						mode="multiple"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}
 						error={rolesErrorObj}
 						onRefetch={onRefetchRoles}
-						value={localRole}
-						onChange={onRoleChange}
-						placeholder="Select role"
+						value={localRoles}
+						onChange={onRolesChange}
+						placeholder="Select roles"
 					/>
 				)}
 			</div>
