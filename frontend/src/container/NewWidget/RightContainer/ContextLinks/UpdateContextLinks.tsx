@@ -214,7 +214,7 @@ function UpdateContextLinks({
 						name={CONTEXT_LINK_FIELDS.LABEL}
 						rules={[{ required: false, message: 'Please input the label' }]}
 					>
-						<Input placeholder="View Traces details: {{_trace_id}}" />
+						<Input placeholder="View Traces details: {{_traceId}}" />
 					</Form.Item>
 					{/* //url */}
 					<Typography.Text className="form-label">
@@ -255,7 +255,7 @@ function UpdateContextLinks({
 										autoCapitalize="off"
 										spellCheck="false"
 										className="url-input-field"
-										placeholder={`${getCurrentDomain()}/trace/{{_trace_id}}`}
+										placeholder={`${getCurrentDomain()}/trace/{{_traceId}}`}
 									/>
 								</div>
 							)}
