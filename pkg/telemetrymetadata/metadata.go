@@ -344,6 +344,11 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 			})
 		}
 	}
+
+	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+		return nil, false, err
+	}
+
 	return keys, complete, nil
 }
 

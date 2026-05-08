@@ -3,6 +3,7 @@ package telemetrytraces
 import (
 	"context"
 	"testing"
+	"time"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -216,7 +217,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+			expectedSQL:   "WHERE multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL",
 			expectedError: nil,
 		},
 		{
@@ -228,7 +229,7 @@ func TestConditionFor(t *testing.T) {
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
+			expectedSQL:   "WHERE multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NULL",
 			expectedError: nil,
 		},
 		{
@@ -299,6 +300,88 @@ func TestConditionFor(t *testing.T) {
 				sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 				assert.Contains(t, sql, tc.expectedSQL)
 			}
+		})
+	}
+}
+
+func TestConditionForResourceWithEvolution(t *testing.T) {
+	ctx := context.Background()
+	releaseTime := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	evolutions := mockEvolutionData(releaseTime)
+
+	testCases := []struct {
+		name        string
+		key         telemetrytypes.TelemetryFieldKey
+		operator    qbtypes.FilterOperator
+		tsStart     uint64
+		tsEnd       uint64
+		expectedSQL string
+	}{
+		{
+			name: "Exists - window after release - JSON only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE resource.`service.name`::String IS NOT NULL",
+		},
+		{
+			name: "NotExists - window after release - JSON only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorNotExists,
+			tsStart:     uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 7, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE resource.`service.name`::String IS NULL",
+		},
+		{
+			name: "Exists - window before release - map only",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE mapContains(resources_string, 'service.name') = ?",
+		},
+		{
+			name: "Exists - window straddles release - multiIf null check",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "service.name",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    evolutions,
+			},
+			operator:    qbtypes.FilterOperatorExists,
+			tsStart:     uint64(time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:       uint64(time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedSQL: "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
+		},
+	}
+
+	fm := NewFieldMapper()
+	conditionBuilder := NewConditionBuilder(fm)
+
+	for _, tc := range testCases {
+		sb := sqlbuilder.NewSelectBuilder()
+		t.Run(tc.name, func(t *testing.T) {
+			cond, err := conditionBuilder.ConditionFor(ctx, tc.tsStart, tc.tsEnd, &tc.key, tc.operator, nil, sb)
+			require.NoError(t, err)
+			sb.Where(cond)
+			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+			assert.Contains(t, sql, tc.expectedSQL)
 		})
 	}
 }

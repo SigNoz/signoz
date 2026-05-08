@@ -886,7 +886,7 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resultColumns, resultEvols, err := selectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd)
+			resultColumns, resultEvols, err := qbtypes.SelectEvolutionsForColumns(tc.columns, tc.evolutions, tc.tsStart, tc.tsEnd)
 
 			if tc.expectedError {
 				assert.Contains(t, err.Error(), tc.errorStr)

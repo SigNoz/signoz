@@ -6,7 +6,7 @@ import uuid
 from abc import ABC
 from collections.abc import Callable, Generator
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import numpy as np
@@ -236,6 +236,7 @@ class Traces(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
+    resource_json: dict[str, str]
     events: list[str]
     links: str
     response_status_code: str
@@ -273,6 +274,7 @@ class Traces(ABC):
         links: list[TracesLink] = [],
         trace_state: str = "",
         flags: np.uint32 = 0,
+        resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -322,8 +324,11 @@ class Traces(ABC):
         self.db_name = ""
         self.db_operation = ""
 
-        # Process resources and derive service_name
+        # Process resources and derive service_name. Spans written before the
+        # JSON-resource evolution time only populate resources_string (legacy_only);
+        # spans at or after the evolution time dual-write to both columns.
         self.resources_string = {k: str(v) for k, v in resources.items()}
+        self.resource_json = {} if resource_write_mode == "legacy_only" else dict(self.resources_string)
         self.service_name = self.resources_string.get("service.name", "default-service")
 
         for k, v in self.resources_string.items():
@@ -575,7 +580,7 @@ class Traces(ABC):
                 self.db_operation,
                 self.has_error,
                 self.is_remote,
-                self.resources_string,
+                self.resource_json,
             ],
             dtype=object,
         )

@@ -16,6 +16,9 @@ import (
 )
 
 func TestStatementBuilder(t *testing.T) {
+	// releaseTime is chosen so it lands inside the standard [1747947419000, 1747983448000]ms
+	// test window, keeping the multiIf SQL form for resource fields.
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -355,7 +358,7 @@ func TestStatementBuilder(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
@@ -394,6 +397,7 @@ func TestStatementBuilder(t *testing.T) {
 }
 
 func TestStatementBuilderListQuery(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -650,7 +654,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
@@ -683,6 +687,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 }
 
 func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -711,7 +716,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit:        10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -744,7 +749,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				}},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp AS `timestamp` asc LIMIT ?",
+				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp AS `timestamp` asc LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -758,7 +763,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 			mockMetadataStore.KeysMap = c.keysMap
 			if mockMetadataStore.KeysMap == nil {
-				mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+				mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 			}
 			fl := flaggertest.New(t)
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
@@ -789,6 +794,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 }
 
 func TestStatementBuilderTraceQuery(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -911,7 +917,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	fl := flaggertest.New(t)
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
@@ -944,6 +950,7 @@ func TestStatementBuilderTraceQuery(t *testing.T) {
 }
 
 func TestAdjustKey(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		inputKey    telemetrytypes.TelemetryFieldKey
@@ -957,7 +964,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: IntrinsicFields["trace_id"],
 		},
 		{
@@ -967,7 +974,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextBody, // incorrect context
 				FieldDataType: telemetrytypes.FieldDataTypeInt64,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "duration_nano",
 				FieldContext:  telemetrytypes.FieldContextSpan,    // should be corrected
@@ -981,7 +988,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextSpan, // correct context
 				FieldDataType: telemetrytypes.FieldDataTypeInt64,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "duration_nano",
 				FieldContext:  telemetrytypes.FieldContextSpan,   // should be corrected
@@ -995,8 +1002,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["service.name"][0],
 		},
 		{
 			name: "single matching key with context specified - override",
@@ -1005,8 +1012,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["cart.items_count"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["cart.items_count"][0],
 		},
 		{
 			name: "multiple matching keys - all materialized",
@@ -1043,7 +1050,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "mixed.materialization.key",
 				FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -1057,7 +1064,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "mixed.materialization.key",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -1072,7 +1079,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:         "unknown.field",
 				Materialized: false,
@@ -1085,7 +1092,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -1100,7 +1107,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "cart.items_count",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -1115,7 +1122,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "user.id",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -1158,6 +1165,7 @@ func TestAdjustKey(t *testing.T) {
 }
 
 func TestAdjustKeys(t *testing.T) {
+	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name                      string
 		query                     qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
@@ -1183,7 +1191,7 @@ func TestAdjustKeys(t *testing.T) {
 					},
 				},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedSelectFields: []telemetrytypes.TelemetryFieldKey{
 				{
 					Name:          "service.name",
@@ -1220,7 +1228,7 @@ func TestAdjustKeys(t *testing.T) {
 					},
 				},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedGroupBy: []qbtypes.GroupByKey{
 				{
 					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
@@ -1267,7 +1275,7 @@ func TestAdjustKeys(t *testing.T) {
 					},
 				},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedOrder: []qbtypes.OrderBy{
 				{
 					Key: qbtypes.OrderByKey{
@@ -1326,7 +1334,7 @@ func TestAdjustKeys(t *testing.T) {
 					},
 				},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedSelectFields: []telemetrytypes.TelemetryFieldKey{
 				{
 					Name:          "trace_id",
@@ -1381,7 +1389,7 @@ func TestAdjustKeys(t *testing.T) {
 					},
 				},
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			// After alias adjustment, name becomes "span.duration" with FieldContextUnspecified
 			// "span.duration" is not in keysMap, so context stays unspecified
 			expectedOrder: []qbtypes.OrderBy{

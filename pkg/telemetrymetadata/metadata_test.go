@@ -89,6 +89,20 @@ func TestGetKeys(t *testing.T) {
 			{Name: "tag_data_type", Type: "String"},
 			{Name: "priority", Type: "UInt8"},
 		}, [][]any{{"http.method", "tag", "String", 1}, {"http.method", "tag", "String", 1}}))
+
+	// Two rows above produce two evolution selectors (each contributing 4 bound args).
+	mock.ExpectQuery(`FROM signoz_metadata\.distributed_column_evolution_metadata`).
+		WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
+		WillReturnRows(cmock.NewRows([]cmock.ColumnType{
+			{Name: "signal", Type: "String"},
+			{Name: "column_name", Type: "String"},
+			{Name: "column_type", Type: "String"},
+			{Name: "field_context", Type: "String"},
+			{Name: "field_name", Type: "String"},
+			{Name: "version", Type: "UInt32"},
+			{Name: "release_time", Type: "Float64"},
+		}, [][]any{}))
+
 	keys, _, err := metadata.GetKeys(context.Background(), &telemetrytypes.FieldKeySelector{
 		Signal:        telemetrytypes.SignalTraces,
 		FieldContext:  telemetrytypes.FieldContextSpan,
@@ -245,6 +259,27 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 						{Name: "tag_data_type", Type: "String"},
 						{Name: "priority", Type: "UInt8"},
 					}, rows))
+			}
+
+			// getTracesKeys / getLogsKeys both fetch evolution metadata; return an empty
+			// result so the existing test data flows through unchanged. Each input key
+			// becomes one selector contributing four bound args.
+			if hasTraces || hasLogs {
+				evoArgs := make([]any, 0, len(tt.inputKeys)*4)
+				for range tt.inputKeys {
+					evoArgs = append(evoArgs, nil, nil, nil, nil)
+				}
+				mock.ExpectQuery(`FROM signoz_metadata\.distributed_column_evolution_metadata`).
+					WithArgs(evoArgs...).
+					WillReturnRows(cmock.NewRows([]cmock.ColumnType{
+						{Name: "signal", Type: "String"},
+						{Name: "column_name", Type: "String"},
+						{Name: "column_type", Type: "String"},
+						{Name: "field_context", Type: "String"},
+						{Name: "field_name", Type: "String"},
+						{Name: "version", Type: "UInt32"},
+						{Name: "release_time", Type: "Float64"},
+					}, [][]any{}))
 			}
 
 			selectors := []*telemetrytypes.FieldKeySelector{}
