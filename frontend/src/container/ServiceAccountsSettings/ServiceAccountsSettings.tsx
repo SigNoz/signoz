@@ -7,6 +7,7 @@ import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import Spinner from 'components/Spinner';
@@ -263,18 +264,20 @@ function ServiceAccountsSettings(): JSX.Element {
 							/>
 						</div>
 
-						<AuthZTooltip checks={[SACreatePermission]}>
-							<Button
-								variant="solid"
-								color="primary"
-								onClick={async (): Promise<void> => {
-									await setIsCreateModalOpen(true);
-								}}
-							>
-								<Plus size={12} />
-								New Service Account
-							</Button>
-						</AuthZTooltip>
+						<NoAuthGuard>
+							<AuthZTooltip checks={[SACreatePermission]}>
+								<Button
+									variant="solid"
+									color="primary"
+									onClick={async (): Promise<void> => {
+										await setIsCreateModalOpen(true);
+									}}
+								>
+									<Plus size={12} />
+									New Service Account
+								</Button>
+							</AuthZTooltip>
+						</NoAuthGuard>
 					</div>
 
 					{isError ? (

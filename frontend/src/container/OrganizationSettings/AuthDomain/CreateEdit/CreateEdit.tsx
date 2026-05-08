@@ -17,6 +17,7 @@ import {
 import { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
 import { defaultTo } from 'lodash-es';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
@@ -257,14 +258,16 @@ function CreateOrEdit(props: CreateOrEditProps): JSX.Element {
 									Cancel
 								</Button>
 							)}
-							<Button
-								onClick={onSubmitHandler}
-								variant="solid"
-								color="primary"
-								loading={isCreating || isUpdating}
-							>
-								Save Changes
-							</Button>
+							<NoAuthGuard>
+								<Button
+									onClick={onSubmitHandler}
+									variant="solid"
+									color="primary"
+									loading={isCreating || isUpdating}
+								>
+									Save Changes
+								</Button>
+							</NoAuthGuard>
 						</section>
 					</div>
 				)}

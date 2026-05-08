@@ -5,6 +5,7 @@ import { Input } from '@signozhq/ui/input';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import { RoleCreatePermission } from 'hooks/useAuthZ/permissions/role.permissions';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';
@@ -41,17 +42,19 @@ function RolesSettings(): JSX.Element {
 						onChange={(e): void => setSearchQuery(e.target.value)}
 					/>
 					{isRolesEnabled && (
-						<AuthZTooltip checks={[RoleCreatePermission]}>
-							<Button
-								variant="solid"
-								color="primary"
-								className="role-settings-toolbar-button"
-								onClick={(): void => setIsCreateModalOpen(true)}
-							>
-								<Plus size={14} />
-								Custom role
-							</Button>
-						</AuthZTooltip>
+						<NoAuthGuard>
+							<AuthZTooltip checks={[RoleCreatePermission]}>
+								<Button
+									variant="solid"
+									color="primary"
+									className="role-settings-toolbar-button"
+									onClick={(): void => setIsCreateModalOpen(true)}
+								>
+									<Plus size={14} />
+									Custom role
+								</Button>
+							</AuthZTooltip>
+						</NoAuthGuard>
 					)}
 				</div>
 				<RolesListingTable searchQuery={searchQuery} />

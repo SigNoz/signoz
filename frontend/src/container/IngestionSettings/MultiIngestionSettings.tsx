@@ -70,6 +70,7 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -1679,14 +1680,16 @@ function MultiIngestionSettings(): JSX.Element {
 						onChange={handleSearch}
 					/>
 
-					<Button
-						variant="solid"
-						className="add-new-ingestion-key-btn"
-						prefix={<Plus size={14} />}
-						onClick={showAddModal}
-					>
-						New Ingestion key
-					</Button>
+					<NoAuthGuard>
+						<Button
+							variant="solid"
+							className="add-new-ingestion-key-btn"
+							prefix={<Plus size={14} />}
+							onClick={showAddModal}
+						>
+							New Ingestion key
+						</Button>
+					</NoAuthGuard>
 				</div>
 
 				<Table

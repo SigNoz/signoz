@@ -26,13 +26,8 @@ import './Settings.styles.scss';
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useLocation();
 
-	const {
-		user,
-		featureFlags,
-		trialInfo,
-		isFetchingActiveLicense,
-		isNoAuthMode,
-	} = useAppContext();
+	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
+		useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -204,14 +199,6 @@ function SettingsPage(): JSX.Element {
 				}));
 			}
 
-			// In no-auth mode, hide the Members page from the sidebar
-			if (isNoAuthMode) {
-				updatedItems = updatedItems.map((item) => ({
-					...item,
-					isEnabled: item.key === ROUTES.MEMBERS_SETTINGS ? false : item.isEnabled,
-				}));
-			}
-
 			return updatedItems;
 		});
 	}, [
@@ -221,7 +208,6 @@ function SettingsPage(): JSX.Element {
 		isCloudUser,
 		isEnterpriseSelfHostedUser,
 		isFetchingActiveLicense,
-		isNoAuthMode,
 		trialInfo?.workSpaceBlock,
 		pathname,
 	]);
@@ -236,7 +222,6 @@ function SettingsPage(): JSX.Element {
 				isCloudUser,
 				isEnterpriseSelfHostedUser,
 				t,
-				isNoAuthMode,
 			),
 		[
 			user.role,
@@ -246,7 +231,6 @@ function SettingsPage(): JSX.Element {
 			isCloudUser,
 			isEnterpriseSelfHostedUser,
 			t,
-			isNoAuthMode,
 		],
 	);
 

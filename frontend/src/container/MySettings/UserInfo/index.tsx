@@ -7,6 +7,7 @@ import {
 	updateMyPassword,
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
@@ -16,7 +17,7 @@ import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';
 
 function UserInfo(): JSX.Element {
-	const { user, org, updateUser, isNoAuthMode } = useAppContext();
+	const { user, org, updateUser } = useAppContext();
 	const { t } = useTranslation(['routes', 'settings', 'common']);
 
 	const { notifications } = useNotifications();
@@ -144,7 +145,7 @@ function UserInfo(): JSX.Element {
 					Update name
 				</Button>
 
-				{!isNoAuthMode && (
+				<NoAuthGuard>
 					<Button
 						type="default"
 						className="periscope-btn secondary"
@@ -153,7 +154,7 @@ function UserInfo(): JSX.Element {
 					>
 						Reset password
 					</Button>
-				)}
+				</NoAuthGuard>
 			</div>
 
 			<Modal
@@ -185,64 +186,62 @@ function UserInfo(): JSX.Element {
 				</div>
 			</Modal>
 
-			{!isNoAuthMode && (
-				<Modal
-					className="reset-password-modal"
-					title={<span className="title">Reset password</span>}
-					open={isResetPasswordModalOpen}
-					closable
-					onCancel={hideResetPasswordModal}
-					footer={[
-						<Button
-							key="submit"
-							className={`periscope-btn ${
-								isResetPasswordDisabled ? 'secondary' : 'primary'
-							}`}
-							icon={<Check size={16} />}
-							onClick={onChangePasswordClickHandler}
-							disabled={isLoading || isResetPasswordDisabled}
-							data-testid="reset-password-btn"
-						>
-							Reset password
-						</Button>,
-					]}
-				>
-					<div className="reset-password-container">
-						<div className="current-password-input">
-							<Typography.Text>Current password</Typography.Text>
-							<Input.Password
-								data-testid="current-password-textbox"
-								disabled={isLoading}
-								placeholder={defaultPlaceHolder}
-								onChange={(event): void => {
-									setCurrentPassword(event.target.value);
-								}}
-								value={currentPassword}
-								type="password"
-								autoComplete="off"
-								visibilityToggle
-							/>
-						</div>
-
-						<div className="new-password-input">
-							<Typography.Text>New password</Typography.Text>
-							<Input.Password
-								data-testid="new-password-textbox"
-								disabled={isLoading}
-								placeholder={defaultPlaceHolder}
-								onChange={(event): void => {
-									const updatedValue = event.target.value;
-									setUpdatePassword(updatedValue);
-								}}
-								value={updatePassword}
-								type="password"
-								autoComplete="off"
-								visibilityToggle={false}
-							/>
-						</div>
+			<Modal
+				className="reset-password-modal"
+				title={<span className="title">Reset password</span>}
+				open={isResetPasswordModalOpen}
+				closable
+				onCancel={hideResetPasswordModal}
+				footer={[
+					<Button
+						key="submit"
+						className={`periscope-btn ${
+							isResetPasswordDisabled ? 'secondary' : 'primary'
+						}`}
+						icon={<Check size={16} />}
+						onClick={onChangePasswordClickHandler}
+						disabled={isLoading || isResetPasswordDisabled}
+						data-testid="reset-password-btn"
+					>
+						Reset password
+					</Button>,
+				]}
+			>
+				<div className="reset-password-container">
+					<div className="current-password-input">
+						<Typography.Text>Current password</Typography.Text>
+						<Input.Password
+							data-testid="current-password-textbox"
+							disabled={isLoading}
+							placeholder={defaultPlaceHolder}
+							onChange={(event): void => {
+								setCurrentPassword(event.target.value);
+							}}
+							value={currentPassword}
+							type="password"
+							autoComplete="off"
+							visibilityToggle
+						/>
 					</div>
-				</Modal>
-			)}
+
+					<div className="new-password-input">
+						<Typography.Text>New password</Typography.Text>
+						<Input.Password
+							data-testid="new-password-textbox"
+							disabled={isLoading}
+							placeholder={defaultPlaceHolder}
+							onChange={(event): void => {
+								const updatedValue = event.target.value;
+								setUpdatePassword(updatedValue);
+							}}
+							value={updatePassword}
+							type="password"
+							autoComplete="off"
+							visibilityToggle={false}
+						/>
+					</div>
+				</div>
+			</Modal>
 		</div>
 	);
 }

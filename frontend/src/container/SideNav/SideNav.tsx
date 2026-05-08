@@ -519,7 +519,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (!isAdmin || isNoAuthMode) {
+		if (!isAdmin) {
 			setHelpSupportDropdownMenuItems((prevState) =>
 				prevState.filter(
 					(item) => !('key' in item) || item.key !== 'invite-collaborators',
@@ -610,7 +610,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isAdmin,
-		isNoAuthMode,
 		isChatSupportEnabled,
 		isPremiumSupportEnabled,
 		isCloudUser,

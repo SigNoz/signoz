@@ -19,6 +19,7 @@ import {
 } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
 import { MemberRow } from 'components/MembersTable/MembersTable';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
 import SaveErrorItem from 'components/ServiceAccountDrawer/SaveErrorItem';
 import type { SaveError } from 'components/ServiceAccountDrawer/utils';
@@ -613,39 +614,43 @@ function EditMemberDrawer({
 					<div className="edit-member-drawer__footer-left">
 						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
 							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									onClick={(): void => setShowDeleteConfirm(true)}
-									disabled={isRootUser || isSelf}
-									variant="link"
-									color="destructive"
-								>
-									<Trash2 size={12} />
-									{isInvited ? 'Revoke Invite' : 'Delete Member'}
-								</Button>
+								<NoAuthGuard>
+									<Button
+										onClick={(): void => setShowDeleteConfirm(true)}
+										disabled={isRootUser || isSelf}
+										variant="link"
+										color="destructive"
+									>
+										<Trash2 size={12} />
+										{isInvited ? 'Revoke Invite' : 'Delete Member'}
+									</Button>
+								</NoAuthGuard>
 							</span>
 						</Tooltip>
 
 						<div className="edit-member-drawer__footer-divider" />
 						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 							<span className="edit-member-drawer__tooltip-wrapper">
-								<Button
-									onClick={handleGenerateResetLink}
-									disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
-									variant="link"
-									color="warning"
-								>
-									<RefreshCw size={12} />
-									{isGeneratingLink
-										? 'Generating...'
-										: isInvited
-											? getInviteButtonLabel(
-													isLoadingTokenStatus,
-													existingToken,
-													isTokenExpired,
-													tokenNotFound,
-												)
-											: 'Generate Password Reset Link'}
-								</Button>
+								<NoAuthGuard>
+									<Button
+										onClick={handleGenerateResetLink}
+										disabled={isGeneratingLink || isRootUser || isLoadingTokenStatus}
+										variant="link"
+										color="warning"
+									>
+										<RefreshCw size={12} />
+										{isGeneratingLink
+											? 'Generating...'
+											: isInvited
+												? getInviteButtonLabel(
+														isLoadingTokenStatus,
+														existingToken,
+														isTokenExpired,
+														tokenNotFound,
+													)
+												: 'Generate Password Reset Link'}
+									</Button>
+								</NoAuthGuard>
 							</span>
 						</Tooltip>
 					</div>
@@ -656,15 +661,17 @@ function EditMemberDrawer({
 							Cancel
 						</Button>
 
-						<Button
-							variant="solid"
-							color="primary"
-							disabled={!isDirty || isSaving || isRootUser}
-							onClick={handleSave}
-							loading={isSaving}
-						>
-							{isSaving ? 'Saving...' : 'Save Member Details'}
-						</Button>
+						<NoAuthGuard>
+							<Button
+								variant="solid"
+								color="primary"
+								disabled={!isDirty || isSaving || isRootUser}
+								onClick={handleSave}
+								loading={isSaving}
+							>
+								{isSaving ? 'Saving...' : 'Save Member Details'}
+							</Button>
+						</NoAuthGuard>
 					</div>
 				</>
 			)}

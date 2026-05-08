@@ -9,8 +9,8 @@ import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useAppContext } from 'providers/App/App';
 import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
@@ -22,8 +22,6 @@ const PAGE_SIZE = 20;
 function MembersSettings(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
-	const { isNoAuthMode } = useAppContext();
-
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
@@ -203,7 +201,7 @@ function MembersSettings(): JSX.Element {
 						/>
 					</div>
 
-					{!isNoAuthMode && (
+					<NoAuthGuard>
 						<Button
 							variant="solid"
 							color="primary"
@@ -212,7 +210,7 @@ function MembersSettings(): JSX.Element {
 							<Plus size={12} />
 							Invite member
 						</Button>
-					)}
+					</NoAuthGuard>
 				</div>
 			</div>
 			<MembersTable
@@ -226,13 +224,11 @@ function MembersSettings(): JSX.Element {
 				onRowClick={handleRowClick}
 			/>
 
-			{!isNoAuthMode && (
-				<InviteMembersModal
-					open={isInviteModalOpen}
-					onClose={(): void => setIsInviteModalOpen(false)}
-					onComplete={handleInviteComplete}
-				/>
-			)}
+			<InviteMembersModal
+				open={isInviteModalOpen}
+				onClose={(): void => setIsInviteModalOpen(false)}
+				onComplete={handleInviteComplete}
+			/>
 
 			<EditMemberDrawer
 				member={selectedMember}
