@@ -172,6 +172,8 @@
     "@commitlint/config-conventional": "^20.4.2",
     "@faker-js/faker": "9.3.0",
     "@jest/globals": "30.2.0",
+    "@swc/core": "1.15.33",
+    "@swc/jest": "0.2.39",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "13.4.0",
     "@testing-library/user-event": "14.4.3",
