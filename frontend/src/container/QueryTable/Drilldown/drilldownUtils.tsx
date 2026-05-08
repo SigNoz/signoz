@@ -140,9 +140,8 @@ export const getAggregateColumnHeader = (
 
 	if (!queryStep) {
 		const isClickHouse = query?.queryType === 'clickhouse_sql';
-		const isPromQL = query?.queryType === 'promql';
 		return {
-			dataSource: isClickHouse ? 'ClickHouse SQL' : isPromQL ? 'PromQL' : '',
+			dataSource: isClickHouse ? 'ClickHouse SQL' : '',
 			aggregations: '',
 		};
 	}
@@ -285,18 +284,6 @@ export const getQueryData = (
 				legend: chQuery.legend,
 				disabled: chQuery.disabled,
 				expression: chQuery.query,
-			} as IBuilderQuery;
-		}
-	}
-
-	if (query?.queryType === 'promql') {
-		const promQuery = query.promql?.find((q) => q.name === queryName);
-		if (promQuery) {
-			return {
-				queryName: promQuery.name,
-				legend: promQuery.legend,
-				disabled: promQuery.disabled,
-				expression: promQuery.query,
 			} as IBuilderQuery;
 		}
 	}
