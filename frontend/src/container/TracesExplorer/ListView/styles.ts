@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const tableStyles: CSSProperties = {
@@ -9,6 +9,7 @@ export const tableStyles: CSSProperties = {
 export const Container = styled.div`
 	display: flex;
 	flex-direction: column;
+	--typography-color: var(--l1-foreground);
 `;
 
 export const ErrorText = styled(Typography)`

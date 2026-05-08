@@ -1,4 +1,5 @@
-import { TableColumnsType as ColumnsType, Typography } from 'antd';
+import { TableColumnsType as ColumnsType } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

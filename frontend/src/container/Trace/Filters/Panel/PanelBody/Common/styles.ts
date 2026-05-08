@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const CheckBoxContainer = styled.div`
@@ -11,7 +11,7 @@ export const CheckBoxContainer = styled.div`
 	margin-bottom: 0.5rem;
 `;
 
-export const ParaGraph = styled(Typography.Paragraph)`
+export const ParaGraph = styled(Typography.Text)`
 	&&& {
 		margin: 0;
 		max-width: 8rem;

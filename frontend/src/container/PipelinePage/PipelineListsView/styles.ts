@@ -1,4 +1,5 @@
-import { Avatar, Button, Table, TableProps, Typography } from 'antd';
+import { Avatar, Button, Table, TableProps } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { themeColors } from 'constants/theme';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled from 'styled-components';

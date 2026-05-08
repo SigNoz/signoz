@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-use';
-import { Col, Input, Row, Tooltip, Typography } from 'antd';
+import { Col, Input, Row, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';

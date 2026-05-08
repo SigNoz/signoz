@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
 import DisconnectValuesModeToggle from './DisconnectValuesModeToggle';

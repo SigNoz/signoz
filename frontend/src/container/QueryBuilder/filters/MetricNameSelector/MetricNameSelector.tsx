@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { AutoComplete, Spin, Typography } from 'antd';
+import { AutoComplete, Spin } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { useListMetrics } from 'api/generated/services/metrics';
 import { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
 import { ATTRIBUTE_TYPES, toAttributeType } from 'constants/queryBuilder';
@@ -281,7 +282,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 				isFetching ? (
 					<Spin size="small" />
 				) : isError ? (
-					<Typography.Text type="danger" style={{ fontSize: 12 }}>
+					<Typography.Text color="danger" style={{ fontSize: 12 }}>
 						Failed to load metrics
 					</Typography.Text>
 				) : null

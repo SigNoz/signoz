@@ -1,4 +1,5 @@
-import { Select, SelectProps, Space, Typography } from 'antd';
+import { Select, SelectProps, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { getCategorySelectOptionByName } from 'container/NewWidget/RightContainer/alertFomatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';

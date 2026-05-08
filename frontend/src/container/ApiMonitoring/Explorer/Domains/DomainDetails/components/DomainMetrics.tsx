@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Skeleton, Tooltip, Typography } from 'antd';
+import { Progress, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
@@ -87,28 +88,16 @@ function DomainMetrics({
 		<div className="domain-detail-drawer__endpoint">
 			<div className="domain-details-grid">
 				<div className="labels-row">
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						EXTERNAL API
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						AVERAGE LATENCY
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						ERROR %
 					</Typography.Text>
-					<Typography.Text
-						type="secondary"
-						className="domain-details-metadata-label"
-					>
+					<Typography.Text color="muted" className="domain-details-metadata-label">
 						LAST USED
 					</Typography.Text>
 				</div>

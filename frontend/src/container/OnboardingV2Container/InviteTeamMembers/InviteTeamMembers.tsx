@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Input, Select, Typography } from 'antd';
+import { Button, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
@@ -257,7 +258,7 @@ function InviteTeamMembers({
 
 				{hasInvalidEmails && (
 					<div className="error-message-container">
-						<Typography.Text className="error-message" type="danger">
+						<Typography.Text className="error-message" color="danger">
 							<TriangleAlert size={14} /> Please enter valid emails for all team
 							members
 						</Typography.Text>

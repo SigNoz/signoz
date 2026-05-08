@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -89,7 +89,7 @@ function LogSelectedField({
 					</span>
 				</Typography.Text>
 			</AddToQueryHOC>
-			<Typography.Text ellipsis className={cx('selected-log-kv', fontSize)}>
+			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
 				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
 				<span className={cx('selected-log-value', fontSize)}>
 					{fieldValue || "''"}

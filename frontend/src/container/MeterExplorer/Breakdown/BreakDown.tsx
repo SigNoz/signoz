@@ -2,7 +2,8 @@ import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Alert, Typography } from 'antd';
+import { Alert } from 'antd';
+import { Typography } from '@signozhq/ui';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';

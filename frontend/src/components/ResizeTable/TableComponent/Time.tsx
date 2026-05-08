@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 
