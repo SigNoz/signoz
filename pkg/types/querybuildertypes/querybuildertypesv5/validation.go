@@ -112,7 +112,7 @@ func WithSkipGroupByValidation() ValidationOption {
 	}
 }
 
-// WithRequestType sets the request type for validation.
+// WithTimestampGroupByValidation enables validation to disallow grouping by timestamp field.
 func WithTimestampGroupByValidation() ValidationOption {
 	return func(cfg *validationConfig) {
 		cfg.withTimestampGroupByValidation = true
@@ -188,7 +188,7 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 		if cfg.withTimestampGroupByValidation && item.Name == "timestamp" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "group by on timestamp is not allowed",
-			).WithAdditional("Timeseries request already accounts for timestamp in the response")
+			)
 		}
 	}
 	return nil
