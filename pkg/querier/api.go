@@ -72,6 +72,53 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 
 	render.Success(rw, http.StatusOK, queryRangeResponse)
 }
+
+func (handler *handler) QueryRangePreview(rw http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRangePreview",
+	})
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var queryRangeRequest qbtypes.QueryRangeRequest
+	if err := json.NewDecoder(req.Body).Decode(&queryRangeRequest); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := queryRangeRequest.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	explain, err := ParseExplainVariant(req.URL.Query().Get("explain"))
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	opts := qbtypes.QueryRangePreviewOptions{Explain: explain}
+	previewResp, err := handler.querier.QueryRangePreview(ctx, orgID, &queryRangeRequest, opts)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, previewResp)
+}
+
 func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 

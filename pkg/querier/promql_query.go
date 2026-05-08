@@ -211,6 +211,17 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 	return newQuery.String(), nil
 }
 
+// Statement renders the PromQL query string after variable substitution. It
+// is used by the dry-run/preview path; PromQL queries do not have a
+// SQL-style argument list.
+func (q *promqlQuery) Statement(_ context.Context) (*qbv5.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
+	if err != nil {
+		return nil, err
+	}
+	return &qbv5.Statement{Query: rendered}, nil
+}
+
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{

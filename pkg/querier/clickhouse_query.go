@@ -99,6 +99,16 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 	return newQuery.String(), nil
 }
 
+// Statement renders the SQL statement for the ClickHouse SQL query without
+// executing it. It is used by the dry-run/preview path.
+func (q *chSQLQuery) Statement(_ context.Context) (*qbtypes.Statement, error) {
+	rendered, err := q.renderVars(q.query.Query, q.vars, q.fromMS, q.toMS)
+	if err != nil {
+		return nil, err
+	}
+	return &qbtypes.Statement{Query: rendered, Args: q.args}, nil
+}
+
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.QueryDuration: instrumentationtypes.DurationBucket(q.fromMS, q.toMS),

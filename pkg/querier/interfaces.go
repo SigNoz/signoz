@@ -12,6 +12,11 @@ import (
 type Querier interface {
 	QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error)
 	QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, client *qbtypes.RawStream)
+	// QueryRangePreview validates and renders the queries in req without
+	// executing them. opts controls dry-run behavior such as which
+	// EXPLAIN variant to attach to the response; the zero value performs
+	// a validation-only preview with no EXPLAIN.
+	QueryRangePreview(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest, opts qbtypes.QueryRangePreviewOptions) (*qbtypes.QueryRangePreviewResponse, error)
 }
 
 // BucketCache is the interface for bucket-based caching.
@@ -25,5 +30,6 @@ type BucketCache interface {
 type Handler interface {
 	QueryRange(rw http.ResponseWriter, req *http.Request)
 	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	QueryRangePreview(rw http.ResponseWriter, req *http.Request)
 	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
 }

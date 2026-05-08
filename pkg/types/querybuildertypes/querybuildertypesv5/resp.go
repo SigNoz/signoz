@@ -64,6 +64,74 @@ type QueryRangeResponse struct {
 	QBEvent *QBEvent `json:"-"`
 }
 
+// QueryRangePreviewResponse describes the dry-run output of a query range
+// request. Each entry corresponds to a single query in the composite query.
+type QueryRangePreviewResponse struct {
+	Type       RequestType         `json:"type"`
+	Statements []*PreviewStatement `json:"statements"`
+}
+
+// ExplainVariant identifies one of the ClickHouse EXPLAIN modes that the
+// preview endpoint can run against a rendered SQL statement.
+type ExplainVariant string
+
+const (
+	ExplainVariantNone      ExplainVariant = ""
+	ExplainVariantPlan      ExplainVariant = "plan"
+	ExplainVariantAST       ExplainVariant = "ast"
+	ExplainVariantSyntax    ExplainVariant = "syntax"
+	ExplainVariantPipeline  ExplainVariant = "pipeline"
+	ExplainVariantEstimate  ExplainVariant = "estimate"
+	ExplainVariantQueryTree ExplainVariant = "query_tree"
+)
+
+// IsValid reports whether the variant is one of the supported values
+// (including the empty/no-explain sentinel).
+func (v ExplainVariant) IsValid() bool {
+	switch v {
+	case ExplainVariantNone,
+		ExplainVariantPlan,
+		ExplainVariantAST,
+		ExplainVariantSyntax,
+		ExplainVariantPipeline,
+		ExplainVariantEstimate,
+		ExplainVariantQueryTree:
+		return true
+	}
+	return false
+}
+
+// QueryRangePreviewOptions carries per-call options for the query range
+// preview (dry-run) endpoint. The zero value is meaningful and produces a
+// validation-only preview with no EXPLAIN.
+type QueryRangePreviewOptions struct {
+	// Explain selects which ClickHouse EXPLAIN variant to run for each
+	// rendered SQL statement. Leave empty to skip EXPLAIN.
+	Explain ExplainVariant
+}
+
+// PrepareJSONSchema adds description to the QueryRangePreviewResponse schema.
+func (q *QueryRangePreviewResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	schema.WithDescription("Response from the v5 query range preview (dry-run) endpoint. Returns the rendered SQL/PromQL for each query in the composite query along with optional EXPLAIN output when requested.")
+	return nil
+}
+
+// PreviewStatement is the rendered form of a single query.
+type PreviewStatement struct {
+	QueryName string   `json:"queryName"`
+	QueryType string   `json:"queryType"`
+	Query     string   `json:"query"`
+	Args      []any    `json:"args,omitempty"`
+	Error     error    `json:"error"`
+	Warnings  []string `json:"warnings,omitempty"`
+	// ExplainVariant is the EXPLAIN mode that produced Explain. Empty when
+	// no EXPLAIN was requested.
+	ExplainVariant string `json:"explainVariant,omitempty"`
+	// Explain is the formatted output returned by ClickHouse for the
+	// requested EXPLAIN variant. Empty when no EXPLAIN was requested.
+	Explain string `json:"explain,omitempty"`
+}
+
 var _ jsonschema.Preparer = &QueryRangeResponse{}
 
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.

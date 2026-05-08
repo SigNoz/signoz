@@ -451,6 +451,22 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v5/query_range/preview", handler.New(provider.authZ.ViewAccess(provider.querierHandler.QueryRangePreview), handler.OpenAPIDef{
+		ID:                  "QueryRangePreviewV5",
+		Tags:                []string{"querier"},
+		Summary:             "Query range (dry-run)",
+		Description:         "Validates the request and renders the underlying SQL/PromQL for each query in the composite query without executing it. When the 'explain' query parameter is set to true, an EXPLAIN is run against ClickHouse for each rendered SQL statement.",
+		Request:             new(qbtypes.QueryRangeRequest),
+		RequestContentType:  "application/json",
+		Response:            new(qbtypes.QueryRangePreviewResponse),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authZ.ViewAccess(provider.querierHandler.ReplaceVariables), handler.OpenAPIDef{
 		ID:                  "ReplaceVariables",
 		Tags:                []string{"querier"},

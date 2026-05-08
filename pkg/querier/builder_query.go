@@ -192,6 +192,12 @@ func (q *builderQuery[T]) isWindowList() bool {
 	return true
 }
 
+// Statement renders the SQL statement for the builder query without executing
+// it. It is used by the dry-run/preview path.
+func (q *builderQuery[T]) Statement(ctx context.Context) (*qbtypes.Statement, error) {
+	return q.stmtBuilder.Build(ctx, q.fromMS, q.toMS, q.kind, q.spec, q.variables)
+}
+
 func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) {
 
 	// can we do window based pagination?
