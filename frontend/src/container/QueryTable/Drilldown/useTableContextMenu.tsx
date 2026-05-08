@@ -61,13 +61,20 @@ export function useTableContextMenu({
 		[clickedData?.tableColumns],
 	);
 
-	const treatAsAggregate = useMemo(
-		() =>
-			!!clickedData &&
-			(clickedData?.column?.isValueColumn ||
-				(!isBuilderQuery && !hasValueColumns)),
-		[clickedData, isBuilderQuery, hasValueColumns],
-	);
+	const treatAsAggregate = useMemo(() => {
+		if (!clickedData) {
+			return false;
+		}
+
+		// 1. Standard Case: The column is explicitly marked as a value/measure
+		if (clickedData?.column?.isValueColumn) {
+			return true;
+		}
+
+		// 2. ClickHouse/PromQL Fallback: Since they lack metadata,
+		// we treat everything as an aggregate to enable Context Links.
+		return !isBuilderQuery && !hasValueColumns;
+	}, [clickedData, isBuilderQuery, hasValueColumns]);
 
 	const aggregateData = useMemo((): AggregateData | null => {
 		if (!treatAsAggregate) {
