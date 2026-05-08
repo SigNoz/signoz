@@ -375,7 +375,13 @@ export default function ChatInput({
 
 	// ── Voice input ────────────────────────────────────────────────────────────
 
-	const { isListening, isSupported, start, discard } = useSpeechRecognition({
+	const {
+		isListening,
+		isSupported,
+		permission: micPermission,
+		start,
+		discard,
+	} = useSpeechRecognition({
 		onTranscript: (transcriptText, isFinal) => {
 			if (isFinal) {
 				// Commit: append to whatever the user has already typed
@@ -390,6 +396,8 @@ export default function ChatInput({
 			}
 		},
 	});
+
+	const showMic = isSupported && micPermission !== 'denied';
 
 	// Stop recording and immediately send whatever is in the textarea.
 	const handleStopAndSend = useCallback(async () => {
@@ -414,7 +422,7 @@ export default function ChatInput({
 	// "session active" ref so a held key only calls `start()` once.
 	const pttActiveRef = useRef(false);
 	useEffect(() => {
-		if (!isSupported) {
+		if (!isSupported || micPermission === 'denied') {
 			return undefined;
 		}
 
@@ -462,7 +470,14 @@ export default function ChatInput({
 			window.removeEventListener('keydown', handleKeyDown);
 			window.removeEventListener('keyup', handleKeyUp);
 		};
-	}, [isSupported, disabled, isStreaming, start, handleStopAndSend]);
+	}, [
+		isSupported,
+		micPermission,
+		disabled,
+		isStreaming,
+		start,
+		handleStopAndSend,
+	]);
 
 	// Each list hook fetches only when its picker tab is actively shown,
 	// AND treats already-cached data as never stale (`staleTime: Infinity`)
@@ -862,53 +877,48 @@ export default function ChatInput({
 				</div>
 
 				<div className={styles.rightActions}>
-					{isListening ? (
-						<div className={styles.micRecording}>
-							<div
-								className={cx(styles.micDiscard, styles.secondary)}
-								onClick={handleDiscard}
-								aria-label="Discard recording"
-							>
-								<X size={12} />
+					{showMic &&
+						(isListening ? (
+							<div className={styles.micRecording}>
+								<div
+									className={cx(styles.micDiscard, styles.secondary)}
+									onClick={handleDiscard}
+									aria-label="Discard recording"
+								>
+									<X size={12} />
+								</div>
+								<span className={styles.micWaves} aria-hidden="true">
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+									<span />
+								</span>
+								<div
+									className={cx(styles.micStop, styles.destructive)}
+									onClick={handleStopAndSend}
+									aria-label="Stop and send"
+								>
+									<Square size={9} fill="currentColor" strokeWidth={0} />
+								</div>
 							</div>
-							<span className={styles.micWaves} aria-hidden="true">
-								<span />
-								<span />
-								<span />
-								<span />
-								<span />
-								<span />
-								<span />
-								<span />
-							</span>
-							<div
-								className={cx(styles.micStop, styles.destructive)}
-								onClick={handleStopAndSend}
-								aria-label="Stop and send"
-							>
-								<Square size={9} fill="currentColor" strokeWidth={0} />
-							</div>
-						</div>
-					) : (
-						<Tooltip
-							title={
-								!isSupported
-									? 'Voice input not supported in this browser'
-									: 'Voice input'
-							}
-						>
-							<Button
-								variant="ghost"
-								size="icon"
-								onClick={start}
-								disabled={disabled || !isSupported}
-								aria-label="Start voice input"
-								className={styles.micBtn}
-							>
-								<Mic size={14} />
-							</Button>
-						</Tooltip>
-					)}
+						) : (
+							<Tooltip title="Voice input">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={start}
+									disabled={disabled}
+									aria-label="Start voice input"
+									className={styles.micBtn}
+								>
+									<Mic size={14} />
+								</Button>
+							</Tooltip>
+						))}
 
 					{isStreaming && onCancel ? (
 						<Tooltip title="Stop generating">

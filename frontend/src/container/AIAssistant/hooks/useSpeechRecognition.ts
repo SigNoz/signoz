@@ -55,6 +55,8 @@ export type SpeechRecognitionError =
 	| 'network'
 	| 'unknown';
 
+export type MicrophonePermission = 'prompt' | 'granted' | 'denied';
+
 interface UseSpeechRecognitionOptions {
 	onError?: (error: SpeechRecognitionError) => void;
 	/**
@@ -68,6 +70,12 @@ interface UseSpeechRecognitionOptions {
 interface UseSpeechRecognitionReturn {
 	isListening: boolean;
 	isSupported: boolean;
+	/**
+	 * Browser microphone permission. Starts as `'prompt'` (or whatever the
+	 * Permissions API reports on mount), flips to `'granted'` once a session
+	 * successfully starts, and to `'denied'` if the user blocks access.
+	 */
+	permission: MicrophonePermission;
 	start: () => void;
 	stop: () => void;
 	/** Stop recognition and discard any pending interim text (no onTranscript call). */
@@ -80,9 +88,46 @@ export function useSpeechRecognition({
 	lang = 'en-US',
 }: UseSpeechRecognitionOptions = {}): UseSpeechRecognitionReturn {
 	const [isListening, setIsListening] = useState(false);
+	const [permission, setPermission] = useState<MicrophonePermission>('prompt');
 	const recognitionRef = useRef<ISpeechRecognition | null>(null);
 	const isDiscardingRef = useRef(false);
 	const isSupported = SpeechRecognitionAPI !== null;
+
+	// Seed `permission` from the Permissions API and keep it in sync with
+	// external changes (e.g. user resets the site permission in browser
+	// settings). Falls back silently if the API is unavailable (Safari) —
+	// the recognition lifecycle below will still flip the state on grant
+	// or deny.
+	useEffect(() => {
+		if (typeof navigator === 'undefined' || !navigator.permissions?.query) {
+			return undefined;
+		}
+		let status: PermissionStatus | null = null;
+		let cancelled = false;
+		const handleChange = (): void => {
+			if (status) {
+				setPermission(status.state as MicrophonePermission);
+			}
+		};
+		navigator.permissions
+			.query({ name: 'microphone' as PermissionName })
+			.then((permStatus) => {
+				if (cancelled) {
+					return;
+				}
+				status = permStatus;
+				setPermission(permStatus.state as MicrophonePermission);
+				permStatus.addEventListener('change', handleChange);
+			})
+			.catch(() => {
+				// Permissions API rejected (some browsers don't recognise the
+				// 'microphone' descriptor) — leave permission as 'prompt'.
+			});
+		return (): void => {
+			cancelled = true;
+			status?.removeEventListener('change', handleChange);
+		};
+	}, []);
 
 	// Always-current refs — updated synchronously on every render so closures
 	// inside recognition event handlers always call the latest version.
@@ -126,6 +171,7 @@ export function useSpeechRecognition({
 
 		recognition.onstart = (): void => {
 			setIsListening(true);
+			setPermission('granted');
 		};
 
 		recognition.onresult = (event): void => {
@@ -165,6 +211,7 @@ export function useSpeechRecognition({
 			let mapped: SpeechRecognitionError = 'unknown';
 			if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
 				mapped = 'not-allowed';
+				setPermission('denied');
 			} else if (event.error === 'no-speech') {
 				mapped = 'no-speech';
 			} else if (event.error === 'network') {
@@ -199,5 +246,5 @@ export function useSpeechRecognition({
 		[],
 	);
 
-	return { isListening, isSupported, start, stop, discard };
+	return { isListening, isSupported, permission, start, stop, discard };
 }
