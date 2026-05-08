@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListHosts),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListHosts),
 		handler.OpenAPIDef{
 			ID:                  "ListHosts",
 			Tags:                []string{"inframonitoring"},
@@ -30,7 +30,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pods", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListPods),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListPods),
 		handler.OpenAPIDef{
 			ID:                  "ListPods",
 			Tags:                []string{"inframonitoring"},

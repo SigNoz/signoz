@@ -41,8 +41,8 @@ type provider struct {
 	config                  apiserver.Config
 	settings                factory.ScopedProviderSettings
 	router                  *mux.Router
-	authZ                   *middleware.AuthZ
-	authz                   authz.AuthZ
+	authzMiddleware         *middleware.AuthZ
+	authzService            authz.AuthZ
 	orgHandler              organization.Handler
 	userHandler             user.Handler
 	sessionHandler          session.Handler
@@ -74,7 +74,7 @@ type provider struct {
 
 func NewFactory(
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -109,7 +109,7 @@ func NewFactory(
 			providerSettings,
 			config,
 			orgGetter,
-			authz,
+			authzService,
 			orgHandler,
 			userHandler,
 			sessionHandler,
@@ -146,7 +146,7 @@ func newProvider(
 	providerSettings factory.ProviderSettings,
 	config apiserver.Config,
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -184,7 +184,7 @@ func newProvider(
 		router:                  router,
 		orgHandler:              orgHandler,
 		userHandler:             userHandler,
-		authz:                   authz,
+		authzService:            authzService,
 		sessionHandler:          sessionHandler,
 		authDomainHandler:       authDomainHandler,
 		preferenceHandler:       preferenceHandler,
@@ -212,7 +212,7 @@ func newProvider(
 		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/user/preferences", handler.New(provider.authZ.ViewAccess(provider.preferenceHandler.ListByUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/preferences", handler.New(provider.authzMiddleware.ViewAccess(provider.preferenceHandler.ListByUser), handler.OpenAPIDef{
 		ID:                  "ListUserPreferences",
 		Tags:                []string{"preferences"},
 		Summary:             "List user preferences",
@@ -27,7 +27,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/preferences/{name}", handler.New(provider.authZ.ViewAccess(provider.preferenceHandler.GetByUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/preferences/{name}", handler.New(provider.authzMiddleware.ViewAccess(provider.preferenceHandler.GetByUser), handler.OpenAPIDef{
 		ID:                  "GetUserPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Get user preference",
@@ -44,7 +44,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/user/preferences/{name}", handler.New(provider.authZ.ViewAccess(provider.preferenceHandler.UpdateByUser), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/user/preferences/{name}", handler.New(provider.authzMiddleware.ViewAccess(provider.preferenceHandler.UpdateByUser), handler.OpenAPIDef{
 		ID:                  "UpdateUserPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Update user preference",
@@ -61,7 +61,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences", handler.New(provider.authZ.AdminAccess(provider.preferenceHandler.ListByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.ListByOrg), handler.OpenAPIDef{
 		ID:                  "ListOrgPreferences",
 		Tags:                []string{"preferences"},
 		Summary:             "List org preferences",
@@ -78,7 +78,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authZ.AdminAccess(provider.preferenceHandler.GetByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.GetByOrg), handler.OpenAPIDef{
 		ID:                  "GetOrgPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Get org preference",
@@ -95,7 +95,7 @@ func (provider *provider) addPreferenceRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authZ.AdminAccess(provider.preferenceHandler.UpdateByOrg), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/org/preferences/{name}", handler.New(provider.authzMiddleware.AdminAccess(provider.preferenceHandler.UpdateByOrg), handler.OpenAPIDef{
 		ID:                  "UpdateOrgPreference",
 		Tags:                []string{"preferences"},
 		Summary:             "Update org preference",
