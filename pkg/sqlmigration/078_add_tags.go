@@ -47,6 +47,7 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "key", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "value", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "entity_type", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
@@ -63,10 +64,10 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tagTableSQLs...)
 
-	// Functional unique index: case-insensitive uniqueness on (org_id, key, value).
+	// Functional unique index: case-insensitive uniqueness on (org_id, entity_type, key, value).
 	// sqlschema.UniqueIndex doesn't support expressions, so emit raw SQL — both
 	// Postgres and SQLite (modernc 3.50.x) support expression indexes.
-	sqls = append(sqls, []byte(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_id_lower_key_lower_value ON tag (org_id, LOWER(key), LOWER(value))`))
+	sqls = append(sqls, []byte(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_entity_lower_key_lower_value ON tag (org_id, entity_type, LOWER(key), LOWER(value))`))
 
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "tag_relations",
@@ -76,7 +77,7 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"entity_id", "tag_id"}},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"entity_type", "entity_id", "tag_id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 			{
 				ReferencingColumnName: sqlschema.ColumnName("org_id"),
