@@ -1,4 +1,7 @@
-import { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesAuthNProviderDTO,
+	AuthtypesGettableAuthDomainDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 // API Endpoints
 export const AUTH_DOMAINS_LIST_ENDPOINT = '*/api/v1/domains';
@@ -10,11 +13,13 @@ export const AUTH_DOMAINS_DELETE_ENDPOINT = '*/api/v1/domains/:id';
 export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-1',
 	name: 'signoz.io',
-	ssoEnabled: true,
-	ssoType: 'google_auth',
-	googleAuthConfig: {
-		clientId: 'test-client-id',
-		clientSecret: 'test-client-secret',
+	config: {
+		ssoEnabled: true,
+		ssoType: AuthtypesAuthNProviderDTO.google_auth,
+		googleAuthConfig: {
+			clientId: 'test-client-id',
+			clientSecret: 'test-client-secret',
+		},
 	},
 	authNProviderInfo: {
 		relayStatePath: 'api/v1/sso/relay/domain-1',
@@ -25,12 +30,14 @@ export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
 export const mockSamlAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-2',
 	name: 'example.com',
-	ssoEnabled: false,
-	ssoType: 'saml',
-	samlConfig: {
-		samlIdp: 'https://idp.example.com/sso',
-		samlEntity: 'urn:example:idp',
-		samlCert: 'MOCK_CERTIFICATE',
+	config: {
+		ssoEnabled: false,
+		ssoType: AuthtypesAuthNProviderDTO.saml,
+		samlConfig: {
+			samlIdp: 'https://idp.example.com/sso',
+			samlEntity: 'urn:example:idp',
+			samlCert: 'MOCK_CERTIFICATE',
+		},
 	},
 	authNProviderInfo: {
 		relayStatePath: 'api/v1/sso/relay/domain-2',
@@ -41,12 +48,14 @@ export const mockSamlAuthDomain: AuthtypesGettableAuthDomainDTO = {
 export const mockOidcAuthDomain: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-3',
 	name: 'corp.io',
-	ssoEnabled: true,
-	ssoType: 'oidc',
-	oidcConfig: {
-		issuer: 'https://oidc.corp.io',
-		clientId: 'oidc-client-id',
-		clientSecret: 'oidc-client-secret',
+	config: {
+		ssoEnabled: true,
+		ssoType: AuthtypesAuthNProviderDTO.oidc,
+		oidcConfig: {
+			issuer: 'https://oidc.corp.io',
+			clientId: 'oidc-client-id',
+			clientSecret: 'oidc-client-secret',
+		},
 	},
 	authNProviderInfo: {
 		relayStatePath: 'api/v1/sso/relay/domain-3',
@@ -57,20 +66,22 @@ export const mockOidcAuthDomain: AuthtypesGettableAuthDomainDTO = {
 export const mockDomainWithRoleMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-4',
 	name: 'enterprise.com',
-	ssoEnabled: true,
-	ssoType: 'saml',
-	samlConfig: {
-		samlIdp: 'https://idp.enterprise.com/sso',
-		samlEntity: 'urn:enterprise:idp',
-		samlCert: 'MOCK_CERTIFICATE',
-	},
-	roleMapping: {
-		defaultRole: 'EDITOR',
-		useRoleAttribute: false,
-		groupMappings: {
-			'admin-group': 'ADMIN',
-			'dev-team': 'EDITOR',
-			viewers: 'VIEWER',
+	config: {
+		ssoEnabled: true,
+		ssoType: AuthtypesAuthNProviderDTO.saml,
+		samlConfig: {
+			samlIdp: 'https://idp.enterprise.com/sso',
+			samlEntity: 'urn:enterprise:idp',
+			samlCert: 'MOCK_CERTIFICATE',
+		},
+		roleMapping: {
+			defaultRole: 'EDITOR',
+			useRoleAttribute: false,
+			groupMappings: {
+				'admin-group': 'ADMIN',
+				'dev-team': 'EDITOR',
+				viewers: 'VIEWER',
+			},
 		},
 	},
 	authNProviderInfo: {
@@ -83,16 +94,18 @@ export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO =
 	{
 		id: 'domain-5',
 		name: 'direct-role.com',
-		ssoEnabled: true,
-		ssoType: 'oidc',
-		oidcConfig: {
-			issuer: 'https://oidc.direct-role.com',
-			clientId: 'direct-role-client-id',
-			clientSecret: 'direct-role-client-secret',
-		},
-		roleMapping: {
-			defaultRole: 'VIEWER',
-			useRoleAttribute: true,
+		config: {
+			ssoEnabled: true,
+			ssoType: AuthtypesAuthNProviderDTO.oidc,
+			oidcConfig: {
+				issuer: 'https://oidc.direct-role.com',
+				clientId: 'direct-role-client-id',
+				clientSecret: 'direct-role-client-secret',
+			},
+			roleMapping: {
+				defaultRole: 'VIEWER',
+				useRoleAttribute: true,
+			},
 		},
 		authNProviderInfo: {
 			relayStatePath: 'api/v1/sso/relay/domain-5',
@@ -103,20 +116,22 @@ export const mockDomainWithDirectRoleAttribute: AuthtypesGettableAuthDomainDTO =
 export const mockOidcWithClaimMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-6',
 	name: 'oidc-claims.com',
-	ssoEnabled: true,
-	ssoType: 'oidc',
-	oidcConfig: {
-		issuer: 'https://oidc.claims.com',
-		issuerAlias: 'https://alias.claims.com',
-		clientId: 'claims-client-id',
-		clientSecret: 'claims-client-secret',
-		insecureSkipEmailVerified: true,
-		getUserInfo: true,
-		claimMapping: {
-			email: 'user_email',
-			name: 'display_name',
-			groups: 'user_groups',
-			role: 'user_role',
+	config: {
+		ssoEnabled: true,
+		ssoType: AuthtypesAuthNProviderDTO.oidc,
+		oidcConfig: {
+			issuer: 'https://oidc.claims.com',
+			issuerAlias: 'https://alias.claims.com',
+			clientId: 'claims-client-id',
+			clientSecret: 'claims-client-secret',
+			insecureSkipEmailVerified: true,
+			getUserInfo: true,
+			claimMapping: {
+				email: 'user_email',
+				name: 'display_name',
+				groups: 'user_groups',
+				role: 'user_role',
+			},
 		},
 	},
 	authNProviderInfo: {
@@ -128,17 +143,19 @@ export const mockOidcWithClaimMapping: AuthtypesGettableAuthDomainDTO = {
 export const mockSamlWithAttributeMapping: AuthtypesGettableAuthDomainDTO = {
 	id: 'domain-7',
 	name: 'saml-attrs.com',
-	ssoEnabled: true,
-	ssoType: 'saml',
-	samlConfig: {
-		samlIdp: 'https://idp.saml-attrs.com/sso',
-		samlEntity: 'urn:saml-attrs:idp',
-		samlCert: 'MOCK_CERTIFICATE_ATTRS',
-		insecureSkipAuthNRequestsSigned: true,
-		attributeMapping: {
-			name: 'user_display_name',
-			groups: 'member_of',
-			role: 'signoz_role',
+	config: {
+		ssoEnabled: true,
+		ssoType: AuthtypesAuthNProviderDTO.saml,
+		samlConfig: {
+			samlIdp: 'https://idp.saml-attrs.com/sso',
+			samlEntity: 'urn:saml-attrs:idp',
+			samlCert: 'MOCK_CERTIFICATE_ATTRS',
+			insecureSkipAuthNRequestsSigned: true,
+			attributeMapping: {
+				name: 'user_display_name',
+				groups: 'member_of',
+				role: 'signoz_role',
+			},
 		},
 	},
 	authNProviderInfo: {
@@ -151,19 +168,21 @@ export const mockGoogleAuthWithWorkspaceGroups: AuthtypesGettableAuthDomainDTO =
 	{
 		id: 'domain-8',
 		name: 'google-groups.com',
-		ssoEnabled: true,
-		ssoType: 'google_auth',
-		googleAuthConfig: {
-			clientId: 'google-groups-client-id',
-			clientSecret: 'google-groups-client-secret',
-			insecureSkipEmailVerified: false,
-			fetchGroups: true,
-			serviceAccountJson: '{"type": "service_account"}',
-			domainToAdminEmail: {
-				'google-groups.com': 'admin@google-groups.com',
+		config: {
+			ssoEnabled: true,
+			ssoType: AuthtypesAuthNProviderDTO.google_auth,
+			googleAuthConfig: {
+				clientId: 'google-groups-client-id',
+				clientSecret: 'google-groups-client-secret',
+				insecureSkipEmailVerified: false,
+				fetchGroups: true,
+				serviceAccountJson: '{"type": "service_account"}',
+				domainToAdminEmail: {
+					'google-groups.com': 'admin@google-groups.com',
+				},
+				fetchTransitiveGroupMembership: true,
+				allowedGroups: ['allowed-group-1', 'allowed-group-2'],
 			},
-			fetchTransitiveGroupMembership: true,
-			allowedGroups: ['allowed-group-1', 'allowed-group-2'],
 		},
 		authNProviderInfo: {
 			relayStatePath: 'api/v1/sso/relay/domain-8',
@@ -188,15 +207,19 @@ export const mockSingleDomainResponse = {
 	data: [mockGoogleAuthDomain],
 };
 
-// Mock success responses
+// Mock success responses. CreateAuthDomain returns just an Identifiable
+// (the new domain ID); clients re-Read to get the full domain.
 export const mockCreateSuccessResponse = {
 	status: 'success',
-	data: mockGoogleAuthDomain,
+	data: { id: mockGoogleAuthDomain.id },
 };
 
 export const mockUpdateSuccessResponse = {
 	status: 'success',
-	data: { ...mockGoogleAuthDomain, ssoEnabled: false },
+	data: {
+		...mockGoogleAuthDomain,
+		config: { ...mockGoogleAuthDomain.config, ssoEnabled: false },
+	},
 };
 
 export const mockDeleteSuccessResponse = {

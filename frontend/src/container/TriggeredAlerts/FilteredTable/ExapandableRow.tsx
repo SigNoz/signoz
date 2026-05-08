@@ -1,4 +1,5 @@
-import { Tag, Typography } from 'antd';
+import { Tag } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Skeleton, Table, Typography } from 'antd';
+import { Skeleton, Table } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import {
 	MessagingQueueServicePayload,
@@ -81,7 +82,7 @@ export function getColumns(
 									e.preventDefault();
 									e.stopPropagation();
 									const path = `/services/${encodeURIComponent(text)}`;
-									if (isModifierKeyPressed(e)) {
+									if (isModifierKeyPressed(e as React.MouseEvent)) {
 										openInNewTab(path);
 									} else {
 										history.push(path);

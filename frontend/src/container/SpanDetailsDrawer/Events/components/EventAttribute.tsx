@@ -1,4 +1,5 @@
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import AttributeWithExpandablePopover from './AttributeWithExpandablePopover';
 
@@ -33,13 +34,13 @@ function EventAttribute({
 	return (
 		<div className="attribute-container" key={attributeKey}>
 			<Tooltip title={attributeKey}>
-				<Typography.Text className="attribute-key" ellipsis>
+				<Typography.Text className="attribute-key" truncate={1}>
 					{attributeKey}
 				</Typography.Text>
 			</Tooltip>
 			<div className="wrapper">
 				<Tooltip title={attributeValue}>
-					<Typography.Text className="attribute-value" ellipsis>
+					<Typography.Text className="attribute-value" truncate={1}>
 						{attributeValue}
 					</Typography.Text>
 				</Tooltip>

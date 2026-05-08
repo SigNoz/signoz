@@ -1,0 +1,22 @@
+.json-view {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+
+	&__footer {
+		flex-shrink: 0;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		border-top: 1px solid var(--l2-border);
+	}
+
+	&__wrap-toggle {
+		display: flex;
+		gap: 8px;
+		margin-left: 12px;
+		align-items: center;
+	}
+}

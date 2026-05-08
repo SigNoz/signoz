@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const CategoryHeadingText = styled(Typography.Text)`

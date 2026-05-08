@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';

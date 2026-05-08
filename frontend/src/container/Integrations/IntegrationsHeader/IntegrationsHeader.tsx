@@ -1,7 +1,8 @@
 import { ChangeEvent, KeyboardEvent, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button, DialogWrapper, Input, toast } from '@signozhq/ui';
-import { Flex, Typography } from 'antd';
+import { Flex } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { ArrowRight, Cable, Check } from 'lucide-react';

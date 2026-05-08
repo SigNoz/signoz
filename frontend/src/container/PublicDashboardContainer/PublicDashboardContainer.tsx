@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';

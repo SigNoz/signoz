@@ -33,11 +33,13 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 			}
 			const tooltipProps: BarTooltipProps = {
 				...props,
+				id: config.getId(),
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
 				isStackedBarChart: isStackedBarChart,
 				canPinTooltip: rest.canPinTooltip,
+				renderTooltipFooter: rest.renderTooltipFooter,
 			};
 			return <BarChartTooltip {...tooltipProps} />;
 		},
@@ -48,6 +50,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 			rest.decimalPrecision,
 			isStackedBarChart,
 			rest.canPinTooltip,
+			rest.renderTooltipFooter,
 		],
 	);
 

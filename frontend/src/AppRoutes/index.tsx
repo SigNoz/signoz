@@ -327,6 +327,11 @@ function App(): JSX.Element {
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 					beforeSend(event) {
+						// Drop the event if its level is 'warning' or 'info'
+						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
 						const sessionReplayUrl = posthog.get_session_replay_url?.({
 							withTimestamp: true,
 						});

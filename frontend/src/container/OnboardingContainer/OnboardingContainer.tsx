@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Typography } from 'antd';
+import { Button, Card, Form } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
@@ -349,9 +350,9 @@ export default function Onboarding(): JSX.Element {
 										<Typography.Title className="moduleTitleStyle" level={4}>
 											{selectedUseCase.title}
 										</Typography.Title>
-										<Typography.Paragraph className="moduleDesc">
+										<Typography.Text className="moduleDesc">
 											{selectedUseCase.desc}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Card>
 								);
 							})}

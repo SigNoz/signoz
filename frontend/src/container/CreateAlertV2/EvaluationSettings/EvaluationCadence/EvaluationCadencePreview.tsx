@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Modal, Typography } from 'antd';
+import { Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Calendar, Info } from 'lucide-react';
 
 import { useCreateAlertState } from '../../context';

@@ -7,7 +7,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { render, RenderResult, screen } from 'tests/test-utils';
 import uPlot from 'uplot';
 
-import { TooltipContentItem } from '../../types';
+import { IRenderTooltipFooterArgs, TooltipContentItem } from '../../types';
 import Tooltip from '../Tooltip';
 
 type MockVirtuosoProps = {
@@ -83,6 +83,7 @@ function createUPlotInstance(cursorIdx: number | null): uPlot {
 
 function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 	const defaultProps: TooltipTestProps = {
+		id: 'tooltip-1',
 		uPlotInstance: createUPlotInstance(null),
 		timezone: { value: 'UTC', name: 'UTC', offset: '0', searchIndex: '0' },
 		content: [],
@@ -192,62 +193,87 @@ describe('Tooltip', () => {
 	});
 });
 
-describe('Tooltip footer hint', () => {
+describe('Tooltip renderTooltipFooter', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockUseIsDarkMode.mockReturnValue(false);
 	});
 
-	it('renders footer with "Press P to pin the tooltip" hint when not pinned', () => {
-		renderTooltip({ isPinned: false, canPinTooltip: true });
+	it('does not render footer content when renderTooltipFooter is not provided', () => {
+		renderTooltip();
 
-		const footer = screen.getByTestId('uplot-tooltip-footer');
-		expect(footer).toBeInTheDocument();
-		expect(footer).toHaveTextContent('Press');
-		expect(footer).toHaveTextContent('P');
-		expect(footer).toHaveTextContent('to pin the tooltip');
+		expect(screen.queryByTestId('custom-tooltip-footer')).not.toBeInTheDocument();
 	});
 
-	it('renders footer with "Press P or Esc to unpin" hint when pinned', () => {
-		renderTooltip({ isPinned: true, canPinTooltip: true });
+	it('renders content returned by renderTooltipFooter', () => {
+		const renderTooltipFooter = jest.fn(
+			(): JSX.Element => <div data-testid="custom-tooltip-footer">Footer</div>,
+		);
 
-		const footer = screen.getByTestId('uplot-tooltip-footer');
-		expect(footer).toHaveTextContent('Press');
-		expect(footer).toHaveTextContent('P');
-		expect(footer).toHaveTextContent('Esc');
-		expect(footer).toHaveTextContent('to unpin');
+		renderTooltip({ renderTooltipFooter });
+
+		expect(screen.getByTestId('custom-tooltip-footer')).toBeInTheDocument();
 	});
 
-	it('does not render Unpin button when not pinned', () => {
-		renderTooltip({ isPinned: false, canPinTooltip: true });
+	it('calls renderTooltipFooter with isPinned=false when tooltip is not pinned', () => {
+		const renderTooltipFooter = jest.fn(() => null);
 
-		expect(screen.queryByTestId('uplot-tooltip-unpin')).not.toBeInTheDocument();
+		renderTooltip({ renderTooltipFooter, isPinned: false });
+
+		expect(renderTooltipFooter).toHaveBeenCalledWith(
+			expect.objectContaining({ isPinned: false }),
+		);
 	});
 
-	it('renders Unpin button when pinned', () => {
-		renderTooltip({ isPinned: true, canPinTooltip: true });
+	it('calls renderTooltipFooter with isPinned=true when tooltip is pinned', () => {
+		const renderTooltipFooter = jest.fn(() => null);
 
-		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
-		expect(unpinBtn).toBeInTheDocument();
-		expect(unpinBtn).toHaveAttribute('aria-label', 'Unpin tooltip');
+		renderTooltip({ renderTooltipFooter, isPinned: true });
+
+		expect(renderTooltipFooter).toHaveBeenCalledWith(
+			expect.objectContaining({ isPinned: true }),
+		);
 	});
 
-	it('calls dismiss when Unpin button is clicked', async () => {
+	it('calls renderTooltipFooter with the dismiss callback', () => {
 		const dismiss = jest.fn();
-		renderTooltip({ isPinned: true, canPinTooltip: true, dismiss });
+		const renderTooltipFooter = jest.fn(() => null);
+
+		renderTooltip({ renderTooltipFooter, dismiss });
+
+		expect(renderTooltipFooter).toHaveBeenCalledWith(
+			expect.objectContaining({ dismiss }),
+		);
+	});
+
+	it('footer content reflects pinned state via renderTooltipFooter args', () => {
+		const renderTooltipFooter = jest.fn(
+			({ isPinned }: IRenderTooltipFooterArgs): JSX.Element => (
+				<div data-testid="footer-state">{isPinned ? 'Pinned' : 'Not pinned'}</div>
+			),
+		);
+
+		renderTooltip({ renderTooltipFooter, isPinned: true });
+
+		expect(screen.getByTestId('footer-state')).toHaveTextContent('Pinned');
+	});
+
+	it('dismiss is callable when invoked from renderTooltipFooter', async () => {
+		const dismiss = jest.fn();
+		const renderTooltipFooter = jest.fn(
+			({ dismiss: onDismiss }: IRenderTooltipFooterArgs): JSX.Element => (
+				<button data-testid="dismiss-btn" onClick={onDismiss}>
+					Dismiss
+				</button>
+			),
+		);
+
+		renderTooltip({ renderTooltipFooter, isPinned: true, dismiss });
 
 		const user = userEvent.setup();
-		const unpinBtn = screen.getByTestId('uplot-tooltip-unpin');
-		await user.click(unpinBtn);
+		await user.click(screen.getByTestId('dismiss-btn'));
 
 		expect(dismiss).toHaveBeenCalledTimes(1);
-	});
-
-	it('footer has role="status" for screen reader announcements', () => {
-		renderTooltip({ canPinTooltip: true });
-
-		const footer = screen.getByRole('status');
-		expect(footer).toBeInTheDocument();
 	});
 });
 

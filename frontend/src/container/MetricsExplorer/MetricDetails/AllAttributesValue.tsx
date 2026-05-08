@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Input, Menu, Popover, Tooltip, Typography } from 'antd';
+import { Button, Input, Menu, Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Check, Copy, Search, SquareArrowOutUpRight } from 'lucide-react';
 
 import MetricDetailsErrorState from './MetricDetailsErrorState';
@@ -118,7 +119,7 @@ export function AllAttributesValue({
 						const isCopied = copiedValue === attribute;
 						return (
 							<div key={attribute} className="all-values-item">
-								<Typography.Text ellipsis className="all-values-item-text">
+								<Typography.Text truncate={1} className="all-values-item-text">
 									{attribute}
 								</Typography.Text>
 								<div className="all-values-item-actions">
@@ -149,7 +150,7 @@ export function AllAttributesValue({
 						);
 					})}
 				{allValuesOpen && filteredAllValues.length === 0 && (
-					<Typography.Text type="secondary" className="all-values-empty">
+					<Typography.Text color="muted" className="all-values-empty">
 						No values found
 					</Typography.Text>
 				)}

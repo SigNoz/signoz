@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Button, Select, Tooltip, Typography } from 'antd';
+import { Button, Select, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import getRandomColor from 'lib/getRandomColor';

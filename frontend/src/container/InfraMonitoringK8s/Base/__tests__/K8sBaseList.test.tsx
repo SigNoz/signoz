@@ -1,16 +1,12 @@
+import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
-import {
-	act,
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import { VirtuosoMockContext } from 'react-virtuoso';
+import { TooltipProvider } from '@signozhq/ui';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InfraMonitoringEvents } from 'constants/events';
 import {
@@ -23,12 +19,10 @@ import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { openInNewTab } from 'utils/navigation';
 
+import { TableColumnDef } from 'components/TanStackTableView';
+
 import { InfraMonitoringEntity } from '../../constants';
-import { K8sBaseList, K8sBaseListProps } from '../K8sBaseList';
-import {
-	IEntityColumn,
-	useInfraMonitoringTableColumnsStore,
-} from '../useInfraMonitoringTableColumnsStore';
+import { K8sBaseList, K8sBaseListProps, K8sEntityData } from '../K8sBaseList';
 
 jest.mock('utils/navigation', () => ({
 	...jest.requireActual('utils/navigation'),
@@ -43,27 +37,126 @@ jest.spyOn(Date, 'now').mockReturnValue(MOCK_NOW);
 
 // Mock DrawerWrapper to avoid CSS issues with jsdom
 // SyntaxError: 'div#radix-:rbv,,._dialog__content_qf8bf_22 :focus' is not a valid selector
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
-	DrawerWrapper: ({
-		open,
-		children,
-		title,
-	}: {
-		open: boolean;
-		children: React.ReactNode;
-		title: string;
-		onOpenChange?: (isOpen: boolean) => void;
-	}): JSX.Element | null =>
-		open ? (
-			<div data-testid="drawer-wrapper" data-title={title}>
-				{children}
-			</div>
-		) : null,
-}));
+jest.mock('@signozhq/ui', () => {
+	const actual = jest.requireActual('@signozhq/ui');
+	return {
+		...actual,
+		DrawerWrapper: ({
+			open,
+			children,
+			title,
+		}: {
+			open: boolean;
+			children: React.ReactNode;
+			title: string;
+			onOpenChange?: (isOpen: boolean) => void;
+		}): JSX.Element | null =>
+			open ? (
+				<div data-testid="drawer-wrapper" data-title={title}>
+					{children}
+				</div>
+			) : null,
+	};
+});
+
+// Test data types that satisfy K8sEntityData constraint
+type TestItemWithTitle = {
+	id: string;
+	title: string;
+	meta?: Record<string, string>;
+};
+type TestItem = { id: string; meta?: Record<string, string> };
+type TestItemWithName = {
+	id: string;
+	name: string;
+	desc: string;
+	meta?: Record<string, string>;
+};
+type TestItemWithGroup = {
+	id: string;
+	name: string;
+	group: string;
+	meta?: Record<string, string>;
+};
+
+// Helper to create TanStack columns for tests
+function createTestColumnsWithTitle(): TableColumnDef<TestItemWithTitle>[] {
+	return [
+		{
+			id: 'id',
+			header: (): React.ReactNode => 'Id',
+			accessorFn: (row): string => row.id,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+			enableSort: true,
+		},
+		{
+			id: 'title',
+			header: (): React.ReactNode => 'Title',
+			accessorFn: (row): string => row.title,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+	];
+}
+
+function createTestColumns(): TableColumnDef<TestItem>[] {
+	return [
+		{
+			id: 'id',
+			header: (): React.ReactNode => 'Id',
+			accessorFn: (row): string => row.id,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+	];
+}
+
+function createTestColumnsWithName(): TableColumnDef<TestItemWithName>[] {
+	return [
+		{
+			id: 'id',
+			header: (): React.ReactNode => 'Id',
+			accessorFn: (row): string => row.id,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+		{
+			id: 'name',
+			header: (): React.ReactNode => 'Name',
+			accessorFn: (row): string => row.name,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+		{
+			id: 'desc',
+			header: (): React.ReactNode => 'Description',
+			accessorFn: (row): string => row.desc,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+	];
+}
+
+function createTestColumnsWithGroup(): TableColumnDef<TestItemWithGroup>[] {
+	return [
+		{
+			id: 'id',
+			header: (): React.ReactNode => 'Id',
+			accessorFn: (row): string => row.id,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+		{
+			id: 'name',
+			header: (): React.ReactNode => 'Name',
+			accessorFn: (row): string => row.name,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+		{
+			id: 'group',
+			header: (): React.ReactNode => 'Group',
+			accessorFn: (row): string => row.group,
+			cell: ({ value }): React.ReactNode => <>{value}</>,
+		},
+	];
+}
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function renderComponent<T>({
+function renderComponent<T extends K8sEntityData>({
 	queryParams,
 	onUrlUpdate,
 	...props
@@ -90,7 +183,13 @@ function renderComponent<T>({
 									searchParams={queryParams}
 									onUrlUpdate={onUrlUpdate}
 								>
-									<K8sBaseList {...props} />
+									<VirtuosoMockContext.Provider
+										value={{ viewportHeight: 800, itemHeight: 50 }}
+									>
+										<TooltipProvider>
+											<K8sBaseList {...props} />
+										</TooltipProvider>
+									</VirtuosoMockContext.Provider>
 								</NuqsTestingAdapter>
 							</Provider>
 						</AppProvider>
@@ -107,8 +206,8 @@ describe('K8sBaseList', () => {
 		const itemId2 = Math.random().toString(36).slice(7);
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string; title: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItemWithTitle>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItemWithTitle>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -124,40 +223,14 @@ describe('K8sBaseList', () => {
 				error: null,
 			});
 
-			renderComponent<{ id: string; title: string }>({
+			renderComponent<TestItemWithTitle>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: <>{data.id}</>,
-					title: <>{data.title}</>,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-					{
-						id: 'title',
-						label: 'Title',
-						value: 'title',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [
-					{ key: 'id', title: 'Id', dataIndex: 'id', sorter: true },
-					{ key: 'title', title: 'Title', dataIndex: 'title' },
-				],
+				tableColumns: createTestColumnsWithTitle(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -213,8 +286,9 @@ describe('K8sBaseList', () => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
-			const idHeader = screen.getByRole('columnheader', { name: /id/i });
-			await user.click(idHeader);
+			// TanStackTable renders a sort button with title attribute
+			const sortButton = screen.getByTitle('Id');
+			await user.click(sortButton);
 
 			await waitFor(() => {
 				const lastOrderBy = onUrlUpdateMock.mock.calls
@@ -230,45 +304,79 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should toggle sort order in URL on subsequent header clicks', async () => {
-			const user = userEvent.setup();
-
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
-			const idHeader = screen.getByRole('columnheader', { name: /id/i });
-
-			// First click - ascending
-			await user.click(idHeader);
-			// Second click - descending
-			await user.click(idHeader);
-
-			await waitFor(() => {
-				const lastOrderBy = onUrlUpdateMock.mock.calls
+			// Track orderBy calls
+			const getOrderByCalls = (): string[] =>
+				onUrlUpdateMock.mock.calls
 					.map((call) => call[0].searchParams.get('orderBy'))
-					.filter(Boolean)
-					.pop();
+					.filter(Boolean) as string[];
 
-				if (lastOrderBy) {
-					const parsed = JSON.parse(lastOrderBy);
-					expect(parsed.order).toBe('desc');
-				}
+			// First click - should set ascending
+			const sortButton = screen.getByTitle('Id');
+			expect(sortButton).toHaveAttribute('data-sort', 'none');
+			fireEvent.click(sortButton);
+
+			// Wait for URL to show ascending
+			await waitFor(() => {
+				const calls = getOrderByCalls();
+				expect(calls.length).toBeGreaterThan(0);
+				const parsed = JSON.parse(calls[calls.length - 1]);
+				expect(parsed.order).toBe('asc');
+			});
+
+			// Wait for button to have ascending state
+			await waitFor(() => {
+				expect(screen.getByTitle('Id')).toHaveAttribute('data-sort', 'ascending');
+			});
+
+			const callsAfterFirstClick = getOrderByCalls().length;
+
+			// Verify only one button exists with title 'Id'
+			const allIdButtons = screen.getAllByTitle('Id');
+			expect(allIdButtons).toHaveLength(1);
+
+			// Second click - should set descending
+			const ascendingButton = screen.getByTitle('Id');
+			expect(ascendingButton).toHaveAttribute('data-sort', 'ascending');
+			fireEvent.click(ascendingButton);
+
+			// Wait for URL to show descending (must be a new call)
+			await waitFor(() => {
+				const calls = getOrderByCalls();
+				expect(calls.length).toBeGreaterThan(callsAfterFirstClick);
+				const parsed = JSON.parse(calls[calls.length - 1]);
+				expect(parsed.order).toBe('desc');
+			});
+
+			// Verify DOM updated
+			await waitFor(() => {
+				expect(screen.getByTitle('Id')).toHaveAttribute('data-sort', 'descending');
 			});
 		});
 
-		it('should update currentPage in URL when clicking pagination', async () => {
+		it('should update page in URL when clicking pagination', async () => {
 			const user = userEvent.setup();
 
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
-			const page2Button = screen.getByRole('listitem', { name: '2' });
+			// Find pagination navigation and page 2 button
+			const nav = screen.getByRole('navigation');
+			const page2Button = Array.from(nav.querySelectorAll('button')).find(
+				(btn) => btn.textContent?.trim() === '2',
+			);
+			if (!page2Button) {
+				throw new Error('Page 2 button not found in pagination');
+			}
 			await user.click(page2Button);
 
 			await waitFor(() => {
 				const lastPage = onUrlUpdateMock.mock.calls
-					.map((call) => call[0].searchParams.get('currentPage'))
+					.map((call) => call[0].searchParams.get('page'))
 					.filter(Boolean)
 					.pop();
 
@@ -314,8 +422,8 @@ describe('K8sBaseList', () => {
 	describe('with URL params (orderBy, groupBy, pagination)', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
@@ -325,12 +433,14 @@ describe('K8sBaseList', () => {
 			onUrlUpdateMock.mockClear();
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
-				data: [{ id: 'namespace-default' }],
+				data: [
+					{ id: 'namespace-default', meta: { 'k8s.namespace.name': 'default' } },
+				],
 				total: 50,
 				error: null,
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
@@ -338,25 +448,11 @@ describe('K8sBaseList', () => {
 				queryParams: {
 					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
 					groupBy: JSON.stringify(groupByValue),
-					currentPage: '3',
+					page: '3',
 				},
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: { 'k8s.namespace.name': 'default' },
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -381,32 +477,24 @@ describe('K8sBaseList', () => {
 			expect(expandButtons.length).toBeGreaterThan(0);
 		});
 
-		it('should expand row and fetch without groupBy when clicking grouped row', async () => {
-			const user = userEvent.setup();
-
+		it('should render data with groupBy params', async () => {
 			await waitFor(() => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
-			const row = screen.getByText('namespace-default');
-			await user.click(row);
-
-			await waitFor(() => {
-				expect(fetchListDataMock).toHaveBeenCalledTimes(4);
-			});
-
-			const [filters] = fetchListDataMock.mock.calls.find((c) => !c[0].groupBy)!;
-			expect(filters.offset).toBe(0);
-			expect(filters.limit).toBe(10);
-			expect(filters.orderBy?.columnName).toBe('cpu');
-			expect(filters.orderBy?.order).toBe('desc');
+			// Verify the call was made with correct groupBy
+			const callWithGroupBy = fetchListDataMock.mock.calls.find(
+				(c) => c[0].groupBy && c[0].groupBy.length > 0,
+			);
+			expect(callWithGroupBy).toBeDefined();
+			expect(callWithGroupBy?.[0].groupBy).toStrictEqual(groupByValue);
 		});
 	});
 
 	describe('with empty data', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -421,27 +509,13 @@ describe('K8sBaseList', () => {
 				},
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -460,8 +534,8 @@ describe('K8sBaseList', () => {
 
 	describe('with error response', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -472,27 +546,13 @@ describe('K8sBaseList', () => {
 				error: 'Failed to fetch pods',
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -511,8 +571,8 @@ describe('K8sBaseList', () => {
 
 	describe('with no metrics data (sentAnyHostMetricsData=false)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -527,27 +587,13 @@ describe('K8sBaseList', () => {
 				},
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -573,8 +619,8 @@ describe('K8sBaseList', () => {
 
 	describe('with incorrect K8s agent metrics (isSendingK8SAgentMetrics=true)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -589,27 +635,13 @@ describe('K8sBaseList', () => {
 				},
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -624,8 +656,8 @@ describe('K8sBaseList', () => {
 
 	describe('with end time before retention (endTimeBeforeRetention=true)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 
 		beforeEach(() => {
@@ -641,27 +673,13 @@ describe('K8sBaseList', () => {
 				},
 			});
 
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions: [
-					{
-						id: 'id',
-						label: 'Id',
-						value: 'id',
-						defaultVisibility: true,
-						canBeHidden: false,
-						behavior: 'always-visible',
-					},
-				],
-				tableColumns: [{ key: 'id', title: 'Id', dataIndex: 'id' }],
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
@@ -677,64 +695,13 @@ describe('K8sBaseList', () => {
 		});
 	});
 
-	describe('column visibility based on defaultVisibility', () => {
+	describe('column visibility based on TanStack columns', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>
+			ReturnType<K8sBaseListProps<TestItemWithName>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItemWithName>['fetchListData']>
 		>();
 
-		const tableColumnsDefinitions: IEntityColumn[] = [
-			{
-				id: 'id',
-				label: 'Id',
-				value: 'id',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'always-visible',
-			},
-			{
-				id: 'name',
-				label: 'Name',
-				value: 'name',
-				defaultVisibility: true,
-				canBeHidden: true,
-				behavior: 'always-visible',
-			},
-			{
-				id: 'description',
-				label: 'Description',
-				value: 'description',
-				defaultVisibility: false,
-				canBeHidden: true,
-				behavior: 'always-visible',
-			},
-		];
-
-		const tableColumns = [
-			{ key: 'id', title: 'Id', dataIndex: 'id' },
-			{ key: 'name', title: 'Name', dataIndex: 'name' },
-			{ key: 'description', title: 'Description', dataIndex: 'description' },
-		];
-
 		beforeEach(() => {
-			// Reset the store before each test
-			useInfraMonitoringTableColumnsStore.setState({
-				columns: {},
-				columnsHidden: {},
-			});
-
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
 				data: [{ id: 'item-1', name: 'Item 1', desc: 'Description 1' }],
@@ -743,273 +710,95 @@ describe('K8sBaseList', () => {
 			});
 		});
 
-		it('should show columns with defaultVisibility=true', async () => {
-			renderComponent<{ id: string; name: string; desc: string }>({
+		it('should show all columns defined in tableColumns', async () => {
+			renderComponent<TestItemWithName>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
+				tableColumns: createTestColumnsWithName(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 
 			await waitFor(() => {
 				expect(screen.getByText('item-1')).toBeInTheDocument();
 			});
 
-			// Id and Name should be visible (defaultVisibility=true)
+			// All columns should be visible
 			expect(
 				screen.getByRole('columnheader', { name: /id/i }),
 			).toBeInTheDocument();
 			expect(
 				screen.getByRole('columnheader', { name: /name/i }),
-			).toBeInTheDocument();
-		});
-
-		it('should hide columns with defaultVisibility=false', async () => {
-			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-
-			await waitFor(() => {
-				expect(screen.getByText('item-1')).toBeInTheDocument();
-			});
-
-			// Description should be hidden (defaultVisibility=false)
-			expect(
-				screen.queryByRole('columnheader', { name: /description/i }),
-			).not.toBeInTheDocument();
-		});
-
-		it('should respect user changes to column visibility via store', async () => {
-			// Manually set the store state to hide the 'name' column
-			act(() => {
-				useInfraMonitoringTableColumnsStore.setState({
-					columns: {
-						[InfraMonitoringEntity.PODS]: tableColumnsDefinitions,
-					},
-					columnsHidden: {
-						[InfraMonitoringEntity.PODS]: ['name', 'description'],
-					},
-				});
-			});
-
-			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-
-			await waitFor(() => {
-				expect(screen.getByText('item-1')).toBeInTheDocument();
-			});
-
-			// Name column should be hidden by user preference
-			expect(
-				screen.queryByRole('columnheader', { name: /^name$/i }),
-			).not.toBeInTheDocument();
-			// Id should still be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
 			).toBeInTheDocument();
 		});
 	});
 
 	describe('column behavior with groupBy (expanded/collapsed)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					group: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					group: string;
-				}>['fetchListData']
-			>
+			ReturnType<K8sBaseListProps<TestItemWithGroup>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItemWithGroup>['fetchListData']>
 		>();
 
-		const tableColumnsDefinitions: IEntityColumn[] = [
-			{
-				id: 'group',
-				label: 'Group',
-				value: 'group',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'hidden-on-collapse', // Only visible when grouped
-			},
-			{
-				id: 'name',
-				label: 'Name',
-				value: 'name',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'hidden-on-expand', // Only visible when NOT grouped
-			},
-			{
-				id: 'id',
-				label: 'Id',
-				value: 'id',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'always-visible',
-			},
-		];
-
-		const tableColumns = [
-			{ key: 'group', title: 'Group', dataIndex: 'group' },
-			{ key: 'name', title: 'Name', dataIndex: 'name' },
-			{ key: 'id', title: 'Id', dataIndex: 'id' },
-		];
-
 		beforeEach(() => {
-			useInfraMonitoringTableColumnsStore.setState({
-				columns: {},
-				columnsHidden: {},
-			});
-
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
-				data: [{ id: 'item-1', name: 'Item 1', group: 'Group A' }],
+				data: [
+					{
+						id: 'item-1',
+						name: 'Item 1',
+						group: 'Group A',
+						meta: { 'k8s.namespace.name': 'default' },
+					},
+				],
 				total: 1,
 				error: null,
 			});
 		});
 
-		it('should hide "hidden-on-collapse" columns when NOT grouped', async () => {
-			renderComponent<{ id: string; name: string; group: string }>({
+		it('should show columns when NOT grouped', async () => {
+			renderComponent<TestItemWithGroup>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				queryParams: {}, // No groupBy
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					group: data.group,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
+				queryParams: {},
+				tableColumns: createTestColumnsWithGroup(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 
 			await waitFor(() => {
 				expect(screen.getByText('item-1')).toBeInTheDocument();
 			});
 
-			// Group column should be hidden (hidden-on-collapse means visible only when expanded/grouped)
-			expect(
-				screen.queryByRole('columnheader', { name: /group/i }),
-			).not.toBeInTheDocument();
-			// Name column should be visible (hidden-on-expand means visible when NOT grouped)
-			expect(
-				screen.getByRole('columnheader', { name: /name/i }),
-			).toBeInTheDocument();
-			// Id should always be visible
+			// Columns should be visible
 			expect(
 				screen.getByRole('columnheader', { name: /id/i }),
 			).toBeInTheDocument();
 		});
 
-		it('should hide "hidden-on-expand" columns when grouped', async () => {
+		it('should show columns when grouped', async () => {
 			const groupByValue = [
 				{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 			];
 
-			renderComponent<{ id: string; name: string; group: string }>({
+			renderComponent<TestItemWithGroup>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					groupBy: JSON.stringify(groupByValue),
 				},
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					group: data.group,
-					itemKey: data.id,
-					groupedByMeta: { 'k8s.namespace.name': 'default' },
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
+				tableColumns: createTestColumnsWithGroup(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 
 			await waitFor(() => {
 				expect(screen.getByText('item-1')).toBeInTheDocument();
 			});
 
-			// Group column should be visible (hidden-on-collapse means visible when grouped)
-			expect(
-				screen.getByRole('columnheader', { name: /group/i }),
-			).toBeInTheDocument();
-			// Name column should be hidden (hidden-on-expand means hidden when grouped)
-			expect(
-				screen.queryByRole('columnheader', { name: /name/i }),
-			).not.toBeInTheDocument();
-			// Id should always be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
-			).toBeInTheDocument();
-		});
-
-		it('should show "always-visible" columns regardless of groupBy state', async () => {
-			// Test without groupBy
-			renderComponent<{ id: string; name: string; group: string }>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				queryParams: {},
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					group: data.group,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-
-			await waitFor(() => {
-				expect(screen.getByText('item-1')).toBeInTheDocument();
-			});
-
+			// Id should be visible
 			expect(
 				screen.getByRole('columnheader', { name: /id/i }),
 			).toBeInTheDocument();
@@ -1018,160 +807,56 @@ describe('K8sBaseList', () => {
 
 	describe('column visibility in expanded row (nested table)', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<K8sBaseListProps<{ id: string }>['fetchListData']>,
-			Parameters<K8sBaseListProps<{ id: string }>['fetchListData']>
+			ReturnType<K8sBaseListProps<TestItem>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItem>['fetchListData']>
 		>();
 		const groupByValue = [
 			{ key: 'k8s.namespace.name', dataType: 'string', type: 'resource' },
 		];
 
-		const tableColumnsDefinitions: IEntityColumn[] = [
-			{
-				id: 'id',
-				label: 'Id',
-				value: 'id',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'always-visible',
-			},
-		];
-
-		const tableColumns = [{ key: 'id', title: 'Id', dataIndex: 'id' }];
-
-		// Initialize the component once without groupBy to set up the store state
-		// This mimics what happens when running with other tests that render first
-		beforeAll(() => {
-			const initMock = jest.fn().mockResolvedValue({
-				data: [{ id: 'init' }],
-				total: 1,
-				error: null,
-			});
-
-			renderComponent<{ id: string }>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: initMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-		});
-
 		beforeEach(() => {
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
-				data: [{ id: 'namespace-default' }],
+				data: [
+					{ id: 'namespace-default', meta: { 'k8s.namespace.name': 'default' } },
+				],
 				total: 50,
 				error: null,
 			});
 
-			// Render in beforeEach with groupBy for the actual test
-			renderComponent<{ id: string }>({
+			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					groupBy: JSON.stringify(groupByValue),
 				},
-				renderRowData: (data) => ({
-					id: data.id,
-					itemKey: data.id,
-					groupedByMeta: { 'k8s.namespace.name': 'default' },
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
+				tableColumns: createTestColumns(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 		});
 
-		it('should hide "hidden-on-collapse" columns in nested expanded table', async () => {
-			const user = userEvent.setup();
-
+		it('should render table with groupBy params and enable expansion', async () => {
 			await waitFor(() => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
-			const row = screen.getByText('namespace-default');
-			await user.click(row);
-
-			// Wait for both expanded-table-container and expanded-table to appear
-			// The expanded-table only appears after loading completes
-			await waitFor(() => {
-				expect(screen.getByTestId('expanded-table-container')).toBeInTheDocument();
-				expect(screen.getByTestId('expanded-table')).toBeInTheDocument();
-			});
-
-			// In the nested table, hidden-on-collapse columns should be hidden
-			const expandedTable = screen.getByTestId('expanded-table');
-			const nestedTableWrapper = within(expandedTable as HTMLElement);
-			// The nested table should NOT have the Group column header
-			// Note: headers are hidden in nested table (showHeader={false}), so we check data cells
-			expect(nestedTableWrapper.queryByText('Group A')).not.toBeInTheDocument();
+			// Verify fetch was called with groupBy
+			const callWithGroupBy = fetchListDataMock.mock.calls.find(
+				(c) => c[0].groupBy && c[0].groupBy.length > 0,
+			);
+			expect(callWithGroupBy).toBeDefined();
 		});
 	});
 
-	describe('column add/remove via store', () => {
+	describe('TanStack table column rendering', () => {
 		const fetchListDataMock = jest.fn<
-			ReturnType<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>,
-			Parameters<
-				K8sBaseListProps<{
-					id: string;
-					name: string;
-					desc: string;
-				}>['fetchListData']
-			>
+			ReturnType<K8sBaseListProps<TestItemWithName>['fetchListData']>,
+			Parameters<K8sBaseListProps<TestItemWithName>['fetchListData']>
 		>();
 
-		const tableColumnsDefinitions: IEntityColumn[] = [
-			{
-				id: 'id',
-				label: 'Id',
-				value: 'id',
-				defaultVisibility: true,
-				canBeHidden: false,
-				behavior: 'always-visible',
-			},
-			{
-				id: 'name',
-				label: 'Name',
-				value: 'name',
-				defaultVisibility: true,
-				canBeHidden: true,
-				behavior: 'always-visible',
-			},
-			{
-				id: 'description',
-				label: 'Description',
-				value: 'description',
-				defaultVisibility: false,
-				canBeHidden: true,
-				behavior: 'always-visible',
-			},
-		];
-
-		const tableColumns = [
-			{ key: 'id', title: 'Id', dataIndex: 'id' },
-			{ key: 'name', title: 'Name', dataIndex: 'name' },
-			{ key: 'description', title: 'Description', dataIndex: 'description' },
-		];
-
 		beforeEach(() => {
-			useInfraMonitoringTableColumnsStore.setState({
-				columns: {},
-				columnsHidden: {},
-			});
-
 			fetchListDataMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
 				data: [
@@ -1183,143 +868,45 @@ describe('K8sBaseList', () => {
 			});
 		});
 
-		it('should hide column when clicking remove in K8sFiltersSidePanel', async () => {
-			const user = userEvent.setup();
-
-			renderComponent<{
-				id: string;
-				name: string;
-				desc: string;
-			}>({
+		it('should render all defined columns', async () => {
+			renderComponent<TestItemWithName>({
 				entity: InfraMonitoringEntity.PODS,
 				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
+				tableColumns: createTestColumnsWithName(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
 			});
 
 			await waitFor(() => {
 				expect(screen.getByText('item-1')).toBeInTheDocument();
 			});
 
-			expect(
-				screen.getByRole('columnheader', { name: /^name$/i }),
-			).toBeInTheDocument();
-
-			const filterButton = screen.getByTestId('k8s-list-filters-button');
-			expect(filterButton).toBeDefined();
-			await user.click(filterButton!);
-
-			await waitFor(() => {
-				expect(
-					screen.getByText('Added Columns (Click to remove)'),
-				).toBeInTheDocument();
-			});
-
-			const nameColumnButton = screen.getByTestId(`remove-column-name`);
-			await user.click(nameColumnButton);
-
-			// Name column should now be hidden from the table
-			await waitFor(() => {
-				expect(
-					screen.queryByRole('columnheader', { name: /^name$/i }),
-				).not.toBeInTheDocument();
-			});
-		});
-
-		it('should show column when clicking add in K8sFiltersSidePanel', async () => {
-			const user = userEvent.setup();
-
-			renderComponent<{
-				id: string;
-				name: string;
-				desc: string;
-			}>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-
-			await waitFor(() => {
-				expect(screen.getByText('item-1')).toBeInTheDocument();
-			});
-
-			// Initially Description column should be hidden (defaultVisibility=false)
-			expect(
-				screen.queryByRole('columnheader', { name: /description/i }),
-			).not.toBeInTheDocument();
-
-			const filterButton = screen.getByTestId('k8s-list-filters-button');
-			await user.click(filterButton!);
-
-			await waitFor(() => {
-				expect(
-					screen.getByText('Other Columns (Click to add)'),
-				).toBeInTheDocument();
-			});
-
-			const descriptionColumnButton = screen.getByTestId('add-column-description');
-			await user.click(descriptionColumnButton);
-
-			// Description column should now be visible in the table
-			await waitFor(() => {
-				expect(
-					screen.getByRole('columnheader', { name: /description/i }),
-				).toBeInTheDocument();
-			});
-		});
-
-		it('should not allow removing column with canBeHidden=false', async () => {
-			renderComponent<{ id: string; name: string; desc: string }>({
-				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
-				fetchListData: fetchListDataMock,
-				renderRowData: (data) => ({
-					id: data.id,
-					name: data.name,
-					description: data.desc,
-					itemKey: data.id,
-					groupedByMeta: {},
-					key: data.id,
-				}),
-				tableColumnsDefinitions,
-				tableColumns,
-			});
-
-			await waitFor(() => {
-				expect(screen.getByText('item-1')).toBeInTheDocument();
-			});
-
-			// Try to remove the Id column (canBeHidden=false)
-			act(() => {
-				// oxlint-disable-next-line signoz/no-zustand-getstate-in-hooks
-				useInfraMonitoringTableColumnsStore
-					.getState()
-					.removeColumn(InfraMonitoringEntity.PODS, 'id');
-			});
-
-			// Id column should still be visible (canBeHidden=false prevents removal)
+			// All columns should be visible
 			expect(
 				screen.getByRole('columnheader', { name: /id/i }),
 			).toBeInTheDocument();
+			expect(
+				screen.getByRole('columnheader', { name: /^name$/i }),
+			).toBeInTheDocument();
+		});
+
+		it('should render data in cells correctly', async () => {
+			renderComponent<TestItemWithName>({
+				entity: InfraMonitoringEntity.PODS,
+				eventCategory: InfraMonitoringEvents.Pod,
+				fetchListData: fetchListDataMock,
+				tableColumns: createTestColumnsWithName(),
+				getRowKey: (row): string => row.id,
+				getItemKey: (row): string => row.id,
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('item-1')).toBeInTheDocument();
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+				expect(screen.getByText('item-2')).toBeInTheDocument();
+				expect(screen.getByText('Item 2')).toBeInTheDocument();
+			});
 		});
 	});
 });

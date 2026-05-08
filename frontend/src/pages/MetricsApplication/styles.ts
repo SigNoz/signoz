@@ -1,7 +1,5 @@
-import {
-	Button as ButtonComponent,
-	Typography as TypographyComponent,
-} from 'antd';
+import { Button as ButtonComponent } from 'antd';
+import { Typography as TypographyComponent } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const Button = styled(ButtonComponent)`

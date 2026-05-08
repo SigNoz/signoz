@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { PrecisionOption } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
 import { SlidersHorizontal } from 'lucide-react';

@@ -30,7 +30,7 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Filter, Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -47,6 +47,7 @@ import { validateQuery } from 'utils/queryValidationUtils';
 import { unquote } from 'utils/stringUtils';
 
 import { queryExamples } from './constants';
+import { combineInitialAndUserExpression } from './utils';
 
 import './QuerySearch.styles.scss';
 
@@ -85,6 +86,8 @@ interface QuerySearchProps {
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
 	showFilterSuggestionsWithoutMetric?: boolean;
+	/** When set, the editor shows only the user expression; API/filter uses `initial AND (user)`. */
+	initialExpression?: string;
 }
 
 function QuerySearch({
@@ -96,6 +99,7 @@ function QuerySearch({
 	signalSource,
 	hardcodedAttributeKeys,
 	showFilterSuggestionsWithoutMetric,
+	initialExpression,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -112,18 +116,26 @@ function QuerySearch({
 	const [isFocused, setIsFocused] = useState(false);
 	const editorRef = useRef<EditorView | null>(null);
 
-	const handleQueryValidation = useCallback((newExpression: string): void => {
-		try {
-			const validationResponse = validateQuery(newExpression);
-			setValidation(validationResponse);
-		} catch (error) {
-			setValidation({
-				isValid: false,
-				message: 'Failed to process query',
-				errors: [error as IDetailedError],
-			});
-		}
-	}, []);
+	const isScopedFilter = initialExpression !== undefined;
+
+	const validateExpressionForEditor = useCallback(
+		(editorDoc: string): void => {
+			const toValidate = isScopedFilter
+				? combineInitialAndUserExpression(initialExpression ?? '', editorDoc)
+				: editorDoc;
+			try {
+				const validationResponse = validateQuery(toValidate);
+				setValidation(validationResponse);
+			} catch (error) {
+				setValidation({
+					isValid: false,
+					message: 'Failed to process query',
+					errors: [error as IDetailedError],
+				});
+			}
+		},
+		[initialExpression, isScopedFilter],
+	);
 
 	const getCurrentExpression = useCallback(
 		(): string => editorRef.current?.state.doc.toString() || '',
@@ -165,6 +177,8 @@ function QuerySearch({
 		setIsEditorReady(true);
 	}, []);
 
+	const prevQueryDataExpressionRef = useRef<string | undefined>();
+
 	useEffect(
 		() => {
 			if (!isEditorReady) {
@@ -173,13 +187,22 @@ function QuerySearch({
 
 			const newExpression = queryData.filter?.expression || '';
 			const currentExpression = getCurrentExpression();
+			const prevExpression = prevQueryDataExpressionRef.current;
 
-			// Do not update codemirror editor if the expression is the same
-			if (newExpression !== currentExpression && !isFocused) {
+			// Only sync editor when queryData.filter?.expression actually changed from external source
+			// Not when focus changed (which would reset uncommitted user input)
+			const queryDataExpressionChanged = prevExpression !== newExpression;
+			prevQueryDataExpressionRef.current = newExpression;
+
+			if (
+				queryDataExpressionChanged &&
+				newExpression !== currentExpression &&
+				!isFocused
+			) {
 				updateEditorValue(newExpression, { skipOnChange: true });
-				if (newExpression) {
-					handleQueryValidation(newExpression);
-				}
+			}
+			if (!isFocused) {
+				validateExpressionForEditor(currentExpression);
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,7 +307,7 @@ function QuerySearch({
 						}
 					});
 				}
-				setKeySuggestions(Array.from(merged.values()));
+				setKeySuggestions([...merged.values()]);
 
 				// Force reopen the completion if editor is available and focused
 				if (editorRef.current) {
@@ -337,7 +360,7 @@ function QuerySearch({
 		// If value contains single quotes, escape them and wrap in single quotes
 		if (value.includes("'")) {
 			// Replace single quotes with escaped single quotes
-			const escapedValue = value.replace(/'/g, "\\'");
+			const escapedValue = value.replaceAll(/'/g, "\\'");
 			return `'${escapedValue}'`;
 		}
 
@@ -614,7 +637,7 @@ function QuerySearch({
 
 	const handleBlur = (): void => {
 		const currentExpression = getCurrentExpression();
-		handleQueryValidation(currentExpression);
+		validateExpressionForEditor(currentExpression);
 		setIsFocused(false);
 	};
 
@@ -632,7 +655,6 @@ function QuerySearch({
 	);
 
 	const handleExampleClick = (exampleQuery: string): void => {
-		// If there's an existing query, append the example with AND
 		const currentExpression = getCurrentExpression();
 		const newExpression = currentExpression
 			? `${currentExpression} AND ${exampleQuery}`
@@ -897,12 +919,12 @@ function QuerySearch({
 
 			// If we have previous pairs, we can prioritize keys that haven't been used yet
 			if (queryContext.queryPairs && queryContext.queryPairs.length > 0) {
-				const usedKeys = queryContext.queryPairs.map((pair) => pair.key);
+				const usedKeys = new Set(queryContext.queryPairs.map((pair) => pair.key));
 
 				// Add boost to unused keys to prioritize them
 				options = options.map((option) => ({
 					...option,
-					boost: usedKeys.includes(option.label) ? -10 : 10,
+					boost: usedKeys.has(option.label) ? -10 : 10,
 				}));
 			}
 
@@ -1317,6 +1339,19 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-editor-container">
+				{isScopedFilter ? (
+					<Tooltip title={initialExpression || ''} placement="left">
+						<div className="query-search-initial-scope-label">
+							<Filter
+								size={14}
+								style={{
+									opacity: 0.9,
+									color: isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_500,
+								}}
+							/>
+						</div>
+					</Tooltip>
+				) : null}
 				<Tooltip
 					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
 					placement="left"
@@ -1356,6 +1391,7 @@ function QuerySearch({
 					className={cx('query-where-clause-editor', {
 						isValid: validation.isValid === true,
 						hasErrors: validation.errors.length > 0,
+						hasInitialExpression: isScopedFilter,
 					})}
 					extensions={[
 						autocompletion({
@@ -1390,7 +1426,12 @@ function QuerySearch({
 									// Mod-Enter is usually Ctrl-Enter or Cmd-Enter based on OS
 									run: (): boolean => {
 										if (onRun && typeof onRun === 'function') {
-											onRun(getCurrentExpression());
+											const user = getCurrentExpression();
+											onRun(
+												isScopedFilter
+													? combineInitialAndUserExpression(initialExpression ?? '', user)
+													: user,
+											);
 										}
 										return true;
 									},
@@ -1555,6 +1596,7 @@ QuerySearch.defaultProps = {
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
 	showFilterSuggestionsWithoutMetric: false,
+	initialExpression: undefined,
 };
 
 export default QuerySearch;

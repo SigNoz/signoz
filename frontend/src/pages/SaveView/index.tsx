@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui';
-import { ColorPicker, Input, Modal, Table, TableProps, Typography } from 'antd';
+import { ColorPicker, Input, Modal, Table, TableProps } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,

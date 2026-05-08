@@ -177,11 +177,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
-				<Skeleton
-					active
-					title={{ width: '40%' }}
-					paragraph={{ rows: 1, width: '60%' }}
-				/>
+				<Skeleton active paragraph={{ rows: 1, width: '60%' }} />
 			</div>
 		);
 	}

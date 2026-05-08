@@ -1,4 +1,5 @@
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ListOfAllDashboard from 'container/ListOfDashboard';
 import { LayoutGrid } from 'lucide-react';

@@ -137,12 +137,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return authNs, nil
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, dashboardModule dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
-			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, config authz.Config, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore, config)
 			if err != nil {
 				return nil, err
 			}
-			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, onBeforeRoleDelete, dashboardModule), nil
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, onBeforeRoleDelete, authtypes.NewRegistry()), nil
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)

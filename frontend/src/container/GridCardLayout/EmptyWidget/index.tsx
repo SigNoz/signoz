@@ -1,13 +1,13 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import { Container } from './styles';
 
 function EmptyWidget(): JSX.Element {
 	return (
 		<Container>
-			<Typography.Paragraph>
+			<Typography.Text>
 				Click one of the widget types above (Time Series / Value) to add here
-			</Typography.Paragraph>
+			</Typography.Text>
 		</Container>
 	);
 }

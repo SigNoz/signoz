@@ -1,4 +1,5 @@
-import { TableColumnsType as ColumnsType, Tag, Typography } from 'antd';
+import { TableColumnsType as ColumnsType, Tag } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {

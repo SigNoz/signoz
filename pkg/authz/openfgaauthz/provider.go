@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz/openfgaserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -18,31 +19,27 @@ import (
 )
 
 type provider struct {
-	server                    *openfgaserver.Server
-	store                     authtypes.RoleStore
-	registry                  []authz.RegisterTypeable
-	managedRolesByTransaction map[string][]string
+	server   *openfgaserver.Server
+	store    authtypes.RoleStore
+	registry *authtypes.Registry
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry ...authz.RegisterTypeable) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *authtypes.Registry) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
 		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore, registry)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry []authz.RegisterTypeable) (authz.AuthZ, error) {
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore, registry *authtypes.Registry) (authz.AuthZ, error) {
 	server, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema, openfgaDataStore)
 	if err != nil {
 		return nil, err
 	}
 
-	managedRolesByTransaction := buildManagedRolesByTransaction(registry)
-
 	return &provider{
-		server:                    server,
-		store:                     sqlauthzstore.NewSqlAuthzStore(sqlstore),
-		registry:                  registry,
-		managedRolesByTransaction: managedRolesByTransaction,
+		server:   server,
+		store:    sqlauthzstore.NewSqlAuthzStore(sqlstore),
+		registry: registry,
 	}, nil
 }
 
@@ -62,11 +59,11 @@ func (provider *provider) BatchCheck(ctx context.Context, tupleReq map[string]*o
 	return provider.server.BatchCheck(ctx, tupleReq)
 }
 
-func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.server.CheckWithTupleCreation(ctx, claims, orgID, relation, typeable, selectors, roleSelectors)
 }
 
-func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, roleSelectors []authtypes.Selector) error {
+func (provider *provider) CheckWithTupleCreationWithoutClaims(ctx context.Context, orgID valuer.UUID, relation authtypes.Relation, typeable coretypes.Resource, selectors []coretypes.Selector, roleSelectors []coretypes.Selector) error {
 	return provider.server.CheckWithTupleCreationWithoutClaims(ctx, orgID, relation, typeable, selectors, roleSelectors)
 }
 
@@ -78,7 +75,7 @@ func (provider *provider) ReadTuples(ctx context.Context, tupleKey *openfgav1.Re
 	return provider.server.ReadTuples(ctx, tupleKey)
 }
 
-func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType authtypes.Type) ([]*authtypes.Object, error) {
+func (provider *provider) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, objectType coretypes.Type) ([]*coretypes.Object, error) {
 	return provider.server.ListObjects(ctx, subject, relation, objectType)
 }
 
@@ -103,22 +100,14 @@ func (provider *provider) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UU
 }
 
 func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
-	selectors := make([]authtypes.Selector, len(names))
+	selectors := make([]coretypes.Selector, len(names))
 	for idx, name := range names {
-		selectors[idx] = authtypes.MustNewSelector(authtypes.TypeRole, name)
+		selectors[idx] = coretypes.TypeRole.MustSelector(name)
 	}
 
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		selectors,
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
+	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, selectors, orgID)
 
-	err = provider.Write(ctx, tuples, nil)
+	err := provider.Write(ctx, tuples, nil)
 	if err != nil {
 		return errors.WithAdditionalf(err, "failed to grant roles: %v to subject: %s", names, subject)
 	}
@@ -141,22 +130,14 @@ func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, ex
 }
 
 func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
-	selectors := make([]authtypes.Selector, len(names))
+	selectors := make([]coretypes.Selector, len(names))
 	for idx, name := range names {
-		selectors[idx] = authtypes.MustNewSelector(authtypes.TypeRole, name)
+		selectors[idx] = coretypes.TypeRole.MustSelector(name)
 	}
 
-	tuples, err := authtypes.TypeableRole.Tuples(
-		subject,
-		authtypes.RelationAssignee,
-		selectors,
-		orgID,
-	)
-	if err != nil {
-		return err
-	}
+	tuples := authtypes.NewTuples(coretypes.NewResourceRole(), subject, authtypes.Relation{Verb: coretypes.VerbAssignee}, selectors, orgID)
 
-	err = provider.Write(ctx, nil, tuples)
+	err := provider.Write(ctx, nil, tuples)
 	if err != nil {
 		return errors.WithAdditionalf(err, "failed to revoke roles: %v to subject: %s", names, subject)
 	}
@@ -184,7 +165,7 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID,
 }
 
 func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
-	return provider.Grant(ctx, orgID, []string{authtypes.SigNozAdminRoleName}, authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil))
+	return provider.Grant(ctx, orgID, []string{authtypes.SigNozAdminRoleName}, authtypes.MustNewSubject(coretypes.NewResourceUser(), userID.String(), orgID, nil))
 }
 
 func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
@@ -195,11 +176,7 @@ func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *autht
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource {
-	return []*authtypes.Resource{}
-}
-
-func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
+func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*coretypes.Object, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -207,7 +184,7 @@ func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *authtypes.R
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*authtypes.Object) error {
+func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*coretypes.Object) error {
 	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
@@ -220,7 +197,7 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 		return make([]*authtypes.TransactionWithAuthorization, 0), nil
 	}
 
-	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.managedRolesByTransaction)
+	tuples, preResolved, roleCorrelations, err := authtypes.NewTuplesFromTransactionsWithManagedRoles(transactions, subject, orgID, provider.registry.ManagedRolesByTransaction())
 	if err != nil {
 		return nil, err
 	}
@@ -235,22 +212,4 @@ func (provider *provider) CheckTransactions(ctx context.Context, subject string,
 	}
 
 	return authtypes.NewTransactionWithAuthorizationFromBatchResults(transactions, batchResults, preResolved, roleCorrelations), nil
-}
-
-func buildManagedRolesByTransaction(registry []authz.RegisterTypeable) map[string][]string {
-	managedRolesByTransaction := make(map[string][]string)
-	for _, register := range registry {
-		for roleName, transactions := range register.MustGetManagedRoleTransactions() {
-			for _, txn := range transactions {
-				key := txn.TransactionKey()
-				managedRolesByTransaction[key] = append(managedRolesByTransaction[key], roleName)
-			}
-		}
-	}
-
-	return managedRolesByTransaction
-}
-
-func (provider *provider) MustGetTypeables() []authtypes.Typeable {
-	return nil
 }

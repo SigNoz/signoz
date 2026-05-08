@@ -2,17 +2,12 @@
 
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Table, Tooltip, Typography } from 'antd';
+import { Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
-import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-
-import { getInvalidValueTooltipText, InfraMonitoringEntity } from './constants';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import styles from './commonUtils.module.scss';
 
@@ -20,6 +15,10 @@ import styles from './commonUtils.module.scss';
  * Converts size in bytes to a human-readable string with appropriate units
  */
 export function formatBytes(bytes: number, decimals = 2): string {
+	if (Number.isNaN(bytes) || !Number.isFinite(bytes)) {
+		return '-';
+	}
+
 	if (bytes === 0) {
 		return '0 Bytes';
 	}
@@ -29,36 +28,6 @@ export function formatBytes(bytes: number, decimals = 2): string {
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
 	return `${parseFloat((bytes / k ** i).toFixed(decimals))} ${sizes[i]}`;
-}
-
-/**
- * Wrapper component that renders its children for valid values or renders '-' for invalid values (-1)
- */
-export function ValidateColumnValueWrapper({
-	children,
-	value,
-	entity,
-	attribute,
-}: {
-	children: React.ReactNode;
-	value: number;
-	entity?: InfraMonitoringEntity;
-	attribute?: string;
-}): JSX.Element {
-	if (value === -1) {
-		let element = <div>-</div>;
-		if (entity && attribute) {
-			element = (
-				<Tooltip title={getInvalidValueTooltipText(entity, attribute)}>
-					{element}
-				</Tooltip>
-			);
-		}
-
-		return element;
-	}
-
-	return <div>{children}</div>;
 }
 
 /**
@@ -101,35 +70,6 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 	}
 	// Red
 	return Color.BG_SAKURA_500;
-}
-
-export function EntityProgressBar({
-	value,
-	type,
-}: {
-	value: number;
-	type: 'request' | 'limit';
-}): JSX.Element {
-	const percentage = Number((value * 100).toFixed(1));
-
-	return (
-		<div className={styles.entityProgressBar}>
-			<Progress
-				percent={percentage}
-				strokeLinecap="butt"
-				size="small"
-				status="normal"
-				strokeColor={
-					type === 'limit'
-						? getStrokeColorForLimitUtilization(value)
-						: getStrokeColorForRequestUtilization(value)
-				}
-				className={styles.progressBar}
-				showInfo={false}
-			/>
-			<Typography.Text style={{ fontSize: '10px' }}>{percentage}%</Typography.Text>
-		</div>
-	);
 }
 
 export function EventContents({
@@ -247,20 +187,4 @@ export const filterDuplicateFilters = (
 	}
 
 	return uniqueFilters;
-};
-
-export const getFiltersFromParams = (
-	searchParams: URLSearchParams,
-	queryKey: string,
-): IBuilderQuery['filters'] | null => {
-	const filtersFromParams = searchParams.get(queryKey);
-	if (filtersFromParams) {
-		try {
-			const parsed = JSON.parse(filtersFromParams);
-			return parsed as IBuilderQuery['filters'];
-		} catch {
-			return null;
-		}
-	}
-	return null;
 };

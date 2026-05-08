@@ -29,8 +29,8 @@ var (
 )
 
 type GettableAuthDomain struct {
-	*StorableAuthDomain
-	*AuthDomainConfig
+	StorableAuthDomain
+	Config            AuthDomainConfig   `json:"config"`
 	AuthNProviderInfo *AuthNProviderInfo `json:"authNProviderInfo"`
 }
 
@@ -43,7 +43,7 @@ type PostableAuthDomain struct {
 	Name   string           `json:"name"`
 }
 
-type UpdateableAuthDomain struct {
+type UpdatableAuthDomain struct {
 	Config AuthDomainConfig `json:"config"`
 }
 
@@ -57,6 +57,15 @@ type StorableAuthDomain struct {
 	types.TimeAuditable
 }
 
+// TODO: the oneOf emitted by JSONSchemaOneOf is not the shape OpenAPI wants
+// for a discriminated union. OpenAPI's discriminator requires every oneOf
+// branch to be a $ref to a named component and a sibling property whose value
+// selects the variant. ssoType is already discriminator-shaped, but the
+// variant payload lives in a sibling field (samlConfig / googleAuthConfig /
+// oidcConfig) instead of being the payload itself, so no discriminator can
+// be attached. Refactor AuthDomainConfig into an envelope (see
+// ruletypes.RuleThresholdData for the pattern) where the chosen config is
+// the payload and ssoType is the discriminator.
 type AuthDomainConfig struct {
 	SSOEnabled    bool          `json:"ssoEnabled"`
 	AuthNProvider AuthNProvider `json:"ssoType"`
@@ -111,8 +120,8 @@ func NewAuthDomainFromStorableAuthDomain(storableAuthDomain *StorableAuthDomain)
 
 func NewGettableAuthDomainFromAuthDomain(authDomain *AuthDomain, authNProviderInfo *AuthNProviderInfo) *GettableAuthDomain {
 	return &GettableAuthDomain{
-		StorableAuthDomain: authDomain.StorableAuthDomain(),
-		AuthDomainConfig:   authDomain.AuthDomainConfig(),
+		StorableAuthDomain: *authDomain.StorableAuthDomain(),
+		Config:             *authDomain.AuthDomainConfig(),
 		AuthNProviderInfo:  authNProviderInfo,
 	}
 }
@@ -184,6 +193,14 @@ func (typ *AuthDomainConfig) UnmarshalJSON(data []byte) error {
 	*typ = AuthDomainConfig(temp)
 	return nil
 
+}
+
+func (AuthDomainConfig) JSONSchemaOneOf() []any {
+	return []any{
+		SamlConfig{},
+		GoogleConfig{},
+		OIDCConfig{},
+	}
 }
 
 type AuthDomainStore interface {
