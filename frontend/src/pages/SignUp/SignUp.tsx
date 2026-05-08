@@ -27,6 +27,39 @@ type FormValues = {
 	isAnonymous: boolean;
 };
 
+const validatePassword = (pwd: string): string | null => {
+	if (pwd.length < 12) {
+		return 'Password must be at least 12 characters long';
+	}
+
+	const symbols = '~!@#$%^&*()_+`-={}|[]\\:"<>?,./';
+	let hasUpperCase = false;
+	let hasLowerCase = false;
+	let hasNumber = false;
+	let hasSymbol = false;
+
+	for (let i = 0; i < pwd.length; i++) {
+		const char = pwd[i];
+		if (char >= 'a' && char <= 'z') {
+			hasLowerCase = true;
+		} else if (char >= 'A' && char <= 'Z') {
+			hasUpperCase = true;
+		} else if (char >= '0' && char <= '9') {
+			hasNumber = true;
+		} else if (symbols.includes(char)) {
+			hasSymbol = true;
+		} else {
+			return 'Password contains invalid characters';
+		}
+	}
+
+	if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSymbol) {
+		return 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one symbol';
+	}
+
+	return null;
+};
+
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 	const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
@@ -39,6 +72,7 @@ function SignUp(): JSX.Element {
 	// Watch form values for reactive validation
 	const email = Form.useWatch('email', form);
 	const password = Form.useWatch('password', form);
+	const passwordError = password ? validatePassword(password) : null;
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
 	const signUp = async (values: FormValues): Promise<void> => {
@@ -95,7 +129,8 @@ function SignUp(): JSX.Element {
 			Boolean(email?.trim()) &&
 			Boolean(password?.trim()) &&
 			Boolean(confirmPassword?.trim()) &&
-			password === confirmPassword,
+			password === confirmPassword &&
+			validatePassword(password) === null,
 		[loading, email, password, confirmPassword],
 	);
 
@@ -137,6 +172,8 @@ function SignUp(): JSX.Element {
 								<FormContainer.Item
 									name="password"
 									validateTrigger="onBlur"
+									validateStatus={passwordError ? 'error' : undefined}
+									help={passwordError}
 									rules={[{ required: true, message: 'Please enter password!' }]}
 								>
 									<AntdInput.Password
