@@ -102,7 +102,7 @@ export function QueryTable({
 				onClick({ x: e.clientX, y: e.clientY }, { record, column, tableColumns });
 			}
 		},
-		[enableDrillDown, onClick],
+		[isCellClickable, onClick],
 	);
 
 	// Click handler to columns to capture clicked data

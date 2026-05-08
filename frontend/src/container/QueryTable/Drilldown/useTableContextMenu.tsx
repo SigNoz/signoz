@@ -63,8 +63,10 @@ export function useTableContextMenu({
 
 	const treatAsAggregate = useMemo(
 		() =>
-			clickedData?.column?.isValueColumn || (!isBuilderQuery && !hasValueColumns),
-		[clickedData?.column?.isValueColumn, isBuilderQuery, hasValueColumns],
+			!!clickedData &&
+			(clickedData?.column?.isValueColumn ||
+				(!isBuilderQuery && !hasValueColumns)),
+		[clickedData, isBuilderQuery, hasValueColumns],
 	);
 
 	const aggregateData = useMemo((): AggregateData | null => {
