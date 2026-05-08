@@ -34,11 +34,15 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const isQueryTypeBuilder = query.queryType === 'builder';
 
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 	const { loading, enableDrillDown = false, contextLinks } = props;
+
+	const isQueryTypeBuilder = query.queryType === 'builder';
+	const hasContextLinks = (contextLinks?.linksData?.length || 0) > 0;
+	const isCellClickable =
+		enableDrillDown && (isQueryTypeBuilder || hasContextLinks);
 
 	const {
 		coordinates,
@@ -92,13 +96,13 @@ export function QueryTable({
 			column: any,
 			tableColumns: any,
 		): void => {
-			if (isQueryTypeBuilder && enableDrillDown) {
+			if (isCellClickable) {
 				e.stopPropagation();
 
 				onClick({ x: e.clientX, y: e.clientY }, { record, column, tableColumns });
 			}
 		},
-		[isQueryTypeBuilder, enableDrillDown, onClick],
+		[enableDrillDown, onClick],
 	);
 
 	// Click handler to columns to capture clicked data
@@ -116,9 +120,9 @@ export function QueryTable({
 						<div
 							role="button"
 							className={cx({
-								'clickable-cell': isQueryTypeBuilder && enableDrillDown,
+								'clickable-cell': isCellClickable,
 							})}
-							tabIndex={0}
+							tabIndex={isCellClickable ? 0 : -1}
 							onClick={(e): void => {
 								handleColumnClick(e, record, column, tableColumns);
 							}}
@@ -129,7 +133,7 @@ export function QueryTable({
 					);
 				},
 			})),
-		[tableColumns, isQueryTypeBuilder, enableDrillDown, handleColumnClick],
+		[tableColumns, isCellClickable, handleColumnClick],
 	);
 
 	const paginationConfig = {

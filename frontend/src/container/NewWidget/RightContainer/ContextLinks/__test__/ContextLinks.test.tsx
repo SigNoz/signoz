@@ -131,11 +131,11 @@ describe('ContextLinks Component', () => {
 
 			// Fill in the form fields using placeholder text
 			const labelInput = screen.getByPlaceholderText(
-				'View Traces details: {{_traceId}}',
+				'View Traces details: {{_trace_id}}',
 			);
 			fireEvent.change(labelInput, { target: { value: 'New Link' } });
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 			fireEvent.change(urlInput, { target: { value: 'https://example.com' } });
 
@@ -242,10 +242,10 @@ describe('ContextLinks Component', () => {
 
 			// Check that form field inputs are present using placeholder text
 			const labelInput = screen.getByPlaceholderText(
-				'View Traces details: {{_traceId}}',
+				'View Traces details: {{_trace_id}}',
 			);
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 			expect(labelInput.tagName).toBe('INPUT');
 			expect(urlInput.tagName).toBe('INPUT');
@@ -298,10 +298,10 @@ describe('ContextLinks Component', () => {
 
 			// Form should be pre-populated with existing data from the first context link
 			const labelInput = screen.getByPlaceholderText(
-				'View Traces details: {{_traceId}}',
+				'View Traces details: {{_trace_id}}',
 			);
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 
 			// Check that the form is pre-populated with the first context link's data
@@ -331,7 +331,7 @@ describe('ContextLinks Component', () => {
 
 			// Type a URL with query parameters
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 			const testUrl =
 				'https://example.com/api?param1=value1&param2=value2&param3=value3';
@@ -417,7 +417,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should be updated with the parameter
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?search=query');
 		});
@@ -466,7 +466,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should be cleaned up
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('');
 		});
@@ -510,7 +510,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should contain both parameters
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?page=1&size=10');
 
@@ -537,7 +537,7 @@ describe('ContextLinks Component', () => {
 
 			// Try to save with invalid URL
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 			fireEvent.change(urlInput, { target: { value: 'invalid-url' } });
 
@@ -585,7 +585,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should be properly encoded
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			) as HTMLInputElement;
 			expect(urlInput.value).toBe('?user%40domain=John%20Doe%20%26%20Co.');
 		});
@@ -606,10 +606,10 @@ describe('ContextLinks Component', () => {
 
 			// Type URL with template variable
 			const urlInput = screen.getByPlaceholderText(
-				'http://localhost/trace/{{_traceId}}',
+				'http://localhost/trace/{{_trace_id}}',
 			);
 			const testUrl =
-				'https://example.com/trace/{{_traceId}}?service={{_serviceName}}';
+				'https://example.com/trace/{{_trace_id}}?service={{_serviceName}}';
 			fireEvent.change(urlInput, { target: { value: testUrl } });
 
 			// Wait for parameter parsing
@@ -623,7 +623,7 @@ describe('ContextLinks Component', () => {
 
 			// URL should maintain template variables
 			expect((urlInput as HTMLInputElement).value).toBe(
-				'https://example.com/trace/{{_traceId}}?service={{_serviceName}}',
+				'https://example.com/trace/{{_trace_id}}?service={{_serviceName}}',
 			);
 		});
 	});

@@ -45,8 +45,6 @@ export function useGraphContextMenu({
 } {
 	const drilldownQuery = useGetCompositeQueryParam() || query;
 
-	const isQueryTypeBuilder = drilldownQuery?.queryType === 'builder';
-
 	const { aggregateDrilldownConfig } = useAggregateDrilldown({
 		query: drilldownQuery,
 		widgetId,
@@ -60,7 +58,7 @@ export function useGraphContextMenu({
 	});
 
 	const menuItemsConfig = useMemo(() => {
-		if (!coordinates || !graphData || !isQueryTypeBuilder) {
+		if (!coordinates || !graphData) {
 			return {};
 		}
 		// Check if queryName is valid for drilldown
@@ -69,7 +67,7 @@ export function useGraphContextMenu({
 		}
 
 		return aggregateDrilldownConfig;
-	}, [coordinates, aggregateDrilldownConfig, graphData, isQueryTypeBuilder]);
+	}, [coordinates, aggregateDrilldownConfig, graphData]);
 
 	return { menuItemsConfig };
 }

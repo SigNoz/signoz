@@ -116,7 +116,8 @@ const useAggregateDrilldown = ({
 		aggregateDataWithTimeRange.filters.forEach((filter) => {
 			if (filter.filterKey && filter.filterValue !== undefined) {
 				// Check if this field is present in groupBy from the query
-				const isFieldInGroupBy = groupByFields.includes(filter.filterKey);
+				const isFieldInGroupBy =
+					query.queryType !== 'builder' || groupByFields.includes(filter.filterKey);
 
 				if (isFieldInGroupBy) {
 					fieldVars[filter.filterKey] = filter.filterValue;

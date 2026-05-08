@@ -188,29 +188,43 @@ const useBaseAggregateOptions = ({
 			queryName as string,
 		);
 
+		const isQueryTypeBuilder = query.queryType === 'builder';
+
 		const baseContextConfig = getBaseContextConfig({
 			handleBaseDrilldown,
 			setSubMenu,
 			showDashboardVariablesOption,
-			showBreakoutOption: true,
-		}).filter((item) => !item.hidden);
+			showBreakoutOption: isQueryTypeBuilder,
+		}).filter(
+			(item) =>
+				!item.hidden && (isQueryTypeBuilder || item.key === 'dashboard_variables'),
+		);
+
+		const contextLinksItems = getContextLinksItems();
+
+		// For non-builder queries with no context links, don't show menu
+		if (!isQueryTypeBuilder && contextLinksItems.length === 0) {
+			return {};
+		}
 
 		return {
 			items: (
 				<>
-					<ContextMenu.Header>
-						<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
-						<div
-							style={{
-								fontWeight: 'normal',
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-							}}
-						>
-							{aggregateData?.label || aggregations}
-						</div>
-					</ContextMenu.Header>
+					{baseContextConfig.length > 0 && (
+						<ContextMenu.Header>
+							<div style={{ textTransform: 'capitalize' }}>{dataSource}</div>
+							<div
+								style={{
+									fontWeight: 'normal',
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap',
+								}}
+							>
+								{aggregateData?.label || aggregations}
+							</div>
+						</ContextMenu.Header>
+					)}
 					<div>
 						<OverlayScrollbar
 							style={{ maxHeight: '200px' }}
@@ -242,7 +256,7 @@ const useBaseAggregateOptions = ({
 										</ContextMenu.Item>
 									);
 								})}
-								{getContextLinksItems()}
+								{contextLinksItems}
 							</>
 						</OverlayScrollbar>
 					</div>
@@ -257,6 +271,7 @@ const useBaseAggregateOptions = ({
 		resolvedQuery,
 		showDashboardVariablesOption,
 		setSubMenu,
+		query?.queryType,
 	]);
 
 	return { baseAggregateOptionsConfig };
