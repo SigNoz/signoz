@@ -9,7 +9,7 @@ import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { Sparkles } from '@signozhq/icons';
 
 import styles from './AIAssistantPage.module.scss';
-import ConversationsList from 'container/AIAssistant/components/HistorySidebar';
+import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
 interface RouteParams {
 	conversationId: string;
@@ -99,6 +99,7 @@ export default function AIAssistantPage(): JSX.Element {
 					<ConversationsList
 						onSelect={handleHistorySelect}
 						onNewConversation={handleNewConversation}
+						showAddNewConversation
 					/>
 
 					<div className={styles.chat}>

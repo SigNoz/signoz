@@ -8,12 +8,13 @@ import { Conversation } from '../../types';
 import { useVariant } from '../../VariantContext';
 import ConversationItem from '../ConversationItem';
 
-import styles from './HistorySidebar.module.scss';
+import styles from './ConversationsList.module.scss';
 
 interface ConversationsListProps {
 	/** Called when a conversation is selected — lets the parent navigate if needed */
 	onSelect?: (id: string) => void;
 	onNewConversation?: () => void;
+	showAddNewConversation?: boolean;
 }
 
 function groupByDate(
@@ -68,6 +69,7 @@ function HeaderLoadingDots(): JSX.Element {
 export default function ConversationsList({
 	onSelect,
 	onNewConversation,
+	showAddNewConversation = false,
 }: ConversationsListProps): JSX.Element {
 	const variant = useVariant();
 	const conversations = useAIAssistantStore((s) => s.conversations);
@@ -147,12 +149,12 @@ export default function ConversationsList({
 		variant === 'page' ? styles.variantPage : styles.variantPanel;
 
 	return (
-		<div className={cx(styles.history, variantClass)}>
+		<div className={cx(styles.conversationsList, variantClass)}>
 			<div className={styles.header}>
 				<span className={styles.heading}>Conversations</span>
 				{isLoadingThreads && <HeaderLoadingDots />}
 
-				{!isLoadingThreads && (
+				{!isLoadingThreads && showAddNewConversation && (
 					<Tooltip title="New conversation">
 						<Button
 							variant="outlined"

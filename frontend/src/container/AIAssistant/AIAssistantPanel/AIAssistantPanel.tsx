@@ -4,7 +4,7 @@ import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, Sparkles, X } from '@signozhq/icons';
 
-import HistorySidebar from '../components/HistorySidebar';
+import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
@@ -176,7 +176,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				</div>
 
 				{showHistory ? (
-					<HistorySidebar onSelect={handleHistorySelect} />
+					<ConversationsList onSelect={handleHistorySelect} />
 				) : (
 					activeConversationId && (
 						<ConversationView conversationId={activeConversationId} />

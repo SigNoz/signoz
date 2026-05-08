@@ -5,7 +5,7 @@ import { Button, Tooltip } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, Sparkles, X } from '@signozhq/icons';
 
-import HistorySidebar from '../components/HistorySidebar';
+import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
