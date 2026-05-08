@@ -13,6 +13,7 @@ import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getBasePath } from 'utils/basePath';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 
 import apiV1, { apiAlertManager, apiV2, apiV3, apiV4, apiV5 } from './apiV1';
 import { Logout } from './utils';
@@ -108,8 +109,7 @@ export const interceptorRejected = async (
 		if (axios.isAxiosError(value) && value.response) {
 			const { response } = value;
 
-			const isNoAuthMode =
-				getLocalStorageApi(LOCALSTORAGE.IS_NO_AUTH_MODE) === 'true';
+			const isNoAuthMode = getIsNoAuthMode();
 
 			if (
 				!isNoAuthMode &&

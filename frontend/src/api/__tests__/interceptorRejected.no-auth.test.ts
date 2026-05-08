@@ -1,7 +1,11 @@
 import axios from 'axios';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import { getIsNoAuthMode } from 'utils/noAuthMode';
 
 import { interceptorRejected } from '../index';
+
+jest.mock('utils/noAuthMode', () => ({
+	getIsNoAuthMode: jest.fn(),
+}));
 
 jest.mock('api/v2/sessions/rotate/post', () => ({
 	__esModule: true,
@@ -25,12 +29,11 @@ const { Logout } = require('../utils');
 describe('interceptorRejected — no-auth mode', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		localStorage.clear();
 		jest.spyOn(axios, 'isAxiosError').mockReturnValue(true);
 	});
 
-	it('does NOT call rotate or Logout when IS_NO_AUTH_MODE=true on 401', async () => {
-		localStorage.setItem(LOCALSTORAGE.IS_NO_AUTH_MODE, 'true');
+	it('does NOT call rotate or Logout when no-auth mode is enabled on 401', async () => {
+		(getIsNoAuthMode as jest.Mock).mockReturnValue(true);
 
 		const error = {
 			isAxiosError: true,
@@ -47,8 +50,8 @@ describe('interceptorRejected — no-auth mode', () => {
 		expect(Logout).not.toHaveBeenCalled();
 	});
 
-	it('DOES attempt rotate when IS_NO_AUTH_MODE=false on 401', async () => {
-		localStorage.setItem(LOCALSTORAGE.IS_NO_AUTH_MODE, 'false');
+	it('DOES attempt rotate when no-auth mode is disabled on 401', async () => {
+		(getIsNoAuthMode as jest.Mock).mockReturnValue(false);
 		(post as jest.Mock).mockResolvedValue({
 			data: { accessToken: 'a', refreshToken: 'b' },
 		});

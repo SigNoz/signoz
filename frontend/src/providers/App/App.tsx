@@ -17,6 +17,7 @@ import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
+import { setNoAuthMode } from 'utils/noAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -81,7 +82,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 	// Pre-flight: discover auth mode from public global config.
 	// On success: in impersonation mode → clear stale tokens, force isLoggedIn=true,
-	//             persist IS_NO_AUTH_MODE flag so the axios interceptor (outside React)
+	//             set noAuthMode singleton so the axios interceptor (outside React)
 	//             can skip the rotate-logout chain.
 	// On failure: fail-safe to normal auth flow (treat as not no-auth).
 	const { data: globalConfigData, isLoading: isFetchingGlobalConfig } =
@@ -104,12 +105,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 
 		if (impersonationEnabled) {
 			clearAuthStorage();
-			setLocalStorageApi(LOCALSTORAGE.IS_NO_AUTH_MODE, 'true');
 			setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+			setNoAuthMode(true);
 			setIsNoAuthMode(true);
 			setIsLoggedIn(true);
 		} else {
-			setLocalStorageApi(LOCALSTORAGE.IS_NO_AUTH_MODE, 'false');
+			setNoAuthMode(false);
 			setIsNoAuthMode(false);
 		}
 

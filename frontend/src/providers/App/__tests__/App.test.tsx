@@ -2,6 +2,7 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
@@ -13,6 +14,7 @@ import { AppProvider, useAppContext } from '../App';
 
 const MY_USER_URL = 'http://localhost/api/v2/users/me';
 const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
+const GLOBAL_CONFIG_URL = 'http://localhost/api/v1/global/config';
 
 jest.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
@@ -333,6 +335,92 @@ describe('AppProvider when authz/check fails', () => {
 				expect(result.current.userFetchError).toBeTruthy();
 			},
 			{ timeout: 2000 },
+		);
+	});
+});
+
+describe('AppProvider no-auth preflight', () => {
+	beforeEach(() => {
+		queryClient.clear();
+	});
+
+	afterEach(() => {
+		setNoAuthMode(false);
+	});
+
+	it('sets isNoAuthMode=true and noAuthMode singleton when impersonation is enabled', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: true } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isNoAuthMode).toBe(true);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(getIsNoAuthMode()).toBe(true);
+	});
+
+	it('leaves isNoAuthMode=false and clears noAuthMode singleton when impersonation is disabled', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: false } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.isNoAuthMode).toBe(false);
+		expect(getIsNoAuthMode()).toBe(false);
+	});
+
+	it('transitions isPreflightLoading from true to false once preflight resolves', async () => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: { identN: { impersonation: { enabled: false } } },
+					}),
+				),
+			),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		expect(result.current.isPreflightLoading).toBe(true);
+
+		await waitFor(
+			() => {
+				expect(result.current.isPreflightLoading).toBe(false);
+			},
+			{ timeout: 3000 },
 		);
 	});
 });
