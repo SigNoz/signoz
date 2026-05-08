@@ -1,4 +1,5 @@
-import { Button, Modal, Typography } from 'antd';
+import { Button, Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Loader, Trash2, X } from 'lucide-react';
 
 import { DeleteRoutingPolicyProps } from './types';

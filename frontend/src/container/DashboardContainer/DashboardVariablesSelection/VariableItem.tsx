@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import CustomVariableInput from './CustomVariableInput';
@@ -31,7 +32,7 @@ function VariableItem({
 
 	return (
 		<div className="variable-item">
-			<Typography.Text className="variable-name" ellipsis>
+			<Typography.Text className="variable-name" truncate={1}>
 				${name}
 				{description && (
 					<Tooltip title={description}>

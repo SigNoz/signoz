@@ -1,4 +1,5 @@
-import { Card, Row, Typography } from 'antd';
+import { Card, Row } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 interface Props {

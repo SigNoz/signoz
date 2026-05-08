@@ -8,7 +8,8 @@ import React, {
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button, Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
@@ -621,7 +622,7 @@ function K8sBaseDetails<T>({
 		>
 			{isEntityLoading && <LoadingContainer />}
 			{isEntityError && (
-				<Typography.Text type="danger">
+				<Typography.Text color="danger">
 					{entityResponse?.error || 'Failed to load entity details'}
 				</Typography.Text>
 			)}
@@ -633,7 +634,7 @@ function K8sBaseDetails<T>({
 								{metadataConfig.map((config) => (
 									<Typography.Text
 										key={config.label}
-										type="secondary"
+										color="muted"
 										className="entity-details-metadata-label"
 									>
 										{config.label}

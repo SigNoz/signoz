@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Select, Typography } from 'antd';
+import { InputNumber, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Axis3D, LineChart, Spline } from 'lucide-react';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

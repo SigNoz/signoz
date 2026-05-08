@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui';
-import { Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -589,7 +590,7 @@ function LogDetailInner({
 					<div className="log-detail-drawer__footer-hint">
 						<div className="log-detail-drawer__footer-hint-content">
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								Use
@@ -598,7 +599,7 @@ function LogDetailInner({
 							<span>/</span>
 							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								to view previous/next log

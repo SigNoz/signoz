@@ -1,7 +1,8 @@
 import { ChangeEvent, useMemo } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Input, Tooltip, Typography } from 'antd';
+import { Button, Flex, Input, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';

@@ -1,4 +1,5 @@
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { AxiosError } from 'axios';
 
 import './Error.styles.scss';
@@ -14,7 +15,7 @@ function Error(props: IErrorProps): JSX.Element {
 		<div className="error-waterfall">
 			<Typography.Text className="text">Something went wrong!</Typography.Text>
 			<Tooltip title={error?.message}>
-				<Typography.Text className="value" ellipsis>
+				<Typography.Text className="value" title={error?.message} truncate={1}>
 					{error?.message}
 				</Typography.Text>
 			</Tooltip>

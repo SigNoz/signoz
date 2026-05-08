@@ -4,7 +4,8 @@ import { useQueries, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { toast } from '@signozhq/ui';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
@@ -236,7 +237,7 @@ function TimeSeries({
 									disabled={isUpdatingMetricMetadata}
 									onClick={handleSaveUnit}
 								>
-									<Typography.Paragraph>Yes</Typography.Paragraph>
+									<Typography.Text>Yes</Typography.Text>
 								</Button>
 							</div>
 						)}

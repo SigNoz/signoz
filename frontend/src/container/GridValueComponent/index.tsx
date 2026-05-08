@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'container/GridPanelSwitch/utils';

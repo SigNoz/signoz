@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ConciergeBell, Plus, SquareArrowOutUpRight } from 'lucide-react';
 
 import './AlertsSection.styles.scss';
