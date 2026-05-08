@@ -2,6 +2,7 @@ package tagtypes
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -9,137 +10,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCleanupName(t *testing.T) {
+func TestValidatePostableTag(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     string
-		want      string
+		input     PostableTag
+		wantKey   string
+		wantValue string
 		wantError bool
 	}{
-		{name: "single segment", input: "prod", want: "prod"},
-		{name: "two segments", input: "team/blr", want: "team/blr"},
-		{name: "three segments", input: "team/BLR/platform", want: "team/BLR/platform"},
-		{name: "leading whitespace", input: "  prod", want: "prod"},
-		{name: "trailing whitespace", input: "prod  ", want: "prod"},
-		{name: "leading separator", input: "/prod", want: "prod"},
-		{name: "trailing separator", input: "prod/", want: "prod"},
-		{name: "consecutive separators collapsed", input: "team//blr", want: "team/blr"},
-		{name: "many separators collapsed", input: "team///blr////platform", want: "team/blr/platform"},
-		{name: "whitespace within segments", input: "team/ blr ", want: "team/blr"},
-		{name: "empty rejected", input: "", wantError: true},
-		{name: "only whitespace rejected", input: "   ", wantError: true},
-		{name: "only separators rejected", input: "///", wantError: true},
-		{name: "internal separator rejected", input: "team/foo::bar", wantError: true},
+		{name: "simple pair", input: PostableTag{Key: "team", Value: "pulse"}, wantKey: "team", wantValue: "pulse"},
+		{name: "preserves casing", input: PostableTag{Key: "Team", Value: "Pulse"}, wantKey: "Team", wantValue: "Pulse"},
+		{name: "trims key", input: PostableTag{Key: "  team  ", Value: "pulse"}, wantKey: "team", wantValue: "pulse"},
+		{name: "trims value", input: PostableTag{Key: "team", Value: "  pulse  "}, wantKey: "team", wantValue: "pulse"},
+
+		{name: "empty key rejected", input: PostableTag{Key: "", Value: "pulse"}, wantError: true},
+		{name: "empty value rejected", input: PostableTag{Key: "team", Value: ""}, wantError: true},
+		{name: "whitespace-only key rejected", input: PostableTag{Key: "   ", Value: "pulse"}, wantError: true},
+		{name: "whitespace-only value rejected", input: PostableTag{Key: "team", Value: "   "}, wantError: true},
+
+		{name: "slash in key rejected", input: PostableTag{Key: "team/eng", Value: "pulse"}, wantError: true},
+		{name: "slash in value rejected", input: PostableTag{Key: "team", Value: "pulse/events"}, wantError: true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := cleanupName(tc.input)
+			gotKey, gotValue, err := validatePostableTag(tc.input)
 			if tc.wantError {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
-			assert.Equal(t, tc.want, got)
+			assert.Equal(t, tc.wantKey, gotKey)
+			assert.Equal(t, tc.wantValue, gotValue)
 		})
 	}
-}
-
-func TestBuildInternalName(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{input: "prod", want: "prod"},
-		{input: "Prod", want: "prod"},
-		{input: "team/BLR/platform", want: "team::blr::platform"},
-		{input: "TEAM/BLR", want: "team::blr"},
-	}
-	for _, tc := range tests {
-		t.Run(tc.input, func(t *testing.T) {
-			assert.Equal(t, tc.want, buildInternalName(tc.input))
-		})
-	}
-}
-
-func TestMatchCasingWithExistingTags(t *testing.T) {
-	existing := []*Tag{
-		{Name: "team/BLR", InternalName: "team::blr"},
-		{Name: "team/BLR/Pulse", InternalName: "team::blr::pulse"},
-		{Name: "Database", InternalName: "database"},
-	}
-
-	tests := []struct {
-		name             string
-		input            string
-		wantName         string
-		wantInternalName string
-	}{
-		{
-			name:             "exact match reuses casing",
-			input:            "team/blr",
-			wantName:         "team/BLR",
-			wantInternalName: "team::blr",
-		},
-		{
-			name:             "exact match reuses casing for deeper tag",
-			input:            "TEAM/blr/pulse",
-			wantName:         "team/BLR/Pulse",
-			wantInternalName: "team::blr::pulse",
-		},
-		{
-			name:             "prefix match reuses prefix casing and keeps remainder",
-			input:            "team/blr/platform",
-			wantName:         "team/BLR/platform",
-			wantInternalName: "team::blr::platform",
-		},
-		{
-			name:             "longest prefix wins",
-			input:            "team/blr/pulse/sub",
-			wantName:         "team/BLR/Pulse/sub",
-			wantInternalName: "team::blr::pulse::sub",
-		},
-		{
-			name:             "no match returns input as-is",
-			input:            "Brand-New/Tag",
-			wantName:         "Brand-New/Tag",
-			wantInternalName: "brand-new::tag",
-		},
-		{
-			name:             "single segment exact match",
-			input:            "DATABASE",
-			wantName:         "Database",
-			wantInternalName: "database",
-		},
-		{
-			name:             "input that shares text but not segment boundary is not a prefix match",
-			input:            "teams/blr",
-			wantName:         "teams/blr",
-			wantInternalName: "teams::blr",
-		},
-		{
-			name:             "prefix of an existing tag",
-			input:            "TEAM",
-			wantName:         "team",
-			wantInternalName: "team",
-		},
-	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cleaned, err := cleanupName(tc.input)
-			require.NoError(t, err)
-			gotName, gotInternal := matchCasingWithExistingTags(cleaned, existing)
-			assert.Equal(t, tc.wantName, gotName)
-			assert.Equal(t, tc.wantInternalName, gotInternal)
-		})
-	}
-}
-
-func TestMatchCasingWithExistingTags_NoTagsExist(t *testing.T) {
-	cleaned, err := cleanupName("Foo/Bar")
-	require.NoError(t, err)
-	name, internal := matchCasingWithExistingTags(cleaned, nil)
-	assert.Equal(t, "Foo/Bar", name)
-	assert.Equal(t, "foo::bar", internal)
 }
 
 type fakeStore struct {
@@ -184,57 +87,78 @@ func TestResolve(t *testing.T) {
 		assert.Zero(t, store.listCallCount, "should not hit store when input is empty")
 	})
 
-	t.Run("creates missing tags and reuses existing", func(t *testing.T) {
+	t.Run("creates missing pairs and reuses existing", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
-		dbTag := NewTag(orgID, "team/BLR", "team::blr", "seed")
-		dbTag2 := NewTag(orgID, "Database", "database", "seed")
+		dbTag := NewTag(orgID, "team", "Pulse", "seed")
+		dbTag2 := NewTag(orgID, "Database", "redis", "seed")
 		store := &fakeStore{tags: []*Tag{dbTag, dbTag2}}
 
 		toCreate, matched, err := Resolve(context.Background(), store, orgID, []PostableTag{
-			{Name: "team/blr/platform"},
-			{Name: "DATABASE"},
-			{Name: "Brand-New"},
+			{Key: "team", Value: "events"},    // new
+			{Key: "DATABASE", Value: "REDIS"}, // case-only conflict
+			{Key: "Brand", Value: "New"},      // new
 		}, "u@signoz.io")
 		require.NoError(t, err)
 
-		createdInternalNames := []string{}
-		createdNames := map[string]string{}
+		createdLowerKVs := []string{}
 		for _, tg := range toCreate {
-			createdInternalNames = append(createdInternalNames, tg.InternalName)
-			createdNames[tg.InternalName] = tg.Name
+			createdLowerKVs = append(createdLowerKVs, strings.ToLower(tg.Key)+"\x00"+strings.ToLower(tg.Value))
 		}
-		assert.ElementsMatch(t, []string{"team::blr::platform", "brand-new"}, createdInternalNames,
-			"only the two missing tags should be returned for insertion")
-		assert.Equal(t, "team/BLR/platform", createdNames["team::blr::platform"], "should inherit casing from existing parent")
-		assert.Equal(t, "Brand-New", createdNames["brand-new"], "should keep input casing when no existing match")
+		assert.ElementsMatch(t, []string{"team\x00events", "brand\x00new"}, createdLowerKVs,
+			"only the two missing pairs should be returned for insertion")
 
-		require.Len(t, matched, 1, "DATABASE should hit the existing 'Database' tag")
+		require.Len(t, matched, 1, "DATABASE:REDIS should hit the existing 'Database:redis' tag")
 		assert.Same(t, dbTag2, matched[0], "matched should return the existing pointer with its authoritative ID")
 	})
 
-	t.Run("dedupes inputs that map to the same internal name", func(t *testing.T) {
+	t.Run("dedupes inputs that map to the same lower(key)+lower(value)", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
 		store := &fakeStore{}
 
 		toCreate, matched, err := Resolve(context.Background(), store, orgID, []PostableTag{
-			{Name: "Foo/Bar"},
-			{Name: "foo/bar"},
-			{Name: "FOO/BAR"},
+			{Key: "Foo", Value: "Bar"},
+			{Key: "foo", Value: "bar"},
+			{Key: "FOO", Value: "BAR"},
 		}, "u@signoz.io")
 		require.NoError(t, err)
 
 		require.Empty(t, matched)
 		require.Len(t, toCreate, 1, "duplicate inputs must collapse into a single insert")
-		assert.Equal(t, "Foo/Bar", toCreate[0].Name)
-		assert.Equal(t, "foo::bar", toCreate[0].InternalName)
+		assert.Equal(t, "Foo", toCreate[0].Key, "first input's casing wins")
+		assert.Equal(t, "Bar", toCreate[0].Value, "first input's casing wins")
+	})
+
+	t.Run("preserves existing casing on case-only match", func(t *testing.T) {
+		orgID := valuer.GenerateUUID()
+		dbTag := NewTag(orgID, "Team", "Pulse", "seed")
+		store := &fakeStore{tags: []*Tag{dbTag}}
+
+		toCreate, matched, err := Resolve(context.Background(), store, orgID, []PostableTag{
+			{Key: "team", Value: "PULSE"},
+		}, "u@signoz.io")
+		require.NoError(t, err)
+
+		assert.Empty(t, toCreate)
+		require.Len(t, matched, 1)
+		assert.Equal(t, "Team", matched[0].Key)
+		assert.Equal(t, "Pulse", matched[0].Value)
 	})
 
 	t.Run("propagates validation error from any input", func(t *testing.T) {
 		store := &fakeStore{}
 		_, _, err := Resolve(context.Background(), store, valuer.GenerateUUID(), []PostableTag{
-			{Name: "valid"},
-			{Name: ""},
+			{Key: "team", Value: "pulse"},
+			{Key: "", Value: "x"},
 		}, "u@signoz.io")
 		require.Error(t, err)
+	})
+
+	t.Run("propagates slash validation error", func(t *testing.T) {
+		store := &fakeStore{}
+		_, _, err := Resolve(context.Background(), store, valuer.GenerateUUID(), []PostableTag{
+			{Key: "team/eng", Value: "pulse"},
+		}, "u@signoz.io")
+		require.Error(t, err)
+		assert.True(t, strings.Contains(err.Error(), "/"), "error should reference the disallowed character")
 	})
 }
