@@ -594,6 +594,20 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		slog.String("idempotency_key", idempotencyKey),
 	)
 
+	for _, reading := range readings {
+		provider.settings.Logger().DebugContext(ctx, "shipping meter reading",
+			slog.String("meter", reading.MeterName),
+			slog.Int64("value", reading.Value),
+			slog.String("unit", reading.Unit.StringValue()),
+			slog.String("aggregation", reading.Aggregation.StringValue()),
+			slog.Int64("start_unix_milli", reading.StartUnixMilli),
+			slog.Int64("end_unix_milli", reading.EndUnixMilli),
+			slog.Bool("is_completed", reading.IsCompleted),
+			slog.Any("dimensions", reading.Dimensions),
+			slog.String("idempotency_key", idempotencyKey),
+		)
+	}
+
 	body, err := json.Marshal(readings)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
