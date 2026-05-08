@@ -1,18 +1,23 @@
 import { MouseEventHandler, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { useNotifications } from 'hooks/useNotifications';
+import { toast } from '@signozhq/ui';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Span } from 'types/api/trace/getTraceV2';
 import { getAbsoluteUrl } from 'utils/basePath';
 
+// Accepts both V2 (spanId) and V3 (span_id) span shapes
+// TODO: Remove V2 (spanId) support when phasing out V2
+interface SpanLike {
+	spanId?: string;
+	span_id?: string;
+}
+
 export const useCopySpanLink = (
-	span?: Span,
+	span?: SpanLike,
 ): { onSpanCopy: MouseEventHandler<HTMLElement> } => {
 	const urlQuery = useUrlQuery();
 	const { pathname } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
 
 	const onSpanCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -25,18 +30,19 @@ export const useCopySpanLink = (
 
 			urlQuery.delete('spanId');
 
-			if (span.spanId) {
-				urlQuery.set('spanId', span?.spanId);
+			const id = span.span_id || span.spanId;
+			if (id) {
+				urlQuery.set('spanId', id);
 			}
 
 			const link = getAbsoluteUrl(`${pathname}?${urlQuery.toString()}`);
 
 			setCopy(link);
-			notifications.success({
-				message: 'Copied to clipboard',
+			toast.success('Copied to clipboard', {
+				position: 'top-right',
 			});
 		},
-		[span, urlQuery, pathname, setCopy, notifications],
+		[span, urlQuery, pathname, setCopy],
 	);
 
 	return {

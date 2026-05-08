@@ -12,12 +12,12 @@
     "types": ["node", "@playwright/test"],
     "paths": {
       "@tests/*": ["./tests/*"],
-      "@utils/*": ["./utils/*"],
+      "@helpers/*": ["./helpers/*"],
       "@specs/*": ["./specs/*"]
     },
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": ["tests/**/*.ts", "utils/**/*.ts", "playwright.config.ts"],
+  "include": ["tests/**/*.ts", "helpers/**/*.ts", "fixtures/**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

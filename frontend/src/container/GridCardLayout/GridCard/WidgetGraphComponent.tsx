@@ -8,7 +8,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Skeleton, Tooltip, Typography } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -397,7 +398,7 @@ function WidgetGraphComponent({
 
 			{queryResponse.error && customErrorMessage && (
 				<div className="error-message-container">
-					<Typography.Text type="warning">{customErrorMessage}</Typography.Text>
+					<Typography.Text color="warning">{customErrorMessage}</Typography.Text>
 				</div>
 			)}
 

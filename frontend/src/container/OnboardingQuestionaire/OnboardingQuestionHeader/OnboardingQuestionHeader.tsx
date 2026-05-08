@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import barberPoolUrl from '@/assets/svgs/barber-pool.svg';
 
@@ -19,9 +19,9 @@ export function OnboardingQuestionHeader({
 			<Typography.Title level={4} className="onboarding-header-title">
 				{title}
 			</Typography.Title>
-			<Typography.Paragraph className="onboarding-header-subtitle">
+			<Typography.Text className="onboarding-header-subtitle">
 				{subtitle}
-			</Typography.Paragraph>
+			</Typography.Text>
 		</div>
 	);
 }

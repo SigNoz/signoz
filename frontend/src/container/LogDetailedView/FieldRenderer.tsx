@@ -1,4 +1,5 @@
-import { Divider, Tooltip, Typography } from 'antd';
+import { Divider, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';
@@ -14,7 +15,7 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 			{dataType && newField && logType ? (
 				<>
 					<Tooltip placement="left" title={newField} mouseLeaveDelay={0}>
-						<Typography.Text ellipsis className="label">
+						<Typography.Text truncate={1} className="label">
 							{newField}{' '}
 						</Typography.Text>
 					</Tooltip>

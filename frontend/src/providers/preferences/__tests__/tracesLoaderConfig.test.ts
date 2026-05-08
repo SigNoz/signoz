@@ -198,7 +198,7 @@ describe('tracesLoaderConfig', () => {
 				}),
 			)}`;
 
-			const result = await tracesLoaderConfig.url();
+			const result = tracesLoaderConfig.url();
 
 			expect(result.columns).toStrictEqual(traceColumns);
 		});
@@ -212,7 +212,7 @@ describe('tracesLoaderConfig', () => {
 				}),
 			)}`;
 
-			const result = await tracesLoaderConfig.url();
+			const result = tracesLoaderConfig.url();
 
 			// Should return empty array, which triggers fallback to defaults in preferencesLoader
 			expect(result.columns).toStrictEqual([]);
@@ -230,7 +230,7 @@ describe('tracesLoaderConfig', () => {
 				}),
 			)}`;
 
-			const result = await tracesLoaderConfig.url();
+			const result = tracesLoaderConfig.url();
 
 			// Without signal field, columns pass through validation
 			// This matches the current implementation behavior where only columns

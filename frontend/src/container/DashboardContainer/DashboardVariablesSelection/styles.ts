@@ -1,5 +1,5 @@
 import { grey } from '@ant-design/colors';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const VariableContainer = styled.div`

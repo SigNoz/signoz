@@ -1,0 +1,43 @@
+.trace-v3-filter-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+
+	.query-builder-search-v2 {
+		width: 100%;
+	}
+
+	.pre-next-toggle {
+		display: flex;
+		flex-shrink: 0;
+		gap: 12px;
+
+		.ant-typography {
+			display: flex;
+			align-items: center;
+			color: var(--l2-foreground);
+			font-family: 'Geist Mono';
+			font-size: 12px;
+			font-weight: 400;
+			line-height: 18px;
+		}
+
+		.ant-btn {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: none;
+		}
+	}
+
+	.no-results {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		color: var(--l2-foreground);
+		font-family: 'Geist Mono';
+		font-size: 12px;
+		font-weight: 400;
+		line-height: 18px;
+	}
+}

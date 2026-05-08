@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Modal, Typography } from 'antd';
+import { Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';

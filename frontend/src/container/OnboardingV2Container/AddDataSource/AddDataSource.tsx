@@ -9,8 +9,8 @@ import {
 	Skeleton,
 	Space,
 	Steps,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { DOCS_BASE_URL } from 'constants/app';

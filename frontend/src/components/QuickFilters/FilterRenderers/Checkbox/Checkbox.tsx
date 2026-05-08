@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -640,16 +641,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											{filter.customRendererForValue ? (
 												filter.customRendererForValue(value)
 											) : (
-												<Typography.Text
-													className="value-string"
-													ellipsis={{
-														tooltip: {
-															placement: 'top',
-															mouseEnterDelay: 0.2,
-															mouseLeaveDelay: 0,
-														},
-													}}
-												>
+												<Typography.Text className="value-string" truncate={1}>
 													{String(value)}
 												</Typography.Text>
 											)}

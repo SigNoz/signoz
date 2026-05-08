@@ -2,8 +2,8 @@ import {
 	Col,
 	Dropdown as DropDownComponent,
 	Input as InputComponent,
-	Typography as TypographyComponent,
 } from 'antd';
+import { Typography as TypographyComponent } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const RetentionContainer = styled(Col)`

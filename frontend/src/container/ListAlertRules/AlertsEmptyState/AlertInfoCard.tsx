@@ -1,5 +1,5 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { openInNewTab } from 'utils/navigation';
 
 interface AlertInfoCardProps {

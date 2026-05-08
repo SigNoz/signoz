@@ -1,0 +1,28 @@
+.trace-details-header {
+	display: flex;
+	align-items: center;
+	padding: 8px 16px;
+	gap: 8px;
+
+	&__back-btn {
+		flex-shrink: 0;
+	}
+
+	.key-value-label {
+		flex-shrink: 0;
+	}
+
+	&__filter {
+		&.trace-v3-filter-row {
+			padding: 0;
+		}
+		max-width: 850px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__old-view-btn {
+		margin-left: auto;
+		flex-shrink: 0;
+	}
+}

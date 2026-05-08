@@ -1,3 +1,4 @@
+import { Typography } from '@signozhq/ui';
 import {
 	Dispatch,
 	SetStateAction,
@@ -18,7 +19,6 @@ import {
 	Tabs,
 	TabsProps,
 	Tooltip,
-	Typography,
 } from 'antd';
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
@@ -585,7 +585,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 							<div className="value-wrapper span-name-wrapper">
 								<Tooltip title={selectedSpan.name}>
-									<Typography.Text className="attribute-value" ellipsis>
+									<Typography.Text className="attribute-value" truncate={1}>
 										{selectedSpan.name}
 									</Typography.Text>
 								</Tooltip>
@@ -613,7 +613,6 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 											<Typography.Text
 												className="span-percentile-value"
 												onClick={(): void => setIsSpanPercentilesOpen((prev) => !prev)}
-												disabled={loadingSpanPercentilesData}
 											>
 												<span className="span-percentile-value-text">
 													p{spanPercentileValue}
@@ -861,7 +860,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 								<div className="dot" style={{ backgroundColor: color }} />
 								<div className="value-wrapper">
 									<Tooltip title={selectedSpan.serviceName}>
-										<Typography.Text className="service-value" ellipsis>
+										<Typography.Text className="service-value" truncate={1}>
 											{selectedSpan.serviceName}
 										</Typography.Text>
 									</Tooltip>

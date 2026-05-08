@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import './IntegrationDetailContentTabs.styles.scss';

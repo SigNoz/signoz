@@ -2,7 +2,8 @@ import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
 import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
-import { Button, Space, Typography } from 'antd';
+import { Button, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
@@ -22,8 +23,6 @@ import {
 import Tags from './Tag';
 
 const { Text } = Typography;
-
-const { Paragraph } = Typography;
 
 function AllTags({
 	updateTagIsError,
@@ -77,14 +76,14 @@ function AllTags({
 	if (traces.isTagModalError) {
 		return (
 			<ErrorContainer>
-				<Paragraph style={{ color: 'var(--warning-background)' }}>
+				<Text style={{ color: 'var(--warning-background)' }}>
 					Unrecognized query format. Please reset your query by clicking `X` in the
 					search bar above.
-				</Paragraph>
+				</Text>
 
-				<Paragraph style={{ color: 'var(--warning-background)' }}>
+				<Text style={{ color: 'var(--warning-background)' }}>
 					Please click on the search bar to get a drop down to select relevant tags
-				</Paragraph>
+				</Text>
 			</ErrorContainer>
 		);
 	}
@@ -111,7 +110,7 @@ function AllTags({
 					Add Tags Filter
 				</Button>
 
-				<Text ellipsis>
+				<Text truncate={1}>
 					Results will include spans with ALL the specified tags ( Rows are `ANDed` )
 				</Text>
 			</Space>

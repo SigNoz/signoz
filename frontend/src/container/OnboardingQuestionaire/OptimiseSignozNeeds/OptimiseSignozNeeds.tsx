@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui';
-import { Slider, Typography } from 'antd';
+import { Slider } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, Loader2, Minus } from 'lucide-react';
 
@@ -194,9 +195,9 @@ function OptimiseSignozNeeds({
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<Typography.Paragraph className="question">
+						<Typography.Text className="question">
 							What does your scale approximately look like?
-						</Typography.Paragraph>
+						</Typography.Text>
 					</div>
 
 					<div className="form-group">
