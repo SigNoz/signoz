@@ -16,12 +16,12 @@ func NewModule(store tagtypes.Store) tag.Module {
 	return &module{store: store}
 }
 
-func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
+func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
 	if len(postable) == 0 {
 		return []*tagtypes.Tag{}, nil
 	}
 
-	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, postable, createdBy)
+	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, entityType, postable, createdBy)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +45,13 @@ func (m *module) SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, enti
 	if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, entityType, entityID, tagIDs)); err != nil {
 		return err
 	}
-	return m.store.DeleteRelationsExcept(ctx, entityID, tagIDs)
+	return m.store.DeleteRelationsExcept(ctx, entityType, entityID, tagIDs)
 }
 
-func (m *module) ListForEntity(ctx context.Context, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
-	return m.store.ListByEntity(ctx, entityID)
+func (m *module) ListForEntity(ctx context.Context, entityType tagtypes.EntityType, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
+	return m.store.ListByEntity(ctx, entityType, entityID)
 }
 
-func (m *module) ListForEntities(ctx context.Context, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
-	return m.store.ListByEntities(ctx, entityIDs)
+func (m *module) ListForEntities(ctx context.Context, entityType tagtypes.EntityType, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+	return m.store.ListByEntities(ctx, entityType, entityIDs)
 }
