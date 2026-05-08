@@ -1,5 +1,6 @@
 import { ArrowRightOutlined, PlayCircleFilled } from '@ant-design/icons';
-import { Flex, Typography } from 'antd';
+import { Flex } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { openInNewTab } from 'utils/navigation';
 
 interface InfoLinkTextProps {

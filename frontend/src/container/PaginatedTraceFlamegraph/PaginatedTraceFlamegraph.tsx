@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Progress, Skeleton, Tooltip, Typography } from 'antd';
+import { Progress, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
@@ -151,7 +152,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 									<section className="service-name">
 										<div className="square-box" style={{ backgroundColor: color }} />
 										<Tooltip title={service}>
-											<Typography.Text className="service-text" ellipsis>
+											<Typography.Text className="service-text" truncate={1}>
 												{service}
 											</Typography.Text>
 										</Tooltip>

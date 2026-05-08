@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Divider, Drawer, Typography } from 'antd';
+import { Divider, Drawer } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';

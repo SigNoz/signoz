@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 interface Props {
@@ -40,7 +40,7 @@ interface SpanTextProps extends Pick<Props, 'leftOffset'> {
 	isDarkMode: boolean;
 }
 
-export const SpanText = styled(Typography.Paragraph)<SpanTextProps>`
+export const SpanText = styled(Typography.Text)<SpanTextProps>`
 	&&& {
 		left: ${({ leftOffset }): string => `${leftOffset}%`};
 		top: 65%;

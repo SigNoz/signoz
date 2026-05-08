@@ -1,4 +1,5 @@
-import { Skeleton, Typography } from 'antd';
+import { Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ENTITY_VERSION_V4 } from 'constants/app';

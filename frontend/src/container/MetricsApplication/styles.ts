@@ -2,8 +2,8 @@ import {
 	Card as CardComponent,
 	Col as ColComponent,
 	Row as RowComponent,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`

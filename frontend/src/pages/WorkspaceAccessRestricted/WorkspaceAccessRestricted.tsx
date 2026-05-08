@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Row, Skeleton, Space, Typography } from 'antd';
+import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';

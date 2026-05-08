@@ -1,5 +1,6 @@
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './CreateEdit.styles.scss';
@@ -57,10 +58,10 @@ function AuthnProviderSelector({
 				<Typography.Title level={4}>
 					Configure Authentication Method
 				</Typography.Title>
-				<Typography.Paragraph italic>
+				<Typography.Text italic>
 					SigNoz supports the following single sign-on services (SSO). Get started
 					with setting your project’s SSO below
-				</Typography.Paragraph>
+				</Typography.Text>
 			</section>
 			<section className="selector">
 				{authnProviders.map((provider) => {
@@ -70,9 +71,9 @@ function AuthnProviderSelector({
 								<span className="icon">{provider.icon}</span>
 								<div className="title-description">
 									<Typography.Text className="title">{provider.title}</Typography.Text>
-									<Typography.Paragraph className="description">
+									<Typography.Text className="description">
 										{provider.description}
-									</Typography.Paragraph>
+									</Typography.Text>
 								</div>
 								<Button
 									onClick={(): void => setAuthnProvider(provider.key)}

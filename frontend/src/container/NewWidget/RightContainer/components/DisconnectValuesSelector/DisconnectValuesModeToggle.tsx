@@ -1,5 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { ToggleGroup, ToggleGroupItem, Typography } from '@signozhq/ui';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
 interface DisconnectValuesModeToggleProps {

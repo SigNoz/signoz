@@ -1,4 +1,5 @@
-import { Form as FormComponent, Typography as TypographyComponent } from 'antd';
+import { Form as FormComponent } from 'antd';
+import { Typography as TypographyComponent } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const Form = styled(FormComponent)`

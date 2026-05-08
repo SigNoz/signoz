@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import Spinner from 'components/Spinner';
 import { NotFoundContainer } from 'container/GridCardLayout/GridCard/FullView/styles';
 import { useFunnelDetails } from 'hooks/TracesFunnels/useFunnels';

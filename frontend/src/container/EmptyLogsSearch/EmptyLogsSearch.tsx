@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';

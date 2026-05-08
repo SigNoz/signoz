@@ -1,4 +1,5 @@
-import { Input, Typography } from 'antd';
+import { Input } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const DurationText = styled.div`

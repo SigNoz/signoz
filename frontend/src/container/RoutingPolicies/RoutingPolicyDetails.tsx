@@ -1,14 +1,6 @@
 import { useMemo } from 'react';
-import {
-	Button,
-	Divider,
-	Flex,
-	Form,
-	Input,
-	Modal,
-	Select,
-	Typography,
-} from 'antd';
+import { Button, Divider, Flex, Form, Input, Modal, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from 'lucide-react';

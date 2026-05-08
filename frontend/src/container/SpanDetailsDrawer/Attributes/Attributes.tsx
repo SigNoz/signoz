@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Input, Typography } from 'antd';
+import { Input } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import CopyClipboardHOC from 'components/Logs/CopyClipboardHOC';
 import { flattenObject } from 'container/LogDetailedView/utils';
@@ -95,7 +96,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 							key={`${item.field} + ${item.value}`}
 						>
 							<div className="item-key-wrapper">
-								<Typography.Text className="item-key" ellipsis>
+								<Typography.Text className="item-key" truncate={1}>
 									{item.field}
 								</Typography.Text>
 								{pinnedAttributes[item.field] && (
@@ -109,7 +110,7 @@ function Attributes(props: IAttributesProps): JSX.Element {
 										textToCopy={item.value}
 										tooltipText={item.value}
 									>
-										<Typography.Text className="item-value" ellipsis>
+										<Typography.Text className="item-value" truncate={1}>
 											{item.value}
 										</Typography.Text>
 									</CopyClipboardHOC>

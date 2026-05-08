@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import { GetStartedContent } from './renderConfig';
 import DocSection from './Section';

@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { FillMode } from 'lib/uPlotV2/config/types';
 
 import './FillModeSelector.styles.scss';

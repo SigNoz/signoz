@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppContext } from 'providers/App/App';
 

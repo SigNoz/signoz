@@ -8,7 +8,7 @@ import {
 	useRef,
 } from 'react';
 import * as Sentry from '@sentry/react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ToggleGraphProps } from 'components/Graph/types';
 import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';

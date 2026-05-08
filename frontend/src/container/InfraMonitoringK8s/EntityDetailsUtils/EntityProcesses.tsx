@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Space, Typography } from 'antd';
+import { Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import WaitlistFragment from 'components/HostMetricsDetail/WaitlistFragment/WaitlistFragment';
 
 import broomUrl from '@/assets/Icons/broom.svg';

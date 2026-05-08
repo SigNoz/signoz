@@ -14,8 +14,8 @@ import {
 	TableColumnsType,
 	TableColumnType,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {

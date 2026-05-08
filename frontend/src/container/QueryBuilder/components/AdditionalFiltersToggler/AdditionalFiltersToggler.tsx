@@ -1,6 +1,7 @@
 import { Fragment, memo, ReactNode, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Row, Typography } from 'antd';
+import { Col, Row } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Minus, Plus } from 'lucide-react';
 
 // ** Types

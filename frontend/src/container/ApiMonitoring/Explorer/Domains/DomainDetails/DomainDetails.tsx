@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Typography } from 'antd';
+import { Button, Divider, Drawer, Radio } from 'antd';
+import { Typography } from '@signozhq/ui';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {

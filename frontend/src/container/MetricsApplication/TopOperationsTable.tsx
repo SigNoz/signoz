@@ -9,8 +9,8 @@ import {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';

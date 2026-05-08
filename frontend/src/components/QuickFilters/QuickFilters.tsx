@@ -12,7 +12,8 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from '@signozhq/ui';
-import { Skeleton, Switch, Tooltip, Typography } from 'antd';
+import { Skeleton, Switch, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
