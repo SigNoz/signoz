@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -35,9 +34,6 @@ type Module interface {
 
 	// Updates an existing service account
 	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
-
-	// RoleAttachSelectors returns the selectors needed to check VerbAttach permission on a role.
-	RoleAttachSelectors(context.Context, valuer.UUID, valuer.UUID) ([]coretypes.Selector, error)
 
 	// Assign a role to the service account. this is safe to retry
 	SetRole(context.Context, valuer.UUID, valuer.UUID, valuer.UUID) error

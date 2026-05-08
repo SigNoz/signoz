@@ -376,43 +376,7 @@ func (module *module) getOrGetSetIdentity(ctx context.Context, serviceAccountID 
 	return identity, nil
 }
 
-func (module *module) RoleAttachSelectors(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]coretypes.Selector, error) {
-	role, err := module.authz.Get(ctx, orgID, roleID)
-	if err != nil {
-		return nil, err
-	}
-
-	return []coretypes.Selector{
-		coretypes.TypeRole.MustSelector(role.Name),
-		coretypes.TypeRole.MustSelector(coretypes.WildCardSelectorString),
-	}, nil
-}
-
 func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.UUID, role *authtypes.Role) error {
-	// Role-level attach check. The entity-level attach check (VerbAttach on the SA)
-	// is done in the middleware. The role check lives here because the role ID comes
-	// from the request body which is only available after the handler parses it.
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		return err
-	}
-
-	selectors, err := module.RoleAttachSelectors(ctx, orgID, role.ID)
-	if err != nil {
-		return err
-	}
-
-	err = module.authz.CheckWithTupleCreation(
-		ctx, claims, orgID,
-		authtypes.Relation{Verb: coretypes.VerbAttach},
-		coretypes.ResourceRole,
-		selectors,
-		[]coretypes.Selector{coretypes.TypeRole.MustSelector(authtypes.SigNozAdminRoleName)},
-	)
-	if err != nil {
-		return errors.Newf(errors.TypeForbidden, authtypes.ErrCodeAuthZForbidden, "caller does not have permission to grant role %q", role.Name)
-	}
-
 	serviceAccount, err := module.GetWithRoles(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -467,4 +431,3 @@ func apiKeyCacheKey(apiKey string) string {
 func identityCacheKey(serviceAccountID valuer.UUID) string {
 	return "identity::" + serviceAccountID.String()
 }
-

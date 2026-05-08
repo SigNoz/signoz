@@ -1,6 +1,9 @@
 package signozapiserver
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
@@ -107,8 +110,13 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/roles", handler.New(provider.authZ.Check(provider.serviceAccountHandler.SetRole, authtypes.Relation{Verb: coretypes.VerbAttach}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
-		authtypes.SigNozAdminRoleName,
+	if err := router.Handle("/api/v1/service_accounts/{id}/roles", handler.New(provider.authZ.CheckAll(provider.serviceAccountHandler.SetRole, []middleware.AuthZCheckGroup{
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbAttach}, Resource: coretypes.ResourceServiceAccount, SelectorCallback: serviceAccountInstanceSelectorCallback, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbAttach}, Resource: coretypes.ResourceRole, SelectorCallback: provider.roleAttachSelectorFromBody, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
 	}), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccountRole",
 		Tags:                []string{"serviceaccount"},
@@ -290,7 +298,39 @@ func (provider *provider) roleAttachSelectorFromPath(req *http.Request, claims a
 		return nil, err
 	}
 
-	return provider.serviceAccountModule.RoleAttachSelectors(req.Context(), valuer.MustNewUUID(claims.OrgID), roleID)
+	role, err := provider.authz.Get(req.Context(), valuer.MustNewUUID(claims.OrgID), roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	return []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(role.Name),
+		coretypes.TypeRole.MustSelector(coretypes.WildCardSelectorString),
+	}, nil
+
+}
+
+func (provider *provider) roleAttachSelectorFromBody(req *http.Request, claims authtypes.Claims) ([]coretypes.Selector, error) {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewReader(body))
+
+	postableRole := new(serviceaccounttypes.PostableServiceAccountRole)
+	if err := json.Unmarshal(body, postableRole); err != nil {
+		return nil, err
+	}
+
+	role, err := provider.authz.Get(req.Context(), valuer.MustNewUUID(claims.OrgID), postableRole.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return []coretypes.Selector{
+		coretypes.TypeRole.MustSelector(role.Name),
+		coretypes.TypeRole.MustSelector(coretypes.WildCardSelectorString),
+	}, nil
 }
 
 func serviceAccountCollectionSelectorCallback(_ *http.Request, _ authtypes.Claims) ([]coretypes.Selector, error) {

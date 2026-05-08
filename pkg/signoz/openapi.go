@@ -72,7 +72,6 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
 		struct{ querier.Handler }{},
-		struct{ serviceaccount.Module }{},
 		struct{ serviceaccount.Handler }{},
 		struct{ factory.Handler }{},
 		struct{ cloudintegration.Handler }{},

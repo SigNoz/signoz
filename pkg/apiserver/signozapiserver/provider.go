@@ -42,6 +42,7 @@ type provider struct {
 	settings                factory.ScopedProviderSettings
 	router                  *mux.Router
 	authZ                   *middleware.AuthZ
+	authz                   authz.AuthZ
 	orgHandler              organization.Handler
 	userHandler             user.Handler
 	sessionHandler          session.Handler
@@ -60,7 +61,6 @@ type provider struct {
 	rawDataExportHandler    rawdataexport.Handler
 	zeusHandler             zeus.Handler
 	querierHandler          querier.Handler
-	serviceAccountModule    serviceaccount.Module
 	serviceAccountHandler   serviceaccount.Handler
 	factoryHandler          factory.Handler
 	cloudIntegrationHandler cloudintegration.Handler
@@ -93,7 +93,6 @@ func NewFactory(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
-	serviceAccountModule serviceaccount.Module,
 	serviceAccountHandler serviceaccount.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
@@ -129,7 +128,6 @@ func NewFactory(
 			rawDataExportHandler,
 			zeusHandler,
 			querierHandler,
-			serviceAccountModule,
 			serviceAccountHandler,
 			factoryHandler,
 			cloudIntegrationHandler,
@@ -167,7 +165,6 @@ func newProvider(
 	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
-	serviceAccountModule serviceaccount.Module,
 	serviceAccountHandler serviceaccount.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
@@ -187,6 +184,7 @@ func newProvider(
 		router:                  router,
 		orgHandler:              orgHandler,
 		userHandler:             userHandler,
+		authz:                   authz,
 		sessionHandler:          sessionHandler,
 		authDomainHandler:       authDomainHandler,
 		preferenceHandler:       preferenceHandler,
@@ -203,7 +201,6 @@ func newProvider(
 		rawDataExportHandler:    rawDataExportHandler,
 		zeusHandler:             zeusHandler,
 		querierHandler:          querierHandler,
-		serviceAccountModule:    serviceAccountModule,
 		serviceAccountHandler:   serviceAccountHandler,
 		factoryHandler:          factoryHandler,
 		cloudIntegrationHandler: cloudIntegrationHandler,
