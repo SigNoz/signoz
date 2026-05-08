@@ -9,7 +9,8 @@ import {
 } from 'react';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { Virtualizer } from '@tanstack/react-virtual';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import SpanHoverCard from 'components/SpanHoverCard/SpanHoverCard';
@@ -322,7 +323,7 @@ export function SpanDuration({
 				{hasActionButtons && <SpanLineActionButtons span={span} />}
 				<Typography.Text
 					className="span-line-text"
-					ellipsis
+					truncate={1}
 					style={textStyle}
 				>{`${toFixed(time, 2)} ${timeUnitName}`}</Typography.Text>
 			</div>

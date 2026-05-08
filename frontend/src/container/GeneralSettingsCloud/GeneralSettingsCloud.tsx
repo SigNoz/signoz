@@ -1,4 +1,5 @@
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { Info } from 'lucide-react';
 
 import './GeneralSettingsCloud.styles.scss';

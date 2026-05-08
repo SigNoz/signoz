@@ -6,7 +6,7 @@ import {
 	RadioGroupItem,
 	RadioGroupLabel,
 } from '@signozhq/ui';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
 
@@ -133,9 +133,9 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 				<Typography.Title level={4} className="onboarding-header-title">
 					Welcome to SigNoz Cloud
 				</Typography.Title>
-				<Typography.Paragraph className="onboarding-header-subtitle">
+				<Typography.Text className="onboarding-header-subtitle">
 					Let&apos;s get you started
-				</Typography.Paragraph>
+				</Typography.Text>
 			</div>
 
 			<div className="questions-form-container">

@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { Zap } from 'lucide-react';
 
@@ -15,7 +15,6 @@ function OptionRendererForLogs({
 	isIndexed,
 	setDynamicPlaceholder,
 }: OptionRendererProps): JSX.Element {
-	const [truncated, setTruncated] = useState<boolean>(false);
 	const optionType = getOptionType(label);
 
 	return (
@@ -25,7 +24,7 @@ function OptionRendererForLogs({
 			onFocus={(): void => setDynamicPlaceholder(value)}
 		>
 			{optionType ? (
-				<Tooltip title={truncated ? `${value}` : ''} placement="topLeft">
+				<Tooltip title={value} placement="topLeft">
 					<div className="logs-options-select">
 						<section className="left-section">
 							{isIndexed ? (
@@ -33,10 +32,7 @@ function OptionRendererForLogs({
 							) : (
 								<div className="dot" />
 							)}
-							<Typography.Text
-								className="text value"
-								ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
-							>
+							<Typography.Text className="text value" truncate={1}>
 								{value}
 							</Typography.Text>
 						</section>
@@ -50,13 +46,10 @@ function OptionRendererForLogs({
 					</div>
 				</Tooltip>
 			) : (
-				<Tooltip title={truncated ? `${label}` : ''} placement="topLeft">
+				<Tooltip title={label} placement="topLeft">
 					<div className="without-option-type">
 						<div className="dot" />
-						<Typography.Text
-							className="text"
-							ellipsis={{ onEllipsis: (ellipsis): void => setTruncated(ellipsis) }}
-						>
+						<Typography.Text className="text" truncate={1}>
 							{label}
 						</Typography.Text>
 					</div>

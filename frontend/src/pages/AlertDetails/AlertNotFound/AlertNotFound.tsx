@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui';
 import ROUTES from 'constants/routes';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';

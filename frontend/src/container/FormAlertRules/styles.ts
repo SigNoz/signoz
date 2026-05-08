@@ -1,4 +1,5 @@
-import { Button, Card, Col, Form, Input, Select, Typography } from 'antd';
+import { Button, Card, Col, Form, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 const { TextArea } = Input;

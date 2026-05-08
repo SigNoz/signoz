@@ -19,7 +19,7 @@ import (
 // buildPodRecords assembles the page records. Phase counts come from
 // phaseCounts in both modes. In list mode (isPodUIDInGroupBy=true) each
 // group is one pod, so exactly one count is 1; PodPhase is derived from
-// which one. In grouped_list mode PodPhase stays PodPhaseNone.
+// which one. In grouped_list mode PodPhase stays PodPhaseNoData.
 func buildPodRecords(
 	isPodUIDInGroupBy bool,
 	resp *qbtypes.QueryRangeResponse,
@@ -38,7 +38,7 @@ func buildPodRecords(
 
 		record := inframonitoringtypes.PodRecord{ // initialize with default values
 			PodUID:           podUID,
-			PodPhase:         inframonitoringtypes.PodPhaseNone,
+			PodPhase:         inframonitoringtypes.PodPhaseNoData,
 			PodCPU:           -1,
 			PodCPURequest:    -1,
 			PodCPULimit:      -1,
@@ -46,7 +46,7 @@ func buildPodRecords(
 			PodMemoryRequest: -1,
 			PodMemoryLimit:   -1,
 			PodAge:           -1,
-			Meta:             map[string]any{},
+			Meta:             map[string]string{},
 		}
 
 		if metrics, ok := metricsMap[compositeKey]; ok {
@@ -71,11 +71,13 @@ func buildPodRecords(
 		}
 
 		if phaseCountsForGroup, ok := phaseCounts[compositeKey]; ok {
-			record.PendingPodCount = phaseCountsForGroup.Pending
-			record.RunningPodCount = phaseCountsForGroup.Running
-			record.SucceededPodCount = phaseCountsForGroup.Succeeded
-			record.FailedPodCount = phaseCountsForGroup.Failed
-			record.UnknownPodCount = phaseCountsForGroup.Unknown
+			record.PodCountsByPhase = inframonitoringtypes.PodCountsByPhase{
+				Pending:   phaseCountsForGroup.Pending,
+				Running:   phaseCountsForGroup.Running,
+				Succeeded: phaseCountsForGroup.Succeeded,
+				Failed:    phaseCountsForGroup.Failed,
+				Unknown:   phaseCountsForGroup.Unknown,
+			}
 
 			// In list mode each group is one pod; the count==1 bucket identifies the phase.
 			if isPodUIDInGroupBy {

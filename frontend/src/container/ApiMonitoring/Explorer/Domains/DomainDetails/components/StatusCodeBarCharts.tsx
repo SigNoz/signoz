@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Card, Skeleton, Typography } from 'antd';
+import { Button, Card, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import {

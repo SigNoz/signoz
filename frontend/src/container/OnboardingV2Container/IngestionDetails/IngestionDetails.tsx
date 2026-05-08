@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Skeleton, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
 import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';

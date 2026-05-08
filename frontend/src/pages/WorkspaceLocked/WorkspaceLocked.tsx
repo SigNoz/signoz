@@ -15,8 +15,8 @@ import {
 	Skeleton,
 	Space,
 	Tabs,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -334,7 +334,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										<Typography.Title level={2}>
 											<div className="workspace-locked__title">Upgrade to Continue</div>
 										</Typography.Title>
-										<Typography.Paragraph className="workspace-locked__details">
+										<Typography.Text className="workspace-locked__details">
 											{t('upgradeNow')}
 											<br />
 											{t('yourDataIsSafe')}{' '}
@@ -342,7 +342,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
 											</span>{' '}
 											{t('actNow')}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>

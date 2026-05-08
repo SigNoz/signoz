@@ -1,3 +1,4 @@
+import { Typography } from '@signozhq/ui';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
@@ -5,15 +6,7 @@ import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { SearchOutlined } from '@ant-design/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Space,
-	TableProps,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Space, TableProps, Tooltip } from 'antd';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { ColumnsType } from 'antd/lib/table';
@@ -360,13 +353,7 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Paragraph
-						ellipsis={{
-							rows: 2,
-						}}
-					>
-						{value}
-					</Typography.Paragraph>
+					<Typography.Text truncate={2}>{value}</Typography.Text>
 				</Tooltip>
 			),
 		},

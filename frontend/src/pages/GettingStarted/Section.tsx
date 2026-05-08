@@ -1,4 +1,5 @@
-import { Col, Row, Typography } from 'antd';
+import { Col, Row } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { map } from 'lodash-es';
 
 import DocCard from './DocCard';

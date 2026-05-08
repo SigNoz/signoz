@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Row, Tag, Typography } from 'antd';
+import { Row, Tag } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';

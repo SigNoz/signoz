@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 // ** Types
