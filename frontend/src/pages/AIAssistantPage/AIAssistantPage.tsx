@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { Button, Tooltip } from '@signozhq/ui';
+
 import ROUTES from 'constants/routes';
-import HistorySidebar from 'container/AIAssistant/components/HistorySidebar';
+
 import ConversationView from 'container/AIAssistant/ConversationView';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
-import { Minimize2, Plus, Sparkles } from '@signozhq/icons';
+import { Sparkles } from '@signozhq/icons';
 
 import styles from './AIAssistantPage.module.scss';
+import ConversationsList from 'container/AIAssistant/components/HistorySidebar';
 
 interface RouteParams {
 	conversationId: string;
@@ -28,7 +29,6 @@ export default function AIAssistantPage(): JSX.Element {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
-	const openDrawer = useAIAssistantStore((s) => s.openDrawer);
 
 	// Keep a ref so the effect can read latest conversations without re-firing
 	// when startNewConversation mutates the store mid-effect.
@@ -62,16 +62,6 @@ export default function AIAssistantPage(): JSX.Element {
 		}
 	}, [activeConversationId, conversationId, conversations, history]);
 
-	const handleMinimize = useCallback(() => {
-		openDrawer();
-		history.goBack();
-	}, [openDrawer, history]);
-
-	const handleNewConversation = useCallback(() => {
-		const newId = startNewConversation();
-		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history]);
-
 	// When conversations sidebar selects a thread, navigate to it
 	const handleHistorySelect = useCallback(
 		(id: string) => {
@@ -79,6 +69,11 @@ export default function AIAssistantPage(): JSX.Element {
 		},
 		[history],
 	);
+
+	const handleNewConversation = useCallback(() => {
+		const newId = startNewConversation();
+		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+	}, [startNewConversation, history]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so
@@ -95,37 +90,16 @@ export default function AIAssistantPage(): JSX.Element {
 			<div className={styles.page}>
 				<div className={styles.header}>
 					<div className={styles.title}>
-						<Sparkles size={18} color="var(--primary)" />
+						<Sparkles size={16} color="var(--primary)" />
 						<span>AI Assistant</span>
-					</div>
-
-					<div className={styles.actions}>
-						<Tooltip title="New conversation">
-							<Button
-								variant="solid"
-								color="secondary"
-								prefix={<Plus size={14} />}
-								onClick={handleNewConversation}
-							>
-								New
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="Minimize to panel">
-							<Button
-								variant="solid"
-								size="icon"
-								color="secondary"
-								onClick={handleMinimize}
-								aria-label="Minimize to panel"
-								prefix={<Minimize2 size={14} />}
-							/>
-						</Tooltip>
 					</div>
 				</div>
 
 				<div className={styles.body}>
-					<HistorySidebar onSelect={handleHistorySelect} />
+					<ConversationsList
+						onSelect={handleHistorySelect}
+						onNewConversation={handleNewConversation}
+					/>
 
 					<div className={styles.chat}>
 						{activeId && <ConversationView conversationId={activeId} />}

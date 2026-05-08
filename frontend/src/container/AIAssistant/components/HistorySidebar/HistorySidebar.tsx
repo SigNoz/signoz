@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
-import { Input } from '@signozhq/ui';
-import { Search } from '@signozhq/icons';
+import { Button, Input, Tooltip } from '@signozhq/ui';
+import { Plus, Search } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
@@ -10,9 +10,10 @@ import ConversationItem from '../ConversationItem';
 
 import styles from './HistorySidebar.module.scss';
 
-interface HistorySidebarProps {
+interface ConversationsListProps {
 	/** Called when a conversation is selected — lets the parent navigate if needed */
 	onSelect?: (id: string) => void;
+	onNewConversation?: () => void;
 }
 
 function groupByDate(
@@ -64,9 +65,10 @@ function HeaderLoadingDots(): JSX.Element {
 	);
 }
 
-export default function HistorySidebar({
+export default function ConversationsList({
 	onSelect,
-}: HistorySidebarProps): JSX.Element {
+	onNewConversation,
+}: ConversationsListProps): JSX.Element {
 	const variant = useVariant();
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
@@ -149,6 +151,20 @@ export default function HistorySidebar({
 			<div className={styles.header}>
 				<span className={styles.heading}>Conversations</span>
 				{isLoadingThreads && <HeaderLoadingDots />}
+
+				{!isLoadingThreads && (
+					<Tooltip title="New conversation">
+						<Button
+							variant="outlined"
+							size="sm"
+							color="secondary"
+							onClick={onNewConversation}
+							aria-label="New conversation"
+						>
+							<Plus size={14} />
+						</Button>
+					</Tooltip>
+				)}
 			</div>
 
 			<div className={styles.searchBar}>

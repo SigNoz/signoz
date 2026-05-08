@@ -109,7 +109,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		changelog,
 	} = useAppContext();
 
-	const isAIAssistantEnabled = isLoggedIn ? useIsAIAssistantEnabled() : false;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const fetchAIThreads = useAIAssistantStore((s) => s.fetchThreads);
 
 	// Bootstrap the AI Assistant thread list once the base URL is configured.

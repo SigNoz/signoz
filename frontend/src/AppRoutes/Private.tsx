@@ -41,9 +41,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const isAIAssistantEnabled = isLoggedInState
-		? useIsAIAssistantEnabled()
-		: false;
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const mapRoutes = useMemo(
 		() =>

@@ -26,7 +26,7 @@ $radius: 4px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 10px 12px 8px;
+	padding: 8px 12px;
 	flex-shrink: 0;
 }
 
@@ -39,11 +39,11 @@ $radius: 4px;
 	// Collapse the line-box to the glyph height so the loading dots
 	// (centered against the line-box) line up with the cap-height of the
 	// uppercase text instead of sitting visually low.
-	line-height: 1;
+	line-height: 24px;
 }
 
 .searchBar {
-	padding: 0 12px 8px;
+	padding: 0px 8px 12px;
 	flex-shrink: 0;
 }
 
