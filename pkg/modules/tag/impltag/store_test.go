@@ -41,10 +41,12 @@ func newTestStore(t *testing.T) sqlstore.SQLStore {
 		Exec(context.Background())
 	require.NoError(t, err)
 
-	_, err = store.BunDB().Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_id_lower_key_lower_value ON tag (org_id, LOWER(key), LOWER(value))`)
+	_, err = store.BunDB().Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_entity_lower_key_lower_value ON tag (org_id, entity_type, LOWER(key), LOWER(value))`)
 	require.NoError(t, err)
 	return store
 }
+
+var dashboardEntityType = tagtypes.MustNewEntityType("dashboard")
 
 func tagsByLowerKeyValue(t *testing.T, db *bun.DB) map[string]*tagtypes.Tag {
 	t.Helper()
@@ -63,8 +65,8 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	tagA := tagtypes.NewTag(orgID, "tag", "Database", "u@signoz.io")
-	tagB := tagtypes.NewTag(orgID, "team", "BLR", "u@signoz.io")
+	tagA := tagtypes.NewTag(orgID, dashboardEntityType, "tag", "Database", "u@signoz.io")
+	tagB := tagtypes.NewTag(orgID, dashboardEntityType, "team", "BLR", "u@signoz.io")
 	preIDA := tagA.ID
 	preIDB := tagB.ID
 
@@ -93,7 +95,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 
 	// Simulate a concurrent insert: someone else has already inserted "tag:Database".
-	winner := tagtypes.NewTag(orgID, "tag", "Database", "concurrent")
+	winner := tagtypes.NewTag(orgID, dashboardEntityType, "tag", "Database", "concurrent")
 	_, err := s.Create(ctx, []*tagtypes.Tag{winner})
 	require.NoError(t, err)
 	winnerID := winner.ID
@@ -101,7 +103,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	// Now our request runs with a different pre-generated ID for the same
 	// (key, value) — case differs but the functional unique index collapses
 	// them. RETURNING should overwrite our stale ID with winner's ID.
-	loser := tagtypes.NewTag(orgID, "TAG", "DATABASE", "u@signoz.io")
+	loser := tagtypes.NewTag(orgID, dashboardEntityType, "TAG", "DATABASE", "u@signoz.io")
 	loserPreID := loser.ID
 	require.NotEqual(t, winnerID, loserPreID, "pre-generated IDs must differ for this test to be meaningful")
 
@@ -126,13 +128,13 @@ func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	pre := tagtypes.NewTag(orgID, "tag", "Database", "concurrent")
+	pre := tagtypes.NewTag(orgID, dashboardEntityType, "tag", "Database", "concurrent")
 	_, err := s.Create(ctx, []*tagtypes.Tag{pre})
 	require.NoError(t, err)
 	preExistingID := pre.ID
 
-	conflict := tagtypes.NewTag(orgID, "tag", "Database", "u@signoz.io")
-	fresh := tagtypes.NewTag(orgID, "team", "BLR", "u@signoz.io")
+	conflict := tagtypes.NewTag(orgID, dashboardEntityType, "tag", "Database", "u@signoz.io")
+	fresh := tagtypes.NewTag(orgID, dashboardEntityType, "team", "BLR", "u@signoz.io")
 	freshPreID := fresh.ID
 
 	got, err := s.Create(ctx, []*tagtypes.Tag{conflict, fresh})
