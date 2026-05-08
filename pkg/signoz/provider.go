@@ -195,6 +195,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
 	)
 }
 

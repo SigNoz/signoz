@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 
 	"github.com/gorilla/handlers"
 
@@ -112,9 +113,11 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	}
 
 	// initiate agent config handler
+	spanAttrMappingFeature := implspanmapper.NewSpanAttrMappingFeature(signoz.Modules.SpanMapper)
+
 	agentConfMgr, err := agentConf.Initiate(&agentConf.ManagerOptions{
 		Store:         signoz.SQLStore,
-		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController},
+		AgentFeatures: []agentConf.AgentFeature{logParsingPipelineController, spanAttrMappingFeature},
 	})
 	if err != nil {
 		return nil, err
