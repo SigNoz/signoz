@@ -61,7 +61,9 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
-	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const isAIAssistantEnabled = isLoggedInState
+		? useIsAIAssistantEnabled()
+		: false;
 
 	const { hostname } = window.location;
 	const [pathname, setPathname] = useState(history.location.pathname);

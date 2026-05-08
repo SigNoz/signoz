@@ -221,6 +221,9 @@ export function getAppContextMock(
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
+		hostsData: null,
+		isFetchingHosts: false,
+		hostsFetchError: null,
 		orgPreferences: [
 			{
 				name: ORG_PREFERENCES.ORG_ONBOARDING,

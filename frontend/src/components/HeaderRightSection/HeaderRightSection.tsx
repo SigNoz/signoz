@@ -18,6 +18,7 @@ import FeedbackModal from './FeedbackModal';
 import ShareURLModal from './ShareURLModal';
 
 import './HeaderRightSection.styles.scss';
+import { useAppContext } from 'providers/App/App';
 
 interface HeaderRightSectionProps {
 	enableAnnouncements: boolean;
@@ -37,7 +38,8 @@ function HeaderRightSection({
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
-	const isAIAssistantEnabled = useIsAIAssistantEnabled();
+	const { isLoggedIn } = useAppContext();
+	const isAIAssistantEnabled = isLoggedIn ? useIsAIAssistantEnabled() : false;
 
 	const handleOpenFeedbackModal = useCallback((): void => {
 		logEvent('Feedback: Clicked', {

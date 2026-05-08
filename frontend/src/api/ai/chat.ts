@@ -65,7 +65,7 @@ import {
 	getAIBaseUrl,
 	SIGNOZ_URL_HEADER,
 } from '../AIAPIInstance';
-import { ENVIRONMENT } from 'constants/env';
+import { getSigNozInstanceUrl } from 'utils/signozInstanceUrl';
 
 // ---------------------------------------------------------------------------
 // SSE-only auth wrapper.
@@ -134,7 +134,7 @@ async function fetchSSEWithAuth(
 ): Promise<Response> {
 	const send = async (token: string | null): Promise<Response> => {
 		const headers: Record<string, string> = {
-			[SIGNOZ_URL_HEADER]: ENVIRONMENT.baseURL,
+			[SIGNOZ_URL_HEADER]: getSigNozInstanceUrl(),
 		};
 		if (token) {
 			headers.Authorization = `Bearer ${token}`;
