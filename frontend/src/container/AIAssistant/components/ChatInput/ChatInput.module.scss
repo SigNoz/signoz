@@ -176,6 +176,11 @@ $radius: 4px;
 		color: var(--l3-foreground);
 		opacity: 0.6;
 	}
+
+	&:disabled {
+		opacity: 0.2;
+		cursor: not-allowed;
+	}
 }
 
 .charWarning {
@@ -209,6 +214,7 @@ $radius: 4px;
 .contextPopover {
 	width: 480px !important;
 	max-width: min(92vw, 480px);
+	margin-left: 16px;
 	border: 1px solid var(--l2-border);
 	border-radius: $radius;
 	background: var(--l1-background);
@@ -220,6 +226,8 @@ $radius: 4px;
 	overflow-x: hidden;
 
 	--popover-padding: 0;
+
+	z-index: 1000;
 }
 
 .contextPopoverContent {

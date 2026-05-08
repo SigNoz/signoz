@@ -157,7 +157,7 @@ export default function ConversationsList({
 				{!isLoadingThreads && showAddNewConversation && (
 					<Tooltip title="New conversation">
 						<Button
-							variant="outlined"
+							variant="solid"
 							size="sm"
 							color="secondary"
 							onClick={onNewConversation}
