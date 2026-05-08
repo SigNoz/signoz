@@ -49,6 +49,7 @@ import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';
@@ -436,18 +437,20 @@ function ServiceAccountDrawer({
 						]}
 						enabled={!isDeleted && !!selectedAccountId}
 					>
-						<Button
-							variant="outlined"
-							size="sm"
-							color="secondary"
-							disabled={isDeleted}
-							onClick={(): void => {
-								void setIsAddKeyOpen(true);
-							}}
-						>
-							<Plus size={12} />
-							Add Key
-						</Button>
+						<NoAuthGuard>
+							<Button
+								variant="outlined"
+								size="sm"
+								color="secondary"
+								disabled={isDeleted}
+								onClick={(): void => {
+									void setIsAddKeyOpen(true);
+								}}
+							>
+								<Plus size={12} />
+								Add Key
+							</Button>
+						</NoAuthGuard>
 					</AuthZTooltip>
 				)}
 			</div>
@@ -550,16 +553,18 @@ function ServiceAccountDrawer({
 							checks={[buildSADeletePermission(selectedAccountId ?? '')]}
 							enabled={!!selectedAccountId}
 						>
-							<Button
-								variant="link"
-								color="destructive"
-								onClick={(): void => {
-									void setIsDeleteOpen(true);
-								}}
-							>
-								<Trash2 size={12} />
-								Delete Service Account
-							</Button>
+							<NoAuthGuard>
+								<Button
+									variant="link"
+									color="destructive"
+									onClick={(): void => {
+										void setIsDeleteOpen(true);
+									}}
+								>
+									<Trash2 size={12} />
+									Delete Service Account
+								</Button>
+							</NoAuthGuard>
 						</AuthZTooltip>
 					)}
 					{!isDeleted && (
@@ -568,15 +573,17 @@ function ServiceAccountDrawer({
 								<X size={14} />
 								Cancel
 							</Button>
-							<Button
-								variant="solid"
-								color="primary"
-								loading={isSaving}
-								disabled={!isDirty}
-								onClick={handleSave}
-							>
-								Save Changes
-							</Button>
+							<NoAuthGuard>
+								<Button
+									variant="solid"
+									color="primary"
+									loading={isSaving}
+									disabled={!isDirty}
+									onClick={handleSave}
+								>
+									Save Changes
+								</Button>
+							</NoAuthGuard>
 						</div>
 					)}
 				</>
