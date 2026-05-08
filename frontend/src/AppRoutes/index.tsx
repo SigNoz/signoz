@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -25,7 +25,7 @@ import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { StatusCodes } from 'http-status-codes';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import posthog from 'posthog-js';
+import type { PostHog } from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { CmdKProvider } from 'providers/cmdKProvider';
@@ -66,6 +66,8 @@ function App(): JSX.Element {
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	const posthogRef = useRef<PostHog | null>(null);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -120,7 +122,7 @@ function App(): JSX.Element {
 					});
 				}
 
-				posthog?.identify(id, {
+				posthogRef.current?.identify(id, {
 					email,
 					name: displayName,
 					orgName,
@@ -132,7 +134,7 @@ function App(): JSX.Element {
 					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
 				});
 
-				posthog?.group('company', orgId, {
+				posthogRef.current?.group('company', orgId, {
 					name: orgName,
 					deployment_name: hostNameParts[0],
 					data_region: hostNameParts[1],
@@ -301,9 +303,13 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
 			if (process.env.POSTHOG_KEY) {
-				posthog.init(process.env.POSTHOG_KEY, {
-					api_host: 'https://us.i.posthog.com',
-					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+				import('posthog-js').then(({ default: posthog }) => {
+					posthogRef.current = posthog;
+
+					posthog.init(process.env.POSTHOG_KEY as string, {
+						api_host: 'https://us.i.posthog.com',
+						person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+					});
 				});
 			}
 
@@ -327,7 +333,7 @@ function App(): JSX.Element {
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 					beforeSend(event) {
-						const sessionReplayUrl = posthog.get_session_replay_url?.({
+						const sessionReplayUrl = posthogRef.current?.get_session_replay_url?.({
 							withTimestamp: true,
 						});
 						if (sessionReplayUrl) {
@@ -344,7 +350,7 @@ function App(): JSX.Element {
 				setIsSentryInitialized(true);
 			}
 		} else {
-			posthog.reset();
+			posthogRef.current?.reset();
 			Sentry.close();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
