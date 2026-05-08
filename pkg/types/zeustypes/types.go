@@ -39,8 +39,8 @@ type Host struct {
 }
 
 type MeterCheckpoint struct {
-	Name       string
-	Checkpoint time.Time
+	Name      string
+	StartDate time.Time
 }
 
 func NewGettableHost(data []byte) *GettableHost {

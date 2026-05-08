@@ -53,8 +53,8 @@ func (provider *provider) PutMetersV3(_ context.Context, _ string, _ string, _ [
 	return errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "putting meters v3 is not supported")
 }
 
-func (provider *provider) GetMeterCheckpoints(_ context.Context, _ string) ([]zeustypes.MeterCheckpoint, error) {
-	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "fetching meter checkpoints is not supported")
+func (provider *provider) ListMeterCheckpoints(_ context.Context, _ string) ([]zeustypes.MeterCheckpoint, error) {
+	return nil, errors.New(errors.TypeUnsupported, zeus.ErrCodeUnsupported, "list meter checkpoints is not supported")
 }
 
 func (provider *provider) PutProfile(_ context.Context, _ string, _ *zeustypes.PostableProfile) error {

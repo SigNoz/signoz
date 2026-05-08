@@ -168,7 +168,7 @@ func (provider *Provider) PutMetersV3(ctx context.Context, key string, idempoten
 	return err
 }
 
-func (provider *Provider) GetMeterCheckpoints(ctx context.Context, key string) ([]zeustypes.MeterCheckpoint, error) {
+func (provider *Provider) ListMeterCheckpoints(ctx context.Context, key string) ([]zeustypes.MeterCheckpoint, error) {
 	response, err := provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/meters/checkpoints"),
@@ -180,7 +180,7 @@ func (provider *Provider) GetMeterCheckpoints(ctx context.Context, key string) (
 		return nil, err
 	}
 
-	checkpointValues := gjson.GetBytes(response, "data.checkpoints")
+	checkpointValues := gjson.GetBytes(response, "data")
 	if !checkpointValues.Exists() || checkpointValues.Type == gjson.Null {
 		return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoints are required")
 	}
@@ -197,19 +197,19 @@ func (provider *Provider) GetMeterCheckpoints(ctx context.Context, key string) (
 			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint name is required")
 		}
 
-		checkpointString := checkpointValue.Get("checkpoint").String()
-		if checkpointString == "" {
-			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint is required for %q", name)
+		startDateString := checkpointValue.Get("start_date").String()
+		if startDateString == "" {
+			return nil, errors.Newf(errors.TypeInternal, zeus.ErrCodeResponseMalformed, "meter checkpoint start_date is required for %q", name)
 		}
 
-		checkpoint, err := time.Parse("2006-01-02", checkpointString)
+		startDate, err := time.Parse("2006-01-02", startDateString)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "parse meter checkpoint %q for %q", checkpointString, name)
+			return nil, errors.Wrapf(err, errors.TypeInternal, zeus.ErrCodeResponseMalformed, "parse meter checkpoint start_date %q for %q", startDateString, name)
 		}
 
 		checkpoints = append(checkpoints, zeustypes.MeterCheckpoint{
-			Name:       name,
-			Checkpoint: checkpoint,
+			Name:      name,
+			StartDate: startDate,
 		})
 	}
 

@@ -2,6 +2,7 @@ package httpmeterreporter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sort"
@@ -50,7 +51,6 @@ const (
 	attrCatchupStart          = "meterreporter.catchup_start"
 	attrCatchupEnd            = "meterreporter.catchup_end"
 	attrDurationMs            = "meterreporter.duration_ms"
-	attrDryRun                = "meterreporter.dry_run"
 	attrIdempotencyKey        = "meterreporter.idempotency_key"
 
 	resultSuccess = "success"
@@ -286,20 +286,16 @@ func (provider *Provider) tick(ctx context.Context) error {
 		return nil
 	}
 
-	// TODO: re-enable once /v2/meters/checkpoints is live in staging. Until
-	// then we run with an empty checkpoint map; bootstrap floors are taken
-	// from data and dropCheckpointed becomes a no-op for the sealed window.
-	// checkpoints, err := provider.zeus.GetMeterCheckpoints(ctx, license.Key)
-	// if err != nil {
-	// 	provider.metrics.checkpointErrors.Add(ctx, 1)
-	// 	provider.settings.Logger().ErrorContext(ctx, "skipping tick: meter checkpoints call failed", errors.Attr(err))
-	// 	return nil
-	// }
-	// checkpointsByMeter := make(map[string]time.Time, len(checkpoints))
-	// for _, checkpoint := range checkpoints {
-	// 	checkpointsByMeter[checkpoint.Name] = checkpoint.Checkpoint.UTC()
-	// }
-	checkpointsByMeter := make(map[string]time.Time)
+	checkpoints, err := provider.zeus.ListMeterCheckpoints(ctx, license.Key)
+	if err != nil {
+		provider.metrics.checkpointErrors.Add(ctx, 1)
+		provider.settings.Logger().ErrorContext(ctx, "skipping tick: meter checkpoints call failed", errors.Attr(err))
+		return nil
+	}
+	checkpointsByMeter := make(map[string]time.Time, len(checkpoints))
+	for _, checkpoint := range checkpoints {
+		checkpointsByMeter[checkpoint.Name] = checkpoint.StartDate.UTC()
+	}
 
 	floor := provider.dataFloor(ctx, todayStart)
 	catchupStart := provider.catchupStart(floor, todayStart, checkpointsByMeter)
@@ -589,41 +585,23 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 		attribute.String(attrDate, date),
 		attribute.Int(attrReadings, len(readings)),
 		attribute.String(attrIdempotencyKey, idempotencyKey),
-		attribute.Bool(attrDryRun, true),
 	))
 	defer span.End()
 
-	provider.settings.Logger().InfoContext(ctx, "meter readings prepared for shipment",
+	provider.settings.Logger().InfoContext(ctx, "shipping meter readings",
 		slog.String("date", date),
 		slog.Int("readings", len(readings)),
 		slog.String("idempotency_key", idempotencyKey),
-		slog.Bool("dry_run", true),
 	)
 
-	// Temporary visibility while /v2/meters is offline.
-	for _, reading := range readings {
-		provider.settings.Logger().InfoContext(ctx, "meter reading prepared for shipment",
-			slog.String("meter", reading.MeterName),
-			slog.Int64("value", reading.Value),
-			slog.String("unit", reading.Unit.StringValue()),
-			slog.String("aggregation", reading.Aggregation.StringValue()),
-			slog.Int64("start_unix_milli", reading.StartUnixMilli),
-			slog.Int64("end_unix_milli", reading.EndUnixMilli),
-			slog.Bool("is_completed", reading.IsCompleted),
-			slog.Any("dimensions", reading.Dimensions),
-			slog.String("idempotency_key", idempotencyKey),
-		)
+	body, err := json.Marshal(readings)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
+	}
+	if err := provider.zeus.PutMetersV3(ctx, licenseKey, idempotencyKey, body); err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter readings for %s", date)
 	}
 
-	// TODO: re-enable once /v2/meters is live in staging.
-	// body, err := json.Marshal(zeustypes.PostableMeters{Meters: readings})
-	// if err != nil {
-	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "marshal meter readings for %s", date)
-	// }
-	// if err := provider.zeus.PutMetersV3(ctx, licenseKey, idempotencyKey, body); err != nil {
-	// 	return errors.Wrapf(err, errors.TypeInternal, errCodeReportFailed, "ship meter readings for %s", date)
-	// }
-	_ = licenseKey
 	span.SetAttributes(attribute.String(attrResult, resultSuccess))
 	return nil
 }
