@@ -6,8 +6,9 @@ import type {
 	RuletypesQueryTypeDTO,
 	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 
-import { filterAlerts } from '../utils';
+import { filterAlerts, getAlertSeverity } from '../utils';
 
 describe('filterAlerts', () => {
 	const mockAlertBase: Partial<RuletypesRuleDTO> = {
@@ -143,5 +144,90 @@ describe('filterAlerts', () => {
 		const result = filterAlerts(alertsWithMissingName, 'warning');
 		expect(result).toHaveLength(1);
 		expect(result[0].labels?.severity).toBe('warning');
+	});
+
+	it('should filter v2 alerts by threshold-derived severity', () => {
+		const v2Alert = ({
+			...mockAlertBase,
+			id: 'v2',
+			alert: 'V2 Disk Pressure',
+			alertType: 'METRIC_BASED_ALERT',
+			schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+			condition: {
+				...(mockAlertBase.condition || {}),
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{
+							name: 'critical',
+							target: 90,
+							matchType: 'at_least_once',
+							op: 'above',
+							channels: [],
+							targetUnit: '%',
+						},
+					],
+				},
+			},
+		} as unknown) as RuletypesRuleDTO;
+
+		const result = filterAlerts([...mockAlerts, v2Alert], 'critical');
+		// v1 critical (Memory Leak) + v2 critical = 2 hits
+		expect(result.map((a) => a.id).sort()).toEqual(['2', 'v2']);
+	});
+});
+
+describe('getAlertSeverity', () => {
+	it('returns labels.severity when present (v1 alert)', () => {
+		const alert = ({
+			labels: { severity: 'warning' },
+		} as unknown) as RuletypesRuleDTO;
+		expect(getAlertSeverity(alert)).toBe('warning');
+	});
+
+	it('returns joined threshold names for v2 alerts', () => {
+		const alert = ({
+			schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+			condition: {
+				thresholds: {
+					kind: 'basic',
+					spec: [
+						{ name: 'warning', target: 70 },
+						{ name: 'critical', target: 90 },
+					],
+				},
+			},
+		} as unknown) as RuletypesRuleDTO;
+		expect(getAlertSeverity(alert)).toBe('warning, critical');
+	});
+
+	it('prefers labels.severity over thresholds for v2 alerts when both present', () => {
+		const alert = ({
+			schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+			labels: { severity: 'critical' },
+			condition: {
+				thresholds: {
+					kind: 'basic',
+					spec: [{ name: 'warning' }],
+				},
+			},
+		} as unknown) as RuletypesRuleDTO;
+		expect(getAlertSeverity(alert)).toBe('critical');
+	});
+
+	it('returns undefined for v2 alerts with no thresholds and no severity label', () => {
+		const alert = ({
+			schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+			condition: { thresholds: { kind: 'basic', spec: [] } },
+		} as unknown) as RuletypesRuleDTO;
+		expect(getAlertSeverity(alert)).toBeUndefined();
+	});
+
+	it('returns undefined for v1 alert with no labels', () => {
+		expect(getAlertSeverity({} as RuletypesRuleDTO)).toBeUndefined();
+	});
+
+	it('returns undefined for null input', () => {
+		expect(getAlertSeverity(undefined)).toBeUndefined();
 	});
 });

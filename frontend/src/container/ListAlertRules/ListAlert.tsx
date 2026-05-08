@@ -45,7 +45,7 @@ import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
 import Status from './TableComponents/Status';
 import ToggleAlertState from './ToggleAlertState';
-import { alertActionLogEvent, filterAlerts } from './utils';
+import { alertActionLogEvent, filterAlerts, getAlertSeverity } from './utils';
 
 const { Search } = Input;
 
@@ -282,18 +282,13 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		},
 		{
 			title: 'Severity',
-			dataIndex: 'labels',
 			width: 80,
 			key: 'severity',
 			sorter: (a, b): number =>
-				(a?.labels?.severity?.length || 0) - (b?.labels?.severity?.length || 0),
-			render: (value): JSX.Element => {
-				const objectKeys = value ? Object.keys(value) : [];
-				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
-				const severityValue = withSeverityKey ? value[withSeverityKey] : '-';
-
-				return <Typography>{severityValue}</Typography>;
-			},
+				(getAlertSeverity(a)?.length || 0) - (getAlertSeverity(b)?.length || 0),
+			render: (_, record): JSX.Element => (
+				<Typography>{getAlertSeverity(record) || '-'}</Typography>
+			),
 			sortOrder: sortedInfo.columnKey === 'severity' ? sortedInfo.order : null,
 		},
 		{
