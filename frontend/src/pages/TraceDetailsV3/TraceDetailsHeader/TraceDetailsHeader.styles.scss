@@ -64,4 +64,10 @@
 		border-radius: 4px;
 		font-size: 12px;
 	}
+
+	&__skeleton .ant-skeleton-input {
+		width: 160px !important;
+		min-height: 20px !important;
+		height: 20px !important;
+	}
 }
