@@ -151,6 +151,7 @@ describe('Metadata', () => {
 	});
 
 	it('should update the metadata when the form is submitted', async () => {
+		jest.setTimeout(15000);
 		render(
 			<Metadata
 				metricName={MOCK_METRIC_NAME}

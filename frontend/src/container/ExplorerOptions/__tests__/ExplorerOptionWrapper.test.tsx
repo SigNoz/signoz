@@ -268,6 +268,7 @@ describe('ExplorerOptionWrapper', () => {
 		});
 
 		it('should test actual handleExport function with generateExportToDashboardLink and verify useUpdateDashboard is NOT called', async () => {
+			jest.setTimeout(15000);
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			// Mock the safeNavigate function

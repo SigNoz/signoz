@@ -79,6 +79,8 @@ describe('Having filter behaviour', () => {
 	});
 
 	it('Autocomplete in the having filter', async () => {
+		// Long test with many userEvent operations - needs extended timeout
+		jest.setTimeout(30000);
 		const onChange = jest.fn();
 		const user = userEvent.setup();
 
