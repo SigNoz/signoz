@@ -11,15 +11,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const (
-	// separator users type in the display name (e.g. "team/blr").
-	HierarchySeparator = "/"
-
-	// separator used in internal_name. Different from HierarchySeparator
-	// because "/" is reserved by the access control layer.
-	InternalSeparator = "::"
-)
-
 var (
 	ErrCodeTagInvalidName = errors.MustNewCode("tag_invalid_name")
 	ErrCodeTagNotFound    = errors.MustNewCode("tag_not_found")
@@ -31,21 +22,20 @@ type Tag struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	Name         string      `json:"name" required:"true" bun:"name,type:text,notnull"`
-	InternalName string      `json:"internalName" required:"true" bun:"internal_name,type:text,notnull,unique:org_id_internal_name"`
-	OrgID        valuer.UUID `json:"orgId" required:"true" bun:"org_id,type:text,notnull,unique:org_id_internal_name"`
+	Key   string      `json:"key" required:"true" bun:"key,type:text,notnull"`
+	Value string      `json:"value" required:"true" bun:"value,type:text,notnull"`
+	OrgID valuer.UUID `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
 }
 
 type PostableTag struct {
-	Name string `json:"name" required:"true"`
+	Key   string `json:"key" required:"true"`
+	Value string `json:"value" required:"true"`
 }
 
-type GettableTag struct {
-	Name string `json:"name" required:"true"`
-}
+type GettableTag = PostableTag
 
 func NewGettableTagFromTag(tag *Tag) *GettableTag {
-	return &GettableTag{Name: tag.Name}
+	return &GettableTag{Key: tag.Key, Value: tag.Value}
 }
 
 func NewGettableTagsFromTags(tags []*Tag) []*GettableTag {
@@ -56,7 +46,7 @@ func NewGettableTagsFromTags(tags []*Tag) []*GettableTag {
 	return out
 }
 
-func NewTag(orgID valuer.UUID, name string, internalName string, createdBy string) *Tag {
+func NewTag(orgID valuer.UUID, key, value, createdBy string) *Tag {
 	now := time.Now()
 	return &Tag{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
@@ -68,18 +58,19 @@ func NewTag(orgID valuer.UUID, name string, internalName string, createdBy strin
 			CreatedBy: createdBy,
 			UpdatedBy: createdBy,
 		},
-		Name:         name,
-		InternalName: internalName,
-		OrgID:        orgID,
+		Key:   key,
+		Value: value,
+		OrgID: orgID,
 	}
 }
 
-// Resolve canonicalizes a batch of user-supplied tag names against the existing
-// tags for an org. Existing parent tags' casing is reused so that
-// "teams/blr/platform" inherits the "BLR" casing from a pre-existing
-// "teams/BLR". Inputs are deduped by internal name. Returns:
+// Resolve canonicalizes a batch of user-supplied (key, value) tag pairs against
+// the existing tags for an org. Lookup is case-insensitive on both key and
+// value (matching the storage uniqueness rule); when an existing row matches,
+// its display casing is reused. Inputs are deduped on (LOWER(key), LOWER(value));
+// the first input's casing wins on collisions. Returns:
 //   - toCreate: new Tag rows the caller should insert (with pre-generated IDs)
-//   - matched: existing rows that the caller's input already pointed to. They
+//   - matched: existing rows the caller's input already pointed to. They
 //     already carry authoritative IDs from the store.
 func Resolve(ctx context.Context, store Store, orgID valuer.UUID, postable []PostableTag, createdBy string) ([]*Tag, []*Tag, error) {
 	if len(postable) == 0 {
@@ -91,107 +82,54 @@ func Resolve(ctx context.Context, store Store, orgID valuer.UUID, postable []Pos
 		return nil, nil, err
 	}
 
-	internalNameToExistingTag := make(map[string]*Tag, len(existing))
+	lowercaseTagsMap := make(map[string]*Tag, len(existing))
 	for _, t := range existing {
-		internalNameToExistingTag[t.InternalName] = t
+		mapKey := strings.ToLower(t.Key) + "\x00" + strings.ToLower(t.Value)
+		lowercaseTagsMap[mapKey] = t
 	}
 
-	seen := make(map[string]struct{}, len(postable))
+	seenInRequestAlready := make(map[string]struct{}, len(postable)) // postable can have the same tag multiple times
 	toCreate := make([]*Tag, 0)
 	matched := make([]*Tag, 0)
 
 	for _, p := range postable {
-		cleanedName, err := cleanupName(p.Name)
+		key, value, err := validatePostableTag(p)
 		if err != nil {
 			return nil, nil, err
 		}
-		matchedName, matchedInternalName := matchCasingWithExistingTags(cleanedName, existing)
-		if _, dup := seen[matchedInternalName]; dup {
+		lookup := strings.ToLower(key) + "\x00" + strings.ToLower(value)
+		if _, dup := seenInRequestAlready[lookup]; dup {
 			continue
 		}
-		seen[matchedInternalName] = struct{}{}
+		seenInRequestAlready[lookup] = struct{}{}
 
-		if existingTag, ok := internalNameToExistingTag[matchedInternalName]; ok {
+		if existingTag, ok := lowercaseTagsMap[lookup]; ok {
 			matched = append(matched, existingTag)
 			continue
 		}
-		toCreate = append(toCreate, NewTag(orgID, matchedName, matchedInternalName, createdBy))
+		toCreate = append(toCreate, NewTag(orgID, key, value, createdBy))
 	}
 
 	return toCreate, matched, nil
 }
 
-func cleanupName(name string) (string, error) {
-	trimmed := strings.TrimSpace(name)
-	raw := strings.Split(trimmed, HierarchySeparator)
-	segments := make([]string, 0, len(raw))
-	for _, seg := range raw {
-		seg = strings.TrimSpace(seg)
-		if seg == "" {
-			continue
-		}
-		segments = append(segments, seg)
+// Entity-specific reserved-key checks (e.g. dashboard column names that would
+// collide with the list-query DSL) are the caller's responsibility — perform
+// them before calling into the tag module.
+func validatePostableTag(p PostableTag) (string, string, error) {
+	key := strings.TrimSpace(p.Key)
+	value := strings.TrimSpace(p.Value)
+	if key == "" {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key cannot be empty")
 	}
-	if len(segments) == 0 {
-		return "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag name cannot be empty")
+	if value == "" {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value cannot be empty")
 	}
-
-	for _, seg := range segments {
-		if strings.Contains(seg, InternalSeparator) {
-			return "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag name segment %q cannot contain %q", seg, InternalSeparator)
-		}
+	if strings.ContainsRune(key, '/') {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key %q cannot contain '/'", key)
 	}
-
-	return strings.Join(segments, HierarchySeparator), nil
-}
-
-func buildInternalName(cleanedName string) string {
-	return strings.ToLower(strings.ReplaceAll(cleanedName, HierarchySeparator, InternalSeparator))
-}
-
-// matchCasingWithExistingTags returns the display name and internal name to use for
-// a user-supplied tag, given the existing tags in the org. If an existing tag
-// has the same internal name, its display name (casing) is reused. Otherwise
-// the existing tag with the longest segment-wise (case-insensitive) common
-// prefix lends its casing to the matching segments — the remaining input
-// segments keep the user-supplied casing. With no overlap, the input is
-// returned as-is.
-func matchCasingWithExistingTags(inputCleaned string, existing []*Tag) (canonicalName string, canonicalInternalName string) {
-	inputSegments := strings.Split(inputCleaned, HierarchySeparator)
-	inputInternal := buildInternalName(inputCleaned)
-
-	var bestMatch *Tag
-	bestMatchLen := 0
-	for _, tag := range existing {
-		if tag.InternalName == inputInternal {
-			return tag.Name, tag.InternalName
-		}
-		existingSegments := strings.Split(tag.Name, HierarchySeparator)
-		matchLen := commonSegmentPrefix(inputSegments, existingSegments)
-		if matchLen > bestMatchLen {
-			bestMatch = tag
-			bestMatchLen = matchLen
-		}
+	if strings.ContainsRune(value, '/') {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value %q cannot contain '/'", value)
 	}
-
-	if bestMatch == nil {
-		return inputCleaned, inputInternal
-	}
-
-	existingSegments := strings.Split(bestMatch.Name, HierarchySeparator)
-	canonicalSegments := append(existingSegments[:bestMatchLen:bestMatchLen], inputSegments[bestMatchLen:]...)
-	canonical := strings.Join(canonicalSegments, HierarchySeparator)
-	return canonical, buildInternalName(canonical)
-}
-
-// returns 1 + (the index till which the two arrays are equal)
-// for eg ["a", "bcd", "efg", "h"] and ["a", "bcd", "ef"] returns 2
-func commonSegmentPrefix(a, b []string) int {
-	n := min(len(a), len(b))
-	for i := range n {
-		if !strings.EqualFold(a[i], b[i]) {
-			return i
-		}
-	}
-	return n
+	return key, value, nil
 }

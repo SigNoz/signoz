@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -53,13 +52,8 @@ func (s *store) ListByEntities(ctx context.Context, entityIDs []valuer.UUID) (ma
 	}
 
 	type joinedRow struct {
-		bun.BaseModel `bun:"table:tag,alias:tag"`
-
-		EntityID     valuer.UUID `bun:"entity_id"`
-		TagID        valuer.UUID `bun:"tag_id"`
-		Name         string      `bun:"name"`
-		InternalName string      `bun:"internal_name"`
-		OrgID        valuer.UUID `bun:"org_id"`
+		tagtypes.Tag
+		EntityID valuer.UUID `bun:"entity_id"`
 	}
 
 	rows := make([]*joinedRow, 0)
@@ -67,7 +61,7 @@ func (s *store) ListByEntities(ctx context.Context, entityIDs []valuer.UUID) (ma
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&rows).
-		ColumnExpr("tr.entity_id, tag.id AS tag_id, tag.name, tag.internal_name, tag.org_id").
+		ColumnExpr("tag.*, tr.entity_id").
 		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
 		Where("tr.entity_id IN (?)", bun.In(entityIDs)).
 		Scan(ctx)
@@ -77,12 +71,8 @@ func (s *store) ListByEntities(ctx context.Context, entityIDs []valuer.UUID) (ma
 
 	out := make(map[valuer.UUID][]*tagtypes.Tag)
 	for _, r := range rows {
-		out[r.EntityID] = append(out[r.EntityID], &tagtypes.Tag{
-			Identifiable: types.Identifiable{ID: r.TagID},
-			Name:         r.Name,
-			InternalName: r.InternalName,
-			OrgID:        r.OrgID,
-		})
+		tag := r.Tag
+		out[r.EntityID] = append(out[r.EntityID], &tag)
 	}
 	return out, nil
 }
@@ -93,14 +83,16 @@ func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.T
 	}
 	// DO UPDATE on a self-set is a deliberate no-op write whose only purpose
 	// is to make RETURNING fire on conflicting rows. Without it, RETURNING is
-	// silent on the conflict path and we'd have to refetch by internal name to
-	// learn the existing rows' IDs after a concurrent-insert race.
+	// silent on the conflict path and we'd have to refetch by (key, value) to
+	// learn the existing rows' IDs after a concurrent-insert race. Setting
+	// key = tag.key (the existing row's value) preserves the first writer's
+	// casing on case-only collisions.
 	err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&tags).
-		On("CONFLICT (org_id, internal_name) DO UPDATE").
-		Set("internal_name = EXCLUDED.internal_name").
+		On("CONFLICT (org_id, (LOWER(key)), (LOWER(value))) DO UPDATE").
+		Set("key = tag.key").
 		Returning("*").
 		Scan(ctx)
 	if err != nil {

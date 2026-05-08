@@ -44,8 +44,8 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 		Name: "tag",
 		Columns: []*sqlschema.Column{
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "internal_name", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "key", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "value", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: true},
@@ -63,12 +63,10 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tagTableSQLs...)
 
-	tagUniqueIndexSQL := migration.sqlschema.Operator().CreateIndex(
-		&sqlschema.UniqueIndex{
-			TableName:   "tag",
-			ColumnNames: []sqlschema.ColumnName{"org_id", "internal_name"},
-		})
-	sqls = append(sqls, tagUniqueIndexSQL...)
+	// Functional unique index: case-insensitive uniqueness on (org_id, key, value).
+	// sqlschema.UniqueIndex doesn't support expressions, so emit raw SQL — both
+	// Postgres and SQLite (modernc 3.50.x) support expression indexes.
+	sqls = append(sqls, []byte(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_id_lower_key_lower_value ON tag (org_id, LOWER(key), LOWER(value))`))
 
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "tag_relations",
