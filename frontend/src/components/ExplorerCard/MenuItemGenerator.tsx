@@ -1,7 +1,7 @@
 import { MouseEvent, useCallback } from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Col, Row, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';

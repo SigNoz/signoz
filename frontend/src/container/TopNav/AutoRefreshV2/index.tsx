@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { CaretDownFilled } from '@ant-design/icons';
 import { Button, Checkbox, Popover } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';

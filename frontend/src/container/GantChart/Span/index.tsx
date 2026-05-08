@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Popover } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';

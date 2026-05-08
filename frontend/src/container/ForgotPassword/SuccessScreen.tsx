@@ -1,5 +1,5 @@
 import { ArrowLeft, Mail } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 
 interface SuccessScreenProps {
 	onBackToLogin: () => void;

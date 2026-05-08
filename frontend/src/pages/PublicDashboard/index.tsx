@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { FrownIcon } from 'lucide-react';
 

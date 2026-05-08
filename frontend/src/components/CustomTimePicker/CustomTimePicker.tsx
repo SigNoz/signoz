@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

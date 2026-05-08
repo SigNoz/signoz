@@ -1,4 +1,5 @@
-import { ToggleGroup, ToggleGroupItem, Typography } from '@signozhq/ui';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { Typography } from '@signozhq/ui/typography';
 import { LineInterpolation } from 'lib/uPlotV2/config/types';
 
 import './LineInterpolationSelector.styles.scss';

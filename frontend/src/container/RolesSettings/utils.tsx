@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 import type {
 	CoretypesResourceRefDTO,
 	CoretypesObjectGroupDTO,

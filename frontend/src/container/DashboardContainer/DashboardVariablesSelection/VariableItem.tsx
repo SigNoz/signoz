@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import CustomVariableInput from './CustomVariableInput';

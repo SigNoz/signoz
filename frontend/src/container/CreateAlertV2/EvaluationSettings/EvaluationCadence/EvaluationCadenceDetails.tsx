@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, DatePicker, Input, Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
