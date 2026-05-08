@@ -17,7 +17,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	// Tag upserts run outside the dashboard transaction by design: a successful
 	// upsert that loses an outer dashboard insert just leaves resolved tag rows
 	// around for the next attempt — preferable to coupling the two.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, postable.Tags, createdBy)
+	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, postable.Tags, createdBy)
 	if err != nil {
 		return nil, err
 	}
