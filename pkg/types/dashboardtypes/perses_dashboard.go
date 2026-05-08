@@ -3,6 +3,7 @@ package dashboardtypes
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -15,6 +16,31 @@ const (
 	SchemaVersion       = "v6"
 	MaxTagsPerDashboard = 5
 )
+
+type DSLKey string
+
+const (
+	DSLKeyName        DSLKey = "name"
+	DSLKeyDescription DSLKey = "description"
+	DSLKeyCreatedAt   DSLKey = "created_at"
+	DSLKeyUpdatedAt   DSLKey = "updated_at"
+	DSLKeyCreatedBy   DSLKey = "created_by"
+	DSLKeyLocked      DSLKey = "locked"
+	DSLKeyPublic      DSLKey = "public"
+)
+
+// reservedDSLKeys are dashboard column-level filter names in the list-query DSL.
+// A tag whose key collides with one of these would make the DSL ambiguous, so
+// they're rejected (case-insensitively) at write time.
+var reservedDSLKeys = map[DSLKey]struct{}{
+	DSLKeyName:        {},
+	DSLKeyDescription: {},
+	DSLKeyCreatedAt:   {},
+	DSLKeyUpdatedAt:   {},
+	DSLKeyCreatedBy:   {},
+	DSLKeyLocked:      {},
+	DSLKeyPublic:      {},
+}
 
 type DashboardV2 struct {
 	types.Identifiable
@@ -69,10 +95,22 @@ func (p *PostableDashboardV2) Validate() error {
 	if p.Data.Display == nil || p.Data.Display.Name == "" {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "data.display.name is required")
 	}
+	if err := p.validateTags(); err != nil {
+		return err
+	}
+	return p.Data.Validate()
+}
+
+func (p *PostableDashboardV2) validateTags() error {
 	if len(p.Tags) > MaxTagsPerDashboard {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "a dashboard can have at most %d tags", MaxTagsPerDashboard)
 	}
-	return p.Data.Validate()
+	for _, tag := range p.Tags {
+		if _, reserved := reservedDSLKeys[DSLKey(strings.ToLower(strings.TrimSpace(tag.Key)))]; reserved {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "tag key %q is reserved", tag.Key)
+		}
+	}
+	return nil
 }
 
 type GettableDashboardV2 struct {
@@ -163,9 +201,6 @@ func NewDashboardV2FromStorable(storable *StorableDashboard, public *StorablePub
 	}, nil
 }
 
-// ToStorableDashboard packages a Dashboard into the bun row that goes into
-// the dashboard table. Tags are intentionally omitted — they live in
-// tag_relations and are inserted separately by the caller.
 func (d *DashboardV2) ToStorableDashboard() (*StorableDashboard, error) {
 	data, err := d.Info.toStorableDashboardData()
 	if err != nil {
