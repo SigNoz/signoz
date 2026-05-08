@@ -3,6 +3,7 @@ package impltag
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -40,18 +41,18 @@ func newTestStore(t *testing.T) sqlstore.SQLStore {
 		Exec(context.Background())
 	require.NoError(t, err)
 
-	_, err = store.BunDB().Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_id_internal_name ON tag (org_id, internal_name)`)
+	_, err = store.BunDB().Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_id_lower_key_lower_value ON tag (org_id, LOWER(key), LOWER(value))`)
 	require.NoError(t, err)
 	return store
 }
 
-func tagsByInternalName(t *testing.T, db *bun.DB) map[string]*tagtypes.Tag {
+func tagsByLowerKeyValue(t *testing.T, db *bun.DB) map[string]*tagtypes.Tag {
 	t.Helper()
 	all := make([]*tagtypes.Tag, 0)
 	require.NoError(t, db.NewSelect().Model(&all).Scan(context.Background()))
 	out := map[string]*tagtypes.Tag{}
 	for _, tag := range all {
-		out[tag.InternalName] = tag
+		out[strings.ToLower(tag.Key)+"\x00"+strings.ToLower(tag.Value)] = tag
 	}
 	return out
 }
@@ -62,8 +63,8 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	tagA := tagtypes.NewTag(orgID, "Database", "database", "u@signoz.io")
-	tagB := tagtypes.NewTag(orgID, "team/BLR", "team::blr", "u@signoz.io")
+	tagA := tagtypes.NewTag(orgID, "tag", "Database", "u@signoz.io")
+	tagB := tagtypes.NewTag(orgID, "team", "BLR", "u@signoz.io")
 	preIDA := tagA.ID
 	preIDB := tagB.ID
 
@@ -77,11 +78,11 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 	assert.Equal(t, preIDB, got[1].ID)
 
 	// And the rows are in the DB.
-	stored := tagsByInternalName(t, sqlstore.BunDB())
-	require.Contains(t, stored, "database")
-	require.Contains(t, stored, "team::blr")
-	assert.Equal(t, preIDA, stored["database"].ID)
-	assert.Equal(t, preIDB, stored["team::blr"].ID)
+	stored := tagsByLowerKeyValue(t, sqlstore.BunDB())
+	require.Contains(t, stored, "tag\x00database")
+	require.Contains(t, stored, "team\x00blr")
+	assert.Equal(t, preIDA, stored["tag\x00database"].ID)
+	assert.Equal(t, preIDB, stored["team\x00blr"].ID)
 }
 
 func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
@@ -91,15 +92,16 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 
 	orgID := valuer.GenerateUUID()
 
-	// Simulate a concurrent insert: someone else has already inserted "database".
-	winner := tagtypes.NewTag(orgID, "Database", "database", "concurrent")
+	// Simulate a concurrent insert: someone else has already inserted "tag:Database".
+	winner := tagtypes.NewTag(orgID, "tag", "Database", "concurrent")
 	_, err := s.Create(ctx, []*tagtypes.Tag{winner})
 	require.NoError(t, err)
 	winnerID := winner.ID
 
 	// Now our request runs with a different pre-generated ID for the same
-	// internal name. RETURNING should overwrite our stale ID with winner's ID.
-	loser := tagtypes.NewTag(orgID, "Database", "database", "u@signoz.io")
+	// (key, value) — case differs but the functional unique index collapses
+	// them. RETURNING should overwrite our stale ID with winner's ID.
+	loser := tagtypes.NewTag(orgID, "TAG", "DATABASE", "u@signoz.io")
 	loserPreID := loser.ID
 	require.NotEqual(t, winnerID, loserPreID, "pre-generated IDs must differ for this test to be meaningful")
 
@@ -110,10 +112,12 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	assert.Equal(t, winnerID, got[0].ID, "returned slice should carry the existing row's ID, not our stale one")
 	assert.Equal(t, winnerID, loser.ID, "input slice element is mutated in place")
 
-	// And the DB still has exactly one row for that internal name — winner's.
-	stored := tagsByInternalName(t, sqlstore.BunDB())
+	// And the DB still has exactly one row for that (lower(key), lower(value)) — winner's, with winner's casing.
+	stored := tagsByLowerKeyValue(t, sqlstore.BunDB())
 	require.Len(t, stored, 1)
-	assert.Equal(t, winnerID, stored["database"].ID)
+	assert.Equal(t, winnerID, stored["tag\x00database"].ID)
+	assert.Equal(t, "tag", stored["tag\x00database"].Key, "winner's casing preserved in key")
+	assert.Equal(t, "Database", stored["tag\x00database"].Value, "winner's casing preserved in value")
 }
 
 func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
@@ -122,13 +126,13 @@ func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	pre := tagtypes.NewTag(orgID, "Database", "database", "concurrent")
+	pre := tagtypes.NewTag(orgID, "tag", "Database", "concurrent")
 	_, err := s.Create(ctx, []*tagtypes.Tag{pre})
 	require.NoError(t, err)
 	preExistingID := pre.ID
 
-	conflict := tagtypes.NewTag(orgID, "Database", "database", "u@signoz.io")
-	fresh := tagtypes.NewTag(orgID, "team/BLR", "team::blr", "u@signoz.io")
+	conflict := tagtypes.NewTag(orgID, "tag", "Database", "u@signoz.io")
+	fresh := tagtypes.NewTag(orgID, "team", "BLR", "u@signoz.io")
 	freshPreID := fresh.ID
 
 	got, err := s.Create(ctx, []*tagtypes.Tag{conflict, fresh})
