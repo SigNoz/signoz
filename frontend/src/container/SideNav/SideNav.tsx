@@ -446,7 +446,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const onClickHandler = useCallback(
-		(key: string, event: MouseEvent | null) => {
+		(key: keyof typeof routeConfig, event: MouseEvent | null) => {
 			const params = new URLSearchParams(search);
 			const availableParams = routeConfig[key];
 
@@ -626,7 +626,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		} else if (item.key === 'quick-search') {
 			openCmdK();
 		} else if (item) {
-			onClickHandler(item?.key as string, event);
+			onClickHandler(item?.key as keyof typeof routeConfig, event);
 		}
 		logEvent('Sidebar V2: Menu clicked', {
 			menuRoute: item?.key,
@@ -634,102 +634,117 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		});
 	};
 
+	const NAVIGATION_SHORTCUT_MAP = useMemo(
+		() =>
+			[
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToHome, 
+					route: ROUTES.HOME 
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToServices,
+					route: ROUTES.APPLICATION,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToTraces,
+					route: ROUTES.TRACES_EXPLORER,
+				},
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToLogs, 
+					route: ROUTES.LOGS 
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToDashboards,
+					route: ROUTES.ALL_DASHBOARD,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToMessagingQueues,
+					route: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToAlerts,
+					route: ROUTES.LIST_ALL_ALERT,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToExceptions,
+					route: ROUTES.ALL_ERROR,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToTracesFunnel,
+					route: ROUTES.TRACES_FUNNELS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToTracesViews,
+					route: ROUTES.TRACES_SAVE_VIEWS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToMetricsSummary,
+					route: ROUTES.METRICS_EXPLORER,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToMetricsExplorer,
+					route: ROUTES.METRICS_EXPLORER_EXPLORER,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToMetricsViews,
+					route: ROUTES.METRICS_EXPLORER_VIEWS,
+				},
+				{ 	
+					shortcut: GlobalShortcuts.NavigateToSettings, 
+					route: ROUTES.SETTINGS 
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsIngestion,
+					route: ROUTES.INGESTION_SETTINGS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsBilling,
+					route: ROUTES.BILLING,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsNotificationChannels,
+					route: ROUTES.ALL_CHANNELS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsServiceAccounts,
+					route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsRoles,
+					route: ROUTES.ROLES_SETTINGS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToSettingsMembers,
+					route: ROUTES.MEMBERS_SETTINGS,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToLogsPipelines,
+					route: ROUTES.LOGS_PIPELINES,
+				},
+				{
+					shortcut: GlobalShortcuts.NavigateToLogsViews,
+					route: ROUTES.LOGS_SAVE_VIEWS,
+				},
+			] as const,
+		[],
+	);
+
 	useEffect(() => {
-		registerShortcut(GlobalShortcuts.NavigateToHome, () =>
-			onClickHandler(ROUTES.HOME, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToServices, () =>
-			onClickHandler(ROUTES.APPLICATION, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToTraces, () =>
-			onClickHandler(ROUTES.TRACES_EXPLORER, null),
-		);
+		NAVIGATION_SHORTCUT_MAP.forEach(({ shortcut, route }) => {
+			registerShortcut(shortcut, () => onClickHandler(route, null));
+		});
 
-		registerShortcut(GlobalShortcuts.NavigateToLogs, () =>
-			onClickHandler(ROUTES.LOGS, null),
-		);
-
-		registerShortcut(GlobalShortcuts.NavigateToDashboards, () =>
-			onClickHandler(ROUTES.ALL_DASHBOARD, null),
-		);
-
-		registerShortcut(GlobalShortcuts.NavigateToMessagingQueues, () =>
-			onClickHandler(ROUTES.MESSAGING_QUEUES_OVERVIEW, null),
-		);
-
-		registerShortcut(GlobalShortcuts.NavigateToAlerts, () =>
-			onClickHandler(ROUTES.LIST_ALL_ALERT, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToExceptions, () =>
-			onClickHandler(ROUTES.ALL_ERROR, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToTracesFunnel, () =>
-			onClickHandler(ROUTES.TRACES_FUNNELS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToTracesViews, () =>
-			onClickHandler(ROUTES.TRACES_SAVE_VIEWS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToMetricsSummary, () =>
-			onClickHandler(ROUTES.METRICS_EXPLORER, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToMetricsExplorer, () =>
-			onClickHandler(ROUTES.METRICS_EXPLORER_EXPLORER, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToMetricsViews, () =>
-			onClickHandler(ROUTES.METRICS_EXPLORER_VIEWS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettings, () =>
-			onClickHandler(ROUTES.SETTINGS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsIngestion, () =>
-			onClickHandler(ROUTES.INGESTION_SETTINGS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
-			onClickHandler(ROUTES.BILLING, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
-			onClickHandler(ROUTES.ALL_CHANNELS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
-			onClickHandler(ROUTES.SERVICE_ACCOUNTS_SETTINGS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsRoles, () =>
-			onClickHandler(ROUTES.ROLES_SETTINGS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsMembers, () =>
-			onClickHandler(ROUTES.MEMBERS_SETTINGS, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
-			onClickHandler(ROUTES.LOGS_PIPELINES, null),
-		);
-		registerShortcut(GlobalShortcuts.NavigateToLogsViews, () =>
-			onClickHandler(ROUTES.LOGS_SAVE_VIEWS, null),
-		);
 		return (): void => {
-			deregisterShortcut(GlobalShortcuts.NavigateToHome);
-			deregisterShortcut(GlobalShortcuts.NavigateToServices);
-			deregisterShortcut(GlobalShortcuts.NavigateToTraces);
-			deregisterShortcut(GlobalShortcuts.NavigateToLogs);
-			deregisterShortcut(GlobalShortcuts.NavigateToDashboards);
-			deregisterShortcut(GlobalShortcuts.NavigateToAlerts);
-			deregisterShortcut(GlobalShortcuts.NavigateToExceptions);
-			deregisterShortcut(GlobalShortcuts.NavigateToMessagingQueues);
-			deregisterShortcut(GlobalShortcuts.NavigateToTracesFunnel);
-			deregisterShortcut(GlobalShortcuts.NavigateToMetricsSummary);
-			deregisterShortcut(GlobalShortcuts.NavigateToMetricsExplorer);
-			deregisterShortcut(GlobalShortcuts.NavigateToMetricsViews);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
-			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
-			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
-			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);
+			NAVIGATION_SHORTCUT_MAP.forEach(({ shortcut }) => {
+				deregisterShortcut(shortcut);
+			});
 		};
-	}, [deregisterShortcut, onClickHandler, registerShortcut]);
+	}, [
+		deregisterShortcut,
+		onClickHandler,
+		registerShortcut,
+		NAVIGATION_SHORTCUT_MAP,
+	]);
 
 	const isPinnedItem = useMemo(
 		() =>
@@ -755,41 +770,48 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	const renderNavItems = (
 		items: SidebarItem[],
 		allowPin?: boolean,
-	): JSX.Element => (
-		<>
-			{items.map((item, index) => (
-				<NavItem
-					showIcon
-					key={item.key || index}
-					item={item}
-					isActive={activeMenuKey === item.key}
-					isDisabled={
-						isWorkspaceBlocked &&
-						item.key !== ROUTES.BILLING &&
-						item.key !== ROUTES.SETTINGS
-					}
-					onTogglePin={
-						allowPin
-							? (item): void => {
-									logEvent(
-										`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
-										{
-											menuRoute: item.key,
-											menuLabel: item.label,
-										},
-									);
-									onTogglePin(item);
-								}
-							: undefined
-					}
-					onClick={(event): void => {
-						handleMenuItemClick(event, item);
-					}}
-					isPinned={isPinnedItem(item)}
-				/>
-			))}
-		</>
-	);
+	): JSX.Element => {
+		const shortcutMap = new Map<string, string>(
+			NAVIGATION_SHORTCUT_MAP.map((item) => [item.route, item.shortcut]),
+		);
+
+		return (
+			<>
+				{items.map((item, index) => (
+					<NavItem
+						showIcon
+						key={item.key || index}
+						item={item}
+						shortcut={shortcutMap.get(String(item.key))}
+						isActive={activeMenuKey === item.key}
+						isDisabled={
+							isWorkspaceBlocked &&
+							item.key !== ROUTES.BILLING &&
+							item.key !== ROUTES.SETTINGS
+						}
+						onTogglePin={
+							allowPin
+								? (item): void => {
+										logEvent(
+											`Sidebar V2: Menu item ${item.isPinned ? 'unpinned' : 'pinned'}`,
+											{
+												menuRoute: item.key,
+												menuLabel: item.label,
+											},
+										);
+										onTogglePin(item);
+									}
+								: undefined
+						}
+						onClick={(event): void => {
+							handleMenuItemClick(event, item);
+						}}
+						isPinned={isPinnedItem(item)}
+					/>
+				))}
+			</>
+		);
+	};
 
 	// Check scroll when menu items change
 	useEffect(() => {
