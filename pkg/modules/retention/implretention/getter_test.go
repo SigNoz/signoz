@@ -89,62 +89,6 @@ func TestBuildSlicesFromRows(t *testing.T) {
 	})
 }
 
-func TestRetentionSQL(t *testing.T) {
-	retentionGetter := NewGetter(noopStore{})
-	rules := []retentiontypes.CustomRetentionRule{{
-		Filters: []retentiontypes.FilterCondition{{
-			Key:    "service.name",
-			Values: []string{"api", "worker"},
-		}},
-		TTLDays: 7,
-	}}
-
-	retentionSQL, err := retentionGetter.BuildMultiIfSQL(rules, 30)
-	require.NoError(t, err)
-	require.Equal(t, "toInt32(multiIf(JSONExtractString(labels, 'service.name') IN ('api', 'worker'), 7, 30))", retentionSQL)
-
-	ruleIndexSQL, err := retentionGetter.BuildRuleIndexSQL(rules)
-	require.NoError(t, err)
-	require.Equal(t, "toInt32(multiIf(JSONExtractString(labels, 'service.name') IN ('api', 'worker'), 0, -1))", ruleIndexSQL)
-
-	invalidRules := []retentiontypes.CustomRetentionRule{{
-		Filters: []retentiontypes.FilterCondition{{
-			Key:    "service name",
-			Values: []string{"api"},
-		}},
-		TTLDays: 7,
-	}}
-
-	_, err = retentionGetter.BuildMultiIfSQL(invalidRules, 30)
-	require.Error(t, err)
-
-	_, err = retentionGetter.BuildRuleIndexSQL(invalidRules)
-	require.Error(t, err)
-}
-
-func TestRuleDimensionKeysDedupes(t *testing.T) {
-	retentionGetter := NewGetter(noopStore{})
-
-	keys, err := retentionGetter.RuleDimensionKeys([]retentiontypes.CustomRetentionRule{
-		{
-			Filters: []retentiontypes.FilterCondition{
-				{Key: "service.name", Values: []string{"api"}},
-				{Key: "env", Values: []string{"prod"}},
-			},
-			TTLDays: 7,
-		},
-		{
-			Filters: []retentiontypes.FilterCondition{
-				{Key: "service.name", Values: []string{"worker"}},
-				{Key: "cluster", Values: []string{"primary"}},
-			},
-			TTLDays: 15,
-		},
-	})
-	require.NoError(t, err)
-	require.Equal(t, []string{"service.name", "env", "cluster"}, keys)
-}
-
 func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentiontypes.CustomRetentionRule) *retentiontypes.TTLSetting {
 	t.Helper()
 

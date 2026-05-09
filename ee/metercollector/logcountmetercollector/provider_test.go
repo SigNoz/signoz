@@ -3,7 +3,6 @@ package logcountmetercollector
 import (
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/modules/retention/implretention"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -21,7 +20,6 @@ func TestBuildDimensions(t *testing.T) {
 }
 
 func TestBuildQueryGroupsOnlyByRetentionDays(t *testing.T) {
-	retentionGetter := implretention.NewGetter(nil)
 	slice := retentiontypes.Slice{
 		StartMs:     1,
 		EndMs:       2,
@@ -35,7 +33,7 @@ func TestBuildQueryGroupsOnlyByRetentionDays(t *testing.T) {
 		}},
 	}
 
-	query, args, err := buildQuery(MeterName.String(), slice, retentionGetter)
+	query, args, err := buildQuery(MeterName.String(), slice)
 	require.NoError(t, err)
 	require.NotEmpty(t, args)
 	require.Contains(t, query, "GROUP BY retention_days")

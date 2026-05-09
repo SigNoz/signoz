@@ -4,6 +4,8 @@ package logsizemetercollector
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -26,6 +28,11 @@ var (
 	MeterName        = zeustypes.MustNewMeterName("signoz.meter.log.size")
 	meterUnit        = zeustypes.MeterUnitBytes
 	meterAggregation = zeustypes.MeterAggregationSum
+)
+
+var (
+	labelKeyPattern   = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
+	labelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
 )
 
 var _ metercollector.MeterCollector = (*Provider)(nil)
@@ -73,7 +80,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 	accumulator := make(map[string]*bucket)
 
 	for _, slice := range slices {
-		query, args, err := buildQuery(meterName, slice, p.retentionGetter)
+		query, args, err := buildQuery(meterName, slice)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "build retention query for meter %q", meterName)
 		}
@@ -128,8 +135,8 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 }
 
 // buildQuery stays local because each meter owns its billing query.
-func buildQuery(meterName string, slice retentiontypes.Slice, retentionGetter retention.Getter) (string, []any, error) {
-	retentionExpr, err := retentionGetter.BuildMultiIfSQL(slice.Rules, slice.DefaultDays)
+func buildQuery(meterName string, slice retentiontypes.Slice) (string, []any, error) {
+	retentionExpr, err := buildRetentionMultiIfSQL(slice.Rules, slice.DefaultDays)
 	if err != nil {
 		return "", nil, err
 	}
@@ -150,6 +157,61 @@ func buildQuery(meterName string, slice retentiontypes.Slice, retentionGetter re
 	sb.GroupBy("retention_days")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return query, args, nil
+}
+
+func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
+	if defaultDays <= 0 {
+		return "", errors.Newf(errors.TypeInvalidInput, zeustypes.ErrCodeMeterCollectFailed, "non-positive default retention %d", defaultDays)
+	}
+
+	if len(rules) == 0 {
+		return "toInt32(" + strconv.Itoa(defaultDays) + ")", nil
+	}
+
+	arms := make([]string, 0, 2*len(rules)+1)
+	for ruleIndex, rule := range rules {
+		if rule.TTLDays <= 0 {
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
+		}
+		conditionExpr, err := buildRuleConditionSQL(ruleIndex, rule)
+		if err != nil {
+			return "", err
+		}
+
+		arms = append(arms, conditionExpr)
+		arms = append(arms, strconv.Itoa(rule.TTLDays))
+	}
+	arms = append(arms, strconv.Itoa(defaultDays))
+
+	return "toInt32(multiIf(" + strings.Join(arms, ", ") + "))", nil
+}
+
+func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRule) (string, error) {
+	if len(rule.Filters) == 0 {
+		return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d has no filters", ruleIndex)
+	}
+
+	filterExprs := make([]string, 0, len(rule.Filters))
+	for filterIndex, filter := range rule.Filters {
+		if !labelKeyPattern.MatchString(filter.Key) {
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+		}
+		if len(filter.Values) == 0 {
+			return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
+		}
+
+		quoted := make([]string, len(filter.Values))
+		for valueIndex, value := range filter.Values {
+			if !labelValuePattern.MatchString(value) {
+				return "", errors.Newf(errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
+			}
+			quoted[valueIndex] = "'" + value + "'"
+		}
+
+		filterExprs = append(filterExprs, fmt.Sprintf("JSONExtractString(labels, '%s') IN (%s)", filter.Key, strings.Join(quoted, ", ")))
+	}
+
+	return strings.Join(filterExprs, " AND "), nil
 }
 
 func buildDimensions(orgID valuer.UUID, retentionDays int) map[string]string {

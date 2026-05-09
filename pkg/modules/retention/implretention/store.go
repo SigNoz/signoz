@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -35,7 +34,7 @@ func (store *store) ListTTLSettings(ctx context.Context, orgID valuer.UUID, tabl
 		OrderExpr("created_at ASC").
 		Scan(ctx)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load ttl_setting rows for org %q table %q", orgID.StringValue(), tableName)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "load ttl_setting rows for org %q table %q", orgID.StringValue(), tableName)
 	}
 
 	return rows, nil
