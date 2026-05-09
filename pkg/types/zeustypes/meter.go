@@ -65,13 +65,10 @@ var ErrCodeMeterCollectFailed = errors.MustNewCode("metercollector_collect_faile
 
 const (
 	// MeterDimensionOrganizationID identifies the organization.
-	MeterDimensionOrganizationID = "signoz.billing.organization.id"
+	MeterDimensionOrganizationID = "signoz.organization.id"
 
-	// MeterDimensionRetentionDays identifies the retention bucket a meter belongs to.
-	MeterDimensionRetentionDays = "signoz.billing.retention.days"
-
-	// MeterDimensionWorkspaceKeyID identifies the ingestion workspace key.
-	MeterDimensionWorkspaceKeyID = "signoz.workspace.key.id"
+	// MeterDimensionRetentionDuration identifies the retention bucket a meter belongs to.
+	MeterDimensionRetentionDuration = "signoz.retention.duration"
 )
 
 // MeterWindow is the [Start, End) range a reporter tick collects.
