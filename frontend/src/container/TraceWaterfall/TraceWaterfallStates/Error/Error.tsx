@@ -1,5 +1,5 @@
 import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 
 import './Error.styles.scss';

@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { RotateCw } from 'lucide-react';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';

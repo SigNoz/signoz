@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v3/traces/{traceID}/waterfall", handler.New(
-		provider.authZ.ViewAccess(provider.traceDetailHandler.GetWaterfall),
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetWaterfall),
 		handler.OpenAPIDef{
 			ID:                  "GetWaterfall",
 			Tags:                []string{"tracedetail"},

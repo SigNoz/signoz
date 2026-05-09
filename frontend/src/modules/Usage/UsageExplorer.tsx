@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Select, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
 import { AppState } from 'store/reducers';

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { connect, useSelector } from 'react-redux';
 import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
 import { Button, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';

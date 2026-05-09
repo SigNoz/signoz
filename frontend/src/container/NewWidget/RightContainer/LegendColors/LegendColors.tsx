@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Button, Collapse, ColorPicker, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { themeColors } from 'constants/theme';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';

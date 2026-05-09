@@ -448,6 +448,7 @@ components:
       - delete
       - list
       - assignee
+      - attach
       type: string
     AuthtypesRole:
       properties:
@@ -9494,9 +9495,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:list
       - tokenizer:
-        - ADMIN
+        - serviceaccount:list
       summary: List service accounts
       tags:
       - serviceaccount
@@ -9556,9 +9557,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:create
       - tokenizer:
-        - ADMIN
+        - serviceaccount:create
       summary: Create service account
       tags:
       - serviceaccount
@@ -9606,9 +9607,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:delete
       - tokenizer:
-        - ADMIN
+        - serviceaccount:delete
       summary: Deletes a service account
       tags:
       - serviceaccount
@@ -9663,9 +9664,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets a service account
       tags:
       - serviceaccount
@@ -9723,9 +9724,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account
       tags:
       - serviceaccount
@@ -9777,9 +9778,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: List service account keys
       tags:
       - serviceaccount
@@ -9845,9 +9846,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -9900,9 +9901,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -9965,9 +9966,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -10026,9 +10027,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets service account roles
       tags:
       - serviceaccount
@@ -10088,9 +10089,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Create service account role
       tags:
       - serviceaccount
@@ -10137,9 +10140,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Delete service account role
       tags:
       - serviceaccount

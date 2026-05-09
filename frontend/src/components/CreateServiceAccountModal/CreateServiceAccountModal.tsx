@@ -1,13 +1,10 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
-import {
-	Button,
-	DialogFooter,
-	DialogWrapper,
-	Input,
-	toast,
-} from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Flex } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';

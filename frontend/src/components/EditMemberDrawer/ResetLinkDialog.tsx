@@ -1,5 +1,6 @@
 import { Check, Copy } from '@signozhq/icons';
-import { Button, DialogWrapper } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
 
 interface ResetLinkDialogProps {
 	open: boolean;

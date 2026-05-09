@@ -1,5 +1,5 @@
 import { Table } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 
 import { ALL_SHORTCUTS, generateTableData, shortcutColumns } from './utils';
 

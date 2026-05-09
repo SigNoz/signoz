@@ -66,9 +66,10 @@ func runGenerateAuthz(_ context.Context) error {
 	registry := coretypes.NewRegistry()
 
 	allowedResources := map[string]bool{
-		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():    true,
-		coretypes.NewResourceRef(coretypes.ResourceRole).String():              true,
-		coretypes.NewResourceRef(coretypes.ResourceMetaResourcesRole).String(): true,
+		coretypes.NewResourceRef(coretypes.ResourceServiceAccount).String():              true,
+		coretypes.NewResourceRef(coretypes.ResourceMetaResourcesServiceAccount).String(): true,
+		coretypes.NewResourceRef(coretypes.ResourceRole).String():                        true,
+		coretypes.NewResourceRef(coretypes.ResourceMetaResourcesRole).String():           true,
 	}
 
 	allowedTypes := map[string]bool{}

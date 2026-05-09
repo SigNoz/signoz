@@ -2,9 +2,9 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { ColorPicker, Input, Modal, Table, TableProps } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,

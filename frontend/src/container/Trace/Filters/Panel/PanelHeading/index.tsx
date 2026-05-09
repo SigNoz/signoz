@@ -3,7 +3,7 @@ import { MouseEventHandler, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { DownOutlined, RightOutlined } from '@ant-design/icons';
 import { Card, Divider } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
