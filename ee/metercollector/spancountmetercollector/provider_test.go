@@ -48,17 +48,3 @@ func TestProviderMetadata(t *testing.T) {
 	require.Equal(t, zeustypes.MeterUnitCount, provider.Unit())
 	require.Equal(t, zeustypes.MeterAggregationSum, provider.Aggregation())
 }
-
-func TestBucketKeyIsStable(t *testing.T) {
-	first := bucketKey(map[string]string{
-		"service.name": "api",
-		zeustypes.MeterDimensionRetentionDuration: "30",
-	})
-	second := bucketKey(map[string]string{
-		zeustypes.MeterDimensionRetentionDuration: "30",
-		"service.name": "api",
-	})
-
-	require.Equal(t, first, second)
-	require.NotEmpty(t, first)
-}

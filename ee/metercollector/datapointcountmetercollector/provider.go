@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -73,11 +72,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 		return nil, errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "load retention slices for meter %q", meterName)
 	}
 
-	type bucket struct {
-		dimensions map[string]string
-		value      int64
-	}
-	accumulator := make(map[string]*bucket)
+	valuesByRetentionDays := make(map[int]int64)
 
 	for _, slice := range slices {
 		query, args, err := buildQuery(meterName, slice)
@@ -100,14 +95,7 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 					return errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
 				}
 
-				dimensions := buildDimensions(orgID, int(retentionDays))
-				key := bucketKey(dimensions)
-				b, ok := accumulator[key]
-				if !ok {
-					b = &bucket{dimensions: dimensions}
-					accumulator[key] = b
-				}
-				b.value += value
+				valuesByRetentionDays[int(retentionDays)] += value
 			}
 			if err := rows.Err(); err != nil {
 				return errors.Wrapf(err, errors.TypeInternal, zeustypes.ErrCodeMeterCollectFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
@@ -118,17 +106,14 @@ func (p *Provider) Collect(ctx context.Context, orgID valuer.UUID, window zeusty
 		}
 	}
 
-	meters := make([]zeustypes.Meter, 0, len(accumulator))
-	for _, b := range accumulator {
-		meters = append(meters, zeustypes.NewMeter(MeterName, b.value, meterUnit, meterAggregation, window, b.dimensions))
+	meters := make([]zeustypes.Meter, 0, len(valuesByRetentionDays))
+	for retentionDays, value := range valuesByRetentionDays {
+		meters = append(meters, zeustypes.NewMeter(MeterName, value, meterUnit, meterAggregation, window, buildDimensions(orgID, retentionDays)))
 	}
 
 	// Empty windows still emit a sentinel so checkpoints can advance.
 	if len(meters) == 0 && len(slices) > 0 {
-		meters = append(meters, zeustypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, map[string]string{
-			zeustypes.MeterDimensionOrganizationID:    orgID.StringValue(),
-			zeustypes.MeterDimensionRetentionDuration: strconv.Itoa(slices[len(slices)-1].DefaultDays),
-		}))
+		meters = append(meters, zeustypes.NewMeter(MeterName, 0, meterUnit, meterAggregation, window, buildDimensions(orgID, slices[len(slices)-1].DefaultDays)))
 	}
 
 	return meters, nil
@@ -219,26 +204,4 @@ func buildDimensions(orgID valuer.UUID, retentionDays int) map[string]string {
 		zeustypes.MeterDimensionOrganizationID:    orgID.StringValue(),
 		zeustypes.MeterDimensionRetentionDuration: strconv.Itoa(retentionDays),
 	}
-}
-
-func bucketKey(dimensions map[string]string) string {
-	keys := make([]string, 0, len(dimensions))
-	for key := range dimensions {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	var b strings.Builder
-	for _, key := range keys {
-		value := dimensions[key]
-		b.WriteString(strconv.Itoa(len(key)))
-		b.WriteByte(':')
-		b.WriteString(key)
-		b.WriteByte('=')
-		b.WriteString(strconv.Itoa(len(value)))
-		b.WriteByte(':')
-		b.WriteString(value)
-		b.WriteByte(';')
-	}
-	return b.String()
 }
