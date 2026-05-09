@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
@@ -50,6 +51,7 @@ export const useDashboardVariableUpdate =
 		const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 		const updateMutation = useUpdateDashboard();
 		const { notifications } = useNotifications();
+		const { t } = useTranslation('dashboard');
 
 		const onValueUpdate = useCallback(
 			(
@@ -179,9 +181,12 @@ export const useDashboardVariableUpdate =
 				// Get current dashboard variables
 				const currentVariables = dashboardData.data.variables || {};
 
-				if (Object.values(currentVariables).some((v) => v.name === name)) {
+				const nameExists = Object.values(currentVariables).some(
+					(v) => v.name === name,
+				);
+				if (nameExists) {
 					notifications.error({
-						message: 'A variable with this name already exists',
+						message: t('variable_name_already_exists', { name, ns: 'dashboard' }),
 					});
 					return;
 				}
@@ -240,7 +245,7 @@ export const useDashboardVariableUpdate =
 				const updatedVariables = convertVariablesToDbFormat(tableRowData);
 				updateVariables(updatedVariables, newVariable.id, [], false);
 			},
-			[dashboardData, updateVariables, notifications],
+			[dashboardData, updateVariables, notifications, t],
 		);
 
 		return {

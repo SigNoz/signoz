@@ -1,4 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
+import { cloneDeep, isEqual, sortBy } from 'lodash-es';
+import { v4 as uuid } from 'uuid';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	DEPRECATED_OPERATORS_MAP,
@@ -6,7 +9,16 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
-import { cloneDeep, isEqual, sortBy } from 'lodash-es';
+import FilterQueryLexer from 'parser/FilterQueryLexer';
+import FilterQueryParser, {
+	AndExpressionContext,
+	ComparisonContext,
+	InClauseContext,
+	NotInClauseContext,
+	OrExpressionContext,
+	PrimaryContext,
+	UnaryExpressionContext,
+} from 'parser/FilterQueryParser';
 import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -23,21 +35,9 @@ import {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
-import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
-import FilterQueryLexer from 'parser/FilterQueryLexer';
-import FilterQueryParser, {
-	AndExpressionContext,
-	ComparisonContext,
-	InClauseContext,
-	NotInClauseContext,
-	OrExpressionContext,
-	PrimaryContext,
-	UnaryExpressionContext,
-} from 'parser/FilterQueryParser';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
-import { v4 as uuid } from 'uuid';
 
 /**
  * Check if an operator requires array values (like IN, NOT IN)
