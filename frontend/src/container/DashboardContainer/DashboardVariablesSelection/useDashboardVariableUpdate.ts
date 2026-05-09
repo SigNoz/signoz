@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
+import { useNotifications } from 'hooks/useNotifications';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -48,6 +49,7 @@ export const useDashboardVariableUpdate =
 		);
 		const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 		const updateMutation = useUpdateDashboard();
+		const { notifications } = useNotifications();
 
 		const onValueUpdate = useCallback(
 			(
@@ -176,6 +178,13 @@ export const useDashboardVariableUpdate =
 
 				// Get current dashboard variables
 				const currentVariables = dashboardData.data.variables || {};
+
+				if (Object.values(currentVariables).some((v) => v.name === name)) {
+					notifications.error({
+						message: 'A variable with this name already exists',
+					});
+					return;
+				}
 
 				// Create tableRowData like Dashboard Settings does
 				const tableRowData = [];
