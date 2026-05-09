@@ -7,7 +7,8 @@ import {
 	useState,
 } from 'react';
 import type { InputRef } from 'antd';
-import { AutoComplete, Input, Typography } from 'antd';
+import { AutoComplete, Input } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

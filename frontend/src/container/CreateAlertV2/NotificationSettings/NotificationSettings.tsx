@@ -1,4 +1,5 @@
-import { Input, Select, Typography } from 'antd';
+import { Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 import { useCreateAlertState } from '../context';
 import {

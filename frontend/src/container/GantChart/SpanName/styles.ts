@@ -1,7 +1,7 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
-export const Span = styled(Typography.Paragraph)`
+export const Span = styled(Typography.Text)`
 	&&& {
 		font-size: 0.75rem;
 		margin: 0;
@@ -9,7 +9,7 @@ export const Span = styled(Typography.Paragraph)`
 	}
 `;
 
-export const Service = styled(Typography.Paragraph)`
+export const Service = styled(Typography.Text)`
 	&&& {
 		color: #acacac;
 		font-size: 0.75rem;

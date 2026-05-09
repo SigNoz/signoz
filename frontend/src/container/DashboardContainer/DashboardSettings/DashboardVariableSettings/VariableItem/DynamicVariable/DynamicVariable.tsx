@@ -7,7 +7,8 @@ import {
 	useState,
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import CustomSelect from 'components/NewSelect/CustomSelect';
 import TextToolTip from 'components/TextToolTip';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
@@ -213,7 +214,7 @@ function DynamicVariable({
 			</div>
 			{errorAttributeKeyMessage && (
 				<div>
-					<Typography.Text type="warning">
+					<Typography.Text color="warning">
 						{errorAttributeKeyMessage}
 					</Typography.Text>
 				</div>

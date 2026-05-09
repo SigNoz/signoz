@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Input, Typography } from 'antd';
+import { Button, Input } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import { X } from 'lucide-react';
 

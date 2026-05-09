@@ -1,4 +1,5 @@
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui';
 import classNames from 'classnames';
 import { Check } from 'lucide-react';
 

@@ -13,7 +13,8 @@ import {
 	ReloadOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select, Typography } from 'antd';
+import { Button, Checkbox, Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -755,15 +756,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						}}
 					>
 						<div className="option-content">
-							<Typography.Text
-								ellipsis={{
-									tooltip: {
-										placement: 'right',
-										autoAdjustOverflow: true,
-									},
-								}}
-								className="option-label-text"
-							>
+							<Typography.Text truncate={1} className="option-label-text">
 								{highlightMatchedText(String(option.label || ''), searchText)}
 							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (

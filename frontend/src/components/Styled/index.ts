@@ -11,10 +11,12 @@ import {
 	Space,
 	SpaceProps,
 	TabsProps,
-	Typography,
 } from 'antd';
-import type { TextProps } from 'antd/lib/typography/Text';
-import type { TitleProps } from 'antd/lib/typography/Title';
+import {
+	Typography,
+	TypographyTextProps,
+	TypographyTitleProps,
+} from '@signozhq/ui';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';
@@ -53,13 +55,13 @@ const StyledButton = styled(Button)<TStyledButton>`
 `;
 
 const { Text } = Typography;
-type TStyledTypographyText = TextProps & IStyledClass;
+type TStyledTypographyText = TypographyTextProps & IStyledClass;
 const StyledTypographyText = styled(Text)<TStyledTypographyText>`
 	${styledClass}
 `;
 
 const { Title } = Typography;
-type TStyledTypographyTitle = TitleProps & IStyledClass;
+type TStyledTypographyTitle = TypographyTitleProps & IStyledClass;
 const StyledTypographyTitle = styled(Title)<TStyledTypographyTitle>`
 	${styledClass}
 `;

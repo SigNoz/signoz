@@ -1,3 +1,4 @@
+import { Typography } from '@signozhq/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
@@ -14,7 +15,6 @@ import {
 	Table,
 	TableColumnsType as ColumnsType,
 	Tag,
-	Typography,
 } from 'antd';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
@@ -362,15 +362,17 @@ export default function BillingContainer(): JSX.Element {
 		[apiResponse, billAmount, isLoading, isFetchingBillingData],
 	);
 
-	const { Text } = Typography;
 	const subscriptionPastDueMessage = (): JSX.Element => (
 		<Typography>
 			{`We were not able to process payments for your account. Please update your card details `}
-			<Text type="danger" onClick={handleBilling} style={{ cursor: 'pointer' }}>
+			<Typography.Link
+				onClick={handleBilling}
+				style={{ cursor: 'pointer', color: 'var(--bg-cherry-500)' }}
+			>
 				{t('here')}
-			</Text>
+			</Typography.Link>
 			{` if your payment information has changed. Email us at `}
-			<Text type="secondary">cloud-support@signoz.io</Text>
+			<Typography.Text color="muted">cloud-support@signoz.io</Typography.Text>
 			{` otherwise. Be sure to provide this information immediately to avoid interruption to your service.`}
 		</Typography>
 	);
@@ -418,7 +420,7 @@ export default function BillingContainer(): JSX.Element {
 				<Typography.Text style={{ fontWeight: 500, fontSize: 18 }}>
 					{t('billing')}
 				</Typography.Text>
-				<Typography.Text color={Color.BG_VANILLA_400}>
+				<Typography.Text color="muted">
 					{t('manage_billing_and_costs')}
 				</Typography.Text>
 			</Flex>
@@ -472,7 +474,7 @@ export default function BillingContainer(): JSX.Element {
 
 				{trialInfo?.onTrial && trialInfo?.trialConvertedToSubscription && (
 					<Typography.Text
-						ellipsis
+						truncate={1}
 						style={{ fontWeight: '300', color: 'var(--bg-forest-500)', fontSize: 12 }}
 					>
 						{t('card_details_recieved_and_billing_info')}

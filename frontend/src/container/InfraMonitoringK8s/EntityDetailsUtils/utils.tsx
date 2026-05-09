@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Ghost } from 'lucide-react';
@@ -103,7 +103,7 @@ export function EntityDetailsEmptyContainer({
 
 	return (
 		<div className="no-logs-found">
-			<Typography.Text type="secondary">
+			<Typography.Text color="muted">
 				<Ghost size={24} color={Color.BG_AMBER_500} />
 				{`No ${view} found for this ${label}
 				in the selected time range.`}
