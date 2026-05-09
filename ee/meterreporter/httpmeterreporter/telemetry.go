@@ -15,22 +15,22 @@ type reporterMetrics struct {
 func newReporterMetrics(meter metric.Meter) (*reporterMetrics, error) {
 	var errs error
 
-	checkpoints, err := meter.Int64Counter("signoz.meterreporter.checkpoints", metric.WithDescription("Zeus meter checkpoint fetches."))
+	checkpoints, err := meter.Int64Counter("signoz.meterreporter.checkpoints", metric.WithDescription("Zeus meter checkpoint fetches."), metric.WithUnit("{checkpoint}"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	reports, err := meter.Int64Counter("signoz.meterreporter.reports", metric.WithDescription("Meter reports shipped to Zeus."))
+	reports, err := meter.Int64Counter("signoz.meterreporter.reports", metric.WithDescription("Meter reports shipped to Zeus."), metric.WithUnit("{report}"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	collections, err := meter.Int64Counter("signoz.meterreporter.collections", metric.WithDescription("Per-meter collect calls."))
+	collections, err := meter.Int64Counter("signoz.meterreporter.collections", metric.WithDescription("Per-meter collect calls."), metric.WithUnit("{collection}"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}
 
-	meters, err := meter.Int64Counter("signoz.meterreporter.meters", metric.WithDescription("Meter readings shipped to Zeus."))
+	meters, err := meter.Int64Counter("signoz.meterreporter.meters", metric.WithDescription("Meter readings shipped to Zeus."), metric.WithUnit("{meter}"))
 	if err != nil {
 		errs = errors.Join(errs, err)
 	}

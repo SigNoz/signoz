@@ -27,7 +27,7 @@ func newMeterCollectors(
 
 	staticConfigs := []metercollector.StaticConfig{
 		{
-			Name:        zeustypes.MeterBasePlatformFee,
+			Name:        zeustypes.MeterPlatformActive,
 			Unit:        zeustypes.MeterUnitCount,
 			Aggregation: zeustypes.MeterAggregationMax,
 			Value:       1,
@@ -67,14 +67,18 @@ func newMeterCollectors(
 		if err != nil {
 			return nil, err
 		}
+
 		collectors[config.Name] = collector
 	}
+
 	for _, config := range telemetryConfigs {
 		collector, err := telemetryFactory.New(ctx, providerSettings, config)
 		if err != nil {
 			return nil, err
 		}
+
 		collectors[config.Name] = collector
 	}
+
 	return collectors, nil
 }

@@ -11,9 +11,7 @@ var (
 	MeterSpanSize       = MustNewMeterName("signoz.meter.span.size")
 	MeterLogSize        = MustNewMeterName("signoz.meter.log.size")
 	MeterDatapointCount = MustNewMeterName("signoz.meter.metric.datapoint.count")
-
-	// TODO: A better (otel semantic name) for this.
-	MeterBasePlatformFee = MustNewMeterName("signoz.meter.base.platform.fee")
+	MeterPlatformActive = MustNewMeterName("signoz.meter.platform.active")
 )
 
 var meterNameRegex = regexp.MustCompile(`^[a-z][a-z0-9_.]+$`)
