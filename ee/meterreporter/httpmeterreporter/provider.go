@@ -595,7 +595,7 @@ func (provider *Provider) shipReadings(ctx context.Context, licenseKey string, d
 	)
 
 	for _, reading := range readings {
-		provider.settings.Logger().DebugContext(ctx, "shipping meter reading",
+		provider.settings.Logger().InfoContext(ctx, "shipping meter reading",
 			slog.String("meter", reading.MeterName),
 			slog.Int64("value", reading.Value),
 			slog.String("unit", reading.Unit.StringValue()),
