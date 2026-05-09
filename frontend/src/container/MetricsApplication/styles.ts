@@ -3,7 +3,7 @@ import {
 	Col as ColComponent,
 	Row as RowComponent,
 } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`

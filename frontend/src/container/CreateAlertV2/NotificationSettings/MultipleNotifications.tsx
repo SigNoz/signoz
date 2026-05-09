@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Select, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from 'lucide-react';
 

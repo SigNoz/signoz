@@ -25,6 +25,8 @@ pytest_plugins = [
     "fixtures.cloudintegrations",
     "fixtures.jsontypes",
     "fixtures.seeder",
+    "fixtures.serviceaccount",
+    "fixtures.role",
 ]
 
 

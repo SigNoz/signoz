@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Flex, Tag } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';

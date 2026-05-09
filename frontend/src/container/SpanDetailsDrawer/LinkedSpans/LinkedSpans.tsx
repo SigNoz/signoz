@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { formUrlParams } from 'container/TraceDetail/utils';
 import { Span } from 'types/api/trace/getTraceV2';

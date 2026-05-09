@@ -8,7 +8,7 @@ import {
 } from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Dropdown, Input, MenuProps, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { FieldDataType } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
