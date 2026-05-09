@@ -17,13 +17,6 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
-	"github.com/SigNoz/signoz/ee/metercollector/baseplatformfeemetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/datapointcountmetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/datapointsizemetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/logcountmetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/logsizemetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/spancountmetercollector"
-	"github.com/SigNoz/signoz/ee/metercollector/spansizemetercollector"
 	"github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
@@ -47,7 +40,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
-	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
@@ -71,7 +63,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
@@ -172,9 +163,13 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			}
 			return factories
 		},
-		func(ctx context.Context, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
+		func(ctx context.Context, providerSettings factory.ProviderSettings, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
-			if err := factories.Add(httpmeterreporter.NewFactory(newMeterCollectors(licensing, telemetryStore, retentionGetter), licensing, telemetryStore, orgGetter, zeus)); err != nil {
+			collectors, err := newMeterCollectors(ctx, providerSettings, telemetryStore, retentionGetter)
+			if err != nil {
+				panic(err)
+			}
+			if err := factories.Add(httpmeterreporter.NewFactory(collectors, licensing, telemetryStore, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
 
@@ -243,16 +238,4 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	}
 
 	return nil
-}
-
-func newMeterCollectors(licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter) map[zeustypes.MeterName]metercollector.MeterCollector {
-	return map[zeustypes.MeterName]metercollector.MeterCollector{
-		baseplatformfeemetercollector.MeterName: baseplatformfeemetercollector.New(licensing),
-		logcountmetercollector.MeterName:        logcountmetercollector.New(telemetryStore, retentionGetter),
-		logsizemetercollector.MeterName:         logsizemetercollector.New(telemetryStore, retentionGetter),
-		datapointcountmetercollector.MeterName:  datapointcountmetercollector.New(telemetryStore, retentionGetter),
-		datapointsizemetercollector.MeterName:   datapointsizemetercollector.New(telemetryStore, retentionGetter),
-		spancountmetercollector.MeterName:       spancountmetercollector.New(telemetryStore, retentionGetter),
-		spansizemetercollector.MeterName:        spansizemetercollector.New(telemetryStore, retentionGetter),
-	}
 }

@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/metercollector"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,54 +32,64 @@ func TestValidateCollectorsRejectsBadRegistry(t *testing.T) {
 	})
 }
 
-func TestDropCheckpointed(t *testing.T) {
+func TestEligibleCollectors(t *testing.T) {
 	meterA := zeustypes.MustNewMeterName("signoz.test.a")
 	meterB := zeustypes.MustNewMeterName("signoz.test.b")
-	meterC := zeustypes.MustNewMeterName("signoz.test.c")
-	windowDay := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
-	window := zeustypes.MustNewMeterWindow(windowDay.UnixMilli(), windowDay.AddDate(0, 0, 1).UnixMilli(), true)
-	readings := []zeustypes.Meter{
-		zeustypes.NewMeter(meterA, 0, zeustypes.MeterUnitCount, zeustypes.MeterAggregationSum, window, nil),
-		zeustypes.NewMeter(meterB, 0, zeustypes.MeterUnitCount, zeustypes.MeterAggregationSum, window, nil),
-		zeustypes.NewMeter(meterC, 0, zeustypes.MeterUnitCount, zeustypes.MeterAggregationSum, window, nil),
+	collectors := []metercollector.MeterCollector{
+		testCollector{name: meterA},
+		testCollector{name: meterB},
 	}
 
-	kept := dropCheckpointed(readings, windowDay, map[string]time.Time{
-		meterA.String(): windowDay,
-		meterB.String(): windowDay.AddDate(0, 0, -1),
-	})
+	day := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
 
-	require.Equal(t, []zeustypes.Meter{
-		zeustypes.NewMeter(meterB, 0, zeustypes.MeterUnitCount, zeustypes.MeterAggregationSum, window, nil),
-		zeustypes.NewMeter(meterC, 0, zeustypes.MeterUnitCount, zeustypes.MeterAggregationSum, window, nil),
-	}, kept)
-}
-
-func TestCatchupStart(t *testing.T) {
-	meterA := zeustypes.MustNewMeterName("signoz.test.a")
-	floor := time.Date(2026, 5, 1, 0, 0, 0, 0, time.UTC)
-	todayStart := time.Date(2026, 5, 5, 0, 0, 0, 0, time.UTC)
-	provider := &Provider{
-		collectors: []metercollector.MeterCollector{
-			testCollector{name: meterA},
+	testCases := []struct {
+		name          string
+		nextByMeter   map[zeustypes.MeterName]time.Time
+		expectedNames []zeustypes.MeterName
+	}{
+		{
+			name: "BothEligibleWhenNextAtOrBeforeDay",
+			nextByMeter: map[zeustypes.MeterName]time.Time{
+				meterA: day.AddDate(0, 0, -2),
+				meterB: day,
+			},
+			expectedNames: []zeustypes.MeterName{meterA, meterB},
+		},
+		{
+			name: "OnlyLaggardEligibleWhenLeaderAheadOfDay",
+			nextByMeter: map[zeustypes.MeterName]time.Time{
+				meterA: day.AddDate(0, 0, -1),
+				meterB: day.AddDate(0, 0, 1),
+			},
+			expectedNames: []zeustypes.MeterName{meterA},
+		},
+		{
+			name: "NoneEligibleWhenAllAhead",
+			nextByMeter: map[zeustypes.MeterName]time.Time{
+				meterA: day.AddDate(0, 0, 1),
+				meterB: day.AddDate(0, 0, 2),
+			},
+			expectedNames: []zeustypes.MeterName{},
 		},
 	}
 
-	t.Run("no checkpoint starts at floor", func(t *testing.T) {
-		require.Equal(t, floor, provider.catchupStart(floor, todayStart, nil))
-	})
-
-	t.Run("checkpoint advances by one day", func(t *testing.T) {
-		require.Equal(t, floor.AddDate(0, 0, 2), provider.catchupStart(floor, todayStart, map[string]time.Time{
-			meterA.String(): floor.AddDate(0, 0, 1),
-		}))
-	})
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got := eligibleCollectors(collectors, testCase.nextByMeter, day)
+			gotNames := make([]zeustypes.MeterName, 0, len(got))
+			for _, c := range got {
+				gotNames = append(gotNames, c.Name())
+			}
+			assert.Equal(t, testCase.expectedNames, gotNames)
+		})
+	}
 }
 
 type testCollector struct {
 	name        zeustypes.MeterName
 	unit        zeustypes.MeterUnit
 	aggregation zeustypes.MeterAggregation
+	origin      time.Time
 }
 
 func (c testCollector) Name() zeustypes.MeterName {
@@ -98,6 +110,13 @@ func (c testCollector) Aggregation() zeustypes.MeterAggregation {
 	return c.aggregation
 }
 
-func (c testCollector) Collect(context.Context, valuer.UUID, zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
+func (c testCollector) Origin(_ context.Context, _ valuer.UUID, todayStart time.Time) (time.Time, error) {
+	if c.origin.IsZero() {
+		return todayStart, nil
+	}
+	return c.origin, nil
+}
+
+func (c testCollector) Collect(context.Context, valuer.UUID, *licensetypes.License, zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	return nil, nil
 }
