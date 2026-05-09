@@ -169,7 +169,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			if err != nil {
 				panic(err)
 			}
-			if err := factories.Add(httpmeterreporter.NewFactory(collectors, licensing, telemetryStore, orgGetter, zeus)); err != nil {
+			if err := factories.Add(httpmeterreporter.NewFactory(collectors, licensing, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
 
