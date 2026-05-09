@@ -211,16 +211,16 @@ export const useDashboardVariableUpdate =
 				// Create new variable
 				const nextOrder =
 					variableOrderArr.length > 0 ? Math.max(...variableOrderArr) + 1 : 0;
-				const newVariable: any = {
+				const newVariable: IDashboardVariable = {
 					id: uuidv4(),
 					name,
-					type: 'DYNAMIC' as const,
+					type: 'DYNAMIC',
 					description,
 					order: nextOrder,
 					selectedValue: value,
 					allSelected: false,
 					haveCustomValuesSelected: false,
-					sort: 'ASC' as const,
+					sort: 'ASC',
 					multiSelect: true,
 					showALLOption: true,
 					dynamicVariablesAttribute: name,
@@ -240,7 +240,7 @@ export const useDashboardVariableUpdate =
 				const updatedVariables = convertVariablesToDbFormat(tableRowData);
 				updateVariables(updatedVariables, newVariable.id, [], false);
 			},
-			[dashboardData, updateVariables],
+			[dashboardData, updateVariables, notifications],
 		);
 
 		return {

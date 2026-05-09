@@ -28,6 +28,8 @@ import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
 	ComparisonContext,
+	InClauseContext,
+	NotInClauseContext,
 	OrExpressionContext,
 	PrimaryContext,
 	UnaryExpressionContext,
@@ -522,17 +524,20 @@ export const convertFiltersToExpressionWithExistingQuery = (
 };
 
 /**
- * Removes specified key-value pairs from a logical query expression string.
+ * Removes clauses for specified keys from a filter query expression.
  *
- * This function parses the given query expression and removes any query pairs
- * whose keys match those in the `keysToRemove` array. It also removes any trailing
- * logical conjunctions (e.g., `AND`, `OR`) and whitespace that follow the matched pairs,
- * ensuring that the resulting expression remains valid and clean.
+ * Uses an ANTLR parse-tree traversal over the existing FilterQuery grammar so that
+ * compound predicates like `BETWEEN x AND y`, `EXISTS`, and `IN (...)` are treated
+ * as atomic nodes — their internal tokens are never confused with top-level AND/OR
+ * conjunctions. Surviving siblings are rejoined with the correct operator at each
+ * level of the tree, producing no dangling operators regardless of expression shape.
+ * If the expression cannot be parsed, it is returned unchanged.
  *
- * @param expression - The full query string.
- * @param keysToRemove - An array of keys (case-insensitive) that should be removed from the expression.
- * @param removeOnlyVariableExpressions - When true, only removes key-value pairs where the value is a variable (starts with $). When false, uses the original behavior.
- * @returns A new expression string with the specified keys and their associated clauses removed.
+ * @param expression - The full filter query string.
+ * @param keysToRemove - Keys (case-insensitive) whose clauses should be dropped.
+ * @param removeOnlyVariableExpressions - When true, only drops clauses whose value
+ *   contains a dashboard variable reference (`$…`); non-variable clauses are kept.
+ * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
@@ -617,8 +622,49 @@ export const removeKeysFromExpression = (
 		}
 
 		if (removeOnlyVariableExpressions) {
-			// Only remove pairs whose value is a dashboard variable reference ($…)
-			return src(ctx).includes('$') ? null : src(ctx);
+			// Scope the '$' check to value nodes only — not the full comparison text —
+			// so a key that contains '$' does not trigger removal when the value is a
+			// literal. The ANTLR4 runtime returns null from getTypedRuleContext when a
+			// rule is absent, despite the non-nullable TypeScript signatures.
+			const inCtx = ctx.inClause() as unknown as InClauseContext | null;
+			const notInCtx = ctx.notInClause() as unknown as NotInClauseContext | null;
+			const hasDollar = (text: string): boolean => text.includes('$');
+
+			const valueHasVariable = (): boolean => {
+				// Simple comparisons: key = $var, BETWEEN $v1 AND $v2, etc.
+				if (ctx.value_list().some((v) => hasDollar(v.getText()))) {
+					return true;
+				}
+				// IN $var (bare single value) or IN ($v1, $v2) (value list)
+				if (inCtx) {
+					const bare = inCtx.value() as unknown as { getText(): string } | null;
+					if (bare && hasDollar(bare.getText())) {
+						return true;
+					}
+					const list = inCtx.valueList() as unknown as {
+						value_list(): { getText(): string }[];
+					} | null;
+					if (list && list.value_list().some((v) => hasDollar(v.getText()))) {
+						return true;
+					}
+				}
+				// NOT IN $var or NOT IN ($v1, $v2)
+				if (notInCtx) {
+					const bare = notInCtx.value() as unknown as { getText(): string } | null;
+					if (bare && hasDollar(bare.getText())) {
+						return true;
+					}
+					const list = notInCtx.valueList() as unknown as {
+						value_list(): { getText(): string }[];
+					} | null;
+					if (list && list.value_list().some((v) => hasDollar(v.getText()))) {
+						return true;
+					}
+				}
+				return false;
+			};
+
+			return valueHasVariable() ? null : src(ctx);
 		}
 
 		return null;
