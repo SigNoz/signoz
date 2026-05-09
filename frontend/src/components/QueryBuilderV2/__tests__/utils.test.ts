@@ -1155,7 +1155,7 @@ describe('removeKeysFromExpression', () => {
 	});
 
 	describe('Real-world scenarios', () => {
-		it('should handle multiple variable instances of same key', () => {
+		it('should remove all variable occurrences of the same key', () => {
 			const expression =
 				"deployment.environment = $env1 deployment.environment = $env2 deployment.environment = 'default'";
 			const result = removeKeysFromExpression(
@@ -1164,10 +1164,8 @@ describe('removeKeysFromExpression', () => {
 				true,
 			);
 
-			// Should remove one occurence as this case in itself is invalid to have multiple variable expressions for the same key
-			expect(result).toBe(
-				"deployment.environment = $env1 deployment.environment = 'default'",
-			);
+			// ANTLR removes every clause whose value contains $, non-variable clause is kept
+			expect(result).toBe("deployment.environment = 'default'");
 		});
 
 		it('should handle OR operators in expressions', () => {
@@ -1197,6 +1195,107 @@ describe('removeKeysFromExpression', () => {
 			// Verify the result can be parsed by extractQueryPairs
 			const pairs = extractQueryPairs(result);
 			expect(pairs).toHaveLength(2);
+		});
+	});
+
+	describe('ANTLR-based removal — operator precedence (AND binds tighter than OR)', () => {
+		it('preserves OR when removing from a mixed AND/OR expression', () => {
+			// a AND b OR c — grammar parses as (a AND b) OR c
+			// removing b collapses the AND group to just a, OR is preserved
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' OR c = '3'", ['b']),
+			).toBe("a = '1' OR c = '3'");
+		});
+
+		it('preserves correct conjunctions in a four-term mixed expression', () => {
+			// a AND b OR c AND d — removing b collapses first AND group to a
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' OR c = '3' AND d = '4'", [
+					'b',
+				]),
+			).toBe("a = '1' OR c = '3' AND d = '4'");
+		});
+
+		it('preserves correct conjunctions when removing from a trailing AND group', () => {
+			// a OR b AND c OR d — removing c collapses second AND group to b
+			expect(
+				removeKeysFromExpression("a = '1' OR b = '2' AND c = '3' OR d = '4'", [
+					'c',
+				]),
+			).toBe("a = '1' OR b = '2' OR d = '4'");
+		});
+	});
+
+	describe('ANTLR-based removal — parenthesised expressions', () => {
+		it('removes last clause without leaving a dangling AND', () => {
+			const expression =
+				'(deployment.environment = $deployment.environment AND service.name = $service.name AND top_level_operation IN [$top_level_operation])';
+			expect(
+				removeKeysFromExpression(expression, ['top_level_operation'], true),
+			).toBe(
+				'(deployment.environment = $deployment.environment AND service.name = $service.name)',
+			);
+		});
+
+		it('removes first clause without leaving a dangling AND', () => {
+			expect(
+				removeKeysFromExpression(
+					'(deployment.environment = $deployment.environment AND service.name = $service.name)',
+					['deployment.environment'],
+					true,
+				),
+			).toBe('(service.name = $service.name)');
+		});
+
+		it('removes middle clause without disturbing surrounding AND', () => {
+			expect(
+				removeKeysFromExpression(
+					'(deployment.environment = $deployment.environment AND service.name = $service.name AND region = $region)',
+					['service.name'],
+					true,
+				),
+			).toBe(
+				'(deployment.environment = $deployment.environment AND region = $region)',
+			);
+		});
+
+		it('drops the empty paren group when its only child is removed', () => {
+			// (a) OR (b) — removing a must not leave () OR (b = '2')
+			// The empty group is dropped; the remaining group keeps its parens (semantically equivalent)
+			expect(removeKeysFromExpression("(a = '1') OR (b = '2')", ['a'])).toBe(
+				"(b = '2')",
+			);
+		});
+
+		it('handles OR inside parentheses without leaving dangling OR', () => {
+			expect(
+				removeKeysFromExpression(
+					'(service.name = $service.name OR operation = $operation)',
+					['operation'],
+					true,
+				),
+			).toBe('(service.name = $service.name)');
+		});
+	});
+
+	describe('ANTLR-based removal — BETWEEN, EXISTS, and other operators', () => {
+		it('removes a BETWEEN clause without treating its AND as a conjunction', () => {
+			// BETWEEN x AND y — the AND is part of the operator, not a conjunction
+			expect(
+				removeKeysFromExpression("a BETWEEN 1 AND 10 AND b = '2'", ['a']),
+			).toBe("b = '2'");
+		});
+
+		it('removes an EXISTS clause (no value token)', () => {
+			expect(removeKeysFromExpression("a = '1' AND b EXISTS", ['b'])).toBe(
+				"a = '1'",
+			);
+		});
+
+		it('removes a NOT EXISTS clause', () => {
+			expect(removeKeysFromExpression("a = '1' AND b NOT EXISTS", ['b'])).toBe(
+				"a = '1'",
+			);
 		});
 	});
 });

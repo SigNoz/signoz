@@ -23,6 +23,15 @@ import {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
+import FilterQueryLexer from 'parser/FilterQueryLexer';
+import FilterQueryParser, {
+	AndExpressionContext,
+	ComparisonContext,
+	OrExpressionContext,
+	PrimaryContext,
+	UnaryExpressionContext,
+} from 'parser/FilterQueryParser';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';
@@ -533,77 +542,90 @@ export const removeKeysFromExpression = (
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
 	}
-
-	let updatedExpression = expression;
-
-	if (updatedExpression) {
-		keysToRemove.forEach((key) => {
-			// Extract key-value query pairs from the expression
-			const existingQueryPairs = extractQueryPairs(updatedExpression);
-
-			let queryPairsMap: Map<string, IQueryPair>;
-
-			if (existingQueryPairs.length > 0) {
-				// Filter query pairs based on the removeOnlyVariableExpressions flag
-				const filteredQueryPairs = removeOnlyVariableExpressions
-					? existingQueryPairs.filter((pair) => {
-							const pairKey = pair.key?.trim().toLowerCase();
-							const matchesKey = pairKey === `${key}`.trim().toLowerCase();
-							if (!matchesKey) {
-								return false;
-							}
-							const value = pair.value?.toString().trim();
-							return value && value.includes('$');
-						})
-					: existingQueryPairs;
-
-				// Build a map for quick lookup of query pairs by their lowercase trimmed keys
-				queryPairsMap = new Map(
-					filteredQueryPairs.map((pair) => {
-						const key = pair.key.trim().toLowerCase();
-						return [key, pair];
-					}),
-				);
-
-				// Lookup the current query pair using the attribute key (case-insensitive)
-				const currentQueryPair = queryPairsMap.get(`${key}`.trim().toLowerCase());
-				if (currentQueryPair && currentQueryPair.isComplete) {
-					// Determine the start index of the query pair (fallback order: key → operator → value)
-					const queryPairStart =
-						currentQueryPair.position.keyStart ??
-						currentQueryPair.position.operatorStart ??
-						currentQueryPair.position.valueStart;
-					// Determine the end index of the query pair (fallback order: value → operator → key)
-					let queryPairEnd =
-						currentQueryPair.position.valueEnd ??
-						currentQueryPair.position.operatorEnd ??
-						currentQueryPair.position.keyEnd;
-					// Get the part of the expression that comes after the current query pair
-					const expressionAfterPair = `${updatedExpression.slice(queryPairEnd + 1)}`;
-					// Match optional spaces and an optional conjunction (AND/OR), case-insensitive
-					const conjunctionOrSpacesRegex = /^(\s*((AND|OR)\s+)?)/i;
-					const match = expressionAfterPair.match(conjunctionOrSpacesRegex);
-					if (match && match.length > 0) {
-						// If match is found, extend the queryPairEnd to include the matched part
-						queryPairEnd += match[0].length;
-					}
-					// Remove the full query pair (including any conjunction/whitespace) from the expression
-					updatedExpression = `${updatedExpression.slice(
-						0,
-						queryPairStart,
-					)}${updatedExpression.slice(queryPairEnd + 1)}`.trim();
-				}
-			}
-		});
-
-		// Clean up any remaining trailing AND/OR operators and extra whitespace
-		updatedExpression = updatedExpression
-			.replace(/\s+(AND|OR)\s*$/i, '') // Remove trailing AND/OR
-			.replace(/^(AND|OR)\s+/i, '') // Remove leading AND/OR
-			.trim();
+	if (!expression.trim()) {
+		return expression;
 	}
 
-	return updatedExpression;
+	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+
+	const chars = CharStreams.fromString(expression);
+	const lexer = new FilterQueryLexer(chars);
+	lexer.removeErrorListeners();
+	const tokenStream = new CommonTokenStream(lexer);
+	const parser = new FilterQueryParser(tokenStream);
+	parser.removeErrorListeners();
+
+	const tree = parser.query();
+
+	// If the expression couldn't be parsed, return it unchanged rather than mangling it
+	if (parser.syntaxErrorsCount > 0) {
+		return expression;
+	}
+
+	// Extract original source text for a node, preserving the user's exact formatting
+	const src = (ctx: ParserRuleContext): string =>
+		expression.slice(ctx.start.start, (ctx.stop ?? ctx.start).stop + 1);
+
+	// Returns null when the entire node should be dropped
+	function visitOrExpression(ctx: OrExpressionContext): string | null {
+		const parts = ctx
+			.andExpression_list()
+			.map(visitAndExpression)
+			.filter((r): r is string => r !== null);
+		return parts.length === 0 ? null : parts.join(' OR ');
+	}
+
+	function visitAndExpression(ctx: AndExpressionContext): string | null {
+		const parts = ctx
+			.unaryExpression_list()
+			.map(visitUnaryExpression)
+			.filter((r): r is string => r !== null);
+		return parts.length === 0 ? null : parts.join(' AND ');
+	}
+
+	function visitUnaryExpression(ctx: UnaryExpressionContext): string | null {
+		const primaryResult = visitPrimary(ctx.primary());
+		if (primaryResult === null) {
+			return null;
+		}
+		return ctx.NOT() ? `NOT ${primaryResult}` : primaryResult;
+	}
+
+	function visitPrimary(ctx: PrimaryContext): string | null {
+		// Parenthesised sub-expression: ( orExpression )
+		const orCtx = ctx.orExpression();
+		if (orCtx) {
+			const inner = visitOrExpression(orCtx);
+			// Drop the paren group entirely when its contents are fully removed
+			return inner === null ? null : `(${inner})`;
+		}
+
+		const compCtx = ctx.comparison();
+		if (compCtx) {
+			return visitComparison(compCtx);
+		}
+
+		// functionCall, fullText, bare key, bare value — keep verbatim
+		return src(ctx);
+	}
+
+	function visitComparison(ctx: ComparisonContext): string | null {
+		const keyText = ctx.key().getText().trim().toLowerCase();
+
+		if (!keysSet.has(keyText)) {
+			return src(ctx);
+		}
+
+		if (removeOnlyVariableExpressions) {
+			// Only remove pairs whose value is a dashboard variable reference ($…)
+			return src(ctx).includes('$') ? null : src(ctx);
+		}
+
+		return null;
+	}
+
+	const result = visitOrExpression(tree.expression().orExpression());
+	return result ?? '';
 };
 
 /**
