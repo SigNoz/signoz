@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { generatePath, useParams } from 'react-router-dom';
-import { Card, Typography } from 'antd';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui';
 import getDashboard from 'api/v1/dashboards/id/get';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';

@@ -8,7 +8,8 @@ import {
 	useState,
 } from 'react';
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
-import { Col, Typography } from 'antd';
+import { Col } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { StyledCol, StyledRow } from 'components/Styled';
 import {
 	IIntervalUnit,

@@ -1,0 +1,258 @@
+// Badge — wraps a KeyValueLabel, clickable to toggle panel
+.span-percentile-badge {
+	cursor: pointer;
+
+	// Override key color for the percentile value (p99)
+	.key-value-label__key {
+		color: var(--destructive);
+	}
+
+	&__loader {
+		display: inline-flex;
+		align-items: center;
+		padding: 2px 4px;
+		color: var(--foreground);
+	}
+
+	&__value {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		color: var(--l2-foreground);
+	}
+}
+
+// Panel — collapsible, renders below the row
+.span-percentile-panel {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	filter: drop-shadow(2px 4px 16px rgba(0, 0, 0, 0.2));
+	backdrop-filter: blur(20px);
+	margin: 8px 16px;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 8px 12px;
+		border-bottom: 1px solid var(--l1-border);
+
+		&-text {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			cursor: pointer;
+		}
+
+		&-icon {
+			color: var(--l2-foreground);
+		}
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 8px;
+
+		&-title {
+			font-size: var(--font-size-sm);
+			line-height: var(--line-height-20);
+		}
+
+		&-highlight {
+			color: var(--destructive);
+		}
+
+		&-loader {
+			display: inline-flex;
+			align-items: flex-end;
+			margin: 0 4px;
+			line-height: 18px;
+		}
+	}
+
+	&__timerange {
+		width: 100%;
+
+		&-select {
+			width: 100%;
+			margin-top: 8px;
+			margin-bottom: 16px;
+
+			.ant-select-selector {
+				border-radius: 50px;
+				border: 1px solid var(--l1-border);
+				background: var(--l1-background);
+				color: var(--l1-foreground);
+				font-size: 12px;
+				height: 32px;
+			}
+		}
+	}
+
+	&__table {
+		&-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+
+			&-text {
+				color: var(--l1-foreground);
+				font-size: 11px;
+				font-weight: 500;
+				line-height: 20px;
+				text-transform: uppercase;
+			}
+		}
+
+		&-rows {
+			margin-top: 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		&-skeleton {
+			.ant-skeleton-title {
+				width: 100% !important;
+				margin-top: 0 !important;
+			}
+
+			.ant-skeleton-paragraph {
+				margin-top: 8px;
+
+				& > li + li {
+					margin-top: 10px;
+					width: 100% !important;
+				}
+			}
+		}
+
+		&-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 0 4px;
+
+			&-key {
+				flex: 0 0 auto;
+				color: var(--l1-foreground);
+				font-size: 12px;
+				font-weight: 500;
+				line-height: 20px;
+			}
+
+			&-value {
+				color: var(--l2-foreground);
+				font-size: 12px;
+				line-height: 20px;
+			}
+
+			&-dash {
+				flex: 1;
+				height: 0;
+				margin: 0 8px;
+				border-top: 1px solid transparent;
+				border-image: repeating-linear-gradient(
+						to right,
+						var(--l1-border) 0,
+						var(--l1-border) 10px,
+						transparent 10px,
+						transparent 20px
+					)
+					1 stretch;
+			}
+
+			&--current {
+				border-radius: 2px;
+				background: rgba(78, 116, 248, 0.2);
+
+				.span-percentile-panel__table-row-key {
+					color: var(--text-robin-300);
+				}
+
+				.span-percentile-panel__table-row-dash {
+					border-image: repeating-linear-gradient(
+							to right,
+							#abbdff 0,
+							#abbdff 10px,
+							transparent 10px,
+							transparent 20px
+						)
+						1 stretch;
+				}
+
+				.span-percentile-panel__table-row-value {
+					color: var(--text-robin-400);
+				}
+			}
+		}
+	}
+
+	&__resource-selector {
+		overflow: hidden;
+		width: calc(100% + 16px);
+		position: absolute;
+		top: 32px;
+		left: -8px;
+		z-index: 1000;
+		border-radius: 4px;
+		border: 1px solid var(--l1-border);
+		background: var(--l1-background);
+		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(20px);
+
+		&-header {
+			border-bottom: 1px solid var(--l1-border);
+		}
+
+		&-input {
+			border-radius: 0;
+			border: none !important;
+			box-shadow: none !important;
+			height: 36px;
+		}
+
+		&-items {
+			height: 200px;
+			overflow-y: auto;
+
+			&::-webkit-scrollbar {
+				width: 0.3rem;
+				height: 0.3rem;
+			}
+
+			&::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			&::-webkit-scrollbar-thumb {
+				background: var(--l3-background);
+			}
+		}
+
+		&-item {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 8px 12px;
+
+			&-value {
+				color: var(--l1-foreground);
+				font-size: 13px;
+				line-height: 20px;
+			}
+		}
+	}
+}

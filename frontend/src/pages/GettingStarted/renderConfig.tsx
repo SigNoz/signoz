@@ -6,7 +6,7 @@ import {
 	DashboardFilled,
 	SoundFilled,
 } from '@ant-design/icons';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import Slack from 'container/SideNav/Slack';
 import store from 'store';
 

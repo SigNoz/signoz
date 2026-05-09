@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { Switch, Typography } from 'antd';
+import { Switch } from 'antd';
+import { Typography } from '@signozhq/ui';
 import {
 	FillMode,
 	LineInterpolation,

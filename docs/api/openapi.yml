@@ -4463,18 +4463,19 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
-      type: object
-    RuletypesEvaluationEnvelope:
-      oneOf:
-      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
-      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
       required:
       - kind
       - spec
+      type: object
+    RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -4487,6 +4488,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -4794,15 +4798,12 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -4844,6 +4845,9 @@ components:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesThresholdKind:
       enum:

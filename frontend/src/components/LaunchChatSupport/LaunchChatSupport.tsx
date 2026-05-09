@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { Button, Modal, Tooltip, Typography } from 'antd';
+import { Button, Modal, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import cx from 'classnames';

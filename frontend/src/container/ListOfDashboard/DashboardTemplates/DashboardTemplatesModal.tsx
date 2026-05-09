@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ChangeEvent, useState } from 'react';
-import { Button, Input, Modal, Typography } from 'antd';
+import { Button, Input, Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
 import ElasticSearchIcon from 'assets/CustomIcons/ElasticSearchIcon';

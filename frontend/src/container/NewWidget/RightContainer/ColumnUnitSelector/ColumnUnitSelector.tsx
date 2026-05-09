@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { isEmpty } from 'lodash-es';

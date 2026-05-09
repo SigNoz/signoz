@@ -7,33 +7,75 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+func unmarshalDashboard(data []byte) (*DashboardData, error) {
+	var d DashboardData
+	if err := json.Unmarshal(data, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
 func TestValidateBigExample(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses.json")
 	require.NoError(t, err, "reading example file")
-	_, err = UnmarshalAndValidateDashboardV2JSON(data)
+	_, err = unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestValidateDashboardWithSections(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses_with_sections.json")
 	require.NoError(t, err, "reading example file")
-	_, err = UnmarshalAndValidateDashboardV2JSON(data)
+	_, err = unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid dashboard")
 }
 
 func TestInvalidateNotAJSON(t *testing.T) {
-	_, err := UnmarshalAndValidateDashboardV2JSON([]byte("not json"))
+	_, err := unmarshalDashboard([]byte("not json"))
 	require.Error(t, err, "expected error for invalid JSON")
+}
+
+// TestUnmarshalErrorPreservesNestedMessage guards the wrap on dec.Decode in
+// DashboardData.UnmarshalJSON. The wrap stamps a consistent type/code on
+// decode failures, but must not smother the rich messages produced by nested
+// UnmarshalJSON methods (panel/query/variable/datasource plugin envelopes).
+func TestUnmarshalErrorPreservesNestedMessage(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "NonExistentPanel", "spec": {}}
+				}
+			}
+		},
+		"layouts": []
+	}`)
+
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err)
+
+	require.Contains(t, err.Error(), "unknown panel plugin kind",
+		"outer wrap should not smother the inner UnmarshalJSON message")
+	require.Contains(t, err.Error(), `"NonExistentPanel"`,
+		"the offending value should still appear in the error")
+	require.Contains(t, err.Error(), "allowed values:",
+		"the allowed-values hint should still appear in the error")
+
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput),
+		"outer wrap should classify the error as TypeInvalidInput")
+	assert.True(t, errors.Asc(err, ErrCodeDashboardInvalidInput),
+		"outer wrap should stamp ErrCodeDashboardInvalidInput")
 }
 
 func TestValidateEmptySpec(t *testing.T) {
 	// no variables no panels
 	data := []byte(`{}`)
-	_, err := UnmarshalAndValidateDashboardV2JSON(data)
+	_, err := unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid")
 }
 
@@ -59,17 +101,13 @@ func TestValidateOnlyVariables(t *testing.T) {
 				"kind": "TextVariable",
 				"spec": {
 					"name": "mytext",
-					"value": "default",
-					"plugin": {
-						"kind": "signoz/TextboxVariable",
-						"spec": {}
-					}
+					"value": "default"
 				}
 			}
 		],
 		"layouts": []
 	}`)
-	_, err := UnmarshalAndValidateDashboardV2JSON(data)
+	_, err := unmarshalDashboard(data)
 	require.NoError(t, err, "expected valid")
 }
 
@@ -148,7 +186,7 @@ func TestInvalidateUnknownPluginKind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -169,7 +207,7 @@ func TestInvalidateOneInvalidPanel(t *testing.T) {
 		},
 		"layouts": []
 	}`)
-	_, err := UnmarshalAndValidateDashboardV2JSON(data)
+	_, err := unmarshalDashboard(data)
 	require.Error(t, err, "expected error for invalid panel plugin kind")
 	require.Contains(t, err.Error(), "FakePanel", "error should mention FakePanel")
 }
@@ -245,7 +283,7 @@ func TestRejectUnknownFieldsInPluginSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error for unknown field")
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -323,7 +361,7 @@ func TestInvalidateWrongFieldTypeInPluginSpec(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected validation error")
 			if tt.wantContain != "" {
 				require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
@@ -531,11 +569,67 @@ func TestInvalidateBadPanelSpecValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
 	}
+}
+
+func TestInvalidatePanelWithoutQueries(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}}}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel-without-queries to be rejected")
+	require.Contains(t, err.Error(), "panel must have one query")
+}
+
+func TestInvalidatePanelWithEmptyQueriesArray(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+					"queries": []
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel with explicit empty queries array to be rejected")
+	require.Contains(t, err.Error(), "panel must have one query")
+}
+
+// Rendering multiple data sources in a single panel is supported via
+// signoz/CompositeQuery, not by listing multiple top-level queries.
+func TestInvalidatePanelWithMultipleDirectQueries(t *testing.T) {
+	data := []byte(`{
+		"panels": {
+			"p1": {
+				"kind": "Panel",
+				"spec": {
+					"plugin": {"kind": "signoz/TimeSeriesPanel", "spec": {}},
+					"queries": [
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "A", "signal": "metrics"}}}},
+						{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/BuilderQuery", "spec": {"name": "B", "signal": "metrics"}}}}
+					]
+				}
+			}
+		},
+		"layouts": []
+	}`)
+	_, err := unmarshalDashboard(data)
+	require.Error(t, err, "expected panel with two top-level queries to be rejected")
+	require.Contains(t, err.Error(), "panel must have one query")
 }
 
 func TestValidateRequiredFields(t *testing.T) {
@@ -626,7 +720,7 @@ func TestValidateRequiredFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON([]byte(tt.data))
+			_, err := unmarshalDashboard([]byte(tt.data))
 			require.Error(t, err, "expected error containing %q, got nil", tt.wantContain)
 			require.Contains(t, err.Error(), tt.wantContain, "error should mention %q", tt.wantContain)
 		})
@@ -642,13 +736,14 @@ func TestTimeSeriesPanelDefaults(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
 		"layouts": []
 	}`)
-	d, err := UnmarshalAndValidateDashboardV2JSON(data)
+	d, err := unmarshalDashboard(data)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	// After validation+normalization, the plugin spec should be a typed struct.
@@ -689,13 +784,14 @@ func TestNumberPanelDefaults(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
 		"layouts": []
 	}`)
-	d, err := UnmarshalAndValidateDashboardV2JSON(data)
+	d, err := unmarshalDashboard(data)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	require.IsType(t, &NumberPanelSpec{}, d.Panels["p1"].Spec.Plugin.Spec)
@@ -716,6 +812,30 @@ func TestNumberPanelDefaults(t *testing.T) {
 		"expected stored/response JSON to contain operator:>, got: %s", outputStr)
 }
 
+// TestPersesFixtureStorageRoundTrip exercises the typed → map[string]any →
+// typed cycle that the create/get path performs against the kitchen-sink
+// fixture. Catches plugin specs whose UnmarshalJSON expects a different shape
+// than the default MarshalJSON emits.
+func TestPersesFixtureStorageRoundTrip(t *testing.T) {
+	raw, err := os.ReadFile("testdata/perses.json")
+	require.NoError(t, err)
+
+	var data DashboardData
+	require.NoError(t, json.Unmarshal(raw, &data), "initial unmarshal")
+
+	marshaled, err := json.Marshal(data)
+	require.NoError(t, err, "marshal typed → JSON")
+
+	var asMap map[string]any
+	require.NoError(t, json.Unmarshal(marshaled, &asMap), "JSON → map (storage shape)")
+
+	remarshaled, err := json.Marshal(asMap)
+	require.NoError(t, err, "map → JSON (read-back shape)")
+
+	var roundtripped DashboardData
+	require.NoError(t, json.Unmarshal(remarshaled, &roundtripped), "JSON → typed (the failure mode)")
+}
+
 // TestStorageRoundTrip simulates the future DB store/load cycle:
 // marshal the normalized dashboard to JSON (what would be written to DB),
 // then unmarshal it back (what would be read from DB), and verify defaults survive.
@@ -728,7 +848,8 @@ func TestStorageRoundTrip(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/TimeSeriesPanel",
 						"spec": {}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			},
 			"p2": {
@@ -737,7 +858,8 @@ func TestStorageRoundTrip(t *testing.T) {
 					"plugin": {
 						"kind": "signoz/NumberPanel",
 						"spec": {"thresholds": [{"value": 100, "color": "Red"}]}
-					}
+					},
+					"queries": [{"kind": "TimeSeriesQuery", "spec": {"plugin": {"kind": "signoz/PromQLQuery", "spec": {"name": "A", "query": "up"}}}}]
 				}
 			}
 		},
@@ -745,7 +867,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	}`)
 
 	// Step 1: Unmarshal + validate + normalize (what the API handler does).
-	d, err := UnmarshalAndValidateDashboardV2JSON(input)
+	d, err := unmarshalDashboard(input)
 	require.NoError(t, err, "unmarshal and validate failed")
 
 	// Step 1.5: Verify struct fields have correct defaults (extra validation before storing).
@@ -765,7 +887,7 @@ func TestStorageRoundTrip(t *testing.T) {
 	require.NoError(t, err, "marshal for storage failed")
 
 	// Step 3: Unmarshal from JSON (simulates reading from DB).
-	loaded, err := UnmarshalAndValidateDashboardV2JSON(stored)
+	loaded, err := unmarshalDashboard(stored)
 	require.NoError(t, err, "unmarshal from storage failed")
 
 	// Step 3.5: Verify struct fields have correct defaults after loading (before returning in API).
@@ -878,7 +1000,7 @@ func TestPanelTypeQueryTypeCompatibility(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := UnmarshalAndValidateDashboardV2JSON(tc.data)
+			_, err := unmarshalDashboard(tc.data)
 			if tc.wantErr {
 				require.Error(t, err)
 			} else {

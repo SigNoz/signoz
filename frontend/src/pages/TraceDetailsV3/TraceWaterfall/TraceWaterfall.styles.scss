@@ -1,0 +1,11 @@
+.trace-waterfall {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+
+	.loading-skeleton {
+		justify-content: center;
+		align-items: center;
+		padding: 20px;
+	}
+}

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
+import { Typography } from '@signozhq/ui';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';

@@ -1,17 +1,8 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import {
-	Alert,
-	Button,
-	Col,
-	Flex,
-	Modal,
-	Row,
-	Skeleton,
-	Space,
-	Typography,
-} from 'antd';
+import { Alert, Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import manageCreditCardApi from 'api/v1/portal/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
@@ -116,7 +107,7 @@ function WorkspaceSuspended(): JSX.Element {
 										<Typography.Title level={2}>
 											<div className="workspace-suspended__title">{t('actionHeader')}</div>
 										</Typography.Title>
-										<Typography.Paragraph className="workspace-suspended__details">
+										<Typography.Text className="workspace-suspended__details">
 											{t('actionDescription')}
 											<br />
 											{t('yourDataIsSafe')}{' '}
@@ -127,7 +118,7 @@ function WorkspaceSuspended(): JSX.Element {
 												)}
 											</span>{' '}
 											{t('actNow')}
-										</Typography.Paragraph>
+										</Typography.Text>
 									</Space>
 								</Col>
 							</Row>

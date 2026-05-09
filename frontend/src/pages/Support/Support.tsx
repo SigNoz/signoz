@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button, Card, Modal, Typography } from 'antd';
+import { Button, Card, Modal } from 'antd';
+import { Typography } from '@signozhq/ui';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { FeatureKeys } from 'constants/features';
@@ -205,7 +206,7 @@ export default function Support(): JSX.Element {
 						(channel): JSX.Element => (
 							<Card className="support-channel" key={channel.key}>
 								<div className="support-channel-content">
-									<Title ellipsis level={5} className="support-channel-title">
+									<Title truncate={1} level={5} className="support-channel-title">
 										{channel.icon}
 										{channel.name}{' '}
 									</Title>
@@ -218,7 +219,7 @@ export default function Support(): JSX.Element {
 										type="default"
 										onClick={(): void => handleChannelClick(channel)}
 									>
-										<Text ellipsis>{channel.btnText} </Text>
+										<Text truncate={1}>{channel.btnText} </Text>
 										{channel.isExternal && <ArrowUpRight size={14} />}
 									</Button>
 								</div>

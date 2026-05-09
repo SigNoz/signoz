@@ -1,4 +1,5 @@
-import { Card, Space, Typography } from 'antd';
+import { Card, Space } from 'antd';
+import { Typography } from '@signozhq/ui';
 import styled from 'styled-components';
 
 export const OptionsContainer = styled(Card)`

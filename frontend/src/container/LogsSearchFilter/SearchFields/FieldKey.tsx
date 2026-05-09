@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui';
 
 interface FieldKeyProps {
 	name: string;
@@ -9,7 +9,7 @@ function FieldKey({ name, type }: FieldKeyProps): JSX.Element {
 	return (
 		<span style={{ margin: '0.25rem 0', display: 'flex', gap: '0.5rem' }}>
 			<Typography.Text>{name}</Typography.Text>
-			<Typography.Text type="secondary" italic>
+			<Typography.Text color="muted" italic>
 				{type}
 			</Typography.Text>
 		</span>
