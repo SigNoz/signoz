@@ -26,9 +26,8 @@ import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHe
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
-import TraceWaterfall, {
-	IInterestedSpan,
-} from './TraceWaterfall/TraceWaterfall';
+import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
+import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
 
 import './TraceDetailsV3.styles.scss';

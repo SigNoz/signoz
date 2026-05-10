@@ -131,6 +131,24 @@
 		position: relative;
 	}
 
+	// Invisible IntersectionObserver targets pinned at the top and bottom of
+	// the virtualized content. See `useBoundaryPagination`.
+	.waterfall-load-more-sentinel {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 1px;
+		pointer-events: none;
+
+		&--top {
+			top: 0;
+		}
+
+		&--bottom {
+			bottom: 0;
+		}
+	}
+
 	.waterfall-sidebar {
 		overflow-x: auto;
 		overflow-y: hidden;

@@ -41,6 +41,7 @@ import {
 	ListPlus,
 } from 'lucide-react';
 import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
@@ -49,7 +50,7 @@ import { toFixed } from 'utils/toFixed';
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
 import SpanHoverCard from '../../../SpanHoverCard/SpanHoverCard';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
-import { IInterestedSpan } from '../../TraceWaterfall';
+import { IInterestedSpan } from '../../types';
 
 import './Success.styles.scss';
 
@@ -502,6 +503,17 @@ function Success(props: ISuccessProps): JSX.Element {
 	const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const {
+		topSentinelRef: loadMoreTopSentinelRef,
+		bottomSentinelRef: loadMoreBottomSentinelRef,
+	} = useBoundaryPagination({
+		scrollContainerRef,
+		spans,
+		isFetching,
+		isFullDataLoaded,
+		setInterestedSpanId,
+	});
+
+	const {
 		cursorXPercent,
 		cursorX,
 		onMouseMove: onCrosshairMove,
@@ -611,32 +623,8 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 				}, 20);
 			}
-
-			// In frontend mode all data is already loaded, no need to fetch more.
-			// In backend mode, skip auto-fetch when under 500 spans (nothing more to paginate).
-			if (isFullDataLoaded || spans.length < 500) {
-				return;
-			}
-
-			if (range?.startIndex === 0 && instance.isScrolling) {
-				// do not trigger for trace root as nothing to fetch above
-				if (spans[0].level !== 0) {
-					setInterestedSpanId({
-						spanId: spans[0].span_id,
-						isUncollapsed: false,
-					});
-				}
-				return;
-			}
-
-			if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
-				setInterestedSpanId({
-					spanId: spans[spans.length - 1].span_id,
-					isUncollapsed: false,
-				});
-			}
 		},
-		[spans, setInterestedSpanId, isFullDataLoaded],
+		[spans],
 	);
 
 	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] =
@@ -829,6 +817,16 @@ function Success(props: ISuccessProps): JSX.Element {
 						height: '100%',
 					}}
 				>
+					{/* Top / bottom sentinels: each transition into the viewport
+					    fires a load-more via useBoundaryPagination. */}
+					<div
+						ref={loadMoreTopSentinelRef}
+						className="waterfall-load-more-sentinel waterfall-load-more-sentinel--top"
+					/>
+					<div
+						ref={loadMoreBottomSentinelRef}
+						className="waterfall-load-more-sentinel waterfall-load-more-sentinel--bottom"
+					/>
 					{/* Left panel - table with horizontal scroll */}
 					<ResizableBox
 						direction="horizontal"
