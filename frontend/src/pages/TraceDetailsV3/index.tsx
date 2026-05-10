@@ -313,7 +313,16 @@ function TraceDetailsV3(): JSX.Element {
 												<span>Flame Graph</span>
 												{traceData?.payload?.totalSpansCount ? (
 													<span className="trace-details-v3__collapse-count">
-														{traceData.payload.totalSpansCount} spans
+														<span>Spans: {traceData.payload.totalSpansCount}</span>
+														<span
+															className={
+																traceData.payload.totalErrorSpansCount > 0
+																	? 'trace-details-v3__collapse-count-errors'
+																	: undefined
+															}
+														>
+															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+														</span>
 														{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
 															<WarningPopover
 																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans."
