@@ -473,7 +473,7 @@ export interface AIAssistantStore {
 	clearConversation: (id: string) => void;
 	archiveConversation: (id: string) => void;
 	restoreConversation: (id: string) => void;
-	renameConversation: (id: string, title: string) => void;
+	renameConversation: (id: string, title: string) => Promise<void>;
 	markBlockAnswered: (messageId: string, answer: string) => void;
 	sendMessage: (
 		text: string,
@@ -929,17 +929,44 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					});
 			},
 
-			renameConversation: (id: string, title: string): void => {
+			renameConversation: async (id: string, title: string): Promise<void> => {
 				const trimmed = title.trim() || undefined;
+				const conv = get().conversations[id];
+				if (!conv) {
+					return;
+				}
+				const previousTitle = conv.title;
+
+				// Optimistic local update so the sidebar reflects the rename
+				// immediately. Reconciled or reverted below once the backend
+				// responds — without that, an in-flight `loadThread` /
+				// `fetchThreads` can resolve with the pre-rename title and
+				// clobber the optimistic value.
 				set((state) => {
 					if (state.conversations[id]) {
 						state.conversations[id].title = trimmed;
 					}
 				});
-				const conv = get().conversations[id];
-				if (conv?.threadId) {
-					updateThread(conv.threadId, { title: trimmed ?? null }).catch((err) => {
-						console.error('[AIAssistant] renameThread failed:', err);
+
+				if (!conv.threadId) {
+					return;
+				}
+
+				try {
+					const updated = await updateThread(conv.threadId, {
+						title: trimmed ?? null,
+					});
+					set((state) => {
+						if (state.conversations[id]) {
+							state.conversations[id].title = updated.title ?? undefined;
+						}
+					});
+				} catch (err) {
+					console.error('[AIAssistant] renameThread failed:', err);
+					set((state) => {
+						if (state.conversations[id]) {
+							state.conversations[id].title = previousTitle;
+						}
 					});
 				}
 			},

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import cx from 'classnames';
-import { Button, Input, Tooltip } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Plus, Search } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
@@ -163,7 +165,7 @@ export default function ConversationsList({
 							onClick={onNewConversation}
 							aria-label="New conversation"
 						>
-							<Plus size={14} />
+							<Plus size={12} />
 						</Button>
 					</Tooltip>
 				)}
