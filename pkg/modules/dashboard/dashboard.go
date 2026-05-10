@@ -42,6 +42,11 @@ type Module interface {
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error)
 
+	// Reset puts back default value for system dashboard.
+	Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error)
+	
+	SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
+
 	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
@@ -89,4 +94,6 @@ type Handler interface {
 	CreateV2(http.ResponseWriter, *http.Request)
 
 	GetV2(http.ResponseWriter, *http.Request)
+
+	Reset(http.ResponseWriter, *http.Request)
 }

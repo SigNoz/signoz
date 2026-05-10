@@ -69,6 +69,15 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
 }
 
+func (module *module) GetBySource(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source) (*dashboardtypes.Dashboard, error) {
+	storableDashboard, err := module.store.GetBySource(ctx, orgID, string(source))
+	if err != nil {
+		return nil, err
+	}
+
+	return dashboardtypes.NewDashboardFromStorableDashboard(storableDashboard), nil
+}
+
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	storableDashboards, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -107,12 +116,82 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
-	err = module.store.Update(ctx, orgID, storableDashboard)
-	if err != nil {
+	if err := module.store.Update(ctx, orgID, storableDashboard); err != nil {
 		return nil, err
 	}
 
 	return dashboard, nil
+}
+
+func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
+	defaultDashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
+	if err != nil {
+		return nil, err
+	}
+
+	existing, err := module.GetBySource(ctx, orgID, source)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	if existing == nil {
+		defaultDashboard.CreatedBy = updatedBy
+		defaultDashboard.UpdatedBy = updatedBy
+
+		storable, err := dashboardtypes.NewStorableDashboardFromDashboard(defaultDashboard)
+		if err != nil {
+			return nil, err
+		}
+		if err := module.store.Create(ctx, storable); err != nil {
+			return nil, err
+		}
+		return defaultDashboard, nil
+	}
+
+	existing.OverwriteData(defaultDashboard.Data, updatedBy)
+
+	storable, err := dashboardtypes.NewStorableDashboardFromDashboard(existing)
+	if err != nil {
+		return nil, err
+	}
+	if err := module.store.Update(ctx, orgID, storable); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
+}
+
+// SetDefaultConfig seeds default values for system dashboards for newly created orgs.
+func (module *module) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
+	for _, source := range dashboardtypes.SystemSources {
+		existing, err := module.GetBySource(ctx, orgID, source)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		if existing != nil {
+			continue
+		}
+
+		dashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
+		if err != nil {
+			// No defaults set for the source skipping will pupulate in  default overview followup pr.
+			if errors.Ast(err, errors.TypeInvalidInput) {
+				continue
+			}
+			return err
+		}
+
+		storable, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
+		if err != nil {
+			return err
+		}
+
+		if err := module.store.Create(ctx, storable); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {

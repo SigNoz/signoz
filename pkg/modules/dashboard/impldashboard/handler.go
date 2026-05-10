@@ -185,6 +185,49 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 
 }
 
+// Reset only resets system dashboard (source != "") to default values.
+func (handler *handler) Reset(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	dashboard, err := handler.module.Get(ctx, orgID, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if dashboard.Source == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard with id %s is not a system dashboard, reset is unsupported", id))
+		return
+	}
+
+	resetDashboard, err := handler.module.Reset(ctx, orgID, dashboardtypes.Source(dashboard.Source), claims.Email)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, resetDashboard)
+}
+
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

@@ -116,15 +116,6 @@ func NewDashboard(orgID valuer.UUID, createdBy string, source Source, storableDa
 	}, nil
 }
 
-func NewDashboardFromUpdatable(data UpdatableDashboard, updatedBy string) *Dashboard {
-	return &Dashboard{
-		Data: data,
-		UserAuditable: types.UserAuditable{
-			UpdatedBy: updatedBy,
-		},
-	}
-}
-
 func NewDashboardFromStorableDashboard(storableDashboard *StorableDashboard) *Dashboard {
 	return &Dashboard{
 		ID: storableDashboard.ID.StringValue(),
@@ -339,6 +330,12 @@ func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard Updat
 	dashboard.UpdatedAt = time.Now()
 	dashboard.Data = updatableDashboard
 	return nil
+}
+
+func (dashboard *Dashboard) OverwriteData(updatableDashboard UpdatableDashboard, updatedBy string) {
+	dashboard.UpdatedBy = updatedBy
+	dashboard.UpdatedAt = time.Now()
+	dashboard.Data = updatableDashboard
 }
 
 func (dashboard *Dashboard) CanLockUnlock(isAdmin bool, updatedBy string) error {

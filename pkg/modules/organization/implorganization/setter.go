@@ -4,22 +4,22 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	"github.com/SigNoz/signoz/pkg/modules/systemdashboard"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type setter struct {
-	store           types.OrganizationStore
-	alertmanager    alertmanager.Alertmanager
-	quickfilter     quickfilter.Module
-	systemDashboard systemdashboard.Module
+	store        types.OrganizationStore
+	alertmanager alertmanager.Alertmanager
+	quickfilter  quickfilter.Module
+	dashboard    dashboard.Module
 }
 
-func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, systemDashboard systemdashboard.Module) organization.Setter {
-	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, systemDashboard: systemDashboard}
+func NewSetter(store types.OrganizationStore, alertmanager alertmanager.Alertmanager, quickfilter quickfilter.Module, dashboard dashboard.Module) organization.Setter {
+	return &setter{store: store, alertmanager: alertmanager, quickfilter: quickfilter, dashboard: dashboard}
 }
 
 func (module *setter) Create(ctx context.Context, organization *types.Organization, createManagedRoles func(context.Context, valuer.UUID) error) error {
@@ -35,7 +35,7 @@ func (module *setter) Create(ctx context.Context, organization *types.Organizati
 		return err
 	}
 
-	if err := module.systemDashboard.SetDefaultConfig(ctx, organization.ID); err != nil {
+	if err := module.dashboard.SetDefaultConfig(ctx, organization.ID); err != nil {
 		return err
 	}
 

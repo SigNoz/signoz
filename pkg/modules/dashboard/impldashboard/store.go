@@ -55,7 +55,6 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		Model(storableDashboard).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
-		Where("source = ?", "").
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
@@ -208,7 +207,6 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		Model(new(dashboardtypes.StorableDashboard)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
-		Where("source = ?", "").
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "dashboard with id %s doesn't exist", id)
