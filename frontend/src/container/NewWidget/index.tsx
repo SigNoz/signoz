@@ -6,14 +6,14 @@ import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
+import { Button } from '@signozhq/ui/button';
 import {
-	Button,
 	ResizableHandle,
 	ResizablePanel,
 	ResizablePanelGroup,
-} from '@signozhq/ui';
+} from '@signozhq/ui/resizable';
 import { Flex, Modal, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';

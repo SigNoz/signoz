@@ -1,6 +1,6 @@
 import { useHistory, useLocation } from 'react-router-dom';
 import { Select, Spin } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';

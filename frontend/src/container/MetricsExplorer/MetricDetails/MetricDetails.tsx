@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';

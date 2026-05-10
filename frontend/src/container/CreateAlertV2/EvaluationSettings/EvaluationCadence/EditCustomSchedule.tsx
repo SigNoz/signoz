@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlertV2/context/constants';
 import { IEditCustomScheduleProps } from 'container/CreateAlertV2/EvaluationSettings/types';

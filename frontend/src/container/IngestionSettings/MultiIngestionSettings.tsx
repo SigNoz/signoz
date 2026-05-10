@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
-import { Badge, Button } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import {
 	Col,
 	Collapse,
@@ -21,7 +22,7 @@ import {
 	Tag,
 	Tooltip,
 } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {

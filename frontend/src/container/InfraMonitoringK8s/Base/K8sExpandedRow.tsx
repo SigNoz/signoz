@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
-import { Button } from '@signozhq/ui';
-import { Typography } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import TanStackTable, {
 	SortState,
 	TableColumnDef,

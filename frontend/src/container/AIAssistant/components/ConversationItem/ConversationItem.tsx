@@ -3,7 +3,11 @@ import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { getAbsoluteUrl } from 'utils/basePath';
-import { Button, Dropdown, Input, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
+import { DropdownMenuSimple } from '@signozhq/ui/dropdown-menu';
+
 import {
 	Archive,
 	ArchiveRestore,
@@ -200,7 +204,7 @@ export default function ConversationItem({
 					// own clicks don't bubble, but the trigger button does.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<Dropdown
+					<DropdownMenuSimple
 						menu={{ items: menuItems }}
 						align="end"
 						sideOffset={4}
@@ -214,7 +218,7 @@ export default function ConversationItem({
 							aria-label="Conversation actions"
 							prefix={<EllipsisVertical size={12} />}
 						/>
-					</Dropdown>
+					</DropdownMenuSimple>
 				</div>
 			)}
 		</div>

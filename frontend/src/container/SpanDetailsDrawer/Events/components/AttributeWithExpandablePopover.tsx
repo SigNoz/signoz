@@ -1,5 +1,5 @@
 import { Button, Popover, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { Fullscreen } from 'lucide-react';
 
 import './AttributeWithExpandablePopover.styles.scss';

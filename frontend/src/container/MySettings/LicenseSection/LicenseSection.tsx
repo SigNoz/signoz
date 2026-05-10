@@ -1,6 +1,6 @@
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/ui';
-import { Typography } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
 import { Copy } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';

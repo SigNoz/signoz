@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';

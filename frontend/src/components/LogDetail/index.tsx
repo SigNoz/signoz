@@ -3,9 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Divider, Drawer, Radio, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';

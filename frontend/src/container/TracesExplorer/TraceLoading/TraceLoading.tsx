@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { DataSource } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';

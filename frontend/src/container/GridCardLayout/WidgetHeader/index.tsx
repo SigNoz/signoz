@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';

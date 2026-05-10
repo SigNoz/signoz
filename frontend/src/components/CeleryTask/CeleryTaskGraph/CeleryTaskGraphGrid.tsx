@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Card } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';

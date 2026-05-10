@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Button, Input, Select, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 

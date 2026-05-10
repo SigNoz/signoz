@@ -176,7 +176,7 @@ func GetAdditionTuples(name string, orgID valuer.UUID, relation Relation, additi
 		transactionTuples := NewTuples(
 			resource,
 			MustNewSubject(
-				resource,
+				coretypes.NewResourceRole(),
 				name,
 				orgID,
 				&coretypes.VerbAssignee,
@@ -200,7 +200,7 @@ func GetDeletionTuples(name string, orgID valuer.UUID, relation Relation, deleti
 		transactionTuples := NewTuples(
 			resource,
 			MustNewSubject(
-				resource,
+				coretypes.NewResourceRole(),
 				name,
 				orgID,
 				&coretypes.VerbAssignee,

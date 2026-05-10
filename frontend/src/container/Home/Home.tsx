@@ -10,7 +10,7 @@ import {
 	Plus,
 	Wrench,
 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';

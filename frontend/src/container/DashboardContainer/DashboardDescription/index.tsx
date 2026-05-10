@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';

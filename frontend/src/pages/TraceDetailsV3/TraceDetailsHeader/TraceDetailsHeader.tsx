@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { ArrowLeft } from 'lucide-react';

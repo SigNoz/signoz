@@ -1,6 +1,6 @@
 import { GoogleSquareFilled, KeyOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
 
 import './CreateEdit.styles.scss';

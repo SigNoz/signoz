@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { CardContainer } from 'container/GridCardLayout/styles';

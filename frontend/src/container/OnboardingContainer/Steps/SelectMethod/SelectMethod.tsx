@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Radio, RadioChangeEvent, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	OnboardingMethods,
 	useOnboardingContext,

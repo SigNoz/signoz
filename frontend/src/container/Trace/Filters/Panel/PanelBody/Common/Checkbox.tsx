@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { Checkbox, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';

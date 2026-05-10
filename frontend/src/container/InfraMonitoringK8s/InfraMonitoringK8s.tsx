@@ -3,7 +3,7 @@ import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
 import { Collapse, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';

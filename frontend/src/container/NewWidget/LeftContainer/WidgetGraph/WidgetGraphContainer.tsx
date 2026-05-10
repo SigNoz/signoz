@@ -1,5 +1,5 @@
 import { Card } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Spinner from 'components/Spinner';
 import { PANEL_TYPES } from 'constants/queryBuilder';
