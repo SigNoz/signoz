@@ -35,6 +35,7 @@ var jobsTableMetricNamesList = []string{
 	"k8s.job.active_pods",
 	"k8s.job.failed_pods",
 	"k8s.job.successful_pods",
+	"k8s.job.desired_successful_pods",
 }
 
 // Carried forward from v1 jobAttrsToEnrich
