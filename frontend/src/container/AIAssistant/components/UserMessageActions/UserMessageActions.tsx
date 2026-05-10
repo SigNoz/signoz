@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Tooltip } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Check, Copy } from '@signozhq/icons';
 
 import { Message } from '../../types';

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import cx from 'classnames';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Checkbox, Radio } from 'antd';
 
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';

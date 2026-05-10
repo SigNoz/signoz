@@ -1,17 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
 import {
-	Button,
 	Dialog,
 	DialogCloseButton,
 	DialogContent,
 	DialogHeader,
 	DialogSubtitle,
 	DialogTitle,
-	ToggleGroup,
-	ToggleGroupItem,
-} from '@signozhq/ui';
+} from '@signozhq/ui/dialog';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,

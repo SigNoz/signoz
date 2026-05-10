@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
-import {
-	Badge,
-	Button,
-	Input,
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-	Tooltip,
-} from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
 import {
 	getListRulesQueryKey,

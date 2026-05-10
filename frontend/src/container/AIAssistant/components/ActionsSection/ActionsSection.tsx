@@ -11,7 +11,8 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
-import { Button, Tooltip } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import type { MessageActionDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,

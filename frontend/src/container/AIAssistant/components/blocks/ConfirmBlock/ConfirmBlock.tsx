@@ -1,5 +1,5 @@
 import cx from 'classnames';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Check, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';

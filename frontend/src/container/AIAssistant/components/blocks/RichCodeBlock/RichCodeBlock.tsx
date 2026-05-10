@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Check, Copy } from '@signozhq/icons';
 import SyntaxHighlighter, {
 	a11yDark,

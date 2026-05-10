@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
-import { Button, Tooltip } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Drawer } from 'antd';
 import ROUTES from 'constants/routes';
 import { Maximize2, MessageSquare, Plus, X } from '@signozhq/icons';

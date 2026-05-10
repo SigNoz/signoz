@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import cx from 'classnames';
+import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
 import {
-	Button,
-	Checkbox,
-	Input,
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
-} from '@signozhq/ui';
+} from '@signozhq/ui/select';
 import { ClarificationFieldTypeDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type {
 	ClarificationEventDTO,

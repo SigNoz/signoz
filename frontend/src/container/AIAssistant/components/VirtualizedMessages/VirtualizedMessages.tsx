@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import {
 	Activity,
