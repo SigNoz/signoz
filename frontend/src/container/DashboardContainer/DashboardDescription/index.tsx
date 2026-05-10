@@ -18,6 +18,7 @@ import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
+import dompurify from 'dompurify';
 import { isEmpty } from 'lodash-es';
 import {
 	Check,
@@ -513,7 +514,11 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 				</div>
 			)}
 			{!isEmpty(description) && (
-				<section className="dashboard-description-section">{description}</section>
+				<section
+					className="dashboard-description-section"
+					// eslint-disable-next-line react/no-danger
+					dangerouslySetInnerHTML={{ __html: dompurify.sanitize(description || '') }}
+				/>
 			)}
 
 			{!isEmpty(dashboardVariables) && (
