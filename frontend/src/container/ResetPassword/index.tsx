@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-use';
-import { Button, Callout } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
 import { Form, Input as AntdInput } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { Logout } from 'api/utils';
 import resetPasswordApi from 'api/v1/factor_password/resetPassword';
 import AuthError from 'components/AuthError/AuthError';

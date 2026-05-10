@@ -5,7 +5,7 @@ import {
 	LeftCircleOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Steps } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';

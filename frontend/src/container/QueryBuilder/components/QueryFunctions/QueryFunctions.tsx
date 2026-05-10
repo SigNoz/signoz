@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from 'lucide-react';

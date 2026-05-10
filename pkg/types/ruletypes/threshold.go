@@ -36,11 +36,14 @@ type RuleThresholdData struct {
 
 // thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
 type thresholdBasic struct {
-	Kind ThresholdKind       `json:"kind" description:"The kind of threshold."`
-	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)."`
+	Kind ThresholdKind       `json:"kind" description:"The kind of threshold." required:"true"`
+	Spec BasicRuleThresholds `json:"spec" description:"The basic threshold specification (array of thresholds)." required:"true"`
 }
 
-var _ jsonschema.OneOfExposer = RuleThresholdData{}
+var (
+	_ jsonschema.OneOfExposer = RuleThresholdData{}
+	_ jsonschema.Preparer     = RuleThresholdData{}
+)
 
 // JSONSchemaOneOf returns the oneOf variants for the RuleThresholdData discriminated union.
 // Each variant represents a different threshold kind with its corresponding spec schema.
@@ -48,6 +51,24 @@ func (RuleThresholdData) JSONSchemaOneOf() []any {
 	return []any{
 		thresholdBasic{},
 	}
+}
+
+// PrepareJSONSchema marks the schema with x-signoz-discriminator;
+// signoz.attachDiscriminators promotes it to a real OpenAPI 3
+// discriminator after reflection.
+func (RuleThresholdData) PrepareJSONSchema(schema *jsonschema.Schema) error {
+	if schema.ExtraProperties == nil {
+		schema.ExtraProperties = map[string]any{}
+	}
+
+	schema.ExtraProperties["x-signoz-discriminator"] = map[string]any{
+		"propertyName": "kind",
+		"mapping": map[string]string{
+			"basic": "#/components/schemas/RuletypesThresholdBasic",
+		},
+	}
+
+	return nil
 }
 
 func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {

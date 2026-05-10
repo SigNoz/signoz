@@ -1,5 +1,5 @@
 import { blue, grey } from '@ant-design/colors';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const CategoryContainer = styled.div`

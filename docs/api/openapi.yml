@@ -448,6 +448,7 @@ components:
       - delete
       - list
       - assignee
+      - attach
       type: string
     AuthtypesRole:
       properties:
@@ -4537,18 +4538,19 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesCumulativeWindow'
-      type: object
-    RuletypesEvaluationEnvelope:
-      oneOf:
-      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
-      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesEvaluationKind'
-        spec: {}
       required:
       - kind
       - spec
+      type: object
+    RuletypesEvaluationEnvelope:
+      discriminator:
+        mapping:
+          cumulative: '#/components/schemas/RuletypesEvaluationCumulative'
+          rolling: '#/components/schemas/RuletypesEvaluationRolling'
+        propertyName: kind
+      oneOf:
+      - $ref: '#/components/schemas/RuletypesEvaluationRolling'
+      - $ref: '#/components/schemas/RuletypesEvaluationCumulative'
       type: object
     RuletypesEvaluationKind:
       enum:
@@ -4561,6 +4563,9 @@ components:
           $ref: '#/components/schemas/RuletypesEvaluationKind'
         spec:
           $ref: '#/components/schemas/RuletypesRollingWindow'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesGettableTestRule:
       properties:
@@ -4868,15 +4873,12 @@ components:
       - compositeQuery
       type: object
     RuletypesRuleThresholdData:
+      discriminator:
+        mapping:
+          basic: '#/components/schemas/RuletypesThresholdBasic'
+        propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/RuletypesThresholdBasic'
-      properties:
-        kind:
-          $ref: '#/components/schemas/RuletypesThresholdKind'
-        spec: {}
-      required:
-      - kind
-      - spec
       type: object
     RuletypesRuleType:
       enum:
@@ -4918,6 +4920,9 @@ components:
           $ref: '#/components/schemas/RuletypesThresholdKind'
         spec:
           $ref: '#/components/schemas/RuletypesBasicRuleThresholds'
+      required:
+      - kind
+      - spec
       type: object
     RuletypesThresholdKind:
       enum:
@@ -9564,9 +9569,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:list
       - tokenizer:
-        - ADMIN
+        - serviceaccount:list
       summary: List service accounts
       tags:
       - serviceaccount
@@ -9626,9 +9631,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:create
       - tokenizer:
-        - ADMIN
+        - serviceaccount:create
       summary: Create service account
       tags:
       - serviceaccount
@@ -9676,9 +9681,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:delete
       - tokenizer:
-        - ADMIN
+        - serviceaccount:delete
       summary: Deletes a service account
       tags:
       - serviceaccount
@@ -9733,9 +9738,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets a service account
       tags:
       - serviceaccount
@@ -9793,9 +9798,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account
       tags:
       - serviceaccount
@@ -9847,9 +9852,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: List service account keys
       tags:
       - serviceaccount
@@ -9915,9 +9920,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Create a service account key
       tags:
       - serviceaccount
@@ -9970,9 +9975,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Revoke a service account key
       tags:
       - serviceaccount
@@ -10035,9 +10040,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:update
       - tokenizer:
-        - ADMIN
+        - serviceaccount:update
       summary: Updates a service account key
       tags:
       - serviceaccount
@@ -10096,9 +10101,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:read
       - tokenizer:
-        - ADMIN
+        - serviceaccount:read
       summary: Gets service account roles
       tags:
       - serviceaccount
@@ -10158,9 +10163,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Create service account role
       tags:
       - serviceaccount
@@ -10207,9 +10214,11 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       - tokenizer:
-        - ADMIN
+        - serviceaccount:attach
+        - role:attach
       summary: Delete service account role
       tags:
       - serviceaccount

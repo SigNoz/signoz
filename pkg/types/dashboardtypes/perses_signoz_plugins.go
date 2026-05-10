@@ -8,6 +8,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/swaggest/jsonschema-go"
 )
 
 // ══════════════════════════════════════════════
@@ -20,11 +21,10 @@ const (
 	VariableKindDynamic VariablePluginKind = "signoz/DynamicVariable"
 	VariableKindQuery   VariablePluginKind = "signoz/QueryVariable"
 	VariableKindCustom  VariablePluginKind = "signoz/CustomVariable"
-	VariableKindTextbox VariablePluginKind = "signoz/TextboxVariable"
 )
 
 func (VariablePluginKind) Enum() []any {
-	return []any{VariableKindDynamic, VariableKindQuery, VariableKindCustom, VariableKindTextbox}
+	return []any{VariableKindDynamic, VariableKindQuery, VariableKindCustom}
 }
 
 type DynamicVariableSpec struct {
@@ -41,8 +41,6 @@ type QueryVariableSpec struct {
 type CustomVariableSpec struct {
 	CustomValue string `json:"customValue" validate:"required" required:"true"`
 }
-
-type TextboxVariableSpec struct{}
 
 // ══════════════════════════════════════════════
 // SigNoz query plugin specs — aliased from querybuildertypesv5
@@ -85,6 +83,30 @@ func (b *BuilderQuerySpec) UnmarshalJSON(data []byte) error {
 	}
 	b.Spec = spec
 	return nil
+}
+
+// MarshalJSON delegates to the inner Spec so the on-wire shape matches what
+// UnmarshalJSON expects (a flat builder-query payload with `signal` at the top
+// level). Without this, Go's default would wrap it as {"Spec": {...}} and the
+// signal-dispatch on read would fail.
+func (b BuilderQuerySpec) MarshalJSON() ([]byte, error) {
+	return json.Marshal(b.Spec)
+}
+
+// PrepareJSONSchema drops the reflected struct shape so only the
+// JSONSchemaOneOf result binds.
+func (BuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
+	return clearOneOfParentShape(s)
+}
+
+// JSONSchemaOneOf exposes the three signal-dispatched shapes a builder query
+// can take. Mirrors qb.UnmarshalBuilderQueryBySignal's runtime dispatch.
+func (BuilderQuerySpec) JSONSchemaOneOf() []any {
+	return []any{
+		qb.QueryBuilderQuery[qb.LogAggregation]{},
+		qb.QueryBuilderQuery[qb.MetricAggregation]{},
+		qb.QueryBuilderQuery[qb.TraceAggregation]{},
+	}
 }
 
 // ══════════════════════════════════════════════

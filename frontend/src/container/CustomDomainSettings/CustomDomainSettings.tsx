@@ -9,7 +9,9 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { Button, Callout, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { toast } from '@signozhq/ui/sonner';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,

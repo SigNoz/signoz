@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { TableColumnDef } from 'components/TanStackTableView';

@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { SyncOutlined } from '@ant-design/icons';
 import { Alert, Table } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';

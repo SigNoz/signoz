@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import type { UseQueryResult } from 'react-query';
 import { Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { Layers } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
 import { LegendPosition } from 'types/api/dashboard/getAll';
