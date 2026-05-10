@@ -25,6 +25,7 @@ var daemonSetNameGroupByKey = qbtypes.GroupByKey{
 // it is queried separately via getPerGroupPodPhaseCounts, and we want the
 // response to short-circuit cleanly when the phase metric is absent.
 var daemonSetsTableMetricNamesList = []string{
+	"k8s.pod.phase",
 	"k8s.pod.cpu.usage",
 	"k8s.pod.cpu_request_utilization",
 	"k8s.pod.cpu_limit_utilization",
@@ -33,7 +34,6 @@ var daemonSetsTableMetricNamesList = []string{
 	"k8s.pod.memory_limit_utilization",
 	"k8s.daemonset.desired_scheduled_nodes",
 	"k8s.daemonset.current_scheduled_nodes",
-	"k8s.pod.phase",
 }
 
 // Carried forward from v1 daemonSetAttrsToEnrich
