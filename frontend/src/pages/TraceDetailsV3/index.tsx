@@ -325,7 +325,7 @@ function TraceDetailsV3(): JSX.Element {
 														</span>
 														{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
 															<WarningPopover
-																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans."
+																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
 																placement="bottomRight"
 																autoAdjustOverflow={false}
 															/>

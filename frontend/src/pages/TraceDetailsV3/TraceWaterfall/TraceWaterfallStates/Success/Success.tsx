@@ -228,13 +228,10 @@ const SpanOverview = memo(function SpanOverview({
 		isFilterActive,
 	);
 
-	// Shift leaf rows 8px to the right so their icon clears the L-connector,
-	// giving the parent/child the same visual separation as Datadog's tree.
-	// Skip for spans that have children of their own — those need to stay
-	// aligned with the L-connectors of their descendants drawn one row down.
-	const indentWidth = isRootSpan
-		? 0
-		: span.level * CONNECTOR_WIDTH + (span.has_children ? 0 : 30);
+	// All siblings at the same level share the same indent so the "same X =
+	// same level" visual rule holds. Parent/child distinction is conveyed by
+	// the chevron and the L-connector, not by an icon-X offset.
+	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
 
 	const handleFunnelClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
 		e.stopPropagation();
@@ -288,9 +285,12 @@ const SpanOverview = memo(function SpanOverview({
 				{/* Indent spacer */}
 				<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
 
-				{/* Expand/collapse arrow + child count (only for spans with children) */}
-				{span.has_children && (
-					<>
+				{/* Expand/collapse arrow + child count slots — always render the
+				    slots, fill them only when the span has children. Reserving the
+				    horizontal space on leaf rows aligns sibling icons regardless
+				    of whether each sibling is a parent or a leaf. */}
+				<span className="tree-arrow-slot">
+					{span.has_children && (
 						<span
 							className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
 							onClick={(event): void => {
@@ -305,11 +305,15 @@ const SpanOverview = memo(function SpanOverview({
 								<ChevronDown size={14} />
 							)}
 						</span>
+					)}
+				</span>
+				<span className="subtree-count-slot">
+					{span.has_children && (
 						<span className="subtree-count">
 							<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
 						</span>
-					</>
-				)}
+					)}
+				</span>
 
 				{/* Colored service dot */}
 				<span
