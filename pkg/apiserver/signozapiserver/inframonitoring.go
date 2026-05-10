@@ -68,7 +68,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/namespaces", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
 		handler.OpenAPIDef{
 			ID:                  "ListNamespaces",
 			Tags:                []string{"inframonitoring"},
