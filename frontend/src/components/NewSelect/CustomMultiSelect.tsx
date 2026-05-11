@@ -1704,11 +1704,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-<<<<<<< HEAD
 								<Loader size="md" className="animate-spin" />
-=======
-								<Loader className="animate-spin" />
->>>>>>> origin
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -1716,11 +1712,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-<<<<<<< HEAD
 								<Loader size="md" className="animate-spin" />
-=======
-								<Loader className="animate-spin" />
->>>>>>> origin
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}
