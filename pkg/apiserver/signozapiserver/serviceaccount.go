@@ -234,16 +234,18 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(
 			handler.BasicAuditDef{
-				Resource: coretypes.ResourceMetaResourcesFactorAPIKey,
-				Verb:     coretypes.VerbCreate,
-				Category: audittypes.ActionCategoryAccessControl,
+				Resource:   coretypes.ResourceMetaResourcesFactorAPIKey,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryAccessControl,
+				ResourceID: handler.ResponseJSONPath("data.id"),
 			},
 			handler.AttachAuditDef{
-				AttachedResource: coretypes.ResourceMetaResourceFactorAPIKey,
-				TargetResource:   coretypes.ResourceServiceAccount,
-				TargetResourceID: handler.PathParam("id"),
-				Verb:             coretypes.VerbAttach,
-				Category:         audittypes.ActionCategoryAccessControl,
+				AttachedResource:   coretypes.ResourceMetaResourceFactorAPIKey,
+				AttachedResourceID: handler.ResponseJSONPath("data.id"),
+				TargetResource:     coretypes.ResourceServiceAccount,
+				TargetResourceID:   handler.PathParam("id"),
+				Verb:               coretypes.VerbAttach,
+				Category:           audittypes.ActionCategoryAccessControl,
 			},
 		),
 	)).Methods(http.MethodPost).GetError(); err != nil {

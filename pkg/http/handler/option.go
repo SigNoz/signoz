@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
@@ -15,15 +12,24 @@ import (
 // Option configures optional behaviour on a handler created by New.
 type Option func(*handler)
 
-// ResourceIDExtractor pulls a resource id from an incoming request. Returns
-// an empty string with no error when the id source is genuinely absent (e.g.
-// "me" routes that act on the caller without an explicit id).
-type ResourceIDExtractor func(*http.Request) (string, error)
+// ExtractorContext carries everything a ResourceIDExtractor might read out of
+// a request/response cycle. The middleware pre-buffers the request body and
+// captures the response body so post-handler extraction works on both sides.
+type ExtractorContext struct {
+	Request      *http.Request
+	RequestBody  []byte
+	ResponseBody []byte
+}
+
+// ResourceIDExtractor pulls a resource id from an incoming request and/or its
+// response. Returns an empty string with no error when the id source is
+// genuinely absent (e.g. "me" routes that act on the caller without an id).
+type ResourceIDExtractor func(ExtractorContext) (string, error)
 
 // PathParam returns an extractor that reads a Gorilla mux path variable.
 func PathParam(name string) ResourceIDExtractor {
-	return func(req *http.Request) (string, error) {
-		vars := mux.Vars(req)
+	return func(ctx ExtractorContext) (string, error) {
+		vars := mux.Vars(ctx.Request)
 		if vars == nil {
 			return "", nil
 		}
@@ -32,22 +38,21 @@ func PathParam(name string) ResourceIDExtractor {
 	}
 }
 
-// BodyJSONPath returns an extractor that reads a JSON path out of the request
-// body using gjson. The body is read and rewound so the downstream handler
-// still sees the full payload.
+// BodyJSONPath returns an extractor that reads a JSON path from the request
+// body via gjson. The middleware buffers the request body before forwarding
+// to the handler, so this extractor still works after the handler runs.
 func BodyJSONPath(path string) ResourceIDExtractor {
-	return func(req *http.Request) (string, error) {
-		if req.Body == nil {
-			return "", nil
-		}
+	return func(ctx ExtractorContext) (string, error) {
+		return gjson.GetBytes(ctx.RequestBody, path).String(), nil
+	}
+}
 
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			return "", errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to read request body for audit extraction")
-		}
-		req.Body = io.NopCloser(bytes.NewReader(body))
-
-		return gjson.GetBytes(body, path).String(), nil
+// ResponseJSONPath returns an extractor that reads a JSON path from the
+// response body via gjson. Useful for Create routes where the new resource id
+// is only known after the handler runs and writes the response payload.
+func ResponseJSONPath(path string) ResourceIDExtractor {
+	return func(ctx ExtractorContext) (string, error) {
+		return gjson.GetBytes(ctx.ResponseBody, path).String(), nil
 	}
 }
 

@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
 	"log/slog"
 	"net"
 	"net/http"
@@ -60,6 +62,14 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			string(semconv.HTTPRouteKey), path,
 		}
 
+		// Pre-buffer the request body if the route declares any AuditDefs that
+		// might want to extract from it after the handler has consumed the body.
+		var requestBody []byte
+		if len(auditDefsFromRequest(req)) > 0 && req.Body != nil {
+			requestBody, _ = io.ReadAll(req.Body)
+			req.Body = io.NopCloser(bytes.NewReader(requestBody))
+		}
+
 		responseBuffer := &byteBuffer{}
 		writer := newResponseCapture(rw, responseBuffer)
 		next.ServeHTTP(writer, req)
@@ -71,7 +81,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		middleware.emitAuditEvent(req, writer, path)
+		middleware.emitAuditEvent(req, writer, path, requestBody)
 
 		fields = append(fields,
 			string(semconv.HTTPResponseStatusCodeKey), statusCode,
@@ -90,7 +100,7 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string) {
+func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string, requestBody []byte) {
 	if middleware.auditor == nil {
 		return
 	}
@@ -110,8 +120,14 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
+	extractorCtx := handler.ExtractorContext{
+		Request:      req,
+		RequestBody:  requestBody,
+		ResponseBody: writer.BodyBytes(),
+	}
+
 	for _, def := range defs {
-		verb, category, resourceAttributes, err := resolveAuditDef(req, def)
+		verb, category, resourceAttributes, err := resolveAuditDef(extractorCtx, def)
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
 			continue
@@ -157,22 +173,22 @@ func auditDefsFromRequest(req *http.Request) []handler.AuditDef {
 	return provider.AuditDefs()
 }
 
-func resolveAuditDef(req *http.Request, def handler.AuditDef) (coretypes.Verb, audittypes.ActionCategory, audittypes.ResourceAttributes, error) {
+func resolveAuditDef(ctx handler.ExtractorContext, def handler.AuditDef) (coretypes.Verb, audittypes.ActionCategory, audittypes.ResourceAttributes, error) {
 	switch d := def.(type) {
 	case handler.BasicAuditDef:
-		resourceID, err := extractResourceID(req, d.ResourceID)
+		resourceID, err := extractResourceID(ctx, d.ResourceID)
 		if err != nil {
 			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
 		}
 
 		return d.Verb, d.Category, audittypes.NewResourceAttributes(d.Resource, resourceID), nil
 	case handler.AttachAuditDef:
-		attachedID, err := extractResourceID(req, d.AttachedResourceID)
+		attachedID, err := extractResourceID(ctx, d.AttachedResourceID)
 		if err != nil {
 			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
 		}
 
-		targetID, err := extractResourceID(req, d.TargetResourceID)
+		targetID, err := extractResourceID(ctx, d.TargetResourceID)
 		if err != nil {
 			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
 		}
@@ -183,10 +199,10 @@ func resolveAuditDef(req *http.Request, def handler.AuditDef) (coretypes.Verb, a
 	return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unknown AuditDef implementation %T", def)
 }
 
-func extractResourceID(req *http.Request, extractor handler.ResourceIDExtractor) (string, error) {
+func extractResourceID(ctx handler.ExtractorContext, extractor handler.ResourceIDExtractor) (string, error) {
 	if extractor == nil {
 		return "", nil
 	}
 
-	return extractor(req)
+	return extractor(ctx)
 }
