@@ -39,12 +39,14 @@ func newProvider(providerSettings factory.ProviderSettings, config metercollecto
 	}
 }
 
-func (provider *Provider) Name() zeustypes.MeterName               { return provider.config.Name }
-func (provider *Provider) Unit() zeustypes.MeterUnit               { return provider.config.Unit }
-func (provider *Provider) Aggregation() zeustypes.MeterAggregation { return provider.config.Aggregation }
+func (provider *Provider) Name() zeustypes.MeterName { return provider.config.Name }
+func (provider *Provider) Unit() zeustypes.MeterUnit { return provider.config.Unit }
+func (provider *Provider) Aggregation() zeustypes.MeterAggregation {
+	return provider.config.Aggregation
+}
 
-func (provider *Provider) Origin(_ context.Context, _ valuer.UUID, todayStart time.Time) (time.Time, error) {
-	return todayStart, nil
+func (provider *Provider) Origin(_ context.Context, _ valuer.UUID, _ time.Time) (time.Time, error) {
+	return time.Time{}, nil
 }
 
 func (provider *Provider) Collect(

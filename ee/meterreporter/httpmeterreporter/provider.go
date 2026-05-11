@@ -197,18 +197,28 @@ func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, today
 			return nil, err
 		}
 
-		next := origin
-		if checkpoint, ok := checkpointsByMeter[collector.Name().String()]; ok {
-			candidate := checkpoint.AddDate(0, 0, 1)
-			if candidate.After(next) {
-				next = candidate
-			}
-		}
-
-		nextByCollector[collector.Name()] = next
+		checkpoint, hasCheckpoint := checkpointsByMeter[collector.Name().String()]
+		nextByCollector[collector.Name()] = nextReportableDay(origin, todayStart, checkpoint, hasCheckpoint)
 	}
 
 	return nextByCollector, nil
+}
+
+func nextReportableDay(origin time.Time, todayStart time.Time, checkpoint time.Time, hasCheckpoint bool) time.Time {
+	if hasCheckpoint {
+		next := checkpoint.AddDate(0, 0, 1)
+		if !origin.IsZero() && origin.After(next) {
+			return origin
+		}
+
+		return next
+	}
+
+	if origin.IsZero() {
+		return todayStart
+	}
+
+	return origin
 }
 
 func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, window zeustypes.MeterWindow, collectors map[zeustypes.MeterName]metercollector.MeterCollector) error {
