@@ -125,7 +125,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, updateable.Tags, updatedBy)
+	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, updateable.Tags, updatedBy)
 	if err != nil {
 		return nil, err
 	}
