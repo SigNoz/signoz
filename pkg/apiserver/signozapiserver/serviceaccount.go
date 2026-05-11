@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
@@ -213,22 +214,31 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authzMiddleware.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
-		authtypes.SigNozAdminRoleName,
-	}), handler.OpenAPIDef{
-		ID:                  "CreateServiceAccountKey",
-		Tags:                []string{"serviceaccount"},
-		Summary:             "Create a service account key",
-		Description:         "This endpoint creates a service account key",
-		Request:             new(serviceaccounttypes.PostableFactorAPIKey),
-		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(
+		provider.authzMiddleware.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
+			authtypes.SigNozAdminRoleName,
+		}),
+		handler.OpenAPIDef{
+			ID:                  "CreateServiceAccountKey",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Create a service account key",
+			Description:         "This endpoint creates a service account key",
+			Request:             new(serviceaccounttypes.PostableFactorAPIKey),
+			RequestContentType:  "",
+			Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindFactorAPIKey,
+			Action:          coretypes.VerbCreate,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -270,22 +280,31 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authzMiddleware.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
-		authtypes.SigNozAdminRoleName,
-	}), handler.OpenAPIDef{
-		ID:                  "RevokeServiceAccountKey",
-		Tags:                []string{"serviceaccount"},
-		Summary:             "Revoke a service account key",
-		Description:         "This endpoint revokes an existing service account key",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(
+		provider.authzMiddleware.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbUpdate}, coretypes.ResourceServiceAccount, serviceAccountInstanceSelectorCallback, []string{
+			authtypes.SigNozAdminRoleName,
+		}),
+		handler.OpenAPIDef{
+			ID:                  "RevokeServiceAccountKey",
+			Tags:                []string{"serviceaccount"},
+			Summary:             "Revoke a service account key",
+			Description:         "This endpoint revokes an existing service account key",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindFactorAPIKey,
+			Action:          coretypes.VerbDelete,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
