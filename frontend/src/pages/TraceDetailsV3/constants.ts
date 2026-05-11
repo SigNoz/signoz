@@ -16,11 +16,27 @@ export const COLOR_BY_OPTIONS: ColorByOption[] = [
 	},
 	{
 		field: {
+			name: 'service.namespace',
+			fieldContext: 'resource',
+			fieldDataType: 'string',
+		},
+		label: 'Namespace',
+	},
+	{
+		field: {
 			name: 'host.name',
 			fieldContext: 'resource',
 			fieldDataType: 'string',
 		},
 		label: 'Host',
+	},
+	{
+		field: {
+			name: 'k8s.node.name',
+			fieldContext: 'resource',
+			fieldDataType: 'string',
+		},
+		label: 'Node',
 	},
 	{
 		field: {
