@@ -14,6 +14,7 @@ import (
 func TestGetFieldKeyName(t *testing.T) {
 	ctx := context.Background()
 
+	mockEvolution := mockEvolutionData(time.Date(2025, 10, 26, 0, 10, 0, 0, time.UTC))
 	testCases := []struct {
 		name           string
 		key            telemetrytypes.TelemetryFieldKey
@@ -64,8 +65,9 @@ func TestGetFieldKeyName(t *testing.T) {
 			key: telemetrytypes.TelemetryFieldKey{
 				Name:         "service.name",
 				FieldContext: telemetrytypes.FieldContextResource,
+				Evolutions:   mockEvolution,
 			},
-			expectedResult: "multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL)",
+			expectedResult: "resources_string['service.name']",
 			expectedError:  nil,
 		},
 		{
@@ -75,8 +77,9 @@ func TestGetFieldKeyName(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 				Materialized:  true,
+				Evolutions:    mockEvolution,
 			},
-			expectedResult: "multiIf(`resource_string_deployment$$environment_exists`==true, `resource_string_deployment$$environment`, resource.`deployment.environment` IS NOT NULL, resource.`deployment.environment`::String, NULL)",
+			expectedResult: "resource_string_deployment$$environment",
 			expectedError:  nil,
 		},
 		{

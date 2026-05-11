@@ -15,6 +15,7 @@ import (
 func TestConditionFor(t *testing.T) {
 	ctx := context.Background()
 
+	mockEvolution := mockEvolutionData(time.Date(2025, 10, 26, 0, 10, 0, 0, time.UTC))
 	testCases := []struct {
 		name          string
 		key           telemetrytypes.TelemetryFieldKey
@@ -214,10 +215,11 @@ func TestConditionFor(t *testing.T) {
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    mockEvolution,
 			},
 			operator:      qbtypes.FilterOperatorExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NOT NULL",
+			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL",
 			expectedError: nil,
 		},
 		{
@@ -226,10 +228,11 @@ func TestConditionFor(t *testing.T) {
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextResource,
 				FieldDataType: telemetrytypes.FieldDataTypeString,
+				Evolutions:    mockEvolution,
 			},
 			operator:      qbtypes.FilterOperatorNotExists,
 			value:         nil,
-			expectedSQL:   "WHERE multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) IS NULL",
+			expectedSQL:   "WHERE multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NULL",
 			expectedError: nil,
 		},
 		{

@@ -185,14 +185,6 @@ func (c *conditionBuilder) conditionFor(
 
 			// otherwise we have to find the correct exist operator based on the column type
 			column = newColumns[0]
-		} else if len(columns) > 1 {
-			// Resource fields without evolution data still produce a multiIf in FieldFor;
-			// fall back to a null check on the multiIf result.
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(fieldExpression), nil
-			} else {
-				return sb.IsNull(fieldExpression), nil
-			}
 		}
 
 		switch column.Type.GetType() {

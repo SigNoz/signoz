@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetryaudit"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
@@ -17,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,7 +90,6 @@ func TestGetKeys(t *testing.T) {
 			{Name: "priority", Type: "UInt8"},
 		}, [][]any{{"http.method", "tag", "String", 1}, {"http.method", "tag", "String", 1}}))
 
-	// Two rows above produce two evolution selectors (each contributing 4 bound args).
 	mock.ExpectQuery(`FROM signoz_metadata\.distributed_column_evolution_metadata`).
 		WithArgs(nil, nil, nil, nil, nil, nil, nil, nil).
 		WillReturnRows(cmock.NewRows([]cmock.ColumnType{
