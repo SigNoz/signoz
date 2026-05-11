@@ -39,7 +39,6 @@ function TraceDetailsV3(): JSX.Element {
 		() => ({
 			spanId: urlQuery.get('spanId') || '',
 			isUncollapsed: urlQuery.get('spanId') !== '',
-			scrollToSpan: true,
 		}),
 	);
 	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
@@ -81,7 +80,6 @@ function TraceDetailsV3(): JSX.Element {
 		setInterestedSpanId({
 			spanId,
 			isUncollapsed: true,
-			scrollToSpan: true,
 		});
 	}, [urlQuery]);
 
