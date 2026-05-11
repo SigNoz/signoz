@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 )
 
 const (
@@ -99,16 +100,16 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	// extract claims
+	verb, category, resourceAttributes, err := resolveAuditDef(req, def)
+	if err != nil {
+		middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
+		return
+	}
+
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
-
-	// extract status code
 	statusCode := writer.StatusCode()
-
-	// extract traces.
 	span := trace.SpanFromContext(req.Context())
 
-	// extract error details.
 	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
@@ -121,11 +122,10 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		statusCode,
 		span.SpanContext().TraceID(),
 		span.SpanContext().SpanID(),
-		def.Verb,
-		def.Category,
+		verb,
+		category,
 		claims,
-		resourceIDFromRequest(req, def.ResourceIDParam),
-		def.ResourceKind,
+		resourceAttributes,
 		errorType,
 		errorCode,
 	)
@@ -133,7 +133,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	middleware.auditor.Audit(req.Context(), event)
 }
 
-func auditDefFromRequest(req *http.Request) *handler.AuditDef {
+func auditDefFromRequest(req *http.Request) handler.AuditDef {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
@@ -155,15 +155,36 @@ func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 	return provider.AuditDef()
 }
 
-func resourceIDFromRequest(req *http.Request, param string) string {
-	if param == "" {
-		return ""
+func resolveAuditDef(req *http.Request, def handler.AuditDef) (coretypes.Verb, audittypes.ActionCategory, audittypes.ResourceAttributes, error) {
+	switch d := def.(type) {
+	case handler.BasicAuditDef:
+		resourceID, err := extractResourceID(req, d.ResourceID)
+		if err != nil {
+			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+		}
+
+		return d.Verb, d.Category, audittypes.NewResourceAttributes(d.Resource, resourceID), nil
+	case handler.AttachAuditDef:
+		attachedID, err := extractResourceID(req, d.AttachedResourceID)
+		if err != nil {
+			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+		}
+
+		targetID, err := extractResourceID(req, d.TargetResourceID)
+		if err != nil {
+			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+		}
+
+		return d.Verb, d.Category, audittypes.NewAttachResourceAttributes(d.AttachedResource, attachedID, d.TargetResource, targetID), nil
 	}
 
-	vars := mux.Vars(req)
-	if vars == nil {
-		return ""
+	return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unknown AuditDef implementation %T", def)
+}
+
+func extractResourceID(req *http.Request, extractor handler.ResourceIDExtractor) (string, error) {
+	if extractor == nil {
+		return "", nil
 	}
 
-	return vars[param]
+	return extractor(req)
 }

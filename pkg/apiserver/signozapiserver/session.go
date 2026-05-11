@@ -27,10 +27,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindSession,
-			Verb:         coretypes.VerbCreate,
-			Category:     audittypes.ActionCategoryAccessControl,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceSession,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -69,10 +69,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindSession,
-			Verb:         coretypes.VerbUpdate,
-			Category:     audittypes.ActionCategoryAccessControl,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceSession,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -94,10 +94,10 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindSession,
-			Verb:         coretypes.VerbDelete,
-			Category:     audittypes.ActionCategoryAccessControl,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceSession,
+			Verb:     coretypes.VerbDelete,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err

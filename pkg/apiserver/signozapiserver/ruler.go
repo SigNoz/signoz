@@ -55,10 +55,10 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindRule,
-			Verb:         coretypes.VerbCreate,
-			Category:     audittypes.ActionCategoryConfigurationChange,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -78,11 +78,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
 			SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindRule,
-			Verb:            coretypes.VerbUpdate,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceRule,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -99,11 +99,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:  []int{http.StatusNotFound},
 			SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindRule,
-			Verb:            coretypes.VerbDelete,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceRule,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
@@ -125,11 +125,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindRule,
-			Verb:            coretypes.VerbUpdate,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceRule,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
@@ -195,10 +195,10 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindPlannedMaintenance,
-			Verb:         coretypes.VerbCreate,
-			Category:     audittypes.ActionCategoryConfigurationChange,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -217,11 +217,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusNotFound},
 			SecuritySchemes:    newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindPlannedMaintenance,
-			Verb:            coretypes.VerbUpdate,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -238,11 +238,11 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:  []int{http.StatusNotFound},
 			SecuritySchemes:   newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindPlannedMaintenance,
-			Verb:            coretypes.VerbDelete,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcePlannedMaintenance,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err

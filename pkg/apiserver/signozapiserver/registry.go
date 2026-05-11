@@ -50,7 +50,7 @@ func (handler *healthOpenAPIHandler) ServeOpenAPI(opCtx openapi.OperationContext
 	)
 }
 
-func (handler *healthOpenAPIHandler) AuditDef() *pkghandler.AuditDef {
+func (handler *healthOpenAPIHandler) AuditDef() pkghandler.AuditDef {
 	// Health endpoints are not audited since they don't represent user actions and are called frequently by monitoring systems, which would create noise in the audit logs.
 	return nil
 }

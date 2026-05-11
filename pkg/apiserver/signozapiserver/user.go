@@ -129,10 +129,10 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindUser,
-			Verb:         coretypes.VerbUpdate,
-			Category:     audittypes.ActionCategoryConfigurationChange,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceUser,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -205,11 +205,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindUser,
-			Verb:            coretypes.VerbUpdate,
-			Category:        audittypes.ActionCategoryConfigurationChange,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceUser,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -282,11 +282,11 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindResetPasswordToken,
-			Verb:            coretypes.VerbCreate,
-			Category:        audittypes.ActionCategoryAccessControl,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceFactorPassword,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryAccessControl,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -325,10 +325,10 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindFactorPassword,
-			Verb:         coretypes.VerbUpdate,
-			Category:     audittypes.ActionCategoryAccessControl,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceFactorPassword,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
@@ -350,10 +350,10 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind: coretypes.KindFactorPassword,
-			Verb:         coretypes.VerbUpdate,
-			Category:     audittypes.ActionCategoryAccessControl,
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourceFactorPassword,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -392,11 +392,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindUserRole,
-			Verb:            coretypes.VerbCreate,
-			Category:        audittypes.ActionCategoryAccessControl,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.AttachAuditDef{
+			AttachedResource:   coretypes.ResourceRole,
+			AttachedResourceID: handler.BodyJSONPath("id"),
+			TargetResource:     coretypes.ResourceUser,
+			TargetResourceID:   handler.PathParam("id"),
+			Verb:               coretypes.VerbAttach,
+			Category:           audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -418,11 +420,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindUserRole,
-			Verb:            coretypes.VerbDelete,
-			Category:        audittypes.ActionCategoryAccessControl,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.AttachAuditDef{
+			AttachedResource:   coretypes.ResourceRole,
+			AttachedResourceID: handler.PathParam("roleId"),
+			TargetResource:     coretypes.ResourceUser,
+			TargetResourceID:   handler.PathParam("id"),
+			Verb:               coretypes.VerbAttach,
+			Category:           audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err

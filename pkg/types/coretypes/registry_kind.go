@@ -29,8 +29,6 @@ var Kinds = []Kind{
 	KindTraceFunnel,
 	KindFactorPassword,
 	KindFactorAPIKey,
-	KindUserRole,
-	KindResetPasswordToken,
 	KindLicense,
 	KindSubscription,
 	KindLogs,
@@ -71,8 +69,6 @@ var (
 	KindTraceFunnel                  = MustNewKind("trace-funnel")
 	KindFactorPassword               = MustNewKind("factor-password")
 	KindFactorAPIKey                 = MustNewKind("factor-api-key")
-	KindUserRole                     = MustNewKind("user-role")
-	KindResetPasswordToken           = MustNewKind("reset-password-token")
 	KindLicense                      = MustNewKind("license")
 	KindSubscription                 = MustNewKind("subscription")
 	KindLogs                         = MustNewKind("logs")

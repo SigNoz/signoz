@@ -232,11 +232,11 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindFactorAPIKey,
-			Verb:            coretypes.VerbCreate,
-			Category:        audittypes.ActionCategoryAccessControl,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceFactorAPIKey,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryAccessControl,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -298,11 +298,11 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithAuditDef(handler.AuditDef{
-			ResourceKind:    coretypes.KindFactorAPIKey,
-			Verb:            coretypes.VerbDelete,
-			Category:        audittypes.ActionCategoryAccessControl,
-			ResourceIDParam: "id",
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceFactorAPIKey,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryAccessControl,
+			ResourceID: handler.PathParam("id"),
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
