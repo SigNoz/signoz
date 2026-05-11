@@ -10,7 +10,7 @@ import (
 )
 
 func (provider *provider) addRulerRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/rules", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.ListRules), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListRules), handler.OpenAPIDef{
 		ID:                  "ListRules",
 		Tags:                []string{"rules"},
 		Summary:             "List alert rules",
@@ -23,7 +23,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.GetRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.GetRuleByID), handler.OpenAPIDef{
 		ID:                  "GetRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Get alert rule by ID",
@@ -37,7 +37,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules", handler.New(provider.authZ.EditAccess(provider.rulerHandler.CreateRule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CreateRule), handler.OpenAPIDef{
 		ID:                  "CreateRule",
 		Tags:                []string{"rules"},
 		Summary:             "Create alert rule",
@@ -54,7 +54,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.UpdateRuleByID), handler.OpenAPIDef{
 		ID:                 "UpdateRuleByID",
 		Tags:               []string{"rules"},
 		Summary:            "Update alert rule",
@@ -69,7 +69,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.DeleteRuleByID), handler.OpenAPIDef{
 		ID:                "DeleteRuleByID",
 		Tags:              []string{"rules"},
 		Summary:           "Delete alert rule",
@@ -81,7 +81,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.PatchRuleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.PatchRuleByID), handler.OpenAPIDef{
 		ID:                  "PatchRuleByID",
 		Tags:                []string{"rules"},
 		Summary:             "Patch alert rule",
@@ -98,7 +98,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/rules/test", handler.New(provider.authZ.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/rules/test", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.TestRule), handler.OpenAPIDef{
 		ID:                  "TestRule",
 		Tags:                []string{"rules"},
 		Summary:             "Test alert rule",
@@ -115,7 +115,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.ListDowntimeSchedules), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.ListDowntimeSchedules), handler.OpenAPIDef{
 		ID:                  "ListDowntimeSchedules",
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "List downtime schedules",
@@ -129,7 +129,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.ViewAccess(provider.rulerHandler.GetDowntimeScheduleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.rulerHandler.GetDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                  "GetDowntimeScheduleByID",
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "Get downtime schedule by ID",
@@ -143,7 +143,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authZ.EditAccess(provider.rulerHandler.CreateDowntimeSchedule), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/downtime_schedules", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.CreateDowntimeSchedule), handler.OpenAPIDef{
 		ID:                  "CreateDowntimeSchedule",
 		Tags:                []string{"downtimeschedules"},
 		Summary:             "Create downtime schedule",
@@ -159,7 +159,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.UpdateDowntimeScheduleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.UpdateDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                 "UpdateDowntimeScheduleByID",
 		Tags:               []string{"downtimeschedules"},
 		Summary:            "Update downtime schedule",
@@ -173,7 +173,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authZ.EditAccess(provider.rulerHandler.DeleteDowntimeScheduleByID), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/downtime_schedules/{id}", handler.New(provider.authzMiddleware.EditAccess(provider.rulerHandler.DeleteDowntimeScheduleByID), handler.OpenAPIDef{
 		ID:                "DeleteDowntimeScheduleByID",
 		Tags:              []string{"downtimeschedules"},
 		Summary:           "Delete downtime schedule",

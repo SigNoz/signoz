@@ -4,7 +4,7 @@ import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Compass, ScrollText } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';

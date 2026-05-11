@@ -1,0 +1,20 @@
+.timeline-v3-container {
+	overflow: visible;
+	position: relative;
+}
+
+.timeline-v3-cursor-badge {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+	background: var(--l3-background);
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	padding: 2px 8px;
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--l1-foreground);
+	white-space: nowrap;
+	pointer-events: none;
+	z-index: 1;
+}

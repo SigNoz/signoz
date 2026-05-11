@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListHosts),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListHosts),
 		handler.OpenAPIDef{
 			ID:                  "ListHosts",
 			Tags:                []string{"inframonitoring"},
@@ -30,7 +30,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pods", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListPods),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListPods),
 		handler.OpenAPIDef{
 			ID:                  "ListPods",
 			Tags:                []string{"inframonitoring"},
@@ -49,7 +49,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNodes),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNodes),
 		handler.OpenAPIDef{
 			ID:                  "ListNodes",
 			Tags:                []string{"inframonitoring"},
@@ -68,7 +68,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/namespaces", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
 		handler.OpenAPIDef{
 			ID:                  "ListNamespaces",
 			Tags:                []string{"inframonitoring"},
@@ -87,7 +87,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/clusters", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListClusters),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListClusters),
 		handler.OpenAPIDef{
 			ID:                  "ListClusters",
 			Tags:                []string{"inframonitoring"},
