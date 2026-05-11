@@ -61,7 +61,7 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 	for i, r := range rows {
 		dashboardIDs[i] = r.Dashboard.ID
 	}
-	tagsByEntity, err := module.tagModule.ListForEntities(ctx, dashboardIDs)
+	tagsByEntity, err := module.tagModule.ListForEntities(ctx, dashboardtypes.EntityTypeDashboard, dashboardIDs)
 	if err != nil {
 		return nil, err
 	}
