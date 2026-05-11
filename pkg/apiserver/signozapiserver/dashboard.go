@@ -14,6 +14,23 @@ import (
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateV2), handler.OpenAPIDef{
+		ID:                  "CreateDashboardV2",
+		Tags:                []string{"dashboard"},
+		Summary:             "Create dashboard (v2)",
+		Description:         "This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.",
+		Request:             new(dashboardtypes.PostableDashboardV2),
+		RequestContentType:  "application/json",
+		Response:            new(dashboardtypes.GettableDashboardV2),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},
