@@ -95,14 +95,8 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
-	def := auditDefFromRequest(req)
-	if def == nil {
-		return
-	}
-
-	verb, category, resourceAttributes, err := resolveAuditDef(req, def)
-	if err != nil {
-		middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
+	defs := auditDefsFromRequest(req)
+	if len(defs) == 0 {
 		return
 	}
 
@@ -116,24 +110,32 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
-	event := audittypes.NewAuditEventFromHTTPRequest(
-		req,
-		routeTemplate,
-		statusCode,
-		span.SpanContext().TraceID(),
-		span.SpanContext().SpanID(),
-		verb,
-		category,
-		claims,
-		resourceAttributes,
-		errorType,
-		errorCode,
-	)
+	for _, def := range defs {
+		verb, category, resourceAttributes, err := resolveAuditDef(req, def)
+		if err != nil {
+			middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
+			continue
+		}
 
-	middleware.auditor.Audit(req.Context(), event)
+		event := audittypes.NewAuditEventFromHTTPRequest(
+			req,
+			routeTemplate,
+			statusCode,
+			span.SpanContext().TraceID(),
+			span.SpanContext().SpanID(),
+			verb,
+			category,
+			claims,
+			resourceAttributes,
+			errorType,
+			errorCode,
+		)
+
+		middleware.auditor.Audit(req.Context(), event)
+	}
 }
 
-func auditDefFromRequest(req *http.Request) handler.AuditDef {
+func auditDefsFromRequest(req *http.Request) []handler.AuditDef {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
@@ -152,7 +154,7 @@ func auditDefFromRequest(req *http.Request) handler.AuditDef {
 		return nil
 	}
 
-	return provider.AuditDef()
+	return provider.AuditDefs()
 }
 
 func resolveAuditDef(req *http.Request, def handler.AuditDef) (coretypes.Verb, audittypes.ActionCategory, audittypes.ResourceAttributes, error) {

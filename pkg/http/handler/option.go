@@ -84,11 +84,12 @@ type AttachAuditDef struct {
 
 func (AttachAuditDef) sealAuditDef() {}
 
-// WithAuditDef attaches an AuditDef to the handler. The actual audit event
-// emission is handled by the middleware layer, which reads the AuditDef from
-// the matched route's handler.
-func WithAuditDef(def AuditDef) Option {
+// WithAuditDef attaches one or more AuditDef declarations to the handler. A
+// single route can produce multiple audit events — e.g. creating a resource
+// that is simultaneously attached to a parent emits one BasicAuditDef and one
+// AttachAuditDef. The middleware emits one event per def in declaration order.
+func WithAuditDef(defs ...AuditDef) Option {
 	return func(h *handler) {
-		h.auditDef = def
+		h.auditDefs = append(h.auditDefs, defs...)
 	}
 }

@@ -232,12 +232,20 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbUpdate)}),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource:   coretypes.ResourceMetaResourceFactorAPIKey,
-			Verb:       coretypes.VerbCreate,
-			Category:   audittypes.ActionCategoryAccessControl,
-			ResourceID: handler.PathParam("id"),
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource: coretypes.ResourceMetaResourcesFactorAPIKey,
+				Verb:     coretypes.VerbCreate,
+				Category: audittypes.ActionCategoryAccessControl,
+			},
+			handler.AttachAuditDef{
+				AttachedResource: coretypes.ResourceMetaResourceFactorAPIKey,
+				TargetResource:   coretypes.ResourceServiceAccount,
+				TargetResourceID: handler.PathParam("id"),
+				Verb:             coretypes.VerbAttach,
+				Category:         audittypes.ActionCategoryAccessControl,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
