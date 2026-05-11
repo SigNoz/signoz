@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/gorilla/mux"
 )
@@ -45,6 +47,11 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			Deprecated:         false,
 			SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesLLMPricingRule,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryConfigurationChange,
+		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
@@ -85,6 +92,12 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceLLMPricingRule,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
