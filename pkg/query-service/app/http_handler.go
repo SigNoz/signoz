@@ -1655,7 +1655,7 @@ func (aH *APIHandler) setTTL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetTTL(context.Background(), claims.OrgID, claims.UserID, ttlParams)
+	result, apiErr := aH.reader.SetTTL(context.Background(), claims.OrgID, claims.Email, ttlParams)
 	if apiErr != nil {
 		if apiErr.Typ == model.ErrorConflict {
 			aH.HandleError(w, apiErr.Err, http.StatusConflict)
@@ -1684,7 +1684,7 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Context is not used here as TTL is long duration DB operation
-	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, claims.UserID, &params)
+	result, apiErr := aH.reader.SetTTLV2(context.Background(), claims.OrgID, claims.Email, &params)
 	if apiErr != nil {
 		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInternal, apiErr.Error()))
 		return

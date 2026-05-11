@@ -1343,7 +1343,7 @@ func getLocalTableName(tableName string) string {
 
 }
 
-func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, createdByEmail string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1435,8 +1435,8 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, userID 
 					UpdatedAt: time.Now(),
 				},
 				UserAuditable: types.UserAuditable{
-					CreatedBy: userID,
-					UpdatedBy: userID,
+					CreatedBy: createdByEmail,
+					UpdatedBy: createdByEmail,
 				},
 				TransactionID:  uuid,
 				TableName:      tableName,
@@ -1515,7 +1515,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, userID 
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, createdByEmail string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1577,8 +1577,8 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, userI
 					UpdatedAt: time.Now(),
 				},
 				UserAuditable: types.UserAuditable{
-					CreatedBy: userID,
-					UpdatedBy: userID,
+					CreatedBy: createdByEmail,
+					UpdatedBy: createdByEmail,
 				},
 				TransactionID:  uuid,
 				TableName:      tableName,
@@ -1695,7 +1695,7 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	return true, nil
 }
 
-func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, userID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, createdByEmail string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -1726,7 +1726,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, userID st
 			ttlParams.ToColdStorageDuration = 0
 		}
 
-		ttlResult, apiErr := r.SetTTL(ctx, orgID, userID, ttlParams)
+		ttlResult, apiErr := r.SetTTL(ctx, orgID, createdByEmail, ttlParams)
 		if apiErr != nil {
 			return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to set standard TTL")
 		}
@@ -1856,8 +1856,8 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, userID st
 				UpdatedAt: time.Now(),
 			},
 			UserAuditable: types.UserAuditable{
-				CreatedBy: userID,
-				UpdatedBy: userID,
+				CreatedBy: createdByEmail,
+				UpdatedBy: createdByEmail,
 			},
 			TransactionID:  uuid,
 			TableName:      tableName,
@@ -2214,7 +2214,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, userID stri
 
 }
 
-func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, createdByEmail string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -2257,8 +2257,8 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, user
 				UpdatedAt: time.Now(),
 			},
 			UserAuditable: types.UserAuditable{
-				CreatedBy: userID,
-				UpdatedBy: userID,
+				CreatedBy: createdByEmail,
+				UpdatedBy: createdByEmail,
 			},
 			TransactionID:  uuid,
 			TableName:      tableName,
