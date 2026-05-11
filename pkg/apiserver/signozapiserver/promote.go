@@ -5,24 +5,34 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addPromoteRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromoteAndIndexPaths), handler.OpenAPIDef{
-		ID:                  "HandlePromoteAndIndexPaths",
-		Tags:                []string{"logs"},
-		Summary:             "Promote and index paths",
-		Description:         "This endpoints promotes and indexes paths",
-		Request:             new([]*promotetypes.PromotePath),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/logs/promote_paths", handler.New(
+		provider.authzMiddleware.EditAccess(provider.promoteHandler.HandlePromoteAndIndexPaths),
+		handler.OpenAPIDef{
+			ID:                  "HandlePromoteAndIndexPaths",
+			Tags:                []string{"logs"},
+			Summary:             "Promote and index paths",
+			Description:         "This endpoints promotes and indexes paths",
+			Request:             new([]*promotetypes.PromotePath),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesLogsField,
+			Verb:     coretypes.VerbUpdate,
+			Category: audittypes.ActionCategoryConfigurationChange,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
