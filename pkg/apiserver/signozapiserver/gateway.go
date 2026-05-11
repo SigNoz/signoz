@@ -5,6 +5,8 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/gatewaytypes"
 	"github.com/gorilla/mux"
 )
@@ -46,105 +48,158 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKey), handler.OpenAPIDef{
-		ID:                  "CreateIngestionKey",
-		Tags:                []string{"gateway"},
-		Summary:             "Create ingestion key for workspace",
-		Description:         "This endpoint creates an ingestion key for the workspace",
-		Request:             new(gatewaytypes.PostableIngestionKey),
-		RequestContentType:  "application/json",
-		Response:            new(gatewaytypes.GettableCreatedIngestionKey),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKey),
+		handler.OpenAPIDef{
+			ID:                  "CreateIngestionKey",
+			Tags:                []string{"gateway"},
+			Summary:             "Create ingestion key for workspace",
+			Description:         "This endpoint creates an ingestion key for the workspace",
+			Request:             new(gatewaytypes.PostableIngestionKey),
+			RequestContentType:  "application/json",
+			Response:            new(gatewaytypes.GettableCreatedIngestionKey),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource: coretypes.ResourceMetaResourcesIngestionKey,
+			Verb:     coretypes.VerbCreate,
+			Category: audittypes.ActionCategoryConfigurationChange,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKey), handler.OpenAPIDef{
-		ID:                  "UpdateIngestionKey",
-		Tags:                []string{"gateway"},
-		Summary:             "Update ingestion key for workspace",
-		Description:         "This endpoint updates an ingestion key for the workspace",
-		Request:             new(gatewaytypes.PostableIngestionKey),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKey),
+		handler.OpenAPIDef{
+			ID:                  "UpdateIngestionKey",
+			Tags:                []string{"gateway"},
+			Summary:             "Update ingestion key for workspace",
+			Description:         "This endpoint updates an ingestion key for the workspace",
+			Request:             new(gatewaytypes.PostableIngestionKey),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceIngestionKey,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("keyId"),
+		}),
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKey), handler.OpenAPIDef{
-		ID:                  "DeleteIngestionKey",
-		Tags:                []string{"gateway"},
-		Summary:             "Delete ingestion key for workspace",
-		Description:         "This endpoint deletes an ingestion key for the workspace",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKey),
+		handler.OpenAPIDef{
+			ID:                  "DeleteIngestionKey",
+			Tags:                []string{"gateway"},
+			Summary:             "Delete ingestion key for workspace",
+			Description:         "This endpoint deletes an ingestion key for the workspace",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceIngestionKey,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("keyId"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKeyLimit), handler.OpenAPIDef{
-		ID:                  "CreateIngestionKeyLimit",
-		Tags:                []string{"gateway"},
-		Summary:             "Create limit for the ingestion key",
-		Description:         "This endpoint creates an ingestion key limit",
-		Request:             new(gatewaytypes.PostableIngestionKeyLimit),
-		RequestContentType:  "application/json",
-		Response:            new(gatewaytypes.GettableCreatedIngestionKeyLimit),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/{keyId}/limits", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.CreateIngestionKeyLimit),
+		handler.OpenAPIDef{
+			ID:                  "CreateIngestionKeyLimit",
+			Tags:                []string{"gateway"},
+			Summary:             "Create limit for the ingestion key",
+			Description:         "This endpoint creates an ingestion key limit",
+			Request:             new(gatewaytypes.PostableIngestionKeyLimit),
+			RequestContentType:  "application/json",
+			Response:            new(gatewaytypes.GettableCreatedIngestionKeyLimit),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcesIngestionLimit,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("keyId"),
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKeyLimit), handler.OpenAPIDef{
-		ID:                  "UpdateIngestionKeyLimit",
-		Tags:                []string{"gateway"},
-		Summary:             "Update limit for the ingestion key",
-		Description:         "This endpoint updates an ingestion key limit",
-		Request:             new(gatewaytypes.UpdatableIngestionKeyLimit),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodPatch).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.UpdateIngestionKeyLimit),
+		handler.OpenAPIDef{
+			ID:                  "UpdateIngestionKeyLimit",
+			Tags:                []string{"gateway"},
+			Summary:             "Update limit for the ingestion key",
+			Description:         "This endpoint updates an ingestion key limit",
+			Request:             new(gatewaytypes.UpdatableIngestionKeyLimit),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceIngestionLimit,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("limitId"),
+		}),
+	)).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKeyLimit), handler.OpenAPIDef{
-		ID:                  "DeleteIngestionKeyLimit",
-		Tags:                []string{"gateway"},
-		Summary:             "Delete limit for the ingestion key",
-		Description:         "This endpoint deletes an ingestion key limit",
-		Request:             nil,
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/gateway/ingestion_keys/limits/{limitId}", handler.New(
+		provider.authzMiddleware.EditAccess(provider.gatewayHandler.DeleteIngestionKeyLimit),
+		handler.OpenAPIDef{
+			ID:                  "DeleteIngestionKeyLimit",
+			Tags:                []string{"gateway"},
+			Summary:             "Delete limit for the ingestion key",
+			Description:         "This endpoint deletes an ingestion key limit",
+			Request:             nil,
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourceIngestionLimit,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("limitId"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
