@@ -139,13 +139,9 @@ type patchableDashboardV2View struct {
 // result is decoded back into an UpdateableDashboardV2 — which re-runs
 // the full v2 validation chain.
 func (p PatchableDashboardV2) Apply(existing *DashboardV2) (*UpdateableDashboardV2, error) {
-	postableTags := make([]tagtypes.PostableTag, len(existing.Info.Tags))
-	for i, t := range existing.Info.Tags {
-		postableTags[i] = tagtypes.PostableTag{Name: t.Name}
-	}
 	base := patchableDashboardV2View{
 		StoredDashboardInfo: existing.Info.StoredDashboardInfo,
-		Tags:                postableTags,
+		Tags:                tagtypes.NewPostableTagsFromTags(existing.Info.Tags),
 	}
 	raw, err := json.Marshal(base)
 	if err != nil {
