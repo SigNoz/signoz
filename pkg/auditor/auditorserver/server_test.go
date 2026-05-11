@@ -20,12 +20,12 @@ func newTestSettings() factory.ScopedProviderSettings {
 	return factory.NewScopedProviderSettings(instrumentationtest.New().ToProviderSettings(), "auditorserver_test")
 }
 
-func newTestEvent(resource string, action coretypes.Verb) audittypes.AuditEvent {
+func newTestEvent(resource string, verb coretypes.Verb) audittypes.AuditEvent {
 	return audittypes.AuditEvent{
 		Timestamp: time.Now(),
-		EventName: audittypes.NewEventName(coretypes.MustNewKind(resource), action),
+		EventName: audittypes.NewEventName(coretypes.MustNewKind(resource), verb),
 		AuditAttributes: audittypes.AuditAttributes{
-			Action:  action,
+			Verb:    verb,
 			Outcome: audittypes.OutcomeSuccess,
 		},
 		ResourceAttributes: audittypes.ResourceAttributes{

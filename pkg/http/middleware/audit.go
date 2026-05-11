@@ -121,7 +121,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		statusCode,
 		span.SpanContext().TraceID(),
 		span.SpanContext().SpanID(),
-		def.Action,
+		def.Verb,
 		def.Category,
 		claims,
 		resourceIDFromRequest(req, def.ResourceIDParam),

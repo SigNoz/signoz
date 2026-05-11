@@ -57,7 +57,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindRule,
-			Action:       coretypes.VerbCreate,
+			Verb:         coretypes.VerbCreate,
 			Category:     audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -80,7 +80,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindRule,
-			Action:          coretypes.VerbUpdate,
+			Verb:            coretypes.VerbUpdate,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),
@@ -101,7 +101,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindRule,
-			Action:          coretypes.VerbDelete,
+			Verb:            coretypes.VerbDelete,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),
@@ -127,7 +127,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindRule,
-			Action:          coretypes.VerbUpdate,
+			Verb:            coretypes.VerbUpdate,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),
@@ -197,7 +197,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindPlannedMaintenance,
-			Action:       coretypes.VerbCreate,
+			Verb:         coretypes.VerbCreate,
 			Category:     audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -219,7 +219,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindPlannedMaintenance,
-			Action:          coretypes.VerbUpdate,
+			Verb:            coretypes.VerbUpdate,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),
@@ -240,7 +240,7 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindPlannedMaintenance,
-			Action:          coretypes.VerbDelete,
+			Verb:            coretypes.VerbDelete,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),

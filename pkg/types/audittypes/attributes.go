@@ -11,22 +11,22 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-// Audit attributes — Action (What).
+// Audit attributes — Verb (What).
 type AuditAttributes struct {
-	Action         coretypes.Verb // guaranteed to be present
+	Verb           coretypes.Verb // guaranteed to be present
 	ActionCategory ActionCategory // guaranteed to be present
 	Outcome        Outcome        // guaranteed to be present
 	IdentNProvider authtypes.IdentNProvider
 }
 
-func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category ActionCategory, claims authtypes.Claims) AuditAttributes {
+func NewAuditAttributesFromHTTP(statusCode int, verb coretypes.Verb, category ActionCategory, claims authtypes.Claims) AuditAttributes {
 	outcome := OutcomeFailure
 	if statusCode >= 200 && statusCode < 400 {
 		outcome = OutcomeSuccess
 	}
 
 	return AuditAttributes{
-		Action:         action,
+		Verb:           verb,
 		ActionCategory: category,
 		Outcome:        outcome,
 		IdentNProvider: claims.IdentNProvider,
@@ -34,7 +34,7 @@ func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category 
 }
 
 func (attributes AuditAttributes) Put(dest pcommon.Map) {
-	dest.PutStr("signoz.audit.action", attributes.Action.StringValue())
+	dest.PutStr("signoz.audit.verb", attributes.Verb.StringValue())
 	dest.PutStr("signoz.audit.action_category", attributes.ActionCategory.StringValue())
 	dest.PutStr("signoz.audit.outcome", attributes.Outcome.StringValue())
 	putStrIfNotEmpty(dest, "signoz.audit.identn_provider", attributes.IdentNProvider.StringValue())
@@ -180,15 +180,15 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 		b.WriteString(principalAttributes.PrincipalID.StringValue())
 	}
 
-	// Action: " created" or " failed to create".
+	// Verb: " created" or " failed to create".
 	if b.Len() > 0 {
 		b.WriteString(" ")
 	}
 	if auditAttributes.Outcome == OutcomeSuccess {
-		b.WriteString(auditAttributes.Action.PastTense())
+		b.WriteString(auditAttributes.Verb.PastTense())
 	} else {
 		b.WriteString("failed to ")
-		b.WriteString(auditAttributes.Action.StringValue())
+		b.WriteString(auditAttributes.Verb.StringValue())
 	}
 
 	// Resource: " kind (id)" or " kind".

@@ -25,7 +25,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		path            string
 		route           string
 		statusCode      int
-		action          coretypes.Verb
+		verb            coretypes.Verb
 		category        ActionCategory
 		claims          authtypes.Claims
 		resourceID      string
@@ -41,7 +41,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards",
 			route:           "/api/v1/dashboards",
 			statusCode:      http.StatusOK,
-			action:          coretypes.VerbCreate,
+			verb:            coretypes.VerbCreate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
@@ -55,7 +55,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			path:            "/api/v1/dashboards/019b-5678-efgh-9012",
 			route:           "/api/v1/dashboards/{id}",
 			statusCode:      http.StatusForbidden,
-			action:          coretypes.VerbUpdate,
+			verb:            coretypes.VerbUpdate,
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
@@ -77,7 +77,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 				testCase.statusCode,
 				traceID,
 				spanID,
-				testCase.action,
+				testCase.verb,
 				testCase.category,
 				testCase.claims,
 				testCase.resourceID,
@@ -90,7 +90,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			assert.Equal(t, testCase.expectedBody, event.Body)
 			assert.Equal(t, testCase.resourceKind, event.ResourceAttributes.ResourceKind)
 			assert.Equal(t, testCase.resourceID, event.ResourceAttributes.ResourceID)
-			assert.Equal(t, testCase.action, event.AuditAttributes.Action)
+			assert.Equal(t, testCase.verb, event.AuditAttributes.Verb)
 			assert.Equal(t, testCase.category, event.AuditAttributes.ActionCategory)
 			assert.Equal(t, testCase.route, event.TransportAttributes.HTTPRoute)
 			assert.Equal(t, testCase.statusCode, event.TransportAttributes.HTTPStatusCode)
@@ -103,12 +103,12 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 	}
 }
 
-func newTestEvent(resourceKind coretypes.Kind, resourceID string, action coretypes.Verb) AuditEvent {
+func newTestEvent(resourceKind coretypes.Kind, resourceID string, verb coretypes.Verb) AuditEvent {
 	return AuditEvent{
-		Body:      resourceKind.String() + "." + action.PastTense(),
-		EventName: NewEventName(resourceKind, action),
+		Body:      resourceKind.String() + "." + verb.PastTense(),
+		EventName: NewEventName(resourceKind, verb),
 		AuditAttributes: AuditAttributes{
-			Action:         action,
+			Verb:           verb,
 			ActionCategory: ActionCategoryConfigurationChange,
 			Outcome:        OutcomeSuccess,
 		},

@@ -28,7 +28,7 @@ type AuditEvent struct {
 	// OTel LogRecord Intrinsic
 	EventName EventName
 
-	// Custom Audit Attributes - Action
+	// Custom Audit Attributes - Verb
 	AuditAttributes AuditAttributes
 
 	// Custom Audit Attributes - Principal
@@ -50,7 +50,7 @@ func NewAuditEventFromHTTPRequest(
 	statusCode int,
 	traceID oteltrace.TraceID,
 	spanID oteltrace.SpanID,
-	action coretypes.Verb,
+	verb coretypes.Verb,
 	actionCategory ActionCategory,
 	claims authtypes.Claims,
 	resourceID string,
@@ -58,7 +58,7 @@ func NewAuditEventFromHTTPRequest(
 	errorType string,
 	errorCode string,
 ) AuditEvent {
-	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
+	auditAttributes := NewAuditAttributesFromHTTP(statusCode, verb, actionCategory, claims)
 	principalAttributes := NewPrincipalAttributesFromClaims(claims)
 	resourceAttributes := NewResourceAttributes(resourceID, resourceKind)
 	errorAttributes := NewErrorAttributes(errorType, errorCode)
@@ -69,7 +69,7 @@ func NewAuditEventFromHTTPRequest(
 		TraceID:             traceID,
 		SpanID:              spanID,
 		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:           NewEventName(resourceAttributes.ResourceKind, auditAttributes.Action),
+		EventName:           NewEventName(resourceAttributes.ResourceKind, auditAttributes.Verb),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,

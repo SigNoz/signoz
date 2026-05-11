@@ -54,7 +54,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyResourceID",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbDelete,
+				Verb:           coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -72,7 +72,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyPrincipalEmail",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbDelete,
+				Verb:           coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -90,7 +90,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyPrincipalIDandEmail",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbDelete,
+				Verb:           coretypes.VerbDelete,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -108,7 +108,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_AllPresent",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbCreate,
+				Verb:           coretypes.VerbCreate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -126,7 +126,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Success_EmptyEverythingOptional",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbUpdate,
+				Verb:           coretypes.VerbUpdate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeSuccess,
 			},
@@ -140,7 +140,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_AllPresent",
 			auditAttributes: AuditAttributes{
-				Action:         coretypes.VerbUpdate,
+				Verb:           coretypes.VerbUpdate,
 				ActionCategory: ActionCategoryConfigurationChange,
 				Outcome:        OutcomeFailure,
 			},
@@ -161,7 +161,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_ErrorTypeOnly",
 			auditAttributes: AuditAttributes{
-				Action:  coretypes.VerbDelete,
+				Verb:    coretypes.VerbDelete,
 				Outcome: OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{
@@ -179,7 +179,7 @@ func TestNewBody(t *testing.T) {
 		{
 			name: "Failure_NoErrorDetails",
 			auditAttributes: AuditAttributes{
-				Action:  coretypes.VerbCreate,
+				Verb:    coretypes.VerbCreate,
 				Outcome: OutcomeFailure,
 			},
 			principalAttributes: PrincipalAttributes{

@@ -39,7 +39,7 @@ def test_session_deleted_event_appears_in_file(
         "session.deleted",
         **{
             "signoz.audit.outcome": "success",
-            "signoz.audit.action": "delete",
+            "signoz.audit.verb": "delete",
             "signoz.audit.principal.email": USER_ADMIN_EMAIL,
         },
     )

@@ -234,7 +234,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindFactorAPIKey,
-			Action:          coretypes.VerbCreate,
+			Verb:            coretypes.VerbCreate,
 			Category:        audittypes.ActionCategoryAccessControl,
 			ResourceIDParam: "id",
 		}),
@@ -300,7 +300,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindFactorAPIKey,
-			Action:          coretypes.VerbDelete,
+			Verb:            coretypes.VerbDelete,
 			Category:        audittypes.ActionCategoryAccessControl,
 			ResourceIDParam: "id",
 		}),

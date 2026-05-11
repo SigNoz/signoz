@@ -29,7 +29,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindSession,
-			Action:       coretypes.VerbCreate,
+			Verb:         coretypes.VerbCreate,
 			Category:     audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -71,7 +71,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindSession,
-			Action:       coretypes.VerbUpdate,
+			Verb:         coretypes.VerbUpdate,
 			Category:     audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -96,7 +96,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindSession,
-			Action:       coretypes.VerbDelete,
+			Verb:         coretypes.VerbDelete,
 			Category:     audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodDelete).GetError(); err != nil {

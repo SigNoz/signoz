@@ -131,7 +131,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindUser,
-			Action:       coretypes.VerbUpdate,
+			Verb:         coretypes.VerbUpdate,
 			Category:     audittypes.ActionCategoryConfigurationChange,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
@@ -207,7 +207,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindUser,
-			Action:          coretypes.VerbUpdate,
+			Verb:            coretypes.VerbUpdate,
 			Category:        audittypes.ActionCategoryConfigurationChange,
 			ResourceIDParam: "id",
 		}),
@@ -284,7 +284,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindResetPasswordToken,
-			Action:          coretypes.VerbCreate,
+			Verb:            coretypes.VerbCreate,
 			Category:        audittypes.ActionCategoryAccessControl,
 			ResourceIDParam: "id",
 		}),
@@ -327,7 +327,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindFactorPassword,
-			Action:       coretypes.VerbUpdate,
+			Verb:         coretypes.VerbUpdate,
 			Category:     audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPut).GetError(); err != nil {
@@ -352,7 +352,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind: coretypes.KindFactorPassword,
-			Action:       coretypes.VerbUpdate,
+			Verb:         coretypes.VerbUpdate,
 			Category:     audittypes.ActionCategoryAccessControl,
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
@@ -394,7 +394,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindUserRole,
-			Action:          coretypes.VerbCreate,
+			Verb:            coretypes.VerbCreate,
 			Category:        audittypes.ActionCategoryAccessControl,
 			ResourceIDParam: "id",
 		}),
@@ -420,7 +420,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AuditDef{
 			ResourceKind:    coretypes.KindUserRole,
-			Action:          coretypes.VerbDelete,
+			Verb:            coretypes.VerbDelete,
 			Category:        audittypes.ActionCategoryAccessControl,
 			ResourceIDParam: "id",
 		}),

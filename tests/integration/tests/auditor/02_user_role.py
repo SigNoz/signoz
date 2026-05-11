@@ -50,7 +50,7 @@ def test_user_updated_event_appears_in_file(
         "user.updated",
         **{
             "signoz.audit.outcome": "success",
-            "signoz.audit.action": "update",
+            "signoz.audit.verb": "update",
             "signoz.audit.resource.id": editor_id,
             "signoz.audit.principal.email": USER_ADMIN_EMAIL,
         },
@@ -100,7 +100,7 @@ def test_user_role_change_emits_created_and_deleted_events(
         "user-role.deleted",
         **{
             "signoz.audit.outcome": "success",
-            "signoz.audit.action": "delete",
+            "signoz.audit.verb": "delete",
             "signoz.audit.resource.id": editor_id,
             "signoz.audit.principal.email": USER_ADMIN_EMAIL,
         },
@@ -113,7 +113,7 @@ def test_user_role_change_emits_created_and_deleted_events(
         "user-role.created",
         **{
             "signoz.audit.outcome": "success",
-            "signoz.audit.action": "create",
+            "signoz.audit.verb": "create",
             "signoz.audit.resource.id": editor_id,
             "signoz.audit.principal.email": USER_ADMIN_EMAIL,
         },
