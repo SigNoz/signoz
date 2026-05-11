@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { QueryFunctionContext, useQueries, useQuery } from 'react-query';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Spin, Switch, Table, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
@@ -202,7 +202,9 @@ function TopErrors({
 					columns={topErrorsColumnsConfig}
 					loading={{
 						spinning: isLoading || isRefetching,
-						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+						indicator: (
+							<Spin indicator={<Loader size={14} className="animate-spin" />} />
+						),
 					}}
 					dataSource={isLoading || isRefetching ? [] : formattedTopErrorsData}
 					locale={{
