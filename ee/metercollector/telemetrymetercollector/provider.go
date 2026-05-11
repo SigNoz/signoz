@@ -115,7 +115,7 @@ func (provider *Provider) Collect(
 	for _, segment := range segments {
 		query, args, err := buildQuery(meterName, segment)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "build retention query for meter %q", meterName)
+			return nil, err
 		}
 
 		rows, err := provider.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
@@ -191,7 +191,7 @@ func buildQuery(meterName string, segment retentiontypes.RetentionPolicySegment)
 
 func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaultDays int) (string, error) {
 	if defaultDays <= 0 {
-		return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorCollectFailed, "non-positive default retention %d", defaultDays)
+		return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "non-positive default retention %d", defaultDays)
 	}
 
 	if len(rules) == 0 {
@@ -201,7 +201,7 @@ func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaul
 	arms := make([]string, 0, 2*len(rules)+1)
 	for ruleIndex, rule := range rules {
 		if rule.TTLDays <= 0 {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
+			return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "rule %d has non-positive ttl_days %d", ruleIndex, rule.TTLDays)
 		}
 		conditionExpr, err := buildRuleConditionSQL(ruleIndex, rule)
 		if err != nil {
@@ -218,22 +218,22 @@ func buildRetentionMultiIfSQL(rules []retentiontypes.CustomRetentionRule, defaul
 
 func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRule) (string, error) {
 	if len(rule.Filters) == 0 {
-		return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "rule %d has no filters", ruleIndex)
+		return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "rule %d has no filters", ruleIndex)
 	}
 
 	filterExprs := make([]string, 0, len(rule.Filters))
 	for filterIndex, filter := range rule.Filters {
 		if !labelKeyPattern.MatchString(filter.Key) {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
+			return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "rule %d filter %d has invalid key %q", ruleIndex, filterIndex, filter.Key)
 		}
 		if len(filter.Values) == 0 {
-			return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "rule %d filter %d has no values", ruleIndex, filterIndex)
+			return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "rule %d filter %d has no values", ruleIndex, filterIndex)
 		}
 
 		quoted := make([]string, len(filter.Values))
 		for valueIndex, value := range filter.Values {
 			if !labelValuePattern.MatchString(value) {
-				return "", errors.Newf(errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
+				return "", errors.Newf(errors.TypeInvalidInput, metercollector.ErrCodeMeterCollectorInvalidCustomRetentionRule, "rule %d filter %d value %d is invalid %q", ruleIndex, filterIndex, valueIndex, value)
 			}
 			quoted[valueIndex] = "'" + value + "'"
 		}
@@ -245,8 +245,10 @@ func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRul
 }
 
 func buildDimensions(orgID valuer.UUID, retentionDays int) map[string]string {
+	retentionDuration := time.Duration(retentionDays) * 24 * time.Hour // nanoseconds
+
 	return zeustypes.NewDimensions(
 		zeustypes.OrganizationID.String(orgID.StringValue()),
-		zeustypes.RetentionDuration.String(strconv.Itoa(retentionDays)),
+		zeustypes.RetentionDuration.String(strconv.FormatInt(int64(retentionDuration), 10)),
 	)
 }

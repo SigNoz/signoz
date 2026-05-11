@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	ErrCodeMeterCollectorCollectFailed = errors.MustNewCode("meter_collector_collect_failed")
-	ErrCodeInvalidConfig               = errors.MustNewCode("meter_collector_invalid_config")
+	ErrCodeMeterCollectorCollectFailed              = errors.MustNewCode("meter_collector_collect_failed")
+	ErrCodeMeterCollectorInvalidCustomRetentionRule = errors.MustNewCode("meter_collector_invalid_custom_retention_rule")
+	ErrCodeInvalidConfig                            = errors.MustNewCode("meter_collector_invalid_config")
 )
 
 type MeterCollector interface {

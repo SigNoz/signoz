@@ -66,46 +66,50 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 }
 
 func (provider *Provider) Start(ctx context.Context) error {
+	close(provider.healthyC)
+
+	provider.collect(ctx)
+
 	ticker := time.NewTicker(provider.config.Interval)
 	defer ticker.Stop()
-
-	close(provider.healthyC)
 
 	for {
 		select {
 		case <-provider.stopC:
 			return nil
 		case <-ticker.C:
-			func() {
-				ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.Collect", trace.WithAttributes(attribute.String("meterreporter.provider", "http")))
-				defer span.End()
+			provider.collect(ctx)
+		}
+	}
+}
 
-				orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
-				if err != nil {
-					span.RecordError(err)
-					provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", errors.Attr(err))
-					return
-				}
+func (provider *Provider) collect(ctx context.Context) {
+	ctx, span := provider.settings.Tracer().Start(ctx, "meterreporter.Collect", trace.WithAttributes(attribute.String("meterreporter.provider", "http")))
+	defer span.End()
 
-				for _, org := range orgs {
-					license, err := provider.licensing.GetActive(ctx, org.ID)
-					if err != nil {
-						if errors.Ast(err, errors.TypeNotFound) {
-							provider.settings.Logger().DebugContext(ctx, "no active license found for org, skipping reporting", slog.String("org_id", org.ID.StringValue()))
-							continue
-						}
+	orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
+	if err != nil {
+		span.RecordError(err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", errors.Attr(err))
+		return
+	}
 
-						span.RecordError(err)
-						provider.settings.Logger().ErrorContext(ctx, "failed to fetch active license for org", errors.Attr(err), slog.String("org_id", org.ID.StringValue()))
-						return
-					}
+	for _, org := range orgs {
+		license, err := provider.licensing.GetActive(ctx, org.ID)
+		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				provider.settings.Logger().DebugContext(ctx, "no active license found for org, skipping reporting", slog.String("org_id", org.ID.StringValue()))
+				continue
+			}
 
-					if err := provider.collectOrg(ctx, org, license); err != nil {
-						span.RecordError(err)
-						provider.settings.Logger().ErrorContext(ctx, "failed to collect meters", errors.Attr(err), slog.String("org_id", org.ID.StringValue()))
-					}
-				}
-			}()
+			span.RecordError(err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to fetch active license for org", errors.Attr(err), slog.String("org_id", org.ID.StringValue()))
+			return
+		}
+
+		if err := provider.collectOrg(ctx, org, license); err != nil {
+			span.RecordError(err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to collect meters", errors.Attr(err), slog.String("org_id", org.ID.StringValue()))
 		}
 	}
 }
