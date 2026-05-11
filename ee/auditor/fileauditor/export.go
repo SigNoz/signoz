@@ -21,16 +21,17 @@ func (provider *provider) export(ctx context.Context, events []audittypes.AuditE
 		return errors.Wrapf(err, errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "failed to marshal audit logs")
 	}
 
+	// Combine the payload and trailing newline into one Write call so the line
+	// is emitted in a single syscall — concurrent readers see either the full
+	// line or nothing, never a torn JSON object.
+	payload = append(payload, '\n')
+
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
 
 	if _, err := provider.file.Write(payload); err != nil {
 		provider.settings.Logger().ErrorContext(ctx, "audit export failed", errors.Attr(err), slog.Int("dropped_log_records", len(events)))
 		return errors.Wrapf(err, errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "failed to write audit logs")
-	}
-
-	if _, err := provider.file.Write([]byte("\n")); err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "failed to write audit log newline")
 	}
 
 	return provider.file.Sync()
