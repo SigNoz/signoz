@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import { QueryParams } from 'constants/query';

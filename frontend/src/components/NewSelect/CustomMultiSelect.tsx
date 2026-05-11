@@ -11,7 +11,7 @@ import { DownOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Loader } from '@signozhq/icons';
 import { Button, Checkbox, Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';

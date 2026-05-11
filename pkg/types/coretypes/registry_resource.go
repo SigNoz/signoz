@@ -9,7 +9,6 @@ var Resources = []Resource{
 	ResourceMetaResourcesRole,
 	ResourceMetaResourcesOrganization,
 	ResourceMetaResourcesServiceAccount,
-	ResourceMetaResourcesServiceAccount,
 	ResourceMetaResourcesUser,
 	ResourceMetaResourceNotificationChannel,
 	ResourceMetaResourcesNotificationChannel,

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';

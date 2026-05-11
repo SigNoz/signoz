@@ -5614,10 +5614,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/ui@0.0.17":
-  version "0.0.17"
-  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.17.tgz#ac14bd973fd718a869d365089ab2e6534987e2c0"
-  integrity sha512-LJDX6HvgNfTIybqWFOP+BtEXIJvQJQGZ0IFgXoMwO37wGf6CZRxRgh0Xuyw+LAS6zMTyqRCw5ghrW7UT9q/Oag==
+"@signozhq/ui@0.0.18":
+  version "0.0.18"
+  resolved "https://registry.yarnpkg.com/@signozhq/ui/-/ui-0.0.18.tgz#a96f843aea87d2a435ed0efc68d0a94eaae98baa"
+  integrity sha512-1p3ALh76kafiz5yX7ReNKVcHDt2od7CcZD/Vx9i2adTwTeynkLJcEfVoXoJD3oh1kKTleooOiOjRyxlA7VzmSA==
   dependencies:
     "@chenglou/pretext" "^0.0.5"
     "@radix-ui/react-checkbox" "^1.2.3"

@@ -3,7 +3,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 import { Card } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components

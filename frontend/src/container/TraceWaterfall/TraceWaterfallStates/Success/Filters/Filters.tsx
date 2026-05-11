@@ -3,7 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Loader } from '@signozhq/icons';
 import { Button, Spin, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';

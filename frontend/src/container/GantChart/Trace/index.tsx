@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { CaretDownFilled, CaretRightFilled } from '@ant-design/icons';
 import { Col } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { StyledCol, StyledRow } from 'components/Styled';
 import {
 	IIntervalUnit,

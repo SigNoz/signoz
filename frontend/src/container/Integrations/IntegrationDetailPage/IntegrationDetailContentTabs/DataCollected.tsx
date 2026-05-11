@@ -1,5 +1,5 @@
 import { Table } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { BarChart2, ScrollText } from 'lucide-react';
 
 import './IntegrationDetailContentTabs.styles.scss';

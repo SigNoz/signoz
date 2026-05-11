@@ -14,7 +14,7 @@ import (
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create public dashboard",
@@ -31,7 +31,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.GetPublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.GetPublic), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard",
@@ -48,7 +48,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
 		ID:                  "UpdatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Update public dashboard",
@@ -65,7 +65,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
 		ID:                  "DeletePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Delete public dashboard",
@@ -82,7 +82,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
+	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
 		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,
@@ -110,7 +110,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
+	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
 		authtypes.Relation{Verb: coretypes.VerbRead},
 		coretypes.ResourceMetaResourcePublicDashboard,

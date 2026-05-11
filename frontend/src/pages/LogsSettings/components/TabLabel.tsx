@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 
 import { TableLabel } from '../types';
 

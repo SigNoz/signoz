@@ -6,7 +6,7 @@ import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Form } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';

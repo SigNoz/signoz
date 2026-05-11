@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import { Skeleton, Table, TableColumnsType as ColumnsType } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import getIngestionData from 'api/settings/getIngestionData';
 import { useAppContext } from 'providers/App/App';
 import { IngestionDataType } from 'types/api/settings/ingestion';

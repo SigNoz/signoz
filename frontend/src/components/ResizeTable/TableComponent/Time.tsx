@@ -1,4 +1,4 @@
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { Checkbox, toast } from '@signozhq/ui';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { toast } from '@signozhq/ui/sonner';
 import { Button, Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';

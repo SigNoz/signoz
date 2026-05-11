@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 import { Button, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { MoveUpRight, RotateCw } from 'lucide-react';

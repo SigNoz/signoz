@@ -1839,6 +1839,7 @@ export enum AuthtypesRelationDTO {
 	delete = 'delete',
 	list = 'list',
 	assignee = 'assignee',
+	attach = 'attach',
 }
 export interface AuthtypesRoleDTO {
 	/**
@@ -4652,6 +4653,55 @@ export interface InframonitoringtypesHostsDTO {
 	warning?: Querybuildertypesv5QueryWarnDataDTO;
 }
 
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNamespaceRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesNamespaceRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceMemory: number;
+	/**
+	 * @type string
+	 */
+	namespaceName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNamespacesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesNamespaceRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export enum InframonitoringtypesNodeConditionDTO {
 	ready = 'ready',
 	not_ready = 'not_ready',
@@ -4842,6 +4892,34 @@ export interface InframonitoringtypesPostableHostsDTO {
 	 */
 	end: number;
 	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNamespacesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
 	/**
 	 * @type array
 	 * @nullable true
@@ -6676,28 +6754,36 @@ export interface RuletypesCumulativeWindowDTO {
 	timezone: string;
 }
 
+export enum RuletypesEvaluationCumulativeDTOKind {
+	cumulative = 'cumulative',
+}
 export interface RuletypesEvaluationCumulativeDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesCumulativeWindowDTO;
+	/**
+	 * @type string
+	 * @enum cumulative
+	 */
+	kind: RuletypesEvaluationCumulativeDTOKind;
+	spec: RuletypesCumulativeWindowDTO;
 }
 
 export type RuletypesEvaluationEnvelopeDTO =
-	| (RuletypesEvaluationRollingDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  })
-	| (RuletypesEvaluationCumulativeDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  });
+	| RuletypesEvaluationRollingDTO
+	| RuletypesEvaluationCumulativeDTO;
 
 export enum RuletypesEvaluationKindDTO {
 	rolling = 'rolling',
 	cumulative = 'cumulative',
 }
+export enum RuletypesEvaluationRollingDTOKind {
+	rolling = 'rolling',
+}
 export interface RuletypesEvaluationRollingDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesRollingWindowDTO;
+	/**
+	 * @type string
+	 * @enum rolling
+	 */
+	kind: RuletypesEvaluationRollingDTOKind;
+	spec: RuletypesRollingWindowDTO;
 }
 
 export interface RuletypesGettableTestRuleDTO {
@@ -7052,10 +7138,7 @@ export interface RuletypesRuleConditionDTO {
 	thresholds?: RuletypesRuleThresholdDataDTO;
 }
 
-export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
-	kind: RuletypesThresholdKindDTO;
-	spec: unknown;
-};
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;
 
 export enum RuletypesRuleTypeDTO {
 	threshold_rule = 'threshold_rule',
@@ -7091,9 +7174,16 @@ export enum RuletypesSeasonalityDTO {
 	daily = 'daily',
 	weekly = 'weekly',
 }
+export enum RuletypesThresholdBasicDTOKind {
+	basic = 'basic',
+}
 export interface RuletypesThresholdBasicDTO {
-	kind?: RuletypesThresholdKindDTO;
-	spec?: RuletypesBasicRuleThresholdsDTO;
+	/**
+	 * @type string
+	 * @enum basic
+	 */
+	kind: RuletypesThresholdBasicDTOKind;
+	spec: RuletypesBasicRuleThresholdsDTO;
 }
 
 export enum RuletypesThresholdKindDTO {
@@ -9236,6 +9326,14 @@ export type Healthz503 = {
 
 export type ListHosts200 = {
 	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNamespaces200 = {
+	data: InframonitoringtypesNamespacesDTO;
 	/**
 	 * @type string
 	 */

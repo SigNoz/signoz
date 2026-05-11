@@ -1,7 +1,7 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Tag } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	getHostLists,
 	HostData,

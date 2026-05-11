@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { Alert, Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import manageCreditCardApi from 'api/v1/portal/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';

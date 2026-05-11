@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Input, Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';

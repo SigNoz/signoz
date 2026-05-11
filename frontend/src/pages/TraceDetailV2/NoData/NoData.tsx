@@ -1,5 +1,5 @@
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { LifeBuoy, RefreshCw } from 'lucide-react';
