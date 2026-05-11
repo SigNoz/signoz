@@ -42,8 +42,8 @@ import (
 
 // Server runs HTTP, Mux and a grpc server
 type Server struct {
-	config      signoz.Config
-	signoz      *signoz.SigNoz
+	config signoz.Config
+	signoz *signoz.SigNoz
 
 	// public http router
 	httpConn     net.Listener
@@ -148,7 +148,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	s := &Server{
 		config:             config,
-		signoz:       signoz,
+		signoz:             signoz,
 		httpHostPort:       baseconst.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 		usageManager:       usageManager,
@@ -317,4 +317,3 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	return nil
 }
-

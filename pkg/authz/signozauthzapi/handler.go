@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -97,25 +98,20 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
-	relation, err := authtypes.NewRelation(relationStr)
+
+	relation, err := coretypes.NewVerb(relationStr)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, relation)
+	objects, err := handler.authz.GetObjects(ctx, valuer.MustNewUUID(claims.OrgID), roleID, authtypes.Relation{Verb: relation})
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, authtypes.NewGettableObjects(objects))
-}
-
-func (handler *handler) GetResources(rw http.ResponseWriter, r *http.Request) {
-	resources := handler.authz.GetResources(r.Context())
-
-	render.Success(rw, http.StatusOK, authtypes.NewGettableResources(resources))
+	render.Success(rw, http.StatusOK, coretypes.NewObjectGroupsFromObjects(objects))
 }
 
 func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
@@ -190,7 +186,7 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relation, err := authtypes.NewRelation(mux.Vars(r)["relation"])
+	relation, err := coretypes.NewVerb(mux.Vars(r)["relation"])
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -207,19 +203,19 @@ func (handler *handler) PatchObjects(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(authtypes.PatchableObjects)
+	req := new(coretypes.PatchableObjects)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	additions, deletions, err := authtypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
+	additions, deletions, err := coretypes.NewPatchableObjects(req.Additions, req.Deletions, relation)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, relation, additions, deletions)
+	err = handler.authz.PatchObjects(ctx, valuer.MustNewUUID(claims.OrgID), role.Name, authtypes.Relation{Verb: relation}, additions, deletions)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -266,7 +262,7 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+	subject, err := authtypes.NewSubject(coretypes.NewResourceUser(), claims.UserID, orgID, nil)
 	if err != nil {
 		render.Error(rw, err)
 		return

@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Trash2, X } from '@signozhq/icons';
-import { Button, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { toast } from '@signozhq/ui/sonner';
 import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -158,7 +159,7 @@ function AuthDomain(): JSX.Element {
 							onClick={(): void => setRecord(record)}
 							variant="link"
 						>
-							Configure {SSOType.get(record.ssoType || '')}
+							Configure {SSOType.get(record.config?.ssoType || '')}
 						</Button>
 						<Button
 							className="auth-domain-list-action-link delete"

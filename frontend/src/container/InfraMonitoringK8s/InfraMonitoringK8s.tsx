@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import { Button, CollapseProps } from 'antd';
-import { Collapse, Tooltip, Typography } from 'antd';
+import { Collapse, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
@@ -43,7 +44,7 @@ import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
 import {
 	useInfraMonitoringCategory,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 } from './hooks';
@@ -60,7 +61,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 

@@ -251,10 +251,10 @@ func TestEnhancePromQLError(t *testing.T) {
 
 	t.Run("quoted metric outside braces patterns", func(t *testing.T) {
 		tests := []struct {
-			name               string
-			query              string
-			wantHint           bool
-			wantMetricInHint   string
+			name             string
+			query            string
+			wantHint         bool
+			wantMetricInHint string
 		}{
 			{
 				name:             "quoted metric name followed by selector",

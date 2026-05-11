@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { authzCheck } from 'api/generated/services/authz';
 import type {
-	AuthtypesObjectDTO,
+	CoretypesObjectDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
@@ -34,7 +34,7 @@ function dispatchPermission(
 		});
 
 		setTimeout(() => {
-			const copiedPermissions = pendingPermissions.slice();
+			const copiedPermissions = [...pendingPermissions];
 			pendingPermissions = [];
 			ctx = null;
 
@@ -50,9 +50,9 @@ async function fetchManyPermissions(
 ): Promise<AuthZCheckResponse> {
 	const payload: AuthtypesTransactionDTO[] = permissions.map((permission) => {
 		const dto = permissionToTransactionDto(permission);
-		const object: AuthtypesObjectDTO = {
+		const object: CoretypesObjectDTO = {
 			resource: {
-				name: dto.object.resource.name,
+				kind: dto.object.resource.kind,
 				type: dto.object.resource.type,
 			},
 			selector: dto.object.selector,

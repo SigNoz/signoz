@@ -55,7 +55,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -79,7 +79,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="read"
-				object="dashboard:*"
+				object="role:*"
 				fallbackOnLoading={<LoadingFallback />}
 			>
 				<TestChild />
@@ -102,7 +102,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -121,11 +121,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		render(
-			<GuardAuthZ
-				relation="read"
-				object="dashboard:*"
-				fallbackOnError={ErrorFallback}
-			>
+			<GuardAuthZ relation="read" object="role:*" fallbackOnError={ErrorFallback}>
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -155,7 +151,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="read"
-				object="dashboard:*"
+				object="role:*"
 				fallbackOnError={errorFallbackWithCapture}
 			>
 				<TestChild />
@@ -178,7 +174,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -201,7 +197,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="update"
-				object="dashboard:123"
+				object="role:123"
 				fallbackOnNoPermissions={NoPermissionFallback}
 			>
 				<TestChild />
@@ -224,7 +220,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="update" object="dashboard:123">
+			<GuardAuthZ relation="update" object="role:123">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -244,7 +240,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { container } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -257,7 +253,7 @@ describe('GuardAuthZ', () => {
 	});
 
 	it('should pass requiredPermissionName to fallbackOnNoPermissions', async () => {
-		const permission = buildPermission('update', 'dashboard:123');
+		const permission = buildPermission('update', 'role:123');
 
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
@@ -269,7 +265,7 @@ describe('GuardAuthZ', () => {
 		render(
 			<GuardAuthZ
 				relation="update"
-				object="dashboard:123"
+				object="role:123"
 				fallbackOnNoPermissions={NoPermissionFallbackWithSuggestions}
 			>
 				<TestChild />
@@ -299,7 +295,7 @@ describe('GuardAuthZ', () => {
 		);
 
 		const { rerender } = render(
-			<GuardAuthZ relation="read" object="dashboard:*">
+			<GuardAuthZ relation="read" object="role:*">
 				<TestChild />
 			</GuardAuthZ>,
 		);
@@ -309,7 +305,7 @@ describe('GuardAuthZ', () => {
 		});
 
 		rerender(
-			<GuardAuthZ relation="delete" object="dashboard:456">
+			<GuardAuthZ relation="delete" object="role:456">
 				<TestChild />
 			</GuardAuthZ>,
 		);

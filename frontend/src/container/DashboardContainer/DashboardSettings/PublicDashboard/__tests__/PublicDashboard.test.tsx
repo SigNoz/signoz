@@ -1,5 +1,5 @@
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { fireEvent, within } from '@testing-library/react';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { StatusCodes } from 'http-status-codes';
@@ -20,8 +20,8 @@ jest.mock('react-use', () => ({
 	...jest.requireActual('react-use'),
 	useCopyToClipboard: jest.fn(),
 }));
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),

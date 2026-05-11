@@ -1,0 +1,27 @@
+.span-line-action-buttons {
+	display: flex;
+	position: absolute;
+	transform: translate(-50%, -50%);
+	top: 50%;
+	right: 0;
+	cursor: pointer;
+	border-radius: 2px;
+	border: 1px solid var(--l1-border);
+	background: var(--l2-background);
+
+	.copy-span-btn {
+		border: none;
+		box-shadow: none;
+		padding: 9px;
+		justify-content: center;
+		align-items: center;
+		display: flex;
+		border-color: var(--l1-border) !important;
+	}
+}
+
+// Tooltip rendered in a portal; bump above FloatingPanel (z-index 999) so it
+// stays visible when the SpanDetailsPanel is docked as a floating panel.
+.span-line-action-tooltip {
+	--tooltip-z-index: 1000;
+}

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Form, FormInstance, Modal } from 'antd';
 import { useAppContext } from 'providers/App/App';
 import { ActionMode, ActionType, PipelineData } from 'types/api/pipeline/def';

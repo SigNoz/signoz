@@ -13,6 +13,8 @@ global:
   ingestion_url: <unset>
   # the url of the SigNoz MCP server. when unset, the MCP settings page is hidden in the frontend.
   # mcp_url: <unset>
+  # the url of the SigNoz AI Assistant server. when unset, the AI Assistant is hidden in the frontend.
+  # ai_assistant_url: <unset>
 
 ##################### Version #####################
 version:
@@ -426,4 +428,4 @@ authz:
   provider: openfga
   openfga:
     # maximum tuples allowed per openfga write operation.
-    max_tuples_per_write: 100
+    max_tuples_per_write: 300
