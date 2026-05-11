@@ -1,67 +1,203 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Space } from 'antd';
-import logEvent from 'api/common/logEvent';
-import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { useListRules } from 'api/generated/services/rules';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
-import Spinner from 'components/Spinner';
-import { useNotifications } from 'hooks/useNotifications';
+import { useCallback, useMemo } from 'react';
+import { Plus, Search } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import type { StatCardClickEvent } from 'components/Alerts';
+import TanStackTable from 'components/TanStackTableView';
+import { useTableParams } from 'components/TanStackTableView/useTableParams';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useUrlSearchState } from 'hooks/useUrlSearchState';
+import { useAppContext } from 'providers/App/App';
+import { useTimezone } from 'providers/Timezone';
 
-import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
-import ListAlert from './ListAlert';
+import {
+	ActionsMenu,
+	ColumnSelector,
+	EmptyState,
+	StatsRow,
+} from './components';
+import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
+import styles from './ListAlertRules.module.scss';
+import { getAlertRuleColumns } from './table.config';
+import type { AlertRule } from './types';
+import { useAlertRulesData } from './useAlertRulesData';
+import { useAlertRulesHandlers } from './useAlertRulesHandlers';
+
+const QUERY_PARAMS_CONFIG = { orderBy: 'alert_rules_order_by' } as const;
 
 function ListAlertRules(): JSX.Element {
-	const { t } = useTranslation('common');
-	const { data, isError, isLoading, refetch, error } = useListRules({
-		query: { cacheTime: 0 },
-	});
-
-	const rules = data?.data ?? [];
-	const hasLoaded = !isLoading && data !== undefined;
-	const logEventCalledRef = useRef(false);
-
-	const { notifications } = useNotifications();
-
-	const apiError = useMemo(
-		() => convertToApiError(error as AxiosError<RenderErrorResponseDTO> | null),
-		[error],
+	const { user } = useAppContext();
+	const [addNewAlert, action] = useComponentPermission(
+		['add_new_alert', 'action'],
+		user.role,
 	);
 
-	useEffect(() => {
-		if (!logEventCalledRef.current && hasLoaded) {
-			logEvent('Alert: List page visited', {
-				number: rules.length,
+	const [filterValues, setFilterValues] = useAlertRulesFilters();
+	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
+		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH);
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { orderBy } = useTableParams(QUERY_PARAMS_CONFIG);
+
+	const { filteredRules, isFetching, isError, stats, allRules } =
+		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);
+
+	const { handleEdit, handleNewAlert, handleRowClick, handleRowClickNewTab } =
+		useAlertRulesHandlers(allRules.length);
+
+	const handleClearFilters = useCallback((): void => {
+		void setFilterValues(null);
+		clearSearch();
+	}, [setFilterValues, clearSearch]);
+
+	const handleStateClick = useCallback(
+		(state: string, event: StatCardClickEvent): void => {
+			const filterKey = `state:${state}`;
+			void setFilterValues((prev: string[]) => {
+				const current = prev ?? [];
+				if (event.exclusive) {
+					const isOnlyFilter = current.length === 1 && current[0] === filterKey;
+					return isOnlyFilter ? null : [filterKey];
+				}
+				if (current.includes(filterKey)) {
+					const next = current.filter((v: string) => v !== filterKey);
+					return next.length ? next : null;
+				}
+				return [...current, filterKey];
 			});
-			logEventCalledRef.current = true;
-		}
-	}, [hasLoaded, rules.length]);
+		},
+		[setFilterValues],
+	);
 
-	useEffect(() => {
-		if (isError) {
-			notifications.error({
-				message: apiError?.getErrorMessage() || t('something_went_wrong'),
+	const handleSeverityClick = useCallback(
+		(severity: string, event: StatCardClickEvent): void => {
+			const filterKey = `severity:${severity}`;
+			void setFilterValues((prev: string[]) => {
+				const current = prev ?? [];
+				if (event.exclusive) {
+					const isOnlyFilter = current.length === 1 && current[0] === filterKey;
+					return isOnlyFilter ? null : [filterKey];
+				}
+				if (current.includes(filterKey)) {
+					const next = current.filter((v: string) => v !== filterKey);
+					return next.length ? next : null;
+				}
+				return [...current, filterKey];
 			});
+		},
+		[setFilterValues],
+	);
+
+	const handleTotalClick = useCallback(
+		(_event: StatCardClickEvent): void => {
+			void setFilterValues(null);
+		},
+		[setFilterValues],
+	);
+
+	const columns = useMemo(
+		() => getAlertRuleColumns(formatTimezoneAdjustedTimestamp),
+		[formatTimezoneAdjustedTimestamp],
+	);
+
+	const columnsWithActions = useMemo(() => {
+		if (!action) {
+			return columns;
 		}
-	}, [isError, apiError, t, notifications]);
 
-	if (isError) {
-		return <div>{apiError?.getErrorMessage() || t('something_went_wrong')}</div>;
-	}
+		return [
+			...columns,
+			{
+				id: 'actions',
+				header: '',
+				accessorKey: 'id',
+				width: { min: 50, default: 50 },
+				enableSort: false,
+				enableRemove: false,
+				enableMove: false,
+				pin: 'right' as const,
+				cell: ({ row }: { row: AlertRule }): JSX.Element => (
+					<div className={styles.actionsColumn}>
+						<ActionsMenu rule={row} onEdit={handleEdit} />
+					</div>
+				),
+			},
+		];
+	}, [action, columns, handleEdit]);
 
-	if (isLoading || !data) {
-		return <Spinner height="75vh" tip="Loading Rules..." />;
-	}
-
-	if (rules.length === 0) {
-		return <AlertsEmptyState />;
-	}
+	const hasActiveFilters =
+		searchText.length > 0 || (filterValues ?? []).length > 0;
+	const isEmptyDueToFilters =
+		!isFetching &&
+		filteredRules.length === 0 &&
+		hasActiveFilters &&
+		stats.total > 0;
+	const isEmptyNoRules = !isFetching && !isError && stats.total === 0;
 
 	return (
-		<Space direction="vertical" size="large" style={{ width: '100%' }}>
-			<ListAlert allAlertRules={rules} refetch={refetch} />
-		</Space>
+		<div className={styles.container}>
+			{!isEmptyNoRules && (
+				<div className={styles.header}>
+					<StatsRow
+						stats={stats}
+						selectedFilters={filterValues ?? []}
+						onStateClick={handleStateClick}
+						onSeverityClick={handleSeverityClick}
+						onTotalClick={handleTotalClick}
+					/>
+					<div className={styles.refreshRow}>
+						<ColumnSelector columns={columns} storageKey="alert-rules-columns" />
+						{addNewAlert && (
+							<Button
+								variant="solid"
+								size="sm"
+								prefix={<Plus size={14} />}
+								onClick={handleNewAlert}
+								color="primary"
+							>
+								New Alert
+							</Button>
+						)}
+					</div>
+				</div>
+			)}
+
+			{!isEmptyNoRules && (
+				<div className={styles.filtersRow}>
+					<Input
+						className={styles.searchInput}
+						placeholder="Search by Alert Name, Severity and Labels"
+						value={searchText}
+						onChange={handleSearchChange}
+						suffix={<Search size={14} className={styles.searchIcon} />}
+					/>
+				</div>
+			)}
+
+			<div className={styles.tableContainer}>
+				{isError ? (
+					<EmptyState variant="error" />
+				) : isEmptyNoRules ? (
+					<EmptyState />
+				) : isEmptyDueToFilters ? (
+					<EmptyState
+						variant="no-search-results"
+						onClearSearch={handleClearFilters}
+					/>
+				) : (
+					<TanStackTable<AlertRule>
+						data={filteredRules}
+						columns={columnsWithActions}
+						isLoading={isFetching}
+						getRowKey={(row): string => row.id ?? ''}
+						getItemKey={(row): string => row.id ?? ''}
+						columnStorageKey="alert-rules-columns"
+						enableQueryParams={QUERY_PARAMS_CONFIG}
+						onRowClick={handleRowClick}
+						onRowClickNewTab={handleRowClickNewTab}
+					/>
+				)}
+			</div>
+		</div>
 	);
 }
 

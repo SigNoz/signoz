@@ -1,0 +1,34 @@
+.popoverContent {
+	min-width: 180px;
+	padding: 8px;
+}
+
+.title {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--l2-foreground);
+	padding: 4px 8px;
+	margin-bottom: 4px;
+}
+
+.columnList {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.columnItem {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--l1-foreground);
+	transition: background-color 0.15s ease;
+
+	&:hover {
+		background: var(--l2-background-hover);
+	}
+}
