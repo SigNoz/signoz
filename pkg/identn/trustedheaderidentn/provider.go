@@ -102,18 +102,25 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	// Drop deleted users; only active or pending-invite users are eligible.
-	users = slices.DeleteFunc(users, func(u *types.User) bool { return u.ErrIfDeleted() != nil })
+	// Drop ineligible users — deleted ones (soft-deleted accounts) and root users.
+	// Root users are filtered (not hard-failed on first encounter) because
+	// ListUsersByEmailAndOrgIDs has no guaranteed ordering: in a multi-org
+	// installation where the same email exists in multiple orgs, hard-failing
+	// on `users[0]` being root would non-deterministically block a valid
+	// non-root user that happens to come later in the slice.
+	//
+	// Root users are deliberately not authenticatable via trusted headers
+	// (matches the SAML/OIDC posture) — treating them as "not a match" here
+	// keeps the resolver consistent.
+	users = slices.DeleteFunc(users, func(u *types.User) bool {
+		return u.ErrIfDeleted() != nil || u.ErrIfRoot() != nil
+	})
 
 	if len(users) > 0 {
-		// Pick the first matching user. Multi-org installations should pin the
-		// user to a specific org via the proxy or a separate header in a
+		// Pick the first remaining match. Multi-org installations should pin
+		// the user to a specific org via the proxy or a separate header in a
 		// future enhancement.
 		matched := users[0]
-
-		if err := matched.ErrIfRoot(); err != nil {
-			return nil, errors.WithAdditionalf(err, "root user cannot authenticate via trusted headers")
-		}
 
 		return authtypes.NewPrincipalUserIdentity(
 			matched.ID,
