@@ -1,11 +1,15 @@
 package retentiontypes
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 )
+
+const secondsPerDay = 24 * 60 * 60
 
 const (
 	DefaultLogsRetentionDays    = 15
@@ -31,6 +35,92 @@ type RetentionPolicySegment struct {
 	EndMs       int64
 	Rules       []CustomRetentionRule
 	DefaultDays int
+}
+
+// NewRetentionPolicySegment creates a retention policy segment for a half-open time range.
+func NewRetentionPolicySegment(startMs int64, endMs int64, rules []CustomRetentionRule, defaultDays int) *RetentionPolicySegment {
+	return &RetentionPolicySegment{
+		StartMs:     startMs,
+		EndMs:       endMs,
+		Rules:       rules,
+		DefaultDays: defaultDays,
+	}
+}
+
+// BuildRetentionPolicySegmentsFromRows converts successful TTL settings into retention policy segments.
+func BuildRetentionPolicySegmentsFromRows(rows []*TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]*RetentionPolicySegment, error) {
+	if startMs >= endMs {
+		return nil, nil
+	}
+
+	var activeAtStart *TTLSetting
+	inWindow := make([]*TTLSetting, 0, len(rows))
+	for _, row := range rows {
+		rowMs := row.CreatedAt.UnixMilli()
+		if rowMs <= startMs {
+			activeAtStart = row
+			continue
+		}
+		if rowMs >= endMs {
+			continue
+		}
+		inWindow = append(inWindow, row)
+	}
+
+	activeRules, activeDefault, err := parseTTLSetting(activeAtStart, fallbackDefaultDays)
+	if err != nil {
+		return nil, err
+	}
+
+	segments := make([]*RetentionPolicySegment, 0, len(inWindow)+1)
+	cursor := startMs
+	for _, row := range inWindow {
+		rowMs := row.CreatedAt.UnixMilli()
+		if rowMs <= cursor {
+			activeRules, activeDefault, err = parseTTLSetting(row, fallbackDefaultDays)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		segments = append(segments, NewRetentionPolicySegment(cursor, rowMs, activeRules, activeDefault))
+		cursor = rowMs
+		activeRules, activeDefault, err = parseTTLSetting(row, fallbackDefaultDays)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if cursor < endMs {
+		segments = append(segments, NewRetentionPolicySegment(cursor, endMs, activeRules, activeDefault))
+	}
+
+	return segments, nil
+}
+
+func parseTTLSetting(row *TTLSetting, fallbackDefaultDays int) ([]CustomRetentionRule, int, error) {
+	if row == nil {
+		return nil, fallbackDefaultDays, nil
+	}
+
+	defaultDays := row.TTL
+	if row.Condition == "" {
+		defaultDays = (row.TTL + secondsPerDay - 1) / secondsPerDay
+	}
+	if defaultDays <= 0 {
+		defaultDays = fallbackDefaultDays
+	}
+
+	if row.Condition == "" {
+		return nil, defaultDays, nil
+	}
+
+	var rules []CustomRetentionRule
+	if err := json.Unmarshal([]byte(row.Condition), &rules); err != nil {
+		return nil, 0, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "parse ttl_setting condition for row %q", row.ID.StringValue())
+	}
+
+	return rules, defaultDays, nil
 }
 
 // CustomRetentionRule is one custom retention rule as stored in ttl_setting.condition.

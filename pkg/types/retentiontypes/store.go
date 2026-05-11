@@ -7,6 +7,6 @@ import (
 )
 
 type Store interface {
-	// ListTTLSettings returns successful TTL settings before the given timestamp.
-	ListTTLSettings(ctx context.Context, orgID valuer.UUID, tableName string, beforeMs int64) ([]*TTLSetting, error)
+	// ListTTLSettingsByTableNameAndBeforeCreatedAt returns successful TTL settings before the given timestamp.
+	ListTTLSettingsByTableNameAndBeforeCreatedAt(ctx context.Context, orgID valuer.UUID, tableName string, beforeMs int64) ([]*TTLSetting, error)
 }

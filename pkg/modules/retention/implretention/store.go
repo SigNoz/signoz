@@ -19,8 +19,8 @@ func NewStore(sqlstore sqlstore.SQLStore) retentiontypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-// ListTTLSettings returns successful TTL settings before the given timestamp.
-func (store *store) ListTTLSettings(ctx context.Context, orgID valuer.UUID, tableName string, beforeMs int64) ([]*retentiontypes.TTLSetting, error) {
+// ListTTLSettingsByTableNameAndBeforeCreatedAt returns successful TTL settings before the given timestamp.
+func (store *store) ListTTLSettingsByTableNameAndBeforeCreatedAt(ctx context.Context, orgID valuer.UUID, tableName string, beforeMs int64) ([]*retentiontypes.TTLSetting, error) {
 	rows := []*retentiontypes.TTLSetting{}
 	err := store.
 		sqlstore.

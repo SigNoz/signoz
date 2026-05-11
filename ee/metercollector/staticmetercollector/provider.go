@@ -22,11 +22,9 @@ type Provider struct {
 }
 
 func New() factory.ProviderFactory[metercollector.MeterCollector, metercollector.StaticConfig] {
-	return factory.NewProviderFactory(
-		factory.MustNewName(providerName),
-		func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.StaticConfig) (metercollector.MeterCollector, error) {
-			return newProvider(providerSettings, config), nil
-		},
+	return factory.NewProviderFactory(factory.MustNewName(providerName), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.StaticConfig) (metercollector.MeterCollector, error) {
+		return newProvider(providerSettings, config), nil
+	},
 	)
 }
 

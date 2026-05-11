@@ -44,11 +44,9 @@ func New(
 	telemetryStore telemetrystore.TelemetryStore,
 	retentionGetter retention.Getter,
 ) factory.ProviderFactory[metercollector.MeterCollector, metercollector.TelemetryConfig] {
-	return factory.NewProviderFactory(
-		factory.MustNewName(providerName),
-		func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.TelemetryConfig) (metercollector.MeterCollector, error) {
-			return newProvider(providerSettings, config, telemetryStore, retentionGetter), nil
-		},
+	return factory.NewProviderFactory(factory.MustNewName(providerName), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.TelemetryConfig) (metercollector.MeterCollector, error) {
+		return newProvider(providerSettings, config, telemetryStore, retentionGetter), nil
+	},
 	)
 }
 
@@ -165,7 +163,7 @@ func buildOriginQuery(meterName string) (string, []any) {
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func buildQuery(meterName string, segment retentiontypes.RetentionPolicySegment) (string, []any, error) {
+func buildQuery(meterName string, segment *retentiontypes.RetentionPolicySegment) (string, []any, error) {
 	retentionExpr, err := buildRetentionMultiIfSQL(segment.Rules, segment.DefaultDays)
 	if err != nil {
 		return "", nil, err
