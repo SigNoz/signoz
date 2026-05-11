@@ -62,3 +62,16 @@ export function getSpanDisplayData(span: SpanV3): Record<string, unknown> {
 	}
 	return result;
 }
+
+/**
+ * V3 pinned-attribute entries are JSON-stringified arrays (e.g.
+ * `'["attributes","http.method"]'`). Legacy V2 entries are flat strings.
+ * Used to distinguish V3 from V2 entries when reading the persisted value.
+ */
+export function isV3PinnedAttribute(entry: string): boolean {
+	try {
+		return Array.isArray(JSON.parse(entry));
+	} catch {
+		return false;
+	}
+}

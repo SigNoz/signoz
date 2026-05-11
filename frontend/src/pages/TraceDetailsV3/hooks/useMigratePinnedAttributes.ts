@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useMutation } from 'react-query';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import { isV3PinnedAttribute } from 'pages/TraceDetailsV3/utils';
 import { serializeKeyPath } from 'periscope/components/PrettyView/utils';
 import { useAppContext } from 'providers/App/App';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
@@ -51,7 +52,7 @@ export function useMigratePinnedAttributes(
 		let hadV2Entry = false;
 
 		for (const entry of value) {
-			if (tryParseJSONArray(entry)) {
+			if (isV3PinnedAttribute(entry)) {
 				next.push(entry);
 				continue;
 			}
@@ -90,12 +91,4 @@ function v2KeyToPath(key: string, span: SpanV3): (string | number)[] | null {
 		return [key];
 	}
 	return null;
-}
-
-function tryParseJSONArray(s: string): boolean {
-	try {
-		return Array.isArray(JSON.parse(s));
-	} catch {
-		return false;
-	}
 }
