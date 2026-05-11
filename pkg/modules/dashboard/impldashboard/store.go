@@ -110,7 +110,7 @@ func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 // ListV2 emits the joined dashboard ⨝ pinned_dashboard ⨝ public_dashboard
 // query the spec calls for. Aliases:
 //
-//	dashboard         AS d    — the visitor expects this
+//	dashboard         — the visitor expects this
 //	pinned_dashboard  AS pin  — only used inside this query
 //	public_dashboard  AS pd   — the visitor expects this
 //
@@ -128,16 +128,7 @@ func (store *store) ListV2(
 		return nil, false, err
 	}
 	type listedRow struct {
-		bun.BaseModel `bun:"table:dashboard,alias:d"`
-
-		ID        valuer.UUID                          `bun:"id"`
-		OrgID     valuer.UUID                          `bun:"org_id"`
-		Data      dashboardtypes.StorableDashboardData `bun:"data"`
-		Locked    bool                                 `bun:"locked"`
-		CreatedAt time.Time                            `bun:"created_at"`
-		CreatedBy string                               `bun:"created_by"`
-		UpdatedAt time.Time                            `bun:"updated_at"`
-		UpdatedBy string                               `bun:"updated_by"`
+		*dashboardtypes.StorableDashboard `bun:",extend"`
 
 		IsPinned bool `bun:"is_pinned"`
 
@@ -154,12 +145,12 @@ func (store *store) ListV2(
 		BunDB().
 		NewSelect().
 		Model(&rows).
-		ColumnExpr("d.id, d.org_id, d.data, d.locked, d.created_at, d.created_by, d.updated_at, d.updated_by").
+		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
 		ColumnExpr("CASE WHEN pin.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_pinned").
 		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
-		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = d.id", userID).
-		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
-		Where("d.org_id = ?", orgID)
+		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = dashboard.id", userID).
+		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
+		Where("dashboard.org_id = ?", orgID)
 
 	if compiled != nil {
 		q = q.Where(compiled.SQL, compiled.Args...)
@@ -187,15 +178,8 @@ func (store *store) ListV2(
 	out := make([]*dashboardtypes.DashboardListRow, len(rows))
 	for i, r := range rows {
 		row := &dashboardtypes.DashboardListRow{
-			Dashboard: &dashboardtypes.StorableDashboard{
-				Identifiable:  types.Identifiable{ID: r.ID},
-				TimeAuditable: types.TimeAuditable{CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt},
-				UserAuditable: types.UserAuditable{CreatedBy: r.CreatedBy, UpdatedBy: r.UpdatedBy},
-				OrgID:         r.OrgID,
-				Data:          r.Data,
-				Locked:        r.Locked,
-			},
-			Pinned: r.IsPinned,
+			Dashboard: r.StorableDashboard,
+			Pinned:    r.IsPinned,
 		}
 		if r.PublicID != nil {
 			row.Public = &dashboardtypes.StorablePublicDashboard{
@@ -217,11 +201,11 @@ func (store *store) ListV2(
 func (store *store) sortExprForListV2(sort dashboardtypes.ListSort) (string, error) {
 	switch sort {
 	case dashboardtypes.ListSortUpdatedAt:
-		return "d.updated_at", nil
+		return "dashboard.updated_at", nil
 	case dashboardtypes.ListSortCreatedAt:
-		return "d.created_at", nil
+		return "dashboard.created_at", nil
 	case dashboardtypes.ListSortName:
-		return string(store.sqlstore.Formatter().JSONExtractString("d.data", "$.data.display.name")), nil
+		return string(store.sqlstore.Formatter().JSONExtractString("dashboard.data", "$.data.display.name")), nil
 	}
 	return "", errors.Newf(errors.TypeInvalidInput, dashboardtypes.ErrCodeDashboardListInvalid,
 		"unsupported sort field %q", sort)

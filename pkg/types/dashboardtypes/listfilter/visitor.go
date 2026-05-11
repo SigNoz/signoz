@@ -35,7 +35,7 @@ func newVisitor(formatter sqlstore.SQLFormatter) *visitor {
 	}
 }
 
-// Emitted WHERE fragment uses aliases `d` (dashboard) and `pd` (public_dashboard).
+// Emitted WHERE fragment uses aliases `dashboard` and `pd` (public_dashboard).
 func (v *visitor) compile(query string) (*fragment, []string) {
 	tree, _, collector := filterquery.Parse(query)
 	if len(collector.Errors) > 0 {
@@ -138,13 +138,13 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	case KeyDescription:
 		return v.emitJSONStringComparison(ctx, op, "$.data.display.description")
 	case KeyCreatedAt:
-		return v.emitTimestampComparison(ctx, op, "d.created_at")
+		return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
 	case KeyUpdatedAt:
-		return v.emitTimestampComparison(ctx, op, "d.updated_at")
+		return v.emitTimestampComparison(ctx, op, "dashboard.updated_at")
 	case KeyCreatedBy:
-		return v.emitStringComparison(ctx, op, "d.created_by")
+		return v.emitStringComparison(ctx, op, "dashboard.created_by")
 	case KeyLocked:
-		return v.emitBoolComparison(ctx, op, "d.locked")
+		return v.emitBoolComparison(ctx, op, "dashboard.locked")
 	case KeyPublic:
 		return v.emitPublicComparison(ctx, op)
 	case KeyTag:
@@ -220,7 +220,7 @@ func (v *visitor) opFromContext(ctx *grammar.ComparisonContext) (qbtypesv5.Filte
 // ─── per-key emitters ────────────────────────────────────────────────────────
 
 func (v *visitor) emitJSONStringComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, jsonPath string) *fragment {
-	colExpr := string(v.formatter.JSONExtractString("d.data", jsonPath))
+	colExpr := string(v.formatter.JSONExtractString("dashboard.data", jsonPath))
 	return v.emitStringOp(ctx, op, colExpr, string(KeyName))
 }
 
@@ -316,17 +316,17 @@ func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtype
 	return newFragment("pd.id IS NULL")
 }
 
-const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id WHERE tr.entity_id = d.id"
+const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id WHERE tr.entity_id = dashboard.id"
 
 // emitTagComparison wraps the inner predicate in EXISTS (or NOT EXISTS for the
 // negated operators). The inner predicate compares against `t.name` so that
 // LIKE/ILIKE patterns the user types match the stored display casing.
 func (v *visitor) emitTagComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator) *fragment {
 	if op == qbtypesv5.FilterOperatorExists {
-		return newFragment("EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = d.id)")
+		return newFragment("EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)")
 	}
 	if op == qbtypesv5.FilterOperatorNotExists {
-		return newFragment("NOT EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = d.id)")
+		return newFragment("NOT EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)")
 	}
 
 	// All other tag operators take the positive form of the inner predicate
