@@ -47,6 +47,18 @@ func NewGettableTagsFromTags(tags []*Tag) []*GettableTag {
 	return out
 }
 
+func NewPostableTagFromTag(tag *Tag) PostableTag {
+	return PostableTag{Key: tag.Key, Value: tag.Value}
+}
+
+func NewPostableTagsFromTags(tags []*Tag) []PostableTag {
+	out := make([]PostableTag, len(tags))
+	for i, t := range tags {
+		out[i] = NewPostableTagFromTag(t)
+	}
+	return out
+}
+
 func NewTag(orgID valuer.UUID, entityType EntityType, key, value, createdBy string) *Tag {
 	now := time.Now()
 	return &Tag{
