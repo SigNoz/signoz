@@ -62,9 +62,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -170,16 +168,11 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, providerSettings factory.ProviderSettings, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
 
-			evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})
-			if !flagger.BooleanOrEmpty(ctx, pkgflagger.FeatureUseMeterReporter, evalCtx) {
-				return factories, "noop"
-			}
-
 			collectors, err := newMeterCollectors(ctx, providerSettings, telemetryStore, retentionGetter)
 			if err != nil {
 				panic(err)
 			}
-			if err := factories.Add(httpmeterreporter.NewFactory(collectors, licensing, orgGetter, zeus)); err != nil {
+			if err := factories.Add(httpmeterreporter.NewFactory(collectors, flagger, licensing, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
 

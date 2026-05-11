@@ -9,11 +9,13 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/metercollector"
 	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -29,6 +31,7 @@ type Provider struct {
 	settings         factory.ScopedProviderSettings
 	config           meterreporter.Config
 	collectorsByName map[zeustypes.MeterName]metercollector.MeterCollector
+	flagger          flagger.Flagger
 	licensing        licensing.Licensing
 	orgGetter        organization.Getter
 	zeus             zeus.Zeus
@@ -37,14 +40,14 @@ type Provider struct {
 	metrics          *reporterMetrics
 }
 
-func NewFactory(collectors map[zeustypes.MeterName]metercollector.MeterCollector, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config] {
+func NewFactory(collectors map[zeustypes.MeterName]metercollector.MeterCollector, flagger flagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config) (meterreporter.Reporter, error) {
-		return newProvider(ctx, providerSettings, config, collectors, licensing, orgGetter, zeus)
+		return newProvider(ctx, providerSettings, config, collectors, flagger, licensing, orgGetter, zeus)
 	},
 	)
 }
 
-func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config, collectors map[zeustypes.MeterName]metercollector.MeterCollector, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) (*Provider, error) {
+func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config, collectors map[zeustypes.MeterName]metercollector.MeterCollector, flagger flagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) (*Provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter")
 
 	metrics, err := newReporterMetrics(settings.Meter())
@@ -56,6 +59,7 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 		settings:         settings,
 		config:           config,
 		collectorsByName: collectors,
+		flagger:          flagger,
 		licensing:        licensing,
 		orgGetter:        orgGetter,
 		zeus:             zeus,
@@ -95,6 +99,12 @@ func (provider *Provider) collect(ctx context.Context) {
 	}
 
 	for _, org := range orgs {
+		evalCtx := featuretypes.NewFlaggerEvaluationContext(org.ID)
+		if !provider.flagger.BooleanOrEmpty(ctx, flagger.FeatureUseMeterReporter, evalCtx) {
+			provider.settings.Logger().DebugContext(ctx, "meter reporter disabled for org, skipping reporting", slog.String("org_id", org.ID.StringValue()))
+			continue
+		}
+
 		license, err := provider.licensing.GetActive(ctx, org.ID)
 		if err != nil {
 			if errors.Ast(err, errors.TypeNotFound) {
