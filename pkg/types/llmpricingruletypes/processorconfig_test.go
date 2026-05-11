@@ -1,11 +1,10 @@
-package impllmpricingrule
+package llmpricingruletypes
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -24,15 +23,15 @@ func assertYAMLEqualToFile(t *testing.T, name string, actual []byte) {
 	assert.Equal(t, e, a)
 }
 
-func makePricingRule(model string, patterns []string, cacheMode llmpricingruletypes.LLMPricingRuleCacheMode, costIn, costOut, cacheRead, cacheWrite float64) *llmpricingruletypes.LLMPricingRule {
-	return &llmpricingruletypes.LLMPricingRule{
+func makePricingRule(model string, patterns []string, cacheMode LLMPricingRuleCacheMode, costIn, costOut, cacheRead, cacheWrite float64) *LLMPricingRule {
+	return &LLMPricingRule{
 		Model:        model,
-		ModelPattern: llmpricingruletypes.StringSlice(patterns),
-		Unit:         llmpricingruletypes.UnitPerMillionTokens,
-		Pricing: llmpricingruletypes.LLMRulePricing{
+		ModelPattern: StringSlice(patterns),
+		Unit:         UnitPerMillionTokens,
+		Pricing: LLMRulePricing{
 			Input:  costIn,
 			Output: costOut,
-			Cache: &llmpricingruletypes.LLMPricingCacheCosts{
+			Cache: &LLMPricingCacheCosts{
 				Mode:  cacheMode,
 				Read:  cacheRead,
 				Write: cacheWrite,
@@ -45,13 +44,13 @@ func makePricingRule(model string, patterns []string, cacheMode llmpricingrulety
 func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 	tests := []struct {
 		name         string
-		rules        []*llmpricingruletypes.LLMPricingRule
+		rules        []*LLMPricingRule
 		expectedFile string
 	}{
 		{
 			name: "with_rule",
-			rules: []*llmpricingruletypes.LLMPricingRule{
-				makePricingRule("gpt-4o", []string{"gpt-4o*"}, llmpricingruletypes.LLMPricingRuleCacheModeSubtract, 5.0, 15.0, 2.5, 0),
+			rules: []*LLMPricingRule{
+				makePricingRule("gpt-4o", []string{"gpt-4o*"}, LLMPricingRuleCacheModeSubtract, 5.0, 15.0, 2.5, 0),
 			},
 			expectedFile: "collector_with_rule.yaml",
 		},
@@ -70,7 +69,7 @@ func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			out, err := generateCollectorConfigWithLLMPricingProcessor(input, tc.rules)
+			out, err := GenerateCollectorConfigWithLLMPricingProcessor(input, tc.rules)
 			require.NoError(t, err)
 			assertYAMLEqualToFile(t, tc.expectedFile, out)
 		})
@@ -80,12 +79,12 @@ func TestGenerateCollectorConfigWithLLMPricingProcessor(t *testing.T) {
 func TestGenerateCollectorConfig_EmptyInputPassthrough(t *testing.T) {
 	// yaml.v3 errors on empty/whitespace input; the generator passes such
 	// input through unchanged instead.
-	rules := []*llmpricingruletypes.LLMPricingRule{
-		makePricingRule("gpt-4o", []string{"gpt-4o*"}, llmpricingruletypes.LLMPricingRuleCacheModeSubtract, 5.0, 15.0, 2.5, 0),
+	rules := []*LLMPricingRule{
+		makePricingRule("gpt-4o", []string{"gpt-4o*"}, LLMPricingRuleCacheModeSubtract, 5.0, 15.0, 2.5, 0),
 	}
 
 	for _, in := range [][]byte{nil, []byte("   \n")} {
-		out, err := generateCollectorConfigWithLLMPricingProcessor(in, rules)
+		out, err := GenerateCollectorConfigWithLLMPricingProcessor(in, rules)
 		require.NoError(t, err)
 		assert.Equal(t, in, out)
 	}

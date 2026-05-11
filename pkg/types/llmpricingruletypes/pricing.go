@@ -121,7 +121,7 @@ type UpdatableLLMPricingRule struct {
 }
 
 type UpdatableLLMPricingRules struct {
-	Rules []UpdatableLLMPricingRule `json:"rules" required:"true"`
+	Rules []*UpdatableLLMPricingRule `json:"rules" required:"true"`
 }
 
 type ListPricingRulesQuery struct {
@@ -204,7 +204,7 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 	}
 }
 
-func NewLLMPricingRuleFromUpdatable(u UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
+func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
 	isOverride := true
 	if u.IsOverride != nil {
 		isOverride = *u.IsOverride
@@ -229,7 +229,7 @@ func NewLLMPricingRuleFromUpdatable(u UpdatableLLMPricingRule, orgID valuer.UUID
 	}
 }
 
-func (r *LLMPricingRule) Update(u UpdatableLLMPricingRule, userEmail string, now time.Time) {
+func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, now time.Time) {
 	if u.IsOverride == nil && r.IsOverride {
 		r.SyncedAt = &now
 		return

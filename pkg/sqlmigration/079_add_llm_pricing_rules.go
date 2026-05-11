@@ -47,11 +47,6 @@ func (migration *addLLMPricingRules) Up(ctx context.Context, db *bun.DB) error {
 		Name: "llm_pricing_rule",
 		Columns: []*sqlschema.Column{
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "source_id", DataType: sqlschema.DataTypeText, Nullable: true},
 			{Name: "model", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "provider", DataType: sqlschema.DataTypeText, Nullable: false},
@@ -61,6 +56,11 @@ func (migration *addLLMPricingRules) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "is_override", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "false"},
 			{Name: "synced_at", DataType: sqlschema.DataTypeTimestamp, Nullable: true},
 			{Name: "enabled", DataType: sqlschema.DataTypeBoolean, Nullable: false, Default: "true"},
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
 			ColumnNames: []sqlschema.ColumnName{"id"},
