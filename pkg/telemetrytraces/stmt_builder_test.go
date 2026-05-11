@@ -708,6 +708,15 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 						FieldDataType: telemetrytypes.FieldDataTypeString,
 					},
 				},
+				"service.name": {
+					{
+						Name:          "service.name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+						Evolutions:    mockEvolutionData(time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)),
+					},
+				},
 			},
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal:       telemetrytypes.SignalTraces,
@@ -716,7 +725,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				Limit:        10,
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
+				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,
@@ -731,6 +740,15 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 						Signal:        telemetrytypes.SignalTraces,
 						FieldContext:  telemetrytypes.FieldContextAttribute,
 						FieldDataType: telemetrytypes.FieldDataTypeString,
+					},
+				},
+				"service.name": {
+					{
+						Name:          "service.name",
+						Signal:        telemetrytypes.SignalTraces,
+						FieldContext:  telemetrytypes.FieldContextResource,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+						Evolutions:    mockEvolutionData(time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)),
 					},
 				},
 			},
@@ -749,7 +767,7 @@ func TestStatementBuilderListQueryWithCorruptData(t *testing.T) {
 				}},
 			},
 			expected: qbtypes.Statement{
-				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(mapContains(resources_string, 'service.name'), resources_string['service.name'], resource.`service.name` IS NOT NULL, resource.`service.name`::String, NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp AS `timestamp` asc LIMIT ?",
+				Query: "SELECT duration_nano AS `duration_nano`, name AS `name`, response_status_code AS `response_status_code`, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) AS `service.name`, span_id AS `span_id`, timestamp AS `timestamp`, trace_id AS `trace_id` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp AS `timestamp` asc LIMIT ?",
 				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 10},
 			},
 			expectedErr: nil,

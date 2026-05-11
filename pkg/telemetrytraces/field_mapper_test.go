@@ -79,7 +79,7 @@ func TestGetFieldKeyName(t *testing.T) {
 				Materialized:  true,
 				Evolutions:    mockEvolution,
 			},
-			expectedResult: "resource_string_deployment$$environment",
+			expectedResult: "`resource_string_deployment$$environment`",
 			expectedError:  nil,
 		},
 		{
