@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
-import { InputNumber, Select, Typography } from 'antd';
+import { InputNumber, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Axis3D, ChartLine, Spline } from '@signozhq/icons';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

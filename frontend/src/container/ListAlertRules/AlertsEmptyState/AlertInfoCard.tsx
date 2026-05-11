@@ -1,5 +1,5 @@
-import { ArrowRight } from '@signozhq/icons';
-import { Typography } from 'antd';
+import { ArrowRight } from '@ant-design/icons';
+import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 
 interface AlertInfoCardProps {

@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { ConciergeBell, Plus, SquareArrowOutUpRight } from '@signozhq/icons';
 
 import './AlertsSection.styles.scss';

@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
+import { Button, Flex, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Plus } from '@signozhq/icons';
-import { Button, Flex, Input, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';

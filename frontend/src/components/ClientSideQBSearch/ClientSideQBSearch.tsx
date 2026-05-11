@@ -554,10 +554,9 @@ function ClientSideQBSearch(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
+							$disabled={isDisabled}
 							onClick={(): void => {
 								if (!isDisabled) {
 									tagEditHandler(value);

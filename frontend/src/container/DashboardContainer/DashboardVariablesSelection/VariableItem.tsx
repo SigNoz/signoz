@@ -1,7 +1,8 @@
 import { memo } from 'react';
-import { SolidInfoCircle } from '@signozhq/icons';
-import { Tooltip, Typography } from 'antd';
+import { Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { SolidInfoCircle } from '@signozhq/icons';
 
 import CustomVariableInput from './CustomVariableInput';
 import DynamicVariableInput from './DynamicVariableInput';
@@ -31,7 +32,7 @@ function VariableItem({
 
 	return (
 		<div className="variable-item">
-			<Typography.Text className="variable-name" ellipsis>
+			<Typography.Text className="variable-name" truncate={1}>
 				${name}
 				{description && (
 					<Tooltip title={description}>

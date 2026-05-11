@@ -16,16 +16,8 @@ import {
 	Plus,
 	X,
 } from '@signozhq/icons';
-import {
-	Button,
-	Card,
-	Input,
-	Modal,
-	Popover,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Button, Card, Input, Modal, Popover, Tag, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';

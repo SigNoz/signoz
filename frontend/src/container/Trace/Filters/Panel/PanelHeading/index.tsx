@@ -2,7 +2,8 @@ import { MouseEventHandler, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
-import { Card, Divider, Typography } from 'antd';
+import { Card, Divider } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
@@ -318,7 +319,7 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 							{!IsPanelOpen ? <ChevronRight size="lg" /> : <ChevronDown size="lg" />}
 						</IconContainer>
 
-						<Text style={{ textTransform: 'capitalize' }} ellipsis>
+						<Text style={{ textTransform: 'capitalize' }} truncate={1}>
 							{AllPanelHeading.find((e) => e.key === PanelName)?.displayValue || ''}
 						</Text>
 					</TextContainer>

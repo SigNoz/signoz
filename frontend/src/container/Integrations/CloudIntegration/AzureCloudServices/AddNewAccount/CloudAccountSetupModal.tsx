@@ -6,7 +6,10 @@ import {
 	LoaderCircle,
 	SquareArrowOutUpRight,
 } from '@signozhq/icons';
-import { Button, Callout, DrawerWrapper, Tabs } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Tabs } from '@signozhq/ui/tabs';
 import { Form, Select, Spin } from 'antd';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';

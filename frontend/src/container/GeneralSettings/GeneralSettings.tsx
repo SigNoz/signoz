@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { BarChart, Compass, Loader, ScrollText } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';

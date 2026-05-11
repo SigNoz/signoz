@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Button, Input, InputRef, Modal, Typography } from 'antd';
+import { Button, Input, InputRef, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Check, X } from '@signozhq/icons';
 
 import './RenameModal.styles.scss';

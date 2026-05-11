@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';

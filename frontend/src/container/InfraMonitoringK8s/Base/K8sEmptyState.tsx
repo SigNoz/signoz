@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { LifeBuoy, TriangleAlert } from '@signozhq/icons';

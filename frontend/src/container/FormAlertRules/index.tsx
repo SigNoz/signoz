@@ -5,7 +5,8 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
-import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
+import { Button, FormInstance, Modal, SelectProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {

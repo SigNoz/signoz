@@ -5,7 +5,8 @@ import {
 	CircleArrowLeft,
 	UserPlus,
 } from '@signozhq/icons';
-import { Button, Space, Steps, Typography } from 'antd';
+import { Button, Space, Steps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 import { onboardingHelpMessage } from 'components/LaunchChatSupport/util';

@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { Check, ChevronDown } from '@signozhq/icons';
-import { Button, Checkbox, Popover, Typography } from 'antd';
+import { Button, Checkbox, Popover } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
@@ -173,12 +174,9 @@ function AutoRefresh({
 					>
 						Auto Refresh
 					</Checkbox>
-					<Typography.Paragraph
-						disabled={isDisabled}
-						className="refresh-interval-text"
-					>
+					<Typography.Text disabled={isDisabled} className="refresh-interval-text">
 						Refresh Interval
-					</Typography.Paragraph>
+					</Typography.Text>
 					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (

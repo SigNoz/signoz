@@ -19,9 +19,6 @@ jest.mock('components/TimelineV3/TimelineV3', () => ({
 
 // Mock the hooks
 jest.mock('hooks/useUrlQuery');
-jest.mock('@signozhq/ui', () => ({
-	Badge: jest.fn(),
-}));
 
 const mockSpan: SpanV3 = {
 	span_id: 'test-span-id',

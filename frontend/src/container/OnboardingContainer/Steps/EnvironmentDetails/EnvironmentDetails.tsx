@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Loader, Server } from '@signozhq/icons';
-import { Button, Card, Form, Input, Space, Typography } from 'antd';
+import { Button, Card, Form, Input, Space } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { useOnboardingContext } from 'container/OnboardingContainer/context/OnboardingContext';
@@ -204,7 +205,7 @@ export default function EnvironmentDetails(): JSX.Element {
 
 			{errorDetails && (
 				<div className="error-container">
-					<Typography.Text type="danger"> {errorDetails} </Typography.Text>
+					<Typography.Text color="danger"> {errorDetails} </Typography.Text>
 				</div>
 			)}
 		</Form>

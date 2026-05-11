@@ -16,12 +16,9 @@ import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import {
-	ComboboxSimple,
-	ComboboxSimpleItem,
-	TooltipProvider,
-} from '@signozhq/ui';
-import { Pagination } from '@signozhq/ui';
+import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import { TooltipProvider } from '@signozhq/ui/tooltip';
+import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
 import {
 	ColumnDef,

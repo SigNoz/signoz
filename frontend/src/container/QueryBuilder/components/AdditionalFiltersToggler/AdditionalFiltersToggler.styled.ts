@@ -1,6 +1,7 @@
 import { SquareMinus, SquarePlus } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Col, Typography } from 'antd';
+import { Col } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import styled, { css } from 'styled-components';
 
 const IconCss = css`

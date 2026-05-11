@@ -15,7 +15,8 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import { Dropdown, Input, MenuProps, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
 import Spinner from 'components/Spinner';
@@ -270,7 +271,7 @@ function WidgetHeader({
 					<div className="widget-header-title-container">
 						<Tooltip title={fullText} placement="top">
 							<Typography.Text
-								ellipsis
+								truncate={1}
 								data-testid={title}
 								className="widget-header-title"
 							>

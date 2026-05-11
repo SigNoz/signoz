@@ -13,15 +13,8 @@ import {
 } from '@signozhq/icons';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Flex,
-	Modal,
-	Space,
-	Typography,
-	Upload,
-	UploadProps,
-} from 'antd';
+import { Button, Flex, Modal, Space, Upload, UploadProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import ROUTES from 'constants/routes';

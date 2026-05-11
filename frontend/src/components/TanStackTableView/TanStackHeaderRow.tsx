@@ -13,7 +13,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
 

@@ -11,16 +11,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import {
-	Button,
-	Flex,
-	Modal,
-	Row,
-	RowProps,
-	Space,
-	Table,
-	Typography,
-} from 'antd';
+import { Button, Modal, Row, RowProps, Space, Table, Flex } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';

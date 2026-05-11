@@ -289,6 +289,8 @@
     // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
     "signoz/no-raw-absolute-path": "error",
     // Prevents window.open(path), window.location.origin + path, window.location.href = path
+    "signoz/no-antd-components": "error",
+    // Prevents the usage of specific antd components in favor of our lib
     "no-restricted-globals": [
       "error",
       {

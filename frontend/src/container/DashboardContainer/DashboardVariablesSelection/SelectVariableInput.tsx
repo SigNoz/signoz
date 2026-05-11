@@ -1,7 +1,8 @@
 import { memo, useMemo } from 'react';
 import { orange } from '@ant-design/colors';
+import { Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { SolidAlertTriangle } from '@signozhq/icons';
-import { Popover, Tooltip, Typography } from 'antd';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { OptionData } from 'components/NewSelect/types';
 import { popupContainer } from 'utils/selectPopupContainer';

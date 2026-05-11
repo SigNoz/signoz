@@ -1,4 +1,5 @@
-import { Button, Modal, Typography } from 'antd';
+import { Button, Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Loader, Trash2, X } from '@signozhq/icons';
 
 import { DeleteRoutingPolicyProps } from './types';

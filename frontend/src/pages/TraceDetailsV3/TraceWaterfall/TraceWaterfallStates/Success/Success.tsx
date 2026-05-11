@@ -9,14 +9,14 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import {
-	Badge,
-	Button,
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from '@signozhq/ui';
+} from '@signozhq/ui/tooltip';
 import {
 	createColumnHelper,
 	flexRender,

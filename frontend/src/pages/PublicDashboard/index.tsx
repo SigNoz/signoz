@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
 import { Frown } from '@signozhq/icons';
 
