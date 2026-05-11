@@ -1,10 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Link } from 'lucide-react';
 import { Span } from 'types/api/trace/getTraceV2';
@@ -21,24 +16,17 @@ export default function SpanLineActionButtons({
 
 	return (
 		<div className="span-line-action-buttons">
-			<TooltipProvider>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon"
-							color="secondary"
-							onClick={onSpanCopy}
-							className="copy-span-btn"
-						>
-							<Link size={14} />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent className="span-line-action-tooltip">
-						Copy Span Link
-					</TooltipContent>
-				</Tooltip>
-			</TooltipProvider>
+			<TooltipSimple title="Copy Span Link">
+				<Button
+					variant="ghost"
+					size="icon"
+					color="secondary"
+					onClick={onSpanCopy}
+					className="copy-span-btn"
+				>
+					<Link size={14} />
+				</Button>
+			</TooltipSimple>
 		</div>
 	);
 }

@@ -6,12 +6,7 @@ import {
 	TabsRoot,
 	TabsTrigger,
 } from '@signozhq/ui/tabs';
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui';
 import {
 	Bookmark,
 	CalendarClock,
@@ -497,27 +492,22 @@ function SpanDetailsPanel({
 			actions.push({
 				key: 'dock-toggle',
 				component: (
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									onClick={(): void =>
-										onVariantChange(
-											isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
-										)
-									}
-								>
-									{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="dock-toggle-tooltip">
-								{isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
+					<TooltipSimple
+						title={isDocked ? 'Open as floating panel' : 'Dock at the bottom'}
+					>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							onClick={(): void =>
+								onVariantChange(
+									isDocked ? SpanDetailVariant.DIALOG : SpanDetailVariant.DOCKED,
+								)
+							}
+						>
+							{isDocked ? <Dock size={14} /> : <PanelBottom size={14} />}
+						</Button>
+					</TooltipSimple>
 				),
 			});
 		}

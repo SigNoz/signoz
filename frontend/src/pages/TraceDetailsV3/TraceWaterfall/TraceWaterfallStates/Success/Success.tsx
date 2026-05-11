@@ -11,12 +11,7 @@ import {
 } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from '@signozhq/ui/tooltip';
+import { TooltipSimple } from '@signozhq/ui';
 import {
 	createColumnHelper,
 	flexRender,
@@ -109,26 +104,24 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const eventTimeMs = event.timeUnixNano / 1e6;
 
 	return (
-		<TooltipProvider>
-			<Tooltip
-				open
-				onOpenChange={(open): void => {
-					if (!open) {
-						setShowPopover(false);
-					}
-				}}
-			>
-				<TooltipTrigger asChild>{dot}</TooltipTrigger>
-				<TooltipContent className="span-hover-card-popover">
-					<EventTooltipContent
-						eventName={event.name}
-						timeOffsetMs={eventTimeMs - spanTimestamp}
-						isError={isError}
-						attributeMap={event.attributeMap || {}}
-					/>
-				</TooltipContent>
-			</Tooltip>
-		</TooltipProvider>
+		<TooltipSimple
+			open
+			onOpenChange={(open: boolean): void => {
+				if (!open) {
+					setShowPopover(false);
+				}
+			}}
+			title={
+				<EventTooltipContent
+					eventName={event.name}
+					timeOffsetMs={eventTimeMs - spanTimestamp}
+					isError={isError}
+					attributeMap={event.attributeMap || {}}
+				/>
+			}
+		>
+			{dot}
+		</TooltipSimple>
 	);
 });
 
@@ -323,40 +316,28 @@ const SpanOverview = memo(function SpanOverview({
 
 				{/* Action buttons — shown on hover via CSS, right-aligned */}
 				<span className="span-row-actions">
-					<TooltipProvider delayDuration={200}>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									className="span-action-btn"
-									onClick={onSpanCopy}
-								>
-									<Link size={12} />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="span-action-tooltip">
-								Copy Span Link
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									className="span-action-btn"
-									onClick={handleFunnelClick}
-								>
-									<ListPlus size={12} />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="span-action-tooltip">
-								Add to Trace Funnel
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
+					<TooltipSimple title="Copy Span Link">
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							className="span-action-btn"
+							onClick={onSpanCopy}
+						>
+							<Link size={12} />
+						</Button>
+					</TooltipSimple>
+					<TooltipSimple title="Add to Trace Funnel">
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							className="span-action-btn"
+							onClick={handleFunnelClick}
+						>
+							<ListPlus size={12} />
+						</Button>
+					</TooltipSimple>
 				</span>
 			</div>
 		</SpanHoverCard>
