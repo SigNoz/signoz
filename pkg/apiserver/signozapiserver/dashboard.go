@@ -32,7 +32,6 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateV2), handler.OpenAPIDef{
-
 		ID:                  "CreateDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard (v2)",
