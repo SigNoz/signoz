@@ -2,19 +2,12 @@ import { useCallback, useMemo } from 'react';
 import { useMutation } from 'react-query';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import { USER_PREFERENCES } from 'constants/userPreferences';
+import { isV3PinnedAttribute } from 'pages/TraceDetailsV3/utils';
 import { useAppContext } from 'providers/App/App';
 
 interface UseTracePinnedFieldsReturn {
 	value: string[];
 	onChange: (next: string[]) => void;
-}
-
-function tryParseJSONArray(s: string): boolean {
-	try {
-		return Array.isArray(JSON.parse(s));
-	} catch {
-		return false;
-	}
 }
 
 /**
@@ -35,7 +28,7 @@ export function useTracePinnedFields(): UseTracePinnedFieldsReturn {
 			(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PINNED_ATTRIBUTES,
 		);
 		const arr = (pref?.value as string[] | undefined) ?? [];
-		return arr.filter(tryParseJSONArray);
+		return arr.filter(isV3PinnedAttribute);
 	}, [userPreferences]);
 
 	const onChange = useCallback(

@@ -23,12 +23,10 @@ function SortableField({
 	field,
 	onRemove,
 	allowDrag,
-	allowRemove,
 }: {
 	field: BaseAutocompleteData;
 	onRemove: (field: BaseAutocompleteData) => void;
 	allowDrag: boolean;
-	allowRemove: boolean;
 }): JSX.Element {
 	const { attributes, listeners, setNodeRef, transform, transition } =
 		useSortable({ id: field.key });
@@ -48,17 +46,15 @@ function SortableField({
 				{allowDrag && <GripVertical size={14} />}
 				<span className="fs-field-key">{field.key}</span>
 			</div>
-			{allowRemove && (
-				<Button
-					className="remove-field-btn periscope-btn"
-					variant="outlined"
-					color="destructive"
-					size="sm"
-					onClick={(): void => onRemove(field)}
-				>
-					Remove
-				</Button>
-			)}
+			<Button
+				className="remove-field-btn periscope-btn"
+				variant="outlined"
+				color="destructive"
+				size="sm"
+				onClick={(): void => onRemove(field)}
+			>
+				Remove
+			</Button>
 		</div>
 	);
 }
@@ -121,7 +117,6 @@ function AddedFields({
 										field={field}
 										onRemove={handleRemove}
 										allowDrag={allowDrag}
-										allowRemove={fields.length > 1}
 									/>
 								))}
 							</SortableContext>
