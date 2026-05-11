@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { Card, Col, Row, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';

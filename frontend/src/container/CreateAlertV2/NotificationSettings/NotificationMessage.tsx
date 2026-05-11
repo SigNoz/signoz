@@ -1,5 +1,5 @@
 import { Input, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { Info } from 'lucide-react';
 
 import { useCreateAlertState } from '../context';

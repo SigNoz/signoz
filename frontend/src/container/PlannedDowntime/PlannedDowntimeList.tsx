@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
 	ListDowntimeSchedules200,

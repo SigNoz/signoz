@@ -1,4 +1,4 @@
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import get from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { THEME_MODE } from 'hooks/useDarkMode/constant';

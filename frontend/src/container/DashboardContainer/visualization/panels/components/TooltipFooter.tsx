@@ -1,5 +1,5 @@
-import { Button } from '@signozhq/ui';
-import { Kbd } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Kbd } from '@signozhq/ui/kbd';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { X } from 'lucide-react';
 

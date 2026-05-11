@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';

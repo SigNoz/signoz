@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Redirect, useLocation } from 'react-router-dom';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import getByErrorType from 'api/errors/getByErrorTypeAndService';
 import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';

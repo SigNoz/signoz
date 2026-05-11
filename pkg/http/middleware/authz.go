@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -17,6 +18,20 @@ import (
 const (
 	authzDeniedMessage string = "::AUTHZ-DENIED::"
 )
+
+type AuthZCheckDef struct {
+	Relation         authtypes.Relation
+	Resource         coretypes.Resource
+	SelectorCallback selectorCallbackWithClaimsFn
+	Roles            []string
+}
+
+// AuthZCheckGroup is a set of checks OR'd together.
+// At least one check in the group must pass for the group to pass.
+type AuthZCheckGroup []AuthZCheckDef
+
+type selectorCallbackWithClaimsFn func(*http.Request, authtypes.Claims) ([]coretypes.Selector, error)
+type selectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]coretypes.Selector, valuer.UUID, error)
 
 type AuthZ struct {
 	logger       *slog.Logger
@@ -186,7 +201,7 @@ func (middleware *AuthZ) OpenAccess(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb authtypes.SelectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
+func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb selectorCallbackWithClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		claims, err := authtypes.ClaimsFromContext(ctx)
@@ -216,7 +231,61 @@ func (middleware *AuthZ) Check(next http.HandlerFunc, relation authtypes.Relatio
 	})
 }
 
-func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb authtypes.SelectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
+// CheckAll verifies groups of permission checks.
+// Within each group, checks are OR'd (any check passing = group passes).
+// Across groups, results are AND'd (all groups must pass).
+//
+// This model expresses any combination:
+//   - Single check:          []AuthZCheckGroup{{checkA}}
+//   - Pure AND:              []AuthZCheckGroup{{checkA}, {checkB}}
+//   - Cross-resource OR:     []AuthZCheckGroup{{checkA, checkB}}
+//   - Mixed (A OR B) AND C:  []AuthZCheckGroup{{checkA, checkB}, {checkC}}
+func (middleware *AuthZ) CheckAll(next http.HandlerFunc, groups []AuthZCheckGroup) http.HandlerFunc {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		orgID := valuer.MustNewUUID(claims.OrgID)
+
+		for _, group := range groups {
+			groupPassed := false
+			var lastErr error
+
+			for _, check := range group {
+				selectors, err := check.SelectorCallback(req, claims)
+				if err != nil {
+					render.Error(rw, err)
+					return
+				}
+
+				roleSelectors := make([]coretypes.Selector, len(check.Roles))
+				for idx, role := range check.Roles {
+					roleSelectors[idx] = coretypes.TypeRole.MustSelector(role)
+				}
+
+				err = middleware.authzService.CheckWithTupleCreation(ctx, claims, orgID, check.Relation, check.Resource, selectors, roleSelectors)
+				if err == nil {
+					groupPassed = true
+					break
+				}
+				lastErr = err
+			}
+
+			if !groupPassed {
+				render.Error(rw, lastErr)
+				return
+			}
+		}
+
+		next(rw, req)
+	})
+}
+
+func (middleware *AuthZ) CheckWithoutClaims(next http.HandlerFunc, relation authtypes.Relation, typeable coretypes.Resource, cb selectorCallbackWithoutClaimsFn, roles []string) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		orgs, err := middleware.orgGetter.ListByOwnedKeyRange(ctx)

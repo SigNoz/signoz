@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 import { blue } from '@ant-design/colors';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

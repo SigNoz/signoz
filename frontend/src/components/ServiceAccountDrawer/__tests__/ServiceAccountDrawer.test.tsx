@@ -6,8 +6,8 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -23,6 +23,10 @@ jest.mock('@signozhq/ui', () => ({
 				{footer}
 			</div>
 		) : null,
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 

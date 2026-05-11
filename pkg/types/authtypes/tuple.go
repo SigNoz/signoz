@@ -1,17 +1,11 @@
 package authtypes
 
 import (
-	"net/http"
-
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
-
-type SelectorCallbackWithClaimsFn func(*http.Request, Claims) ([]coretypes.Selector, error)
-type SelectorCallbackWithoutClaimsFn func(*http.Request, []*types.Organization) ([]coretypes.Selector, valuer.UUID, error)
 
 var (
 	ErrCodeAuthZUnavailable = errors.MustNewCode("authz_unavailable")
