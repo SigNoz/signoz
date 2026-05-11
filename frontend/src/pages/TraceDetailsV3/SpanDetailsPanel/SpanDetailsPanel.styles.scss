@@ -1,0 +1,154 @@
+.span-details-panel {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	&__header-nav {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+	}
+
+	&__body {
+		padding: 12px;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+		background: var(--l1-background);
+		font-size: 14px;
+		gap: 16px;
+
+		.data-viewer {
+			min-height: 500px;
+		}
+	}
+
+	&__details-section {
+		flex-shrink: 0;
+		min-width: 0;
+	}
+
+	&__tabs-section {
+		flex: 1;
+		min-width: 0;
+		max-height: 100%;
+		min-height: 400px;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+
+		// TabsRoot — direct child of tabs-section
+		> div {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		[role='tablist'] {
+			flex-shrink: 0;
+		}
+
+		[class*='tabs__list-wrapper'] {
+			padding-left: 0 !important;
+		}
+	}
+
+	&__tabs-scroll {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+
+		[role='tabpanel'] {
+			padding: 0;
+		}
+	}
+
+	&__span-row {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		justify-content: space-between;
+	}
+
+	&__span-info {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 16px;
+		padding: 8px 0;
+	}
+
+	&__span-info-item {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 13px;
+		color: var(--l2-foreground);
+		white-space: nowrap;
+	}
+
+	&__highlighted-options {
+		padding: 8px 0;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0;
+
+		.key-value-label {
+			width: auto;
+			min-width: 0;
+			overflow: hidden;
+		}
+	}
+
+	&__service-dot {
+		display: inline-block;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--success-500);
+	}
+
+	&__trace-id {
+		color: var(--accent-primary);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		display: block;
+	}
+
+	&__key-attributes {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 8px 0;
+
+		&-label {
+			font-size: var(--font-size-xs);
+			font-weight: var(--font-weight-medium);
+			color: var(--l2-foreground);
+			text-transform: uppercase;
+			letter-spacing: 0.48px;
+			line-height: var(--line-height-20);
+		}
+
+		&-chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+		}
+	}
+}
+
+// Tooltip is rendered in a portal but the SpanDetailsPanel can be docked as a
+// FloatingPanel (z-index 999), which would otherwise sit on top of the default
+// tooltip (z-index 50). Bump the tooltip above the panel.
+.dock-toggle-tooltip {
+	--tooltip-z-index: 1000;
+}
