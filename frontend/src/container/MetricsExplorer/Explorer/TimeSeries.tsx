@@ -3,8 +3,9 @@ import { useQueries, useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { toast } from '@signozhq/ui';
-import { Button, Tooltip, Typography } from 'antd';
+import { toast } from '@signozhq/ui/sonner';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	invalidateGetMetricMetadata,
 	useUpdateMetricMetadata,
@@ -236,7 +237,7 @@ function TimeSeries({
 									disabled={isUpdatingMetricMetadata}
 									onClick={handleSaveUnit}
 								>
-									<Typography.Paragraph>Yes</Typography.Paragraph>
+									<Typography.Text>Yes</Typography.Text>
 								</Button>
 							</div>
 						)}

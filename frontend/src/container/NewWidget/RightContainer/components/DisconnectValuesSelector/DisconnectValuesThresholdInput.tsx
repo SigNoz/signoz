@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { rangeUtil } from '@grafana/data';
-import { Callout, Input } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
+import { Input } from '@signozhq/ui/input';
 interface DisconnectValuesThresholdInputProps {
 	value: number;
 	onChange: (seconds: number) => void;

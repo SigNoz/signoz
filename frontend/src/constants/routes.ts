@@ -8,6 +8,7 @@ const ROUTES = {
 	SERVICE_MAP: '/service-map',
 	TRACE: '/trace',
 	TRACE_DETAIL: '/trace/:id',
+	TRACE_DETAIL_OLD: '/trace-old/:id',
 	TRACES_EXPLORER: '/traces-explorer',
 	ONBOARDING: '/onboarding',
 	GET_STARTED: '/get-started',

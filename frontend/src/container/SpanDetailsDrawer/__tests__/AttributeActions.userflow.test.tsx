@@ -68,8 +68,8 @@ jest.mock('react-query', () => ({
 	useQueryClient: (): any => mockQueryClient,
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: jest.fn(),
 }));
 

@@ -11,6 +11,12 @@
 	}
 }
 
+.infra-metrics-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 24px;
+}
+
 .infra-metrics-card {
 	margin: 1rem 0;
 	height: 300px;
