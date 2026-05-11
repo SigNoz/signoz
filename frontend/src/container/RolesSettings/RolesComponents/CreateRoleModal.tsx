@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, useHistory } from 'react-router-dom';
 import { X } from '@signozhq/icons';
-import { Button, Input, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Form, Modal } from 'antd';
 import {
 	invalidateGetRole,

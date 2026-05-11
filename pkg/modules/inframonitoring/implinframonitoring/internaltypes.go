@@ -23,3 +23,9 @@ type podPhaseCounts struct {
 	Failed    int
 	Unknown   int
 }
+
+// nodeConditionCounts holds per-group node counts bucketed by latest condition_ready in window.
+type nodeConditionCounts struct {
+	Ready    int
+	NotReady int
+}

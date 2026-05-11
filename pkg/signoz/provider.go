@@ -195,8 +195,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
 		sqlmigration.NewAddTagsFactory(sqlstore, sqlschema),
-		sqlmigration.NewAddDashboardSoftDeleteFactory(sqlstore, sqlschema),
 	)
 }
 

@@ -1,6 +1,6 @@
 module base
 
-type organisation 
+type organization 
   relations
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
@@ -10,12 +10,14 @@ type user
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
     define delete: [user, serviceaccount, role#assignee]
+    define attach: [user, serviceaccount, role#assignee]
 
-type serviceaccount 
+type serviceaccount
   relations
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
-    define delete: [user, serviceaccount, role#assignee]  
+    define delete: [user, serviceaccount, role#assignee]
+    define attach: [user, serviceaccount, role#assignee]
 
 type anonymous
 
@@ -26,6 +28,7 @@ type role
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
     define delete: [user, serviceaccount, role#assignee]
+    define attach: [user, serviceaccount, role#assignee]
 
 type metaresources
   relations

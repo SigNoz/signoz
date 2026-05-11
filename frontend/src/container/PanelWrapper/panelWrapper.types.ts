@@ -5,6 +5,7 @@ import { PanelMode } from 'container/DashboardContainer/visualization/panels/typ
 import { WidgetGraphComponentProps } from 'container/GridCardLayout/GridCard/types';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
@@ -30,6 +31,7 @@ export type PanelWrapperProps = {
 	enableDrillDown?: boolean;
 	panelMode: PanelMode;
 	onColumnWidthsChange?: (widths: Record<string, number>) => void;
+	groupByPerQuery?: Record<string, BaseAutocompleteData[]>;
 };
 
 export type TooltipData = {

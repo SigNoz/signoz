@@ -1,0 +1,107 @@
+.trace-details-v3 {
+	height: calc(100vh);
+	display: flex;
+	flex-direction: column;
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	&__flame-collapse,
+	&__waterfall-collapse {
+		border: none;
+		border-radius: 0;
+		background: transparent;
+
+		.ant-collapse-item {
+			border: none;
+		}
+
+		.ant-collapse-header {
+			border: 1px solid var(--l2-border);
+		}
+
+		.ant-collapse-content {
+			background: transparent;
+			border-top: none;
+			// Disable collapse animation — virtualizer and canvas flicker during height transitions
+			transition: none !important;
+		}
+	}
+
+	&__collapse-label {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+	}
+
+	&__collapse-count {
+		display: flex;
+		gap: 6px;
+		align-items: center;
+		font-size: 12px;
+		font-weight: 400;
+		color: var(--l2-foreground);
+	}
+
+	&__flame-collapse {
+		flex-shrink: 0;
+
+		.ant-collapse-content-box {
+			padding: 0 !important;
+		}
+	}
+
+	&__waterfall-collapse {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+
+		.ant-collapse-item {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.ant-collapse-content.ant-collapse-content-active {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.ant-collapse-content-box {
+			padding: 0 !important;
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		&--docked {
+			flex: none;
+
+			.ant-collapse-item {
+				flex: none;
+				display: block;
+			}
+
+			.ant-collapse-content-box {
+				flex: none;
+				display: block;
+			}
+		}
+	}
+
+	&__docked-span-details {
+		flex: 1;
+		overflow: auto;
+		min-height: 0;
+	}
+}

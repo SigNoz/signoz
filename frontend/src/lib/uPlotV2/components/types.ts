@@ -4,6 +4,7 @@ import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
 
 /**
  * Props for the Plot component
@@ -58,17 +59,31 @@ export interface TooltipRenderArgs {
 	isPinned: boolean;
 	dismiss: () => void;
 	viaSync: boolean;
-	/** In Tooltip sync mode, limits which series are rendered in the receiver tooltip.
-	 * null = no filtering; [] = no matches (tooltip hidden upstream); [...] = allowed indexes */
+	/** In Tooltip sync mode, identifies receiver series that match the source's
+	 * focused series on the shared groupBy keys.
+	 * Filtered mode: limits which series are rendered (null = no filter,
+	 *   [] = no matches/tooltip hidden upstream, [...] = allowed indexes).
+	 * All mode: same indexes are interpreted as a highlight set; non-matching
+	 *   series still render. */
 	syncedSeriesIndexes?: number[] | null;
+	/** Receiver-side filter mode for the synced tooltip. Defaults to Filtered. */
+	syncFilterMode?: SyncTooltipFilterMode;
+}
+
+export interface IRenderTooltipFooterArgs {
+	pinKey?: string;
+	isPinned: boolean;
+	dismiss: () => void;
 }
 
 export interface BaseTooltipProps {
+	id: string;
 	showTooltipHeader?: boolean;
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => ReactNode;
 	timezone?: Timezone;
 }
 
@@ -106,4 +121,9 @@ export interface TooltipContentItem {
 	tooltipValue: string;
 	color: string;
 	isActive: boolean;
+	/** Synced receiver series whose metric matches the source's focused series
+	 * on the shared groupBy keys, in 'all' filter mode. List rendering uses this
+	 * to apply the active highlight to matching rows while non-matching rows
+	 * stay dimmed. */
+	isHighlighted?: boolean;
 }

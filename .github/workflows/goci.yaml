@@ -102,3 +102,20 @@ jobs:
         run: |
           go run cmd/enterprise/*.go generate openapi
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run cmd/enterprise/*.go generate openapi locally and commit."; exit 1)
+  authz:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: go-install
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: generate-authz
+        run: |
+          go run cmd/enterprise/*.go generate authz
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in authz permissions. Run go run cmd/enterprise/*.go generate authz locally and commit."; exit 1)
