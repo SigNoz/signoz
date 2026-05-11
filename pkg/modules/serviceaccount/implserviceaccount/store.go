@@ -147,7 +147,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 
 	count, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("org_id = ?", orgID).
@@ -199,21 +199,6 @@ func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccount
 		NewInsert().
 		Model(serviceAccountRole).
 		On("CONFLICT (service_account_id, role_id) DO NOTHING").
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (store *store) DeleteServiceAccountRoles(ctx context.Context, serviceAccountID valuer.UUID) error {
-	_, err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewDelete().
-		Model(new(serviceaccounttypes.ServiceAccountRole)).
-		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
 		return err

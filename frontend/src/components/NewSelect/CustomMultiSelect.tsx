@@ -7,13 +7,11 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import {
-	DownOutlined,
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+import { DownOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Checkbox, Select, Typography } from 'antd';
+import { Loader } from '@signozhq/icons';
+import { Button, Checkbox, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -755,15 +753,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						}}
 					>
 						<div className="option-content">
-							<Typography.Text
-								ellipsis={{
-									tooltip: {
-										placement: 'right',
-										autoAdjustOverflow: true,
-									},
-								}}
-								className="option-label-text"
-							>
+							<Typography.Text truncate={1} className="option-label-text">
 								{highlightMatchedText(String(option.label || ''), searchText)}
 							</Typography.Text>
 							{(option.type === 'custom' || option.type === 'regex') && (
@@ -1707,7 +1697,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader className="animate-spin" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -1715,7 +1705,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader className="animate-spin" />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}

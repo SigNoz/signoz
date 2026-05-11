@@ -44,6 +44,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const signozDiscriminatorKey string = "x-signoz-discriminator"
+
 type OpenAPI struct {
 	apiserver apiserver.APIServer
 	reflector *openapi3.Reflector
@@ -142,6 +144,8 @@ func (openapi *OpenAPI) CreateAndWrite(path string) error {
 		return err
 	}
 
+	attachDiscriminators(openapi.reflector.Spec)
+
 	// The library's MarshalYAML does a JSON round-trip that converts all numbers
 	// to float64, causing large integers (e.g. epoch millisecond timestamps) to
 	// render in scientific notation (1.6409952e+12).
@@ -197,5 +201,61 @@ func convertJSONNumbers(v interface{}) {
 				convertJSONNumbers(elem)
 			}
 		}
+	}
+}
+
+// attachDiscriminators promotes x-signoz-discriminator extensions
+// into openapi3 Discriminator fields. Malformed markers are dropped.
+func attachDiscriminators(spec *openapi3.Spec) {
+	if spec.Components == nil || spec.Components.Schemas == nil {
+		return
+	}
+
+	for name, entry := range spec.Components.Schemas.MapOfSchemaOrRefValues {
+		if entry.Schema == nil {
+			continue
+		}
+
+		raw, ok := entry.Schema.MapOfAnything[signozDiscriminatorKey]
+		if !ok {
+			continue
+		}
+
+		marker, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		propertyName, ok := marker["propertyName"].(string)
+		if !ok || propertyName == "" {
+			continue
+		}
+
+		disc := openapi3.Discriminator{PropertyName: propertyName}
+		if rawMapping, ok := marker["mapping"]; ok {
+			if mapping, ok := rawMapping.(map[string]string); ok {
+				disc.Mapping = mapping
+			} else if mapping, ok := rawMapping.(map[string]any); ok {
+				converted := make(map[string]string, len(mapping))
+				for k, v := range mapping {
+					if s, ok := v.(string); ok {
+						converted[k] = s
+					}
+				}
+				disc.Mapping = converted
+			}
+		}
+
+		entry.Schema.Discriminator = &disc
+		delete(entry.Schema.MapOfAnything, signozDiscriminatorKey)
+
+		// The parent's reflected `properties` / `required` duplicate
+		// what the oneOf variants already declare, and orval intersects
+		// the two — turning a clean discriminated union DTO into a
+		// noisy union of intersections. Drop them here.
+		entry.Schema.Properties = nil
+		entry.Schema.Required = nil
+
+		spec.Components.Schemas.MapOfSchemaOrRefValues[name] = entry
 	}
 }

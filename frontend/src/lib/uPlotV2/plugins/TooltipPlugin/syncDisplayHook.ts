@@ -137,7 +137,7 @@ function applyReceiverSync({
 
 	if (commonKeys.length === 0) {
 		uPlotInstance.setSeries(null, { focus: false });
-		return [];
+		return noMatchResult;
 	}
 
 	if ((uPlotInstance.cursor.left ?? -1) < 0) {

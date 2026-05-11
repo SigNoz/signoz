@@ -54,9 +54,23 @@ describe('globalTimeStore', () => {
 			expect(result.current.lastRefreshTimestamp).toBe(0);
 		});
 
-		it('should have lastComputedMinMax with default values', () => {
+		it('should have lastComputedMinMax computed from initial selectedTime', () => {
 			const { result } = renderHook(() => useGlobalTimeStore());
-			expect(result.current.lastComputedMinMax).toStrictEqual({
+			// Now computes min/max on store creation, no longer starts with 0
+			expect(result.current.lastComputedMinMax.minTime).toBeGreaterThan(0);
+			expect(result.current.lastComputedMinMax.maxTime).toBeGreaterThan(0);
+		});
+
+		it('should not crash with invalid relative time format', () => {
+			// Invalid time formats should not crash store creation
+			const store = createGlobalTimeStore({
+				selectedTime: 'invalid_time' as GlobalTimeSelectedTime,
+			});
+
+			// Store should be created successfully
+			expect(store.getState().selectedTime).toBe('invalid_time');
+			// Should fallback to {0, 0} when parsing fails
+			expect(store.getState().lastComputedMinMax).toStrictEqual({
 				minTime: 0,
 				maxTime: 0,
 			});
@@ -724,8 +738,8 @@ describe('globalTimeStore', () => {
 			const wrapper = createIsolatedWrapper();
 			const { result } = renderHook(() => useGlobalTime(), { wrapper });
 
-			// Initial state has 0 values
-			expect(result.current.lastComputedMinMax.maxTime).toBe(0);
+			// Initial state now has computed values (no longer 0)
+			expect(result.current.lastComputedMinMax.maxTime).toBeGreaterThan(0);
 
 			act(() => {
 				result.current.setSelectedTime('15m');

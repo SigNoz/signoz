@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'container/NewWidget/LeftContainer/WidgetGraph/PlotTag';
@@ -39,14 +41,22 @@ function ChartPreview({
 
 	const yAxisUnit = alertState.yAxisUnit || '';
 
-	// Only update automatically when creating a new metrics-based alert rule
+	const location = useLocation();
+	const yAxisUnitFromURL = new URLSearchParams(location.search).get(
+		QueryParams.yAxisUnit,
+	);
+
+	// Only update automatically when creating a new metrics-based alert rule.
+	// Skip when yAxisUnit was explicitly provided via URL (e.g. from ingestion settings).
 	const shouldUpdateYAxisUnit = useMemo(() => {
-		// Do not update if we are coming to the page from dashboards (we still show warning)
 		if (source === YAxisSource.DASHBOARDS) {
 			return false;
 		}
+		if (yAxisUnitFromURL) {
+			return false;
+		}
 		return !isEditMode && alertType === AlertTypes.METRICS_BASED_ALERT;
-	}, [isEditMode, alertType, source]);
+	}, [isEditMode, alertType, source, yAxisUnitFromURL]);
 
 	const selectedQueryName = thresholdState.selectedQuery;
 	const { yAxisUnit: initialYAxisUnit, isLoading } =
