@@ -96,7 +96,6 @@ func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
 		Where("d.id = ?", id).
 		Where("d.org_id = ?", orgID).
-		Where("d.deleted_at IS NULL").
 		Scan(ctx)
 	if err != nil {
 		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
