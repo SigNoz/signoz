@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import CustomSelect from 'components/NewSelect/CustomSelect';
 import TextToolTip from 'components/TextToolTip';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {

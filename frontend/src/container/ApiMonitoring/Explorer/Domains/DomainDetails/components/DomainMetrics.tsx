@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {

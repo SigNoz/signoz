@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';

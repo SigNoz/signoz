@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { orange } from '@ant-design/colors';
 import { WarningOutlined } from '@ant-design/icons';
 import { Popover, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { CustomMultiSelect, CustomSelect } from 'components/NewSelect';
 import { OptionData } from 'components/NewSelect/types';
 import { popupContainer } from 'utils/selectPopupContainer';

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Radio, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
 import { Download, DownloadIcon, Loader2 } from 'lucide-react';

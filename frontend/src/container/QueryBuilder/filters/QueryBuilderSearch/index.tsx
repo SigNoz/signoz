@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button, Select, Spin, Tag, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';

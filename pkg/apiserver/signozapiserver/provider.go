@@ -41,7 +41,8 @@ type provider struct {
 	config                  apiserver.Config
 	settings                factory.ScopedProviderSettings
 	router                  *mux.Router
-	authZ                   *middleware.AuthZ
+	authzMiddleware         *middleware.AuthZ
+	authzService            authz.AuthZ
 	orgHandler              organization.Handler
 	userHandler             user.Handler
 	sessionHandler          session.Handler
@@ -73,7 +74,7 @@ type provider struct {
 
 func NewFactory(
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -108,7 +109,7 @@ func NewFactory(
 			providerSettings,
 			config,
 			orgGetter,
-			authz,
+			authzService,
 			orgHandler,
 			userHandler,
 			sessionHandler,
@@ -145,7 +146,7 @@ func newProvider(
 	providerSettings factory.ProviderSettings,
 	config apiserver.Config,
 	orgGetter organization.Getter,
-	authz authz.AuthZ,
+	authzService authz.AuthZ,
 	orgHandler organization.Handler,
 	userHandler user.Handler,
 	sessionHandler session.Handler,
@@ -183,6 +184,7 @@ func newProvider(
 		router:                  router,
 		orgHandler:              orgHandler,
 		userHandler:             userHandler,
+		authzService:            authzService,
 		sessionHandler:          sessionHandler,
 		authDomainHandler:       authDomainHandler,
 		preferenceHandler:       preferenceHandler,
@@ -210,7 +212,7 @@ func newProvider(
 		llmPricingRuleHandler:   llmPricingRuleHandler,
 	}
 
-	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
+	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
 
 	if err := provider.AddToRouter(router); err != nil {
 		return nil, err
@@ -336,14 +338,18 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 }
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
-	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
-	}
+	return newScopedSecuritySchemes([]string{role.String()})
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
 		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
+	}
+}
+
+func newScopedSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
+	return []handler.OpenAPISecurityScheme{
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: scopes},
 	}
 }

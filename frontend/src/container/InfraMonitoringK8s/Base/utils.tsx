@@ -1,4 +1,4 @@
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 

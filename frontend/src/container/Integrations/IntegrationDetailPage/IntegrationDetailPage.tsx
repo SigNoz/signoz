@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Flex, Skeleton } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';

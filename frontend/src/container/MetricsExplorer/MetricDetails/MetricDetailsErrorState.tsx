@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { InfoIcon } from 'lucide-react';
 
 import { MetricDetailsErrorStateProps } from './types';

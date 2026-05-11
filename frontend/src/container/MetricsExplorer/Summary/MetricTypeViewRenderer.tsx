@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	BarChart,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Slider } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, Loader2, Minus } from 'lucide-react';
 
