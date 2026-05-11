@@ -144,10 +144,7 @@ func (provider *Provider) collectOrg(ctx context.Context, org *types.Organizatio
 			return err
 		}
 
-		nextByCollector, err := provider.nextDays(ctx, org.ID, license, todayStart, checkpointsByMeter)
-		if err != nil {
-			return err
-		}
+		nextByCollector := provider.nextDays(license, todayStart, checkpointsByMeter)
 
 		start, end, ok := backfillRange(nextByCollector, todayStart)
 		if ok {
@@ -200,40 +197,30 @@ func (provider *Provider) checkpoints(ctx context.Context, licenseKey string) (m
 	return checkpointsByMeter, nil
 }
 
-func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, todayStart time.Time, checkpointsByMeter map[string]time.Time) (map[zeustypes.MeterName]time.Time, error) {
+func (provider *Provider) nextDays(license *licensetypes.License, todayStart time.Time, checkpointsByMeter map[string]time.Time) map[zeustypes.MeterName]time.Time {
 	nextByCollector := make(map[zeustypes.MeterName]time.Time, len(provider.collectorsByName))
 	licenseCreatedAt := license.CreatedAt.UTC()
 	licenseCreatedAtDay := time.Date(licenseCreatedAt.Year(), licenseCreatedAt.Month(), licenseCreatedAt.Day(), 0, 0, 0, 0, time.UTC)
 
 	for _, collector := range provider.collectorsByName {
-		origin, err := collector.Origin(ctx, orgID, license, todayStart)
-		if err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to get origin from collector", errors.Attr(err), slog.String("meter", collector.Name().String()))
-			return nil, err
-		}
-
 		checkpoint, hasCheckpoint := checkpointsByMeter[collector.Name().String()]
-		nextByCollector[collector.Name()] = nextReportableDay(origin, licenseCreatedAtDay, todayStart, checkpoint, hasCheckpoint)
+		nextByCollector[collector.Name()] = nextReportableDay(licenseCreatedAtDay, todayStart, checkpoint, hasCheckpoint)
 	}
 
-	return nextByCollector, nil
+	return nextByCollector
 }
 
-func nextReportableDay(origin time.Time, licenseCreatedAtDay time.Time, todayStart time.Time, checkpoint time.Time, hasCheckpoint bool) time.Time {
-	var next time.Time
-	if hasCheckpoint {
-		next = checkpoint.AddDate(0, 0, 1)
-		if !origin.IsZero() && origin.After(next) {
-			next = origin
-		}
-	} else if origin.IsZero() {
+func nextReportableDay(licenseCreatedAtDay time.Time, todayStart time.Time, checkpoint time.Time, hasCheckpoint bool) time.Time {
+	next := licenseCreatedAtDay
+	if next.IsZero() {
 		next = todayStart
-	} else {
-		next = origin
 	}
 
-	if !licenseCreatedAtDay.IsZero() && licenseCreatedAtDay.After(next) {
-		return licenseCreatedAtDay
+	if hasCheckpoint {
+		checkpointNext := checkpoint.AddDate(0, 0, 1)
+		if checkpointNext.After(next) {
+			next = checkpointNext
+		}
 	}
 
 	return next
