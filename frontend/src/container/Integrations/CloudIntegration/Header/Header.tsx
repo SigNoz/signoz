@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import Breadcrumb from 'antd/es/breadcrumb';
 import ROUTES from 'constants/routes';
 import { IntegrationType } from 'container/Integrations/types';

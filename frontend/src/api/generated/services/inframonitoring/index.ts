@@ -13,9 +13,11 @@ import type {
 
 import type {
 	InframonitoringtypesPostableHostsDTO,
+	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
 	ListHosts200,
+	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
 	RenderErrorResponseDTO,
@@ -105,6 +107,90 @@ export const useListHosts = <
 	TContext
 > => {
 	const mutationOptions = getListHostsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.
+ * @summary List Namespaces for Infra Monitoring
+ */
+export const listNamespaces = (
+	inframonitoringtypesPostableNamespacesDTO: BodyType<InframonitoringtypesPostableNamespacesDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListNamespaces200>({
+		url: `/api/v2/infra_monitoring/namespaces`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableNamespacesDTO,
+		signal,
+	});
+};
+
+export const getListNamespacesMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listNamespaces>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	TContext
+> => {
+	const mutationKey = ['listNamespaces'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listNamespaces(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListNamespacesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listNamespaces>>
+>;
+export type ListNamespacesMutationBody =
+	BodyType<InframonitoringtypesPostableNamespacesDTO>;
+export type ListNamespacesMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Namespaces for Infra Monitoring
+ */
+export const useListNamespaces = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listNamespaces>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	TContext
+> => {
+	const mutationOptions = getListNamespacesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

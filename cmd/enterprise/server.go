@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/auditor/fileauditor"
 	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
@@ -153,6 +154,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(licensing licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 			factories := signoz.NewAuditorProviderFactories()
 			if err := factories.Add(otlphttpauditor.NewFactory(licensing, version.Info)); err != nil {
+				panic(err)
+			}
+			if err := factories.Add(fileauditor.NewFactory(licensing, version.Info)); err != nil {
 				panic(err)
 			}
 			return factories

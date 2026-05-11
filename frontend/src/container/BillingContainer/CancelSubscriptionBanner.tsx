@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { SolidInfoCircle, Undo2, X } from '@signozhq/icons';
-import { Button, DialogWrapper, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import { pick } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';

@@ -1,6 +1,8 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
-import { Button, DialogWrapper, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetServiceAccountQueryKey,

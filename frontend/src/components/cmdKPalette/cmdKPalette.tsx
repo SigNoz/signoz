@@ -7,7 +7,7 @@ import {
 	CommandItem,
 	CommandList,
 	CommandShortcut,
-} from '@signozhq/ui';
+} from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
 import { useThemeMode } from 'hooks/useDarkMode';
 import history from 'lib/history';

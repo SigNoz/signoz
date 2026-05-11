@@ -76,11 +76,7 @@
                 "display": {
                     "name": "textboxvar"
                 },
-                "value": "defaultvaluegoeshere",
-                "plugin": {
-                    "kind": "signoz/TextboxVariable",
-                    "spec": {}
-                }
+                "value": "defaultvaluegoeshere"
             }
         }
     ],

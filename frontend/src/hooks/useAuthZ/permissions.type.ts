@@ -8,6 +8,10 @@ export default {
 				type: 'metaresources',
 			},
 			{
+				kind: 'serviceaccount',
+				type: 'metaresources',
+			},
+			{
 				kind: 'role',
 				type: 'role',
 			},
