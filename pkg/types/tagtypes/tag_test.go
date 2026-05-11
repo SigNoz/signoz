@@ -68,11 +68,11 @@ func (f *fakeStore) CreateRelations(_ context.Context, _ []*TagRelation) error {
 }
 
 func (f *fakeStore) ListByEntity(_ context.Context, _ EntityType, _ valuer.UUID) ([]*Tag, error) {
-	return nil, nil
+	return []*Tag{}, nil
 }
 
 func (f *fakeStore) ListByEntities(_ context.Context, _ EntityType, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
-	return nil, nil
+	return map[valuer.UUID][]*Tag{}, nil
 }
 
 func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ EntityType, _ valuer.UUID, _ []valuer.UUID) error {
