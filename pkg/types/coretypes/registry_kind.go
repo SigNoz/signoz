@@ -38,6 +38,12 @@ var Kinds = []Kind{
 	KindMeterMetrics,
 	KindLogsField,
 	KindTracesField,
+	KindLLMPricingRule,
+	KindSpanMapperGroup,
+	KindSpanMapper,
+	KindZeusProfile,
+	KindZeusHost,
+	KindMetric,
 }
 
 var (
@@ -78,4 +84,10 @@ var (
 	KindMeterMetrics                 = MustNewKind("meter-metrics")
 	KindLogsField                    = MustNewKind("logs-field")
 	KindTracesField                  = MustNewKind("traces-field")
+	KindLLMPricingRule               = MustNewKind("llm-pricing-rule")
+	KindSpanMapperGroup              = MustNewKind("span-mapper-group")
+	KindSpanMapper                   = MustNewKind("span-mapper")
+	KindZeusProfile                  = MustNewKind("zeus-profile")
+	KindZeusHost                     = MustNewKind("zeus-host")
+	KindMetric                       = MustNewKind("metric")
 )
