@@ -292,15 +292,6 @@ def test_trace_operator_query_order_by_select_field(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Guards against the CH 25.12.5 NOT_FOUND_COLUMN_IN_BLOCK regression
-    for ORDER BY col AS `col` on a column that IS included in the SELECT result.
-
-    The original fix only handled timestamp. The bug fires for any
-    column using the alias-in-ORDER-BY pattern — including core fields like
-    duration_nano. Previously, ColumnExpressionFor produced `duration_nano AS
-    `duration_nano`` and that expression was used verbatim in ORDER BY, triggering
-    the column-rename to duration_nano_0 inside a CTE against a Distributed table.
-
     Setup:
     Two traces each with a parent → child pair; the parents have distinct durations
     (5 s and 1 s).
@@ -424,15 +415,6 @@ def test_trace_operator_query_order_by_non_core_field_in_select(
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
     """
-    Variant of the Q4-analog where the ORDER BY column is a non-core attribute
-    field that IS also in selectFields.
-
-    Previously, ColumnExpressionFor produced `attributes_string['http.method'] AS
-    `http.method`` for every custom field, and that expression was used verbatim
-    in ORDER BY — generating ORDER BY attributes_string['http.method'] AS
-    `http.method` DESC, which triggers the CH 25.12.5 column-rename regression
-    inside a CTE against a Distributed table.
-
     Setup:
     Two traces each with a parent → child pair; parents have distinct http.method
     values (POST and GET).
