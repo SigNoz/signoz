@@ -5,7 +5,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
@@ -111,20 +113,28 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.UpdateMyUser), handler.OpenAPIDef{
-		ID:                  "UpdateMyUserV2",
-		Tags:                []string{"users"},
-		Summary:             "Update my user v2",
-		Description:         "This endpoint updates the user I belong to",
-		Request:             new(types.UpdatableUser),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/me", handler.New(
+		provider.authzMiddleware.OpenAccess(provider.userHandler.UpdateMyUser),
+		handler.OpenAPIDef{
+			ID:                  "UpdateMyUserV2",
+			Tags:                []string{"users"},
+			Summary:             "Update my user v2",
+			Description:         "This endpoint updates the user I belong to",
+			Request:             new(types.UpdatableUser),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: coretypes.KindUser,
+			Action:       coretypes.VerbUpdate,
+			Category:     audittypes.ActionCategoryConfigurationChange,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -179,20 +189,29 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
-		ID:                  "UpdateUser",
-		Tags:                []string{"users"},
-		Summary:             "Update user v2",
-		Description:         "This endpoint updates the user by id",
-		Request:             new(types.UpdatableUser),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/{id}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.userHandler.UpdateUser),
+		handler.OpenAPIDef{
+			ID:                  "UpdateUser",
+			Tags:                []string{"users"},
+			Summary:             "Update user v2",
+			Description:         "This endpoint updates the user by id",
+			Request:             new(types.UpdatableUser),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindUser,
+			Action:          coretypes.VerbUpdate,
+			Category:        audittypes.ActionCategoryConfigurationChange,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -247,20 +266,29 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.CreateResetPasswordToken), handler.OpenAPIDef{
-		ID:                  "CreateResetPasswordToken",
-		Tags:                []string{"users"},
-		Summary:             "Create or regenerate reset password token for a user",
-		Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(types.ResetPasswordToken),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/{id}/reset_password_tokens", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.userHandler.CreateResetPasswordToken),
+		handler.OpenAPIDef{
+			ID:                  "CreateResetPasswordToken",
+			Tags:                []string{"users"},
+			Summary:             "Create or regenerate reset password token for a user",
+			Description:         "This endpoint creates or regenerates a reset password token for a user. If a valid token exists, it is returned. If expired, a new one is created.",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(types.ResetPasswordToken),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindResetPasswordToken,
+			Action:          coretypes.VerbCreate,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -281,37 +309,53 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ChangePassword), handler.OpenAPIDef{
-		ID:                  "UpdateMyPassword",
-		Tags:                []string{"users"},
-		Summary:             "Updates my password",
-		Description:         "This endpoint updates the password of the user I belong to",
-		Request:             new(types.ChangePasswordRequest),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/me/factor_password", handler.New(
+		provider.authzMiddleware.OpenAccess(provider.userHandler.ChangePassword),
+		handler.OpenAPIDef{
+			ID:                  "UpdateMyPassword",
+			Tags:                []string{"users"},
+			Summary:             "Updates my password",
+			Description:         "This endpoint updates the password of the user I belong to",
+			Request:             new(types.ChangePasswordRequest),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: coretypes.KindFactorPassword,
+			Action:       coretypes.VerbUpdate,
+			Category:     audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(provider.authzMiddleware.OpenAccess(provider.userHandler.ForgotPassword), handler.OpenAPIDef{
-		ID:                  "ForgotPassword",
-		Tags:                []string{"users"},
-		Summary:             "Forgot password",
-		Description:         "This endpoint initiates the forgot password flow by sending a reset password email",
-		Request:             new(types.PostableForgotPassword),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/factor_password/forgot", handler.New(
+		provider.authzMiddleware.OpenAccess(provider.userHandler.ForgotPassword),
+		handler.OpenAPIDef{
+			ID:                  "ForgotPassword",
+			Tags:                []string{"users"},
+			Summary:             "Forgot password",
+			Description:         "This endpoint initiates the forgot password flow by sending a reset password email",
+			Request:             new(types.PostableForgotPassword),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnprocessableEntity},
+			Deprecated:          false,
+			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind: coretypes.KindFactorPassword,
+			Action:       coretypes.VerbUpdate,
+			Category:     audittypes.ActionCategoryAccessControl,
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -332,37 +376,55 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.SetRoleByUserID), handler.OpenAPIDef{
-		ID:                  "SetRoleByUserID",
-		Tags:                []string{"users"},
-		Summary:             "Set user roles",
-		Description:         "This endpoint assigns the role to the user roles by user id",
-		Request:             new(types.PostableRole),
-		RequestContentType:  "application/json",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.userHandler.SetRoleByUserID),
+		handler.OpenAPIDef{
+			ID:                  "SetRoleByUserID",
+			Tags:                []string{"users"},
+			Summary:             "Set user roles",
+			Description:         "This endpoint assigns the role to the user roles by user id",
+			Request:             new(types.PostableRole),
+			RequestContentType:  "application/json",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindUserRole,
+			Action:          coretypes.VerbCreate,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles/{roleId}", handler.New(provider.authzMiddleware.AdminAccess(provider.userHandler.RemoveUserRoleByRoleID), handler.OpenAPIDef{
-		ID:                  "RemoveUserRoleByUserIDAndRoleID",
-		Tags:                []string{"users"},
-		Summary:             "Remove a role from user",
-		Description:         "This endpoint removes a role from the user by user id and role id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v2/users/{id}/roles/{roleId}", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.userHandler.RemoveUserRoleByRoleID),
+		handler.OpenAPIDef{
+			ID:                  "RemoveUserRoleByUserIDAndRoleID",
+			Tags:                []string{"users"},
+			Summary:             "Remove a role from user",
+			Description:         "This endpoint removes a role from the user by user id and role id",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{http.StatusNotFound},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.AuditDef{
+			ResourceKind:    coretypes.KindUserRole,
+			Action:          coretypes.VerbDelete,
+			Category:        audittypes.ActionCategoryAccessControl,
+			ResourceIDParam: "id",
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
