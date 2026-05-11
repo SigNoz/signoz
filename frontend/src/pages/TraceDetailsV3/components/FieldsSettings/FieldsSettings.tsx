@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui';
-import { Button, Input } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { CheckIcon, TableColumnsSplit, X, XIcon } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -100,6 +101,7 @@ function FieldsSettings({
 
 			<section className="fs-search">
 				<Input
+					className="fs-search-input"
 					type="text"
 					value={inputValue}
 					placeholder="Search for a field..."
@@ -124,16 +126,18 @@ function FieldsSettings({
 			{hasUnsavedChanges && (
 				<div className="fs-footer">
 					<Button
-						type="default"
+						variant="outlined"
+						color="secondary"
 						onClick={handleDiscard}
-						icon={<XIcon width={14} height={14} />}
+						prefix={<XIcon width={14} height={14} />}
 					>
 						Discard
 					</Button>
 					<Button
-						type="primary"
+						variant="solid"
+						color="primary"
 						onClick={handleSave}
-						icon={<CheckIcon width={14} height={14} />}
+						prefix={<CheckIcon width={14} height={14} />}
 					>
 						Save changes
 					</Button>

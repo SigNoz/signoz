@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { Button, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Skeleton } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
@@ -76,7 +77,9 @@ function OtherFields({
 									{!isAtLimit && (
 										<Button
 											className="add-field-btn periscope-btn"
-											size="small"
+											variant="outlined"
+											color="secondary"
+											size="sm"
 											onClick={(): void => onAdd(attr)}
 										>
 											Add

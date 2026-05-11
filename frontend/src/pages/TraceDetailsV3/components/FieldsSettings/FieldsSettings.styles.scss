@@ -32,7 +32,7 @@
 	}
 
 	.fs-search {
-		.ant-input {
+		.fs-search-input {
 			background-color: var(--l1-background);
 			height: 40px;
 			border-radius: 0;
@@ -163,9 +163,5 @@
 		align-items: center;
 		justify-content: center;
 		width: 50%;
-
-		.ant-btn-icon {
-			margin: 3px !important;
-		}
 	}
 }

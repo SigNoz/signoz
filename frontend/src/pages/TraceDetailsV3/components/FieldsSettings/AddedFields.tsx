@@ -14,7 +14,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -51,7 +51,9 @@ function SortableField({
 			{allowRemove && (
 				<Button
 					className="remove-field-btn periscope-btn"
-					size="small"
+					variant="outlined"
+					color="destructive"
+					size="sm"
 					onClick={(): void => onRemove(field)}
 				>
 					Remove
