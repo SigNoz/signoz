@@ -1,7 +1,8 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
+import { CaretDownOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
@@ -222,7 +223,7 @@ function AttributeCheckList({
 		>
 			{loading ? (
 				<div className="loader-container">
-					<Spin indicator={<LoadingOutlined spin />} size="large" />
+					<Spin indicator={<Loader className="animate-spin" />} size="large" />
 				</div>
 			) : (
 				<div className="modal-content">
