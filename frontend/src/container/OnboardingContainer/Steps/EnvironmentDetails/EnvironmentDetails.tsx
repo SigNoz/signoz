@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Loader, Server } from '@signozhq/icons';
+import { Check, Server, LoaderCircle } from '@signozhq/icons';
 import { Button, Card, Form, Input, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -184,7 +184,7 @@ export default function EnvironmentDetails(): JSX.Element {
 							className="periscope-btn primary"
 							icon={
 								isSubmittingRequestForEnvironment ? (
-									<Loader size="md" className="animate-spin" />
+									<LoaderCircle size="md" className="animate-spin" />
 								) : (
 									<Check size={12} />
 								)

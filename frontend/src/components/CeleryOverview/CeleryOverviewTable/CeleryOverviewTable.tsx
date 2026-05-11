@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { LoaderCircle, Search } from '@signozhq/icons';
+import { Loader, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -521,7 +521,7 @@ export default function CeleryOverviewTable({
 				loading={{
 					spinning: isLoading,
 					indicator: (
-						<Spin indicator={<LoaderCircle size={14} className="animate-spin" />} />
+						<Spin indicator={<Loader size={14} className="animate-spin" />} />
 					),
 				}}
 				locale={{

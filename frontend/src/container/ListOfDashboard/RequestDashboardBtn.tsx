@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Loader } from '@signozhq/icons';
+import { LoaderCircle, Check } from '@signozhq/icons';
 import { Button, Input, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -78,7 +78,7 @@ export function RequestDashboardBtn(): JSX.Element {
 						className="periscope-btn primary"
 						icon={
 							isSubmittingRequestForDashboard ? (
-								<Loader size="md" className="animate-spin" />
+								<LoaderCircle className="animate-spin" size={12} />
 							) : (
 								<Check size={12} />
 							)

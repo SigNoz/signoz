@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Blocks, Check, Loader } from '@signozhq/icons';
+import { Blocks, Check, LoaderCircle } from '@signozhq/icons';
 import { Button, Card, Form, Input, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -271,7 +271,7 @@ export default function DataSource(): JSX.Element {
 										className="periscope-btn primary"
 										icon={
 											isSubmittingRequestForDataSource ? (
-												<Loader size="md" className="animate-spin" />
+												<LoaderCircle size="md" className="animate-spin" />
 											) : (
 												<Check size={12} />
 											)
