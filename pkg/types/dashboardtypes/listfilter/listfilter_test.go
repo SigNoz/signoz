@@ -158,86 +158,138 @@ func TestCompile_Timestamps(t *testing.T) {
 	})
 }
 
-// Tag operators wrap each predicate in EXISTS / NOT EXISTS.
+// Tag operators wrap each predicate in EXISTS / NOT EXISTS. Any non-reserved
+// key is a tag key — `team = 'pulse'` matches a tag with key=team value=pulse,
+// `tag = 'prod'` matches a tag with key=tag value=prod, and so on.
 func TestCompile_Tag(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "tag = wraps in EXISTS",
+			subtestName:       "team = wraps in EXISTS",
+			dslQueryToCompile: `team = 'pulse'`,
+			expectedSQL: `
+				EXISTS (
+					SELECT 1 FROM tag_relations tr
+					JOIN tag t ON t.id = tr.tag_id
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value = ?
+				)`,
+			expectedArgs: []any{"team", "pulse"},
+		},
+		{
+			subtestName:       "tag = is just a regular tag-key filter",
 			dslQueryToCompile: `tag = 'database'`,
 			expectedSQL: `
 				EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name = ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value = ?
 				)`,
-			expectedArgs: []any{"database"},
+			expectedArgs: []any{"tag", "database"},
 		},
 		{
-			subtestName:       "tag != wraps in NOT EXISTS with positive inner",
-			dslQueryToCompile: `tag != 'database'`,
+			subtestName:       "team != wraps in NOT EXISTS with positive inner",
+			dslQueryToCompile: `team != 'pulse'`,
 			expectedSQL: `
 				NOT EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name = ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value = ?
 				)`,
-			expectedArgs: []any{"database"},
+			expectedArgs: []any{"team", "pulse"},
 		},
 		{
-			subtestName:       "tag IN — inner is single placeholder list",
-			dslQueryToCompile: `tag IN ['team/pulse', 'team/events']`,
+			subtestName:       "team IN — inner is single placeholder list on t.value",
+			dslQueryToCompile: `team IN ['pulse', 'events']`,
 			expectedSQL: `
 				EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name IN (?, ?)
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value IN (?, ?)
 				)`,
-			expectedArgs: []any{"team/pulse", "team/events"},
+			expectedArgs: []any{"team", "pulse", "events"},
 		},
 		{
-			subtestName:       "tag NOT IN",
-			dslQueryToCompile: `tag NOT IN ['database/redis', 'database/mongo']`,
+			subtestName:       "team NOT IN",
+			dslQueryToCompile: `team NOT IN ['pulse', 'events']`,
 			expectedSQL: `
 				NOT EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name IN (?, ?)
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value IN (?, ?)
 				)`,
-			expectedArgs: []any{"database/redis", "database/mongo"},
+			expectedArgs: []any{"team", "pulse", "events"},
 		},
 		{
-			subtestName:       "tag LIKE — hierarchy match",
-			dslQueryToCompile: `tag LIKE 'prod/%'`,
+			subtestName:       "team LIKE — wildcard on value",
+			dslQueryToCompile: `team LIKE 'pulse%'`,
 			expectedSQL: `
 				EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name LIKE ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value LIKE ?
 				)`,
-			expectedArgs: []any{"prod/%"},
+			expectedArgs: []any{"team", "pulse%"},
 		},
 		{
-			subtestName:       "tag NOT LIKE",
-			dslQueryToCompile: `tag NOT LIKE 'tests/%'`,
+			subtestName:       "team NOT LIKE",
+			dslQueryToCompile: `team NOT LIKE 'staging%'`,
 			expectedSQL: `
 				NOT EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name LIKE ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value LIKE ?
 				)`,
-			expectedArgs: []any{"tests/%"},
+			expectedArgs: []any{"team", "staging%"},
 		},
 		{
-			subtestName:       "tag EXISTS — bare predicate, no tag table join needed",
-			dslQueryToCompile: `tag EXISTS`,
-			expectedSQL:       `EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)`,
-			expectedArgs:      []any{},
+			subtestName:       "database EXISTS — asserts a tag with key=database is present",
+			dslQueryToCompile: `database EXISTS`,
+			expectedSQL: `
+				EXISTS (
+					SELECT 1 FROM tag_relations tr
+					JOIN tag t ON t.id = tr.tag_id
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+				)`,
+			expectedArgs: []any{"database"},
 		},
 		{
-			subtestName:       "tag NOT EXISTS",
-			dslQueryToCompile: `tag NOT EXISTS`,
-			expectedSQL:       `NOT EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)`,
-			expectedArgs:      []any{},
+			subtestName:       "database NOT EXISTS",
+			dslQueryToCompile: `database NOT EXISTS`,
+			expectedSQL: `
+				NOT EXISTS (
+					SELECT 1 FROM tag_relations tr
+					JOIN tag t ON t.id = tr.tag_id
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+				)`,
+			expectedArgs: []any{"database"},
+		},
+		{
+			subtestName:       "tag-key matching is case-insensitive — TEAM lowercased",
+			dslQueryToCompile: `TEAM = 'pulse'`,
+			expectedSQL: `
+				EXISTS (
+					SELECT 1 FROM tag_relations tr
+					JOIN tag t ON t.id = tr.tag_id
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value = ?
+				)`,
+			expectedArgs: []any{"team", "pulse"},
 		},
 	})
 }
@@ -302,30 +354,34 @@ func TestCompile_NOT(t *testing.T) {
 		},
 		{
 			subtestName:       "NOT on a tag equality",
-			dslQueryToCompile: `NOT tag = 'database'`,
+			dslQueryToCompile: `NOT team = 'pulse'`,
 			expectedSQL: `
 				NOT (
 					EXISTS (
 						SELECT 1 FROM tag_relations tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_id = dashboard.id AND t.name = ?
+						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						AND LOWER(t.key) = LOWER(?)
+						AND t.value = ?
 					)
 				)`,
-			expectedArgs: []any{"database"},
+			expectedArgs: []any{"team", "pulse"},
 		},
 		{
-			subtestName:       "NOT tag = ... AND name = ...",
-			dslQueryToCompile: `NOT tag = 'database' AND name = 'overview'`,
+			subtestName:       "NOT team = ... AND name = ...",
+			dslQueryToCompile: `NOT team = 'pulse' AND name = 'overview'`,
 			expectedSQL: `
 				NOT (
 					EXISTS (
 						SELECT 1 FROM tag_relations tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_id = dashboard.id AND t.name = ?
+						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						AND LOWER(t.key) = LOWER(?)
+						AND t.value = ?
 					)
 				)
 				AND json_extract("dashboard"."data", '$.data.display.name') = ?`,
-			expectedArgs: []any{"database", "overview"},
+			expectedArgs: []any{"team", "pulse", "overview"},
 		},
 	})
 }
@@ -333,48 +389,57 @@ func TestCompile_NOT(t *testing.T) {
 func TestCompile_ComplexExamples(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:       "name CONTAINS + tag LIKE + created_by + tag",
-			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod/%' AND created_by = 'naman.verma@signoz.io' AND tag = 'database'`,
+			subtestName:       "name CONTAINS + tag LIKE + created_by + database =",
+			dslQueryToCompile: `name CONTAINS 'overview' AND tag LIKE 'prod%' AND created_by = 'naman.verma@signoz.io' AND database = 'mongo'`,
 			expectedSQL: `
 				json_extract("dashboard"."data", '$.data.display.name') LIKE ?
 				AND EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name LIKE ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value LIKE ?
 				)
 				AND dashboard.created_by = ?
 				AND EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name = ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value = ?
 				)`,
-			expectedArgs: []any{"%overview%", "prod/%", "naman.verma@signoz.io", "database"},
+			expectedArgs: []any{"%overview%", "tag", "prod%", "naman.verma@signoz.io", "database", "mongo"},
 		},
 		{
-			subtestName:       "tag IN AND tag =",
-			dslQueryToCompile: `tag IN ['team/pulse', 'team/events'] AND tag = 'database'`,
+			subtestName:       "team IN AND database EXISTS",
+			dslQueryToCompile: `team IN ['pulse', 'events'] AND database EXISTS`,
 			expectedSQL: `
 				EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name IN (?, ?)
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
+					AND t.value IN (?, ?)
 				)
 				AND EXISTS (
 					SELECT 1 FROM tag_relations tr
 					JOIN tag t ON t.id = tr.tag_id
-					WHERE tr.entity_id = dashboard.id AND t.name = ?
+					WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+					AND LOWER(t.key) = LOWER(?)
 				)`,
-			expectedArgs: []any{"team/pulse", "team/events", "database"},
+			expectedArgs: []any{"team", "pulse", "events", "database"},
 		},
 		{
 			subtestName:       "nested OR / AND with parens",
-			dslQueryToCompile: `(tag IN ['sql', 'redis', 'mongo'] OR name LIKE '%database%') AND (tag = 'team/pulse' OR name LIKE '%pulse%')`,
+			dslQueryToCompile: `(database IN ['sql', 'redis', 'mongo'] OR name LIKE '%database%') AND (team = 'pulse' OR name LIKE '%pulse%')`,
 			expectedSQL: `
 				(
 					EXISTS (
 						SELECT 1 FROM tag_relations tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_id = dashboard.id AND t.name IN (?, ?, ?)
+						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						AND LOWER(t.key) = LOWER(?)
+						AND t.value IN (?, ?, ?)
 					)
 					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
 				)
@@ -382,11 +447,13 @@ func TestCompile_ComplexExamples(t *testing.T) {
 					EXISTS (
 						SELECT 1 FROM tag_relations tr
 						JOIN tag t ON t.id = tr.tag_id
-						WHERE tr.entity_id = dashboard.id AND t.name = ?
+						WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id
+						AND LOWER(t.key) = LOWER(?)
+						AND t.value = ?
 					)
 					OR json_extract("dashboard"."data", '$.data.display.name') LIKE ?
 				)`,
-			expectedArgs: []any{"sql", "redis", "mongo", "%database%", "team/pulse", "%pulse%"},
+			expectedArgs: []any{"database", "sql", "redis", "mongo", "%database%", "team", "pulse", "%pulse%"},
 		},
 	})
 }
@@ -394,13 +461,13 @@ func TestCompile_ComplexExamples(t *testing.T) {
 func TestCompile_Rejections(t *testing.T) {
 	runCompileCases(t, []compileCase{
 		{
-			subtestName:              "rejects unknown key",
-			dslQueryToCompile:        `foo = 'bar'`,
-			expectedErrShouldContain: "unknown key",
+			subtestName:              "rejects op outside per-reserved-key allowlist",
+			dslQueryToCompile:        `name BETWEEN 'a' AND 'z'`,
+			expectedErrShouldContain: "operator",
 		},
 		{
-			subtestName:              "rejects op outside per-key allowlist",
-			dslQueryToCompile:        `name BETWEEN 'a' AND 'z'`,
+			subtestName:              "rejects BETWEEN on a tag key",
+			dslQueryToCompile:        `team BETWEEN 'a' AND 'z'`,
 			expectedErrShouldContain: "operator",
 		},
 		{

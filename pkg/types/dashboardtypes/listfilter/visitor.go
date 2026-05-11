@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/parser/filterquery"
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/antlr4-go/antlr/v4"
 )
@@ -114,8 +115,10 @@ func (v *visitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	return nil
 }
 
-// VisitComparison dispatches a single `key OP value` term to the per-key
-// emitter. It also enforces the operator allowlist.
+// VisitComparison dispatches a single `key OP value` term. A key that matches
+// a reserved DSL key (name, description, etc.) becomes a column-level
+// predicate; any other identifier is treated as a tag key — the operator
+// applies to the tag's value, with a case-insensitive match on the tag's key.
 func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 	key, ok := v.parseKey(ctx)
 	if !ok {
@@ -127,41 +130,43 @@ func (v *visitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		return nil
 	}
 
-	if _, allowed := allowedOps[key][op]; !allowed {
-		v.addErr("operator %s is not allowed for key %q", opName(op), key)
+	if reservedOpSet, isReserved := reservedOps[dashboardtypes.DSLKey(key)]; isReserved {
+		if _, allowed := reservedOpSet[op]; !allowed {
+			v.addErr("operator %s is not allowed for key %q", opName(op), key)
+			return nil
+		}
+		switch dashboardtypes.DSLKey(key) {
+		case dashboardtypes.DSLKeyName:
+			return v.emitJSONStringComparison(ctx, op, "$.data.display.name")
+		case dashboardtypes.DSLKeyDescription:
+			return v.emitJSONStringComparison(ctx, op, "$.data.display.description")
+		case dashboardtypes.DSLKeyCreatedAt:
+			return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
+		case dashboardtypes.DSLKeyUpdatedAt:
+			return v.emitTimestampComparison(ctx, op, "dashboard.updated_at")
+		case dashboardtypes.DSLKeyCreatedBy:
+			return v.emitStringComparison(ctx, op, "dashboard.created_by")
+		case dashboardtypes.DSLKeyLocked:
+			return v.emitBoolComparison(ctx, op, "dashboard.locked")
+		case dashboardtypes.DSLKeyPublic:
+			return v.emitPublicComparison(ctx, op)
+		}
+	}
+
+	if _, allowed := tagKeyOps[op]; !allowed {
+		v.addErr("operator %s is not allowed on a tag-key filter", opName(op))
 		return nil
 	}
-
-	switch key {
-	case KeyName:
-		return v.emitJSONStringComparison(ctx, op, "$.data.display.name")
-	case KeyDescription:
-		return v.emitJSONStringComparison(ctx, op, "$.data.display.description")
-	case KeyCreatedAt:
-		return v.emitTimestampComparison(ctx, op, "dashboard.created_at")
-	case KeyUpdatedAt:
-		return v.emitTimestampComparison(ctx, op, "dashboard.updated_at")
-	case KeyCreatedBy:
-		return v.emitStringComparison(ctx, op, "dashboard.created_by")
-	case KeyLocked:
-		return v.emitBoolComparison(ctx, op, "dashboard.locked")
-	case KeyPublic:
-		return v.emitPublicComparison(ctx, op)
-	case KeyTag:
-		return v.emitTagComparison(ctx, op)
-	}
-	v.addErr("unhandled key %q", key)
-	return nil
+	return v.emitTagComparison(ctx, op, key)
 }
 
-func (v *visitor) parseKey(ctx *grammar.ComparisonContext) (Key, bool) {
+func (v *visitor) parseKey(ctx *grammar.ComparisonContext) (string, bool) {
 	keyText := strings.ToLower(strings.TrimSpace(ctx.Key().GetText()))
-	k := Key(keyText)
-	if _, ok := allowedOps[k]; !ok {
-		v.addErr("unknown key %q — allowed: name, description, created_at, updated_at, created_by, locked, public, tag", keyText)
+	if keyText == "" {
+		v.addErr("filter key cannot be empty")
 		return "", false
 	}
-	return k, true
+	return keyText, true
 }
 
 func (v *visitor) opFromContext(ctx *grammar.ComparisonContext) (qbtypesv5.FilterOperator, bool) {
@@ -221,11 +226,11 @@ func (v *visitor) opFromContext(ctx *grammar.ComparisonContext) (qbtypesv5.Filte
 
 func (v *visitor) emitJSONStringComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, jsonPath string) *fragment {
 	colExpr := string(v.formatter.JSONExtractString("dashboard.data", jsonPath))
-	return v.emitStringOp(ctx, op, colExpr, string(KeyName))
+	return v.emitStringOp(ctx, op, colExpr, string(dashboardtypes.DSLKeyName))
 }
 
 func (v *visitor) emitStringComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, colExpr string) *fragment {
-	return v.emitStringOp(ctx, op, colExpr, string(KeyCreatedBy))
+	return v.emitStringOp(ctx, op, colExpr, string(dashboardtypes.DSLKeyCreatedBy))
 }
 
 // emitStringOp covers all the operators the spec allows on text-shaped keys
@@ -316,27 +321,32 @@ func (v *visitor) emitPublicComparison(ctx *grammar.ComparisonContext, op qbtype
 	return newFragment("pd.id IS NULL")
 }
 
-const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id WHERE tr.entity_id = dashboard.id"
+const tagSubqueryPrefix = "SELECT 1 FROM tag_relations tr JOIN tag t ON t.id = tr.tag_id " +
+	"WHERE tr.entity_type = 'dashboard' AND tr.entity_id = dashboard.id " +
+	"AND LOWER(t.key) = LOWER(?)"
 
 // emitTagComparison wraps the inner predicate in EXISTS (or NOT EXISTS for the
-// negated operators). The inner predicate compares against `t.name` so that
-// LIKE/ILIKE patterns the user types match the stored display casing.
-func (v *visitor) emitTagComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator) *fragment {
-	if op == qbtypesv5.FilterOperatorExists {
-		return newFragment("EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)")
-	}
-	if op == qbtypesv5.FilterOperatorNotExists {
-		return newFragment("NOT EXISTS (SELECT 1 FROM tag_relations tr WHERE tr.entity_id = dashboard.id)")
+// negated operators). The inner predicate matches the tag's key
+// case-insensitively and applies the user's operator to the tag's value.
+// EXISTS / NOT EXISTS skip the value predicate — they assert the existence
+// (or absence) of any tag with the given key.
+func (v *visitor) emitTagComparison(ctx *grammar.ComparisonContext, op qbtypesv5.FilterOperator, key string) *fragment {
+	if op == qbtypesv5.FilterOperatorExists || op == qbtypesv5.FilterOperatorNotExists {
+		wrapper := "EXISTS"
+		if op == qbtypesv5.FilterOperatorNotExists {
+			wrapper = "NOT EXISTS"
+		}
+		return newFragment(wrapper+" ("+tagSubqueryPrefix+")", key)
 	}
 
-	// All other tag operators take the positive form of the inner predicate
+	// All other tag operators take the positive form of the value predicate
 	// and toggle the EXISTS wrapper for negation. Inverse() flips Not<X> → <X>.
 	negated := op.IsNegativeOperator()
 	posOp := op
 	if negated {
 		posOp = op.Inverse()
 	}
-	inner := v.emitStringOp(ctx, posOp, "t.name", string(KeyTag))
+	inner := v.emitStringOp(ctx, posOp, "t.value", key)
 	if inner == nil {
 		return nil
 	}
@@ -344,7 +354,8 @@ func (v *visitor) emitTagComparison(ctx *grammar.ComparisonContext, op qbtypesv5
 	if negated {
 		wrapper = "NOT EXISTS"
 	}
-	return newFragment(wrapper+" ("+tagSubqueryPrefix+" AND "+inner.sql+")", inner.args...)
+	args := append([]any{key}, inner.args...)
+	return newFragment(wrapper+" ("+tagSubqueryPrefix+" AND "+inner.sql+")", args...)
 }
 
 // ─── value extraction helpers ───────────────────────────────────────────────
