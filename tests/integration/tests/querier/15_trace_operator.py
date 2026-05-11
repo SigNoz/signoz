@@ -262,7 +262,7 @@ def test_trace_operator_query_order_by_field_not_in_select_fields(
                 order=[
                     # http.method is intentionally absent from select_fields
                     OrderBy(
-                        key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="tag"),
+                        key=TelemetryFieldKey(name="http.method", field_data_type="string", field_context="attribute"),
                         direction="desc",
                     ),
                 ],
@@ -498,7 +498,7 @@ def test_trace_operator_query_order_by_non_core_field_in_select(
     http_method_field = TelemetryFieldKey(
         name="http.method",
         field_data_type="string",
-        field_context="tag",
+        field_context="attribute",
     )
 
     response = make_query_request(

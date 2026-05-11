@@ -437,11 +437,21 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		"parent_span_id": true,
 	}
 
-	// Inner SELECT: projects all needed columns from the CTE, including any
-	// ORDER BY fields not in SelectFields. ColumnExpressionFor produces
-	// `expr AS `alias`` which is fine in the SELECT list.
+	// CH 25.12.5 distributed-analyzer regression (ClickHouse/ClickHouse#103508):
+	// native columns from a Distributed-table-backed CTE get renamed col → col_0
+	// in the shard block, making them invisible to the outer SELECT/ORDER BY.
+	// Fix: rename every core field to a safe alias (_s_<col>) in the inner SELECT
+	// so the analyzer never sees the original name as an ORDER BY target. The
+	// outer SELECT re-exposes them under their original names.
+	innerCoreExprs := make([]string, len(coreFields))
+	outerCoreExprs := make([]string, len(coreFields))
+	for i, f := range coreFields {
+		innerCoreExprs[i] = fmt.Sprintf("%s AS _s_%s", f, f)
+		outerCoreExprs[i] = fmt.Sprintf("_s_%s AS %s", f, f)
+	}
+
 	innerSB := sqlbuilder.NewSelectBuilder()
-	innerSB.Select(coreFields...)
+	innerSB.Select(innerCoreExprs...)
 
 	var additionalSelectedFields []string
 	for _, field := range b.operator.SelectFields {
@@ -474,12 +484,10 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	innerSB.From(selectFromCTE)
 	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	// Outer SELECT: acts as a projection barrier so ORDER BY-only fields do not
-	// leak into the result. ORDER BY uses `alias` (no AS) to avoid the CH 25.12.5
-	// distributed-analyzer regression (ORDER BY col AS `col` inside a CTE renames
-	// the column to col_0). See ClickHouse/ClickHouse#103508.
+	// Outer SELECT: re-exposes core fields under their original names and acts as
+	// a projection barrier so ORDER BY-only fields do not leak into the result.
 	outerSB := sqlbuilder.NewSelectBuilder()
-	outerSB.Select(coreFields...)
+	outerSB.Select(outerCoreExprs...)
 	for _, name := range additionalSelectedFields {
 		outerSB.SelectMore(fmt.Sprintf("`%s`", name))
 	}
