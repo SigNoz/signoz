@@ -43,7 +43,7 @@ var Kinds = []Kind{
 	KindSpanMapper,
 	KindZeusProfile,
 	KindZeusHost,
-	KindMetric,
+	KindMetricField,
 }
 
 var (
@@ -89,5 +89,5 @@ var (
 	KindSpanMapper                   = MustNewKind("span-mapper")
 	KindZeusProfile                  = MustNewKind("zeus-profile")
 	KindZeusHost                     = MustNewKind("zeus-host")
-	KindMetric                       = MustNewKind("metric")
+	KindMetricField                  = MustNewKind("metric-field")
 )

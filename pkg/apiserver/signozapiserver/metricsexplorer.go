@@ -126,7 +126,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
 		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource:   coretypes.ResourceMetaResourceMetric,
+			Resource:   coretypes.ResourceMetaResourceMetricField,
 			Verb:       coretypes.VerbUpdate,
 			Category:   audittypes.ActionCategoryConfigurationChange,
 			ResourceID: handler.PathParam("metric_name"),

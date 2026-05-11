@@ -79,8 +79,8 @@ var Resources = []Resource{
 	ResourceMetaResourcesZeusProfile,
 	ResourceMetaResourceZeusHost,
 	ResourceMetaResourcesZeusHost,
-	ResourceMetaResourceMetric,
-	ResourceMetaResourcesMetric,
+	ResourceMetaResourceMetricField,
+	ResourceMetaResourcesMetricField,
 }
 
 var (
@@ -162,6 +162,6 @@ var (
 	ResourceMetaResourcesZeusProfile                      = NewResourceMetaResources(KindZeusProfile)
 	ResourceMetaResourceZeusHost                          = NewResourceMetaResource(KindZeusHost)
 	ResourceMetaResourcesZeusHost                         = NewResourceMetaResources(KindZeusHost)
-	ResourceMetaResourceMetric                            = NewResourceMetaResource(KindMetric)
-	ResourceMetaResourcesMetric                           = NewResourceMetaResources(KindMetric)
+	ResourceMetaResourceMetricField                       = NewResourceMetaResource(KindMetricField)
+	ResourceMetaResourcesMetricField                      = NewResourceMetaResources(KindMetricField)
 )
