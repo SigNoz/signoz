@@ -1,4 +1,4 @@
-import { ArrowRight } from '@ant-design/icons';
+import { ArrowRight } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 

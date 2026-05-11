@@ -1260,7 +1260,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>

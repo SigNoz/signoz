@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
-import { Button, Divider } from 'antd';
+import { Button, Divider, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
