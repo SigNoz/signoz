@@ -133,6 +133,12 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 			continue
 		}
 
+		if len(resolved) == 0 {
+			if _, attach := def.(handler.AttachManyAuditDef); attach {
+				middleware.logger.WarnContext(req.Context(), "audit AttachManyAuditDef resolved to zero events", slog.Int("request_body_size", len(requestBody)), slog.String("request_body_head", truncate(requestBody, 256)))
+			}
+		}
+
 		for _, r := range resolved {
 			event := audittypes.NewAuditEventFromHTTPRequest(
 				req,
@@ -250,4 +256,12 @@ func extractResourceIDs(ctx handler.ExtractorContext, extractor handler.Resource
 	}
 
 	return extractor(ctx)
+}
+
+func truncate(b []byte, n int) string {
+	if len(b) <= n {
+		return string(b)
+	}
+
+	return string(b[:n]) + "..."
 }
