@@ -23,8 +23,8 @@ func NewGetter(store retentiontypes.Store) retention.Getter {
 	}
 }
 
-// ActiveSlices loads successful TTL changes and converts them into meter windows.
-func (getter *getter) ActiveSlices(
+// GetRetentionPolicySegments loads successful TTL changes and converts them into retention policy segments.
+func (getter *getter) GetRetentionPolicySegments(
 	ctx context.Context,
 	orgID valuer.UUID,
 	dbName string,
@@ -32,7 +32,7 @@ func (getter *getter) ActiveSlices(
 	fallbackDefaultDays int,
 	startMs int64,
 	endMs int64,
-) ([]retentiontypes.Slice, error) {
+) ([]retentiontypes.RetentionPolicySegment, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
@@ -51,10 +51,10 @@ func (getter *getter) ActiveSlices(
 		return nil, err
 	}
 
-	return buildSlicesFromRows(rows, fallbackDefaultDays, startMs, endMs)
+	return buildRetentionPolicySegmentsFromRows(rows, fallbackDefaultDays, startMs, endMs)
 }
 
-func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]retentiontypes.Slice, error) {
+func buildRetentionPolicySegmentsFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays int, startMs, endMs int64) ([]retentiontypes.RetentionPolicySegment, error) {
 	if startMs >= endMs {
 		return nil, nil
 	}
@@ -78,7 +78,7 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 		return nil, err
 	}
 
-	slices := make([]retentiontypes.Slice, 0, len(inWindow)+1)
+	segments := make([]retentiontypes.RetentionPolicySegment, 0, len(inWindow)+1)
 	cursor := startMs
 	for _, row := range inWindow {
 		rowMs := row.CreatedAt.UnixMilli()
@@ -89,7 +89,7 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 			}
 			continue
 		}
-		slices = append(slices, retentiontypes.Slice{
+		segments = append(segments, retentiontypes.RetentionPolicySegment{
 			StartMs:     cursor,
 			EndMs:       rowMs,
 			Rules:       activeRules,
@@ -103,7 +103,7 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 	}
 
 	if cursor < endMs {
-		slices = append(slices, retentiontypes.Slice{
+		segments = append(segments, retentiontypes.RetentionPolicySegment{
 			StartMs:     cursor,
 			EndMs:       endMs,
 			Rules:       activeRules,
@@ -111,7 +111,7 @@ func buildSlicesFromRows(rows []*retentiontypes.TTLSetting, fallbackDefaultDays 
 		})
 	}
 
-	return slices, nil
+	return segments, nil
 }
 
 func parseTTLSetting(row *retentiontypes.TTLSetting, fallbackDefaultDays int) ([]retentiontypes.CustomRetentionRule, int, error) {

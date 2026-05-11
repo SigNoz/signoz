@@ -9,8 +9,8 @@ import (
 
 // Getter resolves retention data and expressions for read paths.
 type Getter interface {
-	// ActiveSlices returns retention rules active over a half-open meter window.
-	ActiveSlices(
+	// GetRetentionPolicySegments returns retention policy segments active over a half-open meter window.
+	GetRetentionPolicySegments(
 		ctx context.Context,
 		orgID valuer.UUID,
 		dbName string,
@@ -18,5 +18,5 @@ type Getter interface {
 		fallbackDefaultDays int,
 		startMs int64,
 		endMs int64,
-	) ([]retentiontypes.Slice, error)
+	) ([]retentiontypes.RetentionPolicySegment, error)
 }

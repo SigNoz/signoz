@@ -165,6 +165,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		},
 		func(ctx context.Context, providerSettings factory.ProviderSettings, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
+
+			evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})
+			if !flagger.BooleanOrEmpty(ctx, pkgflagger.FeatureUseMeterReporter, evalCtx) {
+				return factories, "noop"
+			}
+
 			collectors, err := newMeterCollectors(ctx, providerSettings, telemetryStore, retentionGetter)
 			if err != nil {
 				panic(err)
@@ -173,12 +179,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				panic(err)
 			}
 
-			evalCtx := featuretypes.NewFlaggerEvaluationContext(valuer.UUID{})
-			if flagger.BooleanOrEmpty(ctx, pkgflagger.FeatureUseMeterReporter, evalCtx) {
-				return factories, "http"
-			}
-
-			return factories, "noop"
+			return factories, "http"
 		},
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			communityHandler := querier.NewHandler(ps, q, a)

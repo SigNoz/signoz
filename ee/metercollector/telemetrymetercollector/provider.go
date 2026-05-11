@@ -68,9 +68,11 @@ func newProvider(
 	}
 }
 
-func (provider *Provider) Name() zeustypes.MeterName               { return provider.config.Name }
-func (provider *Provider) Unit() zeustypes.MeterUnit               { return provider.config.Unit }
-func (provider *Provider) Aggregation() zeustypes.MeterAggregation { return provider.config.Aggregation }
+func (provider *Provider) Name() zeustypes.MeterName { return provider.config.Name }
+func (provider *Provider) Unit() zeustypes.MeterUnit { return provider.config.Unit }
+func (provider *Provider) Aggregation() zeustypes.MeterAggregation {
+	return provider.config.Aggregation
+}
 
 func (provider *Provider) Origin(ctx context.Context, _ valuer.UUID, todayStart time.Time) (time.Time, error) {
 	query, args := buildOriginQuery(provider.config.Name.String())
@@ -95,7 +97,7 @@ func (provider *Provider) Collect(
 ) ([]zeustypes.Meter, error) {
 	meterName := provider.config.Name.String()
 
-	slices, err := provider.retentionGetter.ActiveSlices(
+	segments, err := provider.retentionGetter.GetRetentionPolicySegments(
 		ctx,
 		orgID,
 		provider.config.DBName,
@@ -105,20 +107,20 @@ func (provider *Provider) Collect(
 		window.EndUnixMilli,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "load retention slices for meter %q", meterName)
+		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "load retention policy segments for meter %q", meterName)
 	}
 
 	valuesByRetentionDays := make(map[int]int64)
 
-	for _, slice := range slices {
-		query, args, err := buildQuery(meterName, slice)
+	for _, segment := range segments {
+		query, args, err := buildQuery(meterName, segment)
 		if err != nil {
 			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "build retention query for meter %q", meterName)
 		}
 
 		rows, err := provider.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "query meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "query meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
 		}
 
 		if err := func() error {
@@ -128,13 +130,13 @@ func (provider *Provider) Collect(
 				var value int64
 
 				if err := rows.Scan(&retentionDays, &value); err != nil {
-					return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "scan meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+					return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "scan meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
 				}
 
 				valuesByRetentionDays[int(retentionDays)] += value
 			}
 			if err := rows.Err(); err != nil {
-				return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "iterate meter %q slice [%d, %d)", meterName, slice.StartMs, slice.EndMs)
+				return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "iterate meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
 			}
 			return nil
 		}(); err != nil {
@@ -148,8 +150,8 @@ func (provider *Provider) Collect(
 	}
 
 	// Empty windows still emit a sentinel so checkpoints can advance.
-	if len(meters) == 0 && len(slices) > 0 {
-		meters = append(meters, zeustypes.NewMeter(provider.config.Name, 0, provider.config.Unit, provider.config.Aggregation, window, buildDimensions(orgID, slices[len(slices)-1].DefaultDays)))
+	if len(meters) == 0 && len(segments) > 0 {
+		meters = append(meters, zeustypes.NewMeter(provider.config.Name, 0, provider.config.Unit, provider.config.Aggregation, window, buildDimensions(orgID, segments[len(segments)-1].DefaultDays)))
 	}
 
 	return meters, nil
@@ -163,8 +165,8 @@ func buildOriginQuery(meterName string) (string, []any) {
 	return sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 }
 
-func buildQuery(meterName string, slice retentiontypes.Slice) (string, []any, error) {
-	retentionExpr, err := buildRetentionMultiIfSQL(slice.Rules, slice.DefaultDays)
+func buildQuery(meterName string, segment retentiontypes.RetentionPolicySegment) (string, []any, error) {
+	retentionExpr, err := buildRetentionMultiIfSQL(segment.Rules, segment.DefaultDays)
 	if err != nil {
 		return "", nil, err
 	}
@@ -179,8 +181,8 @@ func buildQuery(meterName string, slice retentiontypes.Slice) (string, []any, er
 	sb.From(telemetrymeter.DBName + "." + telemetrymeter.SamplesTableName)
 	sb.Where(
 		sb.Equal("metric_name", meterName),
-		sb.GTE("unix_milli", slice.StartMs),
-		sb.LT("unix_milli", slice.EndMs),
+		sb.GTE("unix_milli", segment.StartMs),
+		sb.LT("unix_milli", segment.EndMs),
 	)
 	sb.GroupBy("retention_days")
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

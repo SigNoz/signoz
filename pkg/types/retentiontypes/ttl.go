@@ -25,8 +25,8 @@ const (
 	TTLSettingStatusSuccess = "success"
 )
 
-// Slice is a half-open time range using one TTL recipe.
-type Slice struct {
+// RetentionPolicySegment is a half-open time range using one retention policy.
+type RetentionPolicySegment struct {
 	StartMs     int64
 	EndMs       int64
 	Rules       []CustomRetentionRule

@@ -1,18 +1,16 @@
 package implretention
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildSlicesFromRows(t *testing.T) {
+func TestBuildRetentionPolicySegmentsFromRows(t *testing.T) {
 	start := time.Date(2026, 5, 4, 0, 0, 0, 0, time.UTC)
 	end := start.AddDate(0, 0, 1)
 
@@ -26,7 +24,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 	}
 
 	t.Run("row before window is active at start", func(t *testing.T) {
-		slices, err := buildSlicesFromRows(
+		segments, err := buildRetentionPolicySegmentsFromRows(
 			[]*retentiontypes.TTLSetting{
 				ttlSetting(t, start.Add(-time.Hour), 45, []retentiontypes.CustomRetentionRule{ruleA}),
 			},
@@ -35,19 +33,19 @@ func TestBuildSlicesFromRows(t *testing.T) {
 			end.UnixMilli(),
 		)
 		require.NoError(t, err)
-		require.Equal(t, []retentiontypes.Slice{{
+		require.Equal(t, []retentiontypes.RetentionPolicySegment{{
 			StartMs:     start.UnixMilli(),
 			EndMs:       end.UnixMilli(),
 			Rules:       []retentiontypes.CustomRetentionRule{ruleA},
 			DefaultDays: 45,
-		}}, slices)
+		}}, segments)
 	})
 
-	t.Run("row inside window splits slices", func(t *testing.T) {
+	t.Run("row inside window splits segments", func(t *testing.T) {
 		firstChange := start.Add(6 * time.Hour)
 		secondChange := start.Add(18 * time.Hour)
 
-		slices, err := buildSlicesFromRows(
+		segments, err := buildRetentionPolicySegmentsFromRows(
 			[]*retentiontypes.TTLSetting{
 				ttlSetting(t, firstChange, 21, []retentiontypes.CustomRetentionRule{ruleA}),
 				ttlSetting(t, secondChange, 14, []retentiontypes.CustomRetentionRule{ruleB}),
@@ -57,7 +55,7 @@ func TestBuildSlicesFromRows(t *testing.T) {
 			end.UnixMilli(),
 		)
 		require.NoError(t, err)
-		require.Equal(t, []retentiontypes.Slice{
+		require.Equal(t, []retentiontypes.RetentionPolicySegment{
 			{
 				StartMs:     start.UnixMilli(),
 				EndMs:       firstChange.UnixMilli(),
@@ -75,17 +73,17 @@ func TestBuildSlicesFromRows(t *testing.T) {
 				Rules:       []retentiontypes.CustomRetentionRule{ruleB},
 				DefaultDays: 14,
 			},
-		}, slices)
+		}, segments)
 	})
 
 	t.Run("no rows uses fallback", func(t *testing.T) {
-		slices, err := buildSlicesFromRows(nil, 30, start.UnixMilli(), end.UnixMilli())
+		segments, err := buildRetentionPolicySegmentsFromRows(nil, 30, start.UnixMilli(), end.UnixMilli())
 		require.NoError(t, err)
-		require.Equal(t, []retentiontypes.Slice{{
+		require.Equal(t, []retentiontypes.RetentionPolicySegment{{
 			StartMs:     start.UnixMilli(),
 			EndMs:       end.UnixMilli(),
 			DefaultDays: 30,
-		}}, slices)
+		}}, segments)
 	})
 }
 
@@ -102,10 +100,4 @@ func ttlSetting(t *testing.T, createdAt time.Time, ttlDays int, rules []retentio
 		TTL:       ttlDays,
 		Condition: string(condition),
 	}
-}
-
-type noopStore struct{}
-
-func (noopStore) ListTTLSettings(context.Context, valuer.UUID, string, int64) ([]*retentiontypes.TTLSetting, error) {
-	return nil, nil
 }
