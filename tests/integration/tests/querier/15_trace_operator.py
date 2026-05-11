@@ -413,12 +413,8 @@ def test_trace_operator_query_order_by_select_field(
 
     assert len(rows) == 2
     # DESC: 5 s parent first, 1 s parent second
-    assert rows[0]["data"]["name"] == "parent-long", (
-        f"Expected parent-long (5s) first in duration_nano DESC, got {rows[0]['data']['name']}"
-    )
-    assert rows[1]["data"]["name"] == "parent-short", (
-        f"Expected parent-short (1s) second in duration_nano DESC, got {rows[1]['data']['name']}"
-    )
+    assert rows[0]["data"]["name"] == "parent-long", f"Expected parent-long (5s) first in duration_nano DESC, got {rows[0]['data']['name']}"
+    assert rows[1]["data"]["name"] == "parent-short", f"Expected parent-short (1s) second in duration_nano DESC, got {rows[1]['data']['name']}"
 
 
 def test_trace_operator_query_order_by_non_core_field_in_select(
@@ -555,9 +551,5 @@ def test_trace_operator_query_order_by_non_core_field_in_select(
     for row in rows:
         assert "http.method" in row["data"], f"http.method missing from row: {row['data']}"
     # DESC: POST before GET
-    assert rows[0]["data"]["http.method"] == "POST", (
-        f"Expected POST first in http.method DESC, got {rows[0]['data']['http.method']}"
-    )
-    assert rows[1]["data"]["http.method"] == "GET", (
-        f"Expected GET second in http.method DESC, got {rows[1]['data']['http.method']}"
-    )
+    assert rows[0]["data"]["http.method"] == "POST", f"Expected POST first in http.method DESC, got {rows[0]['data']['http.method']}"
+    assert rows[1]["data"]["http.method"] == "GET", f"Expected GET second in http.method DESC, got {rows[1]['data']['http.method']}"
