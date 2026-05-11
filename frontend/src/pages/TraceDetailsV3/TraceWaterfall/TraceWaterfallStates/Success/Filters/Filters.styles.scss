@@ -118,9 +118,10 @@
 		flex-shrink: 0;
 		gap: 12px;
 
-		.ant-typography {
+		&__count {
 			display: flex;
 			align-items: center;
+			margin: auto;
 			color: var(--l2-foreground);
 			font-family: 'Geist Mono';
 			font-size: 12px;
@@ -136,14 +137,20 @@
 		}
 	}
 
-	.no-results {
+	.filter-status {
 		display: flex;
 		align-items: center;
+		gap: 6px;
 		flex-shrink: 0;
 		color: var(--l2-foreground);
 		font-family: 'Geist Mono';
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 18px;
+
+		&--error {
+			color: var(--destructive);
+			cursor: help;
+		}
 	}
 }

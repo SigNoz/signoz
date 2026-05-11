@@ -216,6 +216,13 @@ function Filters({
 					setCurrentSearchedIndex(0);
 				}
 			},
+			onError: () => {
+				const isFilterActive = filters.items.length > 0;
+				setNoData(false);
+				setFilteredSpanIds([]);
+				onFilteredSpansChange?.([], isFilterActive);
+				setCurrentSearchedIndex(0);
+			},
 		},
 	);
 
@@ -235,11 +242,16 @@ function Filters({
 			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
 			{error && (
 				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
-					<InfoCircleOutlined size={14} />
+					<span className="filter-status filter-status--error">
+						<InfoCircleOutlined />
+						API error
+					</span>
 				</Tooltip>
 			)}
-			{noData && (
-				<Typography.Text className="no-results">No results found</Typography.Text>
+			{!error && noData && (
+				<Typography.Text className="filter-status">
+					No results found
+				</Typography.Text>
 			)}
 		</>
 	);
@@ -332,7 +344,7 @@ function Filters({
 			</div>
 			{filteredSpanIds.length > 0 && (
 				<div className="pre-next-toggle">
-					<Typography.Text>
+					<Typography.Text className="pre-next-toggle__count">
 						{currentSearchedIndex + 1} / {filteredSpanIds.length}
 					</Typography.Text>
 					<Button
