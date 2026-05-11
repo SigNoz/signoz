@@ -10,6 +10,7 @@ export {
 	STATE_LABELS,
 	STATE_COLORS,
 	SEVERITY_COLORS,
+	SEVERITY_BADGE_COLORS,
 } from './constants';
 export type { FilterValue, AlertStatsBase, AlertWithLabels } from './types';
 export {
