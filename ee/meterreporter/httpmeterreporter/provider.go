@@ -134,40 +134,43 @@ func (provider *Provider) Healthy() <-chan struct{} {
 }
 
 func (provider *Provider) collectOrg(ctx context.Context, org *types.Organization, license *licensetypes.License) error {
-	checkpointsByMeter, err := provider.checkpoints(ctx, license.Key)
-	if err != nil {
-		return err
-	}
-
 	now := time.Now().UTC()
 	// Use one timestamp so a tick cannot straddle midnight.
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	nextByCollector, err := provider.nextDays(ctx, org.ID, license, todayStart, checkpointsByMeter)
-	if err != nil {
-		return err
-	}
-
-	start, end := backfillRange(nextByCollector, todayStart, provider.config.MaxBackfillDays)
-
-	for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
-		eligible := eligibleCollectors(provider.collectorsByName, nextByCollector, day)
-		if len(eligible) == 0 {
-			continue
-		}
-
-		window, err := zeustypes.NewMeterWindow(day.UnixMilli(), day.AddDate(0, 0, 1).UnixMilli(), true)
+	if provider.config.Backfill {
+		checkpointsByMeter, err := provider.checkpoints(ctx, license.Key)
 		if err != nil {
 			return err
 		}
 
-		if err := provider.report(ctx, org.ID, license, window, eligible); err != nil {
-			provider.settings.Logger().WarnContext(ctx, "failed to backfill for day", errors.Attr(err), slog.String("date", day.Format("2006-01-02")))
+		nextByCollector, err := provider.nextDays(ctx, org.ID, license, todayStart, checkpointsByMeter)
+		if err != nil {
 			return err
+		}
+
+		start, end, ok := backfillRange(nextByCollector, todayStart)
+		if ok {
+			for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
+				eligible := eligibleCollectors(provider.collectorsByName, nextByCollector, day)
+				if len(eligible) == 0 {
+					continue
+				}
+
+				window, err := zeustypes.NewMeterWindow(day.UnixMilli(), day.AddDate(0, 0, 1).UnixMilli(), true)
+				if err != nil {
+					return err
+				}
+
+				if err := provider.report(ctx, org.ID, license, window, eligible); err != nil {
+					provider.settings.Logger().WarnContext(ctx, "failed to backfill for day", errors.Attr(err), slog.String("date", day.Format("2006-01-02")))
+					return err
+				}
+			}
 		}
 	}
 
-	// Today's partial window: every collector is always eligible (next ≤ today).
+	// Today's partial window: every collector is always eligible (next <= today).
 	if now.UnixMilli() > todayStart.UnixMilli() {
 		todayWindow, err := zeustypes.NewMeterWindow(todayStart.UnixMilli(), now.UnixMilli(), false)
 		if err != nil {
@@ -199,6 +202,8 @@ func (provider *Provider) checkpoints(ctx context.Context, licenseKey string) (m
 
 func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, todayStart time.Time, checkpointsByMeter map[string]time.Time) (map[zeustypes.MeterName]time.Time, error) {
 	nextByCollector := make(map[zeustypes.MeterName]time.Time, len(provider.collectorsByName))
+	licenseCreatedAt := license.CreatedAt.UTC()
+	licenseCreatedAtDay := time.Date(licenseCreatedAt.Year(), licenseCreatedAt.Month(), licenseCreatedAt.Day(), 0, 0, 0, 0, time.UTC)
 
 	for _, collector := range provider.collectorsByName {
 		origin, err := collector.Origin(ctx, orgID, license, todayStart)
@@ -208,27 +213,30 @@ func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, licen
 		}
 
 		checkpoint, hasCheckpoint := checkpointsByMeter[collector.Name().String()]
-		nextByCollector[collector.Name()] = nextReportableDay(origin, todayStart, checkpoint, hasCheckpoint)
+		nextByCollector[collector.Name()] = nextReportableDay(origin, licenseCreatedAtDay, todayStart, checkpoint, hasCheckpoint)
 	}
 
 	return nextByCollector, nil
 }
 
-func nextReportableDay(origin time.Time, todayStart time.Time, checkpoint time.Time, hasCheckpoint bool) time.Time {
+func nextReportableDay(origin time.Time, licenseCreatedAtDay time.Time, todayStart time.Time, checkpoint time.Time, hasCheckpoint bool) time.Time {
+	var next time.Time
 	if hasCheckpoint {
-		next := checkpoint.AddDate(0, 0, 1)
+		next = checkpoint.AddDate(0, 0, 1)
 		if !origin.IsZero() && origin.After(next) {
-			return origin
+			next = origin
 		}
-
-		return next
+	} else if origin.IsZero() {
+		next = todayStart
+	} else {
+		next = origin
 	}
 
-	if origin.IsZero() {
-		return todayStart
+	if !licenseCreatedAtDay.IsZero() && licenseCreatedAtDay.After(next) {
+		return licenseCreatedAtDay
 	}
 
-	return origin
+	return next
 }
 
 func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, window zeustypes.MeterWindow, collectors map[zeustypes.MeterName]metercollector.MeterCollector) error {
@@ -269,29 +277,24 @@ func (provider *Provider) report(ctx context.Context, orgID valuer.UUID, license
 	return nil
 }
 
-// backfillRange returns the inclusive [start, end] sealed-day range:
-// start is min(nextByCollector) clamped up to yesterday; end is start + maxDays-1
-// clamped to yesterday.
-func backfillRange(nextByCollector map[zeustypes.MeterName]time.Time, todayStart time.Time, maxDays int) (start, end time.Time) {
+// backfillRange returns the inclusive sealed-day range ending at yesterday.
+func backfillRange(nextByCollector map[zeustypes.MeterName]time.Time, todayStart time.Time) (start, end time.Time, ok bool) {
 	yesterday := todayStart.AddDate(0, 0, -1)
 
-	start = todayStart
 	for _, next := range nextByCollector {
-		if next.Before(start) {
+		if !next.Before(todayStart) {
+			continue
+		}
+		if start.IsZero() || next.Before(start) {
 			start = next
 		}
 	}
 
-	if start.After(yesterday) {
-		start = yesterday
+	if start.IsZero() || start.After(yesterday) {
+		return time.Time{}, time.Time{}, false
 	}
 
-	end = start.AddDate(0, 0, maxDays-1)
-	if end.After(yesterday) {
-		end = yesterday
-	}
-
-	return start, end
+	return start, yesterday, true
 }
 
 func eligibleCollectors(collectors map[zeustypes.MeterName]metercollector.MeterCollector, nextByCollector map[zeustypes.MeterName]time.Time, day time.Time) map[zeustypes.MeterName]metercollector.MeterCollector {

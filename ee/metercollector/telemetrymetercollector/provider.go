@@ -243,10 +243,10 @@ func buildRuleConditionSQL(ruleIndex int, rule retentiontypes.CustomRetentionRul
 }
 
 func buildDimensions(orgID valuer.UUID, retentionDays int) map[string]string {
-	retentionDuration := time.Duration(retentionDays) * 24 * time.Hour // nanoseconds
+	retentionDurationSeconds := int64(retentionDays) * 24 * 60 * 60 // seconds
 
 	return zeustypes.NewDimensions(
 		zeustypes.OrganizationID.String(orgID.StringValue()),
-		zeustypes.RetentionDuration.String(strconv.FormatInt(int64(retentionDuration), 10)),
+		zeustypes.RetentionDuration.String(strconv.FormatInt(retentionDurationSeconds, 10)),
 	)
 }

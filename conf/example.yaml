@@ -434,5 +434,5 @@ authz:
 meterreporter:
   # The interval between collection ticks. Minimum 5m.
   interval: 6h
-  # The per-tick timeout that bounds collect-and-ship work. Minimum 3m and must be less than interval.
-  timeout: 5m
+  # Whether to backfill sealed days from the license creation day.
+  backfill: true
