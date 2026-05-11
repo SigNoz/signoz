@@ -95,5 +95,6 @@ func (provider *provider) Stop(ctx context.Context) error {
 	if serverErr != nil {
 		return serverErr
 	}
+
 	return fileErr
 }

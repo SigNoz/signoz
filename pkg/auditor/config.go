@@ -48,8 +48,6 @@ type OTLPHTTPConfig struct {
 	Retry RetryConfig `mapstructure:"retry"`
 }
 
-// FileConfig holds configuration for the file exporter provider.
-// Audit events are encoded as OTLP-JSON log records and appended to the file.
 type FileConfig struct {
 	// Path is the absolute path to the audit log file. The file is opened with
 	// O_APPEND|O_CREATE|O_WRONLY; existing contents are preserved across runs.
