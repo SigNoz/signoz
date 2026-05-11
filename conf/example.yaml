@@ -428,4 +428,4 @@ authz:
   provider: openfga
   openfga:
     # maximum tuples allowed per openfga write operation.
-    max_tuples_per_write: 100
+    max_tuples_per_write: 300

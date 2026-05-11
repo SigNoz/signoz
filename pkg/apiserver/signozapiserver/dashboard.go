@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -13,7 +14,7 @@ import (
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authZ.EditAccess(provider.dashboardHandler.CreateV2), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/dashboards", handler.New(provider.authzMiddleware.EditAccess(provider.dashboardHandler.CreateV2), handler.OpenAPIDef{
 		ID:                  "CreateDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create dashboard (v2)",
@@ -30,7 +31,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authZ.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
+	if err := router.Handle("/api/v2/dashboards/{id}", handler.New(provider.authzMiddleware.ViewAccess(provider.dashboardHandler.GetV2), handler.OpenAPIDef{
 		ID:                  "GetDashboardV2",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get dashboard (v2)",
@@ -47,7 +48,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
 		ID:                  "CreatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Create public dashboard",
@@ -64,7 +65,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.GetPublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.GetPublic), handler.OpenAPIDef{
 		ID:                  "GetPublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Get public dashboard",
@@ -81,7 +82,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
 		ID:                  "UpdatePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Update public dashboard",
@@ -98,7 +99,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authZ.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
 		ID:                  "DeletePublicDashboard",
 		Tags:                []string{"dashboard"},
 		Summary:             "Delete public dashboard",
@@ -115,11 +116,11 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authZ.CheckWithoutClaims(
+	if err := router.Handle("/api/v1/public/dashboards/{id}", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicData,
-		authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
 				return nil, valuer.UUID{}, err
@@ -138,16 +139,16 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authZ.CheckWithoutClaims(
+	if err := router.Handle("/api/v1/public/dashboards/{id}/widgets/{idx}/query_range", handler.New(provider.authzMiddleware.CheckWithoutClaims(
 		provider.dashboardHandler.GetPublicWidgetQueryRange,
-		authtypes.RelationRead,
-		dashboardtypes.TypeableMetaResourcePublicDashboard,
-		func(req *http.Request, orgs []*types.Organization) ([]authtypes.Selector, valuer.UUID, error) {
+		authtypes.Relation{Verb: coretypes.VerbRead},
+		coretypes.ResourceMetaResourcePublicDashboard,
+		func(req *http.Request, orgs []*types.Organization) ([]coretypes.Selector, valuer.UUID, error) {
 			id, err := valuer.NewUUID(mux.Vars(req)["id"])
 			if err != nil {
 				return nil, valuer.UUID{}, err
@@ -166,7 +167,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newAnonymousSecuritySchemes([]string{dashboardtypes.TypeableMetaResourcePublicDashboard.Scope(authtypes.RelationRead)}),
+		SecuritySchemes:     newAnonymousSecuritySchemes([]string{coretypes.ResourceMetaResourcePublicDashboard.Scope(coretypes.VerbRead)}),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

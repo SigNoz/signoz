@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -15,7 +17,6 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"log/slog"
 )
 
 func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
@@ -137,4 +138,3 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 		aH.QueryRangeV4(w, r)
 	}
 }
-
