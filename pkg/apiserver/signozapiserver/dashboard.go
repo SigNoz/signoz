@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -14,20 +15,29 @@ import (
 )
 
 func (provider *provider) addDashboardRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic), handler.OpenAPIDef{
-		ID:                  "CreatePublicDashboard",
-		Tags:                []string{"dashboard"},
-		Summary:             "Create public dashboard",
-		Description:         "This endpoint creates public sharing config and enables public sharing of the dashboard",
-		Request:             new(dashboardtypes.PostablePublicDashboard),
-		RequestContentType:  "",
-		Response:            new(types.Identifiable),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.dashboardHandler.CreatePublic),
+		handler.OpenAPIDef{
+			ID:                  "CreatePublicDashboard",
+			Tags:                []string{"dashboard"},
+			Summary:             "Create public dashboard",
+			Description:         "This endpoint creates public sharing config and enables public sharing of the dashboard",
+			Request:             new(dashboardtypes.PostablePublicDashboard),
+			RequestContentType:  "",
+			Response:            new(types.Identifiable),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusCreated,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcesPublicDashboard,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
@@ -48,37 +58,55 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublic), handler.OpenAPIDef{
-		ID:                  "UpdatePublicDashboard",
-		Tags:                []string{"dashboard"},
-		Summary:             "Update public dashboard",
-		Description:         "This endpoint updates the public sharing config for a dashboard",
-		Request:             new(dashboardtypes.UpdatablePublicDashboard),
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.dashboardHandler.UpdatePublic),
+		handler.OpenAPIDef{
+			ID:                  "UpdatePublicDashboard",
+			Tags:                []string{"dashboard"},
+			Summary:             "Update public dashboard",
+			Description:         "This endpoint updates the public sharing config for a dashboard",
+			Request:             new(dashboardtypes.UpdatablePublicDashboard),
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcePublicDashboard,
+			Verb:       coretypes.VerbUpdate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(provider.authzMiddleware.AdminAccess(provider.dashboardHandler.DeletePublic), handler.OpenAPIDef{
-		ID:                  "DeletePublicDashboard",
-		Tags:                []string{"dashboard"},
-		Summary:             "Delete public dashboard",
-		Description:         "This endpoint deletes the public sharing config and disables the public sharing of a dashboard",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
+	if err := router.Handle("/api/v1/dashboards/{id}/public", handler.New(
+		provider.authzMiddleware.AdminAccess(provider.dashboardHandler.DeletePublic),
+		handler.OpenAPIDef{
+			ID:                  "DeletePublicDashboard",
+			Tags:                []string{"dashboard"},
+			Summary:             "Delete public dashboard",
+			Description:         "This endpoint deletes the public sharing config and disables the public sharing of a dashboard",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            nil,
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusNoContent,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+		handler.WithAuditDef(handler.BasicAuditDef{
+			Resource:   coretypes.ResourceMetaResourcePublicDashboard,
+			Verb:       coretypes.VerbDelete,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.PathParam("id"),
+		}),
+	)).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
 
