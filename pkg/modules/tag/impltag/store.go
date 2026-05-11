@@ -54,8 +54,8 @@ func (s *store) ListByEntities(ctx context.Context, entityType tagtypes.EntityTy
 	}
 
 	type joinedRow struct {
-		tagtypes.Tag
-		EntityID valuer.UUID `bun:"entity_id"`
+		tagtypes.Tag `bun:",extend"`
+		EntityID     valuer.UUID `bun:"entity_id"`
 	}
 
 	rows := make([]*joinedRow, 0)
