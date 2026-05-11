@@ -116,7 +116,6 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
-		Where("deleted_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -125,7 +124,7 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 	if err != nil {
 		return err
 	}
-	// Defends against the race where a soft-delete lands between the caller's
+	// Defends against the race where a delete lands between the caller's
 	// pre-update GetV2 and this update.
 	if rows == 0 {
 		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)

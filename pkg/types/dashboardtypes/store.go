@@ -38,8 +38,5 @@ type Store interface {
 	// ════════════════════════════════════════════════════════════════════════
 	GetV2(context.Context, valuer.UUID, valuer.UUID) (*StorableDashboard, *StorablePublicDashboard, error)
 
-	// UpdateV2 updates the dashboard's data, updated_at and updated_by columns
-	// only, scoped by org and excluding soft-deleted rows. Uses the caller's
-	// transaction context so it can be made atomic with tag relation changes.
 	UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data StorableDashboardData) error
 }
