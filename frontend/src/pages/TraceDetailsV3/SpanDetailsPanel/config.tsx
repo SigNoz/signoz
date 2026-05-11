@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { Badge } from '@signozhq/ui/badge';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
+
+import { TraceIdField } from './TraceIdField';
 
 interface HighlightedOption {
 	key: string;
@@ -33,17 +34,7 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		key: 'traceId',
 		label: 'TRACE ID',
 		render: (span): ReactNode | null =>
-			span.trace_id ? (
-				<Link
-					to={{
-						pathname: `/trace/${span.trace_id}`,
-						search: window.location.search,
-					}}
-					className="span-details-panel__trace-id"
-				>
-					{span.trace_id}
-				</Link>
-			) : null,
+			span.trace_id ? <TraceIdField span={span} /> : null,
 	},
 	{
 		key: 'spanKind',
