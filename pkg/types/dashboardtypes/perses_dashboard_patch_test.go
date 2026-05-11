@@ -94,7 +94,7 @@ const basePostableJSON = `{
 		],
 		"duration": "1h"
 	},
-	"tags": [{"name": "team/alpha"}, {"name": "env/prod"}]
+	"tags": [{"key": "team", "value": "alpha"}, {"key": "env", "value": "prod"}]
 }`
 
 func TestPatchableDashboardV2_Apply(t *testing.T) {
@@ -107,8 +107,8 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		Info: DashboardInfo{
 			StoredDashboardInfo: p.StoredDashboardInfo,
 			Tags: []*tagtypes.Tag{
-				{Name: "team/alpha", InternalName: "team::alpha"},
-				{Name: "env/prod", InternalName: "env::prod"},
+				{Key: "team", Value: "alpha"},
+				{Key: "env", Value: "prod"},
 			},
 		},
 	}
@@ -359,10 +359,11 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 	})
 
 	t.Run("append tag", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"name": "env/staging"}}]`).Apply(base)
+		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"key": "env", "value": "staging"}}]`).Apply(base)
 		require.NoError(t, err)
 		require.Len(t, out.Tags, 3)
-		assert.Equal(t, "env/staging", out.Tags[2].Name)
+		assert.Equal(t, "env", out.Tags[2].Key)
+		assert.Equal(t, "staging", out.Tags[2].Value)
 	})
 
 	t.Run("append tag when none exist", func(t *testing.T) {
@@ -372,20 +373,23 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 				Tags:                nil,
 			},
 		}
-		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"name": "team/new"}}]`).Apply(noTagsBase)
+		out, err := decode(t, `[{"op": "add", "path": "/tags/-", "value": {"key": "team", "value": "new"}}]`).Apply(noTagsBase)
 		require.NoError(t, err)
 		require.Len(t, out.Tags, 1)
-		assert.Equal(t, "team/new", out.Tags[0].Name)
+		assert.Equal(t, "team", out.Tags[0].Key)
+		assert.Equal(t, "new", out.Tags[0].Value)
 	})
 
-	t.Run("replace tag name", func(t *testing.T) {
-		out, err := decode(t, `[{"op": "replace", "path": "/tags/0/name", "value": "team/beta"}]`).Apply(base)
+	t.Run("replace tag value", func(t *testing.T) {
+		out, err := decode(t, `[{"op": "replace", "path": "/tags/0/value", "value": "beta"}]`).Apply(base)
 		require.NoError(t, err)
 		require.Len(t, out.Tags, 2)
-		assert.Equal(t, "team/beta", out.Tags[0].Name)
-		assert.Equal(t, "env/prod", out.Tags[1].Name, "tag at index 1 untouched")
+		assert.Equal(t, "team", out.Tags[0].Key)
+		assert.Equal(t, "beta", out.Tags[0].Value)
+		assert.Equal(t, "env", out.Tags[1].Key, "tag at index 1 untouched")
+		assert.Equal(t, "prod", out.Tags[1].Value, "tag at index 1 untouched")
 		for _, tag := range out.Tags {
-			assert.NotEqual(t, "team/alpha", tag.Name, "old tag name must be gone")
+			assert.NotEqual(t, "alpha", tag.Value, "old tag value must be gone")
 		}
 	})
 
@@ -393,7 +397,7 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 		out, err := decode(t, `[
 			{"op": "replace", "path": "/data/display/name", "value": "Multi-step"},
 			{"op": "remove",  "path": "/data/panels/p2"},
-			{"op": "add",     "path": "/tags/-", "value": {"name": "env/staging"}}
+			{"op": "add",     "path": "/tags/-", "value": {"key": "env", "value": "staging"}}
 		]`).Apply(base)
 		require.NoError(t, err)
 		assert.Equal(t, "Multi-step", out.Data.Display.Name)
@@ -537,10 +541,10 @@ func TestPatchableDashboardV2_Apply(t *testing.T) {
 
 	t.Run("too many tags rejected", func(t *testing.T) {
 		_, err := decode(t, `[
-			{"op": "add", "path": "/tags/-", "value": {"name": "t1"}},
-			{"op": "add", "path": "/tags/-", "value": {"name": "t2"}},
-			{"op": "add", "path": "/tags/-", "value": {"name": "t3"}},
-			{"op": "add", "path": "/tags/-", "value": {"name": "t4"}}
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "1"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "2"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "3"}},
+			{"op": "add", "path": "/tags/-", "value": {"key": "t", "value": "4"}}
 		]`).Apply(base)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "at most")
