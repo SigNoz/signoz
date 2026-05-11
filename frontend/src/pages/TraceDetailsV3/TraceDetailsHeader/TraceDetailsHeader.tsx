@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
+import setLocalStorageKey from 'api/browser/localstorage/set';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
@@ -54,6 +56,7 @@ function TraceDetailsHeader({
 	const { previewFields, setPreviewFields } = useTraceContext();
 
 	const handleSwitchToOldView = useCallback((): void => {
+		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
 		const oldUrl = `/trace-old/${traceID}${window.location.search}`;
 		history.replace(oldUrl);
 	}, [traceID]);

@@ -1,8 +1,12 @@
 import { useMemo } from 'react';
-import { Button, Skeleton, Tooltip } from 'antd';
+import { useRouteMatch } from 'react-router-dom';
+import { Skeleton, Tooltip } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
+import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import history from 'lib/history';
@@ -60,11 +64,27 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		}
 	};
 
+	const isOnOldRoute = !!useRouteMatch({
+		path: ROUTES.TRACE_DETAIL_OLD,
+		exact: true,
+	});
+
+	const handleSwitchToNewView = (): void => {
+		removeLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW);
+		history.replace(`/trace/${traceID}${window.location.search}`);
+	};
+
 	return (
 		<div className="trace-metadata">
 			<section className="metadata-info">
 				<div className="first-row">
-					<Button className="previous-btn" onClick={handlePreviousBtnClick}>
+					<Button
+						variant="solid"
+						color="secondary"
+						size="icon"
+						className="previous-btn"
+						onClick={handlePreviousBtnClick}
+					>
 						<ArrowLeft size={14} />
 					</Button>
 					<div className="trace-name">
@@ -72,6 +92,17 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 						<Typography.Text className="trace-id">Trace ID</Typography.Text>
 					</div>
 					<Typography.Text className="trace-id-value">{traceID}</Typography.Text>
+					{isOnOldRoute && (
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							className="new-view-btn"
+							onClick={handleSwitchToNewView}
+						>
+							New view
+						</Button>
+					)}
 				</div>
 
 				{isDataLoading && (
