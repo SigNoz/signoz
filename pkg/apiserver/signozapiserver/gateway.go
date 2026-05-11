@@ -65,9 +65,10 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
 		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourcesIngestionKey,
-			Verb:     coretypes.VerbCreate,
-			Category: audittypes.ActionCategoryConfigurationChange,
+			Resource:   coretypes.ResourceMetaResourcesIngestionKey,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.ResponseJSONPath("data.id"),
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -141,12 +142,22 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource:   coretypes.ResourceMetaResourcesIngestionLimit,
-			Verb:       coretypes.VerbCreate,
-			Category:   audittypes.ActionCategoryConfigurationChange,
-			ResourceID: handler.PathParam("keyId"),
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesIngestionLimit,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachAuditDef{
+				AttachedResource:   coretypes.ResourceMetaResourceIngestionLimit,
+				AttachedResourceID: handler.ResponseJSONPath("data.id"),
+				TargetResource:     coretypes.ResourceMetaResourceIngestionKey,
+				TargetResourceID:   handler.PathParam("keyId"),
+				Verb:               coretypes.VerbAttach,
+				Category:           audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

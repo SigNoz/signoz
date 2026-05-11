@@ -50,9 +50,10 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
 		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourcesSpanMapperGroup,
-			Verb:     coretypes.VerbCreate,
-			Category: audittypes.ActionCategoryConfigurationChange,
+			Resource:   coretypes.ResourceMetaResourcesSpanMapperGroup,
+			Verb:       coretypes.VerbCreate,
+			Category:   audittypes.ActionCategoryConfigurationChange,
+			ResourceID: handler.ResponseJSONPath("data.id"),
 		}),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
@@ -144,12 +145,22 @@ func (provider *provider) addSpanMapperRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource:   coretypes.ResourceMetaResourcesSpanMapper,
-			Verb:       coretypes.VerbCreate,
-			Category:   audittypes.ActionCategoryConfigurationChange,
-			ResourceID: handler.PathParam("groupId"),
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesSpanMapper,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachAuditDef{
+				AttachedResource:   coretypes.ResourceMetaResourceSpanMapper,
+				AttachedResourceID: handler.ResponseJSONPath("data.id"),
+				TargetResource:     coretypes.ResourceMetaResourceSpanMapperGroup,
+				TargetResourceID:   handler.PathParam("groupId"),
+				Verb:               coretypes.VerbAttach,
+				Category:           audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

@@ -26,6 +26,10 @@ type ExtractorContext struct {
 // genuinely absent (e.g. "me" routes that act on the caller without an id).
 type ResourceIDExtractor func(ExtractorContext) (string, error)
 
+// ResourceIDsExtractor pulls a list of resource ids. Used by AttachManyAuditDef
+// to fan out one audit event per attached entity referenced in a request body.
+type ResourceIDsExtractor func(ExtractorContext) ([]string, error)
+
 // PathParam returns an extractor that reads a Gorilla mux path variable.
 func PathParam(name string) ResourceIDExtractor {
 	return func(ctx ExtractorContext) (string, error) {
@@ -53,6 +57,25 @@ func BodyJSONPath(path string) ResourceIDExtractor {
 func ResponseJSONPath(path string) ResourceIDExtractor {
 	return func(ctx ExtractorContext) (string, error) {
 		return gjson.GetBytes(ctx.ResponseBody, path).String(), nil
+	}
+}
+
+// BodyJSONArray returns a multi-id extractor that reads a JSON array of
+// strings out of the request body at the given gjson path.
+func BodyJSONArray(path string) ResourceIDsExtractor {
+	return func(ctx ExtractorContext) ([]string, error) {
+		result := gjson.GetBytes(ctx.RequestBody, path)
+		if !result.Exists() {
+			return nil, nil
+		}
+
+		array := result.Array()
+		ids := make([]string, 0, len(array))
+		for _, r := range array {
+			ids = append(ids, r.String())
+		}
+
+		return ids, nil
 	}
 }
 
@@ -88,6 +111,22 @@ type AttachAuditDef struct {
 }
 
 func (AttachAuditDef) sealAuditDef() {}
+
+// AttachManyAuditDef declares that a single request attaches many of the same
+// kind of resource to one target. The middleware fans out one attach event per
+// id returned by AttachedResourceIDs. Used for routes whose body carries a
+// list of references (e.g. rule preferredChannels, planned-maintenance
+// alertIds, route-policy channels).
+type AttachManyAuditDef struct {
+	AttachedResource    coretypes.Resource
+	AttachedResourceIDs ResourceIDsExtractor
+	TargetResource      coretypes.Resource
+	TargetResourceID    ResourceIDExtractor
+	Verb                coretypes.Verb
+	Category            audittypes.ActionCategory
+}
+
+func (AttachManyAuditDef) sealAuditDef() {}
 
 // WithAuditDef attaches one or more AuditDef declarations to the handler. A
 // single route can produce multiple audit events — e.g. creating a resource

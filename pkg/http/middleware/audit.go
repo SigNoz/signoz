@@ -127,28 +127,36 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	}
 
 	for _, def := range defs {
-		verb, category, resourceAttributes, err := resolveAuditDef(extractorCtx, def)
+		resolved, err := resolveAuditDef(extractorCtx, def)
 		if err != nil {
 			middleware.logger.WarnContext(req.Context(), "audit event dropped — resource id extraction failed", errors.Attr(err))
 			continue
 		}
 
-		event := audittypes.NewAuditEventFromHTTPRequest(
-			req,
-			routeTemplate,
-			statusCode,
-			span.SpanContext().TraceID(),
-			span.SpanContext().SpanID(),
-			verb,
-			category,
-			claims,
-			resourceAttributes,
-			errorType,
-			errorCode,
-		)
+		for _, r := range resolved {
+			event := audittypes.NewAuditEventFromHTTPRequest(
+				req,
+				routeTemplate,
+				statusCode,
+				span.SpanContext().TraceID(),
+				span.SpanContext().SpanID(),
+				r.Verb,
+				r.Category,
+				claims,
+				r.ResourceAttributes,
+				errorType,
+				errorCode,
+			)
 
-		middleware.auditor.Audit(req.Context(), event)
+			middleware.auditor.Audit(req.Context(), event)
+		}
 	}
+}
+
+type resolvedAuditDef struct {
+	Verb               coretypes.Verb
+	Category           audittypes.ActionCategory
+	ResourceAttributes audittypes.ResourceAttributes
 }
 
 func auditDefsFromRequest(req *http.Request) []handler.AuditDef {
@@ -173,35 +181,72 @@ func auditDefsFromRequest(req *http.Request) []handler.AuditDef {
 	return provider.AuditDefs()
 }
 
-func resolveAuditDef(ctx handler.ExtractorContext, def handler.AuditDef) (coretypes.Verb, audittypes.ActionCategory, audittypes.ResourceAttributes, error) {
+func resolveAuditDef(ctx handler.ExtractorContext, def handler.AuditDef) ([]resolvedAuditDef, error) {
 	switch d := def.(type) {
 	case handler.BasicAuditDef:
 		resourceID, err := extractResourceID(ctx, d.ResourceID)
 		if err != nil {
-			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+			return nil, err
 		}
 
-		return d.Verb, d.Category, audittypes.NewResourceAttributes(d.Resource, resourceID), nil
+		return []resolvedAuditDef{{
+			Verb:               d.Verb,
+			Category:           d.Category,
+			ResourceAttributes: audittypes.NewResourceAttributes(d.Resource, resourceID),
+		}}, nil
 	case handler.AttachAuditDef:
 		attachedID, err := extractResourceID(ctx, d.AttachedResourceID)
 		if err != nil {
-			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+			return nil, err
 		}
 
 		targetID, err := extractResourceID(ctx, d.TargetResourceID)
 		if err != nil {
-			return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, err
+			return nil, err
 		}
 
-		return d.Verb, d.Category, audittypes.NewAttachResourceAttributes(d.AttachedResource, attachedID, d.TargetResource, targetID), nil
+		return []resolvedAuditDef{{
+			Verb:               d.Verb,
+			Category:           d.Category,
+			ResourceAttributes: audittypes.NewAttachResourceAttributes(d.AttachedResource, attachedID, d.TargetResource, targetID),
+		}}, nil
+	case handler.AttachManyAuditDef:
+		ids, err := extractResourceIDs(ctx, d.AttachedResourceIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		targetID, err := extractResourceID(ctx, d.TargetResourceID)
+		if err != nil {
+			return nil, err
+		}
+
+		resolved := make([]resolvedAuditDef, 0, len(ids))
+		for _, id := range ids {
+			resolved = append(resolved, resolvedAuditDef{
+				Verb:               d.Verb,
+				Category:           d.Category,
+				ResourceAttributes: audittypes.NewAttachResourceAttributes(d.AttachedResource, id, d.TargetResource, targetID),
+			})
+		}
+
+		return resolved, nil
 	}
 
-	return coretypes.Verb{}, audittypes.ActionCategory{}, audittypes.ResourceAttributes{}, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unknown AuditDef implementation %T", def)
+	return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unknown AuditDef implementation %T", def)
 }
 
 func extractResourceID(ctx handler.ExtractorContext, extractor handler.ResourceIDExtractor) (string, error) {
 	if extractor == nil {
 		return "", nil
+	}
+
+	return extractor(ctx)
+}
+
+func extractResourceIDs(ctx handler.ExtractorContext, extractor handler.ResourceIDsExtractor) ([]string, error) {
+	if extractor == nil {
+		return nil, nil
 	}
 
 	return extractor(ctx)

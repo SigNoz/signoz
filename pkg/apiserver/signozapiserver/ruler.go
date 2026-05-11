@@ -55,11 +55,22 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourceRule,
-			Verb:     coretypes.VerbCreate,
-			Category: audittypes.ActionCategoryConfigurationChange,
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesRule,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachManyAuditDef{
+				AttachedResource:    coretypes.ResourceMetaResourceNotificationChannel,
+				AttachedResourceIDs: handler.BodyJSONArray("preferredChannels"),
+				TargetResource:      coretypes.ResourceMetaResourceRule,
+				TargetResourceID:    handler.ResponseJSONPath("data.id"),
+				Verb:                coretypes.VerbAttach,
+				Category:            audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -195,11 +206,22 @@ func (provider *provider) addRulerRoutes(router *mux.Router) error {
 			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourcePlannedMaintenance,
-			Verb:     coretypes.VerbCreate,
-			Category: audittypes.ActionCategoryConfigurationChange,
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesPlannedMaintenance,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachManyAuditDef{
+				AttachedResource:    coretypes.ResourceMetaResourceRule,
+				AttachedResourceIDs: handler.BodyJSONArray("alertIds"),
+				TargetResource:      coretypes.ResourceMetaResourcePlannedMaintenance,
+				TargetResourceID:    handler.ResponseJSONPath("data.id"),
+				Verb:                coretypes.VerbAttach,
+				Category:            audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}

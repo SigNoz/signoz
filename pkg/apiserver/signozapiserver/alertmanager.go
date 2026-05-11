@@ -207,11 +207,22 @@ func (provider *provider) addAlertmanagerRoutes(router *mux.Router) error {
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
 		},
-		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourcesRoutePolicy,
-			Verb:     coretypes.VerbCreate,
-			Category: audittypes.ActionCategoryConfigurationChange,
-		}),
+		handler.WithAuditDef(
+			handler.BasicAuditDef{
+				Resource:   coretypes.ResourceMetaResourcesRoutePolicy,
+				Verb:       coretypes.VerbCreate,
+				Category:   audittypes.ActionCategoryConfigurationChange,
+				ResourceID: handler.ResponseJSONPath("data.id"),
+			},
+			handler.AttachManyAuditDef{
+				AttachedResource:    coretypes.ResourceMetaResourceNotificationChannel,
+				AttachedResourceIDs: handler.BodyJSONArray("channels"),
+				TargetResource:      coretypes.ResourceMetaResourceRoutePolicy,
+				TargetResourceID:    handler.ResponseJSONPath("data.id"),
+				Verb:                coretypes.VerbAttach,
+				Category:            audittypes.ActionCategoryConfigurationChange,
+			},
+		),
 	)).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
