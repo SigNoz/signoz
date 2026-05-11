@@ -441,3 +441,43 @@ func TestGetIdentityRejectsRootUser(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, identity)
 }
+
+// Multi-org case: when ListUsersByEmailAndOrgIDs returns both a root user
+// and a regular user for the same email, the resolver must skip the root
+// and pick the non-root regardless of slice order — DB query order is not
+// guaranteed.
+func TestGetIdentityPicksNonRootWhenRootAndRegularShareEmail(t *testing.T) {
+	rootOrgID := valuer.GenerateUUID()
+	regularOrgID := valuer.GenerateUUID()
+	email, err := valuer.NewEmail("shared@example.com")
+	require.NoError(t, err)
+
+	rootUser, err := types.NewRootUser("Root", email, rootOrgID)
+	require.NoError(t, err)
+	regularUser, err := types.NewUser("Regular", email, regularOrgID, types.UserStatusActive)
+	require.NoError(t, err)
+
+	orgGetter := &fakeOrgGetter{orgs: []*types.Organization{
+		{Identifiable: types.Identifiable{ID: rootOrgID}, Name: "root-org"},
+		{Identifiable: types.Identifiable{ID: regularOrgID}, Name: "regular-org"},
+	}}
+
+	// Iterate both possible slice orderings so the test fails the same way
+	// regardless of whether the DB returns the root or the regular user first.
+	for _, ordering := range [][]*types.User{
+		{rootUser, regularUser},
+		{regularUser, rootUser},
+	} {
+		userGetter := &fakeUserGetter{users: ordering}
+		p := newProvider(t, newConfig("X-Forwarded-Email", "", false), orgGetter, userGetter, &fakeUserSetter{})
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("X-Forwarded-Email", "shared@example.com")
+
+		identity, err := p.GetIdentity(req)
+		require.NoError(t, err)
+		require.NotNil(t, identity)
+		assert.Equal(t, regularUser.ID, identity.UserID)
+		assert.Equal(t, regularOrgID, identity.OrgID)
+	}
+}
