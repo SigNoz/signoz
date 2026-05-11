@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '@signozhq/ui';
+import {
+	TabsContent,
+	TabsList,
+	TabsRoot,
+	TabsTrigger,
+} from '@signozhq/ui/tabs';
 import { DetailsHeader } from 'components/DetailsPanel';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';

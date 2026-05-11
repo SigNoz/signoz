@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { MenuItem } from '@signozhq/ui';
-import { Button, Dropdown } from '@signozhq/ui';
+import { Button } from '@signozhq/ui';
+import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
 import { Ellipsis } from 'lucide-react';
 
 import { useTraceContext } from '../contexts/TraceContext';

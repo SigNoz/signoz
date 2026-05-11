@@ -1,8 +1,8 @@
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/switch', () => ({
+	...jest.requireActual('@signozhq/ui/switch'),
 	Switch: ({
 		value,
 		onChange,

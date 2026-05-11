@@ -139,6 +139,9 @@ const routes: AppRoutes[] = [
 		exact: true,
 		key: 'LOGS_SAVE_VIEWS',
 	},
+	// V3 trace details is gated until release: /trace serves V2 (public),
+	// /trace-old serves V3 (URL-only access). Flip the two `component`
+	// values back to release V3.
 	{
 		path: ROUTES.TRACE_DETAIL_OLD,
 		exact: true,

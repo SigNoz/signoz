@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import ROUTES from 'constants/routes';

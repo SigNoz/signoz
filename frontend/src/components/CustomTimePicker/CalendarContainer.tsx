@@ -1,4 +1,4 @@
-import { Calendar } from '@signozhq/ui';
+import { Calendar } from '@signozhq/ui/calendar';
 import { Button } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';

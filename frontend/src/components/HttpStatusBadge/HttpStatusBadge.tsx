@@ -1,4 +1,4 @@
-import { Badge } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
 
 type BadgeColor =
 	| 'vanilla'

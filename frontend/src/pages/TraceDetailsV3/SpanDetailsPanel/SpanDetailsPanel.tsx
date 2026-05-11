@@ -1,15 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Button } from '@signozhq/ui/button';
 import {
-	Button,
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
 	TabsContent,
 	TabsList,
 	TabsRoot,
 	TabsTrigger,
-} from '@signozhq/ui';
+} from '@signozhq/ui/tabs';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
 import {
 	Bookmark,
 	CalendarClock,
