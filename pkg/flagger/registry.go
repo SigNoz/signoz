@@ -3,11 +3,10 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics    = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval     = featuretypes.MustNewName("kafka_span_eval")
-	FeatureHideRootUser      = featuretypes.MustNewName("hide_root_user")
-	FeatureGetMetersFromZeus = featuretypes.MustNewName("get_meters_from_zeus")
-	FeaturePutMetersInZeus   = featuretypes.MustNewName("put_meters_in_zeus")
+	FeatureUseSpanMetrics  = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval   = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser    = featuretypes.MustNewName("hide_root_user")
+	FeaturePutMetersInZeus = featuretypes.MustNewName("put_meters_in_zeus")
 	FeatureUseJSONBody       = featuretypes.MustNewName("use_json_body")
 )
 
@@ -34,14 +33,6 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageStable,
 			Description:    "Controls whether root admin user is hidden or not",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
-			Name:           FeatureGetMetersFromZeus,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether billing details are fetched from Zeus instead of the legacy subscriptions service",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
