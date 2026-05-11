@@ -1,4 +1,5 @@
-import { Input, Typography } from 'antd';
+import { Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
 import classNames from 'classnames';
 

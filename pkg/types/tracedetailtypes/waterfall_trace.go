@@ -95,7 +95,7 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 			if parentNode, exists := spanIDToSpanNodeMap[spanNode.ParentSpanID]; exists {
 				parentNode.Children = append(parentNode.Children, spanNode)
 			} else {
-				missingSpan := NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnixNano, spanNode.DurationNano)
+				missingSpan := NewMissingWaterfallSpan(spanNode.ParentSpanID, spanNode.TraceID, spanNode.TimeUnix, spanNode.DurationNano)
 				missingSpan.Children = append(missingSpan.Children, spanNode)
 				spanIDToSpanNodeMap[missingSpan.SpanID] = missingSpan
 				traceRoots = append(traceRoots, missingSpan)
@@ -112,10 +112,10 @@ func NewWaterfallTraceFromSpans(spans []StorableSpan) *WaterfallTrace {
 	}
 
 	sort.Slice(traceRoots, func(i, j int) bool {
-		if traceRoots[i].TimeUnixNano == traceRoots[j].TimeUnixNano {
+		if traceRoots[i].TimeUnix == traceRoots[j].TimeUnix {
 			return traceRoots[i].Name < traceRoots[j].Name
 		}
-		return traceRoots[i].TimeUnixNano < traceRoots[j].TimeUnixNano
+		return traceRoots[i].TimeUnix < traceRoots[j].TimeUnix
 	})
 
 	return NewWaterfallTrace(
@@ -264,7 +264,7 @@ func NewGettableWaterfallTrace(
 
 	// convert start timestamp to millis because client is expecting it in millis
 	for _, span := range selectedSpans {
-		span.TimeUnixNano = span.TimeUnixNano / 1_000_000
+		span.TimeUnix = span.TimeUnix / 1_000_000
 	}
 
 	// duration values are in nanoseconds; convert in-place to milliseconds.
@@ -332,15 +332,15 @@ func mergeSpanIntervals(spans []*WaterfallSpan) uint64 {
 		return 0
 	}
 	sort.Slice(spans, func(i, j int) bool {
-		return spans[i].TimeUnixNano < spans[j].TimeUnixNano
+		return spans[i].TimeUnix < spans[j].TimeUnix
 	})
 
-	currentStart := spans[0].TimeUnixNano
+	currentStart := spans[0].TimeUnix
 	currentEnd := currentStart + spans[0].DurationNano
 	total := uint64(0)
 
 	for _, span := range spans[1:] {
-		startNano := span.TimeUnixNano
+		startNano := span.TimeUnix
 		endNano := startNano + span.DurationNano
 		if currentEnd >= startNano {
 			if endNano > currentEnd {

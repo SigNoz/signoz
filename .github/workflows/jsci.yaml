@@ -63,46 +63,6 @@ jobs:
         uses: actions/checkout@v4
       - name: run
         run: bash frontend/scripts/validate-md-languages.sh
-  authz:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: self-checkout
-        uses: actions/checkout@v5
-      - name: node-install
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-      - name: deps-install
-        working-directory: ./frontend
-        run: |
-          yarn install
-      - name: uv-install
-        uses: astral-sh/setup-uv@v5
-      - name: uv-deps
-        working-directory: ./tests/integration
-        run: |
-          uv sync
-      - name: setup-test
-        run: |
-          make py-test-setup
-      - name: generate
-        working-directory: ./frontend
-        run: |
-          yarn generate:permissions-type
-      - name: teardown-test
-        if: always()
-        run: |
-          make py-test-teardown
-      - name: validate
-        run: |
-          if ! git diff --exit-code frontend/src/hooks/useAuthZ/permissions.type.ts; then
-            echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: npm run generate:permissions-type (from the frontend directory)"
-            exit 1
-          fi
   openapi:
     if: |
       github.event_name == 'merge_group' ||

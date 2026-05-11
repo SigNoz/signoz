@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/SigNoz/signoz/cmd"
+	"github.com/SigNoz/signoz/ee/auditor/fileauditor"
 	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
@@ -138,12 +139,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 
 			return authNs, nil
 		},
-		func(ctx context.Context, sqlstore sqlstore.SQLStore, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete, dashboardModule dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
-			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore)
+		func(ctx context.Context, sqlstore sqlstore.SQLStore, config authz.Config, licensing licensing.Licensing, onBeforeRoleDelete []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error) {
+			openfgaDataStore, err := openfgaserver.NewSQLStore(sqlstore, config)
 			if err != nil {
 				return nil, err
 			}
-			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, onBeforeRoleDelete, dashboardModule), nil
+			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, onBeforeRoleDelete, authtypes.NewRegistry()), nil
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing, tagModule tag.Module) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), store, settings, analytics, orgGetter, queryParser, querier, licensing, tagModule)
@@ -154,6 +155,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(licensing licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 			factories := signoz.NewAuditorProviderFactories()
 			if err := factories.Add(otlphttpauditor.NewFactory(licensing, version.Info)); err != nil {
+				panic(err)
+			}
+			if err := factories.Add(fileauditor.NewFactory(licensing, version.Info)); err != nil {
 				panic(err)
 			}
 			return factories

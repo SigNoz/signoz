@@ -67,16 +67,7 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 
 func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.StorableDashboard, *dashboardtypes.StorablePublicDashboard, error) {
 	type joinedRow struct {
-		bun.BaseModel `bun:"table:dashboard,alias:d"`
-
-		ID        valuer.UUID                          `bun:"id"`
-		OrgID     valuer.UUID                          `bun:"org_id"`
-		Data      dashboardtypes.StorableDashboardData `bun:"data"`
-		Locked    bool                                 `bun:"locked"`
-		CreatedAt time.Time                            `bun:"created_at"`
-		CreatedBy string                               `bun:"created_by"`
-		UpdatedAt time.Time                            `bun:"updated_at"`
-		UpdatedBy string                               `bun:"updated_by"`
+		*dashboardtypes.StorableDashboard `bun:",extend"`
 
 		PublicID               *valuer.UUID `bun:"public_id"`
 		PublicCreatedAt        *time.Time   `bun:"public_created_at"`
@@ -85,34 +76,24 @@ func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		PublicDefaultTimeRange *string      `bun:"public_default_time_range"`
 	}
 
-	row := new(joinedRow)
+	row := &joinedRow{StorableDashboard: new(dashboardtypes.StorableDashboard)}
 	err := store.
 		sqlstore.
 		BunDB().
 		NewSelect().
 		Model(row).
-		ColumnExpr("d.id, d.org_id, d.data, d.locked, d.created_at, d.created_by, d.updated_at, d.updated_by").
+		ColumnExpr("dashboard.id, dashboard.org_id, dashboard.data, dashboard.locked, dashboard.created_at, dashboard.created_by, dashboard.updated_at, dashboard.updated_by").
 		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
-		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
-		Where("d.id = ?", id).
-		Where("d.org_id = ?", orgID).
-		Where("d.deleted_at IS NULL").
+		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = dashboard.id").
+		Where("dashboard.id = ?", id).
+		Where("dashboard.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
 	}
 
-	storable := &dashboardtypes.StorableDashboard{
-		Identifiable:  types.Identifiable{ID: row.ID},
-		TimeAuditable: types.TimeAuditable{CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt},
-		UserAuditable: types.UserAuditable{CreatedBy: row.CreatedBy, UpdatedBy: row.UpdatedBy},
-		OrgID:         row.OrgID,
-		Data:          row.Data,
-		Locked:        row.Locked,
-	}
-
 	if row.PublicID == nil {
-		return storable, nil, nil
+		return row.StorableDashboard, nil, nil
 	}
 	public := &dashboardtypes.StorablePublicDashboard{
 		Identifiable:     types.Identifiable{ID: *row.PublicID},
@@ -121,7 +102,7 @@ func (store *store) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		DefaultTimeRange: *row.PublicDefaultTimeRange,
 		DashboardID:      row.ID.StringValue(),
 	}
-	return storable, public, nil
+	return row.StorableDashboard, public, nil
 }
 
 func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.StorableDashboardData) error {
@@ -135,7 +116,6 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
-		Where("deleted_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -144,7 +124,7 @@ func (store *store) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer.U
 	if err != nil {
 		return err
 	}
-	// Defends against the race where a soft-delete lands between the caller's
+	// Defends against the race where a delete lands between the caller's
 	// pre-update GetV2 and this update.
 	if rows == 0 {
 		return errors.Newf(errors.TypeNotFound, dashboardtypes.ErrCodeDashboardNotFound, "dashboard with id %s doesn't exist", id)
@@ -162,7 +142,6 @@ func (store *store) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valu
 		Set("updated_by = ?", updatedBy).
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
-		Where("deleted_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -298,7 +277,7 @@ func (store *store) UpdatePublic(ctx context.Context, storable *dashboardtypes.S
 func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(dashboardtypes.StorableDashboard)).
 		Where("id = ?", id).
@@ -314,7 +293,7 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 func (store *store) DeletePublic(ctx context.Context, dashboardID string) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(dashboardtypes.StorablePublicDashboard)).
 		Where("dashboard_id = ?", dashboardID).

@@ -1,0 +1,596 @@
+.waterfall-loading-bar {
+	height: 2px;
+	background: var(--primary);
+	animation: waterfall-loading 1.5s ease-in-out infinite;
+	flex-shrink: 0;
+}
+
+@keyframes waterfall-loading {
+	0% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: left;
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+	100% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: right;
+	}
+}
+
+.success-content {
+	overflow-y: hidden;
+	overflow-x: hidden;
+	max-width: 100%;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+
+	.missing-spans {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 44px;
+		margin: 16px;
+		padding: 12px;
+		border-radius: 4px;
+		background: rgba(69, 104, 220, 0.1);
+
+		.left-info {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+
+			.text {
+				color: var(--bg-robin-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+
+		.right-info {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			color: var(--bg-robin-400);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 20px; /* 142.857% */
+			letter-spacing: -0.07px;
+		}
+
+		.right-info:hover {
+			background-color: unset;
+			color: var(--bg-robin-200);
+		}
+	}
+
+	.waterfall-split-panel {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		overflow-x: hidden;
+		padding: 0px 20px 0px 20px;
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+	}
+
+	.waterfall-split-header {
+		position: sticky;
+		top: 0;
+		z-index: 2;
+		display: flex;
+		height: 25px;
+		background-color: var(--l1-background);
+
+		.sidebar-header {
+			flex-shrink: 0;
+		}
+
+		.resize-handle-header {
+			width: 4px;
+			flex-shrink: 0;
+		}
+
+		.status-header {
+			width: 50px;
+			flex-shrink: 0;
+		}
+
+		.timeline-header {
+			flex: 1;
+			overflow: hidden;
+			padding: 0 15px;
+		}
+	}
+
+	.waterfall-split-body {
+		display: flex;
+		position: relative;
+	}
+
+	.waterfall-sidebar {
+		overflow-x: auto;
+		overflow-y: hidden;
+		flex-shrink: 0;
+		border-right: 1px solid var(--l1-border);
+
+		.resizable-box__content {
+			overflow-x: auto;
+			overflow-y: hidden;
+
+			&::-webkit-scrollbar {
+				height: 0;
+			}
+
+			scrollbar-width: none;
+		}
+
+		&::-webkit-scrollbar {
+			height: 0.3rem;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: var(--l3-background);
+			border-radius: 4px;
+		}
+	}
+
+	.span-tree-table {
+		position: relative;
+		border-collapse: collapse;
+
+		.span-tree-row {
+			display: flex;
+			align-items: center;
+		}
+
+		.span-tree-cell {
+			display: flex;
+			width: 100%;
+			height: 28px;
+			align-items: center;
+			overflow: visible;
+			padding: 0;
+		}
+
+		.span-tree-row:hover,
+		.span-tree-row.hovered-span {
+			border-radius: 4px;
+			background: color-mix(
+				in srgb,
+				var(--l3-background) 20%,
+				transparent
+			) !important;
+
+			.span-overview {
+				background: unset !important;
+			}
+		}
+	}
+
+	.sidebar-resize-handle {
+		width: 4px;
+		flex-shrink: 0;
+		cursor: col-resize;
+		user-select: none;
+		touch-action: none;
+		background: transparent;
+		transition: background 0.15s ease;
+		z-index: 1;
+
+		&:hover,
+		&:active {
+			background: rgba(35, 196, 248, 0.2);
+		}
+	}
+
+	.waterfall-status-col {
+		width: 50px;
+		flex-shrink: 0;
+		position: relative;
+
+		.status-cell {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+
+			--badge-border-radius: 2px;
+			--badge-padding: 3px 6px;
+			--badge-line-height: 12px;
+			--badge-border-width: 0px;
+
+			&.hovered-span {
+				border-radius: 4px;
+				background: color-mix(
+					in srgb,
+					var(--l3-background) 20%,
+					transparent
+				) !important;
+			}
+
+			&.interested-span,
+			&.selected-non-matching-span {
+				border-radius: 4px;
+				background: color-mix(
+					in srgb,
+					var(--l3-background) 40%,
+					transparent
+				) !important;
+			}
+
+			&.dimmed-span {
+				opacity: 0.4;
+			}
+		}
+	}
+
+	.waterfall-timeline {
+		flex: 1;
+		position: relative;
+		overflow: hidden;
+
+		.waterfall-crosshair {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 1px;
+			background: var(--l3-background);
+			pointer-events: none;
+			z-index: 1;
+		}
+
+		.timeline-row {
+			display: flex;
+			align-items: center;
+			// Match timeline-header's 15px padding so bars align with ticks
+			padding: 0 15px;
+		}
+
+		.timeline-row:hover,
+		.timeline-row.hovered-span {
+			border-radius: 4px;
+			background: color-mix(
+				in srgb,
+				var(--l3-background) 20%,
+				transparent
+			) !important;
+		}
+
+		.timeline-row:has(.interested-span),
+		.timeline-row:has(.selected-non-matching-span) {
+			border-radius: 4px;
+			background: color-mix(
+				in srgb,
+				var(--l3-background) 40%,
+				transparent
+			) !important;
+		}
+	}
+
+	// Shared span component styles (used in both panels)
+	.span-overview {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+		height: 100%;
+		width: 100%;
+		cursor: pointer;
+		position: relative;
+		white-space: nowrap;
+
+		.tree-indent {
+			display: inline-block;
+			flex-shrink: 0;
+		}
+
+		.tree-line {
+			position: absolute;
+			background-color: var(--l2-border);
+			pointer-events: none;
+		}
+
+		.tree-connector {
+			position: absolute;
+			width: 11px;
+			height: 50%;
+			border-left: 1px solid var(--l2-border);
+			border-bottom: 1px solid var(--l2-border);
+			border-bottom-left-radius: 6px;
+			pointer-events: none;
+		}
+
+		.tree-arrow {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			flex-shrink: 0;
+			cursor: pointer;
+			color: var(--l1-foreground);
+			border-radius: 4px;
+
+			&:hover {
+				background: var(--l3-background);
+			}
+		}
+
+		.subtree-count {
+			display: inline-flex;
+			align-items: center;
+			flex-shrink: 0;
+
+			.badge {
+				font-size: 10px;
+				line-height: 14px;
+				padding: 0 4px;
+				height: 14px;
+			}
+		}
+
+		.tree-icon {
+			display: inline-block;
+			width: 7px;
+			height: 7px;
+			border-radius: 50%;
+			flex-shrink: 0;
+			margin: 0 6px;
+
+			&.is-error {
+				box-shadow: 0 0 0 2px rgba(255, 70, 70, 0.3);
+			}
+		}
+
+		.tree-label {
+			color: var(--l1-foreground);
+			font-family: 'Inter';
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 28px;
+			letter-spacing: 0.01em;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			flex: 1;
+			min-width: 0;
+
+			.tree-service-name {
+				margin-left: 18px;
+				color: var(--l3-foreground);
+				font-weight: 400;
+			}
+		}
+
+		.span-row-actions {
+			position: sticky;
+			right: 0;
+			display: flex;
+			align-items: center;
+			gap: 2px;
+			margin-left: auto;
+			padding-right: 4px;
+			padding-left: 8px;
+			flex-shrink: 0;
+			height: 100%;
+			background: linear-gradient(to left, var(--l1-background) 60%, transparent);
+			z-index: 2;
+			opacity: 0;
+			pointer-events: none;
+
+			.span-action-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				width: 22px;
+				height: 22px;
+				border-radius: 2px;
+				cursor: pointer;
+				color: var(--l1-foreground);
+				background: transparent;
+				border: none;
+				padding: 0;
+
+				&:hover {
+					background: var(--l3-background);
+				}
+			}
+		}
+
+		&:hover .span-row-actions {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+
+	// Also show action buttons when hovering the tree row (parent of span-overview)
+	.span-tree-row:hover .span-row-actions,
+	.span-tree-row.hovered-span .span-row-actions {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.span-duration {
+		display: flex;
+		align-items: center;
+		height: 28px;
+		position: relative;
+		width: 100%;
+		padding: 0 15px;
+		cursor: pointer;
+
+		.span-bar {
+			position: absolute;
+			height: 18px;
+			top: 5px;
+			border-radius: 2px;
+			display: flex;
+			align-items: center;
+			padding: 0 8px;
+			overflow: hidden;
+			cursor: pointer;
+			white-space: nowrap;
+			color: rgba(0, 0, 0, 0.9);
+			background-color: var(--span-color);
+			border: 1px solid transparent;
+
+			.span-info {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				width: 100%;
+				overflow: hidden;
+				z-index: 1;
+
+				.span-name {
+					font-weight: 500;
+					font-size: 11px;
+					white-space: nowrap;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					flex-grow: 1;
+					min-width: 0;
+				}
+
+				.span-duration-text {
+					color: inherit;
+					opacity: 0.8;
+					font-size: 10px;
+					margin-left: 8px;
+					flex-shrink: 0;
+				}
+			}
+		}
+
+		.event-dot {
+			position: absolute;
+			top: 50%;
+			transform: translate(-50%, -50%) rotate(45deg);
+			width: 5px;
+			height: 5px;
+			background-color: var(--event-dot-bg, var(--bg-robin-500));
+			border: 1px solid var(--event-dot-border, var(--bg-robin-600));
+			cursor: pointer;
+			z-index: 1;
+
+			&.error {
+				background-color: var(--destructive);
+				border-color: var(--destructive);
+			}
+
+			&:hover {
+				transform: translate(-50%, -50%) rotate(45deg) scale(1.5);
+			}
+		}
+	}
+
+	// Hover state: solid l2-background fill + border (matches flamegraph)
+	.timeline-row:hover .span-bar,
+	.timeline-row.hovered-span .span-bar {
+		color: var(--span-color);
+		background-color: var(--l2-background);
+		background-image: none;
+		border: 1px solid var(--span-color);
+	}
+
+	// Selected state: solid l3-background fill + dashed border (matches flamegraph)
+	.interested-span .span-bar,
+	.selected-non-matching-span .span-bar {
+		color: var(--span-color);
+		background-color: var(--l2-background);
+		background-image: none;
+		border: 1px dashed var(--span-color);
+	}
+
+	// Shared state classes for both panels
+	// Background highlight for selection is on .timeline-row via :has() — see .waterfall-timeline
+	// Only apply on .span-overview (left panel) where there's no parent row with :has()
+	.span-overview.interested-span,
+	.span-overview.selected-non-matching-span {
+		border-radius: 4px;
+		background: color-mix(
+			in srgb,
+			var(--l3-background) 40%,
+			transparent
+		) !important;
+	}
+
+	.dimmed-span {
+		opacity: 0.4;
+	}
+	.highlighted-span {
+		opacity: 1;
+	}
+
+	.selected-non-matching-span {
+		.tree-label {
+			opacity: 0.5;
+		}
+	}
+}
+
+.span-dets {
+	.related-logs {
+		display: flex;
+		width: 160px;
+		padding: 4px 8px;
+		justify-content: center;
+		align-items: center;
+		gap: 8px;
+		border-radius: 2px;
+		border: 1px solid var(--l1-border);
+		background: var(--l2-background);
+		box-shadow: none;
+	}
+}
+
+// `.span-bar` text color is the one place where semantic tokens don't fit
+// cleanly: in dark mode the bar's bright `--span-color` background needs dark
+// text; in light mode `generateColor` produces darker bar fills, so the text
+// must flip to white. This is the only `.lightMode` carve-out left after the
+// migration to semantic tokens — the hover/selected rules are repeated here
+// to beat the default-state rule's specificity inside `.lightMode`.
+.lightMode {
+	.success-content {
+		.span-duration .span-bar {
+			color: rgba(255, 255, 255, 0.9);
+		}
+
+		.timeline-row:hover .span-bar,
+		.timeline-row.hovered-span .span-bar,
+		.interested-span .span-bar,
+		.selected-non-matching-span .span-bar {
+			color: var(--span-color);
+		}
+	}
+}
+
+// Tooltips for the row's hover-revealed action buttons (Copy / Add to Funnel).
+// Bumped above FloatingPanel (z-index 999) so they stay visible when the
+// SpanDetailsPanel is docked as a floating panel.
+.span-action-tooltip {
+	--tooltip-z-index: 1000;
+}

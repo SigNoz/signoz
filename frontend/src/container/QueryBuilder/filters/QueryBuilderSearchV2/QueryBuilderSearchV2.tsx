@@ -961,9 +961,7 @@ function QueryBuilderSearchV2(
 				>
 					<Tooltip title={chipValue}>
 						<TypographyText
-							ellipsis
 							$isInNin={isInNin}
-							disabled={isDisabled}
 							$isEnabled={!!searchValue}
 							onClick={(): void => {
 								if (!isDisabled) {

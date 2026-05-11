@@ -1,4 +1,5 @@
-import { Button, Tooltip, TooltipProvider } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
 import { Copy } from '@signozhq/icons';
 import './CopyIconButton.styles.scss';
 

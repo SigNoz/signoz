@@ -1,4 +1,4 @@
-import { Callout } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
 import { Spin } from 'antd';
 import { LoaderCircle } from 'lucide-react';
 
