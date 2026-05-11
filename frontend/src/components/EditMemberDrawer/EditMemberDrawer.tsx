@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Badge, Button, DrawerWrapper, Input, toast } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';

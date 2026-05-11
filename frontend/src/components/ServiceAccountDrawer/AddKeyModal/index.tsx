@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper, toast } from '@signozhq/ui';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,

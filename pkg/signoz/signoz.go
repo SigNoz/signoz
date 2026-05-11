@@ -102,7 +102,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, []authz.OnBeforeRoleDelete, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
+	authzCallback func(context.Context, sqlstore.SQLStore, authz.Config, licensing.Licensing, []authz.OnBeforeRoleDelete) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing, tag.Module) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	auditorProviderFactories func(licensing.Licensing) factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]],
@@ -348,7 +348,7 @@ func New(
 	}
 
 	// Initialize authz
-	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, onBeforeRoleDelete, dashboard)
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, config.Authz, licensing, onBeforeRoleDelete)
 	if err != nil {
 		return nil, err
 	}

@@ -9,17 +9,18 @@ import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 
 import Styles from './TooltipList.module.scss';
-import { getAbsoluteUrl } from 'utils/basePath';
 
 // Fallback per-item height before Virtuoso reports the real total.
 const TOOLTIP_ITEM_HEIGHT = 38;
 const LIST_MAX_HEIGHT = 300;
 
 interface TooltipListProps {
+	id: string;
 	content: TooltipContentItem[];
 }
 
 export default function TooltipList({
+	id,
 	content,
 }: TooltipListProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
@@ -41,23 +42,25 @@ export default function TooltipList({
 		if (!isScrollEventTriggered.current) {
 			// TODO: remove event in July 2026
 			logEvent(Events.TOOLTIP_CONTENT_SCROLLED, {
-				path: getAbsoluteUrl(window.location.pathname),
+				id,
 			});
 			isScrollEventTriggered.current = true;
 		}
 	}, []);
 
 	return (
-		<Virtuoso
-			className={cx(Styles.list, !isDarkMode && Styles.listLightMode)}
-			data-testid="uplot-tooltip-list"
-			data={content}
-			onScroll={handleScroll}
-			style={{ height }}
-			totalListHeightChanged={setTotalListHeight}
-			itemContent={(_, item): JSX.Element => (
-				<TooltipItem item={item} isItemActive={false} />
-			)}
-		/>
+		<div className={Styles.container}>
+			<Virtuoso
+				className={cx(Styles.list, !isDarkMode && Styles.listLightMode)}
+				data-testid="uplot-tooltip-list"
+				data={content}
+				onScroll={handleScroll}
+				style={{ height }}
+				totalListHeightChanged={setTotalListHeight}
+				itemContent={(_, item): JSX.Element => (
+					<TooltipItem item={item} isItemActive={item.isHighlighted === true} />
+				)}
+			/>
+		</div>
 	);
 }

@@ -71,7 +71,7 @@ type WaterfallSpan struct {
 	ParentSpanID string            `json:"parent_span_id"`
 	Resource     map[string]string `json:"resource"`
 	SpanID       string            `json:"span_id"`
-	TimeUnixNano uint64            `json:"-"`
+	TimeUnix     uint64            `json:"time_unix"`
 	TraceID      string            `json:"trace_id"`
 	TraceState   string            `json:"trace_state"`
 
@@ -138,7 +138,7 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 		SpanID:       spanID,
 		TraceID:      traceID,
 		Name:         "Missing Span",
-		TimeUnixNano: timeUnixNano,
+		TimeUnix:     timeUnixNano,
 		DurationNano: durationNano,
 		Events:       make([]Event, 0),
 		Children:     make([]*WaterfallSpan, 0),
@@ -150,10 +150,10 @@ func NewMissingWaterfallSpan(spanID, traceID string, timeUnixNano, durationNano 
 // SortChildren recursively sorts children of each span by TimeUnixNano then Name.
 func (ws *WaterfallSpan) SortChildren() {
 	sort.Slice(ws.Children, func(i, j int) bool {
-		if ws.Children[i].TimeUnixNano == ws.Children[j].TimeUnixNano {
+		if ws.Children[i].TimeUnix == ws.Children[j].TimeUnix {
 			return ws.Children[i].Name < ws.Children[j].Name
 		}
-		return ws.Children[i].TimeUnixNano < ws.Children[j].TimeUnixNano
+		return ws.Children[i].TimeUnix < ws.Children[j].TimeUnix
 	})
 	for _, child := range ws.Children {
 		child.SortChildren()
@@ -292,7 +292,7 @@ func (item *StorableSpan) ToWaterfallSpan() *WaterfallSpan {
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
 		Children:           make([]*WaterfallSpan, 0),
-		TimeUnixNano:       uint64(item.StartTime.UnixNano()),
+		TimeUnix:           uint64(item.StartTime.UnixNano()),
 		ServiceName:        item.ServiceName,
 	}
 }

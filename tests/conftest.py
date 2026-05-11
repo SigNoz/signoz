@@ -25,6 +25,8 @@ pytest_plugins = [
     "fixtures.cloudintegrations",
     "fixtures.jsontypes",
     "fixtures.seeder",
+    "fixtures.serviceaccount",
+    "fixtures.role",
 ]
 
 
@@ -58,6 +60,12 @@ def pytest_addoption(parser: pytest.Parser):
         action="store",
         default="delete",
         help="sqlite mode",
+    )
+    parser.addoption(
+        "--sqlite-transaction-mode",
+        action="store",
+        default="deferred",
+        help="sqlite transaction mode",
     )
     parser.addoption(
         "--postgres-version",

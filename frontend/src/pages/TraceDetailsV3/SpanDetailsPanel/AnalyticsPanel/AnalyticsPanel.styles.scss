@@ -1,0 +1,96 @@
+.analytics-panel {
+	&__body {
+		padding: 12px 6px;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+		background: var(--l1-background);
+
+		// TabsRoot — last direct child div
+		> div:last-child {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		[role='tablist'] {
+			flex-shrink: 0;
+		}
+	}
+
+	&__tabs-scroll {
+		flex: 1;
+		min-height: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+	}
+
+	&__list {
+		display: grid;
+		grid-template-columns: auto auto 1fr;
+		gap: 4px 8px;
+		padding: 8px 0;
+		align-items: center;
+	}
+
+	&__dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 2px;
+	}
+
+	&__service-name {
+		font-size: 13px;
+		color: var(--l1-foreground);
+		word-break: break-word;
+	}
+
+	&__bar-cell {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	&__bar {
+		flex: 1;
+		height: 6px;
+		background: var(--l3-background);
+		border-radius: 3px;
+		min-width: 40px;
+
+		&--small {
+			max-width: 80px;
+			flex: 0 0 80px;
+		}
+	}
+
+	&__bar-fill {
+		height: 100%;
+		border-radius: 3px;
+	}
+
+	&__value {
+		flex-shrink: 0;
+		text-align: right;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--l1-foreground);
+
+		&--wide {
+			min-width: 55px;
+		}
+
+		&--narrow {
+			min-width: 25px;
+		}
+	}
+
+	// Tabs root
+	[class*='tabs__list-wrapper'] {
+		padding-left: 0 !important;
+	}
+}

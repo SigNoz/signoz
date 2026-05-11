@@ -117,11 +117,20 @@
 	justify-content: flex-end;
 	gap: 12px;
 	margin-top: 12px;
+
+	ul {
+		padding: 0;
+	}
 }
 
 .paginationPageSize {
 	width: 80px;
 	--combobox-trigger-height: 2rem;
+}
+
+.paginationTotalCount {
+	font-size: var(--periscope-font-size-base);
+	color: var(--l1-foreground);
 }
 
 .tanstackLoadingOverlay {

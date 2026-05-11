@@ -11,7 +11,7 @@ import (
 
 func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v1/llm_pricing_rules", handler.New(
-		provider.authZ.ViewAccess(provider.llmPricingRuleHandler.List),
+		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.List),
 		handler.OpenAPIDef{
 			ID:                  "ListLLMPricingRules",
 			Tags:                []string{"llmpricingrules"},
@@ -32,7 +32,7 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules", handler.New(
-		provider.authZ.AdminAccess(provider.llmPricingRuleHandler.CreateOrUpdate),
+		provider.authzMiddleware.AdminAccess(provider.llmPricingRuleHandler.CreateOrUpdate),
 		handler.OpenAPIDef{
 			ID:                 "CreateOrUpdateLLMPricingRules",
 			Tags:               []string{"llmpricingrules"},
@@ -50,7 +50,7 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules/{id}", handler.New(
-		provider.authZ.ViewAccess(provider.llmPricingRuleHandler.Get),
+		provider.authzMiddleware.ViewAccess(provider.llmPricingRuleHandler.Get),
 		handler.OpenAPIDef{
 			ID:                  "GetLLMPricingRule",
 			Tags:                []string{"llmpricingrules"},
@@ -70,7 +70,7 @@ func (provider *provider) addLLMPricingRuleRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/llm_pricing_rules/{id}", handler.New(
-		provider.authZ.AdminAccess(provider.llmPricingRuleHandler.Delete),
+		provider.authzMiddleware.AdminAccess(provider.llmPricingRuleHandler.Delete),
 		handler.OpenAPIDef{
 			ID:                  "DeleteLLMPricingRule",
 			Tags:                []string{"llmpricingrules"},

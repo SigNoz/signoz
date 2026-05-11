@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { LifeBuoy } from 'lucide-react';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';

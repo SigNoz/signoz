@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -17,14 +16,7 @@ import (
 )
 
 var (
-	TypeableMetaResourceDashboard       = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("dashboard"))
-	TypeableMetaResourcePublicDashboard = authtypes.MustNewTypeableMetaResource(authtypes.MustNewName("public-dashboard"))
-	TypeableMetaResourcesDashboards     = authtypes.MustNewTypeableMetaResources(authtypes.MustNewName("dashboards"))
-
-	EntityTypeDashboard = tagtypes.MustNewEntityType("dashboard")
-)
-
-var (
+	EntityTypeDashboard                = tagtypes.MustNewEntityType("dashboard")
 	ErrCodeDashboardInvalidInput       = errors.MustNewCode("dashboard_invalid_input")
 	ErrCodeDashboardNotFound           = errors.MustNewCode("dashboard_not_found")
 	ErrCodeDashboardInvalidData        = errors.MustNewCode("dashboard_invalid_data")
@@ -37,7 +29,6 @@ type StorableDashboard struct {
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
-	types.DeleteAuditable
 	Data   StorableDashboardData `bun:"data,type:text,notnull"`
 	Locked bool                  `bun:"locked,notnull,default:false"`
 	OrgID  valuer.UUID           `bun:"org_id,notnull"`

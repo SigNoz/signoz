@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { LockKeyhole } from '@signozhq/icons';
-import { Badge, Input } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Input } from '@signozhq/ui/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

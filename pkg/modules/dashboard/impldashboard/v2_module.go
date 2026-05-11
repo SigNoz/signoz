@@ -53,7 +53,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	tags, err := module.tagModule.ListForEntity(ctx, id)
+	tags, err := module.tagModule.ListForEntity(ctx, dashboardtypes.EntityTypeDashboard, id)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	// Tag upserts run outside the update transaction for the same reason as
 	// Create: a successful upsert that loses the outer transaction just leaves
 	// resolved tag rows around for the next attempt.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, updateable.Tags, updatedBy)
+	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, updateable.Tags, updatedBy)
 	if err != nil {
 		return nil, err
 	}
