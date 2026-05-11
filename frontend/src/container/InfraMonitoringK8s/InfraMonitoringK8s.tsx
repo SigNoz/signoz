@@ -22,15 +22,6 @@ import {
 	HardDrive,
 	Workflow,
 } from '@signozhq/icons';
-import * as Sentry from '@sentry/react';
-import { Button, CollapseProps } from 'antd';
-import { Collapse, Tooltip, Typography } from 'antd';
-import logEvent from 'api/common/logEvent';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
-import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
