@@ -1343,7 +1343,7 @@ func getLocalTableName(tableName string) string {
 
 }
 
-func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1434,6 +1434,10 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: userID,
+					UpdatedBy: userID,
+				},
 				TransactionID:  uuid,
 				TableName:      tableName,
 				TTL:            int(params.DelDuration),
@@ -1511,7 +1515,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 	return &model.SetTTLResponseItem{Message: "move ttl has been successfully set up"}, nil
 }
 
-func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -1571,6 +1575,10 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				TimeAuditable: types.TimeAuditable{
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
+				},
+				UserAuditable: types.UserAuditable{
+					CreatedBy: userID,
+					UpdatedBy: userID,
 				},
 				TransactionID:  uuid,
 				TableName:      tableName,
@@ -1687,7 +1695,7 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 	return true, nil
 }
 
-func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
+func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, userID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -1718,7 +1726,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			ttlParams.ToColdStorageDuration = 0
 		}
 
-		ttlResult, apiErr := r.SetTTL(ctx, orgID, ttlParams)
+		ttlResult, apiErr := r.SetTTL(ctx, orgID, userID, ttlParams)
 		if apiErr != nil {
 			return nil, errorsV2.Wrapf(apiErr.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "failed to set standard TTL")
 		}
@@ -1846,6 +1854,10 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
+			},
+			UserAuditable: types.UserAuditable{
+				CreatedBy: userID,
+				UpdatedBy: userID,
 			},
 			TransactionID:  uuid,
 			TableName:      tableName,
@@ -2185,24 +2197,24 @@ func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditi
 // SetTTL sets the TTL for traces or metrics or logs tables.
 // This is an async API which creates goroutines to set TTL.
 // Status of TTL update is tracked with ttl_status table in sqlite db.
-func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	// Keep only latest 100 transactions/requests
 	r.deleteTtlTransactions(ctx, orgID, 100)
 
 	switch params.Type {
 	case constants.TraceTTL:
-		return r.setTTLTraces(ctx, orgID, params)
+		return r.setTTLTraces(ctx, orgID, userID, params)
 	case constants.MetricsTTL:
-		return r.setTTLMetrics(ctx, orgID, params)
+		return r.setTTLMetrics(ctx, orgID, userID, params)
 	case constants.LogsTTL:
-		return r.setTTLLogs(ctx, orgID, params)
+		return r.setTTLLogs(ctx, orgID, userID, params)
 	default:
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting ttl. ttl type should be <metrics|traces>, got %v", params.Type)}
 	}
 
 }
 
-func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, userID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -2243,6 +2255,10 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			TimeAuditable: types.TimeAuditable{
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
+			},
+			UserAuditable: types.UserAuditable{
+				CreatedBy: userID,
+				UpdatedBy: userID,
 			},
 			TransactionID:  uuid,
 			TableName:      tableName,

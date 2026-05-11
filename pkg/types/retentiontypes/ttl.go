@@ -9,6 +9,7 @@ type TTLSetting struct {
 	bun.BaseModel `bun:"table:ttl_setting"`
 	types.Identifiable
 	types.TimeAuditable
+	types.UserAuditable
 	TransactionID  string `bun:"transaction_id,type:text,notnull"`
 	TableName      string `bun:"table_name,type:text,notnull"`
 	TTL            int    `bun:"ttl,notnull,default:0"`
