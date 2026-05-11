@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Dot, Sparkles } from '@signozhq/icons';
-import { Button, Tooltip } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
