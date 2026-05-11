@@ -1,0 +1,36 @@
+.labelColumn {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+	overflow-x: auto;
+	max-width: 100%;
+}
+
+.labelBadge {
+	cursor: default;
+	font-size: 12px;
+
+	--badge-display: inline;
+
+	max-width: 180px;
+	min-width: 100px;
+	text-overflow: ellipsis;
+}
+
+.labelPopover {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 8px;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.labelBadgePopover {
+	font-size: 12px;
+}
+
+.labelValue {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}

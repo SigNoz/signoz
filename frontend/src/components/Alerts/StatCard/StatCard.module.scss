@@ -1,0 +1,50 @@
+.statCard {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: var(--spacing-1);
+	padding: var(--spacing-4) var(--spacing-7);
+	background: var(--l2-background);
+	border-radius: 4px;
+	border: 1px solid var(--l1-border);
+	min-width: 80px;
+	height: 58px;
+	box-sizing: border-box;
+	transition:
+		border-color 0.15s ease,
+		background-color 0.15s ease;
+	font-family: inherit;
+	text-align: left;
+	margin: 0;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.statCardClickable {
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--l2-foreground);
+	}
+}
+
+.statCardActive {
+	border-color: var(--primary);
+	background: color-mix(in srgb, var(--primary) 10%, var(--l2-background));
+}
+
+.statLabel {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--l2-foreground);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+.statValue {
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--l1-foreground);
+	line-height: 1.2;
+}
