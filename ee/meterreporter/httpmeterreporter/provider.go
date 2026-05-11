@@ -40,15 +40,37 @@ type Provider struct {
 	metrics          *reporterMetrics
 }
 
-func NewFactory(collectors map[zeustypes.MeterName]metercollector.MeterCollector, flagger flagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config] {
+func NewFactory(collectorFactories factory.NamedMap[factory.ProviderFactory[metercollector.MeterCollector, metercollector.Config]], collectorConfigs []metercollector.Config, flagger flagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config) (meterreporter.Reporter, error) {
-		return newProvider(ctx, providerSettings, config, collectors, flagger, licensing, orgGetter, zeus)
+		return newProvider(ctx, providerSettings, config, collectorFactories, collectorConfigs, flagger, licensing, orgGetter, zeus)
 	},
 	)
 }
 
-func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config meterreporter.Config, collectors map[zeustypes.MeterName]metercollector.MeterCollector, flagger flagger.Flagger, licensing licensing.Licensing, orgGetter organization.Getter, zeus zeus.Zeus) (*Provider, error) {
+func newProvider(
+	ctx context.Context,
+	providerSettings factory.ProviderSettings,
+	config meterreporter.Config,
+	collectorFactories factory.NamedMap[factory.ProviderFactory[metercollector.MeterCollector, metercollector.Config]],
+	collectorConfigs []metercollector.Config,
+	flagger flagger.Flagger,
+	licensing licensing.Licensing,
+	orgGetter organization.Getter,
+	zeus zeus.Zeus,
+) (*Provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter")
+
+	collectorsByName := map[zeustypes.MeterName]metercollector.MeterCollector{}
+	for _, collectorConfig := range collectorConfigs {
+		collector, err := factory.NewProviderFromNamedMap(ctx, providerSettings, collectorConfig, collectorFactories, collectorConfig.Provider)
+		if err != nil {
+			return nil, err
+		}
+		if _, exists := collectorsByName[collector.Name()]; exists {
+			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "duplicate meter collector %q", collector.Name())
+		}
+		collectorsByName[collector.Name()] = collector
+	}
 
 	metrics, err := newReporterMetrics(settings.Meter())
 	if err != nil {
@@ -58,7 +80,7 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 	return &Provider{
 		settings:         settings,
 		config:           config,
-		collectorsByName: collectors,
+		collectorsByName: collectorsByName,
 		flagger:          flagger,
 		licensing:        licensing,
 		orgGetter:        orgGetter,

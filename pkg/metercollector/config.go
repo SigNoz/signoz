@@ -5,9 +5,26 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 )
 
+const (
+	ProviderStatic    = "static"
+	ProviderTelemetry = "telemetry"
+)
+
 type Config struct {
+	Provider  string          `mapstructure:"provider"`
 	Telemetry TelemetryConfig `mapstructure:"telemetry"`
 	Static    StaticConfig    `mapstructure:"static"`
+}
+
+func (c Config) Validate() error {
+	switch c.Provider {
+	case ProviderStatic:
+		return c.Static.Validate()
+	case ProviderTelemetry:
+		return c.Telemetry.Validate()
+	default:
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidConfig, "meter collector: unknown provider %q", c.Provider)
+	}
 }
 
 type TelemetryConfig struct {

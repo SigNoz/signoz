@@ -12,8 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const providerName = "static"
-
 var _ metercollector.MeterCollector = (*Provider)(nil)
 
 type Provider struct {
@@ -21,9 +19,9 @@ type Provider struct {
 	config   metercollector.StaticConfig
 }
 
-func New() factory.ProviderFactory[metercollector.MeterCollector, metercollector.StaticConfig] {
-	return factory.NewProviderFactory(factory.MustNewName(providerName), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.StaticConfig) (metercollector.MeterCollector, error) {
-		return newProvider(providerSettings, config), nil
+func NewFactory() factory.ProviderFactory[metercollector.MeterCollector, metercollector.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(metercollector.ProviderStatic), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.Config) (metercollector.MeterCollector, error) {
+		return newProvider(providerSettings, config.Static), nil
 	},
 	)
 }

@@ -24,8 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-const providerName = "telemetry"
-
 var (
 	labelKeyPattern   = regexp.MustCompile(`^[A-Za-z0-9_.\-]+$`)
 	labelValuePattern = regexp.MustCompile(`^[A-Za-z0-9_.\-:]+$`)
@@ -40,12 +38,9 @@ type Provider struct {
 	retentionGetter retention.Getter
 }
 
-func New(
-	telemetryStore telemetrystore.TelemetryStore,
-	retentionGetter retention.Getter,
-) factory.ProviderFactory[metercollector.MeterCollector, metercollector.TelemetryConfig] {
-	return factory.NewProviderFactory(factory.MustNewName(providerName), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.TelemetryConfig) (metercollector.MeterCollector, error) {
-		return newProvider(providerSettings, config, telemetryStore, retentionGetter), nil
+func NewFactory(telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter) factory.ProviderFactory[metercollector.MeterCollector, metercollector.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(metercollector.ProviderTelemetry), func(ctx context.Context, providerSettings factory.ProviderSettings, config metercollector.Config) (metercollector.MeterCollector, error) {
+		return newProvider(providerSettings, config.Telemetry, telemetryStore, retentionGetter), nil
 	},
 	)
 }
@@ -77,7 +72,7 @@ func (provider *Provider) Origin(ctx context.Context, _ valuer.UUID, _ *licenset
 
 	var minMs int64
 	if err := provider.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(&minMs); err != nil {
-		return time.Time{}, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "load origin for meter %q", provider.config.Name.String())
+		return time.Time{}, err
 	}
 	if minMs == 0 {
 		return todayStart, nil
@@ -105,7 +100,7 @@ func (provider *Provider) Collect(
 		window.EndUnixMilli,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "load retention policy segments for meter %q", meterName)
+		return nil, err
 	}
 
 	valuesByRetentionDays := make(map[int]int64)
@@ -118,7 +113,7 @@ func (provider *Provider) Collect(
 
 		rows, err := provider.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 		if err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "query meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
+			return nil, err
 		}
 
 		if err := func() error {
@@ -128,13 +123,13 @@ func (provider *Provider) Collect(
 				var value int64
 
 				if err := rows.Scan(&retentionDays, &value); err != nil {
-					return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "scan meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
+					return err
 				}
 
 				valuesByRetentionDays[int(retentionDays)] += value
 			}
 			if err := rows.Err(); err != nil {
-				return errors.Wrapf(err, errors.TypeInternal, metercollector.ErrCodeMeterCollectorCollectFailed, "iterate meter %q retention policy segment [%d, %d)", meterName, segment.StartMs, segment.EndMs)
+				return err
 			}
 			return nil
 		}(); err != nil {

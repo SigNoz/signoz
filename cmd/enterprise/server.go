@@ -18,6 +18,8 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/metercollector/staticmetercollector"
+	"github.com/SigNoz/signoz/ee/metercollector/telemetrymetercollector"
 	"github.com/SigNoz/signoz/ee/meterreporter/httpmeterreporter"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
@@ -168,11 +170,12 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ctx context.Context, providerSettings factory.ProviderSettings, flagger pkgflagger.Flagger, licensing licensing.Licensing, telemetryStore telemetrystore.TelemetryStore, retentionGetter retention.Getter, orgGetter organization.Getter, zeus zeus.Zeus) (factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]], string) {
 			factories := signoz.NewMeterReporterProviderFactories()
 
-			collectors, err := newMeterCollectors(ctx, providerSettings, telemetryStore, retentionGetter)
-			if err != nil {
-				panic(err)
-			}
-			if err := factories.Add(httpmeterreporter.NewFactory(collectors, flagger, licensing, orgGetter, zeus)); err != nil {
+			collectorFactories := factory.MustNewNamedMap(
+				staticmetercollector.NewFactory(),
+				telemetrymetercollector.NewFactory(telemetryStore, retentionGetter),
+			)
+
+			if err := factories.Add(httpmeterreporter.NewFactory(collectorFactories, meterConfigs, flagger, licensing, orgGetter, zeus)); err != nil {
 				panic(err)
 			}
 
