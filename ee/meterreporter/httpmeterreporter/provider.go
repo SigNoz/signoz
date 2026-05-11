@@ -143,7 +143,7 @@ func (provider *Provider) collectOrg(ctx context.Context, org *types.Organizatio
 	// Use one timestamp so a tick cannot straddle midnight.
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
-	nextByCollector, err := provider.nextDays(ctx, org.ID, todayStart, checkpointsByMeter)
+	nextByCollector, err := provider.nextDays(ctx, org.ID, license, todayStart, checkpointsByMeter)
 	if err != nil {
 		return err
 	}
@@ -197,11 +197,11 @@ func (provider *Provider) checkpoints(ctx context.Context, licenseKey string) (m
 	return checkpointsByMeter, nil
 }
 
-func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, todayStart time.Time, checkpointsByMeter map[string]time.Time) (map[zeustypes.MeterName]time.Time, error) {
+func (provider *Provider) nextDays(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, todayStart time.Time, checkpointsByMeter map[string]time.Time) (map[zeustypes.MeterName]time.Time, error) {
 	nextByCollector := make(map[zeustypes.MeterName]time.Time, len(provider.collectorsByName))
 
 	for _, collector := range provider.collectorsByName {
-		origin, err := collector.Origin(ctx, orgID, todayStart)
+		origin, err := collector.Origin(ctx, orgID, license, todayStart)
 		if err != nil {
 			provider.settings.Logger().ErrorContext(ctx, "failed to get origin from collector", errors.Attr(err), slog.String("meter", collector.Name().String()))
 			return nil, err

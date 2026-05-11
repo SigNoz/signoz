@@ -43,28 +43,21 @@ func (provider *Provider) Aggregation() zeustypes.MeterAggregation {
 	return provider.config.Aggregation
 }
 
-func (provider *Provider) Origin(_ context.Context, _ valuer.UUID, _ time.Time) (time.Time, error) {
-	return time.Time{}, nil
+func (provider *Provider) Origin(_ context.Context, _ valuer.UUID, license *licensetypes.License, _ time.Time) (time.Time, error) {
+	if license == nil || license.CreatedAt.IsZero() {
+		return time.Time{}, nil
+	}
+
+	createdAt := license.CreatedAt.UTC()
+	return time.Date(createdAt.Year(), createdAt.Month(), createdAt.Day(), 0, 0, 0, 0, time.UTC), nil
 }
 
-func (provider *Provider) Collect(
-	_ context.Context,
-	orgID valuer.UUID,
-	license *licensetypes.License,
-	window zeustypes.MeterWindow,
-) ([]zeustypes.Meter, error) {
+func (provider *Provider) Collect(_ context.Context, orgID valuer.UUID, license *licensetypes.License, window zeustypes.MeterWindow) ([]zeustypes.Meter, error) {
 	if license == nil || license.Key == "" {
 		return nil, nil
 	}
 
 	return []zeustypes.Meter{
-		zeustypes.NewMeter(
-			provider.config.Name,
-			provider.config.Value,
-			provider.config.Unit,
-			provider.config.Aggregation,
-			window,
-			zeustypes.NewDimensions(zeustypes.OrganizationID.String(orgID.StringValue())),
-		),
+		zeustypes.NewMeter(provider.config.Name, provider.config.Value, provider.config.Unit, provider.config.Aggregation, window, zeustypes.NewDimensions(zeustypes.OrganizationID.String(orgID.StringValue()))),
 	}, nil
 }

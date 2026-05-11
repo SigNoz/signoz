@@ -72,7 +72,7 @@ func (provider *Provider) Aggregation() zeustypes.MeterAggregation {
 	return provider.config.Aggregation
 }
 
-func (provider *Provider) Origin(ctx context.Context, _ valuer.UUID, todayStart time.Time) (time.Time, error) {
+func (provider *Provider) Origin(ctx context.Context, _ valuer.UUID, _ *licensetypes.License, todayStart time.Time) (time.Time, error) {
 	query, args := buildOriginQuery(provider.config.Name.String())
 
 	var minMs int64

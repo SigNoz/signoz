@@ -20,6 +20,6 @@ type MeterCollector interface {
 	Name() zeustypes.MeterName
 	Unit() zeustypes.MeterUnit
 	Aggregation() zeustypes.MeterAggregation
-	Origin(ctx context.Context, orgID valuer.UUID, todayStart time.Time) (time.Time, error)
+	Origin(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, todayStart time.Time) (time.Time, error)
 	Collect(ctx context.Context, orgID valuer.UUID, license *licensetypes.License, window zeustypes.MeterWindow) ([]zeustypes.Meter, error)
 }
