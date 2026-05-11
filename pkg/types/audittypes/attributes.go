@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -12,13 +13,13 @@ import (
 
 // Audit attributes — Action (What).
 type AuditAttributes struct {
-	Action         Action         // guaranteed to be present
+	Action         coretypes.Verb // guaranteed to be present
 	ActionCategory ActionCategory // guaranteed to be present
 	Outcome        Outcome        // guaranteed to be present
 	IdentNProvider authtypes.IdentNProvider
 }
 
-func NewAuditAttributesFromHTTP(statusCode int, action Action, category ActionCategory, claims authtypes.Claims) AuditAttributes {
+func NewAuditAttributesFromHTTP(statusCode int, action coretypes.Verb, category ActionCategory, claims authtypes.Claims) AuditAttributes {
 	outcome := OutcomeFailure
 	if statusCode >= 200 && statusCode < 400 {
 		outcome = OutcomeSuccess
@@ -71,10 +72,10 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 // These are OTel resource attributes (placed on the Resource, not event attributes).
 type ResourceAttributes struct {
 	ResourceID   string
-	ResourceKind string // guaranteed to be present
+	ResourceKind coretypes.Kind // guaranteed to be present
 }
 
-func NewResourceAttributes(resourceID, resourceKind string) ResourceAttributes {
+func NewResourceAttributes(resourceID string, resourceKind coretypes.Kind) ResourceAttributes {
 	return ResourceAttributes{
 		ResourceID:   resourceID,
 		ResourceKind: resourceKind,
@@ -85,7 +86,7 @@ func NewResourceAttributes(resourceID, resourceKind string) ResourceAttributes {
 // These are resource-level attributes (stored in the resource JSON column),
 // not event-level attributes (stored in attributes_string).
 func (attributes ResourceAttributes) PutResource(dest pcommon.Map) {
-	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.ResourceKind)
+	putStrIfNotEmpty(dest, "signoz.audit.resource.kind", attributes.ResourceKind.String())
 	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
 }
 
@@ -192,7 +193,7 @@ func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttri
 
 	// Resource: " kind (id)" or " kind".
 	b.WriteString(" ")
-	b.WriteString(resourceAttributes.ResourceKind)
+	b.WriteString(resourceAttributes.ResourceKind.String())
 	if resourceAttributes.ResourceID != "" {
 		b.WriteString(" (")
 		b.WriteString(resourceAttributes.ResourceID)

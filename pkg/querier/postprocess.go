@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/govaluate"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -969,11 +970,19 @@ func (q *querier) prepareFillZeroArgsWithStep(functions []qbtypes.Function, req 
 	updatedFunctions := make([]qbtypes.Function, len(functions))
 	copy(updatedFunctions, functions)
 
+	// funcFillZero expects start/end in milliseconds. req.Start/req.End may
+	// arrive in s/ms/μs/ns depending on the caller; normalize via ToNanoSecs
+	// (same pattern used elsewhere in the codebase, e.g. RecommendedStepInterval)
+	// then convert to ms. Without this, an ns payload makes (end-start)/step
+	// 10^6× too large and OOMs the process.
+	startMs := querybuilder.ToNanoSecs(req.Start) / 1_000_000
+	endMs := querybuilder.ToNanoSecs(req.End) / 1_000_000
+
 	for i, fn := range updatedFunctions {
 		if fn.Name == qbtypes.FunctionNameFillZero && len(fn.Args) == 0 {
 			fn.Args = []qbtypes.FunctionArg{
-				{Value: float64(req.Start)},
-				{Value: float64(req.End)},
+				{Value: float64(startMs)},
+				{Value: float64(endMs)},
 				{Value: float64(step)},
 			}
 			updatedFunctions[i] = fn

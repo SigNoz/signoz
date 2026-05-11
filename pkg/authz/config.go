@@ -25,7 +25,7 @@ func newConfig() factory.Config {
 	return &Config{
 		Provider: "openfga",
 		OpenFGA: OpenFGAConfig{
-			MaxTuplesPerWrite: 100,
+			MaxTuplesPerWrite: 300,
 		},
 	}
 }
