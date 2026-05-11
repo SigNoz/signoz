@@ -64,9 +64,13 @@
 		min-height: 0;
 		overflow-y: auto;
 		scrollbar-width: none;
+		display: flex;
+		flex-direction: column;
 
 		[role='tabpanel'] {
 			padding: 0;
+			flex: 1;
+			min-height: 0;
 		}
 	}
 
