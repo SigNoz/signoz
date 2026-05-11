@@ -7,7 +7,6 @@ import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
-import { NoAuthGuard } from 'components/NoAuthGuard';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import Spinner from 'components/Spinner';
@@ -38,6 +37,7 @@ import {
 } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 
 function ServiceAccountsSettings(): JSX.Element {
 	const [currentPage, setPage] = useQueryState(

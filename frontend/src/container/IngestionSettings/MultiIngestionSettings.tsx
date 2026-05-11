@@ -1007,21 +1007,25 @@ function MultiIngestionSettings(): JSX.Element {
 									</div>
 								</div>
 								<div className="action-btn">
-									<Button
-										variant="link"
-										size="icon"
-										color="secondary"
-										suffix={<PenLine size={14} />}
-										aria-label="Edit ingestion key"
-										onClick={onEditKey}
-									/>
-									<Button
-										variant="link"
-										size="icon"
-										color="destructive"
-										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
-										onClick={onDeleteKey}
-									/>
+									<NoAuthGuard>
+										<Button
+											variant="link"
+											size="icon"
+											color="secondary"
+											suffix={<PenLine size={14} />}
+											aria-label="Edit ingestion key"
+											onClick={onEditKey}
+										/>
+									</NoAuthGuard>
+									<NoAuthGuard>
+										<Button
+											variant="link"
+											size="icon"
+											color="destructive"
+											suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+											onClick={onDeleteKey}
+										/>
+									</NoAuthGuard>
 								</div>
 							</div>
 						),
@@ -1124,28 +1128,32 @@ function MultiIngestionSettings(): JSX.Element {
 															<div className="actions">
 																{hasLimits(signalName) ? (
 																	<>
-																		<Button
-																			variant="link"
-																			size="icon"
-																			color="secondary"
-																			prefix={<PenLine size={14} />}
-																			aria-label={`Edit ${signalName} limit`}
-																			disabled={
-																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
-																			}
-																			onClick={onEditSignalLimit}
-																		/>
-																		<Button
-																			variant="link"
-																			size="icon"
-																			color="destructive"
-																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
-																			aria-label={`Delete ${signalName} limit`}
-																			disabled={
-																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
-																			}
-																			onClick={onDeleteSignalLimit}
-																		/>
+																		<NoAuthGuard>
+																			<Button
+																				variant="link"
+																				size="icon"
+																				color="secondary"
+																				prefix={<PenLine size={14} />}
+																				aria-label={`Edit ${signalName} limit`}
+																				disabled={
+																					!!(activeAPIKey?.id === APIKey?.id && activeSignal)
+																				}
+																				onClick={onEditSignalLimit}
+																			/>
+																		</NoAuthGuard>
+																		<NoAuthGuard>
+																			<Button
+																				variant="link"
+																				size="icon"
+																				color="destructive"
+																				prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																				aria-label={`Delete ${signalName} limit`}
+																				disabled={
+																					!!(activeAPIKey?.id === APIKey?.id && activeSignal)
+																				}
+																				onClick={onDeleteSignalLimit}
+																			/>
+																		</NoAuthGuard>
 																	</>
 																) : (
 																	<Button

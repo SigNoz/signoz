@@ -4,6 +4,7 @@ import { useQueryClient } from 'react-query';
 import { Button } from 'antd';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import deleteChannel from 'api/channels/delete';
+import { NoAuthGuard } from 'components/NoAuthGuard';
 import APIError from 'types/api/error';
 
 function Delete({ notifications, id }: DeleteProps): JSX.Element {
@@ -35,14 +36,16 @@ function Delete({ notifications, id }: DeleteProps): JSX.Element {
 	};
 
 	return (
-		<Button
-			loading={loading}
-			disabled={loading}
-			type="link"
-			onClick={onClickHandler}
-		>
-			Delete
-		</Button>
+		<NoAuthGuard>
+			<Button
+				loading={loading}
+				disabled={loading}
+				type="link"
+				onClick={onClickHandler}
+			>
+				Delete
+			</Button>
+		</NoAuthGuard>
 	);
 }
 
