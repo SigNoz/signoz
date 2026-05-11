@@ -339,6 +339,8 @@ function TraceDetailsV3(): JSX.Element {
 												<TraceFlamegraph
 													filteredSpanIds={filteredSpanIds}
 													isFilterActive={isFilterActive}
+													selectedSpan={selectedSpan}
+													totalSpansCount={totalSpansCount}
 												/>
 											</ResizableBox>
 										),
