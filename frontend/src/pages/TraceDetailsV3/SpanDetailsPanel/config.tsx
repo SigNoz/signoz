@@ -42,4 +42,12 @@ export const HIGHLIGHTED_OPTIONS: HighlightedOption[] = [
 		render: (span): ReactNode | null =>
 			span.kind_string ? <Badge color="vanilla">{span.kind_string}</Badge> : null,
 	},
+	{
+		key: 'statusMessage',
+		label: 'STATUS MESSAGE',
+		render: (span): ReactNode | null =>
+			span.status_message ? (
+				<Badge color="vanilla">{span.status_message}</Badge>
+			) : null,
+	},
 ];
