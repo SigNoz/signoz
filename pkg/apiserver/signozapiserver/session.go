@@ -28,7 +28,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 			SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 		},
 		handler.WithAuditDef(handler.BasicAuditDef{
-			Resource: coretypes.ResourceMetaResourceSession,
+			Resource: coretypes.ResourceMetaResourcesSession,
 			Verb:     coretypes.VerbCreate,
 			Category: audittypes.ActionCategoryAccessControl,
 		}),

@@ -394,7 +394,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		},
 		handler.WithAuditDef(handler.AttachAuditDef{
 			AttachedResource:   coretypes.ResourceRole,
-			AttachedResourceID: handler.BodyJSONPath("id"),
+			AttachedResourceID: handler.BodyJSONPath("name"),
 			TargetResource:     coretypes.ResourceUser,
 			TargetResourceID:   handler.PathParam("id"),
 			Verb:               coretypes.VerbAttach,
