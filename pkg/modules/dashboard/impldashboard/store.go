@@ -159,8 +159,7 @@ func (store *store) ListV2(
 		ColumnExpr("pd.id AS public_id, pd.created_at AS public_created_at, pd.updated_at AS public_updated_at, pd.time_range_enabled AS public_time_range_enabled, pd.default_time_range AS public_default_time_range").
 		Join("LEFT JOIN pinned_dashboard AS pin ON pin.user_id = ? AND pin.dashboard_id = d.id", userID).
 		Join("LEFT JOIN public_dashboard AS pd ON pd.dashboard_id = d.id").
-		Where("d.org_id = ?", orgID).
-		Where("d.deleted_at IS NULL")
+		Where("d.org_id = ?", orgID)
 
 	if compiled != nil {
 		q = q.Where(compiled.SQL, compiled.Args...)
