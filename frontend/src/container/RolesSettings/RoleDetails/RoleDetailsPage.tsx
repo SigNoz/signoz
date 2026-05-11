@@ -110,7 +110,6 @@ function RoleDetailsPage(): JSX.Element {
 				getGetObjectsQueryKey({ id: roleId, relation: activePermission }),
 			);
 		}
-		setActivePermission(null);
 	};
 
 	const { mutate: patchObjects, isLoading: isSaving } = usePatchObjects({
@@ -213,18 +212,16 @@ function RoleDetailsPage(): JSX.Element {
 				{!isManaged && (
 					<div className="role-details-actions">
 						<Button
-							variant="ghost"
+							variant="link"
 							color="destructive"
-							className="role-details-delete-action-btn"
 							onClick={(): void => setIsDeleteModalOpen(true)}
 							aria-label="Delete role"
 						>
-							<Trash2 size={14} />
+							<Trash2 size={12} />
 						</Button>
 						<Button
 							variant="solid"
 							color="secondary"
-							size="sm"
 							onClick={(): void => setIsEditModalOpen(true)}
 						>
 							Edit Role Details

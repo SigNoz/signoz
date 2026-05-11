@@ -285,12 +285,19 @@
 			}
 		}
 
-		// todo: https://github.com/SigNoz/components/issues/116
-		input,
+		input {
+			&::placeholder {
+				opacity: 0.4;
+			}
+		}
+
 		textarea {
 			width: 100%;
-			background: var(--l3-background);
-			border: 1px solid var(--l1-border);
+			box-sizing: border-box;
+			min-height: 100px;
+			resize: vertical;
+			background: var(--input-background, transparent);
+			border: 1px solid var(--border);
 			border-radius: 2px;
 			padding: 6px 8px;
 			font-family: Inter;
@@ -303,7 +310,7 @@
 			box-shadow: none;
 
 			&::placeholder {
-				color: var(--l3-foreground);
+				color: var(--muted-foreground);
 				opacity: 0.4;
 			}
 
@@ -312,25 +319,6 @@
 				border-color: var(--input);
 				box-shadow: none;
 			}
-		}
-
-		input {
-			height: 32px;
-		}
-
-		input:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-
-			&:hover {
-				border-color: var(--l1-border);
-				box-shadow: none;
-			}
-		}
-
-		textarea {
-			min-height: 100px;
-			resize: vertical;
 		}
 	}
 

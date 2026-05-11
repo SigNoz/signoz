@@ -58,8 +58,18 @@ const baseAuthzResources: AuthzResources = {
 };
 
 const resourceDefs: ResourceDefinition[] = [
-	{ id: 'dashboard', label: 'Dashboard' },
-	{ id: 'alert', label: 'Alert' },
+	{
+		id: 'metaresource:dashboard',
+		kind: 'dashboard',
+		type: 'metaresource',
+		label: 'Dashboard',
+	},
+	{
+		id: 'metaresource:alert',
+		kind: 'alert',
+		type: 'metaresource',
+		label: 'Alert',
+	},
 ];
 
 const ID_A = 'aaaaaaaa-0000-0000-0000-000000000001';
@@ -69,15 +79,24 @@ const ID_C = 'cccccccc-0000-0000-0000-000000000003';
 describe('buildPatchPayload', () => {
 	it('sends only the added selector as an addition', () => {
 		const initial: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_A] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:dashboard': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [ID_A],
+			},
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		const result = buildPatchPayload({
@@ -95,18 +114,24 @@ describe('buildPatchPayload', () => {
 
 	it('sends only the removed selector as a deletion', () => {
 		const initial: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B, ID_C],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_C],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		const result = buildPatchPayload({
@@ -124,18 +149,24 @@ describe('buildPatchPayload', () => {
 
 	it('treats selector order as irrelevant — produces no payload when IDs are identical', () => {
 		const initial: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_B, ID_A],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		const result = buildPatchPayload({
@@ -151,15 +182,21 @@ describe('buildPatchPayload', () => {
 
 	it('replaces wildcard with specific IDs when switching all → only_selected', () => {
 		const initial: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B],
 			},
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		const result = buildPatchPayload({
@@ -179,12 +216,21 @@ describe('buildPatchPayload', () => {
 
 	it('only deletes wildcard when switching all → only_selected with empty selector list', () => {
 		const initial: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:dashboard': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		const result = buildPatchPayload({
@@ -202,12 +248,18 @@ describe('buildPatchPayload', () => {
 
 	it('only includes resources that actually changed', () => {
 		const initial: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_A] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [ID_A],
+			},
 		};
 		const newConfig: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] }, // unchanged
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_A, ID_B] }, // added ID_B
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] }, // unchanged
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [ID_A, ID_B],
+			}, // added ID_B
 		};
 
 		const result = buildPatchPayload({
@@ -232,7 +284,7 @@ describe('objectsToPermissionConfig', () => {
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
 
-		expect(result.dashboard).toStrictEqual({
+		expect(result['metaresource:dashboard']).toStrictEqual({
 			scope: PermissionScope.ALL,
 			selectedIds: [],
 		});
@@ -245,7 +297,7 @@ describe('objectsToPermissionConfig', () => {
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
 
-		expect(result.dashboard).toStrictEqual({
+		expect(result['metaresource:dashboard']).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [ID_A, ID_B],
 		});
@@ -254,11 +306,11 @@ describe('objectsToPermissionConfig', () => {
 	it('defaults to ONLY_SELECTED with empty selectedIds when resource is absent from API response', () => {
 		const result = objectsToPermissionConfig([], resourceDefs);
 
-		expect(result.dashboard).toStrictEqual({
+		expect(result['metaresource:dashboard']).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [],
 		});
-		expect(result.alert).toStrictEqual({
+		expect(result['metaresource:alert']).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [],
 		});
@@ -268,8 +320,11 @@ describe('objectsToPermissionConfig', () => {
 describe('configsEqual', () => {
 	it('returns true for identical configs', () => {
 		const config: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
-			alert: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [ID_A] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:alert': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [ID_A],
+			},
 		};
 
 		expect(configsEqual(config, { ...config })).toBe(true);
@@ -277,22 +332,25 @@ describe('configsEqual', () => {
 
 	it('returns false when configs differ', () => {
 		const a: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
 		};
 		const b: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ONLY_SELECTED, selectedIds: [] },
+			'metaresource:dashboard': {
+				scope: PermissionScope.ONLY_SELECTED,
+				selectedIds: [],
+			},
 		};
 
 		expect(configsEqual(a, b)).toBe(false);
 
 		const c: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_C, ID_B],
 			},
 		};
 		const d: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B],
 			},
@@ -303,13 +361,13 @@ describe('configsEqual', () => {
 
 	it('returns true when selectedIds are the same but in different order', () => {
 		const a: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_A, ID_B],
 			},
 		};
 		const b: PermissionConfig = {
-			dashboard: {
+			'metaresource:dashboard': {
 				scope: PermissionScope.ONLY_SELECTED,
 				selectedIds: [ID_B, ID_A],
 			},
@@ -322,23 +380,25 @@ describe('configsEqual', () => {
 describe('buildConfig', () => {
 	it('uses initial values when provided and defaults for resources not in initial', () => {
 		const initial: PermissionConfig = {
-			dashboard: { scope: PermissionScope.ALL, selectedIds: [] },
+			'metaresource:dashboard': { scope: PermissionScope.ALL, selectedIds: [] },
 		};
 
 		const result = buildConfig(resourceDefs, initial);
 
-		expect(result.dashboard).toStrictEqual({
+		expect(result['metaresource:dashboard']).toStrictEqual({
 			scope: PermissionScope.ALL,
 			selectedIds: [],
 		});
-		expect(result.alert).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
+		expect(result['metaresource:alert']).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
 	});
 
 	it('applies DEFAULT_RESOURCE_CONFIG to all resources when no initial is provided', () => {
 		const result = buildConfig(resourceDefs);
 
-		expect(result.dashboard).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
-		expect(result.alert).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
+		expect(result['metaresource:dashboard']).toStrictEqual(
+			DEFAULT_RESOURCE_CONFIG,
+		);
+		expect(result['metaresource:alert']).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
 	});
 });
 
@@ -375,7 +435,10 @@ describe('deriveResourcesForRelation', () => {
 		const result = deriveResourcesForRelation(baseAuthzResources, 'create');
 
 		expect(result).toHaveLength(2);
-		expect(result.map((r) => r.id)).toStrictEqual(['dashboard', 'alert']);
+		expect(result.map((r) => r.id)).toStrictEqual([
+			'metaresource:dashboard',
+			'metaresource:alert',
+		]);
 	});
 
 	it('returns an empty array when authzResources is null', () => {

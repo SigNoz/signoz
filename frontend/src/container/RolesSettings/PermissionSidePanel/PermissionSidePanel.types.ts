@@ -5,6 +5,8 @@ export interface ResourceOption {
 
 export interface ResourceDefinition {
 	id: string;
+	kind: string;
+	type: string;
 	label: string;
 	options?: ResourceOption[];
 }

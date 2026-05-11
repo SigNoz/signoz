@@ -282,30 +282,6 @@
 	}
 }
 
-.role-details-delete-action-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	min-width: 32px;
-	border: none;
-	border-radius: 2px;
-	background: transparent;
-	color: var(--destructive);
-	opacity: 0.6;
-	padding: 0;
-	transition:
-		background-color 0.2s,
-		opacity 0.2s;
-	box-shadow: none;
-
-	&:hover {
-		background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-		opacity: 0.9;
-	}
-}
-
 .role-details-delete-modal {
 	width: calc(100% - 30px) !important;
 	max-width: 384px;

@@ -78,39 +78,50 @@ function ResourceRow({
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
-						<div className="psp-resource__radio-item">
-							<RadioGroupItem
-								value={PermissionScope.ONLY_SELECTED}
-								id={`${resource.id}-only-selected`}
-							/>
-							<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
-								Only selected
-							</RadioGroupLabel>
-						</div>
+						{resource.type === 'metaresources' ? (
+							<div className="psp-resource__radio-item">
+								<RadioGroupItem
+									value={PermissionScope.ONLY_SELECTED}
+									id={`${resource.id}-none`}
+								/>
+								<RadioGroupLabel htmlFor={`${resource.id}-none`}>None</RadioGroupLabel>
+							</div>
+						) : (
+							<div className="psp-resource__radio-item">
+								<RadioGroupItem
+									value={PermissionScope.ONLY_SELECTED}
+									id={`${resource.id}-only-selected`}
+								/>
+								<RadioGroupLabel htmlFor={`${resource.id}-only-selected`}>
+									Only selected
+								</RadioGroupLabel>
+							</div>
+						)}
 					</RadioGroup>
 
-					{config.scope === PermissionScope.ONLY_SELECTED && (
-						<div className="psp-resource__select-wrapper">
-							{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
-							<Select
-								mode="tags"
-								value={config.selectedIds}
-								onChange={(vals: string[]): void =>
-									onSelectedIdsChange(resource.id, vals)
-								}
-								options={resource.options ?? []}
-								placeholder="Select resources..."
-								className="psp-resource__select"
-								popupClassName="psp-resource__select-popup"
-								showSearch
-								filterOption={(input, option): boolean =>
-									String(option?.label ?? '')
-										.toLowerCase()
-										.includes(input.toLowerCase())
-								}
-							/>
-						</div>
-					)}
+					{config.scope === PermissionScope.ONLY_SELECTED &&
+						resource.type !== 'metaresources' && (
+							<div className="psp-resource__select-wrapper">
+								{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
+								<Select
+									mode="tags"
+									value={config.selectedIds}
+									onChange={(vals: string[]): void =>
+										onSelectedIdsChange(resource.id, vals)
+									}
+									options={resource.options ?? []}
+									placeholder="Select resources..."
+									className="psp-resource__select"
+									popupClassName="psp-resource__select-popup"
+									showSearch
+									filterOption={(input, option): boolean =>
+										String(option?.label ?? '')
+											.toLowerCase()
+											.includes(input.toLowerCase())
+									}
+								/>
+							</div>
+						)}
 				</div>
 			)}
 		</div>
@@ -213,13 +224,13 @@ function PermissionSidePanel({
 			<div className="permission-side-panel">
 				<div className="permission-side-panel__header">
 					<Button
-						variant="ghost"
+						variant="link"
+						color="secondary"
 						size="icon"
-						className="permission-side-panel__close"
 						onClick={onClose}
 						aria-label="Close panel"
 					>
-						<X size={16} />
+						<X size={14} />
 					</Button>
 					<span className="permission-side-panel__header-divider" />
 					<span className="permission-side-panel__title">
