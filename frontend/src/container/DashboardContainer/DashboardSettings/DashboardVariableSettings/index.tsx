@@ -69,6 +69,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 								<GripVertical
 									ref={setActivatorNodeRef as unknown as React.Ref<SVGSVGElement>}
 									style={{ touchAction: 'none', cursor: 'move' }}
+									size="md"
 									{...listeners}
 								/>
 

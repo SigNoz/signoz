@@ -35,7 +35,7 @@ function VariableItem({
 				${name}
 				{description && (
 					<Tooltip title={description}>
-						<SolidInfoCircle className="info-icon" />
+						<SolidInfoCircle className="info-icon" size="md" />
 					</Tooltip>
 				)}
 			</Typography.Text>

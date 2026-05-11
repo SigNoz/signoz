@@ -134,7 +134,10 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<Search style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }} />
+		<Search
+			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
+			size="md"
+		/>
 	),
 	onFilter: (value, record): boolean =>
 		record[dataIndex || '']

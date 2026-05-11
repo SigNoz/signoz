@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
-import { Button, Modal } from 'antd';
+import { Button, Flex, Modal } from 'antd';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
@@ -115,11 +115,17 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				>
 					{!isCloudUser && (
 						<div className="changelog-modal-footer-ctas">
-							<Button type="default" icon={<X />} onClick={onClose}>
-								Skip for now
+							<Button type="default" onClick={onClose}>
+								<Flex align="center" gap="4px">
+									<X size="md" />
+									Skip for now
+								</Flex>
 							</Button>
-							<Button type="primary" icon={<Check />} onClick={onClickUpdateWorkspace}>
-								Update my workspace
+							<Button type="primary" onClick={onClickUpdateWorkspace}>
+								<Flex align="center" gap="4px">
+									<Check size="md" />
+									Update my workspace
+								</Flex>
 							</Button>
 						</div>
 					)}

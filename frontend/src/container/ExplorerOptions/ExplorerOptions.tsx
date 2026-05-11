@@ -970,7 +970,7 @@ function ExplorerOptions({
 									</div>
 								}
 							>
-								<Info size="md" />
+								<Info size="md" className="info-icon" />
 							</Tooltip>
 						)}
 
