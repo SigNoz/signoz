@@ -18,10 +18,8 @@ import type {
 } from 'react-query';
 
 import type {
-	CreateDashboardV2201,
 	CreatePublicDashboard201,
 	CreatePublicDashboardPathParameters,
-	DashboardtypesPostableDashboardV2DTO,
 	DashboardtypesPostablePublicDashboardDTO,
 	DashboardtypesUpdatablePublicDashboardDTO,
 	DeletePublicDashboardPathParameters,
@@ -635,89 +633,4 @@ export const invalidateGetPublicDashboardWidgetQueryRange = async (
 	);
 
 	return queryClient;
-};
-
-/**
- * This endpoint creates a v2-shape dashboard with structured metadata, a typed data tree, and resolved tags.
- * @summary Create dashboard (v2)
- */
-export const createDashboardV2 = (
-	dashboardtypesPostableDashboardV2DTO: BodyType<DashboardtypesPostableDashboardV2DTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<CreateDashboardV2201>({
-		url: `/api/v2/dashboards`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: dashboardtypesPostableDashboardV2DTO,
-		signal,
-	});
-};
-
-export const getCreateDashboardV2MutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createDashboardV2>>,
-		TError,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof createDashboardV2>>,
-	TError,
-	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
-	TContext
-> => {
-	const mutationKey = ['createDashboardV2'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-			'mutationKey' in options.mutation &&
-			options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof createDashboardV2>>,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return createDashboardV2(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type CreateDashboardV2MutationResult = NonNullable<
-	Awaited<ReturnType<typeof createDashboardV2>>
->;
-export type CreateDashboardV2MutationBody =
-	BodyType<DashboardtypesPostableDashboardV2DTO>;
-export type CreateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Create dashboard (v2)
- */
-export const useCreateDashboardV2 = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown,
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof createDashboardV2>>,
-		TError,
-		{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof createDashboardV2>>,
-	TError,
-	{ data: BodyType<DashboardtypesPostableDashboardV2DTO> },
-	TContext
-> => {
-	const mutationOptions = getCreateDashboardV2MutationOptions(options);
-
-	return useMutation(mutationOptions);
 };
