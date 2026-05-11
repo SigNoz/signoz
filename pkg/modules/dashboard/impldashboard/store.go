@@ -142,7 +142,6 @@ func (store *store) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valu
 		Set("updated_by = ?", updatedBy).
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
-		Where("deleted_at IS NULL").
 		Exec(ctx)
 	if err != nil {
 		return err
