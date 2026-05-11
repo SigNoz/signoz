@@ -126,6 +126,7 @@ function SignUp(): JSX.Element {
 									<Input
 										placeholder="e.g. john@signoz.io"
 										type="email"
+										autoFocus
 										required
 										id="signupEmail"
 										className="signup-form-input"
