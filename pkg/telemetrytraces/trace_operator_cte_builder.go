@@ -427,7 +427,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		return nil, err
 	}
 
-	coreFields := []string{"trace_id", "span_id", "name", "duration_nano", "parent_span_id"}
+	coreFields := []string{"timestamp", "trace_id", "span_id", "name", "duration_nano", "parent_span_id"}
 	selectedFields := map[string]bool{
 		"timestamp":      true,
 		"trace_id":       true,
@@ -437,13 +437,11 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		"parent_span_id": true,
 	}
 
-	// Inner SELECT reads from the CTE and renames timestamp→ts.
-	// This breaks the `ORDER BY col AS `col`` pattern that triggers a
-	// CH 25.12.5 distributed-analyzer regression (NOT_FOUND_COLUMN_IN_BLOCK /
-	// timestamp renamed to timestamp_0). See ClickHouse/ClickHouse#103508.
+	// Inner SELECT: projects all needed columns from the CTE, including any
+	// ORDER BY fields not in SelectFields. ColumnExpressionFor produces
+	// `expr AS `alias`` which is fine in the SELECT list.
 	innerSB := sqlbuilder.NewSelectBuilder()
-	innerSB.Select("timestamp AS ts")
-	innerSB.SelectMore(coreFields...)
+	innerSB.Select(coreFields...)
 
 	var additionalSelectedFields []string
 	for _, field := range b.operator.SelectFields {
@@ -461,8 +459,6 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		additionalSelectedFields = append(additionalSelectedFields, field.Name)
 	}
 
-	// Also expose any explicit ORDER BY fields that aren't already selected,
-	// so the outer query can reference them by alias name.
 	for _, orderBy := range b.operator.Order {
 		if selectedFields[orderBy.Key.Name] {
 			continue
@@ -478,12 +474,12 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	innerSB.From(selectFromCTE)
 	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	// Outer SELECT reads from the inner subquery and re-exposes timestamp via
-	// the ts alias. ORDER BY uses the alias name directly — no AS-alias in the
-	// ORDER BY position — which is the pattern that avoids the CH regression.
+	// Outer SELECT: acts as a projection barrier so ORDER BY-only fields do not
+	// leak into the result. ORDER BY uses `alias` (no AS) to avoid the CH 25.12.5
+	// distributed-analyzer regression (ORDER BY col AS `col` inside a CTE renames
+	// the column to col_0). See ClickHouse/ClickHouse#103508.
 	outerSB := sqlbuilder.NewSelectBuilder()
-	outerSB.Select("ts AS timestamp")
-	outerSB.SelectMore(coreFields...)
+	outerSB.Select(coreFields...)
 	for _, name := range additionalSelectedFields {
 		outerSB.SelectMore(fmt.Sprintf("`%s`", name))
 	}
