@@ -117,6 +117,10 @@ export type PaginationProps = {
 	defaultLimit?: number;
 	showTotalCount?: boolean;
 	totalCountLabel?: string;
+	/** @default true */
+	showPageSize?: boolean;
+	onPageChange?: (page: number) => void;
+	onLimitChange?: (limit: number) => void;
 };
 
 export type TanstackTableQueryParamsConfig = {
@@ -160,6 +164,8 @@ export type TanStackTableProps<TData> = {
 	/** Called when ctrl+click or cmd+click on a row */
 	onRowClickNewTab?: (row: TData, itemKey: string) => void;
 	onRowDeactivate?: () => void;
+	/** Called when sort state changes */
+	onSort?: (sort: SortState | null) => void;
 	activeRowIndex?: number;
 	renderExpandedRow?: (
 		row: TData,
