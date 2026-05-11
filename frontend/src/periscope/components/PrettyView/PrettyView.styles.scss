@@ -1,0 +1,195 @@
+.pretty-view {
+	padding: 0;
+	flex: 1;
+
+	&__search-wrapper {
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		padding-bottom: 8px;
+		background: var(--l1-background);
+	}
+
+	&__search-input {
+		width: 100%;
+		border: 1px solid var(--l2-border) !important;
+		border-radius: 4px;
+		font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace !important;
+		font-size: 12px !important;
+		line-height: 18px !important;
+		background: var(--l1-background) !important;
+		outline: none !important;
+		box-shadow: none !important;
+
+		&:focus {
+			border-color: var(--primary) !important;
+			outline: none !important;
+			box-shadow: none !important;
+		}
+	}
+
+	// Font spec: SF Mono, 12px, 400, 18px line-height, -0.5% letter-spacing
+	font-family: 'SF Mono', 'Geist Mono', 'Fira Code', monospace;
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 18px;
+	letter-spacing: -0.06px;
+
+	// Override react-json-tree inline styles
+	ul {
+		margin: 0 !important;
+		padding-left: 16px !important;
+		list-style: none !important;
+		background-color: transparent !important;
+		flex: 1;
+	}
+
+	> ul,
+	&__pinned > ul {
+		padding-left: 0 !important;
+	}
+
+	// Force font on all tree elements
+	li,
+	span,
+	label {
+		font-family: inherit !important;
+		font-size: inherit !important;
+		line-height: inherit !important;
+		letter-spacing: inherit !important;
+	}
+
+	// Fix react-json-tree text-indent wrapping
+	li {
+		text-indent: 0 !important;
+		margin-left: 0 !important;
+		padding-top: 2px !important;
+		padding-bottom: 2px !important;
+	}
+
+	.pretty-view__actions {
+		margin-right: 16px;
+	}
+
+	// Leaf node row — hover highlights only this row
+	&__row {
+		border-radius: 2px;
+		display: flex !important;
+		align-items: baseline;
+
+		&:hover {
+			background-color: var(--l3-background);
+
+			.pretty-view__actions {
+				opacity: 1;
+			}
+		}
+
+		// Push actions to the right edge
+		> span {
+			flex: 1;
+		}
+	}
+
+	// Nested node (object/array) — hover only on the label line, not children
+	&__nested-row {
+		> label,
+		> span:not(ul span) {
+			border-radius: 2px;
+			padding: 1px 2px;
+			display: inline !important; // keep item string inline with label
+		}
+
+		// Highlight label + item string on hover, show actions
+		&:hover > label,
+		&:hover > label + span {
+			background-color: var(--l3-background);
+		}
+
+		&:hover > label + span .pretty-view__actions {
+			opacity: 1;
+		}
+
+		// In nested rows, value-row should not take full width
+		.pretty-view__value-row {
+			width: auto;
+		}
+	}
+
+	// Value + actions wrapper (from valueRenderer / getItemString)
+	&__value-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	// In leaf rows, value-row takes full width to push ... to the right
+	&__row &__value-row {
+		justify-content: space-between;
+		width: 100%;
+	}
+
+	// ... actions button — hidden by default, shown on row hover
+	&__actions {
+		opacity: 0;
+		display: inline-flex;
+		align-items: center;
+		cursor: pointer;
+		color: var(--l2-foreground);
+		transition: opacity 0.1s ease;
+		padding: 0 2px;
+
+		&:hover {
+			color: var(--l1-foreground);
+		}
+	}
+
+	// Pinned items section
+	&__pinned {
+		border-bottom: 1px solid var(--l2-border);
+		padding-bottom: 8px;
+		margin-bottom: 8px;
+		padding-left: 0px;
+
+		li {
+			margin-left: 0 !important;
+			padding-left: 0 !important;
+			display: flex !important;
+			align-items: baseline;
+		}
+	}
+
+	&__pinned-header {
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--l3-foreground);
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		padding: 4px;
+	}
+
+	&__pinned-label {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 6px;
+	}
+
+	&__pinned-icon {
+		flex-shrink: 0;
+		color: var(--text-robin-400);
+		cursor: pointer;
+		fill: var(--text-robin-400);
+		transition: fill 0.1s ease;
+
+		&:hover {
+			color: var(--text-robin-300);
+			fill: transparent;
+		}
+	}
+}
+
+// Field-action dropdown is rendered in a portal; bump above FloatingPanel
+// (z-index 999) so it stays visible when the consumer panel is floating.
+.pretty-view-actions-dropdown {
+	--dropdown-menu-content-z-index: 1000;
+}

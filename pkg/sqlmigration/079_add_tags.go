@@ -1,0 +1,102 @@
+package sqlmigration
+
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/migrate"
+)
+
+type addTags struct {
+	sqlstore  sqlstore.SQLStore
+	sqlschema sqlschema.SQLSchema
+}
+
+func NewAddTagsFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(factory.MustNewName("add_tags"), func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+		return &addTags{
+			sqlstore:  sqlstore,
+			sqlschema: sqlschema,
+		}, nil
+	})
+}
+
+func (migration *addTags) Register(migrations *migrate.Migrations) error {
+	return migrations.Register(migration.Up, migration.Down)
+}
+
+func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	sqls := [][]byte{}
+
+	tagTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
+		Name: "tag",
+		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "key", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "value", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "entity_type", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: true},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("org_id"),
+				ReferencedTableName:   sqlschema.TableName("organizations"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+		},
+	})
+	sqls = append(sqls, tagTableSQLs...)
+
+	// Functional unique index: case-insensitive uniqueness on (org_id, entity_type, key, value).
+	// sqlschema.UniqueIndex doesn't support expressions, so emit raw SQL — both
+	// Postgres and SQLite (modernc 3.50.x) support expression indexes.
+	sqls = append(sqls, []byte(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_entity_lower_key_lower_value ON tag (org_id, entity_type, LOWER(key), LOWER(value))`))
+
+	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
+		Name: "tag_relations",
+		Columns: []*sqlschema.Column{
+			{Name: "entity_type", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "entity_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
+		},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"entity_type", "entity_id", "tag_id"}},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("org_id"),
+				ReferencedTableName:   sqlschema.TableName("organizations"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+		},
+	})
+	sqls = append(sqls, tagRelationsTableSQLs...)
+
+	for _, sql := range sqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (migration *addTags) Down(_ context.Context, _ *bun.DB) error {
+	return nil
+}

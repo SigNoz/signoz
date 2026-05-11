@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CancelSubscriptionBanner from './CancelSubscriptionBanner';
 
@@ -13,14 +13,16 @@ describe('CancelSubscriptionBanner', () => {
 	it('renders banner with title and subtitle', () => {
 		render(<CancelSubscriptionBanner />);
 		expect(
-			screen.getByText('Cancel Subscription', { selector: 'span' }),
+			screen.getByText('Cancel your subscription', { selector: 'span' }),
 		).toBeInTheDocument();
 		expect(
-			screen.getByText('Cancel your SigNoz subscription.'),
+			screen.getByText(
+				/When you cancel your SigNoz subscription, all your data will be deleted/i,
+			),
 		).toBeInTheDocument();
 	});
 
-	it('opens dialog with correct content when Cancel Subscription is clicked', async () => {
+	it('opens dialog with content when Cancel Subscription is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CancelSubscriptionBanner />);
 
@@ -30,17 +32,62 @@ describe('CancelSubscriptionBanner', () => {
 
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 		expect(
-			screen.getByText(/reach out to our support team/i),
+			screen.getByText(/Cancelling your subscription would stop your data/i),
 		).toBeInTheDocument();
+		expect(screen.getByText(/Type/i)).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: /keep subscription/i }),
+			screen.getByPlaceholderText(/Enter the word cancel/i),
 		).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /go back/i })).toBeInTheDocument();
 		expect(
-			screen.getByRole('button', { name: /contact support/i }),
+			screen.getByRole('button', { name: /cancel subscription/i }),
 		).toBeInTheDocument();
 	});
 
-	it('sends mailto to cloud-support with correct subject on Contact Support', async () => {
+	it('keeps Cancel subscription button disabled until "cancel" is typed', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CancelSubscriptionBanner />);
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
+
+		const confirmButton = screen.getByRole('button', {
+			name: /cancel subscription/i,
+		});
+		expect(confirmButton).toBeDisabled();
+
+		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
+		await user.type(input, 'canc');
+		expect(confirmButton).toBeDisabled();
+
+		await user.type(input, 'el');
+		expect(confirmButton).toBeEnabled();
+	});
+
+	it('closes dialog and resets input when Go back is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CancelSubscriptionBanner />);
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
+
+		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
+		await user.type(input, 'cancel');
+
+		await user.click(screen.getByRole('button', { name: /go back/i }));
+		await waitFor(() =>
+			expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+		);
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
+		expect(screen.getByPlaceholderText(/Enter the word cancel/i)).toHaveValue('');
+	});
+
+	it('sends mailto to cloud-support with correct subject after typing "cancel"', async () => {
 		const realCreateElement = document.createElement.bind(document);
 		const mockClick = jest.fn();
 		const mockAnchor = { href: '', click: mockClick };
@@ -57,7 +104,13 @@ describe('CancelSubscriptionBanner', () => {
 		await user.click(
 			screen.getByRole('button', { name: /cancel subscription/i }),
 		);
-		await user.click(screen.getByRole('button', { name: /contact support/i }));
+
+		const input = screen.getByPlaceholderText(/Enter the word cancel/i);
+		await user.type(input, 'cancel');
+
+		await user.click(
+			screen.getByRole('button', { name: /cancel subscription/i }),
+		);
 
 		expect(mockAnchor.href).toContain('mailto:cloud-support@signoz.io');
 		expect(mockAnchor.href).toContain('Cancel%20My%20SigNoz%20Subscription');

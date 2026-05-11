@@ -867,8 +867,12 @@ describe('TooltipPlugin', () => {
 				}),
 			);
 
-			const resizeCall = addSpy.mock.calls.find(([type]) => type === 'resize');
-			const scrollCall = addSpy.mock.calls.find(([type]) => type === 'scroll');
+			const resizeCall = addSpy.mock.calls.find(
+				([type]) => type === ('resize' as keyof WindowEventMap),
+			);
+			const scrollCall = addSpy.mock.calls.find(
+				([type]) => type === ('scroll' as keyof WindowEventMap),
+			);
 
 			expect(resizeCall).toBeDefined();
 			expect(scrollCall).toBeDefined();

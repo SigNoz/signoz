@@ -147,7 +147,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 
 	count, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("org_id = ?", orgID).
