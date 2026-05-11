@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Table } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import {
 	endPointStatusCodeColumns,
 	getFormattedEndPointStatusCodeData,

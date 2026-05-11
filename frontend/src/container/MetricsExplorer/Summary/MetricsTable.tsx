@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Spin, Table, TablePaginationConfig, TableProps, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';

@@ -16,7 +16,7 @@ import {
 	Typography,
 	TypographyTextProps,
 	TypographyTitleProps,
-} from '@signozhq/ui';
+} from '@signozhq/ui/typography';
 import styled, { FlattenSimpleInterpolation } from 'styled-components';
 
 import { IStyledClass } from './types';

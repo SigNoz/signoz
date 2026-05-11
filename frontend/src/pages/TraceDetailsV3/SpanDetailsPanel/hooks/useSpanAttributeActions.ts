@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';

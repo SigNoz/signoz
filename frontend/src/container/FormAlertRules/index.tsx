@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
 import { Button, FormInstance, Modal, SelectProps } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {

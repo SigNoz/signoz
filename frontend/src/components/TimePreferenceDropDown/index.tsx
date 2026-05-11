@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
 import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import TimeItems, {
 	timePreferance,
 	timePreferenceType,

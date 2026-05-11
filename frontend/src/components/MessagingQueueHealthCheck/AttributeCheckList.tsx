@@ -1,4 +1,4 @@
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';

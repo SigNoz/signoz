@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useMeasure } from 'react-use';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
 import Spinner from 'components/Spinner';
 import { AppState } from 'store/reducers';

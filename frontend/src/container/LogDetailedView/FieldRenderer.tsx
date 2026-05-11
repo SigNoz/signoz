@@ -1,5 +1,5 @@
 import { Divider, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
 import { FieldRendererProps } from './LogDetailedView.types';

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';

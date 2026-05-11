@@ -5,7 +5,7 @@ import { generatePath } from 'react-router-dom';
 import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Space, TableColumnsType as ColumnsType, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import AddToQueryHOC, {
 	AddToQueryHOCProps,

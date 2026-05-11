@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Progress, Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import UnAuthorized from 'assets/UnAuthorized';
 import { Container } from 'components/NotFound/styles';
 import { handleContactSupport } from 'container/Integrations/utils';

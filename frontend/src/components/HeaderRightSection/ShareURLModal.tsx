@@ -5,7 +5,7 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Switch } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';

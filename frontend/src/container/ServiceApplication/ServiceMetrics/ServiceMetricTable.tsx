@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { WarningFilled } from '@ant-design/icons';
 import { Flex } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';

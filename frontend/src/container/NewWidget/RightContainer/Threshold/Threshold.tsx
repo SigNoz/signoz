@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { Button, Input, InputNumber, Select, Space } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { Button, Modal, Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';

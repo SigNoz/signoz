@@ -1,5 +1,5 @@
 import { TableColumnsType as ColumnsType } from 'antd';
-import { Typography } from '@signozhq/ui';
+import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
