@@ -2,13 +2,13 @@ module base
 
 type user
 
-type serviceaccount
+type serviceaccount 
 
-type role
+type role 
   relations
     define assignee: [user, serviceaccount]
 
-type organization
+type organization 
   relations
     define create: [role#assignee]
     define read: [role#assignee]

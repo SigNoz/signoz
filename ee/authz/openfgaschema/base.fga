@@ -1,6 +1,6 @@
 module base
 
-type organization
+type organization 
   relations
     define read: [user, serviceaccount, role#assignee]
     define update: [user, serviceaccount, role#assignee]
