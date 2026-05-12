@@ -11,8 +11,18 @@ import (
 )
 
 const (
-	MaxFilterExpressionLength = 250_000 // This is conservative limit as querybuilder adds sql syntax overhead on top of this.
-	MaxClickHouseQueryLength  = 260_000 // This is the default limit for ClickHouse queries, actual limit is 262142 characters.
+	// MaxFilterExpressionLength bounds a builder filter expression. The compiled SQL
+	// adds wrapper syntax on top of this, so we stay well below ClickHouse's parser
+	// limit (max_query_size, 262144 bytes by default) to leave room for that overhead.
+	MaxFilterExpressionLength = 250_000
+	// MaxClickHouseQueryLength bounds a raw ClickHouse SQL query. ClickHouse's
+	// default max_query_size is 262144 bytes; we leave a small headroom for any
+	// wrapping (CTEs, time filters, etc.) the server adds before sending.
+	MaxClickHouseQueryLength = 260_000
+	// MaxPromQLQueryLength bounds a raw PromQL query string. Picked to match the
+	// other query bounds; PromQL has no equivalent server-side parser cap, but we
+	// reject pathologically large inputs to protect the server.
+	MaxPromQLQueryLength = 260_000
 )
 
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
@@ -160,7 +170,7 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 		return err
 	}
 
-	if err := q.validateFilterExpression(cfg); err != nil {
+	if err := q.validateFilterExpression(); err != nil {
 		return err
 	}
 
@@ -374,17 +384,16 @@ func (q *QueryBuilderQuery[T]) validateFunctions() error {
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateFilterExpression(cfg validationConfig) error {
-
-	if q.Filter != nil && q.Filter.Expression != "" {
-		// Actual default limit is 262142 characters, opting for a conservative limit of 25,000 characters
-		if len(q.Filter.Expression) > MaxFilterExpressionLength {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"filter expression exceeds maximum allowed length of %d characters",
-				MaxFilterExpressionLength,
-			)
-		}
+func (q *QueryBuilderQuery[T]) validateFilterExpression() error {
+	if q.Filter == nil || q.Filter.Expression == "" {
+		return nil
+	}
+	if len(q.Filter.Expression) > MaxFilterExpressionLength {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"filter expression exceeds maximum allowed length of %d characters",
+			MaxFilterExpressionLength,
+		)
 	}
 	return nil
 }
@@ -667,13 +676,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid PromQL spec",
 			)
 		}
-		if spec.Query == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"PromQL query is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	case QueryTypeClickHouseSQL:
 		spec, ok := envelope.Spec.(ClickHouseQuery)
 		if !ok {
@@ -682,7 +685,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid ClickHouse SQL spec",
 			)
 		}
-		return spec.Validate(opts...)
+		return spec.Validate()
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,

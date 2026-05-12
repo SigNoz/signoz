@@ -19,14 +19,13 @@ func (q ClickHouseQuery) Copy() ClickHouseQuery {
 }
 
 // Validate performs preliminary validation on ClickHouseQuery.
-func (q ClickHouseQuery) Validate(opts ...ValidationOption) error {
+func (q ClickHouseQuery) Validate() error {
 	if q.Query == "" {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"ClickHouse SQL query is required",
 		)
 	}
-
 	if len(q.Query) > MaxClickHouseQueryLength {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -34,6 +33,5 @@ func (q ClickHouseQuery) Validate(opts ...ValidationOption) error {
 			MaxClickHouseQueryLength,
 		)
 	}
-
 	return nil
 }
