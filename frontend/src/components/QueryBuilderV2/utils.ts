@@ -535,14 +535,17 @@ export const convertFiltersToExpressionWithExistingQuery = (
  *
  * @param expression - The full filter query string.
  * @param keysToRemove - Keys (case-insensitive) whose clauses should be dropped.
- * @param removeOnlyVariableExpressions - When true, only drops clauses whose value
- *   contains a dashboard variable reference (`$…`); non-variable clauses are kept.
+ * @param removeOnlyVariableExpressions - Controls which clauses are eligible for removal:
+ *   - `false` (default): removes all clauses for the key regardless of value.
+ *   - `true`: removes only the first clause whose value contains any `$`.
+ *   - `string` (e.g. `"$service.name"`): removes only the clause whose value exactly
+ *     matches that string — preferred when the specific variable reference is known.
  * @returns The rewritten expression, or an empty string if all clauses were removed.
  */
 export const removeKeysFromExpression = (
 	expression: string,
 	keysToRemove: string[],
-	removeOnlyVariableExpressions = false,
+	removeOnlyVariableExpressions: string | boolean = false,
 ): string => {
 	if (!keysToRemove || keysToRemove.length === 0) {
 		return expression;
@@ -552,6 +555,9 @@ export const removeKeysFromExpression = (
 	}
 
 	const keysSet = new Set(keysToRemove.map((k) => k.trim().toLowerCase()));
+	// Tracks keys for which a variable expression has already been removed.
+	// Having multiple $-value clauses for the same key is invalid; we remove at most one.
+	const removedVariableKeys = new Set<string>();
 
 	const chars = CharStreams.fromString(expression);
 	const lexer = new FilterQueryLexer(chars);
@@ -622,49 +628,61 @@ export const removeKeysFromExpression = (
 		}
 
 		if (removeOnlyVariableExpressions) {
-			// Scope the '$' check to value nodes only — not the full comparison text —
+			// Scope the value check to value nodes only — not the full comparison text —
 			// so a key that contains '$' does not trigger removal when the value is a
 			// literal. The ANTLR4 runtime returns null from getTypedRuleContext when a
 			// rule is absent, despite the non-nullable TypeScript signatures.
 			const inCtx = ctx.inClause() as unknown as InClauseContext | null;
 			const notInCtx = ctx.notInClause() as unknown as NotInClauseContext | null;
-			const hasDollar = (text: string): boolean => text.includes('$');
+			// When a specific variable string is supplied, require an exact match so we
+			// never accidentally remove a different $-valued clause for the same key.
+			const matchesVariable = (text: string): boolean =>
+				typeof removeOnlyVariableExpressions === 'string'
+					? text === removeOnlyVariableExpressions
+					: text.includes('$');
 
 			const valueHasVariable = (): boolean => {
 				// Simple comparisons: key = $var, BETWEEN $v1 AND $v2, etc.
-				if (ctx.value_list().some((v) => hasDollar(v.getText()))) {
+				if (ctx.value_list().some((v) => matchesVariable(v.getText()))) {
 					return true;
 				}
 				// IN $var (bare single value) or IN ($v1, $v2) (value list)
 				if (inCtx) {
 					const bare = inCtx.value() as unknown as { getText(): string } | null;
-					if (bare && hasDollar(bare.getText())) {
+					if (bare && matchesVariable(bare.getText())) {
 						return true;
 					}
 					const list = inCtx.valueList() as unknown as {
 						value_list(): { getText(): string }[];
 					} | null;
-					if (list && list.value_list().some((v) => hasDollar(v.getText()))) {
+					if (list && list.value_list().some((v) => matchesVariable(v.getText()))) {
 						return true;
 					}
 				}
 				// NOT IN $var or NOT IN ($v1, $v2)
 				if (notInCtx) {
 					const bare = notInCtx.value() as unknown as { getText(): string } | null;
-					if (bare && hasDollar(bare.getText())) {
+					if (bare && matchesVariable(bare.getText())) {
 						return true;
 					}
 					const list = notInCtx.valueList() as unknown as {
 						value_list(): { getText(): string }[];
 					} | null;
-					if (list && list.value_list().some((v) => hasDollar(v.getText()))) {
+					if (list && list.value_list().some((v) => matchesVariable(v.getText()))) {
 						return true;
 					}
 				}
 				return false;
 			};
 
-			return valueHasVariable() ? null : src(ctx);
+			if (valueHasVariable()) {
+				if (removedVariableKeys.has(keyText)) {
+					return src(ctx);
+				}
+				removedVariableKeys.add(keyText);
+				return null;
+			}
+			return src(ctx);
 		}
 
 		return null;

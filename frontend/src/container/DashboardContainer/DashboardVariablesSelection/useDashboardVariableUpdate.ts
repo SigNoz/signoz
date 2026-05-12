@@ -230,7 +230,6 @@ export const useDashboardVariableUpdate =
 					showALLOption: true,
 					dynamicVariablesAttribute: name,
 					dynamicVariablesSource: source,
-					dynamicVariablesWidgetIds: [],
 					queryValue: '',
 				};
 
@@ -245,7 +244,7 @@ export const useDashboardVariableUpdate =
 				const updatedVariables = convertVariablesToDbFormat(tableRowData);
 				updateVariables(updatedVariables, newVariable.id, [], false);
 			},
-			[dashboardData, updateVariables, notifications, t],
+			[dashboardData, updateVariables],
 		);
 
 		return {

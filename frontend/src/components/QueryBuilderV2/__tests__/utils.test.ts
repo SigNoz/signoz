@@ -1155,7 +1155,7 @@ describe('removeKeysFromExpression', () => {
 	});
 
 	describe('Real-world scenarios', () => {
-		it('should remove all variable occurrences of the same key', () => {
+		it('should remove at most one variable expression per key', () => {
 			const expression =
 				"deployment.environment = $env1 deployment.environment = $env2 deployment.environment = 'default'";
 			const result = removeKeysFromExpression(
@@ -1164,8 +1164,12 @@ describe('removeKeysFromExpression', () => {
 				true,
 			);
 
-			// ANTLR removes every clause whose value contains $, non-variable clause is kept
-			expect(result).toBe("deployment.environment = 'default'");
+			// Should remove one occurrence — having multiple $-value clauses for the
+			// same key is invalid. The first is removed; subsequent $ clauses and
+			// literal-value clauses are preserved.
+			expect(result).toBe(
+				"deployment.environment = $env2 AND deployment.environment = 'default'",
+			);
 		});
 
 		it('should handle OR operators in expressions', () => {
