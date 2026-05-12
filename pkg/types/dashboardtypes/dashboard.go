@@ -332,10 +332,14 @@ func (dashboard *Dashboard) Update(ctx context.Context, updatableDashboard Updat
 	return nil
 }
 
-func (dashboard *Dashboard) OverwriteData(updatableDashboard UpdatableDashboard, updatedBy string) {
-	dashboard.UpdatedBy = updatedBy
-	dashboard.UpdatedAt = time.Now()
-	dashboard.Data = updatableDashboard
+func (dashboard *Dashboard) CanDelete() error {
+	if dashboard.Source != "" {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete system dashboard with source %s", dashboard.Source)
+	}
+	if dashboard.Locked {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to delete it")
+	}
+	return nil
 }
 
 func (dashboard *Dashboard) CanLockUnlock(isAdmin bool, updatedBy string) error {

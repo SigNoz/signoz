@@ -42,8 +42,8 @@ type Module interface {
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error)
 
-	// Reset puts back default value for system dashboard.
-	Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error)
+	// ResetSystemDashboard puts back default value for the system dashboard keyed by source.
+	ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error)
 	
 	SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error
 
@@ -95,5 +95,5 @@ type Handler interface {
 
 	GetV2(http.ResponseWriter, *http.Request)
 
-	Reset(http.ResponseWriter, *http.Request)
+	ResetSystemDashboard(http.ResponseWriter, *http.Request)
 }

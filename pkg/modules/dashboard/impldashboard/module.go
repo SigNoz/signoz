@@ -106,8 +106,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return nil, err
 	}
 
-	err = dashboard.Update(ctx, updatableDashboard, updatedBy, diff)
-	if err != nil {
+	if err := dashboard.Update(ctx, updatableDashboard, updatedBy, diff); err != nil {
 		return nil, err
 	}
 
@@ -123,7 +122,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
+func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
 	defaultDashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
 	if err != nil {
 		return nil, err
@@ -148,7 +147,9 @@ func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashb
 		return defaultDashboard, nil
 	}
 
-	existing.OverwriteData(defaultDashboard.Data, updatedBy)
+	if err := existing.Update(ctx, defaultDashboard.Data, updatedBy, 0); err != nil {
+		return nil, err
+	}
 
 	storable, err := dashboardtypes.NewStorableDashboardFromDashboard(existing)
 	if err != nil {
@@ -231,12 +232,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 		return err
 	}
 
-	if dashboard.Locked {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard is locked, please unlock the dashboard to be delete it")
-	}
-
-	err = module.store.Delete(ctx, orgID, id)
-	if err != nil {
+	if err := module.store.Delete(ctx, orgID, id); err != nil {
 		return err
 	}
 

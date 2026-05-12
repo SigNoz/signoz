@@ -185,8 +185,8 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-// Reset only resets system dashboard (source != "") to default values.
-func (handler *handler) Reset(rw http.ResponseWriter, r *http.Request) {
+// ResetSystemDashboard only resets system dashboard (source != "") to default values.
+func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -202,30 +202,19 @@ func (handler *handler) Reset(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	source := r.URL.Query().Get("source")
+	if source == "" {
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "source query parameter is required"))
+		return
+	}
+
+	dashboard, err := handler.module.ResetSystemDashboard(ctx, orgID, dashboardtypes.Source(source), claims.Email)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	dashboard, err := handler.module.Get(ctx, orgID, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	if dashboard.Source == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboard with id %s is not a system dashboard, reset is unsupported", id))
-		return
-	}
-
-	resetDashboard, err := handler.module.Reset(ctx, orgID, dashboardtypes.Source(dashboard.Source), claims.Email)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	render.Success(rw, http.StatusOK, resetDashboard)
+	render.Success(rw, http.StatusOK, dashboard)
 }
 
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {

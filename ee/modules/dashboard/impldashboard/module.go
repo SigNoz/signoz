@@ -237,8 +237,8 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
 }
 
-func (module *module) Reset(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
-	return module.pkgDashboardModule.Reset(ctx, orgID, source, updatedBy)
+func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
+	return module.pkgDashboardModule.ResetSystemDashboard(ctx, orgID, source, updatedBy)
 }
 
 func (module *module) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) error {
