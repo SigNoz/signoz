@@ -26,7 +26,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 // This is not a real snapshot file and will never be used. We need this placeholder to ensure maintenance runs on shutdown.
@@ -79,7 +78,7 @@ func New(
 	orgID string,
 	stateStore alertmanagertypes.StateStore,
 	nfManager nfmanager.NotificationManager,
-	maintenanceStore ruletypes.MaintenanceStore,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) (*Server, error) {
 	server := &Server{
 		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),

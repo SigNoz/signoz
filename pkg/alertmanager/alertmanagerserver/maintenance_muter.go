@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
@@ -15,18 +16,18 @@ import (
 // It suppresses alerts whose ruleId label matches an active maintenance schedule.
 // Results are cached for cacheTTL to avoid a DB query on every per-alert check.
 type MaintenanceMuter struct {
-	maintenanceStore ruletypes.MaintenanceStore
+	maintenanceStore alertmanagertypes.MaintenanceStore
 	orgID            string
 	logger           *slog.Logger
 
 	mu          sync.RWMutex
-	cached      []*ruletypes.PlannedMaintenance
+	cached      []*alertmanagertypes.PlannedMaintenance
 	cacheExpiry time.Time
 }
 
 const maintenanceCacheTTL = 30 * time.Second
 
-func NewMaintenanceMuter(store ruletypes.MaintenanceStore, orgID string, logger *slog.Logger) *MaintenanceMuter {
+func NewMaintenanceMuter(store alertmanagertypes.MaintenanceStore, orgID string, logger *slog.Logger) *MaintenanceMuter {
 	return &MaintenanceMuter{
 		maintenanceStore: store,
 		orgID:            orgID,
@@ -67,7 +68,7 @@ func (m *MaintenanceMuter) MutedBy(ctx context.Context, lset model.LabelSet) []s
 	return ids
 }
 
-func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*ruletypes.PlannedMaintenance {
+func (m *MaintenanceMuter) getMaintenances(ctx context.Context) []*alertmanagertypes.PlannedMaintenance {
 	m.mu.RLock()
 	if time.Now().Before(m.cacheExpiry) {
 		cached := m.cached

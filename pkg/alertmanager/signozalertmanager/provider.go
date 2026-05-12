@@ -18,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -29,7 +28,7 @@ type provider struct {
 	configStore         alertmanagertypes.ConfigStore
 	stateStore          alertmanagertypes.StateStore
 	notificationManager nfmanager.NotificationManager
-	maintenanceStore    ruletypes.MaintenanceStore
+	maintenanceStore    alertmanagertypes.MaintenanceStore
 	stopC               chan struct{}
 }
 
@@ -37,7 +36,7 @@ func NewFactory(
 	sqlstore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	notificationManager nfmanager.NotificationManager,
-	maintenanceStore ruletypes.MaintenanceStore,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, settings factory.ProviderSettings, config alertmanager.Config) (alertmanager.Alertmanager, error) {
 		return New(settings, config, sqlstore, orgGetter, notificationManager, maintenanceStore)
@@ -50,7 +49,7 @@ func New(
 	sqlstore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	notificationManager nfmanager.NotificationManager,
-	maintenanceStore ruletypes.MaintenanceStore,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) (*provider, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager")
 	configStore := sqlalertmanagerstore.NewConfigStore(sqlstore)

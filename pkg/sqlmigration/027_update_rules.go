@@ -11,7 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/migrate"
@@ -61,7 +61,7 @@ type existingMaintenance struct {
 	Name          string              `bun:"name,type:text,notnull"`
 	Description   string              `bun:"description,type:text"`
 	AlertIDs      *AlertIds           `bun:"alert_ids,type:text"`
-	Schedule      *ruletypes.Schedule `bun:"schedule,type:text,notnull"`
+	Schedule      *alertmanagertypes.Schedule `bun:"schedule,type:text,notnull"`
 	CreatedAt     time.Time           `bun:"created_at,type:datetime,notnull"`
 	CreatedBy     string              `bun:"created_by,type:text,notnull"`
 	UpdatedAt     time.Time           `bun:"updated_at,type:datetime,notnull"`
@@ -75,7 +75,7 @@ type newMaintenance struct {
 	types.UserAuditable
 	Name        string              `bun:"name,type:text,notnull"`
 	Description string              `bun:"description,type:text"`
-	Schedule    *ruletypes.Schedule `bun:"schedule,type:text,notnull"`
+	Schedule    *alertmanagertypes.Schedule `bun:"schedule,type:text,notnull"`
 	OrgID       string              `bun:"org_id,type:text"`
 }
 

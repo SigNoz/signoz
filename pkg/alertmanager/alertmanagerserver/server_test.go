@@ -11,13 +11,12 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -28,9 +27,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestMaintenanceStore() ruletypes.MaintenanceStore {
+func newTestMaintenanceStore() alertmanagertypes.MaintenanceStore {
 	ss := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
-	return sqlrulestore.NewMaintenanceStore(ss)
+	return sqlalertmanagerstore.NewMaintenanceStore(ss)
 }
 
 func TestServerSetConfigAndStop(t *testing.T) {

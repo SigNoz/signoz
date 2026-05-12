@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/ruler"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -194,7 +195,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 		return
 	}
 
-	var params ruletypes.ListPlannedMaintenanceParams
+	var params alertmanagertypes.ListPlannedMaintenanceParams
 	if err := binding.Query.BindQuery(req.URL.Query(), &params); err != nil {
 		render.Error(rw, err)
 		return
@@ -207,7 +208,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 	}
 
 	if params.Active != nil {
-		activeSchedules := make([]*ruletypes.PlannedMaintenance, 0)
+		activeSchedules := make([]*alertmanagertypes.PlannedMaintenance, 0)
 		for _, schedule := range schedules {
 			now := time.Now().In(time.FixedZone(schedule.Schedule.Timezone, 0))
 			if schedule.IsActive(now) == *params.Active {
@@ -218,7 +219,7 @@ func (handler *handler) ListDowntimeSchedules(rw http.ResponseWriter, req *http.
 	}
 
 	if params.Recurring != nil {
-		recurringSchedules := make([]*ruletypes.PlannedMaintenance, 0)
+		recurringSchedules := make([]*alertmanagertypes.PlannedMaintenance, 0)
 		for _, schedule := range schedules {
 			if schedule.IsRecurring() == *params.Recurring {
 				recurringSchedules = append(recurringSchedules, schedule)
@@ -253,7 +254,7 @@ func (handler *handler) CreateDowntimeSchedule(rw http.ResponseWriter, req *http
 	ctx, cancel := context.WithTimeout(req.Context(), 30*time.Second)
 	defer cancel()
 
-	schedule := new(ruletypes.PostablePlannedMaintenance)
+	schedule := new(alertmanagertypes.PostablePlannedMaintenance)
 	if err := binding.JSON.BindBody(req.Body, schedule); err != nil {
 		render.Error(rw, err)
 		return
@@ -283,7 +284,7 @@ func (handler *handler) UpdateDowntimeScheduleByID(rw http.ResponseWriter, req *
 		return
 	}
 
-	schedule := new(ruletypes.PostablePlannedMaintenance)
+	schedule := new(alertmanagertypes.PostablePlannedMaintenance)
 	if err := binding.JSON.BindBody(req.Body, schedule); err != nil {
 		render.Error(rw, err)
 		return

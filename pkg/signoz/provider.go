@@ -67,7 +67,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer/tokenizerstore/sqltokenizerstore"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/SigNoz/signoz/pkg/web/noopweb"
@@ -234,7 +233,7 @@ func NewAlertmanagerProviderFactories(
 	sqlstore sqlstore.SQLStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
-	maintenanceStore ruletypes.MaintenanceStore,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) factory.NamedMap[factory.ProviderFactory[alertmanager.Alertmanager, alertmanager.Config]] {
 	return factory.MustNewNamedMap(
 		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager, maintenanceStore),

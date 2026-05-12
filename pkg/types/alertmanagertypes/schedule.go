@@ -1,4 +1,4 @@
-package ruletypes
+package alertmanagertypes
 
 import (
 	"database/sql/driver"

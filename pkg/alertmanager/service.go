@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 )
 
 type Service struct {
@@ -41,7 +40,7 @@ type Service struct {
 
 	notificationManager nfmanager.NotificationManager
 
-	maintenanceStore ruletypes.MaintenanceStore
+	maintenanceStore alertmanagertypes.MaintenanceStore
 }
 
 func New(
@@ -51,7 +50,7 @@ func New(
 	configStore alertmanagertypes.ConfigStore,
 	orgGetter organization.Getter,
 	nfManager nfmanager.NotificationManager,
-	maintenanceStore ruletypes.MaintenanceStore,
+	maintenanceStore alertmanagertypes.MaintenanceStore,
 ) *Service {
 	service := &Service{
 		config:              config,

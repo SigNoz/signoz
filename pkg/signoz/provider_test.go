@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -14,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlschema/sqlschematest"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -63,7 +63,7 @@ func TestNewProviderFactories(t *testing.T) {
 		store := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)
 		orgGetter := implorganization.NewGetter(implorganization.NewStore(store), nil)
 		notificationManager := nfmanagertest.NewMock()
-		maintenanceStore := sqlrulestore.NewMaintenanceStore(store)
+		maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(store)
 		NewAlertmanagerProviderFactories(store, orgGetter, notificationManager, maintenanceStore)
 	})
 

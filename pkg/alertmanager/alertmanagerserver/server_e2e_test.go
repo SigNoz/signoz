@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
-	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes/alertmanagertypestest"
@@ -94,7 +94,7 @@ func TestEndToEndAlertManagerFlow(t *testing.T) {
 	stateStore := alertmanagertypestest.NewStateStore()
 	registry := prometheus.NewRegistry()
 	logger := slog.New(slog.DiscardHandler)
-	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
+	maintenanceStore := sqlalertmanagerstore.NewMaintenanceStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual))
 	server, err := New(context.Background(), logger, registry, srvCfg, orgID, stateStore, notificationManager, maintenanceStore)
 	require.NoError(t, err)
 	amConfig, err := alertmanagertypes.NewDefaultConfig(srvCfg.Global, srvCfg.Route, orgID)

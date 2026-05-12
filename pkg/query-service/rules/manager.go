@@ -87,7 +87,7 @@ type ManagerOptions struct {
 	Alertmanager        alertmanager.Alertmanager
 	OrgGetter           organization.Getter
 	RuleStore           ruletypes.RuleStore
-	MaintenanceStore    ruletypes.MaintenanceStore
+	MaintenanceStore    alertmanagertypes.MaintenanceStore
 	SQLStore            sqlstore.SQLStore
 	QueryParser         queryparser.QueryParser
 }
@@ -101,7 +101,7 @@ type Manager struct {
 	block chan struct{}
 	// datastore to store alert definitions
 	ruleStore        ruletypes.RuleStore
-	maintenanceStore ruletypes.MaintenanceStore
+	maintenanceStore alertmanagertypes.MaintenanceStore
 
 	logger              *slog.Logger
 	cache               cache.Cache
@@ -232,7 +232,7 @@ func (m *Manager) RuleStore() ruletypes.RuleStore {
 	return m.ruleStore
 }
 
-func (m *Manager) MaintenanceStore() ruletypes.MaintenanceStore {
+func (m *Manager) MaintenanceStore() alertmanagertypes.MaintenanceStore {
 	return m.maintenanceStore
 }
 
