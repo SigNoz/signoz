@@ -29,6 +29,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -63,6 +64,7 @@ type Modules struct {
 	Preference       preference.Module
 	UserSetter       user.Setter
 	UserGetter       user.Getter
+	RetentionGetter  retention.Getter
 	SavedView        savedview.Module
 	Apdex            apdex.Module
 	Dashboard        dashboard.Module
@@ -103,6 +105,7 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	retentionGetter retention.Getter,
 	fl flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
@@ -119,6 +122,7 @@ func NewModules(
 		Dashboard:        dashboard,
 		UserSetter:       userSetter,
 		UserGetter:       userGetter,
+		RetentionGetter:  retentionGetter,
 		QuickFilter:      quickfilter,
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),

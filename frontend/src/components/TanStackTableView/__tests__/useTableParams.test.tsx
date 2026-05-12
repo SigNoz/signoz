@@ -398,7 +398,7 @@ describe('useTableParams (selective URL mode — partial config object)', () => 
 			.filter(Boolean)
 			.pop();
 		expect(lastExpanded).toBeDefined();
-		expect(JSON.parse(lastExpanded!)).toEqual(
+		expect(JSON.parse(lastExpanded!)).toStrictEqual(
 			expect.arrayContaining(['row-1', 'row-2']),
 		);
 

@@ -34,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/signoz"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/gorilla/mux"
@@ -1677,7 +1678,7 @@ func (aH *APIHandler) setCustomRetentionTTL(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var params model.CustomRetentionTTLParams
+	var params retentiontypes.CustomRetentionTTLParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		render.Error(w, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "Invalid data"))
 		return
