@@ -70,12 +70,22 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 
 	selectFromCTE := rootCTEName
 	if b.operator.ReturnSpansFrom != "" {
-		selectFromCTE = b.queryToCTEName[b.operator.ReturnSpansFrom]
-		if selectFromCTE == "" {
+		sourceQueryCTE := b.queryToCTEName[b.operator.ReturnSpansFrom]
+		if sourceQueryCTE == "" {
 			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput,
 				"returnSpansFrom references query '%s' which has no corresponding CTE",
 				b.operator.ReturnSpansFrom)
 		}
+		filteredCTEName := fmt.Sprintf("__return_from_%s", b.operator.ReturnSpansFrom)
+		b.addCTE(filteredCTEName,
+			fmt.Sprintf(
+				"SELECT src.* FROM %s AS src INNER JOIN (SELECT DISTINCT trace_id FROM %s) AS matched_traces ON src.trace_id = matched_traces.trace_id",
+				sourceQueryCTE, rootCTEName,
+			),
+			nil,
+			[]string{sourceQueryCTE, rootCTEName},
+		)
+		selectFromCTE = filteredCTEName
 	}
 
 	finalStmt, err := b.buildFinalQuery(ctx, selectFromCTE, requestType)
