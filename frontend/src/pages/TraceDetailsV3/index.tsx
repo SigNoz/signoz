@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { ChartNoAxesGantt, TriangleAlert } from '@signozhq/icons';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { Collapse } from 'antd';
@@ -309,26 +310,32 @@ function TraceDetailsV3(): JSX.Element {
 										key: 'flame',
 										label: (
 											<div className="trace-details-v3__collapse-label">
-												<span>Flame Graph</span>
-												{traceData?.payload?.totalSpansCount ? (
-													<span className="trace-details-v3__collapse-count">
-														<span>Spans: {traceData.payload.totalSpansCount}</span>
-														<span
-															className={
-																traceData.payload.totalErrorSpansCount > 0
-																	? 'trace-details-v3__collapse-count-errors'
-																	: undefined
-															}
-														>
-															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
-														</span>
-														{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+												<span className="trace-details-v3__collapse-title">
+													Flame Graph
+													{traceData?.payload?.totalSpansCount &&
+														traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
 															<WarningPopover
 																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
-																placement="bottomRight"
-																autoAdjustOverflow={false}
+																placement="bottomLeft"
 															/>
 														)}
+												</span>
+												{traceData?.payload?.totalSpansCount ? (
+													<span className="trace-details-v3__collapse-count">
+														<span className="trace-details-v3__collapse-count-item">
+															<ChartNoAxesGantt size={13} />
+															Spans: {traceData.payload.totalSpansCount}
+														</span>
+														<span
+															className={`trace-details-v3__collapse-count-item${
+																traceData.payload.totalErrorSpansCount > 0
+																	? ' trace-details-v3__collapse-count-errors'
+																	: ''
+															}`}
+														>
+															<TriangleAlert size={13} />
+															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+														</span>
 													</span>
 												) : null}
 											</div>

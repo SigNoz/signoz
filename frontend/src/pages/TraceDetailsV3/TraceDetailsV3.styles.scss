@@ -40,13 +40,25 @@
 		width: 100%;
 	}
 
+	&__collapse-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
 	&__collapse-count {
 		display: flex;
-		gap: 6px;
+		gap: 12px;
 		align-items: center;
 		font-size: 12px;
 		font-weight: 400;
 		color: var(--l2-foreground);
+	}
+
+	&__collapse-count-item {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
 	}
 
 	&__collapse-count-errors {
