@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';

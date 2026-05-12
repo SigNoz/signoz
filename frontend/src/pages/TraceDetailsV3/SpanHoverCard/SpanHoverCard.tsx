@@ -3,7 +3,7 @@ import {
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
-} from '@signozhq/ui';
+} from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
