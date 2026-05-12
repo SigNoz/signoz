@@ -66,16 +66,12 @@ export function useBoundaryPagination({
 						seenInitial.add(entry.target);
 						return;
 					}
-					if (!entry.isIntersecting) {
-						return;
-					}
-					if (isFetchingRef.current) {
-						return;
-					}
-					if (isFullDataLoadedRef.current) {
-						return;
-					}
-					if (spansRef.current.length < MIN_SPANS_FOR_PAGINATION) {
+					if (
+						!entry.isIntersecting ||
+						isFetchingRef.current ||
+						isFullDataLoadedRef.current ||
+						spansRef.current.length < MIN_SPANS_FOR_PAGINATION
+					) {
 						return;
 					}
 
