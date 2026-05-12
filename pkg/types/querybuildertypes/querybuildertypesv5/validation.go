@@ -10,6 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
+const (
+	MaxFilterExpressionLength = 250_000 // This is conservative limit as querybuilder adds sql syntax overhead on top of this.
+	MaxClickHouseQueryLength  = 260_000 // This is the default limit for ClickHouse queries, actual limit is 262142 characters.
+)
+
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
@@ -152,6 +157,10 @@ func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
 	}
 
 	if err := q.validateSelectFields(cfg); err != nil {
+		return err
+	}
+
+	if err := q.validateFilterExpression(cfg); err != nil {
 		return err
 	}
 
@@ -360,6 +369,21 @@ func (q *QueryBuilderQuery[T]) validateFunctions() error {
 				fnId = fmt.Sprintf("function #%d in query '%s'", i+1, q.Name)
 			}
 			return wrapValidationError(err, fnId, "invalid %s: %s")
+		}
+	}
+	return nil
+}
+
+func (q *QueryBuilderQuery[T]) validateFilterExpression(cfg validationConfig) error {
+
+	if q.Filter != nil && q.Filter.Expression != "" {
+		// Actual default limit is 262142 characters, opting for a conservative limit of 25,000 characters
+		if len(q.Filter.Expression) > MaxFilterExpressionLength {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"filter expression exceeds maximum allowed length of %d characters",
+				MaxFilterExpressionLength,
+			)
 		}
 	}
 	return nil
@@ -658,13 +682,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid ClickHouse SQL spec",
 			)
 		}
-		if spec.Query == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"ClickHouse SQL query is required",
-			)
-		}
-		return nil
+		return spec.Validate(opts...)
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
