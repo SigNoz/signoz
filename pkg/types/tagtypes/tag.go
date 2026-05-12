@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ErrCodeTagInvalidName = errors.MustNewCode("tag_invalid_name")
-	ErrCodeTagNotFound    = errors.MustNewCode("tag_not_found")
+	ErrCodeTagInvalidKey   = errors.MustNewCode("tag_invalid_key")
+	ErrCodeTagInvalidValue = errors.MustNewCode("tag_invalid_value")
+	ErrCodeTagNotFound     = errors.MustNewCode("tag_not_found")
 )
 
 type Tag struct {
@@ -134,16 +135,16 @@ func validatePostableTag(p PostableTag) (string, string, error) {
 	key := strings.TrimSpace(p.Key)
 	value := strings.TrimSpace(p.Value)
 	if key == "" {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key cannot be empty")
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key cannot be empty")
 	}
 	if value == "" {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value cannot be empty")
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value cannot be empty")
 	}
 	if strings.ContainsRune(key, '/') {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key %q cannot contain '/'", key)
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key %q cannot contain '/'", key)
 	}
 	if strings.ContainsRune(value, '/') {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value %q cannot contain '/'", value)
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value %q cannot contain '/'", value)
 	}
 	return key, value, nil
 }
