@@ -224,7 +224,7 @@
     "oxlint": "1.62.0",
     "oxlint-tsgolint": "0.22.1",
     "portfinder-sync": "^0.0.2",
-    "postcss": "8.5.6",
+    "postcss": "8.5.10",
     "postcss-scss": "4.0.9",
     "prop-types": "15.8.1",
     "react-hooks-testing-library": "0.6.0",
