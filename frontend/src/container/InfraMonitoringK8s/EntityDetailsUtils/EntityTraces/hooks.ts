@@ -59,7 +59,7 @@ export function useEntityTraces({
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
 		queryKey: reactQueryKey,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const { query } = getEntityTracesQueryPayload({
 				start: timeRange.startTime,
 				end: timeRange.endTime,
@@ -67,7 +67,7 @@ export function useEntityTraces({
 				offset,
 				pageSize,
 			});
-			return GetMetricQueryRange(query, ENTITY_VERSION_V5);
+			return GetMetricQueryRange(query, ENTITY_VERSION_V5, undefined, signal);
 		},
 		enabled: !!expression?.trim(),
 	});

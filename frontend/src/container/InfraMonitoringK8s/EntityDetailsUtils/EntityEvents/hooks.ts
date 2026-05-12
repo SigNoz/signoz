@@ -67,7 +67,7 @@ export function useEntityEvents({
 
 	const { data, isLoading, isFetching, isError, error, refetch } = useQuery({
 		queryKey: reactQueryKey,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const { query } = getEntityEventsQueryPayload({
 				start: timeRange.startTime,
 				end: timeRange.endTime,
@@ -75,7 +75,7 @@ export function useEntityEvents({
 				offset,
 				pageSize,
 			});
-			return GetMetricQueryRange(query, ENTITY_VERSION_V5);
+			return GetMetricQueryRange(query, ENTITY_VERSION_V5, undefined, signal);
 		},
 		enabled: !!expression?.trim(),
 	});
