@@ -1,10 +1,4 @@
-import React, {
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check } from '@signozhq/icons';
 import {
 	Button,
@@ -20,6 +14,7 @@ import {
 } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
+import { DatePickerProps } from 'antd/es/date-picker';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createDowntimeSchedule,
@@ -45,7 +40,6 @@ import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
-import { type PanelMode } from 'rc-picker/lib/interface';
 import { DeepPartial } from 'utils/types';
 
 import 'dayjs/locale/en';
@@ -140,7 +134,7 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
-	const datePickerFooter = (mode: PanelMode): ReactNode =>
+	const datePickerFooter: DatePickerProps['renderExtraFooter'] = (mode) =>
 		mode === 'time' ? (
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
