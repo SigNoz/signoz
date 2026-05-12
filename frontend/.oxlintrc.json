@@ -411,7 +411,7 @@
     "jsx-a11y/media-has-caption": "warn",
     "jsx-a11y/mouse-events-have-key-events": "warn",
     "jsx-a11y/no-access-key": "error",
-    "jsx-a11y/no-autofocus": "warn",
+    "jsx-a11y/no-autofocus": "off",
     "jsx-a11y/no-distracting-elements": "error",
     "jsx-a11y/no-redundant-roles": "warn",
     "jsx-a11y/role-has-required-aria-props": "warn",

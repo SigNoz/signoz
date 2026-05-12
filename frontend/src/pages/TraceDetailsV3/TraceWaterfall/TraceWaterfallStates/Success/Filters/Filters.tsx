@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Button, Spin, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
@@ -9,10 +8,10 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
+import { LoaderCircle, Info, ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { BASE_FILTER_QUERY } from './constants';
 
@@ -188,10 +187,12 @@ function Filters({
 					/>
 				</div>
 			)}
-			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
+			{isFetching && (
+				<Spin indicator={<LoaderCircle className="animate-spin" />} size="small" />
+			)}
 			{error && (
 				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
-					<InfoCircleOutlined size={14} />
+					<Info size={14} />
 				</Tooltip>
 			)}
 			{noData && (

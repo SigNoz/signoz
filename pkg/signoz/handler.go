@@ -124,6 +124,6 @@ func NewHandlers(
 		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
-		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(nil, providerSettings),
+		LLMPricingRuleHandler:   impllmpricingrule.NewHandler(modules.LLMPricingRule),
 	}
 }

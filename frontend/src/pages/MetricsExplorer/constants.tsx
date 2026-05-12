@@ -2,14 +2,14 @@ import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import ExplorerPage from 'container/MetricsExplorer/Explorer';
 import SummaryPage from 'container/MetricsExplorer/Summary';
-import { BarChart2, Compass, TowerControl } from 'lucide-react';
+import { BarChart, Compass, TowerControl } from '@signozhq/icons';
 import SaveView from 'pages/SaveView';
 
 export const Summary: TabRoutes = {
 	Component: SummaryPage,
 	name: (
 		<div className="tab-item">
-			<BarChart2 size={16} /> Summary
+			<BarChart size={16} /> Summary
 		</div>
 	),
 	route: ROUTES.METRICS_EXPLORER,

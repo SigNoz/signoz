@@ -10,7 +10,7 @@ import {
 import * as Sentry from '@sentry/react';
 import { Typography } from '@signozhq/ui/typography';
 import { ToggleGraphProps } from 'components/Graph/types';
-import { LineChart } from 'lucide-react';
+import { ChartLine } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import UPlot from 'uplot';
 
@@ -171,7 +171,7 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		if (data && data[0] && data[0]?.length === 0) {
 			return (
 				<div className="uplot-no-data not-found">
-					<LineChart size={48} strokeWidth={0.5} />
+					<ChartLine size={48} strokeWidth={0.5} />
 
 					<Typography>No Data</Typography>
 				</div>

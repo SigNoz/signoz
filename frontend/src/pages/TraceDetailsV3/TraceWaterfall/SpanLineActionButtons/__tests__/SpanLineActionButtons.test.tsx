@@ -49,9 +49,9 @@ describe('SpanLineActionButtons', () => {
 		const copyButton = screen.getByRole('button');
 		expect(copyButton).toBeInTheDocument();
 
-		// Check if the lucide link icon is rendered
+		// Check that an icon is rendered inside the button
 		const linkIcon = copyButton.querySelector('svg');
-		expect(linkIcon).toHaveClass('lucide-link');
+		expect(linkIcon).toBeInTheDocument();
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {

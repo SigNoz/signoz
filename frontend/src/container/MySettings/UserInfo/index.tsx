@@ -8,7 +8,7 @@ import {
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, FileTerminal, MailIcon, UserIcon } from 'lucide-react';
+import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 
@@ -125,11 +125,11 @@ function UserInfo(): JSX.Element {
 
 				<div className="user-info-subsection">
 					<div className="user-email">
-						<MailIcon size={16} /> {user.email}
+						<Mail size={16} /> {user.email}
 					</div>
 
 					<div className="user-role">
-						<UserIcon size={16} /> {user.role.toLowerCase()}
+						<User size={16} /> {user.role.toLowerCase()}
 					</div>
 				</div>
 			</div>

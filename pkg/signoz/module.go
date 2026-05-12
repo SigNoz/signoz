@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -29,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -65,6 +68,7 @@ type Modules struct {
 	Preference       preference.Module
 	UserSetter       user.Setter
 	UserGetter       user.Getter
+	RetentionGetter  retention.Getter
 	SavedView        savedview.Module
 	Apdex            apdex.Module
 	Dashboard        dashboard.Module
@@ -83,6 +87,7 @@ type Modules struct {
 	RuleStateHistory rulestatehistory.Module
 	TraceDetail      tracedetail.Module
 	SpanMapper       spanmapper.Module
+	LLMPricingRule   llmpricingrule.Module
 }
 
 func NewModules(
@@ -106,6 +111,7 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	retentionGetter retention.Getter,
 	fl flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
@@ -122,6 +128,7 @@ func NewModules(
 		Dashboard:        dashboard,
 		UserSetter:       userSetter,
 		UserGetter:       userGetter,
+		RetentionGetter:  retentionGetter,
 		QuickFilter:      quickfilter,
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),
@@ -137,5 +144,6 @@ func NewModules(
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
 		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
+		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
 	}
 }

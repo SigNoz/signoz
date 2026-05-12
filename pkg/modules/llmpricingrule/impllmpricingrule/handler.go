@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
@@ -19,12 +18,11 @@ import (
 const maxLimit = 100
 
 type handler struct {
-	module           llmpricingrule.Module
-	providerSettings factory.ProviderSettings
+	module llmpricingrule.Module
 }
 
-func NewHandler(module llmpricingrule.Module, providerSettings factory.ProviderSettings) llmpricingrule.Handler {
-	return &handler{module: module, providerSettings: providerSettings}
+func NewHandler(module llmpricingrule.Module) llmpricingrule.Handler {
+	return &handler{module: module}
 }
 
 // List handles GET /api/v1/llm_pricing_rules.

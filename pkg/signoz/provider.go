@@ -28,6 +28,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
 	"github.com/SigNoz/signoz/pkg/identn/impersonationidentn"
 	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/meterreporter/noopmeterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -197,6 +199,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
 		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
 		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -317,6 +320,12 @@ func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[fac
 func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 	return factory.MustNewNamedMap(
 		noopauditor.NewFactory(),
+	)
+}
+
+func NewMeterReporterProviderFactories() factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
+	return factory.MustNewNamedMap(
+		noopmeterreporter.NewFactory(),
 	)
 }
 

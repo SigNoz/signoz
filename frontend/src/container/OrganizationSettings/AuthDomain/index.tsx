@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Trash2, X } from '@signozhq/icons';
+import { Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/sonner';
 import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
@@ -180,7 +179,7 @@ function AuthDomain(): JSX.Element {
 			<section className="auth-domain-header">
 				<h3 className="auth-domain-title">Authenticated Domains</h3>
 				<Button
-					prefix={<PlusOutlined />}
+					prefix={<Plus size="md" />}
 					onClick={(): void => {
 						setAddDomain(true);
 					}}

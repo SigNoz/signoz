@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import {
-	DeleteOutlined,
-	MoreOutlined,
-	SaveOutlined,
-	ShareAltOutlined,
-} from '@ant-design/icons';
-import {
 	Button,
 	Col,
 	Dropdown,
@@ -44,6 +38,7 @@ import {
 } from './styles';
 import { ExplorerCardProps } from './types';
 import { deleteViewHandler } from './utils';
+import { Ellipsis, Save, Share2, Trash2 } from '@signozhq/icons';
 
 function ExplorerCard({
 	sourcepage,
@@ -159,13 +154,13 @@ function ExplorerCard({
 				key: 'delete',
 				label: <Typography.Text strong>Delete</Typography.Text>,
 				onClick: onDeleteHandler,
-				icon: <DeleteOutlined />,
+				icon: <Trash2 size="md" />,
 			},
 		],
 	};
 
 	const saveButtonType = isQueryUpdated ? 'default' : 'primary';
-	const saveButtonIcon = isQueryUpdated ? null : <SaveOutlined />;
+	const saveButtonIcon = isQueryUpdated ? null : <Save size="md" />;
 
 	const showSaveView = false;
 
@@ -215,11 +210,7 @@ function ExplorerCard({
 									</Space>
 								)}
 								{isQueryUpdated && (
-									<Button
-										type="primary"
-										icon={<SaveOutlined />}
-										onClick={onUpdateQueryHandler}
-									>
+									<Button type="primary" icon={<Save />} onClick={onUpdateQueryHandler}>
 										Save changes
 									</Button>
 								)}
@@ -248,10 +239,10 @@ function ExplorerCard({
 											: SaveButtonText.SAVE_VIEW}
 									</Button>
 								</Popover>
-								<ShareAltOutlined onClick={onCopyUrlHandler} />
+								<Share2 onClick={onCopyUrlHandler} size="md" />
 								{viewKey && (
 									<Dropdown trigger={['click']} menu={moreOptionMenu}>
-										<MoreOutlined />
+										<Ellipsis size="md" />
 									</Dropdown>
 								)}
 							</Space>

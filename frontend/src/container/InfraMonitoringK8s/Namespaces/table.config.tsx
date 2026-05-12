@@ -7,7 +7,7 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
 import { K8sNamespacesData, K8sNamespacesListPayload } from './api';
-import { FilePenLine } from 'lucide-react';
+import { FilePenLine } from '@signozhq/icons';
 
 export function getK8sNamespaceRowKey(namespace: K8sNamespacesData): string {
 	return namespace.namespaceName || namespace.meta.k8s_namespace_name;

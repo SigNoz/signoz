@@ -5,7 +5,7 @@ import logEvent from 'api/common/logEvent';
 import { useGetHosts } from 'api/generated/services/zeus';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { Link2 } from 'lucide-react';
+import { Link2 } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
