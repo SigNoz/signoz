@@ -22,7 +22,7 @@
 		align-items: center;
 		gap: 6px;
 		padding: 4px 10px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		cursor: pointer;
 		max-width: 220px;
@@ -31,7 +31,7 @@
 		background: var(--l1-background);
 
 		&:hover {
-			border-color: var(--primary-background-hover);
+			border-color: var(--l3-border);
 		}
 
 		&__text {
@@ -47,7 +47,7 @@
 			width: 6px;
 			height: 6px;
 			border-radius: 50%;
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			flex-shrink: 0;
 		}
 	}
@@ -61,12 +61,6 @@
 			align-items: center;
 			justify-content: space-between;
 			margin-bottom: 8px;
-
-			.ant-typography {
-				font-size: 12px;
-				font-weight: 500;
-				color: var(--l2-foreground);
-			}
 		}
 
 		&__expression {

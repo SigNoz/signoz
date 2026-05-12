@@ -44,6 +44,24 @@ interface TraceDetailsHeaderProps {
 	traceMetadata?: TraceMetadataForHeader;
 }
 
+const SKELETON_COUNT = 3;
+
+function DetailsLoader(): JSX.Element {
+	return (
+		<>
+			{Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+				<Skeleton.Input
+					// eslint-disable-next-line react/no-array-index-key
+					key={i}
+					active
+					size="small"
+					className="trace-details-header__skeleton"
+				/>
+			))}
+		</>
+	);
+}
+
 function TraceDetailsHeader({
 	filterMetadata,
 	onFilteredSpansChange,
@@ -173,23 +191,7 @@ function TraceDetailsHeader({
 							)}
 						</>
 					) : (
-						<>
-							<Skeleton.Input
-								active
-								size="small"
-								className="trace-details-header__skeleton"
-							/>
-							<Skeleton.Input
-								active
-								size="small"
-								className="trace-details-header__skeleton"
-							/>
-							<Skeleton.Input
-								active
-								size="small"
-								className="trace-details-header__skeleton"
-							/>
-						</>
+						<DetailsLoader />
 					)}
 				</div>
 			)}

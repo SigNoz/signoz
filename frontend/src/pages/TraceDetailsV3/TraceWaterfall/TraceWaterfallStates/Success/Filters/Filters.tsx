@@ -3,8 +3,15 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { Switch, ToggleGroup, ToggleGroupItem, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Button, Popover, Spin, Tooltip } from 'antd';
+import { Spin } from 'antd';
 import { AxiosError } from 'axios';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
@@ -241,11 +248,16 @@ function Filters({
 		<>
 			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
 			{error && (
-				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
-					<span className="filter-status filter-status--error">
-						<InfoCircleOutlined />
-						API error
-					</span>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span className="filter-status filter-status--error">
+							<InfoCircleOutlined />
+							API error
+						</span>
+					</TooltipTrigger>
+					<TooltipContent>
+						{(error as AxiosError)?.message || 'Something went wrong'}
+					</TooltipContent>
 				</Tooltip>
 			)}
 			{!error && noData && (
@@ -258,124 +270,140 @@ function Filters({
 
 	// --- COLLAPSED VIEW ---
 	if (!isExpanded) {
-		return (
-			<div className="trace-v3-filter-row collapsed">
-				<Popover
-					content={
-						expression ? (
-							<div className="filter-pill-popover">
-								<div className="filter-pill-popover__header">
-									<Typography.Text>Search query</Typography.Text>
-									<Button
-										type="text"
-										size="small"
-										icon={<Copy size={12} />}
-										onClick={(): void => {
-											setCopy(expression);
-											toast.success('Copied to clipboard', {
-												richColors: false,
-												position: 'top-right',
-											});
-										}}
-									/>
-								</div>
-								<div className="filter-pill-popover__expression">{expression}</div>
-							</div>
-						) : null
-					}
-					trigger="hover"
-					placement="bottomLeft"
-					arrow={false}
-					overlayStyle={{ maxWidth: 400 }}
-				>
-					{/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-					<div className="filter-pill" onClick={onExpand}>
-						<Search size={12} />
-						<span className="filter-pill__text">{expression || 'Search...'}</span>
-						{expression && <span className="filter-pill__indicator" />}
-					</div>
-				</Popover>
-				{highlightErrorsToggle}
-				{statusIndicators}
+		const pill = (
+			/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+			<div className="filter-pill" onClick={onExpand}>
+				<Search size={12} />
+				<span className="filter-pill__text">{expression || 'Search...'}</span>
+				{expression && <span className="filter-pill__indicator" />}
 			</div>
+		);
+
+		return (
+			<TooltipProvider>
+				<div className="trace-v3-filter-row collapsed">
+					{expression ? (
+						<Tooltip>
+							<TooltipTrigger asChild>{pill}</TooltipTrigger>
+							<TooltipContent side="bottom" align="start">
+								<div className="filter-pill-popover">
+									<div className="filter-pill-popover__header">
+										<Typography.Text>Search query</Typography.Text>
+										<Button
+											variant="ghost"
+											size="icon"
+											color="secondary"
+											onClick={(): void => {
+												setCopy(expression);
+												toast.success('Copied to clipboard', {
+													richColors: false,
+													position: 'top-right',
+												});
+											}}
+										>
+											<Copy size={12} />
+										</Button>
+									</div>
+									<div className="filter-pill-popover__expression">{expression}</div>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					) : (
+						pill
+					)}
+					{highlightErrorsToggle}
+					{statusIndicators}
+				</div>
+			</TooltipProvider>
 		);
 	}
 
 	// --- EXPANDED VIEW ---
 	return (
-		<div className="trace-v3-filter-row expanded">
-			<ToggleGroup
-				type="single"
-				value={selectedCategory}
-				onChange={(value): void => {
-					if (value) {
-						handleCategoryChange(value as SpanCategory);
-					}
-				}}
-				size="sm"
-			>
-				{categories.map((category) => (
-					<ToggleGroupItem key={category} value={category}>
-						{category}
-					</ToggleGroupItem>
-				))}
-			</ToggleGroup>
-			{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-			<div
-				className="filter-search-container"
-				ref={containerRef}
-				onBlur={(e): void => {
-					if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-						handleBlur();
-					}
-				}}
-			>
-				<QuerySearch
-					queryData={{
-						...BASE_FILTER_QUERY,
-						filters,
-						filter: { expression },
+		<TooltipProvider>
+			<div className="trace-v3-filter-row expanded">
+				<ToggleGroup
+					type="single"
+					value={selectedCategory}
+					onChange={(value): void => {
+						if (value) {
+							handleCategoryChange(value as SpanCategory);
+						}
 					}}
-					onChange={handleExpressionChange}
-					onRun={handleRunQuery}
-					dataSource={DataSource.TRACES}
-					placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
-				/>
-			</div>
-			{filteredSpanIds.length > 0 && (
-				<div className="pre-next-toggle">
-					<Typography.Text className="pre-next-toggle__count">
-						{currentSearchedIndex + 1} / {filteredSpanIds.length}
-					</Typography.Text>
-					<Button
-						icon={<ChevronUp size={14} />}
-						disabled={currentSearchedIndex === 0}
-						type="text"
-						onClick={(): void => {
-							handlePrevNext(currentSearchedIndex - 1);
-							setCurrentSearchedIndex((prev) => prev - 1);
+					size="sm"
+				>
+					{categories.map((category) => (
+						<ToggleGroupItem key={category} value={category}>
+							{category}
+						</ToggleGroupItem>
+					))}
+				</ToggleGroup>
+				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+				<div
+					className="filter-search-container"
+					ref={containerRef}
+					onBlur={(e): void => {
+						if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+							handleBlur();
+						}
+					}}
+				>
+					<QuerySearch
+						queryData={{
+							...BASE_FILTER_QUERY,
+							filters,
+							filter: { expression },
 						}}
-					/>
-					<Button
-						icon={<ChevronDown size={14} />}
-						type="text"
-						disabled={currentSearchedIndex === filteredSpanIds.length - 1}
-						onClick={(): void => {
-							handlePrevNext(currentSearchedIndex + 1);
-							setCurrentSearchedIndex((prev) => prev + 1);
-						}}
+						onChange={handleExpressionChange}
+						onRun={handleRunQuery}
+						dataSource={DataSource.TRACES}
+						placeholder="Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')"
 					/>
 				</div>
-			)}
-			<Button
-				type="text"
-				icon={<X size={14} />}
-				onClick={onCollapse}
-				className="filter-collapse-btn"
-			/>
-			{highlightErrorsToggle}
-			{statusIndicators}
-		</div>
+				{filteredSpanIds.length > 0 && (
+					<div className="pre-next-toggle">
+						<Typography.Text className="pre-next-toggle__count">
+							{currentSearchedIndex + 1} / {filteredSpanIds.length}
+						</Typography.Text>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							disabled={currentSearchedIndex === 0}
+							onClick={(): void => {
+								handlePrevNext(currentSearchedIndex - 1);
+								setCurrentSearchedIndex((prev) => prev - 1);
+							}}
+						>
+							<ChevronUp size={14} />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							color="secondary"
+							disabled={currentSearchedIndex === filteredSpanIds.length - 1}
+							onClick={(): void => {
+								handlePrevNext(currentSearchedIndex + 1);
+								setCurrentSearchedIndex((prev) => prev + 1);
+							}}
+						>
+							<ChevronDown size={14} />
+						</Button>
+					</div>
+				)}
+				<Button
+					variant="ghost"
+					size="icon"
+					color="secondary"
+					className="filter-collapse-btn"
+					onClick={onCollapse}
+				>
+					<X size={14} />
+				</Button>
+				{highlightErrorsToggle}
+				{statusIndicators}
+			</div>
+		</TooltipProvider>
 	);
 }
 
