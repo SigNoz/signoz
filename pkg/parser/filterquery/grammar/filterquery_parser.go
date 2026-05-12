@@ -40,7 +40,7 @@ func filterqueryParserInit() {
 		"", "LPAREN", "RPAREN", "LBRACK", "RBRACK", "COMMA", "EQUALS", "NOT_EQUALS",
 		"NEQ", "LT", "LE", "GT", "GE", "LIKE", "ILIKE", "BETWEEN", "EXISTS",
 		"REGEXP", "CONTAINS", "IN", "NOT", "AND", "OR", "HASTOKEN", "HAS", "HASANY",
-		"HASALL", "BOOL", "NUMBER", "QUOTED_TEXT", "KEY", "WS", "FREETEXT",
+		"HASALL", "SEARCH", "BOOL", "NUMBER", "QUOTED_TEXT", "KEY", "WS", "FREETEXT",
 	}
 	staticData.RuleNames = []string{
 		"query", "expression", "orExpression", "andExpression", "unaryExpression",
@@ -50,7 +50,7 @@ func filterqueryParserInit() {
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 32, 219, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 33, 219, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
 		2, 16, 7, 16, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 43,
@@ -71,8 +71,8 @@ func filterqueryParserInit() {
 		8, 12, 10, 12, 12, 12, 204, 9, 12, 1, 13, 1, 13, 1, 13, 3, 13, 209, 8,
 		13, 1, 14, 1, 14, 1, 14, 1, 14, 1, 15, 1, 15, 1, 16, 1, 16, 1, 16, 0, 0,
 		17, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 0, 5,
-		1, 0, 7, 8, 1, 0, 13, 14, 2, 0, 29, 29, 32, 32, 1, 0, 23, 26, 1, 0, 27,
-		30, 235, 0, 34, 1, 0, 0, 0, 2, 37, 1, 0, 0, 0, 4, 39, 1, 0, 0, 0, 6, 47,
+		1, 0, 7, 8, 1, 0, 13, 14, 2, 0, 30, 30, 33, 33, 1, 0, 23, 27, 1, 0, 28,
+		31, 235, 0, 34, 1, 0, 0, 0, 2, 37, 1, 0, 0, 0, 4, 39, 1, 0, 0, 0, 6, 47,
 		1, 0, 0, 0, 8, 57, 1, 0, 0, 0, 10, 70, 1, 0, 0, 0, 12, 149, 1, 0, 0, 0,
 		14, 163, 1, 0, 0, 0, 16, 180, 1, 0, 0, 0, 18, 182, 1, 0, 0, 0, 20, 190,
 		1, 0, 0, 0, 22, 192, 1, 0, 0, 0, 24, 197, 1, 0, 0, 0, 26, 208, 1, 0, 0,
@@ -142,7 +142,7 @@ func filterqueryParserInit() {
 		14, 0, 208, 205, 1, 0, 0, 0, 208, 206, 1, 0, 0, 0, 208, 207, 1, 0, 0, 0,
 		209, 27, 1, 0, 0, 0, 210, 211, 5, 3, 0, 0, 211, 212, 3, 18, 9, 0, 212,
 		213, 5, 4, 0, 0, 213, 29, 1, 0, 0, 0, 214, 215, 7, 4, 0, 0, 215, 31, 1,
-		0, 0, 0, 216, 217, 5, 30, 0, 0, 217, 33, 1, 0, 0, 0, 11, 44, 51, 53, 57,
+		0, 0, 0, 216, 217, 5, 31, 0, 0, 217, 33, 1, 0, 0, 0, 11, 44, 51, 53, 57,
 		70, 149, 163, 180, 187, 202, 208,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
@@ -208,12 +208,13 @@ const (
 	FilterQueryParserHAS         = 24
 	FilterQueryParserHASANY      = 25
 	FilterQueryParserHASALL      = 26
-	FilterQueryParserBOOL        = 27
-	FilterQueryParserNUMBER      = 28
-	FilterQueryParserQUOTED_TEXT = 29
-	FilterQueryParserKEY         = 30
-	FilterQueryParserWS          = 31
-	FilterQueryParserFREETEXT    = 32
+	FilterQueryParserSEARCH      = 27
+	FilterQueryParserBOOL        = 28
+	FilterQueryParserNUMBER      = 29
+	FilterQueryParserQUOTED_TEXT = 30
+	FilterQueryParserKEY         = 31
+	FilterQueryParserWS          = 32
+	FilterQueryParserFREETEXT    = 33
 )
 
 // FilterQueryParser rules.
@@ -803,7 +804,7 @@ func (p *FilterQueryParser) AndExpression() (localctx IAndExpressionContext) {
 	}
 	_la = p.GetTokenStream().LA(1)
 
-	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&6437208066) != 0 {
+	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&12879659010) != 0 {
 		p.SetState(51)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
@@ -825,7 +826,7 @@ func (p *FilterQueryParser) AndExpression() (localctx IAndExpressionContext) {
 				p.UnaryExpression()
 			}
 
-		case FilterQueryParserLPAREN, FilterQueryParserNOT, FilterQueryParserHASTOKEN, FilterQueryParserHAS, FilterQueryParserHASANY, FilterQueryParserHASALL, FilterQueryParserBOOL, FilterQueryParserNUMBER, FilterQueryParserQUOTED_TEXT, FilterQueryParserKEY, FilterQueryParserFREETEXT:
+		case FilterQueryParserLPAREN, FilterQueryParserNOT, FilterQueryParserHASTOKEN, FilterQueryParserHAS, FilterQueryParserHASANY, FilterQueryParserHASALL, FilterQueryParserSEARCH, FilterQueryParserBOOL, FilterQueryParserNUMBER, FilterQueryParserQUOTED_TEXT, FilterQueryParserKEY, FilterQueryParserFREETEXT:
 			{
 				p.SetState(50)
 				p.UnaryExpression()
@@ -2748,6 +2749,7 @@ type IFunctionCallContext interface {
 	HAS() antlr.TerminalNode
 	HASANY() antlr.TerminalNode
 	HASALL() antlr.TerminalNode
+	SEARCH() antlr.TerminalNode
 
 	// IsFunctionCallContext differentiates from other interfaces.
 	IsFunctionCallContext()
@@ -2825,6 +2827,10 @@ func (s *FunctionCallContext) HASALL() antlr.TerminalNode {
 	return s.GetToken(FilterQueryParserHASALL, 0)
 }
 
+func (s *FunctionCallContext) SEARCH() antlr.TerminalNode {
+	return s.GetToken(FilterQueryParserSEARCH, 0)
+}
+
 func (s *FunctionCallContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -2865,7 +2871,7 @@ func (p *FilterQueryParser) FunctionCall() (localctx IFunctionCallContext) {
 		p.SetState(192)
 		_la = p.GetTokenStream().LA(1)
 
-		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&125829120) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&260046848) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
@@ -3505,7 +3511,7 @@ func (p *FilterQueryParser) Value() (localctx IValueContext) {
 		p.SetState(214)
 		_la = p.GetTokenStream().LA(1)
 
-		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&2013265920) != 0) {
+		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&4026531840) != 0) {
 			p.GetErrorHandler().RecoverInline(p)
 		} else {
 			p.GetErrorHandler().ReportMatch(p)
