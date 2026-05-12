@@ -10,7 +10,6 @@ import noNavigatorClipboard from './rules/no-navigator-clipboard.mjs';
 import noUnsupportedAssetPattern from './rules/no-unsupported-asset-pattern.mjs';
 import noRawAbsolutePath from './rules/no-raw-absolute-path.mjs';
 import noAntdComponents from './rules/no-antd-components.mjs';
-import noSignozhqUiBarrel from './rules/no-signozhq-ui-barrel.mjs';
 
 export default {
 	meta: {
@@ -22,6 +21,5 @@ export default {
 		'no-unsupported-asset-pattern': noUnsupportedAssetPattern,
 		'no-raw-absolute-path': noRawAbsolutePath,
 		'no-antd-components': noAntdComponents,
-		'no-signozhq-ui-barrel': noSignozhqUiBarrel,
 	},
 };
