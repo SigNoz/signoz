@@ -1,5 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { Braces, ChartBar, DraftingCompass, ScrollText } from 'lucide-react';
+import { Braces, ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
 
 /**
  * Supported operators for filtering with their display properties

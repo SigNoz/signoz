@@ -7,7 +7,13 @@ import logEvent from 'api/common/logEvent';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, debounce, isEmpty } from 'lodash-es';
-import { ArrowRight, CheckCircle, Plus, TriangleAlert, X } from 'lucide-react';
+import {
+	ArrowRight,
+	CircleCheck,
+	Plus,
+	TriangleAlert,
+	X,
+} from '@signozhq/icons';
 import APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
@@ -216,7 +222,7 @@ function InviteTeamMembers({
 										emailValidity[member.id!] === undefined ? null : emailValidity[
 												member.id!
 										  ] ? (
-											<CheckCircle size={14} color={Color.BG_FOREST_500} />
+											<CircleCheck size={14} color={Color.BG_FOREST_500} />
 										) : (
 											<TriangleAlert size={14} color={Color.BG_SIENNA_500} />
 										)

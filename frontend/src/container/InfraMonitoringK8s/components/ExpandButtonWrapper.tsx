@@ -1,5 +1,5 @@
-import { Button } from '@signozhq/ui/button';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@signozhq/ui';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import styles from './ExpandedButtonWrapper.module.scss';
 import { useEffect, useState } from 'react';
 

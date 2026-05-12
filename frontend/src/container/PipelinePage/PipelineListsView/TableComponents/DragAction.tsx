@@ -1,4 +1,4 @@
-import { HolderOutlined } from '@ant-design/icons';
+import { GripVertical } from '@signozhq/icons';
 import { Switch } from 'antd';
 
 import { holdIconStyle } from '../config';
@@ -8,7 +8,7 @@ function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 	return (
 		<LastActionColumn>
 			<Switch defaultChecked={isEnabled} onChange={onChange} />
-			<HolderOutlined style={holdIconStyle} />
+			<GripVertical size="lg" style={holdIconStyle} />
 		</LastActionColumn>
 	);
 }

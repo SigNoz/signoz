@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Typography } from '@signozhq/ui/typography';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Ghost } from 'lucide-react';
+import { Ghost } from '@signozhq/icons';
 import {
 	BaseAutocompleteData,
 	DataTypes,

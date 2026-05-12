@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
-import { PlusCircleOutlined } from '@ant-design/icons';
+import { CirclePlus } from '@signozhq/icons';
 import type { TableLocale } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -203,7 +203,7 @@ function PipelineExpandView({
 		if (prevPipelinesCount === 0 || isEditingActionMode) {
 			return (
 				<FooterButton type="link" onClick={addNewProcessorHandler}>
-					<PlusCircleOutlined />
+					<CirclePlus size="lg" />
 					<ModalFooterTitle>{t('add_new_processor')}</ModalFooterTitle>
 				</FooterButton>
 			);

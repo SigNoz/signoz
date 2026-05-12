@@ -16,7 +16,7 @@ echo "\n✅ Tag files renamed to index.ts"
 
 # Format generated files
 echo "\n\n---\nRunning prettier...\n"
-if ! yarn prettify src/api/generated; then
+if ! pnpm prettify src/api/generated; then
   echo "Formatting failed!"
   exit 1
 fi
@@ -25,7 +25,7 @@ echo "\n✅ Formatting successful"
 
 # Fix linting issues
 echo "\n\n---\nRunning lint...\n"
-if ! yarn lint:generated; then
+if ! pnpm lint:generated; then
   echo "Lint check failed! Please fix linting errors before proceeding."
   exit 1
 fi

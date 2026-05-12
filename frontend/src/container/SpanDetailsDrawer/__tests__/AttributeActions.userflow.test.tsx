@@ -351,10 +351,9 @@ describe('AttributeActions User Flow Tests', () => {
 			const quotedAttrRow = screen.getByText('trace.annotation').closest('.item');
 			await user.hover(quotedAttrRow!);
 
-			const moreActionsButton = quotedAttrRow!
-				.querySelector('.lucide-ellipsis')
-				?.closest('button');
-			await user.click(moreActionsButton!);
+			const actionButtons = quotedAttrRow!.querySelectorAll('.action-btn button');
+			const moreActionsButton = actionButtons[actionButtons.length - 1];
+			await user.hover(moreActionsButton);
 
 			await waitFor(() => {
 				expect(screen.getByText('Copy Field Value')).toBeInTheDocument();

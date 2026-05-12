@@ -31,7 +31,7 @@ import {
 	GripVertical,
 	LockKeyhole,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import {
 	selectIsDashboardLocked,

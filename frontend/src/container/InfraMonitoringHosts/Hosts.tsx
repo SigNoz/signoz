@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -17,7 +16,6 @@ import {
 } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Filter } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -40,6 +38,7 @@ import {
 import { getHostsQuickFiltersConfig } from './utils';
 
 import styles from './InfraMonitoringHosts.module.scss';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
@@ -149,9 +148,10 @@ function Hosts(): JSX.Element {
 							<div className={styles.quickFiltersContainerHeader}>
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
-									<VerticalAlignTopOutlined
-										rotate={270}
+									<ArrowUpToLine
+										style={{ rotate: '270deg', cursor: 'pointer' }}
 										onClick={handleFilterVisibilityChange}
+										size="md"
 									/>
 								</Tooltip>
 							</div>

@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sDeploymentsData } from './api';
-import { Computer } from 'lucide-react';
+import { Computer } from '@signozhq/icons';
 
 export function getK8sDeploymentRowKey(deployment: K8sDeploymentsData): string {
 	return deployment.meta.k8s_deployment_name || deployment.deploymentName;
@@ -92,7 +92,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			cell: ({ value }): React.ReactNode => {
 				const availablePods = value as number;
 				return (
-					<ValidateColumnValueWrapper value={availablePods}>
+					<ValidateColumnValueWrapper
+						value={availablePods}
+						entity={InfraMonitoringEntity.DEPLOYMENTS}
+						attribute="available pod"
+					>
 						<TanStackTable.Text>{availablePods}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
@@ -109,7 +113,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			cell: ({ value }): React.ReactNode => {
 				const desiredPods = value as number;
 				return (
-					<ValidateColumnValueWrapper value={desiredPods}>
+					<ValidateColumnValueWrapper
+						value={desiredPods}
+						entity={InfraMonitoringEntity.DEPLOYMENTS}
+						attribute="desired pod"
+					>
 						<TanStackTable.Text>{desiredPods}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
@@ -165,7 +173,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			cell: ({ value }): React.ReactNode => {
 				const cpu = value as number;
 				return (
-					<ValidateColumnValueWrapper value={cpu}>
+					<ValidateColumnValueWrapper
+						value={cpu}
+						entity={InfraMonitoringEntity.DEPLOYMENTS}
+						attribute="CPU metric"
+					>
 						<TanStackTable.Text>{cpu}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
@@ -221,7 +233,11 @@ export const k8sDeploymentsColumnsConfig: TableColumnDef<K8sDeploymentsData>[] =
 			cell: ({ value }): React.ReactNode => {
 				const memory = value as number;
 				return (
-					<ValidateColumnValueWrapper value={memory}>
+					<ValidateColumnValueWrapper
+						value={memory}
+						entity={InfraMonitoringEntity.DEPLOYMENTS}
+						attribute="memory metric"
+					>
 						<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 					</ValidateColumnValueWrapper>
 				);
