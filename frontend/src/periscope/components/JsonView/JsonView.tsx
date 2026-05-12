@@ -23,7 +23,14 @@ const editorOptions: EditorProps['options'] = {
 	lineHeight: 18,
 	colorDecorators: true,
 	scrollBeyondLastLine: false,
-	scrollbar: { vertical: 'hidden', horizontal: 'hidden' },
+	scrollbar: {
+		vertical: 'hidden',
+		horizontal: 'hidden',
+		// Once the editor can't scroll any further, release the wheel event so
+		// the parent container picks it up. Without this Monaco swallows the
+		// event at the boundary and outer scroll feels stuck.
+		alwaysConsumeMouseWheel: false,
+	},
 	folding: false,
 };
 
