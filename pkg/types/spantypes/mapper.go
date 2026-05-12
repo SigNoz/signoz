@@ -56,14 +56,14 @@ type SpanMapper struct {
 	ID           valuer.UUID      `json:"id"            required:"true"`
 	GroupID      valuer.UUID      `json:"group_id"      required:"true"`
 	Name         string           `json:"name"          required:"true"`
-	FieldContext FieldContext     `json:"field_context" required:"true"`
+	FieldContext FieldContext     `json:"fieldContext"  required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"       required:"true"`
 }
 
 type PostableSpanMapper struct {
 	Name         string           `json:"name"          required:"true"`
-	FieldContext FieldContext     `json:"field_context" required:"true"`
+	FieldContext FieldContext     `json:"fieldContext" required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"`
 }
@@ -71,7 +71,7 @@ type PostableSpanMapper struct {
 // UpdatableSpanMapper is the HTTP request body for updating a span mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableSpanMapper struct {
-	FieldContext FieldContext      `json:"field_context"`
+	FieldContext FieldContext      `json:"fieldContext"`
 	Config       *SpanMapperConfig `json:"config"`
 	Enabled      *bool             `json:"enabled"`
 }

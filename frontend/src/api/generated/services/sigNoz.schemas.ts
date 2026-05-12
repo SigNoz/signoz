@@ -7314,7 +7314,7 @@ export interface SpantypesPostableSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7348,7 +7348,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7458,7 +7458,7 @@ export interface SpantypesUpdatableSpanMapperDTO {
 	 * @nullable true
 	 */
 	enabled?: boolean | null;
-	field_context?: SpantypesFieldContextDTO;
+	fieldContext?: SpantypesFieldContextDTO;
 }
 
 export interface SpantypesUpdatableSpanMapperGroupDTO {
