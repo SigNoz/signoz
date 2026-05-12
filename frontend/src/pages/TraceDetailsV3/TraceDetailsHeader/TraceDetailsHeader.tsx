@@ -21,6 +21,7 @@ import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filt
 import TraceOptionsMenu from './TraceOptionsMenu';
 
 import './TraceDetailsHeader.styles.scss';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 interface FilterMetadata {
 	startTime: number;
@@ -164,7 +165,7 @@ function TraceDetailsHeader({
 							<span className="trace-details-header__sub-item">
 								<CalendarClock size={13} />
 								{dayjs(traceMetadata.startTimestampMillis).format(
-									'D MMM YYYY, HH:mm:ss',
+									DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS,
 								)}
 							</span>
 							{traceMetadata.rootSpanStatusCode && (

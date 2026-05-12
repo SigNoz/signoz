@@ -3,6 +3,12 @@ import {
 	WaterfallAggregationType,
 } from 'types/api/trace/getTraceV3';
 
+export const AGGREGATIONS = {
+	EXEC_TIME_PCT: 'execution_time_percentage',
+	SPAN_COUNT: 'span_count',
+	DURATION: 'duration',
+} as const satisfies Record<string, WaterfallAggregationType>;
+
 export function getAggregationMap(
 	aggregations: WaterfallAggregationResponse[] | undefined,
 	type: WaterfallAggregationType,

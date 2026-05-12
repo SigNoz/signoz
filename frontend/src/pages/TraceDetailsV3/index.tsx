@@ -20,6 +20,7 @@ import {
 
 import { COLOR_BY_FIELDS } from './constants';
 import { TraceProvider } from './contexts/TraceContext';
+import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
 import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
@@ -90,8 +91,8 @@ function TraceDetailsV3(): JSX.Element {
 	const waterfallAggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
 		() =>
 			COLOR_BY_FIELDS.flatMap((field) => [
-				{ field, aggregation: 'execution_time_percentage' as const },
-				{ field, aggregation: 'span_count' as const },
+				{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
+				{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
 			]),
 		[],
 	);

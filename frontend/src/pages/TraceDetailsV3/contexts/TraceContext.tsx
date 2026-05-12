@@ -28,7 +28,10 @@ import {
 	DEFAULT_COLOR_BY_FIELD,
 } from '../constants';
 import { getSpanAttribute } from '../utils';
-import { getAggregationMap as findAggregationMap } from '../utils/aggregations';
+import {
+	AGGREGATIONS,
+	getAggregationMap as findAggregationMap,
+} from '../utils/aggregations';
 
 interface TraceContextValue {
 	colorByField: TelemetryFieldKey;
@@ -149,7 +152,7 @@ export function TraceProvider({
 			// the same set of spans).
 			const map = findAggregationMap(
 				aggregations,
-				'execution_time_percentage',
+				AGGREGATIONS.EXEC_TIME_PCT,
 				fieldName,
 			);
 			return !!map && Object.keys(map).length > 0;

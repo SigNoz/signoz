@@ -80,9 +80,12 @@ function TraceOptionsMenu({
 
 	return (
 		<Dropdown menu={{ items: menuItems }}>
-			<Button variant="solid" color="secondary" size="sm">
-				<Ellipsis size={14} />
-			</Button>
+			<Button
+				variant="solid"
+				color="secondary"
+				size="sm"
+				prefix={<Ellipsis size={14} />}
+			/>
 		</Dropdown>
 	);
 }
