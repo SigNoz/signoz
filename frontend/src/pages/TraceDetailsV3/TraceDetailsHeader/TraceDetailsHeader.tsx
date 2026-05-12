@@ -28,7 +28,7 @@ import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
 import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import TraceOptionsMenu from './TraceOptionsMenu';
@@ -86,7 +86,8 @@ function TraceDetailsHeader({
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-	const { previewFields, setPreviewFields } = useTraceContext();
+	const previewFields = useTraceStore((s) => s.previewFields);
+	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
 	const handleSwitchToOldView = useCallback((): void => {
 		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');

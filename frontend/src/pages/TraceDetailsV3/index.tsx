@@ -19,7 +19,7 @@ import {
 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from './constants';
-import { TraceProvider } from './contexts/TraceContext';
+import TraceStoreSync from './stores/TraceStoreSync';
 import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
@@ -283,7 +283,7 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<TraceProvider aggregations={traceData?.payload?.aggregations}>
+		<TraceStoreSync aggregations={traceData?.payload?.aggregations}>
 			<div className="trace-details-v3">
 				<TraceDetailsHeader
 					filterMetadata={filterMetadata}
@@ -394,7 +394,7 @@ function TraceDetailsV3(): JSX.Element {
 					</>
 				)}
 			</div>
-		</TraceProvider>
+		</TraceStoreSync>
 	);
 }
 

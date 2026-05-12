@@ -40,7 +40,8 @@ import {
 	Link,
 	ListPlus,
 } from '@signozhq/icons';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -212,9 +213,9 @@ const SpanOverview = memo(function SpanOverview({
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
-	const { resolveSpanColor } = useTraceContext();
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 
-	const color = resolveSpanColor(span);
+	const color = resolveSpanColor(span, colorByFieldName);
 
 	// Smart highlighting logic
 	const {
@@ -389,8 +390,8 @@ export const SpanDuration = memo(function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
-	const { resolveSpanColor } = useTraceContext();
-	const color = resolveSpanColor(span);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const color = resolveSpanColor(span, colorByFieldName);
 	// `resolveSpanColor` returns a CSS variable for errors; `colorToRgb` can't parse it.
 	const rgbColor = span.has_error ? '239, 68, 68' : colorToRgb(color);
 

@@ -7,7 +7,7 @@ import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegrap
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
 import {
 	mergeTelemetryFieldKeys,
@@ -55,7 +55,7 @@ function TraceFlamegraph({
 		[history, search],
 	);
 
-	const { previewFields } = useTraceContext();
+	const previewFields = useTraceStore((s) => s.previewFields);
 
 	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
 	// color-by entries first so their canonical metadata wins on collision.
