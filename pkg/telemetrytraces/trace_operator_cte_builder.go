@@ -423,19 +423,17 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 }
 
 func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
-	keySelectors := b.getKeySelectors()
-	for _, field := range b.operator.SelectFields {
-		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
-			Name:          field.Name,
-			Signal:        telemetrytypes.SignalTraces,
-			FieldContext:  field.FieldContext,
-			FieldDataType: field.FieldDataType,
-		})
-	}
-	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
-	if err != nil {
-		return nil, err
-	}
+	sb := sqlbuilder.NewSelectBuilder()
+
+	// Select core fields
+	sb.Select(
+		"timestamp",
+		"trace_id",
+		"span_id",
+		"name",
+		"duration_nano",
+		"parent_span_id",
+	)
 
 	selectedFields := map[string]bool{
 		"timestamp":      true,
@@ -446,9 +444,23 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		"parent_span_id": true,
 	}
 
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("timestamp", "trace_id", "span_id", "name", "duration_nano", "parent_span_id")
+	// Get keys for selectFields
+	keySelectors := b.getKeySelectors()
+	for _, field := range b.operator.SelectFields {
+		keySelectors = append(keySelectors, &telemetrytypes.FieldKeySelector{
+			Name:          field.Name,
+			Signal:        telemetrytypes.SignalTraces,
+			FieldContext:  field.FieldContext,
+			FieldDataType: field.FieldDataType,
+		})
+	}
 
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add selectFields using ColumnExpressionFor since we now have all base table columns
 	for _, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
@@ -463,25 +475,20 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		selectedFields[field.Name] = true
 	}
 
+	sb.From(selectFromCTE)
+
+	// Add order by support using ColumnExpressionFor
+	orderApplied := false
 	for _, orderBy := range b.operator.Order {
-		if selectedFields[orderBy.Key.Name] {
-			continue
-		}
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, b.start, b.end, &orderBy.Key.TelemetryFieldKey, keys)
 		if err != nil {
 			return nil, err
 		}
-		sb.SelectMore(colExpr)
-		selectedFields[orderBy.Key.Name] = true
+		sb.OrderBy(fmt.Sprintf("%s %s", colExpr, orderBy.Direction.StringValue()))
+		orderApplied = true
 	}
 
-	sb.From(selectFromCTE)
-
-	if len(b.operator.Order) > 0 {
-		for _, orderBy := range b.operator.Order {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
-		}
-	} else {
+	if !orderApplied {
 		sb.OrderBy("timestamp DESC")
 	}
 
@@ -490,6 +497,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 	} else {
 		sb.Limit(100)
 	}
+
 	if b.operator.Offset > 0 {
 		sb.Offset(b.operator.Offset)
 	}
