@@ -2214,7 +2214,7 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, userEmail s
 
 }
 
-func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, createdByEmail string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, userEmail string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
 		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
@@ -2257,8 +2257,8 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, crea
 				UpdatedAt: time.Now(),
 			},
 			UserAuditable: types.UserAuditable{
-				CreatedBy: createdByEmail,
-				UpdatedBy: createdByEmail,
+				CreatedBy: userEmail,
+				UpdatedBy: userEmail,
 			},
 			TransactionID:  uuid,
 			TableName:      tableName,
