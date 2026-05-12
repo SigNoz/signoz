@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, DrawerWrapper } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
 

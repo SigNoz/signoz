@@ -1,5 +1,5 @@
 import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Modal } from 'antd';
 
 interface DeleteRoleModalProps {

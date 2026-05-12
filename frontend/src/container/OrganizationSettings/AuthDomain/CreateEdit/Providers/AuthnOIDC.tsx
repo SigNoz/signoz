@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';
-import { Callout, Checkbox, Input } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
 import { Form, Tooltip } from 'antd';
 
 import ClaimMappingSection from './components/ClaimMappingSection';

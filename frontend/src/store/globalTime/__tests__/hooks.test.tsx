@@ -134,17 +134,17 @@ describe('useComputedMinMaxSync', () => {
 		jest.useRealTimers();
 	});
 
-	it('should compute min/max on mount when store has zero values', () => {
+	it('should have computed min/max on store creation (no longer needs mount sync)', () => {
 		const contextStore = createGlobalTimeStore({ selectedTime: '15m' });
 
-		expect(contextStore.getState().lastComputedMinMax).toStrictEqual({
-			minTime: 0,
-			maxTime: 0,
-		});
+		// Store now computes min/max on creation, not on mount
+		expect(contextStore.getState().lastComputedMinMax.minTime).toBeGreaterThan(0);
+		expect(contextStore.getState().lastComputedMinMax.maxTime).toBeGreaterThan(0);
 
+		// Hook still works but is a no-op when values already exist
 		renderHook(() => useComputedMinMaxSync(contextStore));
 
-		// Should have computed values now
+		// Values remain computed
 		expect(contextStore.getState().lastComputedMinMax.maxTime).toBeGreaterThan(0);
 		expect(contextStore.getState().lastComputedMinMax.minTime).toBeGreaterThan(0);
 	});

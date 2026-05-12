@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
-import { Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Divider, Drawer, Radio, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
@@ -17,7 +18,6 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import ContextView from 'container/LogDetailedView/ContextView/ContextView';
 import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
-import JSONView from 'container/LogDetailedView/JsonView';
 import Overview from 'container/LogDetailedView/Overview';
 import {
 	aggregateAttributesResourcesToString,
@@ -47,6 +47,7 @@ import {
 	TextSelect,
 	X,
 } from 'lucide-react';
+import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -562,7 +563,9 @@ function LogDetailInner({
 						handleChangeSelectedView={handleChangeSelectedView}
 					/>
 				)}
-				{selectedView === VIEW_TYPES.JSON && <JSONView logData={log} />}
+				{selectedView === VIEW_TYPES.JSON && (
+					<JsonView data={LogJsonData} height="68vh" />
+				)}
 
 				{selectedView === VIEW_TYPES.CONTEXT && (
 					<ContextView
@@ -587,7 +590,7 @@ function LogDetailInner({
 					<div className="log-detail-drawer__footer-hint">
 						<div className="log-detail-drawer__footer-hint-content">
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								Use
@@ -596,7 +599,7 @@ function LogDetailInner({
 							<span>/</span>
 							<ArrowDown size={14} className="log-detail-drawer__footer-hint-icon" />
 							<Typography.Text
-								type="secondary"
+								color="muted"
 								className="log-detail-drawer__footer-hint-text"
 							>
 								to view previous/next log
