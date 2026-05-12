@@ -28,7 +28,12 @@ func (module *module) CreateGroup(ctx context.Context, orgID valuer.UUID, group 
 	return module.store.CreateGroup(ctx, group)
 }
 
-func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, group *spantypes.SpanMapperGroup) error {
+func (module *module) UpdateGroup(ctx context.Context, orgID, id valuer.UUID, name *string, condition *spantypes.SpanMapperGroupCondition, enabled *bool, updatedBy string) error {
+	group, err := module.store.GetGroup(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	group.Update(name, condition, enabled, updatedBy)
 	return module.store.UpdateGroup(ctx, group)
 }
 
@@ -52,10 +57,15 @@ func (module *module) CreateMapper(ctx context.Context, orgID, groupID valuer.UU
 	return module.store.CreateMapper(ctx, mapper)
 }
 
-func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, mapper *spantypes.SpanMapper) error {
+func (module *module) UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error {
 	if _, err := module.store.GetGroup(ctx, orgID, groupID); err != nil {
 		return err
 	}
+	mapper, err := module.store.GetMapper(ctx, orgID, groupID, id)
+	if err != nil {
+		return err
+	}
+	mapper.Update(fieldContext, config, enabled, updatedBy)
 	return module.store.UpdateMapper(ctx, mapper)
 }
 

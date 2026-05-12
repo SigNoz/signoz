@@ -14,14 +14,14 @@ type Module interface {
 	ListGroups(ctx context.Context, orgID valuer.UUID, q *spantypes.ListSpanMapperGroupsQuery) ([]*spantypes.SpanMapperGroup, error)
 	GetGroup(ctx context.Context, orgID, id valuer.UUID) (*spantypes.SpanMapperGroup, error)
 	CreateGroup(ctx context.Context, orgID valuer.UUID, group *spantypes.SpanMapperGroup) error
-	UpdateGroup(ctx context.Context, orgID, id valuer.UUID, group *spantypes.SpanMapperGroup) error
+	UpdateGroup(ctx context.Context, orgID, id valuer.UUID, name *string, condition *spantypes.SpanMapperGroupCondition, enabled *bool, updatedBy string) error
 	DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error
 
 	// Mapper operations
 	ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*spantypes.SpanMapper, error)
 	GetMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*spantypes.SpanMapper, error)
 	CreateMapper(ctx context.Context, orgID, groupID valuer.UUID, mapper *spantypes.SpanMapper) error
-	UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, mapper *spantypes.SpanMapper) error
+	UpdateMapper(ctx context.Context, orgID, groupID, id valuer.UUID, fieldContext spantypes.FieldContext, config *spantypes.SpanMapperConfig, enabled *bool, updatedBy string) error
 	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
 }
 

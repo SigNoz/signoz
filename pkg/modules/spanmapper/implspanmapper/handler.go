@@ -104,14 +104,7 @@ func (h *handler) UpdateGroup(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group, err := h.module.GetGroup(ctx, orgID, id)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	group.Update(req, claims.Email)
-
-	if err := h.module.UpdateGroup(ctx, orgID, id, group); err != nil {
+	if err := h.module.UpdateGroup(ctx, orgID, id, req.Name, req.Condition, req.Enabled, claims.Email); err != nil {
 		render.Error(rw, err)
 		return
 	}
@@ -239,14 +232,7 @@ func (h *handler) UpdateMapper(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapper, err := h.module.GetMapper(ctx, orgID, groupID, mapperID)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-	mapper.Update(req, claims.Email)
-
-	if err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, mapper); err != nil {
+	if err := h.module.UpdateMapper(ctx, orgID, groupID, mapperID, req.FieldContext, req.Config, req.Enabled, claims.Email); err != nil {
 		render.Error(rw, err)
 		return
 	}

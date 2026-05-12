@@ -110,14 +110,13 @@ func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper)
 	}
 }
 
-func (m *SpanMapper) Update(u *UpdatableSpanMapper, updatedBy string) {
-	m.FieldContext = u.FieldContext
-
-	if u.Config != nil {
-		m.Config = *u.Config
+func (m *SpanMapper) Update(fieldContext FieldContext, config *SpanMapperConfig, enabled *bool, updatedBy string) {
+	m.FieldContext = fieldContext
+	if config != nil {
+		m.Config = *config
 	}
-	if u.Enabled != nil {
-		m.Enabled = *u.Enabled
+	if enabled != nil {
+		m.Enabled = *enabled
 	}
 	m.UpdatedAt = time.Now()
 	m.UpdatedBy = updatedBy

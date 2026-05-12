@@ -75,15 +75,15 @@ func NewSpanMapperGroup(orgID valuer.UUID, createdBy string, p *PostableSpanMapp
 	}
 }
 
-func (g *SpanMapperGroup) Update(u *UpdatableSpanMapperGroup, updatedBy string) {
-	if u.Name != nil {
-		g.Name = *u.Name
+func (g *SpanMapperGroup) Update(name *string, condition *SpanMapperGroupCondition, enabled *bool, updatedBy string) {
+	if name != nil {
+		g.Name = *name
 	}
-	if u.Condition != nil {
-		g.Condition = *u.Condition
+	if condition != nil {
+		g.Condition = *condition
 	}
-	if u.Enabled != nil {
-		g.Enabled = *u.Enabled
+	if enabled != nil {
+		g.Enabled = *enabled
 	}
 	g.UpdatedAt = time.Now()
 	g.UpdatedBy = updatedBy
