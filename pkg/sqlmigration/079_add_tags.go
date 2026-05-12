@@ -77,6 +77,13 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"kind", "entity_id", "tag_id"}},
+		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
+			{
+				ReferencingColumnName: sqlschema.ColumnName("tag_id"),
+				ReferencedTableName:   sqlschema.TableName("tag"),
+				ReferencedColumnName:  sqlschema.ColumnName("id"),
+			},
+		},
 	})
 	sqls = append(sqls, tagRelationsTableSQLs...)
 
