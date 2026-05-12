@@ -108,7 +108,8 @@ func TestCreateRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(receiver)
+				receiver := receiver
+				err := cfg.CreateReceiver(&Receiver{Receiver: &receiver})
 				require.NoError(t, err)
 			}
 
@@ -203,7 +204,8 @@ func TestDeleteRuleIDMatcher(t *testing.T) {
 			require.NoError(t, err)
 
 			for _, receiver := range tc.receivers {
-				err := cfg.CreateReceiver(receiver)
+				receiver := receiver
+				err := cfg.CreateReceiver(&Receiver{Receiver: &receiver})
 				require.NoError(t, err)
 			}
 
@@ -328,4 +330,79 @@ func TestSetGlobalConfigPreservesSMTPRequireTLS(t *testing.T) {
 			assert.Equal(t, tt.expect, c.alertmanagerConfig.Global.SMTPRequireTLS)
 		})
 	}
+}
+
+func TestConfigPreservesCustomReceiverConfigs(t *testing.T) {
+	webhookURL, err := url.Parse("https://chat.googleapis.com/v1/spaces/test/messages")
+	require.NoError(t, err)
+
+	cfg, err := NewDefaultConfig(
+		GlobalConfig{SMTPSmarthost: config.HostPort{Host: "localhost", Port: "25"}, SMTPFrom: "test@example.com"},
+		RouteConfig{GroupInterval: time.Minute, GroupWait: time.Minute, RepeatInterval: time.Minute},
+		"1",
+	)
+	require.NoError(t, err)
+
+	receiver := &Receiver{
+		Receiver: &config.Receiver{Name: "googlechat-receiver"},
+		GoogleChatConfigs: []*GoogleChatReceiverConfig{
+			{
+				WebhookURL:        &config.SecretURL{URL: webhookURL},
+				Title:             "Alert",
+				Text:              "Body",
+				SendResolvedValue: true,
+			},
+		},
+	}
+
+	err = cfg.CreateReceiver(receiver)
+	require.NoError(t, err)
+
+	assertCustomConfigInStoreable(t, cfg.StoreableConfig().Config, "googlechat-receiver", "Alert")
+
+	reloaded, err := NewConfigFromStoreableConfig(cfg.StoreableConfig())
+	require.NoError(t, err)
+
+	reloadedReceiver, err := reloaded.GetReceiver("googlechat-receiver")
+	require.NoError(t, err)
+	require.Len(t, reloadedReceiver.GoogleChatConfigs, 1)
+	assert.Equal(t, "Alert", reloadedReceiver.GoogleChatConfigs[0].Title)
+
+	receiver.GoogleChatConfigs[0].Title = "Updated"
+	err = cfg.UpdateReceiver(receiver)
+	require.NoError(t, err)
+
+	assertCustomConfigInStoreable(t, cfg.StoreableConfig().Config, "googlechat-receiver", "Updated")
+}
+
+func assertCustomConfigInStoreable(t *testing.T, rawConfig string, receiverName string, expectedTitle string) {
+	t.Helper()
+
+	var configData map[string]any
+	err := json.Unmarshal([]byte(rawConfig), &configData)
+	require.NoError(t, err)
+
+	receiversRaw, ok := configData["receivers"].([]interface{})
+	require.True(t, ok)
+
+	var receiverMap map[string]any
+	for _, receiver := range receiversRaw {
+		receiverData, ok := receiver.(map[string]any)
+		if !ok {
+			continue
+		}
+		if receiverData["name"] == receiverName {
+			receiverMap = receiverData
+			break
+		}
+	}
+	require.NotNil(t, receiverMap)
+
+	configsRaw, ok := receiverMap["googlechat_configs"].([]interface{})
+	require.True(t, ok)
+	require.NotEmpty(t, configsRaw)
+
+	configEntry, ok := configsRaw[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, expectedTitle, configEntry["title"])
 }

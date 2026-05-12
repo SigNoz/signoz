@@ -21,6 +21,12 @@ func TestNewReceiver(t *testing.T) {
 			expected: `{"name":"telegram","telegram_configs":[{"send_resolved":false,"token":"1234567890","chat":12345,"message":"{{ template \"telegram.default.message\" . }}","parse_mode":"HTML"}]}`,
 			pass:     true,
 		},
+		{
+			name:     "GoogleChatConfig",
+			input:    `{"name":"googlechat","googlechat_configs":[{"send_resolved":true,"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body"}]}`,
+			expected: `{"name":"googlechat","googlechat_configs":[{"webhook_url":"https://chat.googleapis.com/v1/spaces/test/messages","title":"Alert","text":"Body","send_resolved":true}]}`,
+			pass:     true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -31,7 +37,7 @@ func TestNewReceiver(t *testing.T) {
 
 				bytes, err := json.Marshal(receiver)
 				require.NoError(t, err)
-				assert.Equal(t, tc.expected, string(bytes))
+				assert.JSONEq(t, tc.expected, string(bytes))
 				return
 			}
 

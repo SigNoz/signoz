@@ -11,46 +11,95 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
+	commoncfg "github.com/prometheus/common/config"
 	"gopkg.in/yaml.v2"
 
 	"github.com/prometheus/alertmanager/config"
 )
 
-type (
-	// Receiver is the type for the receiver configuration.
-	Receiver                 = config.Receiver
-	ReceiverIntegrationsFunc = func(nc Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error)
-)
+// Receiver extends the base alertmanager config.Receiver with custom configs support.
+type Receiver struct {
+	*config.Receiver
+	GoogleChatConfigs []*GoogleChatReceiverConfig `json:"googlechat_configs,omitempty" yaml:"googlechat_configs,omitempty"`
+}
+
+type ReceiverIntegrationsFunc = func(nc *Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error)
 
 // Creates a new receiver from a string. The input is initialized with the default values from the upstream alertmanager.
 // The only default value which is missed is `send_resolved` (as it is a bool) which if not set in the input will always be set to `false`.
-func NewReceiver(input string) (Receiver, error) {
-	receiver := Receiver{}
-	err := json.Unmarshal([]byte(input), &receiver)
-	if err != nil {
-		return Receiver{}, err
+func NewReceiver(input string) (*Receiver, error) {
+	var rawData map[string]interface{}
+	if err := json.Unmarshal([]byte(input), &rawData); err != nil {
+		return nil, err
 	}
 
-	// We marshal and unmarshal the receiver to ensure that the receiver is
-	// initialized with defaults from the upstream alertmanager.
-	bytes, err := yaml.Marshal(receiver)
+	googleChatConfigs := extractReceiverConfigList[GoogleChatReceiverConfig](rawData, receiverFieldGoogleChatConfigs)
+
+	cleanedInput, err := json.Marshal(rawData)
 	if err != nil {
-		return Receiver{}, err
+		return nil, err
 	}
 
-	receiverWithDefaults := Receiver{}
+	baseReceiver := &config.Receiver{}
+	if err := json.Unmarshal(cleanedInput, baseReceiver); err != nil {
+		return nil, err
+	}
+
+	bytes, err := yaml.Marshal(baseReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	receiverWithDefaults := &config.Receiver{}
 	if err := yaml.Unmarshal(bytes, &receiverWithDefaults); err != nil {
-		return Receiver{}, err
+		return nil, err
 	}
 
 	if err := receiverWithDefaults.UnmarshalYAML(func(i interface{}) error { return nil }); err != nil {
-		return Receiver{}, err
+		return nil, err
 	}
+	defaultReceiverHTTPConfigs(receiverWithDefaults)
 
-	return receiverWithDefaults, nil
+	return &Receiver{
+		Receiver:          receiverWithDefaults,
+		GoogleChatConfigs: googleChatConfigs,
+	}, nil
 }
 
-func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
+func defaultReceiverHTTPConfigs(receiver *config.Receiver) {
+	for _, cfg := range receiver.WebhookConfigs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+	for _, cfg := range receiver.SlackConfigs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+	for _, cfg := range receiver.PagerdutyConfigs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+	for _, cfg := range receiver.OpsGenieConfigs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+	for _, cfg := range receiver.MSTeamsConfigs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+	for _, cfg := range receiver.MSTeamsV2Configs {
+		if cfg.HTTPConfig == nil {
+			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+		}
+	}
+}
+
+func TestReceiver(ctx context.Context, receiver *Receiver, receiverIntegrationsFunc ReceiverIntegrationsFunc, config *Config, tmpl *template.Template, logger *slog.Logger, lSet model.LabelSet, alert ...*Alert) error {
 	ctx = notify.WithGroupKey(ctx, fmt.Sprintf("%s-%s-%d", receiver.Name, lSet.Fingerprint(), time.Now().Unix()))
 	ctx = notify.WithGroupLabels(ctx, lSet)
 	ctx = notify.WithReceiverName(ctx, receiver.Name)
@@ -67,12 +116,12 @@ func TestReceiver(ctx context.Context, receiver Receiver, receiverIntegrationsFu
 		return err
 	}
 
-	receiver, err = testConfig.GetReceiver(receiver.Name)
+	baseReceiver, err := testConfig.GetReceiver(receiver.Name)
 	if err != nil {
 		return err
 	}
 
-	integrations, err := receiverIntegrationsFunc(receiver, tmpl, logger)
+	integrations, err := receiverIntegrationsFunc(baseReceiver, tmpl, logger)
 	if err != nil {
 		return err
 	}

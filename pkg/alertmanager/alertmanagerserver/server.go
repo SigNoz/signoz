@@ -250,7 +250,11 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
-		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger)
+		extendedRcv, err := alertmanagerConfig.GetReceiver(rcv.Name)
+		if err != nil {
+			return err
+		}
+		integrations, err := alertmanagernotify.NewReceiverIntegrations(extendedRcv, server.tmpl, server.logger)
 		if err != nil {
 			return err
 		}
@@ -324,8 +328,8 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	return nil
 }
 
-func (server *Server) TestReceiver(ctx context.Context, receiver alertmanagertypes.Receiver) error {
-	testAlert := alertmanagertypes.NewTestAlert(receiver, time.Now(), time.Now())
+func (server *Server) TestReceiver(ctx context.Context, receiver *alertmanagertypes.Receiver) error {
+	testAlert := alertmanagertypes.NewTestAlert(*receiver.Receiver, time.Now(), time.Now())
 	return alertmanagertypes.TestReceiver(ctx, receiver, alertmanagernotify.NewReceiverIntegrations, server.alertmanagerConfig, server.tmpl, server.logger, testAlert.Labels, testAlert)
 }
 
@@ -394,7 +398,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 			receiverName := receiverName
 
 			g.Go(func() error {
-				receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
+				baseReceiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
 				if err != nil {
 					mu.Lock()
 					errs = append(errs, errors.WrapInternalf(err, errors.CodeInternal, "failed to get receiver %q", receiverName))
@@ -404,7 +408,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 
 				err = alertmanagertypes.TestReceiver(
 					gCtx,
-					receiver,
+					baseReceiver,
 					alertmanagernotify.NewReceiverIntegrations,
 					server.alertmanagerConfig,
 					server.tmpl,

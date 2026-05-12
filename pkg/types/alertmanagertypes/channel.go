@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/uptrace/bun"
 )
 
@@ -42,7 +41,7 @@ type Channel struct {
 
 // NewChannelFromReceiver creates a new Channel from a Receiver.
 // It can return nil if the receiver is the default receiver.
-func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, error) {
+func NewChannelFromReceiver(receiver *Receiver, orgID string) (*Channel, error) {
 	if receiver.Name == DefaultReceiverName {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelInvalid, "cannot use %s name as a channel name", receiver.Name)
 	}
@@ -60,9 +59,24 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 		OrgID: orgID,
 	}
 
+	configData, err := json.Marshal(receiver.Receiver)
+	if err != nil {
+		return nil, err
+	}
+
+	customType, dataWithCustomConfigs, hasCustomConfigs, err := marshalReceiverWithCustomConfigs(receiver, configData)
+	if err != nil {
+		return nil, err
+	}
+	if hasCustomConfigs {
+		channel.Type = customType
+		channel.Data = string(dataWithCustomConfigs)
+		return &channel, nil
+	}
+
 	// Use reflection to examine receiver struct fields
-	receiverType := reflect.TypeOf(receiver)
-	receiverVal := reflect.ValueOf(receiver)
+	receiverType := reflect.TypeOf(*receiver.Receiver)
+	receiverVal := reflect.ValueOf(*receiver.Receiver)
 
 	// Iterate through fields looking for *Config fields
 	for i := 0; i < receiverType.NumField(); i++ {
@@ -87,12 +101,6 @@ func NewChannelFromReceiver(receiver config.Receiver, orgID string) (*Channel, e
 		}
 
 		channelType := matches[1]
-
-		// Marshal config data to JSON
-		configData, err := json.Marshal(receiver)
-		if err != nil {
-			continue
-		}
 
 		channel.Type = channelType
 		channel.Data = string(configData)
@@ -168,7 +176,7 @@ func NewStatsFromChannels(channels Channels) map[string]any {
 	return stats
 }
 
-func (c *Channel) Update(receiver Receiver) error {
+func (c *Channel) Update(receiver *Receiver) error {
 	channel, err := NewChannelFromReceiver(receiver, c.OrgID)
 	if err != nil {
 		return err
@@ -178,6 +186,7 @@ func (c *Channel) Update(receiver Receiver) error {
 		return errors.Newf(errors.TypeInvalidInput, ErrCodeAlertmanagerChannelNameMismatch, "cannot update channel name")
 	}
 
+	c.Type = channel.Type
 	c.Data = channel.Data
 	c.UpdatedAt = time.Now()
 

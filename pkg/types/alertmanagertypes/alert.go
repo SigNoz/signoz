@@ -13,6 +13,7 @@ import (
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/api/v2/restapi/operations/alert"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/matcher/compat"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -134,7 +135,7 @@ func NewAlertsFromPostableAlerts(ctx context.Context, postableAlerts PostableAle
 	return validAlerts, errs
 }
 
-func NewTestAlert(receiver Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
+func NewTestAlert(receiver config.Receiver, startsAt time.Time, updatedAt time.Time) *Alert {
 	return &Alert{
 		Alert: model.Alert{
 			StartsAt: startsAt,

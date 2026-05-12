@@ -109,7 +109,7 @@ func (_c *MockAlertmanager_Collect_Call) RunAndReturn(run func(context1 context.
 }
 
 // CreateChannel provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
+func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error) {
 	ret := _mock.Called(context1, s, v)
 
 	if len(ret) == 0 {
@@ -118,17 +118,17 @@ func (_mock *MockAlertmanager) CreateChannel(context1 context.Context, s string,
 
 	var r0 *alertmanagertypes.Channel
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)); ok {
 		return returnFunc(context1, s, v)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) *alertmanagertypes.Channel); ok {
 		r0 = returnFunc(context1, s, v)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*alertmanagertypes.Channel)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
 		r1 = returnFunc(context1, s, v)
 	} else {
 		r1 = ret.Error(1)
@@ -144,12 +144,12 @@ type MockAlertmanager_CreateChannel_Call struct {
 // CreateChannel is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 func (_e *MockAlertmanager_Expecter) CreateChannel(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_CreateChannel_Call {
 	return &MockAlertmanager_CreateChannel_Call{Call: _e.mock.On("CreateChannel", context1, s, v)}
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -159,9 +159,9 @@ func (_c *MockAlertmanager_CreateChannel_Call) Run(run func(context1 context.Con
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		run(
 			arg0,
@@ -177,7 +177,7 @@ func (_c *MockAlertmanager_CreateChannel_Call) Return(channel *alertmanagertypes
 	return _c
 }
 
-func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
+func (_c *MockAlertmanager_CreateChannel_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) (*alertmanagertypes.Channel, error)) *MockAlertmanager_CreateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1578,7 +1578,7 @@ func (_c *MockAlertmanager_TestAlert_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // TestReceiver provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, v alertmanagertypes.Receiver) error {
+func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, v *alertmanagertypes.Receiver) error {
 	ret := _mock.Called(context1, s, v)
 
 	if len(ret) == 0 {
@@ -1586,7 +1586,7 @@ func (_mock *MockAlertmanager) TestReceiver(context1 context.Context, s string, 
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver) error); ok {
 		r0 = returnFunc(context1, s, v)
 	} else {
 		r0 = ret.Error(0)
@@ -1602,12 +1602,12 @@ type MockAlertmanager_TestReceiver_Call struct {
 // TestReceiver is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 func (_e *MockAlertmanager_Expecter) TestReceiver(context1 interface{}, s interface{}, v interface{}) *MockAlertmanager_TestReceiver_Call {
 	return &MockAlertmanager_TestReceiver_Call{Call: _e.mock.On("TestReceiver", context1, s, v)}
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver)) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1617,9 +1617,9 @@ func (_c *MockAlertmanager_TestReceiver_Call) Run(run func(context1 context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		run(
 			arg0,
@@ -1635,7 +1635,7 @@ func (_c *MockAlertmanager_TestReceiver_Call) Return(err error) *MockAlertmanage
 	return _c
 }
 
-func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
+func (_c *MockAlertmanager_TestReceiver_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver) error) *MockAlertmanager_TestReceiver_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1704,7 +1704,7 @@ func (_c *MockAlertmanager_UpdateAllRoutePoliciesByRuleId_Call) RunAndReturn(run
 }
 
 // UpdateChannelByReceiverAndID provides a mock function for the type MockAlertmanager
-func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID) error {
+func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error {
 	ret := _mock.Called(context1, s, v, uUID)
 
 	if len(ret) == 0 {
@@ -1712,7 +1712,7 @@ func (_mock *MockAlertmanager) UpdateChannelByReceiverAndID(context1 context.Con
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alertmanagertypes.Receiver, valuer.UUID) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *alertmanagertypes.Receiver, valuer.UUID) error); ok {
 		r0 = returnFunc(context1, s, v, uUID)
 	} else {
 		r0 = ret.Error(0)
@@ -1728,13 +1728,13 @@ type MockAlertmanager_UpdateChannelByReceiverAndID_Call struct {
 // UpdateChannelByReceiverAndID is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-//   - v alertmanagertypes.Receiver
+//   - v *alertmanagertypes.Receiver
 //   - uUID valuer.UUID
 func (_e *MockAlertmanager_Expecter) UpdateChannelByReceiverAndID(context1 interface{}, s interface{}, v interface{}, uUID interface{}) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	return &MockAlertmanager_UpdateChannelByReceiverAndID_Call{Call: _e.mock.On("UpdateChannelByReceiverAndID", context1, s, v, uUID)}
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID)) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1744,9 +1744,9 @@ func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Run(run func(conte
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 alertmanagertypes.Receiver
+		var arg2 *alertmanagertypes.Receiver
 		if args[2] != nil {
-			arg2 = args[2].(alertmanagertypes.Receiver)
+			arg2 = args[2].(*alertmanagertypes.Receiver)
 		}
 		var arg3 valuer.UUID
 		if args[3] != nil {
@@ -1767,7 +1767,7 @@ func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, v alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
+func (_c *MockAlertmanager_UpdateChannelByReceiverAndID_Call) RunAndReturn(run func(context1 context.Context, s string, v *alertmanagertypes.Receiver, uUID valuer.UUID) error) *MockAlertmanager_UpdateChannelByReceiverAndID_Call {
 	_c.Call.Return(run)
 	return _c
 }
