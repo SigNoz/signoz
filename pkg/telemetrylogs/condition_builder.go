@@ -25,6 +25,17 @@ func NewConditionBuilder(fm qbtypes.FieldMapper, fl flagger.Flagger) *conditionB
 	return &conditionBuilder{fm: fm, fl: fl}
 }
 
+// ftsMapExprs returns mapKeys and mapValues expressions for FTS matching on a map column.
+// Non-string value types are wrapped with arrayMap(x -> toString(x), ...).
+func ftsMapExprs(col *schema.Column) (keysExpr, valsExpr string) {
+	keysExpr = fmt.Sprintf("mapKeys(%s)", col.Name)
+	valsExpr = fmt.Sprintf("mapValues(%s)", col.Name)
+	if mc, ok := col.Type.(schema.MapColumnType); ok && mc.ValueType.GetType() != schema.ColumnTypeEnumString {
+		valsExpr = fmt.Sprintf("arrayMap(x -> toString(x), mapValues(%s))", col.Name)
+	}
+	return
+}
+
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
 	startNs, endNs uint64,
@@ -118,10 +129,24 @@ func (c *conditionBuilder) conditionFor(
 		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
+		if key.Name == querybuilder.FTSInternalKey {
+			rawVal := fmt.Sprintf("%v", value)
+			keysExpr, valsExpr := ftsMapExprs(columns[0])
+			keysCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), keysExpr)
+			valsCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), valsExpr)
+			return sb.Or(keysCond, valsCond), nil
+		}
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
 		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
+		if key.Name == querybuilder.FTSInternalKey {
+			rawVal := fmt.Sprintf("%v", value)
+			keysExpr, valsExpr := ftsMapExprs(columns[0])
+			keysCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), keysExpr)
+			valsCond := fmt.Sprintf(`arrayExists(x -> match(x, %s), %s)`, sb.Var(rawVal), valsExpr)
+			return "NOT " + sb.Or(keysCond, valsCond), nil
+		}
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
 		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
@@ -280,6 +305,12 @@ func (c *conditionBuilder) ConditionFor(
 	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
+	}
+
+	// FTS wildcard conditions are self-contained (arrayExists over full map);
+	// no additional EXISTS wrapper is needed.
+	if key.Name == querybuilder.FTSInternalKey {
+		return condition, nil
 	}
 
 	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields

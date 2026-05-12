@@ -46,6 +46,7 @@ type filterExpressionVisitor struct {
 	keysWithWarnings map[string]bool
 	startNs          uint64
 	endNs            uint64
+	ftsFieldKeys     []*telemetrytypes.TelemetryFieldKey
 }
 
 type FilterExprVisitorOpts struct {
@@ -65,6 +66,9 @@ type FilterExprVisitorOpts struct {
 	Variables          map[string]qbtypes.VariableItem
 	StartNs            uint64
 	EndNs              uint64
+	// FTSFieldKeys enables search() for this query context. nil disables search()
+	// (traces, metrics, and non-log callers leave this nil).
+	FTSFieldKeys []*telemetrytypes.TelemetryFieldKey
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
@@ -87,6 +91,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		keysWithWarnings:   make(map[string]bool),
 		startNs:            opts.StartNs,
 		endNs:              opts.EndNs,
+		ftsFieldKeys:       opts.FTSFieldKeys,
 	}
 }
 
@@ -728,10 +733,17 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	return cond
 }
 
-// VisitFunctionCall handles function calls like has(), hasAny(), etc.
+// VisitFunctionCall handles function calls like has(), hasAny(), search(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
 		return SkipConditionLiteral
+	}
+
+	// search() must be handled before visiting params: unquoted tokens like
+	// search(error) are parsed as a key context, and visiting them through VisitKey
+	// would append "key not found" errors before we can treat the text as a search string.
+	if ctx.SEARCH() != nil {
+		return v.visitSearchFunction(ctx)
 	}
 
 	// Get function name based on which token is present
@@ -840,6 +852,59 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		return conds[0]
 	}
 	return v.builder.Or(conds...)
+}
+
+// visitSearchFunction handles the search() function call.
+// search('value') or search(value) fans out a regex match across all FTS column keys.
+func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallContext) any {
+	// ftsFieldKeys == nil means search() is not enabled for this signal/query type.
+	// Only log statement builders set FTSFieldKeys; traces/metrics leave it nil.
+	if len(v.ftsFieldKeys) == 0 {
+		v.errors = append(v.errors, "search() is only supported for log queries")
+		return ErrorConditionLiteral
+	}
+
+	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
+		v.errors = append(v.errors, "search() is restricted to a maximum of 6-hour time window")
+		return ErrorConditionLiteral
+	}
+
+	// Extract the search text directly from the parse tree — bypass VisitKey so that
+	// unquoted tokens like search(error) don't trigger "key not found" errors.
+	paramCtxs := ctx.FunctionParamList().AllFunctionParam()
+	if len(paramCtxs) < 1 {
+		v.errors = append(v.errors, "search() requires a value parameter, e.g. search('error') or search(error)")
+		return ErrorConditionLiteral
+	}
+	paramCtx := paramCtxs[0]
+	var searchText string
+	if paramCtx.Value() != nil {
+		raw := v.Visit(paramCtx.Value())
+		searchText = fmt.Sprintf("%v", raw)
+	} else if paramCtx.Key() != nil {
+		// Unquoted word — use the raw token text, bypassing the key lookup.
+		searchText = paramCtx.Key().GetText()
+	} else {
+		v.errors = append(v.errors, "search() parameter must be a string value")
+		return ErrorConditionLiteral
+	}
+
+	// Apply FormatFullTextSearch: valid regex → used as-is; invalid → escaped literal.
+	// Use FilterOperatorRegexp, consistent with how existing FTS (VisitFullText) works.
+	formattedText := FormatFullTextSearch(searchText)
+
+	var ftsConds []string
+	for _, key := range v.ftsFieldKeys {
+		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
+		if err != nil {
+			continue
+		}
+		ftsConds = append(ftsConds, cond)
+	}
+	if len(ftsConds) == 0 {
+		return ErrorConditionLiteral
+	}
+	return v.builder.Or(ftsConds...)
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

@@ -663,11 +663,11 @@ func (b *logQueryStatementBuilder) addFilterCondition(
 			FieldKeys:          keys,
 			BodyJSONEnabled:    bodyJSONEnabled,
 			SkipResourceFilter: true,
-			FullTextColumn:     b.fullTextColumn,
 			JsonKeyToKey:       b.jsonKeyToKey,
 			Variables:          variables,
 			StartNs:            start,
 			EndNs:              end,
+			FTSFieldKeys:       DefaultFTSFieldKeys,
 		})
 
 		if err != nil {

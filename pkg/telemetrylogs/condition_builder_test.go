@@ -514,6 +514,67 @@ func TestConditionFor(t *testing.T) {
 			expectedSQL:   "",
 			expectedError: qbtypes.ErrColumnNotFound,
 		},
+		// FTS wildcard (FTSInternalKey) cases
+		{
+			name: "FTS wildcard - attribute string REGEXP",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "_X_INTERNAL_FTS_KEY",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:     qbtypes.FilterOperatorRegexp,
+			value:        "error",
+			expectedSQL:  "arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string))",
+			expectedArgs: []any{"error", "error"},
+		},
+		{
+			name: "FTS wildcard - attribute number REGEXP",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "_X_INTERNAL_FTS_KEY",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeNumber,
+			},
+			operator:     qbtypes.FilterOperatorRegexp,
+			value:        "42",
+			expectedSQL:  "arrayExists(x -> match(x, ?), mapKeys(attributes_number)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_number)))",
+			expectedArgs: []any{"42", "42"},
+		},
+		{
+			name: "FTS wildcard - attribute bool REGEXP",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "_X_INTERNAL_FTS_KEY",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeBool,
+			},
+			operator:     qbtypes.FilterOperatorRegexp,
+			value:        "true",
+			expectedSQL:  "arrayExists(x -> match(x, ?), mapKeys(attributes_bool)) OR arrayExists(x -> match(x, ?), arrayMap(x -> toString(x), mapValues(attributes_bool)))",
+			expectedArgs: []any{"true", "true"},
+		},
+		{
+			name: "FTS wildcard - resource string REGEXP",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "_X_INTERNAL_FTS_KEY",
+				FieldContext:  telemetrytypes.FieldContextResource,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:     qbtypes.FilterOperatorRegexp,
+			value:        "my-service",
+			expectedSQL:  "arrayExists(x -> match(x, ?), mapKeys(resources_string)) OR arrayExists(x -> match(x, ?), mapValues(resources_string))",
+			expectedArgs: []any{"my-service", "my-service"},
+		},
+		{
+			name: "FTS wildcard - NOT REGEXP",
+			key: telemetrytypes.TelemetryFieldKey{
+				Name:          "_X_INTERNAL_FTS_KEY",
+				FieldContext:  telemetrytypes.FieldContextAttribute,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+			operator:     qbtypes.FilterOperatorNotRegexp,
+			value:        "healthcheck",
+			expectedSQL:  "NOT (arrayExists(x -> match(x, ?), mapKeys(attributes_string)) OR arrayExists(x -> match(x, ?), mapValues(attributes_string)))",
+			expectedArgs: []any{"healthcheck", "healthcheck"},
+		},
 	}
 	fl := flaggertest.New(t)
 	fm := NewFieldMapper(fl)

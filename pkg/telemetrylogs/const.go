@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -124,6 +125,21 @@ var (
 			},
 			Direction: qbtypes.OrderDirectionDesc,
 		},
+	}
+
+	// DefaultFTSFieldKeys is the ordered set of TelemetryFieldKey instances that
+	// search() fans out across. Intrinsic log columns use the normal conditionFor
+	// path; entries with Name==FTSInternalKey are short-circuited in conditionFor
+	// to emit arrayExists conditions over mapKeys/mapValues without arrayConcat.
+	DefaultFTSFieldKeys = []*telemetrytypes.TelemetryFieldKey{
+		{Name: LogsV2BodyColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: LogsV2SeverityTextColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: LogsV2TraceIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: LogsV2SpanIDColumn, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextLog, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeNumber},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeBool},
+		{Name: querybuilder.FTSInternalKey, Signal: telemetrytypes.SignalLogs, FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 )
 

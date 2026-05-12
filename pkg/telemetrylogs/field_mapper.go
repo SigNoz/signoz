@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/utils"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -79,6 +80,9 @@ func NewFieldMapper(fl flagger.Flagger) qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(ctx context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
+		if key.Name == querybuilder.FTSInternalKey {
+			return []*schema.Column{logsV2Columns["resources_string"]}, nil
+		}
 		columns := []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}
 		return columns, nil
 	case telemetrytypes.FieldContextScope:
