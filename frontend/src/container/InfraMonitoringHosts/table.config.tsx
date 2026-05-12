@@ -118,6 +118,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 					<ValidateColumnValueWrapper
 						value={cpu}
 						entity={InfraMonitoringEntity.HOSTS}
+						attribute="CPU metric"
 					>
 						<EntityProgressBar value={cpu} type="cpu" />
 					</ValidateColumnValueWrapper>
@@ -145,6 +146,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 					<ValidateColumnValueWrapper
 						value={memory}
 						entity={InfraMonitoringEntity.HOSTS}
+						attribute="memory metric"
 					>
 						<EntityProgressBar value={memory} type="memory" />
 					</ValidateColumnValueWrapper>
@@ -162,8 +164,15 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		enableSort: true,
 		cell: ({ value }): React.ReactNode => {
 			const wait = value as number;
+
 			return (
-				<TanStackTable.Text>{`${Number((wait * 100).toFixed(1))}%`}</TanStackTable.Text>
+				<ValidateColumnValueWrapper
+					value={wait}
+					entity={InfraMonitoringEntity.HOSTS}
+					attribute="IOWait metric"
+				>
+					<TanStackTable.Text>{`${Number((wait * 100).toFixed(1))}%`}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
 			);
 		},
 	},
@@ -175,8 +184,18 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 		accessorFn: (row): number => row.load15,
 		width: { min: 100, default: 100 },
 		enableSort: true,
-		cell: ({ value }): React.ReactNode => (
-			<TanStackTable.Text>{value as number}</TanStackTable.Text>
-		),
+		cell: ({ value }): React.ReactNode => {
+			const load15 = value as number;
+
+			return (
+				<ValidateColumnValueWrapper
+					value={load15}
+					entity={InfraMonitoringEntity.HOSTS}
+					attribute="load average metric"
+				>
+					<TanStackTable.Text>{load15}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];

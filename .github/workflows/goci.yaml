@@ -77,6 +77,10 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: setup-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: docker-community
         shell: bash
         run: |

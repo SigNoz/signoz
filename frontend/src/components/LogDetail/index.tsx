@@ -228,7 +228,7 @@ function LogDetailInner({
 			}
 
 			return log?.body || '';
-		} catch (error) {
+		} catch {
 			return log?.body || '';
 		}
 	}, [isBodyJsonQueryEnabled, log?.body]);
@@ -517,7 +517,7 @@ function LogDetailInner({
 									variant="link"
 									color="secondary"
 									size="sm"
-									prefix={<Filter size={12} />}
+									prefix={<Filter size="lg" />}
 									onClick={handleFilterVisible}
 								/>
 							</Tooltip>
