@@ -228,7 +228,7 @@
     "stylelint-scss": "7.0.0",
     "svgo": "4.0.0",
     "ts-api-utils": "2.4.0",
-    "ts-jest": "29.4.6",
+    "ts-jest": "29.4.9",
     "ts-node": "^10.2.1",
     "typescript-plugin-css-modules": "5.2.0",
     "use-sync-external-store": "1.6.0",

@@ -7479,7 +7479,7 @@ export interface SpantypesPostableSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7487,7 +7487,6 @@ export interface SpantypesPostableSpanMapperDTO {
 }
 
 export interface SpantypesPostableSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type boolean
@@ -7514,7 +7513,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7547,7 +7546,6 @@ export interface SpantypesSpanMapperConfigDTO {
 }
 
 export interface SpantypesSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type string
@@ -7585,11 +7583,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpantypesSpanMapperGroupCategoryDTO {
-	[key: string]: unknown;
-}
-
-export interface SpantypesSpanMapperGroupConditionDTO {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array
 	 * @nullable true
@@ -7600,7 +7597,7 @@ export interface SpantypesSpanMapperGroupConditionDTO {
 	 * @nullable true
 	 */
 	resource: string[] | null;
-}
+} | null;
 
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
@@ -7626,7 +7623,7 @@ export interface SpantypesUpdatableSpanMapperDTO {
 	 * @nullable true
 	 */
 	enabled?: boolean | null;
-	field_context?: SpantypesFieldContextDTO;
+	fieldContext?: SpantypesFieldContextDTO;
 }
 
 export interface SpantypesUpdatableSpanMapperGroupDTO {
@@ -9174,10 +9171,6 @@ export type GetMyServiceAccount200 = {
 };
 
 export type ListSpanMapperGroupsParams = {
-	/**
-	 * @description undefined
-	 */
-	category?: SpantypesSpanMapperGroupCategoryDTO;
 	/**
 	 * @type boolean
 	 * @nullable true

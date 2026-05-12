@@ -36,8 +36,8 @@ export default function LeftToolbarActions({
 			{!showFilter && (
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<Filter size="md" />
-						<ArrowUpToLine size="md" style={{ transform: 'rotate(90deg)' }} />
+						<Filter size={12} />
+						<ArrowUpToLine size={12} style={{ transform: 'rotate(90deg)' }} />
 					</Button>
 				</Tooltip>
 			)}
