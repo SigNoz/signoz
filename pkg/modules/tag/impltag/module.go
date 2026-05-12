@@ -17,6 +17,29 @@ func NewModule(store tagtypes.Store) tag.Module {
 	return &module{store: store}
 }
 
+func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
+	var tags []*tagtypes.Tag
+	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		resolved, err := m.CreateMany(ctx, orgID, kind, postable, createdBy)
+		if err != nil {
+			return err
+		}
+		tagIDs := make([]valuer.UUID, len(resolved))
+		for i, t := range resolved {
+			tagIDs[i] = t.ID
+		}
+		if err := m.SyncLinksForEntity(ctx, kind, entityID, tagIDs); err != nil {
+			return err
+		}
+		tags = resolved
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tags, nil
+}
+
 func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
 	if len(postable) == 0 {
 		return []*tagtypes.Tag{}, nil
@@ -43,10 +66,12 @@ func (m *module) LinkToEntity(ctx context.Context, kind coretypes.Kind, entityID
 }
 
 func (m *module) SyncLinksForEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error {
-	if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, entityID, tagIDs)); err != nil {
-		return err
-	}
-	return m.store.DeleteRelationsExcept(ctx, kind, entityID, tagIDs)
+	return m.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, entityID, tagIDs)); err != nil {
+			return err
+		}
+		return m.store.DeleteRelationsExcept(ctx, kind, entityID, tagIDs)
+	})
 }
 
 func (m *module) ListForEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID) ([]*tagtypes.Tag, error) {

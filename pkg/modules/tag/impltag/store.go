@@ -131,3 +131,7 @@ func (s *store) DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, 
 	_, err := q.Exec(ctx)
 	return err
 }
+
+func (s *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return s.sqlstore.RunInTxCtx(ctx, nil, cb)
+}

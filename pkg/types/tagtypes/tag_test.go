@@ -80,6 +80,10 @@ func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ coretypes.Kind, _
 	return nil
 }
 
+func (f *fakeStore) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return cb(ctx)
+}
+
 func TestResolve(t *testing.T) {
 	t.Run("empty input does not hit store", func(t *testing.T) {
 		store := &fakeStore{}

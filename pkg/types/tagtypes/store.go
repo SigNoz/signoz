@@ -25,4 +25,6 @@ type Store interface {
 	CreateRelations(ctx context.Context, relations []*TagRelation) error
 
 	DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, keepTagIDs []valuer.UUID) error
+
+	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error
 }

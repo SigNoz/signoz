@@ -9,6 +9,10 @@ import (
 )
 
 type Module interface {
+	// SyncTags resolves the given postable tags (creating new rows as needed)
+	// and reconciles the entity's links to exactly that set, all in one transaction.
+	SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error)
+
 	// Does not link the resolved tags to any entity — call LinkToEntity for that.
 	CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error)
 
