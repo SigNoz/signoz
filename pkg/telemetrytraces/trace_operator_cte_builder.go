@@ -437,7 +437,6 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		return nil, err
 	}
 
-	coreFields := []string{"timestamp", "trace_id", "span_id", "name", "duration_nano", "parent_span_id"}
 	selectedFields := map[string]bool{
 		"timestamp":      true,
 		"trace_id":       true,
@@ -447,23 +446,9 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		"parent_span_id": true,
 	}
 
-	// CH 25.12.5 distributed-analyzer regression (ClickHouse/ClickHouse#103508):
-	// native columns from a Distributed-table-backed CTE get renamed col → col_0
-	// in the shard block, making them invisible to the outer SELECT/ORDER BY.
-	// Fix: rename every core field to a safe alias (_s_<col>) in the inner SELECT
-	// so the analyzer never sees the original name as an ORDER BY target. The
-	// outer SELECT re-exposes them under their original names.
-	innerCoreExprs := make([]string, len(coreFields))
-	outerCoreExprs := make([]string, len(coreFields))
-	for i, f := range coreFields {
-		innerCoreExprs[i] = fmt.Sprintf("%s AS _s_%s", f, f)
-		outerCoreExprs[i] = fmt.Sprintf("_s_%s AS %s", f, f)
-	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("timestamp", "trace_id", "span_id", "name", "duration_nano", "parent_span_id")
 
-	innerSB := sqlbuilder.NewSelectBuilder()
-	innerSB.Select(innerCoreExprs...)
-
-	var additionalSelectedFields []string
 	for _, field := range b.operator.SelectFields {
 		if selectedFields[field.Name] {
 			continue
@@ -474,9 +459,8 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 				slog.String("field", field.Name), errors.Attr(err))
 			continue
 		}
-		innerSB.SelectMore(colExpr)
+		sb.SelectMore(colExpr)
 		selectedFields[field.Name] = true
-		additionalSelectedFields = append(additionalSelectedFields, field.Name)
 	}
 
 	for _, orderBy := range b.operator.Order {
@@ -487,43 +471,33 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		if err != nil {
 			return nil, err
 		}
-		innerSB.SelectMore(colExpr)
+		sb.SelectMore(colExpr)
 		selectedFields[orderBy.Key.Name] = true
 	}
 
-	innerSB.From(selectFromCTE)
-	innerSQL, innerArgs := innerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	// Outer SELECT: re-exposes core fields under their original names and acts as
-	// a projection barrier so ORDER BY-only fields do not leak into the result.
-	outerSB := sqlbuilder.NewSelectBuilder()
-	outerSB.Select(outerCoreExprs...)
-	for _, name := range additionalSelectedFields {
-		outerSB.SelectMore(fmt.Sprintf("`%s`", name))
-	}
-	outerSB.From(fmt.Sprintf("(%s) AS t", innerSQL))
+	sb.From(selectFromCTE)
 
 	if len(b.operator.Order) > 0 {
 		for _, orderBy := range b.operator.Order {
-			outerSB.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
 		}
 	} else {
-		outerSB.OrderBy("timestamp DESC")
+		sb.OrderBy("timestamp DESC")
 	}
 
 	if b.operator.Limit > 0 {
-		outerSB.Limit(b.operator.Limit)
+		sb.Limit(b.operator.Limit)
 	} else {
-		outerSB.Limit(100)
+		sb.Limit(100)
 	}
 	if b.operator.Offset > 0 {
-		outerSB.Offset(b.operator.Offset)
+		sb.Offset(b.operator.Offset)
 	}
 
-	outerSQL, outerArgs := outerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{
-		Query: outerSQL,
-		Args:  append(innerArgs, outerArgs...),
+		Query: sql,
+		Args:  args,
 	}, nil
 }
 
