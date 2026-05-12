@@ -9,7 +9,9 @@ import {
 	SolidAlertCircle,
 	X,
 } from '@signozhq/icons';
-import { Button, Callout, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { toast } from '@signozhq/ui/sonner';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -177,11 +179,7 @@ export default function CustomDomainSettings(): JSX.Element {
 	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
-				<Skeleton
-					active
-					title={{ width: '40%' }}
-					paragraph={{ rows: 1, width: '60%' }}
-				/>
+				<Skeleton active paragraph={{ rows: 1, width: '60%' }} />
 			</div>
 		);
 	}
@@ -204,6 +202,7 @@ export default function CustomDomainSettings(): JSX.Element {
 					>
 						<Dropdown
 							trigger={['click']}
+							disabled={isFetchingHosts}
 							dropdownRender={(): JSX.Element => (
 								<div className="workspace-url-dropdown">
 									<span className="workspace-url-dropdown-header">
@@ -239,12 +238,7 @@ export default function CustomDomainSettings(): JSX.Element {
 								</div>
 							)}
 						>
-							<Button
-								className="workspace-url-trigger"
-								disabled={isFetchingHosts}
-								variant="link"
-								color="none"
-							>
+							<Button variant="link" color="none">
 								<Link2 size={12} />
 								<span>{stripProtocol(activeHost?.url ?? '')}</span>
 								<ChevronDown size={12} />

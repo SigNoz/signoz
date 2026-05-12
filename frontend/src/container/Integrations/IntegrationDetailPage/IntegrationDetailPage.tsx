@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
-import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
-import { Flex, Skeleton, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Flex, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
@@ -55,8 +55,19 @@ function IntegrationDetailPage(): JSX.Element {
 		),
 	);
 
-	if (integrationId === INTEGRATION_TYPES.AWS) {
-		return <CloudIntegration type={IntegrationType.AWS_SERVICES} />;
+	if (
+		integrationId === INTEGRATION_TYPES.AWS ||
+		integrationId === INTEGRATION_TYPES.AZURE
+	) {
+		return (
+			<CloudIntegration
+				type={
+					integrationId === INTEGRATION_TYPES.AWS
+						? IntegrationType.AWS_SERVICES
+						: IntegrationType.AZURE_SERVICES
+				}
+			/>
+		);
 	}
 
 	return (
@@ -85,20 +96,20 @@ function IntegrationDetailPage(): JSX.Element {
 						<div className="error-btns">
 							<Button
 								variant="solid"
-								color="primary"
+								color="secondary"
 								onClick={(): Promise<any> => refetch()}
 								prefix={<RotateCw size={14} />}
 							>
 								Retry
 							</Button>
-							<div
-								className="contact-support"
+							<Button
+								variant="solid"
+								color="secondary"
 								onClick={(): void => handleContactSupport(isCloudUserVal)}
+								suffix={<MoveUpRight size={12} />}
 							>
-								<Typography.Link className="text">Contact Support </Typography.Link>
-
-								<MoveUpRight size={14} color={Color.BG_ROBIN_400} />
-							</div>
+								Contact Support
+							</Button>
 						</div>
 					</div>
 				</div>

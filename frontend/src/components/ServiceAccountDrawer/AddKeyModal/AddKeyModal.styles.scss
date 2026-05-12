@@ -87,7 +87,7 @@
 
 			input {
 				color: var(--l1-foreground);
-				font-size: var(--font-size-sm);
+				font-size: var(--font-size-xs);
 			}
 
 			.ant-picker-suffix {
@@ -126,12 +126,6 @@
 	}
 
 	&__copy-btn {
-		flex-shrink: 0;
-		height: 32px;
-		border-radius: 0 2px 2px 0;
-		border-top: none;
-		border-right: none;
-		border-bottom: none;
 		border-left: 1px solid var(--l1-border);
 		min-width: 40px;
 	}
@@ -152,6 +146,7 @@
 		color: var(--foreground);
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
+		margin-bottom: var(--spacing-4);
 	}
 
 	&__footer {

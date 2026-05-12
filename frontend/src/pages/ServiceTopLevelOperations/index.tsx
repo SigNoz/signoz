@@ -3,7 +3,8 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { SyncOutlined } from '@ant-design/icons';
-import { Alert, Table, Typography } from 'antd';
+import { Alert, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';
@@ -124,7 +125,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 						columns={columns}
 						bordered
 						title={(): string => 'Top Level Operations'}
-						// @ts-ignore
+						// @ts-expect-error
 						dataSource={topLevelOperations}
 						loading={isLoading}
 						showHeader={false}

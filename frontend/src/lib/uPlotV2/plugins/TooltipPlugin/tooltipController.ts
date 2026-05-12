@@ -27,6 +27,7 @@ export function createInitialControllerState(): TooltipControllerState {
 		verticalOffset: 0,
 		seriesIndexes: [],
 		focusedSeriesIndex: null,
+		syncedSeriesIndexes: null,
 		cursorDrivenBySync: false,
 		plotWithinViewport: false,
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
@@ -184,7 +185,7 @@ export function createSetLegendHandler(
 			return;
 		}
 
-		const newSeriesIndexes = plot.cursor.idxs.slice();
+		const newSeriesIndexes = [...plot.cursor.idxs];
 		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
 		const previousCursorDrivenBySync = controller.cursorDrivenBySync;

@@ -235,19 +235,33 @@ def test_anonymous_role_has_public_dashboard_permission(
     # signoz-anonymous role read access to public-dashboard/*
     with signoz.sqlstore.conn.connect() as conn:
         tuple_object_id = f"organization/{org_id}/public-dashboard/*"
+        anonymous_role_subject = f"organization/{org_id}/role/signoz-anonymous"
         tuple_result = conn.execute(
-            sql.text("SELECT * FROM tuple WHERE object_id = :object_id"),
-            {"object_id": tuple_object_id},
+            sql.text("SELECT * FROM tuple WHERE object_id = :object_id AND relation = :relation"),
+            {"object_id": tuple_object_id, "relation": "read"},
         )
 
-        tuple_row = tuple_result.mappings().fetchone()
+        tuple_rows = tuple_result.mappings().fetchall()
+        assert len(tuple_rows) > 0
+
+        if request.config.getoption("--sqlstore-provider") == "sqlite":
+            tuple_row = next(
+                (row for row in tuple_rows if row["user_object_id"] == anonymous_role_subject),
+                None,
+            )
+        else:
+            tuple_row = next(
+                (row for row in tuple_rows if row["_user"] == f"role:{anonymous_role_subject}#assignee"),
+                None,
+            )
+
         assert tuple_row is not None
         assert tuple_row["object_type"] == "metaresource"
         assert tuple_row["relation"] == "read"
 
         if request.config.getoption("--sqlstore-provider") == "sqlite":
             assert tuple_row["user_object_type"] == "role"
-            assert tuple_row["user_object_id"] == f"organization/{org_id}/role/signoz-anonymous"
+            assert tuple_row["user_object_id"] == anonymous_role_subject
             assert tuple_row["user_relation"] == "assignee"
         else:
-            assert tuple_row["_user"] == f"role:organization/{org_id}/role/signoz-anonymous#assignee"
+            assert tuple_row["_user"] == f"role:{anonymous_role_subject}#assignee"

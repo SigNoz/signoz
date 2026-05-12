@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Checkbox, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
 import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
@@ -27,6 +29,7 @@ const interestedInOptions: Record<string, string> = {
 	singleTool:
 		'Single Tool (logs, metrics & traces) to reduce operational overhead',
 	correlateSignals: 'Correlate signals for faster troubleshooting',
+	openSourceTooling: 'Prefer open-source tooling',
 };
 
 export function AboutSigNozQuestions({

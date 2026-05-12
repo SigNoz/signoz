@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
+import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
@@ -75,7 +76,7 @@ function OptionsMenu({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		if (addColumn && addColumn?.onSearch) {

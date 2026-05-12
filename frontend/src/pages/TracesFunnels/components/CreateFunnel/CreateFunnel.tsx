@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { generatePath, matchPath, useLocation } from 'react-router-dom';
-import { Input } from '@signozhq/ui';
+import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
 import axios from 'axios';
 import SignozModal from 'components/SignozModal/SignozModal';

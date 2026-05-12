@@ -1,86 +1,22 @@
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
-import { Group } from 'lucide-react';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { Tooltip } from 'antd';
+import { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import { ExpandButtonWrapper } from 'container/InfraMonitoringK8s/components';
 
-import { K8sRenderedRowData } from '../Base/types';
-import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
-import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
-import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
+import EntityGroupHeader from '../Base/EntityGroupHeader';
+import K8sGroupCell from '../Base/K8sGroupCell';
+import { formatBytes } from '../commonUtils';
+import { ValidateColumnValueWrapper } from '../components';
 import { K8sNodeData, K8sNodesListPayload } from './api';
+import { Workflow } from 'lucide-react';
 
-import styles from './table.module.scss';
-
-export interface K8sNodesRowData {
-	key: string;
-	itemKey: string;
-	nodeUID: string;
-	nodeName: React.ReactNode;
-	clusterName: string;
-	cpu: React.ReactNode;
-	cpu_allocatable: React.ReactNode;
-	memory: React.ReactNode;
-	memory_allocatable: React.ReactNode;
-	groupedByMeta?: any;
+export function getK8sNodeRowKey(node: K8sNodeData): string {
+	return node.nodeUID || node.meta.k8s_node_uid || node.meta.k8s_node_name;
 }
 
-export const k8sNodesColumns: IEntityColumn[] = [
-	{
-		label: 'Node Group',
-		value: 'nodeGroup',
-		id: 'nodeGroup',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-collapse',
-	},
-	{
-		label: 'Node Name',
-		value: 'nodeName',
-		id: 'nodeName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
-	},
-	{
-		label: 'Cluster Name',
-		value: 'clusterName',
-		id: 'clusterName',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Usage (cores)',
-		value: 'cpu',
-		id: 'cpu',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'CPU Alloc (cores)',
-		value: 'cpu_allocatable',
-		id: 'cpu_allocatable',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Memory Usage (WSS)',
-		value: 'memory',
-		id: 'memory',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Memory Alloc (bytes)',
-		value: 'memory_allocatable',
-		id: 'memory_allocatable',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-];
+export function getK8sNodeItemKey(node: K8sNodeData): string {
+	return node.meta.k8s_node_name;
+}
 
 export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 	filters: {
@@ -90,110 +26,120 @@ export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const k8sNodesColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sNodesColumnsConfig: TableColumnDef<K8sNodeData>[] = [
 	{
-		title: (
-			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> NODE GROUP
-			</div>
+		id: 'nodeGroup',
+		header: (): React.ReactNode => <EntityGroupHeader title="NODE GROUP" />,
+		accessorFn: (row): string => row.meta.k8s_node_name || '',
+		width: { min: 300 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-collapse',
+		cell: ({ isExpanded, toggleExpanded, row }): JSX.Element | null => {
+			return (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				>
+					<K8sGroupCell row={row} />
+				</ExpandButtonWrapper>
+			);
+		},
+	},
+	{
+		id: 'nodeName',
+		header: (): React.ReactNode => (
+			<EntityGroupHeader
+				title="Node Name"
+				icon={<Workflow data-hide-expanded="true" size={14} />}
+			/>
 		),
-		dataIndex: 'nodeGroup',
-		key: 'nodeGroup',
-		ellipsis: true,
-		width: 150,
-		align: 'left',
-		sorter: false,
+		accessorFn: (row): string => row.meta.k8s_node_name || '',
+		width: { min: 290 },
+		enableSort: false,
+		enableRemove: false,
+		enableMove: false,
+		pin: 'left',
+		visibilityBehavior: 'hidden-on-expand',
+		cell: ({ value }): React.ReactNode => {
+			const nodeName = value as string;
+			return (
+				<Tooltip title={nodeName}>
+					<TanStackTable.Text>{nodeName}</TanStackTable.Text>
+				</Tooltip>
+			);
+		},
 	},
 	{
-		title: <div>Node Name</div>,
-		dataIndex: 'nodeName',
-		key: 'nodeName',
-		ellipsis: true,
-		width: 80,
-		sorter: false,
-		align: 'left',
+		id: 'clusterName',
+		header: 'Cluster Name',
+		accessorFn: (row): string => row.meta.k8s_cluster_name || '',
+		width: { min: 150, default: 150 },
+		enableSort: false,
+		cell: ({ value }): React.ReactNode => (
+			<TanStackTable.Text>{value as string}</TanStackTable.Text>
+		),
 	},
 	{
-		title: <div>Cluster Name</div>,
-		dataIndex: 'clusterName',
-		key: 'clusterName',
-		ellipsis: true,
-		width: 80,
-		sorter: false,
-		align: 'left',
+		id: 'cpu',
+		header: 'CPU Usage (cores)',
+		accessorFn: (row): number => row.nodeCPUUsage,
+		width: { min: 200, default: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpu = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpu}>
+					<TanStackTable.Text>{cpu}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Usage (cores)</div>,
-		dataIndex: 'cpu',
-		key: 'cpu',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'cpu_allocatable',
+		header: 'CPU Alloc (cores)',
+		accessorFn: (row): number => row.nodeCPUAllocatable,
+		width: { min: 200, default: 200 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const cpuAllocatable = value as number;
+			return (
+				<ValidateColumnValueWrapper value={cpuAllocatable}>
+					<TanStackTable.Text>{cpuAllocatable}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>CPU Alloc (cores)</div>,
-		dataIndex: 'cpu_allocatable',
-		key: 'cpu_allocatable',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory',
+		header: 'Memory Usage (WSS)',
+		accessorFn: (row): number => row.nodeMemoryUsage,
+		width: { min: 240, default: 240 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memory = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memory}>
+					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 	{
-		title: <div>Memory Usage (WSS)</div>,
-		dataIndex: 'memory',
-		key: 'memory',
-		width: 80,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Memory Allocatable</div>,
-		dataIndex: 'memory_allocatable',
-		key: 'memory_allocatable',
-		width: 80,
-		sorter: true,
-		align: 'left',
+		id: 'memory_allocatable',
+		header: 'Memory Allocatable',
+		accessorFn: (row): number => row.nodeMemoryAllocatable,
+		width: { min: 240, default: 240 },
+		enableSort: true,
+		cell: ({ value }): React.ReactNode => {
+			const memoryAllocatable = value as number;
+			return (
+				<ValidateColumnValueWrapper value={memoryAllocatable}>
+					<TanStackTable.Text>{formatBytes(memoryAllocatable)}</TanStackTable.Text>
+				</ValidateColumnValueWrapper>
+			);
+		},
 	},
 ];
-
-export const k8sNodesRenderRowData = (
-	node: K8sNodeData,
-	groupBy: BaseAutocompleteData[],
-): K8sRenderedRowData => ({
-	key: getRowKey(
-		node,
-		() => node.nodeUID || node.meta.k8s_node_uid || node.meta.k8s_node_name,
-		groupBy,
-	),
-	itemKey: node.meta.k8s_node_name,
-	nodeUID: node.nodeUID || node.meta.k8s_node_uid,
-	nodeName: (
-		<Tooltip title={node.meta.k8s_node_name}>
-			{node.meta.k8s_node_name || ''}
-		</Tooltip>
-	),
-	clusterName: node.meta.k8s_cluster_name,
-	cpu: (
-		<ValidateColumnValueWrapper value={node.nodeCPUUsage}>
-			{node.nodeCPUUsage}
-		</ValidateColumnValueWrapper>
-	),
-	memory: (
-		<ValidateColumnValueWrapper value={node.nodeMemoryUsage}>
-			{formatBytes(node.nodeMemoryUsage)}
-		</ValidateColumnValueWrapper>
-	),
-	cpu_allocatable: (
-		<ValidateColumnValueWrapper value={node.nodeCPUAllocatable}>
-			{node.nodeCPUAllocatable}
-		</ValidateColumnValueWrapper>
-	),
-	memory_allocatable: (
-		<ValidateColumnValueWrapper value={node.nodeMemoryAllocatable}>
-			{formatBytes(node.nodeMemoryAllocatable)}
-		</ValidateColumnValueWrapper>
-	),
-	nodeGroup: getGroupByEl(node, groupBy),
-	...node.meta,
-	groupedByMeta: getGroupedByMeta(node, groupBy),
-});

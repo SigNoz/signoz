@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -6,8 +6,8 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
@@ -70,9 +70,9 @@ describe('EditKeyModal (URL-controlled)', () => {
 	it('renders key data from prop when edit-key param is set', async () => {
 		renderModal();
 
-		expect(
-			await screen.findByDisplayValue('Original Key Name'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByDisplayValue('Original Key Name'),
+		).resolves.toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
 
@@ -111,7 +111,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 
 		const latestUrlUpdate =
 			onUrlUpdate.mock.calls[onUrlUpdate.mock.calls.length - 1]?.[0];
-		expect(latestUrlUpdate).toEqual(
+		expect(latestUrlUpdate).toStrictEqual(
 			expect.objectContaining({
 				queryString: expect.any(String),
 			}),
@@ -134,9 +134,9 @@ describe('EditKeyModal (URL-controlled)', () => {
 		await user.click(screen.getByRole('button', { name: /Revoke Key/i }));
 
 		// Same dialog, now showing revoke confirmation
-		expect(
-			await screen.findByRole('dialog', { name: /Revoke Original Key Name/i }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('dialog', { name: /Revoke Original Key Name/i }),
+		).resolves.toBeInTheDocument();
 		expect(
 			screen.getByText(/Revoking this key will permanently invalidate it/i),
 		).toBeInTheDocument();

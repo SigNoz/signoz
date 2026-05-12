@@ -11,7 +11,8 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, RowProps, Space, Table, Typography } from 'antd';
+import { Button, Modal, Row, RowProps, Space, Table } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
@@ -38,7 +39,7 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
-		// @ts-ignore
+		// @ts-expect-error
 		id: props['data-row-key'],
 	});
 
@@ -148,7 +149,7 @@ function VariablesSettings({
 			});
 
 			if (name) {
-				// @ts-ignore
+				// @ts-expect-error
 				variableNamesMap[name] = name;
 			}
 
@@ -391,7 +392,7 @@ function VariablesSettings({
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
-					// @ts-ignore
+					// @ts-expect-error
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],
 						order: index,

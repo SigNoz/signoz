@@ -19,9 +19,9 @@ import {
 	volumeWidgetInfo,
 } from './constants';
 import {
-	k8sVolumesColumns,
+	getK8sVolumeItemKey,
+	getK8sVolumeRowKey,
 	k8sVolumesColumnsConfig,
-	k8sVolumesRenderRowData,
 } from './table.config';
 
 function K8sVolumesList({
@@ -91,10 +91,10 @@ function K8sVolumesList({
 			<K8sBaseList<K8sVolumesData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.VOLUMES}
-				tableColumnsDefinitions={k8sVolumesColumns}
 				tableColumns={k8sVolumesColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sVolumesRenderRowData}
+				getRowKey={getK8sVolumeRowKey}
+				getItemKey={getK8sVolumeItemKey}
 				eventCategory={InfraMonitoringEvents.Volumes}
 			/>
 

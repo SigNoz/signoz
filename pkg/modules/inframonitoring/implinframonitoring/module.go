@@ -159,3 +159,372 @@ func (m *module) ListHosts(ctx context.Context, orgID valuer.UUID, req *inframon
 
 	return resp, nil
 }
+
+func (m *module) ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Pods{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.PodsOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{podUIDGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, podsTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getPodsTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopPodGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.PodRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newPodsTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, req, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	isPodUIDInGroupBy := isKeyInGroupByAttrs(req.GroupBy, podUIDAttrKey)
+	resp.Records = buildPodRecords(isPodUIDInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts, req.End)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}
+
+func (m *module) ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Nodes{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.NodesOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{nodeNameGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, nodesTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.NodeRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.NodeRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getNodesTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopNodeGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.NodeRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNodesTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeConditionCounts, err := m.getPerGroupNodeConditionCounts(ctx, req, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
+	// Start/End/Filter/GroupBy from PostablePods.
+	podPhaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
+		Start:   req.Start,
+		End:     req.End,
+		Filter:  req.Filter,
+		GroupBy: req.GroupBy,
+	}, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	isNodeNameInGroupBy := isKeyInGroupByAttrs(req.GroupBy, nodeNameAttrKey)
+	resp.Records = buildNodeRecords(isNodeNameInGroupBy, queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCounts, podPhaseCounts)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}
+
+func (m *module) ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (*inframonitoringtypes.Namespaces, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Namespaces{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.NamespacesOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{namespaceNameGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, namespacesTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.NamespaceRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.NamespaceRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getNamespacesTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopNamespaceGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.NamespaceRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newNamespacesTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reuse the pods phase-counts CTE function via a temp struct — it reads only
+	// Start/End/Filter/GroupBy from PostablePods.
+	phaseCounts, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
+		Start:   req.Start,
+		End:     req.End,
+		Filter:  req.Filter,
+		GroupBy: req.GroupBy,
+	}, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildNamespaceRecords(queryResp, pageGroups, req.GroupBy, metadataMap, phaseCounts)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}
+
+func (m *module) ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	resp := &inframonitoringtypes.Clusters{}
+
+	if req.OrderBy == nil {
+		req.OrderBy = &qbtypes.OrderBy{
+			Key: qbtypes.OrderByKey{
+				TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+					Name: inframonitoringtypes.ClustersOrderByCPU,
+				},
+			},
+			Direction: qbtypes.OrderDirectionDesc,
+		}
+	}
+
+	if len(req.GroupBy) == 0 {
+		req.GroupBy = []qbtypes.GroupByKey{clusterNameGroupByKey}
+		resp.Type = inframonitoringtypes.ResponseTypeList
+	} else {
+		resp.Type = inframonitoringtypes.ResponseTypeGroupedList
+	}
+
+	missingMetrics, minFirstReportedUnixMilli, err := m.getMetricsExistenceAndEarliestTime(ctx, clustersTableMetricNamesList)
+	if err != nil {
+		return nil, err
+	}
+	if len(missingMetrics) > 0 {
+		resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: missingMetrics}
+		resp.Records = []inframonitoringtypes.ClusterRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	if req.End < int64(minFirstReportedUnixMilli) {
+		resp.EndTimeBeforeRetention = true
+		resp.Records = []inframonitoringtypes.ClusterRecord{}
+		resp.Total = 0
+		return resp, nil
+	}
+	resp.RequiredMetricsCheck = inframonitoringtypes.RequiredMetricsCheck{MissingMetrics: []string{}}
+
+	metadataMap, err := m.getClustersTableMetadata(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Total = len(metadataMap)
+
+	pageGroups, err := m.getTopClusterGroups(ctx, orgID, req, metadataMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(pageGroups) == 0 {
+		resp.Records = []inframonitoringtypes.ClusterRecord{}
+		return resp, nil
+	}
+
+	filterExpr := ""
+	if req.Filter != nil {
+		filterExpr = req.Filter.Expression
+	}
+
+	fullQueryReq := buildFullQueryRequest(req.Start, req.End, filterExpr, req.GroupBy, pageGroups, m.newClustersTableListQuery())
+	queryResp, err := m.querier.QueryRange(ctx, orgID, fullQueryReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reuse the nodes condition-counts CTE function via a temp struct — it reads only
+	// Start/End/Filter/GroupBy from PostableNodes. With default groupBy
+	// [k8s.cluster.name], counts are bucketed per cluster; with a custom groupBy,
+	// they aggregate across clusters in that group.
+	nodeConditionCountsMap, err := m.getPerGroupNodeConditionCounts(ctx, &inframonitoringtypes.PostableNodes{
+		Start:   req.Start,
+		End:     req.End,
+		Filter:  req.Filter,
+		GroupBy: req.GroupBy,
+	}, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	// Same pattern for pod phase counts via PostablePods shim.
+	podPhaseCountsMap, err := m.getPerGroupPodPhaseCounts(ctx, &inframonitoringtypes.PostablePods{
+		Start:   req.Start,
+		End:     req.End,
+		Filter:  req.Filter,
+		GroupBy: req.GroupBy,
+	}, pageGroups)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Records = buildClusterRecords(queryResp, pageGroups, req.GroupBy, metadataMap, nodeConditionCountsMap, podPhaseCountsMap)
+	resp.Warning = queryResp.Warning
+
+	return resp, nil
+}

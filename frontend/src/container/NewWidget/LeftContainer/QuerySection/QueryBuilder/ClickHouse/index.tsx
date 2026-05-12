@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { Callout } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 import DOCLINKS from 'utils/docLinks';

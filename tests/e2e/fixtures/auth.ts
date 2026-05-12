@@ -22,7 +22,9 @@ const storageByUser = new Map<string, Promise<StorageState>>();
 
 async function storageFor(browser: Browser, user: User): Promise<StorageState> {
 	const cached = storageByUser.get(user.email);
-	if (cached) return cached;
+	if (cached) {
+		return cached;
+	}
 
 	const task = (async () => {
 		const ctx = await browser.newContext();

@@ -85,7 +85,7 @@ describe('previousQuery.utils', () => {
 		saveAsPreviousQuery(key, sampleQuery);
 
 		const fromStore = getPreviousQueryFromKey(key);
-		expect(fromStore).toEqual(sampleQuery);
+		expect(fromStore).toStrictEqual(sampleQuery);
 	});
 
 	it('saveAsPreviousQuery merges multiple entries and removeKeyFromPreviousQuery deletes one', () => {

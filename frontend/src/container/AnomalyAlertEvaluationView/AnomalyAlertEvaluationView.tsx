@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Checkbox, Input, Typography } from 'antd';
+import { Checkbox, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -30,18 +31,18 @@ function UplotChart({
 
 	useEffect(() => {
 		if (plotInstance.current) {
-			// @ts-ignore
+			// @ts-expect-error
 			plotInstance.current.destroy();
 		}
 
 		if (data && data.length > 0) {
-			// @ts-ignore
+			// @ts-expect-error
 			plotInstance.current = new uPlot(options, data, chartRef.current);
 		}
 
 		return (): void => {
 			if (plotInstance.current) {
-				// @ts-ignore
+				// @ts-expect-error
 				plotInstance.current.destroy();
 			}
 		};
@@ -275,7 +276,7 @@ function AnomalyAlertEvaluationView({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		handleSearch(value);

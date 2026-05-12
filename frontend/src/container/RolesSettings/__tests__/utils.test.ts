@@ -1,12 +1,18 @@
 import type {
-	AuthtypesGettableObjectsDTO,
-	AuthtypesGettableResourcesDTO,
+	CoretypesResourceRefDTO,
+	CoretypesObjectGroupDTO,
+	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import type {
 	PermissionConfig,
 	ResourceDefinition,
 } from '../PermissionSidePanel/PermissionSidePanel.types';
+
+type AuthzResources = {
+	resources: CoretypesResourceRefDTO[];
+	relations: Record<string, string[]>;
+};
 import { PermissionScope } from '../PermissionSidePanel/PermissionSidePanel.types';
 import {
 	buildConfig,
@@ -33,17 +39,17 @@ jest.mock('../RoleDetails/constants', () => {
 	};
 });
 
-const dashboardResource: AuthtypesGettableResourcesDTO['resources'][number] = {
-	name: 'dashboard',
-	type: 'metaresource',
+const dashboardResource: AuthzResources['resources'][number] = {
+	kind: 'dashboard',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
-const alertResource: AuthtypesGettableResourcesDTO['resources'][number] = {
-	name: 'alert',
-	type: 'metaresource',
+const alertResource: AuthzResources['resources'][number] = {
+	kind: 'alert',
+	type: 'metaresource' as CoretypesTypeDTO,
 };
 
-const baseAuthzResources: AuthtypesGettableResourcesDTO = {
+const baseAuthzResources: AuthzResources = {
 	resources: [dashboardResource, alertResource],
 	relations: {
 		create: ['metaresource'],
@@ -81,7 +87,7 @@ describe('buildPatchPayload', () => {
 			authzRes: baseAuthzResources,
 		});
 
-		expect(result.additions).toEqual([
+		expect(result.additions).toStrictEqual([
 			{ resource: dashboardResource, selectors: [ID_B] },
 		]);
 		expect(result.deletions).toBeNull();
@@ -110,7 +116,7 @@ describe('buildPatchPayload', () => {
 			authzRes: baseAuthzResources,
 		});
 
-		expect(result.deletions).toEqual([
+		expect(result.deletions).toStrictEqual([
 			{ resource: dashboardResource, selectors: [ID_B] },
 		]);
 		expect(result.additions).toBeNull();
@@ -163,10 +169,10 @@ describe('buildPatchPayload', () => {
 			authzRes: baseAuthzResources,
 		});
 
-		expect(result.deletions).toEqual([
+		expect(result.deletions).toStrictEqual([
 			{ resource: dashboardResource, selectors: ['*'] },
 		]);
-		expect(result.additions).toEqual([
+		expect(result.additions).toStrictEqual([
 			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
 		]);
 	});
@@ -188,7 +194,7 @@ describe('buildPatchPayload', () => {
 			authzRes: baseAuthzResources,
 		});
 
-		expect(result.deletions).toEqual([
+		expect(result.deletions).toStrictEqual([
 			{ resource: dashboardResource, selectors: ['*'] },
 		]);
 		expect(result.additions).toBeNull();
@@ -211,7 +217,7 @@ describe('buildPatchPayload', () => {
 			authzRes: baseAuthzResources,
 		});
 
-		expect(result.additions).toEqual([
+		expect(result.additions).toStrictEqual([
 			{ resource: alertResource, selectors: [ID_B] },
 		]);
 		expect(result.deletions).toBeNull();
@@ -220,26 +226,26 @@ describe('buildPatchPayload', () => {
 
 describe('objectsToPermissionConfig', () => {
 	it('maps a wildcard selector to ALL scope', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: ['*'] },
 		];
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
 
-		expect(result.dashboard).toEqual({
+		expect(result.dashboard).toStrictEqual({
 			scope: PermissionScope.ALL,
 			selectedIds: [],
 		});
 	});
 
 	it('maps specific selectors to ONLY_SELECTED scope with the IDs', () => {
-		const objects: AuthtypesGettableObjectsDTO[] = [
+		const objects: CoretypesObjectGroupDTO[] = [
 			{ resource: dashboardResource, selectors: [ID_A, ID_B] },
 		];
 
 		const result = objectsToPermissionConfig(objects, resourceDefs);
 
-		expect(result.dashboard).toEqual({
+		expect(result.dashboard).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [ID_A, ID_B],
 		});
@@ -248,11 +254,11 @@ describe('objectsToPermissionConfig', () => {
 	it('defaults to ONLY_SELECTED with empty selectedIds when resource is absent from API response', () => {
 		const result = objectsToPermissionConfig([], resourceDefs);
 
-		expect(result.dashboard).toEqual({
+		expect(result.dashboard).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [],
 		});
-		expect(result.alert).toEqual({
+		expect(result.alert).toStrictEqual({
 			scope: PermissionScope.ONLY_SELECTED,
 			selectedIds: [],
 		});
@@ -321,24 +327,24 @@ describe('buildConfig', () => {
 
 		const result = buildConfig(resourceDefs, initial);
 
-		expect(result.dashboard).toEqual({
+		expect(result.dashboard).toStrictEqual({
 			scope: PermissionScope.ALL,
 			selectedIds: [],
 		});
-		expect(result.alert).toEqual(DEFAULT_RESOURCE_CONFIG);
+		expect(result.alert).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
 	});
 
 	it('applies DEFAULT_RESOURCE_CONFIG to all resources when no initial is provided', () => {
 		const result = buildConfig(resourceDefs);
 
-		expect(result.dashboard).toEqual(DEFAULT_RESOURCE_CONFIG);
-		expect(result.alert).toEqual(DEFAULT_RESOURCE_CONFIG);
+		expect(result.dashboard).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
+		expect(result.alert).toStrictEqual(DEFAULT_RESOURCE_CONFIG);
 	});
 });
 
 describe('derivePermissionTypes', () => {
 	it('derives one PermissionType per relation key with correct key and capitalised label', () => {
-		const relations: AuthtypesGettableResourcesDTO['relations'] = {
+		const relations: AuthzResources['relations'] = {
 			create: ['metaresource'],
 			read: ['metaresource'],
 			delete: ['metaresource'],
@@ -347,14 +353,14 @@ describe('derivePermissionTypes', () => {
 		const result = derivePermissionTypes(relations);
 
 		expect(result).toHaveLength(3);
-		expect(result.map((p) => p.key)).toEqual(['create', 'read', 'delete']);
+		expect(result.map((p) => p.key)).toStrictEqual(['create', 'read', 'delete']);
 		expect(result[0].label).toBe('Create');
 	});
 
 	it('falls back to the default set of permission types when relations is null', () => {
 		const result = derivePermissionTypes(null);
 
-		expect(result.map((p) => p.key)).toEqual([
+		expect(result.map((p) => p.key)).toStrictEqual([
 			'create',
 			'list',
 			'read',
@@ -369,7 +375,7 @@ describe('deriveResourcesForRelation', () => {
 		const result = deriveResourcesForRelation(baseAuthzResources, 'create');
 
 		expect(result).toHaveLength(2);
-		expect(result.map((r) => r.id)).toEqual(['dashboard', 'alert']);
+		expect(result.map((r) => r.id)).toStrictEqual(['dashboard', 'alert']);
 	});
 
 	it('returns an empty array when authzResources is null', () => {

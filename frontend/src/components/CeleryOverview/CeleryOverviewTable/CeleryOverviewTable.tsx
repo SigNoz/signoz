@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
+import { Loader } from '@signozhq/icons';
 import {
 	Button,
 	Input,
@@ -14,8 +15,8 @@ import {
 	TableColumnsType,
 	TableColumnType,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {
@@ -516,7 +517,9 @@ export default function CeleryOverviewTable({
 				bordered={false}
 				loading={{
 					spinning: isLoading,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					indicator: (
+						<Spin indicator={<Loader size={14} className="animate-spin" />} />
+					),
 				}}
 				locale={{
 					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,

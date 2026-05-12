@@ -171,6 +171,27 @@ export * from './useTableParams';
  *   tableScrollerProps={{ className: 'my-table-scroll', 'data-testid': 'logs-scroller' }}
  * />
  * ```
+ *
+ * @example Disable virtual scroll — useful for nested tables inside expanded rows.
+ * Virtual scroll requires a fixed height container, which is problematic for nested tables
+ * that need dynamic height. Use `disableVirtualScroll` when rendering tables inside
+ * `renderExpandedRow` to allow the nested table to grow based on content.
+ * Note: Cannot be combined with `onEndReached` (infinite scroll requires virtualization).
+ * ```tsx
+ * // Parent table with expandable rows
+ * <TanStackTable
+ *   data={parentData}
+ *   columns={parentColumns}
+ *   renderExpandedRow={(row) => (
+ *     // Nested table without virtualization — height adapts to content
+ *     <TanStackTable
+ *       data={row.children}
+ *       columns={childColumns}
+ *       disableVirtualScroll
+ *     />
+ *   )}
+ * />
+ * ```
  */
 const TanStackTable = Object.assign(TanStackTableBase, {
 	Text: TanStackTableText,

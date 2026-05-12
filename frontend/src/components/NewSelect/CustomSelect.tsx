@@ -6,13 +6,9 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import {
-	CloseOutlined,
-	DownOutlined,
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+import { CloseOutlined, DownOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
+import { Loader } from '@signozhq/icons';
 import { Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
@@ -581,7 +577,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{loading && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader className="animate-spin" />
 							</div>
 							<div className="navigation-text">Refreshing values...</div>
 						</div>
@@ -589,7 +585,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 					{!loading && waitingMessage && (
 						<div className="navigation-loading">
 							<div className="navigation-icons">
-								<LoadingOutlined />
+								<Loader className="animate-spin" />
 							</div>
 							<div className="navigation-text" title={waitingMessage}>
 								{waitingMessage}

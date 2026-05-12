@@ -36,7 +36,7 @@ describe('useColumnState', () => {
 			renderHook(() => useColumnState({ storageKey: TEST_KEY, columns }));
 
 			const state = useColumnStore.getState().tables[TEST_KEY];
-			expect(state.hiddenColumnIds).toEqual(['b']);
+			expect(state.hiddenColumnIds).toStrictEqual(['b']);
 		});
 
 		it('does not initialize without storageKey', () => {
@@ -61,7 +61,7 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns }),
 			);
 
-			expect(result.current.columnVisibility).toEqual({ b: false });
+			expect(result.current.columnVisibility).toStrictEqual({ b: false });
 		});
 
 		it('applies visibilityBehavior for grouped state', () => {
@@ -79,13 +79,15 @@ describe('useColumnState', () => {
 			const { result: notGrouped } = renderHook(() =>
 				useColumnState({ storageKey: TEST_KEY, columns, isGrouped: false }),
 			);
-			expect(notGrouped.current.columnVisibility).toEqual({ grouped: false });
+			expect(notGrouped.current.columnVisibility).toStrictEqual({
+				grouped: false,
+			});
 
 			// Grouped
 			const { result: grouped } = renderHook(() =>
 				useColumnState({ storageKey: TEST_KEY, columns, isGrouped: true }),
 			);
-			expect(grouped.current.columnVisibility).toEqual({ ungrouped: false });
+			expect(grouped.current.columnVisibility).toStrictEqual({ ungrouped: false });
 		});
 
 		it('combines store hidden + visibilityBehavior', () => {
@@ -103,7 +105,10 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns, isGrouped: true }),
 			);
 
-			expect(result.current.columnVisibility).toEqual({ a: false, b: false });
+			expect(result.current.columnVisibility).toStrictEqual({
+				a: false,
+				b: false,
+			});
 		});
 	});
 
@@ -119,7 +124,7 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns }),
 			);
 
-			expect(result.current.sortedColumns.map((c) => c.id)).toEqual([
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
 				'a',
 				'b',
 				'c',
@@ -138,7 +143,7 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns }),
 			);
 
-			expect(result.current.sortedColumns.map((c) => c.id)).toEqual([
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
 				'c',
 				'a',
 				'b',
@@ -157,7 +162,7 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns }),
 			);
 
-			expect(result.current.sortedColumns.map((c) => c.id)).toEqual([
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
 				'pinned',
 				'b',
 				'a',
@@ -181,7 +186,7 @@ describe('useColumnState', () => {
 				result.current.hideColumn('a');
 			});
 
-			expect(result.current.columnVisibility).toEqual({ a: false });
+			expect(result.current.columnVisibility).toStrictEqual({ a: false });
 		});
 
 		it('showColumn shows a column', () => {
@@ -195,13 +200,13 @@ describe('useColumnState', () => {
 				useColumnState({ storageKey: TEST_KEY, columns }),
 			);
 
-			expect(result.current.columnVisibility).toEqual({ a: false });
+			expect(result.current.columnVisibility).toStrictEqual({ a: false });
 
 			act(() => {
 				result.current.showColumn('a');
 			});
 
-			expect(result.current.columnVisibility).toEqual({});
+			expect(result.current.columnVisibility).toStrictEqual({});
 		});
 
 		it('setColumnSizing updates sizing', () => {
@@ -219,7 +224,7 @@ describe('useColumnState', () => {
 				result.current.setColumnSizing({ a: 200 });
 			});
 
-			expect(result.current.columnSizing).toEqual({ a: 200 });
+			expect(result.current.columnSizing).toStrictEqual({ a: 200 });
 		});
 
 		it('setColumnOrder updates order from column array', () => {
@@ -237,7 +242,7 @@ describe('useColumnState', () => {
 				result.current.setColumnOrder([col('c'), col('a'), col('b')]);
 			});
 
-			expect(result.current.sortedColumns.map((c) => c.id)).toEqual([
+			expect(result.current.sortedColumns.map((c) => c.id)).toStrictEqual([
 				'c',
 				'a',
 				'b',

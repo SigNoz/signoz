@@ -1,28 +1,35 @@
-.expandedClickableRow {
-	cursor: pointer;
+.expandedTableContainer {
+	overflow-x: auto;
 }
 
-.expandedTableContainer {
-	border: 1px solid var(--l1-border);
-	overflow-x: auto;
-	padding-left: 48px;
+.expandedTable {
+	--tanstack-table-header-cell-bg: var(--l1-background);
+	--tanstack-table-header-cell-color: var(--l1-foreground);
+	--tanstack-table-cell-bg: var(--l1-background);
+	--tanstack-table-cell-color: var(--l1-foreground);
+	--tanstack-table-row-hover-bg: var(--l1-background-hover);
+	--tanstack-table-row-active-bg: var(--l1-background-active);
+	--tanstack-table-resize-handle-bg: var(--l1-background);
+	--tanstack-table-resize-handle-hover-bg: var(--l1-border);
+	--tanstack-table-row-height: 36px;
 
-	:global(.ant-table-tbody > tr:hover > td) {
-		background: none !important;
+	--tanstack-cell-padding-left-override: 15px;
+	--tanstack-cell-padding-right-override: 15px;
+
+	& [data-hide-expanded='true'] {
+		display: none;
 	}
 }
 
 .expandedTableFooter {
 	display: flex;
 	justify-content: flex-start;
-	gap: 8px;
-	padding: 8px;
-	padding-left: 42px;
-	margin-top: 8px;
+	gap: var(--spacing-4);
+	background-color: var(--l1-background);
 }
 
 .viewAllButton {
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-2);
+	margin: var(--spacing-4);
 }

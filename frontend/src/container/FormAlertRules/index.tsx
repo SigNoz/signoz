@@ -5,7 +5,8 @@ import { useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
+import { Button, FormInstance, Modal, SelectProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -370,7 +371,7 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
-		const element = document.getElementById('top');
+		const element = document.querySelector('#top');
 		if (element) {
 			element.scrollIntoView({ behavior: 'smooth' });
 		}

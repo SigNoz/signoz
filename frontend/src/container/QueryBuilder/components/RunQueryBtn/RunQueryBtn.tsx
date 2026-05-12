@@ -1,4 +1,4 @@
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import {
 	ChevronUp,

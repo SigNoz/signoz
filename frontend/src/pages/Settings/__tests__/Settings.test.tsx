@@ -82,12 +82,13 @@ describe('SettingsPage nav sections', () => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
 
-		it.each(['billing', 'roles', 'mcp-server'])(
-			'does not render "%s" element',
-			(id) => {
-				expect(screen.queryByTestId(id)).not.toBeInTheDocument();
-			},
-		);
+		it.each(['billing', 'roles'])('does not render "%s" element', (id) => {
+			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+		});
+
+		it('renders "mcp-server" element', () => {
+			expect(screen.getByTestId('mcp-server')).toBeInTheDocument();
+		});
 	});
 
 	describe('Self-hosted Admin', () => {

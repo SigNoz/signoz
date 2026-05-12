@@ -2,8 +2,9 @@ package alertmanagertypes
 
 import (
 	"context"
-	"github.com/expr-lang/expr"
 	"time"
+
+	"github.com/expr-lang/expr"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"

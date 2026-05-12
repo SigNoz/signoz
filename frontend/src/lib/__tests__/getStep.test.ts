@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import getStep, { DefaultStepSize, MaxDataPoints } from 'lib/getStep';
 
 describe('lib/getStep', () => {
-	test('should return default step when the given range is less than 1 day', () => {
+	it('should return default step when the given range is less than 1 day', () => {
 		const start = dayjs();
 		const end = start.add(1, 'hour');
 		const startUnix = start.valueOf();
@@ -14,7 +14,7 @@ describe('lib/getStep', () => {
 				end: endUnix / 1e3,
 				inputFormat: 's',
 			}),
-		).toEqual(DefaultStepSize);
+		).toStrictEqual(DefaultStepSize);
 
 		expect(
 			getStep({
@@ -22,7 +22,7 @@ describe('lib/getStep', () => {
 				end: endUnix,
 				inputFormat: 'ms',
 			}),
-		).toEqual(DefaultStepSize);
+		).toStrictEqual(DefaultStepSize);
 
 		expect(
 			getStep({
@@ -30,10 +30,10 @@ describe('lib/getStep', () => {
 				end: endUnix * 1e6,
 				inputFormat: 'ns',
 			}),
-		).toEqual(DefaultStepSize);
+		).toStrictEqual(DefaultStepSize);
 	});
 
-	test('should return relevant step when the given range is greater than 1 day', () => {
+	it('should return relevant step when the given range is greater than 1 day', () => {
 		const start = dayjs();
 		const end = start.add(1, 'day').add(1, 'second');
 		const startUnix = start.valueOf();
@@ -52,7 +52,7 @@ describe('lib/getStep', () => {
 				end: endUnix / 1e3,
 				inputFormat: 's',
 			}),
-		).toEqual(expectedStepSize);
+		).toStrictEqual(expectedStepSize);
 
 		expect(
 			getStep({
@@ -60,7 +60,7 @@ describe('lib/getStep', () => {
 				end: endUnix,
 				inputFormat: 'ms',
 			}),
-		).toEqual(expectedStepSize);
+		).toStrictEqual(expectedStepSize);
 
 		expect(
 			getStep({
@@ -68,6 +68,6 @@ describe('lib/getStep', () => {
 				end: endUnix * 1e6,
 				inputFormat: 'ns',
 			}),
-		).toEqual(expectedStepSize);
+		).toStrictEqual(expectedStepSize);
 	});
 });

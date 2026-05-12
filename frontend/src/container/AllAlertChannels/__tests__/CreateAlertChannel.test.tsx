@@ -46,7 +46,7 @@ describe('Create Alert Channel', () => {
 	afterEach(() => {
 		jest.clearAllMocks();
 	});
-	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel ', () => {
+	describe('Should check if the new alert channel is properly displayed with the cascading fields of slack channel', () => {
 		beforeEach(() => {
 			render(<CreateAlertChannels preType={ChannelType.Slack} />);
 		});
@@ -56,13 +56,13 @@ describe('Create Alert Channel', () => {
 		it('Should check if the title is "New Notification Channels"', () => {
 			expect(screen.getByText('page_title_create')).toBeInTheDocument();
 		});
-		it('Should check if the name label and textbox are displayed properly ', () => {
+		it('Should check if the name label and textbox are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_channel_name',
 				testId: 'channel-name-textbox',
 			});
 		});
-		it('Should check if Send resolved alerts label and checkbox are displayed properly ', () => {
+		it('Should check if Send resolved alerts label and checkbox are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_send_resolved',
 				testId: 'field-send-resolved-checkbox',
@@ -78,13 +78,13 @@ describe('Create Alert Channel', () => {
 		it('Should check if the selected item in the type dropdown has text "Slack"', () => {
 			expect(screen.getByText('Slack')).toBeInTheDocument();
 		});
-		it('Should check if Webhook URL label and input are displayed properly ', () => {
+		it('Should check if Webhook URL label and input are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_webhook_url',
 				testId: 'webhook-url-textbox',
 			});
 		});
-		it('Should check if Recepient label, input, and help text are displayed properly ', () => {
+		it('Should check if Recepient label, input, and help text are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_recipient',
 				testId: 'slack-channel-textbox',
@@ -92,7 +92,7 @@ describe('Create Alert Channel', () => {
 			});
 		});
 
-		it('Should check if Title label and text area are displayed properly ', () => {
+		it('Should check if Title label and text area are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_title',
 				testId: 'title-textarea',
@@ -103,7 +103,7 @@ describe('Create Alert Channel', () => {
 
 			expect(titleTextArea).toHaveTextContent(slackTitleDefaultValue);
 		});
-		it('Should check if Description label and text area are displayed properly ', () => {
+		it('Should check if Description label and text area are displayed properly', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_description',
 				testId: 'description-textarea',
@@ -179,13 +179,13 @@ describe('Create Alert Channel', () => {
 			it('Should check if the selected item in the type dropdown has text "Webhook"', () => {
 				expect(screen.getByText('Webhook')).toBeInTheDocument();
 			});
-			it('Should check if Webhook URL label and input are displayed properly ', () => {
+			it('Should check if Webhook URL label and input are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_webhook_url',
 					testId: 'webhook-url-textbox',
 				});
 			});
-			it('Should check if Webhook User Name label, input, and help text are displayed properly ', () => {
+			it('Should check if Webhook User Name label, input, and help text are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_webhook_username',
 					testId: 'webhook-username-textbox',
@@ -323,7 +323,7 @@ describe('Create Alert Channel', () => {
 				});
 			});
 
-			it('Should check if Message contains the default template ', () => {
+			it('Should check if Message contains the default template', () => {
 				const messageTextArea = screen.getByTestId('opsgenie-message-textarea');
 
 				expect(messageTextArea).toHaveValue(opsGenieMessageDefaultValue);
@@ -389,14 +389,14 @@ describe('Create Alert Channel', () => {
 				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
-			it('Should check if Webhook URL label and input are displayed properly ', () => {
+			it('Should check if Webhook URL label and input are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_webhook_url',
 					testId: 'webhook-url-textbox',
 				});
 			});
 
-			it('Should check if Title label and text area are displayed properly ', () => {
+			it('Should check if Title label and text area are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_slack_title',
 					testId: 'title-textarea',
@@ -408,7 +408,7 @@ describe('Create Alert Channel', () => {
 
 				expect(titleTextArea).toHaveTextContent(slackTitleDefaultValue);
 			});
-			it('Should check if Description label and text area are displayed properly ', () => {
+			it('Should check if Description label and text area are displayed properly', () => {
 				testLabelInputAndHelpValue({
 					labelText: 'field_slack_description',
 					testId: 'description-textarea',
