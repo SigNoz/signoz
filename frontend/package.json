@@ -211,7 +211,7 @@
     "lint-staged": "^12.5.0",
     "msw": "1.3.2",
     "npm-run-all": "latest",
-    "orval": "7.18.0",
+    "orval": "7.21.0",
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
     "oxlint-tsgolint": "0.22.1",
