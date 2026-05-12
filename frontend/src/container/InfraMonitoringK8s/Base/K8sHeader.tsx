@@ -10,7 +10,7 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';

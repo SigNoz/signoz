@@ -1,5 +1,4 @@
 import React from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
@@ -16,7 +15,7 @@ import EntityGroupHeader from 'container/InfraMonitoringK8s/Base/EntityGroupHead
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
-import { Container } from 'lucide-react';
+import { Container, Info } from '@signozhq/icons';
 
 function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	return {
@@ -83,7 +82,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={styles.statusHeader}>
 				Status
 				<Tooltip title="Sent system metrics in last 10 mins">
-					<InfoCircleOutlined />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),
@@ -132,7 +131,7 @@ export const hostColumnsConfig: TableColumnDef<HostData>[] = [
 			<div className={`${styles.columnHeaderRight} ${styles.memoryUsageHeader}`}>
 				Memory Usage
 				<Tooltip title="Excluding cache memory">
-					<InfoCircleOutlined />
+					<Info size="md" />
 				</Tooltip>
 			</div>
 		),

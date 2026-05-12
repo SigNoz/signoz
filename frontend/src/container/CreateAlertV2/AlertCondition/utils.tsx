@@ -11,7 +11,7 @@ import {
 } from 'container/CreateAlertV2/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';

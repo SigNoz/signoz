@@ -11,7 +11,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';

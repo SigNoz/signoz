@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import type { UseQueryResult } from 'react-query';
 import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Layers } from 'lucide-react';
+import { Layers } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

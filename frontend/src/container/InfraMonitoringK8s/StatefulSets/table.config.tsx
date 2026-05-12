@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sStatefulSetsData } from './api';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown } from '@signozhq/icons';
 
 export function getK8sStatefulSetRowKey(
 	statefulSet: K8sStatefulSetsData,

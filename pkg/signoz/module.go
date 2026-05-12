@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -82,6 +84,7 @@ type Modules struct {
 	CloudIntegration cloudintegration.Module
 	RuleStateHistory rulestatehistory.Module
 	TraceDetail      tracedetail.Module
+	LLMPricingRule   llmpricingrule.Module
 }
 
 func NewModules(
@@ -137,5 +140,6 @@ func NewModules(
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
 	}
 }

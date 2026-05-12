@@ -70,21 +70,23 @@ describe('ChangeHistory test', () => {
 		);
 
 		// assertion for different deployment stages
-		expect(container.querySelector('[data-icon="loading"]')).toBeInTheDocument();
+		expect(
+			container.querySelector('[data-testid="deployment-icon-in-progress"]'),
+		).toBeInTheDocument();
 		expect(getByText('In Progress')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-icon="exclamation-circle"]'),
+			container.querySelector('[data-testid="deployment-icon-dirty"]'),
 		).toBeInTheDocument();
 		expect(getByText('Dirty')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-icon="close-circle"]'),
+			container.querySelector('[data-testid="deployment-icon-failed"]'),
 		).toBeInTheDocument();
 		expect(getByText('Failed')).toBeInTheDocument();
 
 		expect(
-			container.querySelector('[data-icon="minus-circle"]'),
+			container.querySelector('[data-testid="deployment-icon-unknown"]'),
 		).toBeInTheDocument();
 		expect(getByText('Unknown')).toBeInTheDocument();
 

@@ -1,15 +1,21 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { CaretDownOutlined } from '@ant-design/icons';
-import { Loader } from '@signozhq/icons';
+import {
+	OctagonAlert,
+	Bolt,
+	Check,
+	ChevronDown,
+	ChevronRight,
+	Loader,
+	X,
+} from '@signozhq/icons';
 import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { History } from 'history';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Bolt, Check, OctagonAlert, X } from 'lucide-react';
 import {
 	KAFKA_SETUP_DOC_LINK,
 	MessagingQueueHealthCheckService,
@@ -135,6 +141,10 @@ function treeTitleAndKey({
 	};
 }
 
+function renderSwitcherIcon(props: { expanded?: boolean }): JSX.Element {
+	return props.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />;
+}
+
 function generateTreeDataNodes(
 	response: OnboardingStatusResponse['data'],
 	parentTitle: string,
@@ -248,7 +258,7 @@ function AttributeCheckList({
 					/>
 					<Tree
 						showLine
-						switcherIcon={<CaretDownOutlined />}
+						switcherIcon={renderSwitcherIcon}
 						treeData={treeData}
 						height={450}
 						className="attribute-tree"

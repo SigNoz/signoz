@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sDaemonSetsData } from './api';
-import { Group } from 'lucide-react';
+import { Group } from '@signozhq/icons';
 
 export function getK8sDaemonSetRowKey(daemonSet: K8sDaemonSetsData): string {
 	return (

@@ -8,7 +8,7 @@ import {
 } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 
 import '../OnboardingQuestionaire.styles.scss';
 

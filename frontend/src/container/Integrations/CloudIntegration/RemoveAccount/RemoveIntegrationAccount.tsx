@@ -9,7 +9,7 @@ import {
 	INTEGRATION_TYPES,
 } from 'container/Integrations/constants';
 import { useNotifications } from 'hooks/useNotifications';
-import { Unlink } from 'lucide-react';
+import { Unlink } from '@signozhq/icons';
 
 import './RemoveIntegrationAccount.scss';
 

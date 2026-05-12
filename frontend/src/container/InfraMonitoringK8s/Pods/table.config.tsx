@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sPodsData } from './api';
-import { Container } from 'lucide-react';
+import { Container } from '@signozhq/icons';
 
 export function getK8sPodRowKey(pod: K8sPodsData): string {
 	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;

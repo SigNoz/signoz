@@ -8,7 +8,7 @@ import {
 	DependentServicesData,
 	getFormattedDependentServicesData,
 } from 'container/ApiMonitoring/utils';
-import { UnfoldVertical } from 'lucide-react';
+import { UnfoldVertical } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
 import { openInNewTab } from 'utils/navigation';
 
