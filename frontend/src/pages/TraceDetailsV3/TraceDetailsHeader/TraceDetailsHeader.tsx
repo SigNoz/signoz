@@ -21,7 +21,7 @@ import {
 	ChartPie,
 	Server,
 	Timer,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
