@@ -24,7 +24,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
-import { MessageContext } from '../../../../api/ai/chat';
+import { MessageContext } from '../../../../api/ai-assistant/chat';
 import {
 	Bell,
 	LayoutDashboard,

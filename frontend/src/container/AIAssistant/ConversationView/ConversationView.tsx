@@ -8,7 +8,7 @@ import VirtualizedMessages from '../components/VirtualizedMessages';
 import { getAutoContexts } from '../getAutoContexts';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { MessageAttachment } from '../types';
-import { MessageContext } from '../../../api/ai/chat';
+import { MessageContext } from '../../../api/ai-assistant/chat';
 import { useVariant } from '../VariantContext';
 
 import styles from './ConversationView.module.scss';

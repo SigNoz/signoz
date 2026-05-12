@@ -7,7 +7,7 @@ import { immer } from 'zustand/middleware/immer';
 import type {
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 import {
 	approveExecution,
@@ -26,10 +26,11 @@ import {
 	submitFeedback,
 	ThreadSummary,
 	updateThread,
-} from '../../../api/ai/chat';
+} from '../../../api/ai-assistant/chat';
 import {
 	Conversation,
 	ConversationStreamState,
+	FeedbackRating,
 	Message,
 	MessageAttachment,
 	MessageBlock,
@@ -494,7 +495,7 @@ export interface AIAssistantStore {
 	) => Promise<void>;
 	submitMessageFeedback: (
 		messageId: string,
-		rating: 'positive' | 'negative',
+		rating: FeedbackRating,
 		comment?: string,
 	) => Promise<void>;
 }
@@ -1201,7 +1202,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 
 			submitMessageFeedback: async (
 				messageId: string,
-				rating: 'positive' | 'negative',
+				rating: FeedbackRating,
 				comment?: string,
 			): Promise<void> => {
 				const { activeConversationId } = get();

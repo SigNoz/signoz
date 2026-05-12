@@ -1,4 +1,4 @@
-import type { MessageContext } from 'api/ai/chat';
+import type { MessageContext } from 'api/ai-assistant/chat';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { matchPath } from 'react-router-dom';

@@ -70,8 +70,8 @@ import type {
 import {
 	GeneratedAPIInstance,
 	getGeneratedAPIQueryKeyHeaders,
-} from '../../../generatedAPIInstance';
-import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
+} from '../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../generatedAPIInstance';
 
 /**
  * @summary Health

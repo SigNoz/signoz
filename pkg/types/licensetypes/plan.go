@@ -12,9 +12,8 @@ var (
 	Gateway        = valuer.NewString("gateway")
 	PremiumSupport = valuer.NewString("premium_support")
 
-	AnomalyDetection   = valuer.NewString("anomaly_detection")
-	DotMetricsEnabled  = valuer.NewString("dot_metrics_enabled")
-	AIAssistantEnabled = valuer.NewString("ai_assistant_enabled")
+	AnomalyDetection  = valuer.NewString("anomaly_detection")
+	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
 
 	// License State.
 	LicenseStatusInvalid = valuer.NewString("invalid")
@@ -63,13 +62,6 @@ var BasicPlan = []*Feature{
 	},
 	{
 		Name:       DotMetricsEnabled,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	{
-		Name:       AIAssistantEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,
@@ -127,25 +119,11 @@ var EnterprisePlan = []*Feature{
 		UsageLimit: -1,
 		Route:      "",
 	},
-	{
-		Name:       AIAssistantEnabled,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
 }
 
 var DefaultFeatureSet = []*Feature{
 	{
 		Name:       DotMetricsEnabled,
-		Active:     false,
-		Usage:      0,
-		UsageLimit: -1,
-		Route:      "",
-	},
-	{
-		Name:       AIAssistantEnabled,
 		Active:     false,
 		Usage:      0,
 		UsageLimit: -1,

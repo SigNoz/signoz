@@ -2,7 +2,7 @@
  * UI types for the AI Assistant.
  *
  * Wherever the OpenAPI-generated DTOs in
- * `src/api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas.ts`
+ * `src/api/ai-assistant/sigNozAIAssistantAPI.schemas.ts`
  * already capture the right shape, this module re-exports them.
  *
  * A type is defined locally only when the UI needs a different shape than
@@ -18,7 +18,7 @@ import type {
 	FeedbackRatingDTO,
 	MessageActionDTO,
 	MessageActionKindDTO,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 /** Client-only file attachment — no API equivalent (uploads happen via data URLs). */
 export interface MessageAttachment {

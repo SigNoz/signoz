@@ -9,11 +9,11 @@ import {
 	SelectItem,
 	SelectTrigger,
 } from '@signozhq/ui/select';
-import { ClarificationFieldTypeDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ClarificationFieldTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type {
 	ClarificationEventDTO,
 	ClarificationFieldEventDTO,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';

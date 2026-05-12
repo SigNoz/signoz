@@ -14,7 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	Check,
 	Columns2,

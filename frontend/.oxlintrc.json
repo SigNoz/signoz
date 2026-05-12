@@ -497,7 +497,8 @@
   "overrides": [
     {
       "files": [
-        "src/api/generated/**/*.ts"
+        "src/api/generated/**/*.ts",
+        "src/api/ai-assistant/**/*.ts"
       ],
       "rules": {
         "@typescript-eslint/explicit-function-return-type": "off",

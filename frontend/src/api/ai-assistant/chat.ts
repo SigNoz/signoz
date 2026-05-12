@@ -11,7 +11,7 @@
  * to resume, which each return a new executionId to open a fresh SSE stream.
  *
  * Types in this file re-use the OpenAPI-generated DTOs in
- * `src/api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas.ts`.
+ * `src/api/ai-assistant/sigNozAIAssistantAPI.schemas.ts`.
  * Local types are defined only when the UI needs a different shape — for
  * example, the SSE event union adds a literal `type` discriminator that the
  * generated event DTOs leave loose.
@@ -57,7 +57,7 @@ import type {
 	ThreadSummaryDTO,
 	ToolCallEventDTO,
 	ToolResultEventDTO,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from './sigNozAIAssistantAPI.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import {

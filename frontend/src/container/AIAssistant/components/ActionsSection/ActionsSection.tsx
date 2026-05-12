@@ -13,12 +13,16 @@ import cx from 'classnames';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import type { MessageActionDTO } from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
-} from 'api/generated/services/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { restoreExecution, revertExecution, undoExecution } from 'api/ai/chat';
+} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import {
+	restoreExecution,
+	revertExecution,
+	undoExecution,
+} from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
 import { openInNewTab } from 'utils/navigation';
