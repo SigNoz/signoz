@@ -9,11 +9,8 @@ import React, {
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import {
-	LoadingOutlined,
-	SearchOutlined,
-	SyncOutlined,
-} from '@ant-design/icons';
+import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -338,7 +335,7 @@ function FullView({
 								)}
 								<div className="time-container">
 									{response.isFetching && (
-										<Spin spinning indicator={<LoadingOutlined spin />} />
+										<Spin spinning indicator={<Loader className="animate-spin" />} />
 									)}
 									<TimePreference
 										selectedTime={selectedTime}
