@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
+import { LoaderCircle } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { QueryParams } from 'constants/query';
@@ -341,7 +338,7 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{isQueryServiceLoading && <LoadingOutlined />}
+						{isQueryServiceLoading && <LoaderCircle className="animate-spin" />}
 						{!isQueryServiceLoading &&
 							isReceivingData &&
 							(getStartedSource !== 'kafka' ? (

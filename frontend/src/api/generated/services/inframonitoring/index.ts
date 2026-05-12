@@ -12,10 +12,12 @@ import type {
 } from 'react-query';
 
 import type {
+	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableHostsDTO,
 	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
+	ListClusters200,
 	ListHosts200,
 	ListNamespaces200,
 	ListNodes200,
@@ -26,6 +28,90 @@ import type {
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+/**
+ * Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
+ * @summary List Clusters for Infra Monitoring
+ */
+export const listClusters = (
+	inframonitoringtypesPostableClustersDTO: BodyType<InframonitoringtypesPostableClustersDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListClusters200>({
+		url: `/api/v2/infra_monitoring/clusters`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableClustersDTO,
+		signal,
+	});
+};
+
+export const getListClustersMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listClusters>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listClusters>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+	TContext
+> => {
+	const mutationKey = ['listClusters'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listClusters>>,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listClusters(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListClustersMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listClusters>>
+>;
+export type ListClustersMutationBody =
+	BodyType<InframonitoringtypesPostableClustersDTO>;
+export type ListClustersMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Clusters for Infra Monitoring
+ */
+export const useListClusters = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listClusters>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listClusters>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+	TContext
+> => {
+	const mutationOptions = getListClustersMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
 /**
  * Returns a paginated list of hosts with key infrastructure metrics: CPU usage (%), memory usage (%), I/O wait (%), disk usage (%), and 15-minute load average. Each host includes its current status (active/inactive based on metrics reported in the last 10 minutes) and metadata attributes (e.g., os.type). Supports filtering via a filter expression, filtering by host status, custom groupBy to aggregate hosts by any attribute, ordering by any of the five metrics, and pagination via offset/limit. The response type is 'list' for the default host.name grouping or 'grouped_list' for custom groupBy keys. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (cpu, memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available for that field.
  * @summary List Hosts for Infra Monitoring

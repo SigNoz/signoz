@@ -44,12 +44,12 @@ function makeSpan(
 
 describe('getVisibleSpans', () => {
 	it('returns empty array for empty input', () => {
-		expect(getVisibleSpans([], new Set())).toEqual([]);
+		expect(getVisibleSpans([], new Set())).toStrictEqual([]);
 	});
 
 	it('returns single root span with no children', () => {
 		const spans = [makeSpan({ span_id: 'root', level: 0 })];
-		expect(getVisibleSpans(spans, new Set())).toEqual(spans);
+		expect(getVisibleSpans(spans, new Set())).toStrictEqual(spans);
 	});
 
 	it('returns all spans for flat tree (all level 0, no children)', () => {
@@ -58,7 +58,7 @@ describe('getVisibleSpans', () => {
 			makeSpan({ span_id: 'b', level: 0 }),
 			makeSpan({ span_id: 'c', level: 0 }),
 		];
-		expect(getVisibleSpans(spans, new Set())).toEqual(spans);
+		expect(getVisibleSpans(spans, new Set())).toStrictEqual(spans);
 	});
 
 	it('returns all spans when all parents are expanded', () => {
@@ -68,7 +68,7 @@ describe('getVisibleSpans', () => {
 			makeSpan({ span_id: 'b', level: 1 }),
 		];
 		const uncollapsed = new Set(['root']);
-		expect(getVisibleSpans(spans, uncollapsed)).toEqual(spans);
+		expect(getVisibleSpans(spans, uncollapsed)).toStrictEqual(spans);
 	});
 
 	it('hides children when root is collapsed', () => {
@@ -99,7 +99,7 @@ describe('getVisibleSpans', () => {
 		// root and A expanded, but A is collapsed
 		const uncollapsed = new Set(['root']); // A not in set → collapsed
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result.map((s) => s.span_id)).toEqual(['root', 'A']);
+		expect(result.map((s) => s.span_id)).toStrictEqual(['root', 'A']);
 	});
 
 	it('collapses one subtree while sibling subtree stays visible', () => {
@@ -116,7 +116,7 @@ describe('getVisibleSpans', () => {
 		// root and childB expanded, childA collapsed
 		const uncollapsed = new Set(['root', 'childB']);
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result.map((s) => s.span_id)).toEqual([
+		expect(result.map((s) => s.span_id)).toStrictEqual([
 			'root',
 			'childA', // visible but collapsed
 			'childB', // visible and expanded
@@ -134,11 +134,11 @@ describe('getVisibleSpans', () => {
 
 		// Collapsed
 		const collapsed = getVisibleSpans(spans, new Set());
-		expect(collapsed.map((s) => s.span_id)).toEqual(['root']);
+		expect(collapsed.map((s) => s.span_id)).toStrictEqual(['root']);
 
 		// Uncollapsed
 		const uncollapsed = getVisibleSpans(spans, new Set(['root']));
-		expect(uncollapsed.map((s) => s.span_id)).toEqual(['root', 'a', 'b']);
+		expect(uncollapsed.map((s) => s.span_id)).toStrictEqual(['root', 'a', 'b']);
 	});
 
 	it('hides all levels below collapsed span in deeply nested tree', () => {
@@ -154,7 +154,7 @@ describe('getVisibleSpans', () => {
 		// Expand L0 and L1, collapse L2
 		const uncollapsed = new Set(['L0', 'L1']);
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result.map((s) => s.span_id)).toEqual(['L0', 'L1', 'L2']);
+		expect(result.map((s) => s.span_id)).toStrictEqual(['L0', 'L1', 'L2']);
 	});
 
 	it('shows only root-level spans when all parents are collapsed', () => {
@@ -166,7 +166,7 @@ describe('getVisibleSpans', () => {
 		];
 		const uncollapsed = new Set<string>(); // nothing expanded
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result.map((s) => s.span_id)).toEqual(['root1', 'root2']);
+		expect(result.map((s) => s.span_id)).toStrictEqual(['root1', 'root2']);
 	});
 
 	it('leaf span in uncollapsed set has no effect', () => {
@@ -177,7 +177,7 @@ describe('getVisibleSpans', () => {
 		// leaf is in uncollapsed set but has_children=false, should make no difference
 		const uncollapsed = new Set(['root', 'leaf']);
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result).toEqual(spans);
+		expect(result).toStrictEqual(spans);
 	});
 
 	it('handles 10k spans within 50ms', () => {
@@ -218,7 +218,13 @@ describe('getVisibleSpans', () => {
 		// root and C expanded; A and B collapsed
 		const uncollapsed = new Set(['root', 'C']);
 		const result = getVisibleSpans(spans, uncollapsed);
-		expect(result.map((s) => s.span_id)).toEqual(['root', 'A', 'B', 'C', 'C1']);
+		expect(result.map((s) => s.span_id)).toStrictEqual([
+			'root',
+			'A',
+			'B',
+			'C',
+			'C1',
+		]);
 	});
 });
 
@@ -234,7 +240,7 @@ describe('getAncestorSpanIds', () => {
 			makeSpan({ span_id: 'child', level: 1, parent_span_id: 'root' }),
 		];
 		const ancestors = getAncestorSpanIds(spans, 'child');
-		expect(ancestors).toEqual(new Set(['root']));
+		expect(ancestors).toStrictEqual(new Set(['root']));
 	});
 
 	it('returns all ancestors for deeply nested span', () => {
@@ -255,7 +261,7 @@ describe('getAncestorSpanIds', () => {
 			makeSpan({ span_id: 'L3', level: 3, parent_span_id: 'L2' }),
 		];
 		const ancestors = getAncestorSpanIds(spans, 'L3');
-		expect(ancestors).toEqual(new Set(['L2', 'L1', 'L0']));
+		expect(ancestors).toStrictEqual(new Set(['L2', 'L1', 'L0']));
 	});
 
 	it('returns empty set for unknown span', () => {

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -17,14 +18,14 @@ func NewStore(sqlstore sqlstore.SQLStore) tagtypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (s *store) List(ctx context.Context, orgID valuer.UUID, entityType tagtypes.EntityType) ([]*tagtypes.Tag, error) {
+func (s *store) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind) ([]*tagtypes.Tag, error) {
 	tags := make([]*tagtypes.Tag, 0)
 	err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&tags).
 		Where("org_id = ?", orgID).
-		Where("entity_type = ?", entityType).
+		Where("kind = ?", kind).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -32,14 +33,14 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, entityType tagtypes
 	return tags, nil
 }
 
-func (s *store) ListByEntity(ctx context.Context, entityType tagtypes.EntityType, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
+func (s *store) ListByEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
 	tags := make([]*tagtypes.Tag, 0)
 	err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&tags).
-		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
-		Where("tr.entity_type = ?", entityType).
+		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
+		Where("tr.kind = ?", kind).
 		Where("tr.entity_id = ?", entityID).
 		Scan(ctx)
 	if err != nil {
@@ -48,7 +49,7 @@ func (s *store) ListByEntity(ctx context.Context, entityType tagtypes.EntityType
 	return tags, nil
 }
 
-func (s *store) ListByEntities(ctx context.Context, entityType tagtypes.EntityType, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+func (s *store) ListByEntities(ctx context.Context, kind coretypes.Kind, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
 	if len(entityIDs) == 0 {
 		return map[valuer.UUID][]*tagtypes.Tag{}, nil
 	}
@@ -64,8 +65,8 @@ func (s *store) ListByEntities(ctx context.Context, entityType tagtypes.EntityTy
 		NewSelect().
 		Model(&rows).
 		ColumnExpr("tag.*, tr.entity_id").
-		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
-		Where("tr.entity_type = ?", entityType).
+		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
+		Where("tr.kind = ?", kind).
 		Where("tr.entity_id IN (?)", bun.In(entityIDs)).
 		Scan(ctx)
 	if err != nil {
@@ -94,7 +95,7 @@ func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.T
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&tags).
-		On("CONFLICT (org_id, entity_type, (LOWER(key)), (LOWER(value))) DO UPDATE").
+		On("CONFLICT (org_id, kind, (LOWER(key)), (LOWER(value))) DO UPDATE").
 		Set("key = tag.key").
 		Returning("*").
 		Scan(ctx)
@@ -112,21 +113,25 @@ func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRe
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&relations).
-		On("CONFLICT (entity_type, entity_id, tag_id) DO NOTHING").
+		On("CONFLICT (kind, entity_id, tag_id) DO NOTHING").
 		Exec(ctx)
 	return err
 }
 
-func (s *store) DeleteRelationsExcept(ctx context.Context, entityType tagtypes.EntityType, entityID valuer.UUID, keepTagIDs []valuer.UUID) error {
+func (s *store) DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, keepTagIDs []valuer.UUID) error {
 	q := s.sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
 		Model((*tagtypes.TagRelation)(nil)).
-		Where("entity_type = ?", entityType).
+		Where("kind = ?", kind).
 		Where("entity_id = ?", entityID)
 	if len(keepTagIDs) > 0 {
 		q = q.Where("tag_id NOT IN (?)", bun.In(keepTagIDs))
 	}
 	_, err := q.Exec(ctx)
 	return err
+}
+
+func (s *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return s.sqlstore.RunInTxCtx(ctx, nil, cb)
 }

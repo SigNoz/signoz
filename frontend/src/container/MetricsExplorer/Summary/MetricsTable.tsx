@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
 import { Spin, Table, TablePaginationConfig, TableProps, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
@@ -79,7 +79,7 @@ function MetricsTable({
 						indicator: (
 							<Spin
 								data-testid="metrics-table-loading-state"
-								indicator={<LoadingOutlined size={14} spin />}
+								indicator={<Loader size={14} className="animate-spin" />}
 							/>
 						),
 					}}
