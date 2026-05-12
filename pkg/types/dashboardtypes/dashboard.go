@@ -10,13 +10,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/tagtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 var (
-	EntityTypeDashboard                = tagtypes.MustNewEntityType("dashboard")
 	ErrCodeDashboardInvalidInput       = errors.MustNewCode("dashboard_invalid_input")
 	ErrCodeDashboardNotFound           = errors.MustNewCode("dashboard_not_found")
 	ErrCodeDashboardInvalidData        = errors.MustNewCode("dashboard_invalid_data")
