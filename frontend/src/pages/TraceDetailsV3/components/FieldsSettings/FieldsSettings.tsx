@@ -68,7 +68,6 @@ function FieldsSettings({
 	const handleSave = useCallback((): void => {
 		onFieldsChange(draftFields);
 		toast.success('Saved successfully', {
-			richColors: false,
 			position: 'top-right',
 		});
 		onClose();
