@@ -1,7 +1,15 @@
 import { useCallback, useRef, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import {
+	ChevronDown,
+	ChevronUp,
+	Copy,
+	Info,
+	Loader,
+	Search,
+	X,
+} from '@signozhq/icons';
 import { Switch, ToggleGroup, ToggleGroupItem, toast } from '@signozhq/ui';
 import { Button } from '@signozhq/ui/button';
 import {
@@ -11,7 +19,6 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { Spin } from 'antd';
 import { AxiosError } from 'axios';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
@@ -19,7 +26,6 @@ import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
-import { ChevronDown, ChevronUp, Copy, Search, X } from 'lucide-react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -246,12 +252,12 @@ function Filters({
 
 	const statusIndicators = (
 		<>
-			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
+			{isFetching && <Loader className="animate-spin" />}
 			{error && (
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<span className="filter-status filter-status--error">
-							<InfoCircleOutlined />
+							<Info />
 							API error
 						</span>
 					</TooltipTrigger>
