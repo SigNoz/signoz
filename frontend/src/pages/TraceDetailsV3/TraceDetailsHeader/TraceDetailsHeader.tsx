@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 

@@ -97,7 +97,10 @@ function FunnelGraph(): JSX.Element {
 	}
 
 	return (
-		<Spin spinning={isFetching} indicator={<Loader className="animate-spin" />}>
+		<Spin
+			spinning={isFetching}
+			indicator={<Loader className="animate-spin" size="md" />}
+		>
 			<div className={cx('funnel-graph', `funnel-graph--${totalSteps}-columns`)}>
 				<div className="funnel-graph__chart-container">
 					<canvas ref={canvasRef} />

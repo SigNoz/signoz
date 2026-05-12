@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircleFilled } from '@ant-design/icons';
+import { CircleCheck, Info, TriangleAlert, Filter } from '@signozhq/icons';
 import {
 	autocompletion,
 	closeCompletion,
@@ -30,7 +30,6 @@ import { useDashboardVariablesByType } from 'hooks/dashboard/useDashboardVariabl
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import { Filter, Info, TriangleAlert } from 'lucide-react';
 import {
 	IDetailedError,
 	IQueryContext,
@@ -1486,7 +1485,7 @@ function QuerySearch({
 							{validation.isValid ? (
 								<Button
 									type="text"
-									icon={<CheckCircleFilled />}
+									icon={<CircleCheck size="md" />}
 									className="periscope-btn ghost"
 								/>
 							) : (

@@ -80,15 +80,10 @@ describe('HeaderRightSection', () => {
 		expect(buttons).toHaveLength(3);
 		expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
 
-		// Check for feedback button by class
-		const feedbackButton = document.querySelector(
-			'.share-feedback-btn[class*="share-feedback-btn"]',
-		);
-		expect(feedbackButton).toBeInTheDocument();
-
-		// Check for announcements button by finding the inbox icon
-		const inboxIcon = document.querySelector('.lucide-inbox');
-		expect(inboxIcon).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /feedback/i })).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /announcements/i }),
+		).toBeInTheDocument();
 	});
 
 	it('should render only enabled features', () => {
@@ -106,22 +101,17 @@ describe('HeaderRightSection', () => {
 			screen.queryByRole('button', { name: /share/i }),
 		).not.toBeInTheDocument();
 
-		// Check that inbox icon is not present
-		const inboxIcon = document.querySelector('.lucide-inbox');
-		expect(inboxIcon).not.toBeInTheDocument();
-
-		// Check that feedback button is present
-		const squarePenIcon = document.querySelector('.lucide-square-pen');
-		expect(squarePenIcon).toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /announcements/i }),
+		).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /feedback/i })).toBeInTheDocument();
 	});
 
 	it('should open feedback modal and log event when feedback button is clicked', async () => {
 		const user = userEvent.setup();
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const feedbackButton = document
-			.querySelector('.lucide-square-pen')
-			?.closest('button');
+		const feedbackButton = screen.getByRole('button', { name: /feedback/i });
 		expect(feedbackButton).toBeInTheDocument();
 
 		await user.click(feedbackButton!);
@@ -149,9 +139,9 @@ describe('HeaderRightSection', () => {
 		const user = userEvent.setup();
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const announcementsButton = document
-			.querySelector('.lucide-inbox')
-			?.closest('button');
+		const announcementsButton = screen.getByRole('button', {
+			name: /announcements/i,
+		});
 		expect(announcementsButton).toBeInTheDocument();
 
 		await user.click(announcementsButton!);
@@ -166,9 +156,7 @@ describe('HeaderRightSection', () => {
 		render(<HeaderRightSection {...defaultProps} />);
 
 		// Open feedback modal
-		const feedbackButton = document
-			.querySelector('.lucide-square-pen')
-			?.closest('button');
+		const feedbackButton = screen.getByRole('button', { name: /feedback/i });
 		expect(feedbackButton).toBeInTheDocument();
 
 		await user.click(feedbackButton!);
@@ -190,9 +178,7 @@ describe('HeaderRightSection', () => {
 		expect(screen.getByTestId('share-modal')).toBeInTheDocument();
 
 		// Open feedback modal - should close share modal
-		const feedbackButton = document
-			.querySelector('.lucide-square-pen')
-			?.closest('button');
+		const feedbackButton = screen.getByRole('button', { name: /feedback/i });
 		expect(feedbackButton).toBeInTheDocument();
 
 		await user.click(feedbackButton!);
@@ -210,7 +196,7 @@ describe('HeaderRightSection', () => {
 
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const feedbackButton = document.querySelector('.lucide-square-pen');
+		const feedbackButton = screen.queryByRole('button', { name: /feedback/i });
 		expect(feedbackButton).toBeInTheDocument();
 	});
 
@@ -224,7 +210,7 @@ describe('HeaderRightSection', () => {
 
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const feedbackButton = document.querySelector('.lucide-square-pen');
+		const feedbackButton = screen.queryByRole('button', { name: /feedback/i });
 		expect(feedbackButton).toBeInTheDocument();
 	});
 
@@ -238,7 +224,7 @@ describe('HeaderRightSection', () => {
 
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const feedbackButton = document.querySelector('.lucide-square-pen');
+		const feedbackButton = screen.queryByRole('button', { name: /feedback/i });
 		expect(feedbackButton).not.toBeInTheDocument();
 	});
 
@@ -252,7 +238,7 @@ describe('HeaderRightSection', () => {
 
 		render(<HeaderRightSection {...defaultProps} />);
 
-		const feedbackButton = document.querySelector('.lucide-square-pen');
+		const feedbackButton = screen.queryByRole('button', { name: /feedback/i });
 		expect(feedbackButton).not.toBeInTheDocument();
 	});
 
@@ -272,11 +258,13 @@ describe('HeaderRightSection', () => {
 
 		// Verify which buttons are present
 		expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
-		const inboxIcon = document.querySelector('.lucide-inbox');
-		expect(inboxIcon).toBeInTheDocument();
+		expect(
+			screen.getByRole('button', { name: /announcements/i }),
+		).toBeInTheDocument();
 
 		// Verify feedback button is not present
-		const feedbackIcon = document.querySelector('.lucide-square-pen');
-		expect(feedbackIcon).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole('button', { name: /feedback/i }),
+		).not.toBeInTheDocument();
 	});
 });

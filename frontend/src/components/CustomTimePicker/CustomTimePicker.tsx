@@ -23,7 +23,7 @@ import { useZoomOut } from 'hooks/useZoomOut';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { isZoomOutDisabled } from 'lib/zoomOutUtils';
 import { defaultTo, isFunction, noop } from 'lodash-es';
-import { ChevronDown, ChevronUp, ZoomOut } from 'lucide-react';
+import { ChevronDown, ChevronUp, ZoomOut } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';

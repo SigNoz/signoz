@@ -125,7 +125,7 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/deployments", handler.New(
-		provider.authZ.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
+		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
 		handler.OpenAPIDef{
 			ID:                  "ListDeployments",
 			Tags:                []string{"inframonitoring"},

@@ -24,7 +24,7 @@ import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
 import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Save, X } from 'lucide-react';
+import { Save, X } from '@signozhq/icons';
 
 import S3BucketsSelector from '../S3BucketsSelector/S3BucketsSelector';
 

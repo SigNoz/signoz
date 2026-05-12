@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@signozhq/icons';
 
 import './SettingsSection.styles.scss';
 

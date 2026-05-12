@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BellOff, CircleCheck, CircleOff, Flame } from 'lucide-react';
+import { BellOff, CircleCheck, CircleOff, Flame } from '@signozhq/icons';
 
 import './AlertState.styles.scss';
 

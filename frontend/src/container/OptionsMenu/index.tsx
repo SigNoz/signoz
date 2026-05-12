@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SettingFilled, SettingOutlined } from '@ant-design/icons';
-import { Popover, Space } from 'antd';
+import { Settings } from '@signozhq/icons';
+import { Flex, Popover } from 'antd';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import AddColumnField from './AddColumnField';
 import FormatField from './FormatField';
@@ -22,7 +21,6 @@ function OptionsMenu({
 	config,
 }: OptionsMenuProps): JSX.Element {
 	const { t } = useTranslation(['trace']);
-	const isDarkMode = useIsDarkMode();
 
 	const OptionsContent = useMemo(
 		() => (
@@ -37,15 +35,13 @@ function OptionsMenu({
 		[config, selectedOptionFormat],
 	);
 
-	const SettingIcon = isDarkMode ? SettingOutlined : SettingFilled;
-
 	return (
 		<OptionsContainer>
 			<Popover placement="bottom" trigger="click" content={OptionsContent}>
-				<Space align="center">
+				<Flex align="center" gap="4px">
 					{t('options_menu.options')}
-					<SettingIcon />
-				</Space>
+					<Settings size="md" />
+				</Flex>
 			</Popover>
 		</OptionsContainer>
 	);
