@@ -25,7 +25,7 @@ describe('computeVisualLayout', () => {
 	it('should handle empty input', () => {
 		const layout = computeVisualLayout([]);
 		expect(layout.totalVisualRows).toBe(0);
-		expect(layout.visualRows).toEqual([]);
+		expect(layout.visualRows).toStrictEqual([]);
 	});
 
 	it('should handle single root, no children — 1 visual row', () => {
@@ -36,7 +36,7 @@ describe('computeVisualLayout', () => {
 		});
 		const layout = computeVisualLayout([[root]]);
 		expect(layout.totalVisualRows).toBe(1);
-		expect(layout.visualRows[0]).toEqual([root]);
+		expect(layout.visualRows[0]).toStrictEqual([root]);
 		expect(layout.spanToVisualRow['root']).toBe(0);
 	});
 

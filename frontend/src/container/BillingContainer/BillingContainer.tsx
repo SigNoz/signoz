@@ -2,7 +2,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { CircleCheck, CloudDownload } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -450,10 +450,12 @@ export default function BillingContainer(): JSX.Element {
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
-							icon={<CloudDownloadOutlined />}
 							className="periscope-btn"
 						>
-							Download CSV
+							<Flex align="center" justify="center" gap={4}>
+								<CloudDownload size="md" />
+								Download CSV
+							</Flex>
 						</Button>
 						<Button
 							data-testid="header-billing-button"
@@ -555,15 +557,15 @@ export default function BillingContainer(): JSX.Element {
 					>
 						<Col span={20} className="plan-benefits">
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								{t('upgrade_now_text')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								{t('Your billing will start only after the trial period')}
 							</Typography.Text>
 							<Typography.Text className="plan-benefit">
-								<CheckCircleOutlined />
+								<CircleCheck size="md" />
 								<span>
 									{t('checkout_plans')} &nbsp;
 									<a

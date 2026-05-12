@@ -3,7 +3,7 @@ import { toast } from '@signozhq/ui';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { CheckIcon, TableColumnsSplit, X, XIcon } from 'lucide-react';
+import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -68,7 +68,6 @@ function FieldsSettings({
 	const handleSave = useCallback((): void => {
 		onFieldsChange(draftFields);
 		toast.success('Saved successfully', {
-			richColors: false,
 			position: 'top-right',
 		});
 		onClose();
@@ -129,7 +128,7 @@ function FieldsSettings({
 						variant="outlined"
 						color="secondary"
 						onClick={handleDiscard}
-						prefix={<XIcon width={14} height={14} />}
+						prefix={<X width={14} height={14} />}
 					>
 						Discard
 					</Button>
@@ -137,7 +136,7 @@ function FieldsSettings({
 						variant="solid"
 						color="primary"
 						onClick={handleSave}
-						prefix={<CheckIcon width={14} height={14} />}
+						prefix={<Check width={14} height={14} />}
 					>
 						Save changes
 					</Button>

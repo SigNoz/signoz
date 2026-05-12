@@ -11,6 +11,8 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
 import { useTraceContext } from '../../contexts/TraceContext';
+import { AGGREGATIONS } from '../../utils/aggregations';
+
 import './AnalyticsPanel.styles.scss';
 
 interface AnalyticsPanelProps {
@@ -30,12 +32,12 @@ function AnalyticsPanel({
 	const { getAggregationMap } = useTraceContext();
 
 	const execTimePct = useMemo(
-		() => getAggregationMap('execution_time_percentage'),
+		() => getAggregationMap(AGGREGATIONS.EXEC_TIME_PCT),
 		[getAggregationMap],
 	);
 
 	const spanCounts = useMemo(
-		() => getAggregationMap('span_count'),
+		() => getAggregationMap(AGGREGATIONS.SPAN_COUNT),
 		[getAggregationMap],
 	);
 

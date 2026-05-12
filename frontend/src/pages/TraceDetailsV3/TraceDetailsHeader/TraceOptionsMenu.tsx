@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { MenuItem } from '@signozhq/ui';
 import { Button } from '@signozhq/ui';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
-import { Ellipsis } from 'lucide-react';
+import { Ellipsis } from '@signozhq/icons';
 
 import { useTraceContext } from '../contexts/TraceContext';
 
@@ -80,9 +80,12 @@ function TraceOptionsMenu({
 
 	return (
 		<Dropdown menu={{ items: menuItems }} align="start">
-			<Button variant="ghost" size="icon" color="secondary">
-				<Ellipsis size={14} />
-			</Button>
+			<Button
+				variant="ghost"
+				size="icon"
+				color="secondary"
+				prefix={<Ellipsis size={14} />}
+			/>
 		</Dropdown>
 	);
 }

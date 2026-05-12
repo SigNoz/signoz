@@ -72,11 +72,23 @@ export function useMigratePinnedAttributes(
 		if (pref) {
 			updateUserPreferenceInContext({ ...pref, value: next });
 		}
-		mutate({
-			name: USER_PREFERENCES.SPAN_DETAILS_PINNED_ATTRIBUTES,
-			value: next,
-		});
-		ranRef.current = true;
+		mutate(
+			{
+				name: USER_PREFERENCES.SPAN_DETAILS_PINNED_ATTRIBUTES,
+				value: next,
+			},
+			{
+				onSuccess: () => {
+					ranRef.current = true;
+				},
+				onError: () => {
+					// Roll back the optimistic context update
+					if (pref) {
+						updateUserPreferenceInContext({ ...pref, value });
+					}
+				},
+			},
+		);
 	}, [userPreferences, selectedSpan, updateUserPreferenceInContext, mutate]);
 }
 

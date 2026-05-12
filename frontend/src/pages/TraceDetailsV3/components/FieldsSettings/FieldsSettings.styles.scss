@@ -157,11 +157,5 @@
 	gap: 12px;
 	padding: 12px;
 	border-top: 1px solid var(--l1-border);
-
-	button {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 50%;
-	}
+	justify-content: space-between;
 }

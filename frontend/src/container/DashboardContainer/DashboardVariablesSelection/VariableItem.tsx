@@ -1,8 +1,8 @@
 import { memo } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
+import { SolidInfoCircle } from '@signozhq/icons';
 
 import CustomVariableInput from './CustomVariableInput';
 import DynamicVariableInput from './DynamicVariableInput';
@@ -36,7 +36,7 @@ function VariableItem({
 				${name}
 				{description && (
 					<Tooltip title={description}>
-						<InfoCircleOutlined className="info-icon" />
+						<SolidInfoCircle className="info-icon" size="md" />
 					</Tooltip>
 				)}
 			</Typography.Text>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
-import { CaretDownFilled } from '@ant-design/icons';
+import { Check, ChevronDown } from '@signozhq/icons';
 import { Button, Checkbox, Popover } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
@@ -13,7 +13,6 @@ import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
-import { Check } from 'lucide-react';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
@@ -200,7 +199,7 @@ function AutoRefresh({
 				title="Set auto refresh"
 				type={showAutoRefreshBtnPrimary ? 'primary' : 'default'}
 			>
-				<CaretDownFilled />
+				<ChevronDown size={14} />
 			</ButtonContainer>
 		</Popover>
 	);

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useRouteMatch } from 'react-router-dom';
+import { useLocation, useRouteMatch } from 'react-router-dom';
 import { Skeleton, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -12,11 +12,11 @@ import dayjs from 'dayjs';
 import history from 'lib/history';
 import {
 	ArrowLeft,
-	BetweenHorizonalStart,
+	BetweenHorizontalStart,
 	CalendarClock,
 	DraftingCompass,
 	Timer,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import './TraceMetadata.styles.scss';
@@ -69,9 +69,16 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 		exact: true,
 	});
 
+	const location = useLocation();
+
 	const handleSwitchToNewView = (): void => {
 		removeLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW);
-		history.replace(`/trace/${traceID}${window.location.search}`);
+		history.replace({
+			pathname: `/trace/${traceID}`,
+			search: location.search,
+			hash: location.hash,
+			state: location.state,
+		});
 	};
 
 	return (
@@ -83,10 +90,9 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 						color="secondary"
 						size="icon"
 						className="previous-btn"
+						prefix={<ArrowLeft size={14} />}
 						onClick={handlePreviousBtnClick}
-					>
-						<ArrowLeft size={14} />
-					</Button>
+					/>
 					<div className="trace-name">
 						<DraftingCompass size={14} className="drafting" />
 						<Typography.Text className="trace-id">Trace ID</Typography.Text>
@@ -108,7 +114,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 				{isDataLoading && (
 					<div className="second-row">
 						<div className="service-entry-info">
-							<BetweenHorizonalStart size={14} />
+							<BetweenHorizontalStart size={14} />
 							<Skeleton.Input active className="skeleton-input" size="small" />
 							<Skeleton.Input active className="skeleton-input" size="small" />
 							<Skeleton.Input active className="skeleton-input" size="small" />
@@ -118,7 +124,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 				{!isDataLoading && !notFound && (
 					<div className="second-row">
 						<div className="service-entry-info">
-							<BetweenHorizonalStart size={14} />
+							<BetweenHorizontalStart size={14} />
 							<Typography.Text className="text">{rootServiceName}</Typography.Text>
 							&#8212;
 							<Typography.Text className="text root-span-name">

@@ -16,7 +16,7 @@ import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import throttle from 'lodash-es/throttle';
-import { Palette } from 'lucide-react';
+import { Palette } from '@signozhq/icons';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

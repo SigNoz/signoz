@@ -20,7 +20,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,

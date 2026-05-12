@@ -8,7 +8,7 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
 import { K8sClusterData, K8sClustersListPayload } from './api';
-import { Boxes } from 'lucide-react';
+import { Boxes } from '@signozhq/icons';
 
 export function getK8sClusterRowKey(cluster: K8sClusterData): string {
 	return (
