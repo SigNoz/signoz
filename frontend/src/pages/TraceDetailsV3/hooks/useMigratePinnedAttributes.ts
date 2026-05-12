@@ -11,13 +11,15 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
  * V2 stored pinned attributes as flat strings (`["http.method"]`).
  * V3 stores nested key paths (`['["attributes","http.method"]']`).
  *
- * On first load with both `userPreferences` and `selectedSpan` available,
- * detect a V2-format value in the backend pref and convert it to V3 paths
- * using the loaded span's shape. Idempotent: once written in V3 format the
- * format check on subsequent loads short-circuits.
+ * On every spanId change while there are still V2-shape entries in the pref,
+ * detect V2 entries and convert them to V3 paths using the loaded span's
+ * shape. Idempotent: once everything is V3 the gate flips and the hook
+ * short-circuits on subsequent renders.
  *
- * Unmappable keys (not present on the loaded span) are dropped — we can't
- * determine whether they belong under `attributes`, `resource`, or top-level.
+ * Unmappable keys (not present on the loaded span) are preserved as V2-shape
+ * in the pref. They get a chance to convert when a future span containing
+ * them loads. The V3 read path (`useTracePinnedFields.value`) filters V2
+ * leftovers out of PrettyView so they don't render half-resolved.
  */
 export function useMigratePinnedAttributes(
 	selectedSpan: SpanV3 | undefined,
@@ -43,29 +45,34 @@ export function useMigratePinnedAttributes(
 			return;
 		}
 
-		// Walk every entry — the array may be mixed (e.g. some legacy V2 flat
-		// keys saved alongside V3 paths). V3 entries pass through unchanged;
-		// V2 entries get converted via the loaded span; unmappable V2 entries
-		// are dropped. We only persist when at least one V2 entry was found
-		// (otherwise the input is already V3-clean).
+		// convertedAny → should we write this round (skip no-op API calls).
+		// stillHasV2   → should we keep retrying on future renders.
 		const next: string[] = [];
-		let hadV2Entry = false;
+		let convertedAny = false;
+		let stillHasV2 = false;
 
 		for (const entry of value) {
 			if (isV3PinnedAttribute(entry)) {
 				next.push(entry);
 				continue;
 			}
-			hadV2Entry = true;
 			const path = v2KeyToPath(entry, selectedSpan);
 			if (path) {
 				next.push(serializeKeyPath(path));
+				convertedAny = true;
+			} else {
+				next.push(entry);
+				stillHasV2 = true;
 			}
-			// else: unmappable on the loaded span — drop
 		}
 
-		if (!hadV2Entry) {
-			ranRef.current = true;
+		if (!convertedAny) {
+			// Nothing to persist this round. Mark done only when there's nothing
+			// left to retry; otherwise leave ranRef false so the next spanId
+			// change gets a chance at the lingering V2 entries.
+			if (!stillHasV2) {
+				ranRef.current = true;
+			}
 			return;
 		}
 
@@ -79,10 +86,10 @@ export function useMigratePinnedAttributes(
 			},
 			{
 				onSuccess: () => {
-					ranRef.current = true;
+					ranRef.current = !stillHasV2;
 				},
 				onError: () => {
-					// Roll back the optimistic context update
+					// Roll back the optimistic context updatexw
 					if (pref) {
 						updateUserPreferenceInContext({ ...pref, value });
 					}
