@@ -69,7 +69,9 @@ export function MetricsTable({
 						enableResize: false,
 						enableRemove: false,
 						enableSort: col.isValueColumn,
-						width: { min: index === 0 ? 220 : col.label?.length * 12 || 100 },
+						width: {
+							min: index === 0 ? 220 : Math.max(col.label?.length * 12, 80) || 100,
+						},
 					}) satisfies TableColumnDef<Record<string, string>>,
 			),
 		[columns],

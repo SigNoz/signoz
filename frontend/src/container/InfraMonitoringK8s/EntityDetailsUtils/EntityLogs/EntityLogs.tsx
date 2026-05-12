@@ -7,7 +7,13 @@ import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import {
 	QuerySearchV2Provider,
-	useQuerySearchV2Context,
+	useExpression,
+	useInitialExpression,
+	useInputExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnChange,
+	useQuerySearchOnRun,
+	useUserExpression,
 } from 'components/QueryBuilderV2';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import {
@@ -65,8 +71,13 @@ function EntityLogsContent({
 }: Omit<Props, 'initialExpression'>): JSX.Element {
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-	const { expression, userExpression, initialExpression, querySearchProps } =
-		useQuerySearchV2Context();
+	const expression = useExpression();
+	const inputExpression = useInputExpression();
+	const userExpression = useUserExpression();
+	const initialExpression = useInitialExpression();
+	const querySearchOnChange = useQuerySearchOnChange();
+	const querySearchOnRun = useQuerySearchOnRun();
+	const querySearchInitialExpressionProp = useQuerySearchInitialExpressionProp();
 
 	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
 		useLogDetailHandlers();
@@ -86,9 +97,9 @@ function EntityLogsContent({
 				? `${currentUser} AND ${partExpression}`
 				: partExpression;
 
-			querySearchProps.onRun(newUser);
+			querySearchOnRun(newUser);
 		},
-		[userExpression, querySearchProps, handleCloseLogDetail],
+		[userExpression, querySearchOnRun, handleCloseLogDetail],
 	);
 
 	const {
@@ -111,7 +122,7 @@ function EntityLogsContent({
 		(updatedExpression?: string): void => {
 			const newUserExpression = updatedExpression
 				? getUserExpressionFromCombined(initialExpression, updatedExpression)
-				: userExpression;
+				: inputExpression;
 			const validation = validateQuery(
 				initialExpression
 					? combineInitialAndUserExpression(initialExpression, newUserExpression)
@@ -119,7 +130,7 @@ function EntityLogsContent({
 			);
 
 			if (validation.isValid) {
-				querySearchProps.onRun(newUserExpression);
+				querySearchOnRun(newUserExpression);
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
@@ -131,7 +142,7 @@ function EntityLogsContent({
 				refetch();
 			}
 		},
-		[userExpression, initialExpression, refetch, querySearchProps, category],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -245,11 +256,11 @@ function EntityLogsContent({
 
 				<div className={styles.filterQuerySearch}>
 					<QuerySearch
-						onChange={querySearchProps.onChange}
+						onChange={querySearchOnChange}
 						queryData={queryData}
 						dataSource={DataSource.LOGS}
 						onRun={handleRunQuery}
-						initialExpression={querySearchProps.initialExpression}
+						initialExpression={querySearchInitialExpressionProp}
 					/>
 				</div>
 			</div>

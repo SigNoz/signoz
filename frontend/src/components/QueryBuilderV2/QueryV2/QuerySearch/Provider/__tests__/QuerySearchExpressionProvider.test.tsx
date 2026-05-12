@@ -1,7 +1,14 @@
 import { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 
-import { useQuerySearchV2Context } from '../context';
+import {
+	useExpression,
+	useInitialExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnChange,
+	useQuerySearchOnRun,
+	useUserExpression,
+} from '../context';
 import {
 	QuerySearchV2Provider,
 	QuerySearchV2ProviderProps,
@@ -27,6 +34,24 @@ function createWrapper(
 	};
 }
 
+function useTestHooks(): {
+	expression: string;
+	userExpression: string;
+	initialExpression: string;
+	querySearchInitialExpressionProp: string | undefined;
+	onChange: (expr: string) => void;
+	onRun: (expr: string) => void;
+} {
+	return {
+		expression: useExpression(),
+		userExpression: useUserExpression(),
+		initialExpression: useInitialExpression(),
+		querySearchInitialExpressionProp: useQuerySearchInitialExpressionProp(),
+		onChange: useQuerySearchOnChange(),
+		onRun: useQuerySearchOnRun(),
+	};
+}
+
 describe('QuerySearchExpressionProvider', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -34,7 +59,7 @@ describe('QuerySearchExpressionProvider', () => {
 	});
 
 	it('should provide initial context values', () => {
-		const { result } = renderHook(() => useQuerySearchV2Context(), {
+		const { result } = renderHook(() => useTestHooks(), {
 			wrapper: createWrapper(),
 		});
 
@@ -44,7 +69,7 @@ describe('QuerySearchExpressionProvider', () => {
 	});
 
 	it('should combine initialExpression with userExpression', () => {
-		const { result } = renderHook(() => useQuerySearchV2Context(), {
+		const { result } = renderHook(() => useTestHooks(), {
 			wrapper: createWrapper({ initialExpression: 'k8s.pod.name = "my-pod"' }),
 		});
 
@@ -52,10 +77,10 @@ describe('QuerySearchExpressionProvider', () => {
 		expect(result.current.initialExpression).toBe('k8s.pod.name = "my-pod"');
 
 		act(() => {
-			result.current.querySearchProps.onChange('service = "api"');
+			result.current.onChange('service = "api"');
 		});
 		act(() => {
-			result.current.querySearchProps.onRun('service = "api"');
+			result.current.onRun('service = "api"');
 		});
 
 		expect(result.current.expression).toBe(
@@ -65,19 +90,19 @@ describe('QuerySearchExpressionProvider', () => {
 	});
 
 	it('should provide querySearchProps with correct callbacks', () => {
-		const { result } = renderHook(() => useQuerySearchV2Context(), {
+		const { result } = renderHook(() => useTestHooks(), {
 			wrapper: createWrapper({ initialExpression: 'initial' }),
 		});
 
-		expect(result.current.querySearchProps.initialExpression).toBe('initial');
-		expect(typeof result.current.querySearchProps.onChange).toBe('function');
-		expect(typeof result.current.querySearchProps.onRun).toBe('function');
+		expect(result.current.querySearchInitialExpressionProp).toBe('initial');
+		expect(typeof result.current.onChange).toBe('function');
+		expect(typeof result.current.onRun).toBe('function');
 	});
 
 	it('should initialize from URL value on mount', () => {
 		mockUrlValue = 'status = 500';
 
-		const { result } = renderHook(() => useQuerySearchV2Context(), {
+		const { result } = renderHook(() => useTestHooks(), {
 			wrapper: createWrapper(),
 		});
 
@@ -87,9 +112,9 @@ describe('QuerySearchExpressionProvider', () => {
 
 	it('should throw error when used outside provider', () => {
 		expect(() => {
-			renderHook(() => useQuerySearchV2Context());
+			renderHook(() => useExpression());
 		}).toThrow(
-			'useQuerySearchV2Context must be used within a QuerySearchV2Provider',
+			'useQuerySearchV2Store must be used within a QuerySearchV2Provider',
 		);
 	});
 });

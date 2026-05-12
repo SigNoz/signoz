@@ -11,7 +11,28 @@ import {
 	LogsAggregatorOperator,
 	ReduceOperators,
 } from 'types/common/queryBuilder';
+import APIError from 'types/api/error';
 import { v4 as uuidv4 } from 'uuid';
+
+const K8S_EVENT_KEYS = ['k8s.object.kind', 'k8s.object.name'];
+
+export function isEventsKeyNotFoundError(error: unknown): boolean {
+	if (!(error instanceof APIError)) {
+		return false;
+	}
+
+	const errorDetails = error.getErrorDetails();
+	if (errorDetails.error.code !== 'invalid_input') {
+		return false;
+	}
+
+	const errors = errorDetails.error.errors || [];
+	return errors.some((err) =>
+		K8S_EVENT_KEYS.some((key) =>
+			err.message?.includes(`key \`${key}\` not found`),
+		),
+	);
+}
 
 export interface EntityEventsQueryParams {
 	start: number;

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
 import {
 	QuerySearchV2Provider,
-	useQuerySearchV2Context,
+	useExpression,
+	useInitialExpression,
+	useInputExpression,
+	useQuerySearchInitialExpressionProp,
+	useQuerySearchOnChange,
+	useQuerySearchOnRun,
+	useUserExpression,
 } from 'components/QueryBuilderV2';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import {
@@ -59,8 +65,13 @@ function EntityTracesContent({
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
-	const { expression, userExpression, initialExpression, querySearchProps } =
-		useQuerySearchV2Context();
+	const expression = useExpression();
+	const inputExpression = useInputExpression();
+	const userExpression = useUserExpression();
+	const initialExpression = useInitialExpression();
+	const querySearchOnChange = useQuerySearchOnChange();
+	const querySearchOnRun = useQuerySearchOnRun();
+	const querySearchInitialExpressionProp = useQuerySearchInitialExpressionProp();
 
 	const [pagination, setPagination] = useQueryState(
 		'pagination',
@@ -87,20 +98,18 @@ function EntityTracesContent({
 		pageSize,
 	});
 
-	const { onRun } = querySearchProps;
-
 	const handleRunQuery = useCallback(
 		(updatedExpression?: string): void => {
 			const newUserExpression = updatedExpression
 				? getUserExpressionFromCombined(initialExpression, updatedExpression)
-				: userExpression;
+				: inputExpression;
 			const validation = validateQuery(
 				initialExpression
 					? combineInitialAndUserExpression(initialExpression, newUserExpression)
 					: newUserExpression || '',
 			);
 			if (validation.isValid) {
-				onRun(newUserExpression || '');
+				querySearchOnRun(newUserExpression || '');
 
 				logEvent(InfraMonitoringEvents.FilterApplied, {
 					entity: InfraMonitoringEvents.K8sEntity,
@@ -112,7 +121,7 @@ function EntityTracesContent({
 				refetch();
 			}
 		},
-		[userExpression, initialExpression, refetch, onRun, category],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -170,11 +179,11 @@ function EntityTracesContent({
 
 				<div className={styles.filterQuerySearch}>
 					<QuerySearch
-						onChange={querySearchProps.onChange}
+						onChange={querySearchOnChange}
 						queryData={queryData}
 						dataSource={DataSource.TRACES}
 						onRun={handleRunQuery}
-						initialExpression={querySearchProps.initialExpression}
+						initialExpression={querySearchInitialExpressionProp}
 					/>
 				</div>
 			</div>
