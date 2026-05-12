@@ -1,3 +1,5 @@
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+
 export interface TraceDetailFlamegraphURLProps {
 	id: string;
 }
@@ -6,6 +8,7 @@ export interface GetTraceFlamegraphPayloadProps {
 	traceId: string;
 	selectedSpanId?: string;
 	limit?: number;
+	selectFields?: TelemetryFieldKey[];
 }
 
 export interface Event {
@@ -26,6 +29,8 @@ export interface FlamegraphSpan {
 	name: string;
 	level: number;
 	event: Event[];
+	resource?: Record<string, string>;
+	attributes?: Record<string, any>;
 }
 
 export interface GetTraceFlamegraphSuccessResponse {

@@ -5,7 +5,13 @@ import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
 
+import { COLOR_BY_FIELDS } from '../constants';
+import { useTraceContext } from '../contexts/TraceContext';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
+import {
+	mergeTelemetryFieldKeys,
+	toTelemetryFieldKey,
+} from '../utils/previewFields';
 import { FLAMEGRAPH_SPAN_LIMIT } from './constants';
 import FlamegraphCanvas from './FlamegraphCanvas';
 import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
@@ -44,6 +50,19 @@ function TraceFlamegraph({
 		[history, search],
 	);
 
+	const { previewFields } = useTraceContext();
+
+	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
+	// color-by entries first so their canonical metadata wins on collision.
+	const flamegraphSelectFields = useMemo(
+		() =>
+			mergeTelemetryFieldKeys(
+				COLOR_BY_FIELDS,
+				previewFields.map(toTelemetryFieldKey),
+			),
+		[previewFields],
+	);
+
 	const {
 		data,
 		isFetching,
@@ -52,6 +71,7 @@ function TraceFlamegraph({
 		traceId,
 		// selectedSpanId: firstSpanAtFetchLevel,
 		limit: FLAMEGRAPH_SPAN_LIMIT,
+		selectFields: flamegraphSelectFields,
 	});
 
 	const spans = useMemo(

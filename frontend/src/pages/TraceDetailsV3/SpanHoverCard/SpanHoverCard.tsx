@@ -1,16 +1,33 @@
-import { memo, ReactNode, useCallback, useRef, useState } from 'react';
-import { Popover } from 'antd';
-import { themeColors } from 'constants/theme';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
+import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import './SpanHoverCard.styles.scss';
 
-interface ITraceMetadata {
-	startTime: number;
-	endTime: number;
+/**
+ * Span-level fields that the tooltip always shows (as the colored title or
+ * one of the status/start/duration rows). Preview rows for these keys are
+ * filtered out to avoid duplication.
+ */
+export const RESERVED_PREVIEW_KEYS: ReadonlySet<string> = new Set([
+	'name',
+	'has_error',
+	'timestamp',
+	'duration_nano',
+]);
+
+export interface SpanPreviewRow {
+	key: string;
+	value: string;
 }
 
 export interface SpanTooltipContentProps {
@@ -19,6 +36,7 @@ export interface SpanTooltipContentProps {
 	hasError: boolean;
 	relativeStartMs: number;
 	durationMs: number;
+	previewRows?: SpanPreviewRow[];
 }
 
 export function SpanTooltipContent({
@@ -27,6 +45,7 @@ export function SpanTooltipContent({
 	hasError,
 	relativeStartMs,
 	durationMs,
+	previewRows,
 }: SpanTooltipContentProps): JSX.Element {
 	const { time: formattedDuration, timeUnitName } =
 		convertTimeToRelevantUnit(durationMs);
@@ -37,104 +56,118 @@ export function SpanTooltipContent({
 				{spanName}
 			</div>
 			<div className="span-hover-card-content__row">
-				Status: {hasError ? 'error' : 'ok'}
+				status: {hasError ? 'error' : 'ok'}
 			</div>
 			<div className="span-hover-card-content__row">
-				Start: {toFixed(relativeStartMs, 2)} ms
+				start: {toFixed(relativeStartMs, 2)} ms
 			</div>
 			<div className="span-hover-card-content__row">
-				Duration: {toFixed(formattedDuration, 2)} {timeUnitName}
+				duration: {toFixed(formattedDuration, 2)} {timeUnitName}
 			</div>
+			{previewRows && previewRows.length > 0 && (
+				<div className="span-hover-card-content__preview">
+					{previewRows.map((row) => (
+						<div key={row.key} className="span-hover-card-content__row">
+							<span className="span-hover-card-content__preview-key">{row.key}:</span>{' '}
+							<span className="span-hover-card-content__preview-value">
+								{row.value}
+							</span>
+						</div>
+					))}
+				</div>
+			)}
 		</div>
 	);
 }
 
-interface SpanHoverCardProps {
-	span: SpanV3;
-	traceMetadata: ITraceMetadata;
-	children: ReactNode;
+/**
+ * Single hover card anchored at a fixed X (sidebar/timeline boundary). The
+ * Y of the anchor is derived from the hovered span's index in the list,
+ * so the card slides vertically in place rather than jumping with the cursor.
+ *
+ * Mount this inside the scrollable waterfall body so `anchorTop` is in
+ * content coordinates — Radix portals the content layer out automatically.
+ */
+export interface SpanHoverCardProps {
+	hoveredSpanId: string | null;
+	onOpenChange: (open: boolean) => void;
+	anchorLeft: number;
+	rowHeight: number;
+	spans: SpanV3[];
+	traceStartTime: number;
 }
 
-/**
- * Lazy hover card — only mounts the expensive antd Popover when the user
- * actually hovers over the element (after a short delay). During fast scrolling,
- * rows mount and unmount without ever creating a Popover instance, avoiding
- * expensive DOM/effect overhead from antd Tooltip/Trigger internals.
- */
-const SpanHoverCard = memo(function SpanHoverCard({
-	span,
-	traceMetadata,
-	children,
+export function SpanHoverCard({
+	hoveredSpanId,
+	onOpenChange,
+	anchorLeft,
+	rowHeight,
+	spans,
+	traceStartTime,
 }: SpanHoverCardProps): JSX.Element {
-	const [showPopover, setShowPopover] = useState(false);
-	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const { previewFields, resolveSpanColor } = useTraceContext();
 
-	const handleMouseEnter = useCallback((): void => {
-		timerRef.current = setTimeout(() => {
-			setShowPopover(true);
-		}, 200);
-	}, []);
-
-	const handleMouseLeave = useCallback((): void => {
-		if (timerRef.current) {
-			clearTimeout(timerRef.current);
-			timerRef.current = null;
+	const hoverCardData = useMemo(() => {
+		if (!hoveredSpanId) {
+			return null;
 		}
-		setShowPopover(false);
-	}, []);
+		const idx = spans.findIndex((s) => s.span_id === hoveredSpanId);
+		if (idx === -1) {
+			return null;
+		}
+		const span = spans[idx];
+		const previewRows: SpanPreviewRow[] = previewFields
+			.filter((f) => !RESERVED_PREVIEW_KEYS.has(f.key))
+			.map((f) => {
+				const value = getSpanAttribute(span, f.key);
+				return value !== undefined && value !== ''
+					? { key: f.key, value: String(value) }
+					: null;
+			})
+			.filter((r): r is SpanPreviewRow => r !== null);
 
-	if (!showPopover) {
-		return (
-			// eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
-			<span
-				className="span-hover-card-wrapper"
-				onMouseEnter={handleMouseEnter}
-				onMouseLeave={handleMouseLeave}
-			>
-				{children}
-			</span>
-		);
-	}
-
-	const durationMs = span.duration_nano / 1e6;
-	const relativeStartMs = span.timestamp - traceMetadata.startTime;
-
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	if (span.has_error) {
-		color = 'var(--bg-cherry-500)';
-	}
+		return {
+			anchorTop: idx * rowHeight,
+			tooltip: {
+				spanName: span.name,
+				color: resolveSpanColor(span),
+				hasError: span.has_error,
+				relativeStartMs: span.timestamp - traceStartTime,
+				durationMs: span.duration_nano / 1e6,
+				previewRows,
+			},
+		};
+	}, [
+		hoveredSpanId,
+		spans,
+		previewFields,
+		resolveSpanColor,
+		rowHeight,
+		traceStartTime,
+	]);
 
 	return (
-		<Popover
-			open
-			content={
-				<SpanTooltipContent
-					spanName={span.name}
-					color={color}
-					hasError={span.has_error}
-					relativeStartMs={relativeStartMs}
-					durationMs={durationMs}
-				/>
-			}
-			trigger="hover"
-			rootClassName="span-hover-card-popover"
-			autoAdjustOverflow
-			arrow={false}
-			onOpenChange={(open): void => {
-				if (!open) {
-					setShowPopover(false);
-				}
-			}}
-		>
-			{/* eslint-disable-next-line jsx-a11y/mouse-events-have-key-events */}
-			<span className="span-hover-card-wrapper" onMouseLeave={handleMouseLeave}>
-				{children}
-			</span>
-		</Popover>
+		<TooltipProvider>
+			<Tooltip open={hoverCardData !== null} onOpenChange={onOpenChange}>
+				<TooltipTrigger asChild>
+					<div
+						className="span-hover-card-anchor"
+						style={{
+							top: hoverCardData?.anchorTop ?? 0,
+							left: anchorLeft,
+							height: rowHeight,
+						}}
+					/>
+				</TooltipTrigger>
+				<TooltipContent
+					side="right"
+					align="start"
+					sideOffset={8}
+					className="span-hover-card-popover"
+				>
+					{hoverCardData && <SpanTooltipContent {...hoverCardData.tooltip} />}
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	);
-});
-
-export default SpanHoverCard;
+}

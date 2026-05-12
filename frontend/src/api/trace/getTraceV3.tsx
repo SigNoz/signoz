@@ -40,6 +40,7 @@ const getTraceV3 = async (
 	const spans: SpanV3[] = (rawPayload.spans || []).map((span: any) => ({
 		...span,
 		'service.name': span.resource?.['service.name'] || '',
+		timestamp: span.time_unix,
 	}));
 
 	// V3 API returns startTimestampMillis/endTimestampMillis as relative durations (ms from epoch offset),

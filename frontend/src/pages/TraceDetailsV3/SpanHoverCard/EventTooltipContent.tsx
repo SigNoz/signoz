@@ -29,7 +29,7 @@ export function EventTooltipContent({
 				{eventName}
 			</div>
 			<div className="event-tooltip-content__time">
-				{toFixed(time, 2)} {timeUnitName} from start
+				{toFixed(time, 2)} {timeUnitName} since span start
 			</div>
 			{Object.keys(attributeMap).length > 0 && (
 				<>

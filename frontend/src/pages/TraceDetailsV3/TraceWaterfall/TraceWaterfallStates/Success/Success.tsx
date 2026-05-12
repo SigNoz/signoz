@@ -27,12 +27,11 @@ import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
-import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { colorToRgb, generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
 	ArrowUpRight,
 	ChevronDown,
@@ -41,15 +40,17 @@ import {
 	Link,
 	ListPlus,
 } from '@signozhq/icons';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
-import SpanHoverCard from '../../../SpanHoverCard/SpanHoverCard';
+import { SpanHoverCard } from '../../../SpanHoverCard/SpanHoverCard';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
-import { IInterestedSpan } from '../../TraceWaterfall';
+import { IInterestedSpan } from '../../types';
 
 import './Success.styles.scss';
 
@@ -76,7 +77,7 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 	const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const handleMouseEnter = useCallback((): void => {
-		timerRef.current = setTimeout(() => setShowPopover(true), 150);
+		timerRef.current = setTimeout(() => setShowPopover(true), 200);
 	}, []);
 
 	const handleMouseLeave = useCallback((): void => {
@@ -133,7 +134,7 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 });
 
 // css config
-const CONNECTOR_WIDTH = 20;
+const CONNECTOR_WIDTH = 30;
 const VERTICAL_CONNECTOR_WIDTH = 1;
 
 interface SpanStateClasses {
@@ -194,8 +195,9 @@ const SpanOverview = memo(function SpanOverview({
 	selectedSpan,
 	filteredSpanIds,
 	isFilterActive,
-	traceMetadata,
 	onAddSpanToFunnel,
+	onHoverEnter,
+	onHoverLeave,
 }: {
 	span: SpanV3;
 	isSpanCollapsed: boolean;
@@ -204,19 +206,15 @@ const SpanOverview = memo(function SpanOverview({
 	handleSpanClick: (span: SpanV3) => void;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
-	traceMetadata: ITraceMetadata;
 	onAddSpanToFunnel: (span: SpanV3) => void;
+	onHoverEnter: (spanId: string) => void;
+	onHoverLeave: () => void;
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
+	const { resolveSpanColor } = useTraceContext();
 
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	if (span.has_error) {
-		color = `var(--bg-cherry-500)`;
-	}
+	const color = resolveSpanColor(span);
 
 	// Smart highlighting logic
 	const {
@@ -232,6 +230,9 @@ const SpanOverview = memo(function SpanOverview({
 		isFilterActive,
 	);
 
+	// All siblings at the same level share the same indent so the "same X =
+	// same level" visual rule holds. Parent/child distinction is conveyed by
+	// the chevron and the L-connector, not by an icon-X offset.
 	const indentWidth = isRootSpan ? 0 : span.level * CONNECTOR_WIDTH;
 
 	const handleFunnelClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
@@ -240,126 +241,128 @@ const SpanOverview = memo(function SpanOverview({
 	};
 
 	return (
-		<SpanHoverCard span={span} traceMetadata={traceMetadata}>
-			<div
-				className={cx('span-overview', {
-					'interested-span': isSelected && (!isFilterActive || isMatching),
-					'highlighted-span': isHighlighted,
-					'selected-non-matching-span': isSelectedNonMatching,
-					'dimmed-span': isDimmed,
-				})}
-				onClick={(): void => handleSpanClick(span)}
-			>
-				{/* Tree connector lines — always draw vertical lines at all ancestor levels + L-connector */}
-				{!isRootSpan &&
-					Array.from({ length: span.level }, (_, i) => {
-						const lvl = i + 1;
-						const xPos = (lvl - 1) * CONNECTOR_WIDTH + 9;
-						if (lvl < span.level) {
-							// Stop the line at 50% for the last child's parent level
-							const isLastChildParentLine =
-								!span.has_sibling && lvl === span.level - 1;
-							return (
-								<div
-									key={lvl}
-									className="tree-line"
-									style={{
-										left: xPos,
-										top: 0,
-										width: 1,
-										height: isLastChildParentLine ? '50%' : '100%',
-									}}
-								/>
-							);
-						}
+		<div
+			className={cx('span-overview', {
+				'interested-span': isSelected && (!isFilterActive || isMatching),
+				'highlighted-span': isHighlighted,
+				'selected-non-matching-span': isSelectedNonMatching,
+				'dimmed-span': isDimmed,
+			})}
+			onClick={(): void => handleSpanClick(span)}
+			onMouseEnter={(): void => onHoverEnter(span.span_id)}
+			onMouseLeave={(): void => onHoverLeave()}
+		>
+			{/* Tree connector lines — always draw vertical lines at all ancestor levels + L-connector */}
+			{!isRootSpan &&
+				Array.from({ length: span.level }, (_, i) => {
+					const lvl = i + 1;
+					const xPos = (lvl - 1) * CONNECTOR_WIDTH + 9;
+					if (lvl < span.level) {
+						// Stop the line at 50% for the last child's parent level
+						const isLastChildParentLine = !span.has_sibling && lvl === span.level - 1;
 						return (
-							<div key={lvl}>
-								<div
-									className="tree-line"
-									style={{ left: xPos, top: 0, width: 1, height: '50%' }}
-								/>
-								<div className="tree-connector" style={{ left: xPos, top: 0 }} />
-							</div>
+							<div
+								key={lvl}
+								className="tree-line"
+								style={{
+									left: xPos,
+									top: 0,
+									width: 1,
+									height: isLastChildParentLine ? '50%' : '100%',
+								}}
+							/>
 						);
-					})}
+					}
+					return (
+						<div key={lvl}>
+							<div
+								className="tree-line"
+								style={{ left: xPos, top: 0, width: 1, height: '50%' }}
+							/>
+							<div className="tree-connector" style={{ left: xPos, top: 0 }} />
+						</div>
+					);
+				})}
 
-				{/* Indent spacer */}
-				<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
+			{/* Indent spacer */}
+			<span className="tree-indent" style={{ width: `${indentWidth}px` }} />
 
-				{/* Expand/collapse arrow + child count (only for spans with children) */}
+			{/* Expand/collapse arrow + child count slots — always render the
+				    slots, fill them only when the span has children. Reserving the
+				    horizontal space on leaf rows aligns sibling icons regardless
+				    of whether each sibling is a parent or a leaf. */}
+			<span className="tree-arrow-slot">
 				{span.has_children && (
-					<>
-						<span
-							className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
-							onClick={(event): void => {
-								event.stopPropagation();
-								event.preventDefault();
-								handleCollapseUncollapse(span.span_id, !isSpanCollapsed);
-							}}
-						>
-							{isSpanCollapsed ? (
-								<ChevronRight size={14} />
-							) : (
-								<ChevronDown size={14} />
-							)}
-						</span>
-						<span className="subtree-count">
-							<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
-						</span>
-					</>
+					<span
+						className={cx('tree-arrow', { expanded: !isSpanCollapsed })}
+						onClick={(event): void => {
+							event.stopPropagation();
+							event.preventDefault();
+							handleCollapseUncollapse(span.span_id, !isSpanCollapsed);
+						}}
+					>
+						{isSpanCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+					</span>
 				)}
+			</span>
+			<span className="subtree-count-slot">
+				{span.has_children && (
+					<span className="subtree-count">
+						<Badge color="vanilla">{span.sub_tree_node_count}</Badge>
+					</span>
+				)}
+			</span>
 
-				{/* Colored service dot */}
-				<span
-					className={cx('tree-icon', { 'is-error': span.has_error })}
-					style={{ backgroundColor: color }}
-				/>
+			{/* Colored service dot */}
+			<span
+				className={cx('tree-icon', { 'is-error': span.has_error })}
+				style={{ backgroundColor: color }}
+			/>
 
-				{/* Span name + service name */}
-				<span className="tree-label">
-					{span.name}
-					<span className="tree-service-name">{span['service.name']}</span>
-				</span>
+			{/* Span name + service name */}
+			<span className="tree-label">
+				{span.name}
+				<span className="tree-service-name">{span['service.name']}</span>
+			</span>
 
-				{/* Action buttons — shown on hover via CSS, right-aligned */}
-				<span className="span-row-actions">
-					<TooltipProvider delayDuration={200}>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									className="span-action-btn"
-									onClick={onSpanCopy}
-								>
-									<Link size={12} />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="span-action-tooltip">
-								Copy Span Link
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									color="secondary"
-									className="span-action-btn"
-									onClick={handleFunnelClick}
-								>
-									<ListPlus size={12} />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent className="span-action-tooltip">
-								Add to Trace Funnel
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
-				</span>
-			</div>
-		</SpanHoverCard>
+			{/* Action buttons — shown on hover via CSS, right-aligned */}
+			<span className="span-row-actions">
+				<TooltipProvider delayDuration={200}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								className="span-action-btn"
+								onClick={onSpanCopy}
+							>
+								<Link size={12} />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent className="span-action-tooltip">
+							Copy Span Link
+						</TooltipContent>
+					</Tooltip>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								size="icon"
+								color="secondary"
+								className="span-action-btn"
+								onClick={handleFunnelClick}
+							>
+								<ListPlus size={12} />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent className="span-action-tooltip">
+							Add to Trace Funnel
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+			</span>
+		</div>
 	);
 });
 
@@ -386,16 +389,10 @@ export const SpanDuration = memo(function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
-	let color = generateColor(
-		span['service.name'],
-		themeColors.traceDetailColorsV3,
-	);
-	let rgbColor = colorToRgb(color);
-
-	if (span.has_error) {
-		color = `var(--bg-cherry-500)`;
-		rgbColor = '239, 68, 68';
-	}
+	const { resolveSpanColor } = useTraceContext();
+	const color = resolveSpanColor(span);
+	// `resolveSpanColor` returns a CSS variable for errors; `colorToRgb` can't parse it.
+	const rgbColor = span.has_error ? '239, 68, 68' : colorToRgb(color);
 
 	const {
 		isSelected,
@@ -420,27 +417,25 @@ export const SpanDuration = memo(function SpanDuration({
 			})}
 			onClick={(): void => handleSpanClick(span)}
 		>
-			<SpanHoverCard span={span} traceMetadata={traceMetadata}>
-				<div
-					className="span-bar"
-					style={
-						{
-							left: `${leftOffset}%`,
-							width: `${width}%`,
-							'--span-color': color,
-							'--span-color-rgb': rgbColor,
-						} as React.CSSProperties
-					}
-				>
-					<span className="span-info">
-						<span className="span-name">{span.name}</span>
-						<span className="span-duration-text">{`${toFixed(
-							time,
-							2,
-						)} ${timeUnitName}`}</span>
-					</span>
-				</div>
-			</SpanHoverCard>
+			<div
+				className="span-bar"
+				style={
+					{
+						left: `${leftOffset}%`,
+						width: `${width}%`,
+						'--span-color': color,
+						'--span-color-rgb': rgbColor,
+					} as React.CSSProperties
+				}
+			>
+				<span className="span-info">
+					<span className="span-name">{span.name}</span>
+					<span className="span-duration-text">{`${toFixed(
+						time,
+						2,
+					)} ${timeUnitName}`}</span>
+				</span>
+			</div>
 			{span.events?.map((event) => {
 				const eventTimeMs = event.timeUnixNano / 1e6;
 				const spanDurationMs = span.duration_nano / 1e6;
@@ -507,6 +502,17 @@ function Success(props: ISuccessProps): JSX.Element {
 	const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const {
+		topSentinelRef: loadMoreTopSentinelRef,
+		bottomSentinelRef: loadMoreBottomSentinelRef,
+	} = useBoundaryPagination({
+		scrollContainerRef,
+		spans,
+		isFetching,
+		isFullDataLoaded,
+		setInterestedSpanId,
+	});
+
+	const {
 		cursorXPercent,
 		cursorX,
 		onMouseMove: onCrosshairMove,
@@ -531,15 +537,32 @@ function Success(props: ISuccessProps): JSX.Element {
 		prevHoveredSpanIdRef.current = spanId;
 	}, []);
 
+	// Hover-card state — single popover anchored at the sidebar/timeline
+	// boundary, Y tracks the hovered row. Set after a 500 ms debounce so fast
+	// scrolls/cursor sweeps don't fire the card.
+	const [hoveredSpanId, setHoveredSpanId] = useState<string | null>(null);
+	const hoverDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 	const handleRowMouseEnter = useCallback(
 		(spanId: string): void => {
 			applyHoverClass(spanId);
+			if (hoverDelayTimerRef.current) {
+				clearTimeout(hoverDelayTimerRef.current);
+			}
+			hoverDelayTimerRef.current = setTimeout(() => {
+				setHoveredSpanId(spanId);
+			}, 500);
 		},
 		[applyHoverClass],
 	);
 
 	const handleRowMouseLeave = useCallback((): void => {
 		applyHoverClass(null);
+		if (hoverDelayTimerRef.current) {
+			clearTimeout(hoverDelayTimerRef.current);
+			hoverDelayTimerRef.current = null;
+		}
+		setHoveredSpanId(null);
 	}, [applyHoverClass]);
 
 	const handleCollapseUncollapse = useCallback(
@@ -555,14 +578,15 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 					return next;
 				});
-			} else {
-				// Backend mode: trigger API call (current behavior)
-				setInterestedSpanId({
-					spanId,
-					isUncollapsed: !collapse,
-					scrollToSpan: false,
-				});
 			}
+			// Backend mode: trigger API call (current behavior)
+			// keeping this for both mode to support scroll to view to function well.
+			// interestedspan would not make api call in frontend mode so it is safe to use for both mode.
+			setInterestedSpanId({
+				spanId,
+				isUncollapsed: !collapse,
+				scrollToSpan: false,
+			});
 		},
 		[isFullDataLoaded, setLocalUncollapsedNodes, setInterestedSpanId],
 	);
@@ -615,32 +639,8 @@ function Success(props: ISuccessProps): JSX.Element {
 					}
 				}, 20);
 			}
-
-			// In frontend mode all data is already loaded, no need to fetch more.
-			// In backend mode, skip auto-fetch when under 500 spans (nothing more to paginate).
-			if (isFullDataLoaded || spans.length < 500) {
-				return;
-			}
-
-			if (range?.startIndex === 0 && instance.isScrolling) {
-				// do not trigger for trace root as nothing to fetch above
-				if (spans[0].level !== 0) {
-					setInterestedSpanId({
-						spanId: spans[0].span_id,
-						isUncollapsed: false,
-					});
-				}
-				return;
-			}
-
-			if (range?.endIndex === spans.length - 1 && instance.isScrolling) {
-				setInterestedSpanId({
-					spanId: spans[spans.length - 1].span_id,
-					isUncollapsed: false,
-				});
-			}
 		},
-		[spans, setInterestedSpanId],
+		[spans],
 	);
 
 	const [isAddSpanToFunnelModalOpen, setIsAddSpanToFunnelModalOpen] =
@@ -685,10 +685,11 @@ function Success(props: ISuccessProps): JSX.Element {
 						}
 						selectedSpan={selectedSpan}
 						handleSpanClick={handleSpanClick}
-						traceMetadata={traceMetadata}
 						filteredSpanIds={filteredSpanIds}
 						isFilterActive={isFilterActive}
 						onAddSpanToFunnel={handleAddSpanToFunnel}
+						onHoverEnter={handleRowMouseEnter}
+						onHoverLeave={handleRowMouseLeave}
 					/>
 				),
 			}),
@@ -698,12 +699,13 @@ function Success(props: ISuccessProps): JSX.Element {
 			uncollapsedNodes,
 			isFullDataLoaded,
 			localUncollapsedNodes,
-			traceMetadata,
 			selectedSpan,
 			handleSpanClick,
 			filteredSpanIds,
 			isFilterActive,
 			handleAddSpanToFunnel,
+			handleRowMouseEnter,
+			handleRowMouseLeave,
 		],
 	);
 
@@ -780,6 +782,12 @@ function Success(props: ISuccessProps): JSX.Element {
 	const virtualItems = virtualizer.getVirtualItems();
 	const leftRows = leftTable.getRowModel().rows;
 
+	const handleHoverCardOpenChange = useCallback((open: boolean): void => {
+		if (!open) {
+			setHoveredSpanId(null);
+		}
+	}, []);
+
 	return (
 		<div className="success-content">
 			{traceMetadata.hasMissingSpans && (
@@ -833,6 +841,24 @@ function Success(props: ISuccessProps): JSX.Element {
 						height: '100%',
 					}}
 				>
+					{/* Top / bottom sentinels: each transition into the viewport
+					    fires a load-more via useBoundaryPagination. */}
+					<div
+						ref={loadMoreTopSentinelRef}
+						className="waterfall-load-more-sentinel waterfall-load-more-sentinel--top"
+					/>
+					<div
+						ref={loadMoreBottomSentinelRef}
+						className="waterfall-load-more-sentinel waterfall-load-more-sentinel--bottom"
+					/>
+					<SpanHoverCard
+						hoveredSpanId={hoveredSpanId}
+						onOpenChange={handleHoverCardOpenChange}
+						anchorLeft={sidebarWidth}
+						rowHeight={ROW_HEIGHT}
+						spans={spans}
+						traceStartTime={traceMetadata.startTime}
+					/>
 					{/* Left panel - table with horizontal scroll */}
 					<ResizableBox
 						direction="horizontal"
@@ -942,8 +968,8 @@ function Success(props: ISuccessProps): JSX.Element {
 										height: ROW_HEIGHT,
 										transform: `translateY(${virtualRow.start}px)`,
 									}}
-									onMouseEnter={(): void => handleRowMouseEnter(span.span_id)}
-									onMouseLeave={handleRowMouseLeave}
+									onMouseEnter={(): void => applyHoverClass(span.span_id)}
+									onMouseLeave={(): void => applyHoverClass(null)}
 								>
 									<SpanDuration
 										span={span}

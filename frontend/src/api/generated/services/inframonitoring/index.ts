@@ -17,11 +17,13 @@ import type {
 	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
+	InframonitoringtypesPostableVolumesDTO,
 	ListClusters200,
 	ListHosts200,
 	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
+	ListVolumes200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
@@ -445,6 +447,90 @@ export const useListPods = <
 	TContext
 > => {
 	const mutationOptions = getListPodsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes persistent volume claims (PVCs) with key volume metrics: available bytes, capacity bytes, usage (capacity - available), inodes, free inodes, and used inodes. Each row also includes metadata attributes (k8s.persistentvolumeclaim.name, k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name, k8s.statefulset.name, k8s.cluster.name). Supports filtering via a filter expression, custom groupBy to aggregate volumes by any attribute, ordering by any of the six metrics (available, capacity, usage, inodes, inodes_free, inodes_used), and pagination via offset/limit. The response type is 'list' for the default k8s.persistentvolumeclaim.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates volumes in the group. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (volumeAvailable, volumeCapacity, volumeUsage, volumeInodes, volumeInodesFree, volumeInodesUsed) return -1 as a sentinel when no data is available for that field.
+ * @summary List Volumes for Infra Monitoring
+ */
+export const listVolumes = (
+	inframonitoringtypesPostableVolumesDTO: BodyType<InframonitoringtypesPostableVolumesDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListVolumes200>({
+		url: `/api/v2/infra_monitoring/pvcs`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableVolumesDTO,
+		signal,
+	});
+};
+
+export const getListVolumesMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listVolumes>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listVolumes>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	TContext
+> => {
+	const mutationKey = ['listVolumes'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listVolumes>>,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listVolumes(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListVolumesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listVolumes>>
+>;
+export type ListVolumesMutationBody =
+	BodyType<InframonitoringtypesPostableVolumesDTO>;
+export type ListVolumesMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Volumes for Infra Monitoring
+ */
+export const useListVolumes = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listVolumes>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listVolumes>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	TContext
+> => {
+	const mutationOptions = getListVolumesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
