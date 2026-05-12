@@ -7,7 +7,7 @@ import (
 )
 
 type TagRelation struct {
-	bun.BaseModel `bun:"table:tag_relations,alias:tag_relations"`
+	bun.BaseModel `bun:"table:tag_relation,alias:tag_relation"`
 
 	Kind     coretypes.Kind `json:"kind" required:"true" bun:"kind,pk,type:text,notnull"`
 	EntityID valuer.UUID    `json:"entityId" required:"true" bun:"entity_id,pk,type:text,notnull"`

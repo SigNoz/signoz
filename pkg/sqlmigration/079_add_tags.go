@@ -70,7 +70,7 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	sqls = append(sqls, []byte(`CREATE UNIQUE INDEX IF NOT EXISTS uq_tag_org_kind_lower_key_lower_value ON tag (org_id, kind, LOWER(key), LOWER(value))`))
 
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
-		Name: "tag_relations",
+		Name: "tag_relation",
 		Columns: []*sqlschema.Column{
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "entity_id", DataType: sqlschema.DataTypeText, Nullable: false},

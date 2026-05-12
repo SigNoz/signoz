@@ -39,7 +39,7 @@ func (s *store) ListByEntity(ctx context.Context, kind coretypes.Kind, entityID 
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&tags).
-		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
+		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
 		Where("tr.entity_id = ?", entityID).
 		Scan(ctx)
@@ -65,7 +65,7 @@ func (s *store) ListByEntities(ctx context.Context, kind coretypes.Kind, entityI
 		NewSelect().
 		Model(&rows).
 		ColumnExpr("tag.*, tr.entity_id").
-		Join("JOIN tag_relations AS tr ON tr.tag_id = tag.id").
+		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
 		Where("tr.entity_id IN (?)", bun.In(entityIDs)).
 		Scan(ctx)
