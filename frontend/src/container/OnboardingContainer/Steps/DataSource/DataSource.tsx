@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LoadingOutlined } from '@ant-design/icons';
+import { LoaderCircle } from '@signozhq/icons';
 import { Button, Card, Form, Input, Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -272,7 +272,7 @@ export default function DataSource(): JSX.Element {
 										className="periscope-btn primary"
 										icon={
 											isSubmittingRequestForDataSource ? (
-												<LoadingOutlined />
+												<LoaderCircle className="animate-spin" />
 											) : (
 												<Check size={12} />
 											)
