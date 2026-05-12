@@ -39,4 +39,5 @@ var NodesValidOrderByKeys = []string{
 	NodesOrderByCPUAllocatable,
 	NodesOrderByMemory,
 	NodesOrderByMemoryAllocatable,
+	OrderByName,
 }

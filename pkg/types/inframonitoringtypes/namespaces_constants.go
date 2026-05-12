@@ -8,4 +8,5 @@ const (
 var NamespacesValidOrderByKeys = []string{
 	NamespacesOrderByCPU,
 	NamespacesOrderByMemory,
+	OrderByName,
 }

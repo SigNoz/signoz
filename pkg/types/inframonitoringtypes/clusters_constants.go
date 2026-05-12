@@ -12,4 +12,5 @@ var ClustersValidOrderByKeys = []string{
 	ClustersOrderByCPUAllocatable,
 	ClustersOrderByMemory,
 	ClustersOrderByMemoryAllocatable,
+	OrderByName,
 }

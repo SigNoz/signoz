@@ -16,4 +16,5 @@ var VolumesValidOrderByKeys = []string{
 	VolumesOrderByInodes,
 	VolumesOrderByInodesFree,
 	VolumesOrderByInodesUsed,
+	OrderByName,
 }

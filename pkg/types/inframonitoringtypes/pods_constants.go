@@ -52,4 +52,5 @@ var PodsValidOrderByKeys = []string{
 	PodsOrderByMemory,
 	PodsOrderByMemoryRequest,
 	PodsOrderByMemoryLimit,
+	OrderByName,
 }

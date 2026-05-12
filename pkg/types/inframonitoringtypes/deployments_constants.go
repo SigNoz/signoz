@@ -20,4 +20,5 @@ var DeploymentsValidOrderByKeys = []string{
 	DeploymentsOrderByMemoryLimit,
 	DeploymentsOrderByDesiredPods,
 	DeploymentsOrderByAvailablePods,
+	OrderByName,
 }

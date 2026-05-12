@@ -24,4 +24,5 @@ var JobsValidOrderByKeys = []string{
 	JobsOrderByActivePods,
 	JobsOrderByFailedPods,
 	JobsOrderBySuccessfulPods,
+	OrderByName,
 }

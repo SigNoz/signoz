@@ -95,6 +95,9 @@ func (m *module) getTopDeploymentGroups(
 	metadataMap map[string]map[string]string,
 ) ([]map[string]string, error) {
 	orderByKey := req.OrderBy.Key.Name
+	if orderByKey == inframonitoringtypes.OrderByName {
+		return paginateMetadataByName(metadataMap, req.GroupBy, req.OrderBy.Direction, req.Offset, req.Limit, deploymentNameAttrKey), nil
+	}
 	queryNamesForOrderBy := orderByToDeploymentsQueryNames[orderByKey]
 	rankingQueryName := queryNamesForOrderBy[len(queryNamesForOrderBy)-1]
 

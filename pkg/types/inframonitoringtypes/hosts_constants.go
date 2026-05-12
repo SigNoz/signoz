@@ -34,4 +34,5 @@ var HostsValidOrderByKeys = []string{
 	HostsOrderByWait,
 	HostsOrderByDiskUsage,
 	HostsOrderByLoad15,
+	OrderByName,
 }

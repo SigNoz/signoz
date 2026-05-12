@@ -20,4 +20,5 @@ var StatefulSetsValidOrderByKeys = []string{
 	StatefulSetsOrderByMemoryLimit,
 	StatefulSetsOrderByDesiredPods,
 	StatefulSetsOrderByAvailablePods,
+	OrderByName,
 }

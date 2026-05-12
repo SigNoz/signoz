@@ -20,4 +20,5 @@ var DaemonSetsValidOrderByKeys = []string{
 	DaemonSetsOrderByMemoryLimit,
 	DaemonSetsOrderByDesiredNodes,
 	DaemonSetsOrderByAvailableNodes,
+	OrderByName,
 }
