@@ -122,31 +122,42 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
-	defaultDashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
+func (module *module) insertSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, createdBy string) (*dashboardtypes.Dashboard, error) {
+	dashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
 	if err != nil {
 		return nil, err
 	}
 
+	if createdBy != "" {
+		dashboard.CreatedBy = createdBy
+		dashboard.UpdatedBy = createdBy
+	}
+
+	storable, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
+	if err != nil {
+		return nil, err
+	}
+	if err := module.store.Create(ctx, storable); err != nil {
+		return nil, err
+	}
+
+	return dashboard, nil
+}
+
+func (module *module) ResetSystemDashboard(ctx context.Context, orgID valuer.UUID, source dashboardtypes.Source, updatedBy string) (*dashboardtypes.Dashboard, error) {
 	existing, err := module.GetBySource(ctx, orgID, source)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
 	if existing == nil {
-		defaultDashboard.CreatedBy = updatedBy
-		defaultDashboard.UpdatedBy = updatedBy
-
-		storable, err := dashboardtypes.NewStorableDashboardFromDashboard(defaultDashboard)
-		if err != nil {
-			return nil, err
-		}
-		if err := module.store.Create(ctx, storable); err != nil {
-			return nil, err
-		}
-		return defaultDashboard, nil
+		return module.insertSystemDashboard(ctx, orgID, source, updatedBy)
 	}
 
+	defaultDashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
+	if err != nil {
+		return nil, err
+	}
 	if err := existing.Update(ctx, defaultDashboard.Data, updatedBy, 0); err != nil {
 		return nil, err
 	}
@@ -173,21 +184,11 @@ func (module *module) SetDefaultConfig(ctx context.Context, orgID valuer.UUID) e
 			continue
 		}
 
-		dashboard, err := dashboardtypes.NewDefaultSystemDashboard(orgID, source)
-		if err != nil {
-			// No defaults set for the source skipping will pupulate in  default overview followup pr.
+		if _, err := module.insertSystemDashboard(ctx, orgID, source, ""); err != nil {
+			// No defaults set for the source skipping will populate in  default overview followup pr.
 			if errors.Ast(err, errors.TypeInvalidInput) {
 				continue
 			}
-			return err
-		}
-
-		storable, err := dashboardtypes.NewStorableDashboardFromDashboard(dashboard)
-		if err != nil {
-			return err
-		}
-
-		if err := module.store.Create(ctx, storable); err != nil {
 			return err
 		}
 	}

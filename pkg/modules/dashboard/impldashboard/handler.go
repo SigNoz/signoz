@@ -202,9 +202,9 @@ func (handler *handler) ResetSystemDashboard(rw http.ResponseWriter, r *http.Req
 		return
 	}
 
-	source := r.URL.Query().Get("source")
+	source := mux.Vars(r)["source"]
 	if source == "" {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "source query parameter is required"))
+		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "source path parameter is required"))
 		return
 	}
 
