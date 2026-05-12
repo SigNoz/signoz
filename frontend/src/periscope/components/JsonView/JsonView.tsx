@@ -23,7 +23,6 @@ const editorOptions: EditorProps['options'] = {
 	lineHeight: 18,
 	colorDecorators: true,
 	scrollBeyondLastLine: false,
-	decorationsOverviewRuler: false,
 	scrollbar: {
 		vertical: 'hidden',
 		horizontal: 'hidden',
