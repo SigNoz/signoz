@@ -68,34 +68,35 @@ func NewReceiver(input string) (*Receiver, error) {
 }
 
 func defaultReceiverHTTPConfigs(receiver *config.Receiver) {
+	defaultCfg := commoncfg.DefaultHTTPClientConfig
 	for _, cfg := range receiver.WebhookConfigs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 	for _, cfg := range receiver.SlackConfigs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 	for _, cfg := range receiver.PagerdutyConfigs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 	for _, cfg := range receiver.OpsGenieConfigs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 	for _, cfg := range receiver.MSTeamsConfigs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 	for _, cfg := range receiver.MSTeamsV2Configs {
 		if cfg.HTTPConfig == nil {
-			cfg.HTTPConfig = &commoncfg.HTTPClientConfig{}
+			cfg.HTTPConfig = &defaultCfg
 		}
 	}
 }

@@ -46,7 +46,7 @@ func New(cfg *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, 
 		return nil, err
 	}
 
-	client, err := notify.NewClientWithTracing(commoncfg.HTTPClientConfig{}, Integration, httpOpts...)
+	client, err := notify.NewClientWithTracing(commoncfg.DefaultHTTPClientConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

@@ -6,16 +6,27 @@ import {
 } from './config';
 
 export const PagerInitialConfig: Partial<PagerChannel> = {
-	description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
-	{{- if gt (len .CommonLabels) (len .GroupLabels) -}}
-	  {{" "}}(
-	  {{- with .CommonLabels.Remove .GroupLabels.Names }}
-		{{- range $index, $label := .SortedPairs -}}
-		  {{ if $index }}, {{ end }}
-		  {{- $label.Name }}="{{ $label.Value -}}"
-		{{- end }}
-	  {{- end -}}
-	  )
+	description: `{{ if gt (len .Alerts.Firing) 0 -}}
+	Alerts Firing:
+	{{ range .Alerts.Firing }}
+	 - Message: {{ .Annotations.description }}
+	Labels:
+	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Annotations:
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Source: {{ .GeneratorURL }}
+	{{ end }}
+	{{- end }}
+	{{ if gt (len .Alerts.Resolved) 0 -}}
+	Alerts Resolved:
+	{{ range .Alerts.Resolved }}
+	 - Message: {{ .Annotations.description }}
+	Labels:
+	{{ range .Labels.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Annotations:
+	{{ range .Annotations.SortedPairs }}   - {{ .Name }} = {{ .Value }}
+	{{ end }}   Source: {{ .GeneratorURL }}
+	{{ end }}
 	{{- end }}`,
 	severity: '{{ (index .Alerts 0).Labels.severity }}',
 	client: 'SigNoz Alert Manager',

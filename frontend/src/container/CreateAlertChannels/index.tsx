@@ -608,6 +608,23 @@ function CreateAlertChannels({
 		[performChannelTest],
 	);
 
+	const getInitialConfigForType = (): Partial<
+		PagerChannel & OpsgenieChannel & EmailChannel & GoogleChatChannel
+	> => {
+		switch (type) {
+			case ChannelType.Pagerduty:
+				return PagerInitialConfig;
+			case ChannelType.Opsgenie:
+				return OpsgenieInitialConfig;
+			case ChannelType.Email:
+				return EmailInitialConfig;
+			case ChannelType.GoogleChat:
+				return GoogleChatInitialConfig;
+			default:
+				return {};
+		}
+	};
+
 	return (
 		<div className="create-alert-channels-container">
 			<FormAlertChannels
@@ -624,10 +641,7 @@ function CreateAlertChannels({
 					initialValue: {
 						type,
 						...selectedConfig,
-						...PagerInitialConfig,
-						...OpsgenieInitialConfig,
-						...EmailInitialConfig,
-						...GoogleChatInitialConfig,
+						...getInitialConfigForType(),
 					},
 				}}
 			/>
