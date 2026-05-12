@@ -49,8 +49,8 @@ export const NON_FILTERABLE_KEYS = new Set([
 
 // Keys whose entire subtree is non-queryable. Hides filter/group-by for the
 // key itself AND any descendant leaf. Used for nested data that exists on the
-// span payload but isn't queryable as a trace attribute (e.g. span events).
-export const NON_FILTERABLE_ANCESTOR_KEYS = new Set(['events']);
+// span payload but isn't queryable as a trace attribute (e.g. span events, links).
+export const NON_FILTERABLE_ANCESTOR_KEYS = new Set(['events', 'references']);
 
 const shouldHideForKey = (
 	leafKey: string,
