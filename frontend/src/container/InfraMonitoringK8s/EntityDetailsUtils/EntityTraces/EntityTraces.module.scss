@@ -1,0 +1,48 @@
+.container {
+	margin-top: var(--spacing-8);
+}
+
+.filterContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: var(--spacing-6);
+	border-radius: var(--radius);
+	border: 1px solid var(--l1-border);
+
+	:global(.ant-select-selector) {
+		border-radius: 2px;
+		border: 1px solid var(--l1-border) !important;
+		background-color: var(--l3-background) !important;
+
+		input {
+			font-size: 12px;
+		}
+
+		:global(.ant-tag .ant-typography) {
+			font-size: 12px;
+		}
+	}
+}
+
+.filterContainerTime {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+}
+
+.filterQuerySearch {
+	flex: 1;
+}
+
+.entityTracesTable {
+	margin-top: var(--spacing-8);
+}
+
+.controls {
+	margin-bottom: 1rem;
+	width: 100%;
+	display: flex;
+	justify-content: flex-end;
+}
