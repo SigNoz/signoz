@@ -1,10 +1,13 @@
 import type { ReactNode } from 'react';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
+
+const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
@@ -85,6 +88,21 @@ describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		server.use(
+			// Grant all authz permissions by default
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
+				return res(
+					ctx.status(200),
+					ctx.json({
+						data: payload.map((txn) => ({
+							relation: txn.relation,
+							object: txn.object,
+							authorized: true,
+						})),
+						status: 'success',
+					}),
+				);
+			}),
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI })),
 			),

@@ -1,10 +1,32 @@
 import type { ReactNode } from 'react';
+import {
+	AuthtypesGettableTransactionDTO,
+	AuthtypesTransactionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { ENVIRONMENT } from 'constants/env';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
+
+const BASE_URL = ENVIRONMENT.baseURL || '';
+const AUTHZ_CHECK_URL = `${BASE_URL}/api/v1/authz/check`;
+
+function authzMockResponse(
+	payload: AuthtypesTransactionDTO[],
+	authorizedByIndex: boolean[],
+): { data: AuthtypesGettableTransactionDTO[]; status: string } {
+	return {
+		data: payload.map((txn, i) => ({
+			relation: txn.relation,
+			object: txn.object,
+			authorized: authorizedByIndex[i] ?? false,
+		})),
+		status: 'success',
+	};
+}
 
 jest.mock('@signozhq/ui/drawer', () => ({
 	...jest.requireActual('@signozhq/ui/drawer'),
@@ -98,6 +120,18 @@ describe('ServiceAccountDrawer', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
 		);
 	});
 
@@ -322,6 +356,106 @@ describe('ServiceAccountDrawer', () => {
 			),
 		).resolves.toBeInTheDocument();
 	});
+
+	it('shows PermissionDeniedCallout inside drawer when read permission is denied', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => false),
+						),
+					),
+				);
+			}),
+		);
+
+		renderDrawer();
+
+		await waitFor(() => {
+			expect(screen.getByText(/serviceaccount:read/)).toBeInTheDocument();
+		});
+	});
+
+	it('shows drawer content when read permission is granted', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+		expect(screen.queryByText(/serviceaccount:read/)).not.toBeInTheDocument();
+	});
+
+	it('disables Save button when update permission is denied', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				// Deny update, grant everything else (match by relation+object)
+				return res(
+					ctx.status(200),
+					ctx.json({
+						data: payload.map((txn: { relation: string; object: string }) => ({
+							relation: txn.relation,
+							object: txn.object,
+							authorized: !(txn.relation === 'update'),
+						})),
+						status: 'success',
+					}),
+				);
+			}),
+		);
+
+		renderDrawer();
+		// When update is denied, name renders as read-only text (not an input)
+		await screen.findByText('CI Bot');
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).toBeDisabled());
+	});
+
+	it('disables Delete button when delete permission is denied', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				// Deny delete, grant everything else (match by relation+object)
+				return res(
+					ctx.status(200),
+					ctx.json({
+						data: payload.map((txn: { relation: string; object: string }) => ({
+							relation: txn.relation,
+							object: txn.object,
+							authorized: !(txn.relation === 'delete'),
+						})),
+						status: 'success',
+					}),
+				);
+			}),
+		);
+
+		renderDrawer();
+		await screen.findByDisplayValue('CI Bot');
+
+		const deleteBtn = screen.getByRole('button', {
+			name: /Delete Service Account/i,
+		});
+		await waitFor(() => expect(deleteBtn).toBeDisabled());
+	});
 });
 
 describe('ServiceAccountDrawer – save-error UX', () => {
@@ -359,6 +493,18 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
 		);
 	});
 

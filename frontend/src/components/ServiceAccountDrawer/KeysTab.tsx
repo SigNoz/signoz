@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { Skeleton, Table, Tooltip } from 'antd';
+import { Skeleton, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
@@ -17,12 +18,15 @@ interface KeysTabProps {
 	keys: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	isLoading: boolean;
 	isDisabled?: boolean;
+	canUpdate?: boolean;
+	accountId?: string;
 	currentPage: number;
 	pageSize: number;
 }
 
 interface BuildColumnsParams {
 	isDisabled: boolean;
+	accountId: string;
 	onRevokeClick: (keyId: string) => void;
 	handleformatLastObservedAt: (
 		lastObservedAt: Date | null | undefined,
@@ -42,6 +46,7 @@ function formatExpiry(expiresAt: number): JSX.Element {
 
 function buildColumns({
 	isDisabled,
+	accountId,
 	onRevokeClick,
 	handleformatLastObservedAt,
 }: BuildColumnsParams): ColumnsType<ServiceaccounttypesGettableFactorAPIKeyDTO> {
@@ -93,7 +98,12 @@ function buildColumns({
 			width: 48,
 			align: 'right' as const,
 			render: (_, record): JSX.Element => (
-				<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
+				<AuthZTooltip
+					relation="update"
+					object={`serviceaccount:${accountId}`}
+					permissionName="serviceaccount:update"
+					enabled={!isDisabled && !!accountId}
+				>
 					<Button
 						variant="ghost"
 						size="sm"
@@ -107,7 +117,7 @@ function buildColumns({
 					>
 						<X size={12} />
 					</Button>
-				</Tooltip>
+				</AuthZTooltip>
 			),
 		},
 	];
@@ -117,6 +127,7 @@ function KeysTab({
 	keys,
 	isLoading,
 	isDisabled = false,
+	accountId = '',
 	currentPage,
 	pageSize,
 }: KeysTabProps): JSX.Element {
@@ -149,8 +160,14 @@ function KeysTab({
 	);
 
 	const columns = useMemo(
-		() => buildColumns({ isDisabled, onRevokeClick, handleformatLastObservedAt }),
-		[isDisabled, onRevokeClick, handleformatLastObservedAt],
+		() =>
+			buildColumns({
+				isDisabled,
+				accountId,
+				onRevokeClick,
+				handleformatLastObservedAt,
+			}),
+		[isDisabled, accountId, onRevokeClick, handleformatLastObservedAt],
 	);
 
 	if (isLoading) {

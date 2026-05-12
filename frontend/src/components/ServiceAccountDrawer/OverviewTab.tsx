@@ -3,6 +3,7 @@ import { LockKeyhole } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Input } from '@signozhq/ui/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
@@ -19,6 +20,8 @@ interface OverviewTabProps {
 	localRoles: string[];
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
+	canUpdate?: boolean;
+	canAttachRole?: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
 	rolesError?: boolean;
@@ -34,6 +37,8 @@ function OverviewTab({
 	localRoles,
 	onRolesChange,
 	isDisabled,
+	canUpdate = true,
+	canAttachRole: _canAttachRole = true,
 	availableRoles,
 	rolesLoading,
 	rolesError,
@@ -63,7 +68,7 @@ function OverviewTab({
 				<label className="sa-drawer__label" htmlFor="sa-name">
 					Name
 				</label>
-				{isDisabled ? (
+				{isDisabled || !canUpdate ? (
 					<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 						<span className="sa-drawer__input-text">{localName || '—'}</span>
 						<LockKeyhole size={14} className="sa-drawer__lock-icon" />
@@ -111,18 +116,34 @@ function OverviewTab({
 						<LockKeyhole size={14} className="sa-drawer__lock-icon" />
 					</div>
 				) : (
-					<RolesSelect
-						id="sa-roles"
-						mode="multiple"
-						roles={availableRoles}
-						loading={rolesLoading}
-						isError={rolesError}
-						error={rolesErrorObj}
-						onRefetch={onRefetchRoles}
-						value={localRoles}
-						onChange={onRolesChange}
-						placeholder="Select roles"
-					/>
+					<AuthZTooltip
+						checks={[
+							{
+								relation: 'attach',
+								object: `serviceaccount:${account.id}`,
+								permissionName: 'serviceaccount:attach',
+							},
+							{
+								relation: 'attach',
+								object: 'role:*',
+								permissionName: 'role:attach',
+							},
+						]}
+						enabled={!isDisabled}
+					>
+						<RolesSelect
+							id="sa-roles"
+							mode="multiple"
+							roles={availableRoles}
+							loading={rolesLoading}
+							isError={rolesError}
+							error={rolesErrorObj}
+							onRefetch={onRefetchRoles}
+							value={localRoles}
+							onChange={onRolesChange}
+							placeholder="Select roles"
+						/>
+					</AuthZTooltip>
 				)}
 			</div>
 

@@ -1,0 +1,11 @@
+.wrapper {
+	display: inline-flex;
+	cursor: not-allowed;
+}
+
+.disabledFieldset {
+	border: none;
+	margin: 0;
+	padding: 0;
+	display: contents;
+}

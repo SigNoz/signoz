@@ -5,8 +5,12 @@ import { Input } from '@signozhq/ui/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
+import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
+import type { AuthZObject } from 'hooks/useAuthZ/types';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
 	PAGE_SIZE,
@@ -208,64 +212,83 @@ function ServiceAccountsSettings(): JSX.Element {
 						</a>
 					</p>
 				</div>
-
-				<div className="sa-settings__controls">
-					<Dropdown
-						menu={{ items: filterMenuItems }}
-						trigger={['click']}
-						overlayClassName="sa-settings-filter-dropdown"
-					>
-						<Button
-							variant="solid"
-							color="secondary"
-							className="sa-settings-filter-trigger"
-						>
-							<span>{filterLabel}</span>
-							<ChevronDown size={12} className="sa-settings-filter-trigger__chevron" />
-						</Button>
-					</Dropdown>
-
-					<div className="sa-settings__search">
-						<Input
-							type="search"
-							name="service-accounts-search"
-							placeholder="Search by name or email..."
-							value={searchQuery}
-							onChange={(e): void => {
-								setSearchQuery(e.target.value);
-								setPage(1);
-							}}
-							className="sa-settings-search-input"
-						/>
-					</div>
-
-					<Button
-						variant="solid"
-						color="primary"
-						onClick={async (): Promise<void> => {
-							await setIsCreateModalOpen(true);
-						}}
-					>
-						<Plus size={12} />
-						New Service Account
-					</Button>
-				</div>
 			</div>
 
-			{isError ? (
-				<ErrorInPlace
-					error={toAPIError(
-						error,
-						'An unexpected error occurred while fetching service accounts.',
+			<GuardAuthZ
+				relation="list"
+				object={'serviceaccount' as AuthZObject<'list'>}
+				fallbackOnNoPermissions={(): JSX.Element => (
+					<PermissionDeniedFullPage permissionName="serviceaccount:list" />
+				)}
+			>
+				<div className="sa-settings__list-section">
+					<div className="sa-settings__controls">
+						<Dropdown
+							menu={{ items: filterMenuItems }}
+							trigger={['click']}
+							overlayClassName="sa-settings-filter-dropdown"
+						>
+							<Button
+								variant="solid"
+								color="secondary"
+								className="sa-settings-filter-trigger"
+							>
+								<span>{filterLabel}</span>
+								<ChevronDown
+									size={12}
+									className="sa-settings-filter-trigger__chevron"
+								/>
+							</Button>
+						</Dropdown>
+
+						<div className="sa-settings__search">
+							<Input
+								type="search"
+								name="service-accounts-search"
+								placeholder="Search by name or email..."
+								value={searchQuery}
+								onChange={(e): void => {
+									setSearchQuery(e.target.value);
+									setPage(1);
+								}}
+								className="sa-settings-search-input"
+							/>
+						</div>
+
+						<AuthZTooltip
+							relation="create"
+							object="serviceaccount"
+							permissionName="serviceaccount:create"
+						>
+							<Button
+								variant="solid"
+								color="primary"
+								onClick={async (): Promise<void> => {
+									await setIsCreateModalOpen(true);
+								}}
+							>
+								<Plus size={12} />
+								New Service Account
+							</Button>
+						</AuthZTooltip>
+					</div>
+
+					{isError ? (
+						<ErrorInPlace
+							error={toAPIError(
+								error,
+								'An unexpected error occurred while fetching service accounts.',
+							)}
+						/>
+					) : (
+						<ServiceAccountsTable
+							data={filteredAccounts}
+							loading={isLoading}
+							onRowClick={handleRowClick}
+						/>
 					)}
-				/>
-			) : (
-				<ServiceAccountsTable
-					data={filteredAccounts}
-					loading={isLoading}
-					onRowClick={handleRowClick}
-				/>
-			)}
+				</div>
+			</GuardAuthZ>
 
 			<CreateServiceAccountModal />
 
