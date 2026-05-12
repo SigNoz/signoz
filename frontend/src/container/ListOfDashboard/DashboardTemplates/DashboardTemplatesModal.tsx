@@ -13,7 +13,13 @@ import NginxIcon from 'assets/CustomIcons/NginxIcon';
 import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
-import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
+import {
+	ConciergeBell,
+	DraftingCompass,
+	Drill,
+	Plus,
+	X,
+} from '@signozhq/icons';
 import { DashboardTemplate } from 'types/api/dashboard/getAll';
 
 import blankDashboardTemplatePreviewUrl from '@/assets/Images/blankDashboardTemplatePreview.svg';

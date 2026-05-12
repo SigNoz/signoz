@@ -22,7 +22,7 @@ import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/uti
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
-import { Edit2, Save, X } from 'lucide-react';
+import { PenLine, Save, X } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
@@ -333,7 +333,7 @@ function Metadata({
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 				>
-					<Edit2 size={14} />
+					<PenLine size={14} />
 					<Typography.Text>Edit</Typography.Text>
 				</Button>
 			</div>

@@ -6,18 +6,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Store interface {
+type SpanMapperStore interface {
 	// Group operations
-	ListSpanMapperGroups(ctx context.Context, orgID valuer.UUID, q *ListSpanMapperGroupsQuery) ([]*StorableSpanMapperGroup, error)
-	GetSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID) (*StorableSpanMapperGroup, error)
-	CreateSpanMapperGroup(ctx context.Context, group *StorableSpanMapperGroup) error
-	UpdateSpanMapperGroup(ctx context.Context, group *StorableSpanMapperGroup) error
-	DeleteSpanMapperGroup(ctx context.Context, orgID, id valuer.UUID) error
+	ListGroups(ctx context.Context, orgID valuer.UUID, q *ListSpanMapperGroupsQuery) ([]*SpanMapperGroup, error)
+	GetGroup(ctx context.Context, orgID, id valuer.UUID) (*SpanMapperGroup, error)
+	CreateGroup(ctx context.Context, group *SpanMapperGroup) error
+	UpdateGroup(ctx context.Context, group *SpanMapperGroup) error
+	DeleteGroup(ctx context.Context, orgID, id valuer.UUID) error
 
 	// Mapper operations
-	ListSpanMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*StorableSpanMapper, error)
-	GetSpanMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*StorableSpanMapper, error)
-	CreateSpanMapper(ctx context.Context, mapper *StorableSpanMapper) error
-	UpdateSpanMapper(ctx context.Context, mapper *StorableSpanMapper) error
-	DeleteSpanMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
+	ListMappers(ctx context.Context, orgID, groupID valuer.UUID) ([]*SpanMapper, error)
+	GetMapper(ctx context.Context, orgID, groupID, id valuer.UUID) (*SpanMapper, error)
+	CreateMapper(ctx context.Context, mapper *SpanMapper) error
+	UpdateMapper(ctx context.Context, mapper *SpanMapper) error
+	DeleteMapper(ctx context.Context, orgID, groupID, id valuer.UUID) error
 }

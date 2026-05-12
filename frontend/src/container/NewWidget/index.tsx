@@ -5,7 +5,7 @@ import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { WarningOutlined } from '@ant-design/icons';
+import { Check, SolidAlertTriangle, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import {
 	ResizableHandle,
@@ -42,7 +42,6 @@ import {
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
-import { Check, X } from 'lucide-react';
 import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 import {
 	clearSelectedRowWidgetId,
@@ -956,7 +955,7 @@ function NewWidget({
 				title={
 					isQueryModified ? (
 						<Space>
-							<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+							<SolidAlertTriangle size={16} color="#fdd600" />
 							Unsaved Changes
 						</Space>
 					) : (
@@ -987,7 +986,7 @@ function NewWidget({
 			<Modal
 				title={
 					<Space>
-						<WarningOutlined style={{ fontSize: '16px', color: '#fdd600' }} />
+						<SolidAlertTriangle size={16} color="#fdd600" />
 						Unsaved Changes
 					</Space>
 				}

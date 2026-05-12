@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { LoaderCircle } from '@signozhq/icons';
+import { LoaderCircle, CircleCheck } from '@signozhq/icons';
 import { Spin } from 'antd';
-import { CircleCheck } from 'lucide-react';
 
 import solidXCircleUrl from '@/assets/Icons/solid-x-circle.svg';
 
@@ -25,7 +24,7 @@ export default function QueryStatus(
 				<Spin
 					spinning
 					size="small"
-					indicator={<LoaderCircle className="animate-spin" />}
+					indicator={<LoaderCircle className="animate-spin" size="md" />}
 				/>
 			);
 		}

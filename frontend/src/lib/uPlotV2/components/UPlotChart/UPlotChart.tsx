@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import * as Sentry from '@sentry/react';
 import { Typography } from '@signozhq/ui/typography';
 import { isEqual } from 'lodash-es';
-import { LineChart } from 'lucide-react';
+import { ChartLine } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import uPlot, { AlignedData, Options } from 'uplot';
 
@@ -182,7 +182,7 @@ export default function UPlotChart({
 					height: `${height}px`,
 				}}
 			>
-				<LineChart size={48} strokeWidth={0.5} />
+				<ChartLine size={48} strokeWidth={0.5} />
 				<Typography>No Data</Typography>
 			</div>
 		);

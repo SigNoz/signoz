@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Popover } from 'antd';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';

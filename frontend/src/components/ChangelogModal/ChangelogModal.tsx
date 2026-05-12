@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { Button, Modal } from 'antd';
+import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
+import { Button, Flex, Modal } from 'antd';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { ChevronsDown, ScrollText } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { UserPreference } from 'types/api/preferences/preference';
@@ -116,15 +115,17 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				>
 					{!isCloudUser && (
 						<div className="changelog-modal-footer-ctas">
-							<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
-								Skip for now
+							<Button type="default" onClick={onClose}>
+								<Flex align="center" gap="4px">
+									<X size="md" />
+									Skip for now
+								</Flex>
 							</Button>
-							<Button
-								type="primary"
-								icon={<CheckOutlined />}
-								onClick={onClickUpdateWorkspace}
-							>
-								Update my workspace
+							<Button type="primary" onClick={onClickUpdateWorkspace}>
+								<Flex align="center" gap="4px">
+									<Check size="md" />
+									Update my workspace
+								</Flex>
 							</Button>
 						</div>
 					)}
