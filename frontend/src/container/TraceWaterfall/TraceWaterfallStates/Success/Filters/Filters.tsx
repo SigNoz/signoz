@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { InfoCircleOutlined, LoadingOutlined } from '@ant-design/icons';
-import { Button, Spin, Tooltip, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Loader } from '@signozhq/icons';
+import { Button, Spin, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -187,7 +189,9 @@ function Filters({
 					/>
 				</div>
 			)}
-			{isFetching && <Spin indicator={<LoadingOutlined spin />} size="small" />}
+			{isFetching && (
+				<Spin indicator={<Loader className="animate-spin" />} size="small" />
+			)}
 			{error && (
 				<Tooltip title={(error as AxiosError)?.message || 'Something went wrong'}>
 					<InfoCircleOutlined size={14} />

@@ -11,7 +11,8 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { USER_ROLES } from 'types/roles';
 import { getBaseUrl } from 'utils/basePath';
 
-import { Badge, toast } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { toast } from '@signozhq/ui/sonner';
 import Spinner from 'components/Spinner';
 import AuthCard from './AuthCard/AuthCard';
 import ClientTabs from './ClientTabs/ClientTabs';

@@ -188,6 +188,87 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByTestId('suffix-content')).toBeInTheDocument();
 			});
 		});
+
+		it('renders total count when showTotalCount is true', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 100');
+			});
+		});
+
+		it('renders total count with label when totalCountLabel is provided', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 50,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+						totalCountLabel: 'Pods',
+					},
+				},
+			});
+
+			await waitFor(() => {
+				const totalCount = screen.getByTestId('pagination-total-count');
+				expect(totalCount).toBeInTheDocument();
+				expect(totalCount).toHaveTextContent('Showing 1 - 10 of 50 Pods');
+			});
+		});
+
+		it('does not render total count when showTotalCount is false', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 100,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: false,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('navigation')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not render total count when total is 0', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: {
+						total: 0,
+						defaultPage: 1,
+						defaultLimit: 10,
+						showTotalCount: true,
+					},
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByRole('table')).toBeInTheDocument();
+			});
+
+			expect(
+				screen.queryByTestId('pagination-total-count'),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	describe('sorting', () => {

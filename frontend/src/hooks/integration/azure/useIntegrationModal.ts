@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { Form, FormInstance } from 'antd';
 import {
 	CreateAccountMutationResult,
