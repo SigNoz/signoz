@@ -3,6 +3,7 @@ import {
 	removeKeysFromExpression,
 } from 'components/QueryBuilderV2/utils';
 import { cloneDeep, isArray, isEmpty } from 'lodash-es';
+import { extractQueryPairs } from 'utils/queryContextUtils';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import {
 	IBuilderQuery,
@@ -155,6 +156,294 @@ const updateAfterRemoval = (
 			},
 		},
 	};
+};
+
+const escapeRegExp = (value: string): string =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const createVariablePlaceholderRegExp = (variableName: string): RegExp => {
+	const escapedName = escapeRegExp(variableName);
+	// (?![\w.]) prevents $env from matching inside $environment or $env.attr
+	return new RegExp(
+		`(\\$${escapedName}(?![\\w.])|\\{\\{\\s*\\.?${escapedName}\\s*\\}\\}|\\[\\[\\s*${escapedName}\\s*\\]\\])`,
+		'g',
+	);
+};
+
+// Create a fresh regex per call to avoid g-flag lastIndex state issues
+const matchesVariablePlaceholder = (
+	text: string,
+	variableName: string,
+): boolean => createVariablePlaceholderRegExp(variableName).test(text);
+
+const removeVariablePlaceholderFromFilterItems = (
+	items: TagFilterItem[],
+	variableName: string,
+): TagFilterItem[] =>
+	items
+		.map((item) => {
+			if (isArray(item.value)) {
+				const cleaned = (item.value as (string | number | boolean)[]).filter(
+					(v) => !matchesVariablePlaceholder(String(v), variableName),
+				);
+				return { ...item, value: cleaned };
+			}
+			return item;
+		})
+		.filter((item) => {
+			if (isArray(item.value)) {
+				return (item.value as unknown[]).length > 0;
+			}
+			return !matchesVariablePlaceholder(String(item.value), variableName);
+		});
+
+/**
+ * Removes entire key-value clauses from a filter expression where the value
+ * is a reference to the given variable. Uses the ANTLR-aware removeKeysFromExpression
+ * so that surrounding AND/OR operators are also cleaned up correctly (no dangling operators).
+ */
+const removeVariableFromExpression = (
+	expression: string | undefined,
+	variableName: string,
+): string => {
+	if (!expression) {
+		return '';
+	}
+
+	const queryPairs = extractQueryPairs(expression);
+
+	const keysToRemove = queryPairs
+		.filter((pair) => {
+			const singleValue = pair.value?.toString() ?? '';
+			const listValues = (pair.valueList ?? []).join(' ');
+			return (
+				matchesVariablePlaceholder(singleValue, variableName) ||
+				matchesVariablePlaceholder(listValues, variableName)
+			);
+		})
+		.map((pair) => pair.key);
+
+	if (keysToRemove.length === 0) {
+		return expression;
+	}
+
+	return removeKeysFromExpression(expression, keysToRemove, true);
+};
+
+const removeVariablePlaceholders = (
+	text: string | undefined,
+	variableName: string,
+): string => {
+	if (!text) {
+		return '';
+	}
+
+	return text
+		.replace(createVariablePlaceholderRegExp(variableName), '')
+		.replace(/\s{2,}/g, ' ')
+		.trim();
+};
+
+const removeVariableReferencesFromQueryData = (
+	queryData: IBuilderQuery,
+	variableName: string,
+	dynamicVariablesAttribute?: string,
+): IBuilderQuery => {
+	let updatedQueryData = { ...queryData };
+
+	if (dynamicVariablesAttribute) {
+		const filters = updatedQueryData.filters?.items || [];
+		const filteredItems = filters.filter(
+			(item) => item.key?.key !== dynamicVariablesAttribute,
+		);
+
+		updatedQueryData = {
+			...updatedQueryData,
+			filters: {
+				...updatedQueryData.filters,
+				items: filteredItems,
+				op: updatedQueryData.filters?.op || 'AND',
+			},
+			filter: {
+				...updatedQueryData.filter,
+				expression: removeKeysFromExpression(
+					updatedQueryData.filter?.expression ?? '',
+					[dynamicVariablesAttribute],
+					true,
+				),
+			},
+			expression: removeKeysFromExpression(
+				updatedQueryData.expression ?? '',
+				[dynamicVariablesAttribute],
+				true,
+			),
+		};
+	}
+
+	updatedQueryData = {
+		...updatedQueryData,
+		filters: {
+			...updatedQueryData.filters,
+			items: removeVariablePlaceholderFromFilterItems(
+				updatedQueryData.filters?.items || [],
+				variableName,
+			),
+			op: updatedQueryData.filters?.op || 'AND',
+		},
+		filter: {
+			...updatedQueryData.filter,
+			// Use ANTLR-aware removal so the whole key-value clause is removed
+			// and no dangling AND/OR operators are left behind.
+			expression: removeVariableFromExpression(
+				updatedQueryData.filter?.expression,
+				variableName,
+			),
+		},
+		expression: removeVariableFromExpression(
+			updatedQueryData.expression,
+			variableName,
+		),
+		legend: removeVariablePlaceholders(updatedQueryData.legend, variableName),
+	};
+
+	return updatedQueryData;
+};
+
+const removeVariableReferencesFromWidget = (
+	widget: Widgets,
+	variableName: string,
+	dynamicVariablesAttribute?: string,
+): Widgets => {
+	let updatedWidget = { ...widget };
+
+	if (updatedWidget.query?.builder?.queryData) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				builder: {
+					...updatedWidget.query.builder,
+					queryData: updatedWidget.query.builder.queryData.map((queryData) =>
+						removeVariableReferencesFromQueryData(
+							queryData,
+							variableName,
+							dynamicVariablesAttribute,
+						),
+					),
+				},
+			},
+		};
+	}
+
+	if (updatedWidget.query?.promql) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				promql: updatedWidget.query.promql.map((promqlQuery) => ({
+					...promqlQuery,
+					query: removeVariablePlaceholders(promqlQuery.query, variableName),
+					legend: removeVariablePlaceholders(promqlQuery.legend, variableName),
+				})),
+			},
+		};
+	}
+
+	if (updatedWidget.query?.clickhouse_sql) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				clickhouse_sql: updatedWidget.query.clickhouse_sql.map((sqlQuery) => ({
+					...sqlQuery,
+					query: removeVariablePlaceholders(sqlQuery.query, variableName),
+					legend: removeVariablePlaceholders(sqlQuery.legend, variableName),
+				})),
+			},
+		};
+	}
+
+	if (updatedWidget.query?.builder?.queryFormulas) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				builder: {
+					...updatedWidget.query.builder,
+					queryFormulas: updatedWidget.query.builder.queryFormulas.map(
+						(formula) => ({
+							...formula,
+							expression: removeVariablePlaceholders(formula.expression, variableName),
+							legend: removeVariablePlaceholders(formula.legend, variableName),
+						}),
+					),
+				},
+			},
+		};
+	}
+
+	if (updatedWidget.query?.builder?.queryTraceOperator) {
+		updatedWidget = {
+			...updatedWidget,
+			query: {
+				...updatedWidget.query,
+				builder: {
+					...updatedWidget.query.builder,
+					queryTraceOperator: updatedWidget.query.builder.queryTraceOperator.map(
+						(traceQuery) =>
+							removeVariableReferencesFromQueryData(
+								traceQuery,
+								variableName,
+								dynamicVariablesAttribute,
+							),
+					),
+				},
+			},
+		};
+	}
+
+	updatedWidget = {
+		...updatedWidget,
+		title: removeVariablePlaceholders(
+			updatedWidget.title as string,
+			variableName,
+		),
+		description: removeVariablePlaceholders(
+			updatedWidget.description,
+			variableName,
+		),
+	};
+
+	return updatedWidget;
+};
+
+export const removeVariableReferencesFromDashboard = (
+	dashboard: Dashboard | undefined,
+	variableName: string,
+	dynamicVariablesAttribute?: string,
+): Dashboard | undefined => {
+	if (!dashboard || !variableName) {
+		return dashboard;
+	}
+
+	const updatedDashboard = cloneDeep(dashboard);
+
+	if (updatedDashboard.data.widgets) {
+		updatedDashboard.data.widgets = updatedDashboard.data.widgets.map(
+			(widget) => {
+				if ('query' in widget) {
+					return removeVariableReferencesFromWidget(
+						widget as Widgets,
+						variableName,
+						dynamicVariablesAttribute,
+					);
+				}
+				return widget;
+			},
+		);
+	}
+
+	return updatedDashboard;
 };
 
 /**
