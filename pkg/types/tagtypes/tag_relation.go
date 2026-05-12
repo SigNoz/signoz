@@ -14,7 +14,7 @@ func MustNewEntityType(name string) EntityType {
 type TagRelation struct {
 	bun.BaseModel `bun:"table:tag_relations,alias:tag_relations"`
 
-	EntityType EntityType  `json:"entityType" required:"true" bun:"entity_type,type:text,notnull"`
+	EntityType EntityType  `json:"entityType" required:"true" bun:"entity_type,pk,type:text,notnull"`
 	EntityID   valuer.UUID `json:"entityId" required:"true" bun:"entity_id,pk,type:text,notnull"`
 	TagID      valuer.UUID `json:"tagId" required:"true" bun:"tag_id,pk,type:text,notnull"`
 	OrgID      valuer.UUID `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
