@@ -159,9 +159,10 @@ export function TraceProvider({
 			isFieldAvailable(opt.field.name),
 		);
 
-		const colorByField = isFieldAvailable(persistedColorByField.name)
-			? persistedColorByField
-			: DEFAULT_COLOR_BY_FIELD;
+		const colorByField =
+			aggregations === undefined || isFieldAvailable(persistedColorByField.name)
+				? persistedColorByField
+				: DEFAULT_COLOR_BY_FIELD;
 
 		const getAggregationMap = (
 			type: WaterfallAggregationType,
