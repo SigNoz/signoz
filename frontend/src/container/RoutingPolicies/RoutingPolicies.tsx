@@ -1,9 +1,8 @@
 import { ChangeEvent, useMemo } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Input, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -75,12 +74,14 @@ function RoutingPolicies(): JSX.Element {
 					/>
 					<Tooltip title={tooltipTitle}>
 						<Button
-							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => handlePolicyDetailsModalOpen('create', null)}
 							disabled={disableCreateButton}
 						>
-							New routing policy
+							<Flex gap={4} align="center">
+								<Plus size={16} />
+								New routing policy
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

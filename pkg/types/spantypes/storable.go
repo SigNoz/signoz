@@ -19,7 +19,6 @@ type StorableSpanMapperGroup struct {
 
 	OrgID     valuer.UUID              `bun:"org_id,type:text,notnull"`
 	Name      string                   `bun:"name,type:text,notnull"`
-	Category  SpanMapperGroupCategory  `bun:"category,type:text,notnull"`
 	Condition SpanMapperGroupCondition `bun:"condition,type:jsonb,notnull"`
 	Enabled   bool                     `bun:"enabled,notnull,default:true"`
 }

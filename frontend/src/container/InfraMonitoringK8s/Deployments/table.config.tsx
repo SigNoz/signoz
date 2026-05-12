@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sDeploymentsData } from './api';
-import { Computer } from 'lucide-react';
+import { Computer } from '@signozhq/icons';
 
 export function getK8sDeploymentRowKey(deployment: K8sDeploymentsData): string {
 	return deployment.meta.k8s_deployment_name || deployment.deploymentName;

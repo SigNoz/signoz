@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sJobsData } from './api';
-import { Bolt } from 'lucide-react';
+import { Bolt } from '@signozhq/icons';
 
 export function getK8sJobRowKey(job: K8sJobsData): string {
 	return job.jobName || job.meta.k8s_job_name || '';

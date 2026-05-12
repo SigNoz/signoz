@@ -1,7 +1,7 @@
 import { SetStateAction } from 'react';
 import { Button, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Trash2, X } from 'lucide-react';
+import { Trash2, X } from '@signozhq/icons';
 
 import './PlannedDowntime.styles.scss';
 

@@ -6,7 +6,7 @@ import logEvent from 'api/common/logEvent';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { X } from 'lucide-react';
+import { X } from '@signozhq/icons';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';

@@ -1,4 +1,4 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRight } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 
@@ -31,7 +31,7 @@ function AlertInfoCard({
 					{subheader}
 				</Typography.Text>
 			</div>
-			<ArrowRightOutlined />
+			<ArrowRight size="md" />
 		</div>
 	);
 }

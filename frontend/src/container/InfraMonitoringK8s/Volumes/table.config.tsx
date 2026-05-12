@@ -8,7 +8,7 @@ import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
 import { K8sVolumesData } from './api';
-import { HardDrive } from 'lucide-react';
+import { HardDrive } from '@signozhq/icons';
 
 export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
 	return (

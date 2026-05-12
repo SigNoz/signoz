@@ -19,10 +19,6 @@ const (
 
 const MaxAllowedPointsInTimeSeries = 300
 
-const TraceTTL = "traces"
-const MetricsTTL = "metrics"
-const LogsTTL = "logs"
-
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"

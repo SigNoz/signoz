@@ -5185,19 +5185,17 @@ components:
           $ref: '#/components/schemas/SpantypesSpanMapperConfig'
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         name:
           type: string
       required:
       - name
-      - field_context
+      - fieldContext
       - config
       type: object
     SpantypesPostableSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         enabled:
@@ -5206,7 +5204,6 @@ components:
           type: string
       required:
       - name
-      - category
       - condition
       type: object
     SpantypesSpanMapper:
@@ -5220,7 +5217,7 @@ components:
           type: string
         enabled:
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
         group_id:
           type: string
@@ -5237,7 +5234,7 @@ components:
       - id
       - group_id
       - name
-      - field_context
+      - fieldContext
       - config
       - enabled
       type: object
@@ -5253,8 +5250,6 @@ components:
       type: object
     SpantypesSpanMapperGroup:
       properties:
-        category:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
         condition:
           $ref: '#/components/schemas/SpantypesSpanMapperGroupCondition'
         createdAt:
@@ -5279,13 +5274,11 @@ components:
       - id
       - orgId
       - name
-      - category
       - condition
       - enabled
       type: object
-    SpantypesSpanMapperGroupCategory:
-      type: object
     SpantypesSpanMapperGroupCondition:
+      nullable: true
       properties:
         attributes:
           items:
@@ -5329,7 +5322,7 @@ components:
         enabled:
           nullable: true
           type: boolean
-        field_context:
+        fieldContext:
           $ref: '#/components/schemas/SpantypesFieldContext'
       type: object
     SpantypesUpdatableSpanMapperGroup:
@@ -10380,12 +10373,6 @@ paths:
         org.
       operationId: ListSpanMapperGroups
       parameters:
-      - explode: true
-        in: query
-        name: category
-        schema:
-          $ref: '#/components/schemas/SpantypesSpanMapperGroupCategory'
-        style: deepObject
       - in: query
         name: enabled
         schema:

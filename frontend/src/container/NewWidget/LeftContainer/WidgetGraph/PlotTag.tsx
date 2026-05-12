@@ -1,5 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Spline } from 'lucide-react';
+import { Spline } from '@signozhq/icons';
 import { EQueryType } from 'types/common/dashboard';
 
 import QueryTypeTag from '../QueryTypeTag';

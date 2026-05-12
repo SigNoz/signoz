@@ -9,7 +9,7 @@ import {
 	updateUrlWithParams,
 } from 'container/NewWidget/RightContainer/ContextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from '@signozhq/icons';
 import { ContextLinkProps, Widgets } from 'types/api/dashboard/getAll';
 import { getBaseUrl } from 'utils/basePath';
 

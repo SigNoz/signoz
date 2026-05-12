@@ -55,7 +55,7 @@ describe('MenuItemGenerator', () => {
 		);
 
 		const spanElement = screen.getByRole('img', {
-			name: 'delete',
+			name: /delete view/i,
 		});
 
 		expect(spanElement).toBeInTheDocument();
