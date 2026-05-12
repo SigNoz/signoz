@@ -305,8 +305,17 @@ def _post_batches(
 
 
 def seed(
-    seeder_base_url: str, *, batch_size: int = 500, timeout: int = 60
+    seeder_base_url: str,
+    *,
+    batch_size: int = 500,
+    timeout: int = 60,
+    clear_first: bool = True,
 ) -> dict[str, int]:
+    """Wipe each signal table (via DELETE /telemetry/<signal>) and replay
+    the golden dataset with timestamps rebased to `now`. Each call leaves
+    the stack in the exact state the JSONL files describe — chart-data
+    assertions are reproducible across sessions regardless of how many
+    earlier sessions seeded."""
     for path in (METRICS_PATH, TRACES_PATH, LOGS_PATH):
         if not path.exists():
             raise FileNotFoundError(
@@ -318,6 +327,9 @@ def seed(
         microsecond=0, tzinfo=None
     )
     base = seeder_base_url.rstrip("/")
+    if clear_first:
+        for signal in ("metrics", "traces", "logs"):
+            requests.delete(f"{base}/telemetry/{signal}", timeout=timeout).raise_for_status()
     counts = {
         "metrics": _post_batches(
             base + "/telemetry/metrics",

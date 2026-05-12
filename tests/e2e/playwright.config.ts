@@ -59,6 +59,12 @@ export default defineConfig({
 			name: 'setup',
 			testDir: './bootstrap',
 			testMatch: /global\.setup\.ts/,
+			teardown: 'teardown',
+		},
+		{
+			name: 'teardown',
+			testDir: './bootstrap',
+			testMatch: /global\.teardown\.ts/,
 		},
 		{
 			name: 'chromium',
