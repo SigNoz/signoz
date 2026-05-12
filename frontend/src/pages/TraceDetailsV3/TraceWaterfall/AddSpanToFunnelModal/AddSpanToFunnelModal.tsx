@@ -10,7 +10,7 @@ import {
 	useFunnelsList,
 } from 'hooks/TracesFunnels/useFunnels';
 import { isEqual } from 'lodash-es';
-import { ArrowLeft, Check, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Search } from '@signozhq/icons';
 import FunnelConfiguration from 'pages/TracesFunnelDetails/components/FunnelConfiguration/FunnelConfiguration';
 import { TracesFunnelsContentRenderer } from 'pages/TracesFunnels';
 import CreateFunnel from 'pages/TracesFunnels/components/CreateFunnel/CreateFunnel';

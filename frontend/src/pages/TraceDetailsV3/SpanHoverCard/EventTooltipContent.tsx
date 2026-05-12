@@ -1,5 +1,5 @@
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { Diamond } from 'lucide-react';
+import { Diamond } from '@signozhq/icons';
 import { toFixed } from 'utils/toFixed';
 
 import './EventTooltipContent.styles.scss';

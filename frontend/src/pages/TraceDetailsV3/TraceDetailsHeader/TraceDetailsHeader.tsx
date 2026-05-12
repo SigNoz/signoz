@@ -9,7 +9,7 @@ import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import { ArrowLeft, CalendarClock, Server, Timer } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Server, Timer } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';

@@ -33,13 +33,13 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
-	AlertCircle,
 	ArrowUpRight,
 	ChevronDown,
 	ChevronRight,
+	CircleAlert,
 	Link,
 	ListPlus,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
@@ -793,7 +793,7 @@ function Success(props: ISuccessProps): JSX.Element {
 			{traceMetadata.hasMissingSpans && (
 				<div className="missing-spans">
 					<section className="left-info">
-						<AlertCircle size={14} />
+						<CircleAlert size={14} />
 						<span className="text">This trace has missing spans</span>
 					</section>
 					<Button

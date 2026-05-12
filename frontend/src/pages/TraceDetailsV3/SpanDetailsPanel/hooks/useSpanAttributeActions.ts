@@ -10,7 +10,7 @@ import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { ArrowDownToDot, ArrowUpFromDot } from 'lucide-react';
+import { ArrowDownToDot, ArrowUpFromDot } from '@signozhq/icons';
 import {
 	BaseAutocompleteData,
 	DataTypes,
