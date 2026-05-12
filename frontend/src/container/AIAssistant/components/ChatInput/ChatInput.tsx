@@ -181,14 +181,11 @@ interface ContextEntityItem {
 	value: string;
 }
 
-const CONTEXT_CATEGORY_ICONS: Record<
-	ContextCategory,
-	(props: { size?: number }) => JSX.Element
-> = {
+const CONTEXT_CATEGORY_ICONS = {
 	Dashboards: LayoutDashboard,
 	Alerts: Bell,
 	Services: ShieldCheck,
-};
+} satisfies Record<ContextCategory, unknown>;
 
 function fileToDataUrl(file: File): Promise<string> {
 	return new Promise((resolve, reject) => {

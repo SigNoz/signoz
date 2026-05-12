@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlertV2/context';
 import { AdvancedOptionsState } from 'container/CreateAlertV2/context/types';
 import dayjs from 'dayjs';
-import { Code, Edit3Icon } from 'lucide-react';
+import { Code, PencilLine } from '@signozhq/icons';
 
 import {
 	EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS,
@@ -49,7 +49,7 @@ function EvaluationCadenceDetails({
 	const tabs = [
 		{
 			label: 'Editor',
-			icon: <Edit3Icon size={14} />,
+			icon: <PencilLine size={14} />,
 			value: 'editor',
 		},
 		{

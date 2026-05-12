@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
+import { Plus, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -14,7 +14,6 @@ import dayjs from 'dayjs';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Search } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { USER_ROLES } from 'types/roles';
@@ -147,7 +146,6 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							icon={<PlusOutlined />}
 							type="primary"
 							onClick={(): void => {
 								setInitialValues({ ...defautlInitialValues, editMode: false });
@@ -157,7 +155,10 @@ export function PlannedDowntime(): JSX.Element {
 							}}
 							disabled={user?.role === USER_ROLES.VIEWER}
 						>
-							New downtime
+							<Flex align="center" gap={4}>
+								<Plus size={16} />
+								New downtime
+							</Flex>
 						</Button>
 					</Tooltip>
 				</Flex>

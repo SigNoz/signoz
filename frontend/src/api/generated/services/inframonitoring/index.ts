@@ -1,7 +1,7 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
 import { useMutation } from 'react-query';
@@ -12,18 +12,108 @@ import type {
 } from 'react-query';
 
 import type {
+	InframonitoringtypesPostableClustersDTO,
 	InframonitoringtypesPostableHostsDTO,
+	InframonitoringtypesPostableNamespacesDTO,
 	InframonitoringtypesPostableNodesDTO,
 	InframonitoringtypesPostablePodsDTO,
+	InframonitoringtypesPostableVolumesDTO,
+	ListClusters200,
 	ListHosts200,
+	ListNamespaces200,
 	ListNodes200,
 	ListPods200,
+	ListVolumes200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
+/**
+ * Returns a paginated list of Kubernetes clusters with key aggregated metrics derived by summing per-node values within the group: CPU usage, CPU allocatable, memory working set, memory allocatable. Each row also reports per-group nodeCountsByReadiness ({ ready, notReady } from each node's latest k8s.node.condition_ready value) and per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value). Each cluster includes metadata attributes (k8s.cluster.name). The response type is 'list' for the default k8s.cluster.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates nodes and pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / cpu_allocatable / memory / memory_allocatable, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (clusterCPU, clusterCPUAllocatable, clusterMemory, clusterMemoryAllocatable) return -1 as a sentinel when no data is available for that field.
+ * @summary List Clusters for Infra Monitoring
+ */
+export const listClusters = (
+	inframonitoringtypesPostableClustersDTO: BodyType<InframonitoringtypesPostableClustersDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListClusters200>({
+		url: `/api/v2/infra_monitoring/clusters`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableClustersDTO,
+		signal,
+	});
+};
+
+export const getListClustersMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listClusters>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listClusters>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+	TContext
+> => {
+	const mutationKey = ['listClusters'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listClusters>>,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listClusters(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListClustersMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listClusters>>
+>;
+export type ListClustersMutationBody =
+	BodyType<InframonitoringtypesPostableClustersDTO>;
+export type ListClustersMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Clusters for Infra Monitoring
+ */
+export const useListClusters = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listClusters>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listClusters>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableClustersDTO> },
+	TContext
+> => {
+	const mutationOptions = getListClustersMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
 /**
  * Returns a paginated list of hosts with key infrastructure metrics: CPU usage (%), memory usage (%), I/O wait (%), disk usage (%), and 15-minute load average. Each host includes its current status (active/inactive based on metrics reported in the last 10 minutes) and metadata attributes (e.g., os.type). Supports filtering via a filter expression, filtering by host status, custom groupBy to aggregate hosts by any attribute, ordering by any of the five metrics, and pagination via offset/limit. The response type is 'list' for the default host.name grouping or 'grouped_list' for custom groupBy keys. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (cpu, memory, wait, load15, diskUsage) return -1 as a sentinel when no data is available for that field.
  * @summary List Hosts for Infra Monitoring
@@ -105,6 +195,90 @@ export const useListHosts = <
 	TContext
 > => {
 	const mutationOptions = getListHostsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes namespaces with key aggregated pod metrics: CPU usage and memory working set (summed across pods in the group), plus per-group podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each pod's latest k8s.pod.phase value in the window). Each namespace includes metadata attributes (k8s.namespace.name, k8s.cluster.name). The response type is 'list' for the default k8s.namespace.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates pods in the group. Supports filtering via a filter expression, custom groupBy, ordering by cpu / memory, and pagination via offset/limit. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (namespaceCPU, namespaceMemory) return -1 as a sentinel when no data is available for that field.
+ * @summary List Namespaces for Infra Monitoring
+ */
+export const listNamespaces = (
+	inframonitoringtypesPostableNamespacesDTO: BodyType<InframonitoringtypesPostableNamespacesDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListNamespaces200>({
+		url: `/api/v2/infra_monitoring/namespaces`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableNamespacesDTO,
+		signal,
+	});
+};
+
+export const getListNamespacesMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listNamespaces>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	TContext
+> => {
+	const mutationKey = ['listNamespaces'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listNamespaces(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListNamespacesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listNamespaces>>
+>;
+export type ListNamespacesMutationBody =
+	BodyType<InframonitoringtypesPostableNamespacesDTO>;
+export type ListNamespacesMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Namespaces for Infra Monitoring
+ */
+export const useListNamespaces = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listNamespaces>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listNamespaces>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	TContext
+> => {
+	const mutationOptions = getListNamespacesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
@@ -273,6 +447,90 @@ export const useListPods = <
 	TContext
 > => {
 	const mutationOptions = getListPodsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Returns a paginated list of Kubernetes persistent volume claims (PVCs) with key volume metrics: available bytes, capacity bytes, usage (capacity - available), inodes, free inodes, and used inodes. Each row also includes metadata attributes (k8s.persistentvolumeclaim.name, k8s.pod.uid, k8s.pod.name, k8s.namespace.name, k8s.node.name, k8s.statefulset.name, k8s.cluster.name). Supports filtering via a filter expression, custom groupBy to aggregate volumes by any attribute, ordering by any of the six metrics (available, capacity, usage, inodes, inodes_free, inodes_used), and pagination via offset/limit. The response type is 'list' for the default k8s.persistentvolumeclaim.name grouping or 'grouped_list' for custom groupBy keys; in both modes every row aggregates volumes in the group. Also reports missing required metrics and whether the requested time range falls before the data retention boundary. Numeric metric fields (volumeAvailable, volumeCapacity, volumeUsage, volumeInodes, volumeInodesFree, volumeInodesUsed) return -1 as a sentinel when no data is available for that field.
+ * @summary List Volumes for Infra Monitoring
+ */
+export const listVolumes = (
+	inframonitoringtypesPostableVolumesDTO: BodyType<InframonitoringtypesPostableVolumesDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListVolumes200>({
+		url: `/api/v2/infra_monitoring/pvcs`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: inframonitoringtypesPostableVolumesDTO,
+		signal,
+	});
+};
+
+export const getListVolumesMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listVolumes>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof listVolumes>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	TContext
+> => {
+	const mutationKey = ['listVolumes'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof listVolumes>>,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return listVolumes(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type ListVolumesMutationResult = NonNullable<
+	Awaited<ReturnType<typeof listVolumes>>
+>;
+export type ListVolumesMutationBody =
+	BodyType<InframonitoringtypesPostableVolumesDTO>;
+export type ListVolumesMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List Volumes for Infra Monitoring
+ */
+export const useListVolumes = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown,
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof listVolumes>>,
+		TError,
+		{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof listVolumes>>,
+	TError,
+	{ data: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	TContext
+> => {
+	const mutationOptions = getListVolumesMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

@@ -4,14 +4,18 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Module interface {
+	// Since this module interacts with OpAMP, it must implement the AgentFeature interface.
+	agentConf.AgentFeature
+
 	List(ctx context.Context, orgID valuer.UUID, offset, limit int) ([]*llmpricingruletypes.LLMPricingRule, int, error)
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error)
-	CreateOrUpdate(ctx context.Context, orgID valuer.UUID, userEmail string, rules []llmpricingruletypes.UpdatableLLMPricingRule) (err error)
+	CreateOrUpdate(ctx context.Context, orgID valuer.UUID, userEmail string, rules []*llmpricingruletypes.UpdatableLLMPricingRule) (err error)
 	Delete(ctx context.Context, orgID, id valuer.UUID) error
 }
 

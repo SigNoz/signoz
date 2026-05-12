@@ -48,6 +48,10 @@
 		color: var(--l2-foreground);
 	}
 
+	&__collapse-count-errors {
+		color: var(--destructive);
+	}
+
 	&__flame-collapse {
 		flex-shrink: 0;
 

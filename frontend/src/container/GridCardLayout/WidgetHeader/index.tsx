@@ -1,18 +1,21 @@
 import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import {
-	AlertOutlined,
-	CloudDownloadOutlined,
-	CopyOutlined,
-	DeleteOutlined,
-	EditFilled,
-	FullscreenOutlined,
-	InfoCircleOutlined,
-	MoreOutlined,
-	SearchOutlined,
-} from '@ant-design/icons';
+	Bell,
+	CircleX,
+	CloudDownload,
+	Copy,
+	EllipsisVertical,
+	Fullscreen,
+	Pencil,
+	Search,
+	SolidInfoCircle,
+	SquareArrowOutUpRight,
+	Trash2,
+	X,
+} from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Input, MenuProps, Tooltip } from 'antd';
+import { Button, Dropdown, Input, MenuProps, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
@@ -27,7 +30,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
-import { CircleX, SquareArrowOutUpRight, X } from 'lucide-react';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
 import { SuccessResponse, Warning } from 'types/api';
@@ -149,35 +151,35 @@ function WidgetHeader({
 		(): MenuItem[] => [
 			{
 				key: MenuItemKeys.View,
-				icon: <FullscreenOutlined />,
+				icon: <Fullscreen size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
 				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
 				disabled: queryResponse.isFetching,
 			},
 			{
 				key: MenuItemKeys.Edit,
-				icon: <EditFilled />,
+				icon: <Pencil size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Clone,
-				icon: <CopyOutlined />,
+				icon: <Copy size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
 				disabled: !editWidget,
 			},
 			{
 				key: MenuItemKeys.Download,
-				icon: <CloudDownloadOutlined />,
+				icon: <CloudDownload size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
 				disabled: false,
 			},
 			{
 				key: MenuItemKeys.Delete,
-				icon: <DeleteOutlined />,
+				icon: <Trash2 size="md" />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
@@ -185,7 +187,7 @@ function WidgetHeader({
 			},
 			{
 				key: MenuItemKeys.CreateAlerts,
-				icon: <AlertOutlined />,
+				icon: <Bell size="md" />,
 				label: (
 					<span
 						style={{
@@ -243,11 +245,10 @@ function WidgetHeader({
 		<div className="widget-header-container">
 			{showGlobalSearch ? (
 				<Input
-					addonBefore={<SearchOutlined size={14} />}
+					addonBefore={<Search size={14} />}
 					placeholder="Search..."
 					bordered={false}
 					data-testid="widget-header-search-input"
-					autoFocus
 					addonAfter={
 						<X
 							size={14}
@@ -284,7 +285,7 @@ function WidgetHeader({
 								className="info-tooltip"
 								placement="right"
 							>
-								<InfoCircleOutlined />
+								<SolidInfoCircle size="md" />
 							</Tooltip>
 						)}
 					</div>
@@ -313,20 +314,20 @@ function WidgetHeader({
 							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
 						{globalSearchAvailable && (
-							<SearchOutlined
+							<Search
 								className="search-header-icons"
 								onClick={(): void => setShowGlobalSearch(true)}
 								data-testid="widget-header-search"
 							/>
 						)}
-
 						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-								<MoreOutlined
+								<Button
 									data-testid="widget-header-options"
 									className={`widget-header-more-options ${
 										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
 									}`}
+									icon={<EllipsisVertical size="md" />}
 								/>
 							</Dropdown>
 						)}

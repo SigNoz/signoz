@@ -12,7 +12,7 @@ import {
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { Globe, Inbox, SquarePen } from 'lucide-react';
+import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';

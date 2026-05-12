@@ -8,11 +8,18 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
+import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import { EventRect, SpanRect } from '../types';
 import { ITraceMetadata } from '../types';
-import { getSpanColor } from '../utils';
+import {
+	getFlamegraphServiceName,
+	getFlamegraphSpanGroupValue,
+	getSpanColor,
+} from '../utils';
 
 function getCanvasPointer(
 	canvas: HTMLCanvasElement,
@@ -69,6 +76,11 @@ export interface EventTooltipData {
 	attributeMap: Record<string, string>;
 }
 
+export interface SpanPreviewRowData {
+	key: string;
+	value: string;
+}
+
 export interface TooltipContent {
 	serviceName: string;
 	spanName: string;
@@ -78,6 +90,7 @@ export interface TooltipContent {
 	clientX: number;
 	clientY: number;
 	spanColor: string;
+	previewRows?: SpanPreviewRowData[];
 	event?: EventTooltipData;
 }
 
@@ -123,6 +136,25 @@ export function useFlamegraphHover(
 	const [hoveredEventKey, setHoveredEventKey] = useState<string | null>(null);
 	const [tooltipContent, setTooltipContent] = useState<TooltipContent | null>(
 		null,
+	);
+
+	const { colorByField, previewFields } = useTraceContext();
+
+	const buildPreviewRows = useCallback(
+		(span: FlamegraphSpan): SpanPreviewRowData[] =>
+			previewFields
+				.filter((field) => !RESERVED_PREVIEW_KEYS.has(field.key))
+				.map((field) => {
+					const value = getSpanAttribute(
+						{ resource: span.resource, attributes: span.attributes },
+						field.key,
+					);
+					return value !== undefined && value !== ''
+						? { key: field.key, value: String(value) }
+						: null;
+				})
+				.filter((r): r is SpanPreviewRowData => r !== null),
+		[previewFields],
 	);
 
 	const isZoomed =
@@ -171,14 +203,18 @@ export function useFlamegraphHover(
 				setHoveredEventKey(`${span.spanId}-${event.name}-${event.timeUnixNano}`);
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
-					serviceName: span.serviceName || '',
+					serviceName: getFlamegraphServiceName(span),
 					spanName: span.name || 'unknown',
 					status: span.hasError ? 'error' : 'ok',
 					startMs: span.timestamp - traceMetadata.startTime,
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({ span, isDarkMode }),
+					spanColor: getSpanColor({
+						span,
+						isDarkMode,
+						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+					}),
 					event: {
 						name: event.name,
 						timeOffsetMs: eventTimeMs - span.timestamp,
@@ -200,14 +236,19 @@ export function useFlamegraphHover(
 				setHoveredEventKey(null);
 				setHoveredSpanId(span.spanId);
 				setTooltipContent({
-					serviceName: span.serviceName || '',
+					serviceName: getFlamegraphServiceName(span),
 					spanName: span.name || 'unknown',
 					status: span.hasError ? 'error' : 'ok',
 					startMs: span.timestamp - traceMetadata.startTime,
 					durationMs: span.durationNano / 1e6,
 					clientX: e.clientX,
 					clientY: e.clientY,
-					spanColor: getSpanColor({ span, isDarkMode }),
+					spanColor: getSpanColor({
+						span,
+						isDarkMode,
+						groupValue: getFlamegraphSpanGroupValue(span, colorByField),
+					}),
+					previewRows: buildPreviewRows(span),
 				});
 				updateCursor(canvas, span);
 			} else {
@@ -225,6 +266,8 @@ export function useFlamegraphHover(
 			isDraggingRef,
 			updateCursor,
 			isDarkMode,
+			colorByField,
+			buildPreviewRows,
 		],
 	);
 

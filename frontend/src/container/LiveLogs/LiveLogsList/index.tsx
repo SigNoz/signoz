@@ -36,7 +36,7 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
-import { getAbsoluteUrl } from '@/utils/basePath';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { LiveLogsListProps } from './types';
 
