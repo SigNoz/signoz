@@ -3,7 +3,6 @@ import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import { AllTheProviders } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { TraceProvider } from '../../contexts/TraceContext';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../constants';
 import TraceFlamegraph from '../TraceFlamegraph';
 
@@ -28,14 +27,12 @@ function renderFlamegraph(props: {
 }): ReturnType<typeof render> {
 	return render(
 		<AllTheProviders>
-			<TraceProvider aggregations={undefined}>
-				<TraceFlamegraph
-					filteredSpanIds={[]}
-					isFilterActive={false}
-					selectedSpan={props.selectedSpan}
-					totalSpansCount={props.totalSpansCount}
-				/>
-			</TraceProvider>
+			<TraceFlamegraph
+				filteredSpanIds={[]}
+				isFilterActive={false}
+				selectedSpan={props.selectedSpan}
+				totalSpansCount={props.totalSpansCount}
+			/>
 		</AllTheProviders>,
 	);
 }
@@ -85,14 +82,12 @@ describe('TraceFlamegraph - selectedSpanId pass-through', () => {
 		});
 		rerender(
 			<AllTheProviders>
-				<TraceProvider aggregations={undefined}>
-					<TraceFlamegraph
-						filteredSpanIds={[]}
-						isFilterActive={false}
-						selectedSpan={makeSpan('xyz')}
-						totalSpansCount={500_000}
-					/>
-				</TraceProvider>
+				<TraceFlamegraph
+					filteredSpanIds={[]}
+					isFilterActive={false}
+					selectedSpan={makeSpan('xyz')}
+					totalSpansCount={500_000}
+				/>
 			</AllTheProviders>,
 		);
 		expect(mockUseGetTraceFlamegraph).toHaveBeenLastCalledWith(
