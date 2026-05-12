@@ -49,9 +49,9 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "entity_type", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
