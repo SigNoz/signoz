@@ -44,8 +44,8 @@ export function parseCustomTimeRange(
 	}
 
 	const [minStr, maxStr] = selectedTime.split(CUSTOM_TIME_SEPARATOR);
-	const minTime = parseInt(minStr, 10);
-	const maxTime = parseInt(maxStr, 10);
+	const minTime = Number.parseInt(minStr, 10);
+	const maxTime = Number.parseInt(maxStr, 10);
 
 	if (Number.isNaN(minTime) || Number.isNaN(maxTime)) {
 		return null;
@@ -61,6 +61,8 @@ const fallbackDurationInNanoSeconds = 30 * 1000 * NANO_SECOND_MULTIPLIER; // 30s
  * Parse the selectedTime string to get min/max time values.
  * For relative times, computes fresh values based on Date.now().
  * For custom times, extracts the stored min/max values.
+ *
+ * @throws Error - When selectedTime is relativeTime and it's invalid
  */
 export function parseSelectedTime(selectedTime: string): ParsedTimeRange {
 	if (isCustomTimeRange(selectedTime)) {
@@ -79,11 +81,72 @@ export function parseSelectedTime(selectedTime: string): ParsedTimeRange {
 }
 
 /**
- * Use to build your react-query key for auto-refresh queries
+ * The {@ref parseSelectedTime} can throw errors, this handles and fallbacks to 0,0 if invalid selected time is provided
+ */
+export function safeParseSelectedTime(selectedTime: string): ParsedTimeRange {
+	try {
+		return parseSelectedTime(selectedTime);
+	} catch (e) {
+		console.error('Error parsing selected time:', e);
+		return { minTime: 0, maxTime: 0 };
+	}
+}
+
+/**
+ * @deprecated Use store.getAutoRefreshQueryKey() instead.
+ * Access via: const getAutoRefreshQueryKey = useGlobalTime((s) => s.getAutoRefreshQueryKey);
+ *
+ * This function only works with the default (unnamed) store prefix.
+ * For named stores, use the store method to get properly scoped query keys.
  */
 export function getAutoRefreshQueryKey(
 	selectedTime: GlobalTimeSelectedTime,
 	...queryParts: unknown[]
 ): unknown[] {
+	if (process.env.NODE_ENV === 'development') {
+		console.warn(
+			'[globalTime] getAutoRefreshQueryKey from utils is deprecated. ' +
+				'Use useGlobalTime((s) => s.getAutoRefreshQueryKey) instead.',
+		);
+	}
 	return [REACT_QUERY_KEY.AUTO_REFRESH_QUERY, ...queryParts, selectedTime];
+}
+
+/**
+ * Round timestamp down to the nearest 5-second boundary.
+ * Used for tighter sync during auto-refresh scenarios.
+ *
+ * @param timestampNano - Timestamp in nanoseconds
+ * @returns Timestamp rounded down to 5-second boundary in nanoseconds
+ */
+export function roundDownTo5Seconds(timestampNano: number): number {
+	const msPerInterval = 5 * 1000;
+	const timestampMs = Math.floor(timestampNano / NANO_SECOND_MULTIPLIER);
+	const roundedMs = Math.floor(timestampMs / msPerInterval) * msPerInterval;
+	return roundedMs * NANO_SECOND_MULTIPLIER;
+}
+
+/**
+ * Compute min/max time with maxTime rounded down to 5-second boundary.
+ * Used when isRefreshEnabled is true for tighter time sync.
+ *
+ * @param selectedTime - The selected time (relative like '15m' or custom range)
+ * @returns ParsedTimeRange with 5-second rounded maxTime for relative times
+ */
+export function computeRounded5sMinMax(selectedTime: string): ParsedTimeRange {
+	if (isCustomTimeRange(selectedTime)) {
+		return parseSelectedTime(selectedTime);
+	}
+
+	const nowNano = Date.now() * NANO_SECOND_MULTIPLIER;
+	const roundedMaxTime = roundDownTo5Seconds(nowNano);
+
+	const { minTime: originalMin, maxTime: originalMax } =
+		getMinMaxForSelectedTime(selectedTime as Time, 0, 0);
+	const durationNano = originalMax - originalMin;
+
+	return {
+		minTime: roundedMaxTime - durationNano,
+		maxTime: roundedMaxTime,
+	};
 }

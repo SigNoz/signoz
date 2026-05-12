@@ -1,4 +1,4 @@
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { SolidInfoCircle } from '@signozhq/icons';
 
 import {
 	DisplayThresholdContainer,
@@ -11,7 +11,7 @@ function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (
 		<DisplayThresholdContainer>
 			<TypographHeading>Threshold </TypographHeading>
-			<Typography>{threshold || <InfoCircleOutlined />}</Typography>
+			<Typography>{threshold || <SolidInfoCircle size="md" />}</Typography>
 		</DisplayThresholdContainer>
 	);
 }

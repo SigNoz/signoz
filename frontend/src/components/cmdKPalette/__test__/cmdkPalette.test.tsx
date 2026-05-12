@@ -149,7 +149,7 @@ describe('CmdKPalette', () => {
 		jest.clearAllMocks();
 	});
 
-	test('renders navigation and settings groups and items', () => {
+	it('renders navigation and settings groups and items', () => {
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		expect(screen.getByText('Navigation')).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('CmdKPalette', () => {
 		expect(screen.getByText('Switch to Dark Mode')).toBeInTheDocument();
 	});
 
-	test('clicking a navigation item calls history.push with correct route', async () => {
+	it('clicking a navigation item calls history.push with correct route', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CmdKPalette userRole="ADMIN" />);
 
@@ -170,14 +170,14 @@ describe('CmdKPalette', () => {
 		expect(history.push).toHaveBeenCalledWith(ROUTES.HOME);
 	});
 
-	test('role-based filtering (basic smoke)', () => {
+	it('role-based filtering (basic smoke)', () => {
 		render(<CmdKPalette userRole="VIEWER" />);
 
 		// VIEWER still sees basic navigation items
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
-	test('keyboard shortcut opens palette via setOpen', () => {
+	it('keyboard shortcut opens palette via setOpen', () => {
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		const event = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true });
@@ -186,7 +186,7 @@ describe('CmdKPalette', () => {
 		expect(mockSetOpen).toHaveBeenCalledWith(true);
 	});
 
-	test('items render with icons when provided', () => {
+	it('items render with icons when provided', () => {
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		const iconHolders = document.querySelectorAll('.cmd-item-icon');
@@ -194,7 +194,7 @@ describe('CmdKPalette', () => {
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
-	test('closing the palette via handleInvoke sets open to false', async () => {
+	it('closing the palette via handleInvoke sets open to false', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CmdKPalette userRole="ADMIN" />);
 

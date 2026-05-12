@@ -47,23 +47,16 @@ export function useDashboardBootstrap(
 		(state) => state.globalTime,
 	);
 
-	const {
-		setDashboardData,
-		setLayouts,
-		setPanelMap,
-		resetDashboardStore,
-	} = useDashboardStore();
+	const { setDashboardData, setLayouts, setPanelMap, resetDashboardStore } =
+		useDashboardStore();
 
 	const dashboardRef = useRef<Dashboard>();
 	const modalRef = useRef<ReturnType<typeof Modal.confirm>>();
 
 	const isVisible = useTabVisibility();
 
-	const {
-		getUrlVariables,
-		updateUrlVariable,
-		transformDashboardVariables,
-	} = useTransformDashboardVariables(dashboardId);
+	const { getUrlVariables, updateUrlVariable, transformDashboardVariables } =
+		useTransformDashboardVariables(dashboardId);
 
 	// Keep the external variables store in sync with dashboardData
 	useDashboardVariablesSync(dashboardId);
@@ -109,11 +102,19 @@ export function useDashboardBootstrap(
 				onOk() {
 					setDashboardData(updatedDashboardData);
 
-					const { maxTime, minTime } = getMinMaxForSelectedTime(
-						globalTime.selectedTime,
-						globalTime.minTime,
-						globalTime.maxTime,
-					);
+					const { maxTime, minTime } =
+						globalTime.selectedTime === 'custom'
+							? {
+									// For custom ranges, min/max are already stored in nanoseconds.
+									// Recomputing via getMinMaxForSelectedTime would multiply them again.
+									maxTime: globalTime.maxTime,
+									minTime: globalTime.minTime,
+								}
+							: getMinMaxForSelectedTime(
+									globalTime.selectedTime,
+									globalTime.minTime,
+									globalTime.maxTime,
+								);
 					dispatch({
 						type: UPDATE_TIME_INTERVAL,
 						payload: { maxTime, minTime, selectedTime: globalTime.selectedTime },

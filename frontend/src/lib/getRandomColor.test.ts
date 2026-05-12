@@ -5,7 +5,7 @@ import spans from './__fixtures__/getRandomColor';
 import { colors, spanServiceNameToColorMapping } from './getRandomColor';
 
 describe('spanServiceNameToColorMapping', () => {
-	test('should map span services to colors', () => {
+	it('should map span services to colors', () => {
 		const expectedServiceToColorMap = {
 			serviceA: themeColors.chartcolors.turquoise,
 			serviceB: themeColors.chartcolors.turquoise,
@@ -14,16 +14,16 @@ describe('spanServiceNameToColorMapping', () => {
 
 		const result = spanServiceNameToColorMapping(spans);
 
-		expect(result).toEqual(expectedServiceToColorMap);
+		expect(result).toStrictEqual(expectedServiceToColorMap);
 	});
 
-	test('should return an empty object when input is an empty array', () => {
+	it('should return an empty object when input is an empty array', () => {
 		const spans: Span[] = [];
 
 		const expectedServiceToColorMap = {};
 
 		const result = spanServiceNameToColorMapping(spans);
 
-		expect(result).toEqual(expectedServiceToColorMap);
+		expect(result).toStrictEqual(expectedServiceToColorMap);
 	});
 });

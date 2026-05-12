@@ -1,16 +1,8 @@
 import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Collapse,
-	Flex,
-	Space,
-	Table,
-	TableProps,
-	Tag,
-	Tooltip,
-	Typography,
-} from 'antd';
+import { Collapse, Flex, Space, Table, TableProps, Tag, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import type {
 	ListDowntimeSchedules200,
@@ -23,7 +15,7 @@ import cx from 'classnames';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
-import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
+import { CalendarClock, PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
@@ -246,8 +238,8 @@ export function CustomCollapseList(
 	const scheduleTime = schedule?.startTime
 		? dayjs(schedule.startTime).toISOString()
 		: createdAt
-		? dayjs(createdAt).toISOString()
-		: '';
+			? dayjs(createdAt).toISOString()
+			: '';
 	// Combine time and date
 	const formattedDateAndTime = `Start time ⎯ ${formatDateTime(
 		defaultTo(scheduleTime, ''),
@@ -269,7 +261,7 @@ export function CustomCollapseList(
 									: getDuration(
 											schedule?.startTime ? dayjs(schedule.startTime).toISOString() : '',
 											schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '',
-									  )
+										)
 							}
 							name={defaultTo(name, '')}
 							handleEdit={(): void => {

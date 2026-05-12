@@ -1,6 +1,8 @@
 import { useQueryClient } from 'react-query';
 import { Trash2, X } from '@signozhq/icons';
-import { Button, DialogWrapper, toast } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetServiceAccountQueryKey,
@@ -30,30 +32,28 @@ function DeleteAccountModal(): JSX.Element {
 	const cachedAccount = accountId
 		? queryClient.getQueryData<{
 				data: ServiceaccounttypesServiceAccountDTO;
-		  }>(getGetServiceAccountQueryKey({ id: accountId }))
+			}>(getGetServiceAccountQueryKey({ id: accountId }))
 		: null;
 	const accountName = cachedAccount?.data?.name;
 
-	const {
-		mutate: deleteAccount,
-		isLoading: isDeleting,
-	} = useDeleteServiceAccount({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Service account deleted');
-				await setIsDeleteOpen(null);
-				await setAccountId(null);
-				await invalidateListServiceAccounts(queryClient);
+	const { mutate: deleteAccount, isLoading: isDeleting } =
+		useDeleteServiceAccount({
+			mutation: {
+				onSuccess: async () => {
+					toast.success('Service account deleted');
+					await setIsDeleteOpen(null);
+					await setAccountId(null);
+					await invalidateListServiceAccounts(queryClient);
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	function handleConfirm(): void {
 		if (!accountId) {

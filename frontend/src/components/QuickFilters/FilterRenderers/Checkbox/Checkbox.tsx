@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { Fragment, useMemo, useState } from 'react';
-import { Button, Checkbox, Input, Skeleton, Typography } from 'antd';
+import { Button, Checkbox, Input, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import {
@@ -19,7 +20,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryKeyValueSuggestions } from 'hooks/querySuggestions/useGetQueryKeyValueSuggestions';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { cloneDeep, isArray, isFunction } from 'lodash-es';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
@@ -82,10 +83,8 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 	// Check if this filter has active filters in the query
 	const isSomeFilterPresentForCurrentAttribute = useMemo(
 		() =>
-			currentQuery.builder.queryData?.[
-				activeQueryIndex
-			]?.filters?.items?.some((item) =>
-				isKeyMatch(item.key?.key, filter.attributeKey.key),
+			currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items?.some(
+				(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
 			),
 		[currentQuery.builder.queryData, activeQueryIndex, filter.attributeKey.key],
 	);
@@ -126,18 +125,16 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 		},
 	);
 
-	const {
-		data: keyValueSuggestions,
-		isLoading: isLoadingKeyValueSuggestions,
-	} = useGetQueryKeyValueSuggestions({
-		key: filter.attributeKey.key,
-		signal: filter.dataSource || DataSource.LOGS,
-		signalSource: 'meter',
-		options: {
-			enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
-			keepPreviousData: true,
-		},
-	});
+	const { data: keyValueSuggestions, isLoading: isLoadingKeyValueSuggestions } =
+		useGetQueryKeyValueSuggestions({
+			key: filter.attributeKey.key,
+			signal: filter.dataSource || DataSource.LOGS,
+			signalSource: 'meter',
+			options: {
+				enabled: isOpen && source === QuickFiltersSource.METER_EXPLORER,
+				keepPreviousData: true,
+			},
+		});
 
 	const attributeValues: string[] = useMemo(() => {
 		const dataType = filter.attributeKey.dataType || DataTypes.String;
@@ -282,7 +279,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 							idx === activeQueryIndex
 								? item.filters?.items?.filter(
 										(fil) => !isKeyMatch(fil.key?.key, filter.attributeKey.key),
-								  ) || []
+									) || []
 								: [...(item.filters?.items || [])],
 						op: item.filters?.op || 'AND',
 					},
@@ -644,16 +641,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 											{filter.customRendererForValue ? (
 												filter.customRendererForValue(value)
 											) : (
-												<Typography.Text
-													className="value-string"
-													ellipsis={{
-														tooltip: {
-															placement: 'top',
-															mouseEnterDelay: 0.2,
-															mouseLeaveDelay: 0,
-														},
-													}}
-												>
+												<Typography.Text className="value-string" truncate={1}>
 													{String(value)}
 												</Typography.Text>
 											)}

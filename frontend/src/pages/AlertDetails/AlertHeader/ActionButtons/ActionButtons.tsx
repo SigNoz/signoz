@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Divider, Dropdown, MenuProps, Switch, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Copy, Ellipsis, PenLine, Trash2 } from 'lucide-react';
+import { Copy, Ellipsis, PenLine, Trash2 } from '@signozhq/icons';
 import {
 	useAlertRuleDelete,
 	useAlertRuleDuplicate,
@@ -48,11 +48,11 @@ function AlertActionButtons({
 
 	const { handleAlertStateToggle } = useAlertRuleStatusToggle({ ruleId });
 	const { handleAlertDuplicate } = useAlertRuleDuplicate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
+		alertDetails: alertDetails as unknown as AlertDef,
 	});
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 	const { handleAlertUpdate, isLoading } = useAlertRuleUpdate({
-		alertDetails: (alertDetails as unknown) as AlertDef,
+		alertDetails: alertDetails as unknown as AlertDef,
 		setUpdatedName,
 		intermediateName,
 	});
@@ -80,7 +80,7 @@ function AlertActionButtons({
 						onClick: handleRename,
 						style: finalMenuItemStyle,
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'duplicate-rule',

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { VerticalAlignTopOutlined } from '@ant-design/icons';
-import { Button, Tooltip, Typography } from 'antd';
+import { Button, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
@@ -11,12 +11,11 @@ import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringFilters,
+	useInfraMonitoringFiltersK8s,
+	useInfraMonitoringPageListing,
 } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { Filter } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -32,18 +31,19 @@ import {
 	hostWidgetInfo,
 } from './constants';
 import {
-	hostColumns,
+	getHostItemKey,
+	getHostRowKey,
 	hostColumnsConfig,
-	hostRenderRowData,
 } from './table.config';
 import { getHostsQuickFiltersConfig } from './utils';
 
 import styles from './InfraMonitoringHosts.module.scss';
+import { ArrowUpToLine, Filter } from '@signozhq/icons';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
-	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [urlFilters, setUrlFilters] = useInfraMonitoringFilters();
+	const [, setCurrentPage] = useInfraMonitoringPageListing();
+	const [urlFilters, setUrlFilters] = useInfraMonitoringFiltersK8s();
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -148,9 +148,10 @@ function Hosts(): JSX.Element {
 							<div className={styles.quickFiltersContainerHeader}>
 								<Typography.Text>Filters</Typography.Text>
 								<Tooltip title="Collapse Filters">
-									<VerticalAlignTopOutlined
-										rotate={270}
+									<ArrowUpToLine
+										style={{ rotate: '270deg', cursor: 'pointer' }}
 										onClick={handleFilterVisibilityChange}
+										size="md"
 									/>
 								</Tooltip>
 							</div>
@@ -170,10 +171,10 @@ function Hosts(): JSX.Element {
 						<K8sBaseList
 							controlListPrefix={controlListPrefix}
 							entity={InfraMonitoringEntity.HOSTS}
-							tableColumnsDefinitions={hostColumns}
 							tableColumns={hostColumnsConfig}
 							fetchListData={fetchListData}
-							renderRowData={hostRenderRowData}
+							getRowKey={getHostRowKey}
+							getItemKey={getHostItemKey}
 							eventCategory={InfraMonitoringEvents.HostEntity}
 						/>
 					</div>

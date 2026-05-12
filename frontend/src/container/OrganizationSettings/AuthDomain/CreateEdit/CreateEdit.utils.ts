@@ -112,23 +112,28 @@ export function prepareInitialValues(
 		};
 	}
 
+	const config = record.config ?? {};
 	return {
-		...record,
-		googleAuthConfig: record.googleAuthConfig
+		name: record.name,
+		ssoEnabled: config.ssoEnabled,
+		ssoType: config.ssoType,
+		samlConfig: config.samlConfig ?? undefined,
+		oidcConfig: config.oidcConfig ?? undefined,
+		googleAuthConfig: config.googleAuthConfig
 			? {
-					...record.googleAuthConfig,
+					...config.googleAuthConfig,
 					domainToAdminEmailList: convertDomainMappingsToList(
-						record.googleAuthConfig.domainToAdminEmail,
+						config.googleAuthConfig.domainToAdminEmail,
 					),
-			  }
+				}
 			: undefined,
-		roleMapping: record.roleMapping
+		roleMapping: config.roleMapping
 			? {
-					...record.roleMapping,
+					...config.roleMapping,
 					groupMappingsList: convertGroupMappingsToList(
-						record.roleMapping.groupMappings,
+						config.roleMapping.groupMappings,
 					),
-			  }
+				}
 			: undefined,
 	};
 }

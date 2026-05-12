@@ -4,8 +4,8 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -135,8 +135,8 @@ describe('MembersSettings (integration)', () => {
 
 		await user.click(screen.getByRole('button', { name: /invite member/i }));
 
-		expect(await screen.findAllByPlaceholderText('john@signoz.io')).toHaveLength(
-			3,
-		);
+		await expect(
+			screen.findAllByPlaceholderText('john@signoz.io'),
+		).resolves.toHaveLength(3);
 	});
 });

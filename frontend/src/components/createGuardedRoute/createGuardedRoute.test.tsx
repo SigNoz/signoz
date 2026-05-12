@@ -41,11 +41,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -57,8 +53,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -79,7 +75,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -92,8 +88,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -113,7 +109,7 @@ describe('createGuardedRoute', () => {
 						relation: txn.relation,
 						object: {
 							resource: {
-								name: txn.object.resource.name,
+								kind: txn.object.resource.kind,
 								type: txn.object.resource.type,
 							},
 							selector: '123:456',
@@ -131,7 +127,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'update',
-			'dashboard:{id}:{version}',
+			'role:{id}:{version}',
 		);
 
 		const mockMatch = {
@@ -144,8 +140,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -166,7 +162,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -179,8 +175,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -201,11 +197,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -217,8 +209,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -236,11 +228,7 @@ describe('createGuardedRoute', () => {
 			}),
 		);
 
-		const GuardedComponent = createGuardedRoute(
-			TestComponent,
-			'read',
-			'dashboard:*',
-		);
+		const GuardedComponent = createGuardedRoute(TestComponent, 'read', 'role:*');
 
 		const mockMatch = {
 			params: {},
@@ -252,8 +240,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -278,7 +266,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'update',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -291,8 +279,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -304,7 +292,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(screen.getByText('update')).toBeInTheDocument();
-		expect(screen.getByText('dashboard:123')).toBeInTheDocument();
+		expect(screen.getByText('role:123')).toBeInTheDocument();
 		expect(
 			screen.queryByText('Test Component: test-value'),
 		).not.toBeInTheDocument();
@@ -335,7 +323,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			ComponentWithMultipleProps,
 			'read',
-			'dashboard:*',
+			'role:*',
 		);
 
 		const mockMatch = {
@@ -350,8 +338,8 @@ describe('createGuardedRoute', () => {
 			prop2: 42,
 			prop3: true,
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -370,10 +358,10 @@ describe('createGuardedRoute', () => {
 				requestCount++;
 				const payload = (await req.json()) as AuthtypesTransactionDTO[];
 				const obj = payload[0]?.object;
-				const name = obj?.resource?.name;
+				const kind = obj?.resource?.kind;
 				const selector = obj?.selector ?? '*';
 				const objectStr =
-					obj?.resource?.type === 'metaresources' ? name : `${name}:${selector}`;
+					obj?.resource?.type === 'metaresources' ? kind : `${kind}:${selector}`;
 				requestedObjects.push(objectStr ?? '');
 
 				return res(ctx.status(200), ctx.json(authzMockResponse(payload, [true])));
@@ -383,7 +371,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'read',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch1 = {
@@ -396,8 +384,8 @@ describe('createGuardedRoute', () => {
 		const props1 = {
 			testProp: 'test-value-1',
 			match: mockMatch1,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		const { unmount } = render(<GuardedComponent {...props1} />);
@@ -407,7 +395,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(requestCount).toBe(1);
-		expect(requestedObjects).toContain('dashboard:123');
+		expect(requestedObjects).toContain('role:123');
 
 		unmount();
 
@@ -421,8 +409,8 @@ describe('createGuardedRoute', () => {
 		const props2 = {
 			testProp: 'test-value-2',
 			match: mockMatch2,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props2} />);
@@ -432,7 +420,7 @@ describe('createGuardedRoute', () => {
 		});
 
 		expect(requestCount).toBe(2);
-		expect(requestedObjects).toContain('dashboard:456');
+		expect(requestedObjects).toContain('role:456');
 	});
 
 	it('should handle different relation types', async () => {
@@ -446,7 +434,7 @@ describe('createGuardedRoute', () => {
 		const GuardedComponent = createGuardedRoute(
 			TestComponent,
 			'delete',
-			'dashboard:{id}',
+			'role:{id}',
 		);
 
 		const mockMatch = {
@@ -459,8 +447,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);

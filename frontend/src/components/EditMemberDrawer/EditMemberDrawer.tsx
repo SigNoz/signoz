@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
-import { Badge, Button, DrawerWrapper, Input, toast } from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -28,6 +32,7 @@ import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
+import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
 
 import DeleteMemberDialog from './DeleteMemberDialog';
@@ -157,10 +162,8 @@ function EditMemberDrawer({
 		new Date(String(existingToken.expiresAt)) < new Date();
 
 	// Create/regenerate token mutation
-	const {
-		mutateAsync: createTokenMutation,
-		isLoading: isGeneratingLink,
-	} = useCreateResetPasswordToken();
+	const { mutateAsync: createTokenMutation, isLoading: isGeneratingLink } =
+		useCreateResetPasswordToken();
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
@@ -220,22 +223,20 @@ function EditMemberDrawer({
 	});
 
 	const makeRoleRetry = useCallback(
-		(
-			context: string,
-			rawRetry: () => Promise<void>,
-		) => async (): Promise<void> => {
-			try {
-				await rawRetry();
-				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
-				refetchUser();
-			} catch (err) {
-				setSaveErrors((prev) =>
-					prev.map((e) =>
-						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
-					),
-				);
-			}
-		},
+		(context: string, rawRetry: () => Promise<void>) =>
+			async (): Promise<void> => {
+				try {
+					await rawRetry();
+					setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+					void refetchUser();
+				} catch (err) {
+					setSaveErrors((prev) =>
+						prev.map((e) =>
+							e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+						),
+					);
+				}
+			},
 		[refetchUser],
 	);
 
@@ -253,7 +254,7 @@ function EditMemberDrawer({
 				});
 			}
 			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
-			refetchUser();
+			void refetchUser();
 		} catch (err) {
 			setSaveErrors((prev) =>
 				prev.map((e) =>
@@ -279,7 +280,7 @@ function EditMemberDrawer({
 					: updateUser({
 							pathParams: { id: member.id },
 							data: { displayName: localDisplayName },
-					  })
+						})
 				: Promise.resolve();
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
@@ -322,7 +323,7 @@ function EditMemberDrawer({
 								}),
 							];
 						});
-						refetchUser();
+						void refetchUser();
 					},
 				});
 			} else {
@@ -343,7 +344,7 @@ function EditMemberDrawer({
 				onComplete();
 			}
 
-			refetchUser();
+			void refetchUser();
 		} finally {
 			setIsSaving(false);
 		}
@@ -381,14 +382,14 @@ function EditMemberDrawer({
 				pathParams: { id: member.id },
 			});
 			if (response?.data?.token) {
-				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
+				const link = getAbsoluteUrl(`/password-reset?token=${response.data.token}`);
 				setResetLink(link);
 				setResetLinkExpiresAt(
 					response.data.expiresAt
 						? formatTimezoneAdjustedTimestamp(
 								String(response.data.expiresAt),
 								DATE_TIME_FORMATS.DASH_DATETIME,
-						  )
+							)
 						: null,
 				);
 				setHasCopiedResetLink(false);
@@ -468,7 +469,6 @@ function EditMemberDrawer({
 								prev.filter((err) => err.context !== 'Name update'),
 							);
 						}}
-						className="edit-member-drawer__input"
 						placeholder="Enter name"
 						disabled={isRootUser || isDeleted}
 					/>
@@ -497,8 +497,8 @@ function EditMemberDrawer({
 							isRootUser
 								? ROOT_USER_TOOLTIP
 								: isDeleted
-								? undefined
-								: 'You cannot modify your own role'
+									? undefined
+									: 'You cannot modify your own role'
 						}
 					>
 						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
@@ -621,20 +621,20 @@ function EditMemberDrawer({
 									{isGeneratingLink
 										? 'Generating...'
 										: isInvited
-										? getInviteButtonLabel(
-												isLoadingTokenStatus,
-												existingToken,
-												isTokenExpired,
-												tokenNotFound,
-										  )
-										: 'Generate Password Reset Link'}
+											? getInviteButtonLabel(
+													isLoadingTokenStatus,
+													existingToken,
+													isTokenExpired,
+													tokenNotFound,
+												)
+											: 'Generate Password Reset Link'}
 								</Button>
 							</span>
 						</Tooltip>
 					</div>
 
 					<div className="edit-member-drawer__footer-right">
-						<Button variant="solid" color="secondary" onClick={handleClose}>
+						<Button variant="outlined" color="secondary" onClick={handleClose}>
 							<X size={14} />
 							Cancel
 						</Button>
@@ -644,6 +644,7 @@ function EditMemberDrawer({
 							color="primary"
 							disabled={!isDirty || isSaving || isRootUser}
 							onClick={handleSave}
+							loading={isSaving}
 						>
 							{isSaving ? 'Saving...' : 'Save Member Details'}
 						</Button>

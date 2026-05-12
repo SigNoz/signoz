@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
+import { Button, Input, InputNumber, Popover, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 import { LogViewMode } from 'container/LogsTable';
@@ -11,9 +12,9 @@ import {
 	ChevronRight,
 	Minus,
 	Plus,
-	Sliders,
+	SlidersVertical,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 
 import './LogsFormatOptionsMenu.styles.scss';
 
@@ -35,13 +36,11 @@ function OptionsMenu({
 	const [fontSizeValue, setFontSizeValue] = useState<FontSize>(
 		fontSize?.value || FontSize.SMALL,
 	);
-	const [isFontSizeOptionsOpen, setIsFontSizeOptionsOpen] = useState<boolean>(
-		false,
-	);
+	const [isFontSizeOptionsOpen, setIsFontSizeOptionsOpen] =
+		useState<boolean>(false);
 
-	const [showAddNewColumnContainer, setShowAddNewColumnContainer] = useState(
-		false,
-	);
+	const [showAddNewColumnContainer, setShowAddNewColumnContainer] =
+		useState(false);
 
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);
@@ -77,7 +76,7 @@ function OptionsMenu({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// @ts-ignore
+		// @ts-expect-error
 		const value = event?.target?.value || '';
 
 		if (addColumn && addColumn?.onSearch) {
@@ -474,7 +473,7 @@ function LogsFormatOptionsMenu({
 			<Tooltip title="Options">
 				<Button
 					className="periscope-btn ghost"
-					icon={<Sliders size={14} />}
+					icon={<SlidersVertical size="md" />}
 					data-testid="periscope-btn-format-options"
 				/>
 			</Tooltip>

@@ -6,7 +6,9 @@ import {
 	CircleHelp,
 	TriangleAlert,
 } from '@signozhq/icons';
-import { Callout, Checkbox, Input } from '@signozhq/ui';
+import { Callout } from '@signozhq/ui/callout';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
 import { Collapse, Form, Input as AntdInput, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
@@ -193,19 +195,20 @@ function ConfigureGoogleAuthAuthnProvider({
 											Requires a Service Account with domain-wide delegation.
 										</p>
 									</div>
-									{expandedSection !== 'workspace-groups' && hasWorkspaceGroupsErrors && (
-										<Tooltip
-											title={
-												<div>
-													{workspaceGroupsErrorMessages.map((msg) => (
-														<div key={msg}>{msg}</div>
-													))}
-												</div>
-											}
-										>
-											<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
-										</Tooltip>
-									)}
+									{expandedSection !== 'workspace-groups' &&
+										hasWorkspaceGroupsErrors && (
+											<Tooltip
+												title={
+													<div>
+														{workspaceGroupsErrorMessages.map((msg) => (
+															<div key={msg}>{msg}</div>
+														))}
+													</div>
+												}
+											>
+												<TriangleAlert size={16} color={Color.BG_CHERRY_500} />
+											</Tooltip>
+										)}
 								</div>
 							}
 						>

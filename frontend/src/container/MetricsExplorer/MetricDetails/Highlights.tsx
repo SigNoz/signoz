@@ -1,7 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Spin, Tooltip, Typography } from 'antd';
+import { Button, Spin, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
-import { InfoIcon } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { HighlightsProps } from './types';
@@ -46,7 +47,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 					className="metric-highlights-error-state"
 					data-testid="metric-highlights-error-state"
 				>
-					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
+					<Info size={16} color={Color.BG_CHERRY_500} />
 					<Typography.Text>
 						Something went wrong while fetching metric highlights
 					</Typography.Text>
@@ -67,13 +68,13 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	return (
 		<div className="metric-details-content-grid">
 			<div className="labels-row">
-				<Typography.Text type="secondary" className="metric-details-grid-label">
+				<Typography.Text color="muted" className="metric-details-grid-label">
 					SAMPLES
 				</Typography.Text>
-				<Typography.Text type="secondary" className="metric-details-grid-label">
+				<Typography.Text color="muted" className="metric-details-grid-label">
 					TIME SERIES
 				</Typography.Text>
-				<Typography.Text type="secondary" className="metric-details-grid-label">
+				<Typography.Text color="muted" className="metric-details-grid-label">
 					LAST RECEIVED
 				</Typography.Text>
 			</div>
@@ -81,7 +82,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				{isLoadingMetricHighlights ? (
 					<div className="metric-highlights-loading-inline">
 						<Spin size="small" />
-						<Typography.Text type="secondary">Loading metric stats</Typography.Text>
+						<Typography.Text color="muted">Loading metric stats</Typography.Text>
 					</div>
 				) : (
 					<>

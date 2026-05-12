@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/config"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -22,9 +23,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -114,6 +118,9 @@ type Config struct {
 	// MetricsExplorer config
 	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
 
+	// InfraMonitoring config
+	InfraMonitoring inframonitoring.Config `mapstructure:"inframonitoring"`
+
 	// Flagger config
 	Flagger flagger.Config `mapstructure:"flagger"`
 
@@ -129,8 +136,17 @@ type Config struct {
 	// Auditor config
 	Auditor auditor.Config `mapstructure:"auditor"`
 
+	// MeterReporter config
+	MeterReporter meterreporter.Config `mapstructure:"meterreporter"`
+
 	// CloudIntegration config
 	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
+
+	// TraceDetail config
+	TraceDetail tracedetail.Config `mapstructure:"tracedetail"`
+
+	// Authz config
+	Authz authz.Config `mapstructure:"authz"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -157,12 +173,16 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
+		inframonitoring.NewConfigFactory(),
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
 		auditor.NewConfigFactory(),
+		meterreporter.NewConfigFactory(),
 		cloudintegration.NewConfigFactory(),
+		tracedetail.NewConfigFactory(),
+		authz.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

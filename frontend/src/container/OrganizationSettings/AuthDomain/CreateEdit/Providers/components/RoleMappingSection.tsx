@@ -8,7 +8,9 @@ import {
 	Trash2,
 	TriangleAlert,
 } from '@signozhq/icons';
-import { Button, Checkbox, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Checkbox } from '@signozhq/ui/checkbox';
+import { Input } from '@signozhq/ui/input';
 import { Collapse, Form, Select, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 

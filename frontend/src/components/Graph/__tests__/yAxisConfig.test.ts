@@ -7,7 +7,7 @@ const testFullPrecisionGetYAxisFormattedValue = (
 ): string => getYAxisFormattedValue(value, format, PrecisionOptionsEnum.FULL);
 
 describe('getYAxisFormattedValue - none (full precision legacy assertions)', () => {
-	test('large integers and decimals', () => {
+	it('large integers and decimals', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('250034', 'none')).toBe(
 			'250034',
 		);
@@ -22,7 +22,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		);
 	});
 
-	test('preserves leading zeros after decimal until first non-zero', () => {
+	it('preserves leading zeros after decimal until first non-zero', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1.0000234', 'none')).toBe(
 			'1.0000234',
 		);
@@ -31,7 +31,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		);
 	});
 
-	test('trims to three significant decimals and removes trailing zeros', () => {
+	it('trims to three significant decimals and removes trailing zeros', () => {
 		expect(
 			testFullPrecisionGetYAxisFormattedValue('0.000000250034', 'none'),
 		).toBe('0.000000250034');
@@ -55,7 +55,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		).toBe('0.00000025');
 	});
 
-	test('whole numbers normalize', () => {
+	it('whole numbers normalize', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1000', 'none')).toBe('1000');
 		expect(testFullPrecisionGetYAxisFormattedValue('99.5458', 'none')).toBe(
 			'99.5458',
@@ -68,7 +68,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		);
 	});
 
-	test('strip redundant decimal zeros', () => {
+	it('strip redundant decimal zeros', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1000.000', 'none')).toBe(
 			'1000',
 		);
@@ -78,7 +78,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		expect(testFullPrecisionGetYAxisFormattedValue('1.000', 'none')).toBe('1');
 	});
 
-	test('edge values', () => {
+	it('edge values', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0', 'none')).toBe('0');
 		expect(testFullPrecisionGetYAxisFormattedValue('-0', 'none')).toBe('0');
 		expect(testFullPrecisionGetYAxisFormattedValue('Infinity', 'none')).toBe('∞');
@@ -92,7 +92,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		expect(testFullPrecisionGetYAxisFormattedValue('abc123', 'none')).toBe('NaN');
 	});
 
-	test('small decimals keep precision as-is', () => {
+	it('small decimals keep precision as-is', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0.0001', 'none')).toBe(
 			'0.0001',
 		);
@@ -104,7 +104,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 		);
 	});
 
-	test('simple decimals preserved', () => {
+	it('simple decimals preserved', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0.1', 'none')).toBe('0.1');
 		expect(testFullPrecisionGetYAxisFormattedValue('0.2', 'none')).toBe('0.2');
 		expect(testFullPrecisionGetYAxisFormattedValue('0.3', 'none')).toBe('0.3');
@@ -115,7 +115,7 @@ describe('getYAxisFormattedValue - none (full precision legacy assertions)', () 
 });
 
 describe('getYAxisFormattedValue - units (full precision legacy assertions)', () => {
-	test('ms', () => {
+	it('ms', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1500', 'ms')).toBe('1.5 s');
 		expect(testFullPrecisionGetYAxisFormattedValue('500', 'ms')).toBe('500 ms');
 		expect(testFullPrecisionGetYAxisFormattedValue('60000', 'ms')).toBe('1 min');
@@ -127,19 +127,19 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('s', () => {
+	it('s', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('90', 's')).toBe('1.5 mins');
 		expect(testFullPrecisionGetYAxisFormattedValue('30', 's')).toBe('30 s');
 		expect(testFullPrecisionGetYAxisFormattedValue('3600', 's')).toBe('1 hour');
 	});
 
-	test('m', () => {
+	it('m', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('90', 'm')).toBe('1.5 hours');
 		expect(testFullPrecisionGetYAxisFormattedValue('30', 'm')).toBe('30 min');
 		expect(testFullPrecisionGetYAxisFormattedValue('1440', 'm')).toBe('1 day');
 	});
 
-	test('bytes', () => {
+	it('bytes', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1024', 'bytes')).toBe(
 			'1 KiB',
 		);
@@ -149,7 +149,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('mbytes', () => {
+	it('mbytes', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1024', 'mbytes')).toBe(
 			'1 GiB',
 		);
@@ -161,7 +161,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('kbytes', () => {
+	it('kbytes', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1024', 'kbytes')).toBe(
 			'1 MiB',
 		);
@@ -173,7 +173,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('short', () => {
+	it('short', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('1000', 'short')).toBe('1 K');
 		expect(testFullPrecisionGetYAxisFormattedValue('1500', 'short')).toBe(
 			'1.5 K',
@@ -201,7 +201,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('percent', () => {
+	it('percent', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0.15', 'percent')).toBe(
 			'0.15%',
 		);
@@ -235,7 +235,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		).toBe('1.005555555595959%');
 	});
 
-	test('ratio', () => {
+	it('ratio', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0.5', 'ratio')).toBe(
 			'0.5 ratio',
 		);
@@ -247,7 +247,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('temperature units', () => {
+	it('temperature units', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('25', 'celsius')).toBe(
 			'25 °C',
 		);
@@ -267,13 +267,13 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 		);
 	});
 
-	test('ms edge cases', () => {
+	it('ms edge cases', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0', 'ms')).toBe('0 ms');
 		expect(testFullPrecisionGetYAxisFormattedValue('-1500', 'ms')).toBe('-1.5 s');
 		expect(testFullPrecisionGetYAxisFormattedValue('Infinity', 'ms')).toBe('∞');
 	});
 
-	test('bytes edge cases', () => {
+	it('bytes edge cases', () => {
 		expect(testFullPrecisionGetYAxisFormattedValue('0', 'bytes')).toBe('0 B');
 		expect(testFullPrecisionGetYAxisFormattedValue('-1024', 'bytes')).toBe(
 			'-1 KiB',
@@ -282,7 +282,7 @@ describe('getYAxisFormattedValue - units (full precision legacy assertions)', ()
 });
 
 describe('getYAxisFormattedValue - precision option tests', () => {
-	test('precision 0 drops decimal part', () => {
+	it('precision 0 drops decimal part', () => {
 		expect(getYAxisFormattedValue('1.2345', 'none', 0)).toBe('1');
 		expect(getYAxisFormattedValue('0.9999', 'none', 0)).toBe('0');
 		expect(getYAxisFormattedValue('12345.6789', 'none', 0)).toBe('12345');
@@ -294,7 +294,7 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 		// with unit
 		expect(getYAxisFormattedValue('4353.81', 'ms', 0)).toBe('4 s');
 	});
-	test('precision 1,2,3,4 decimals', () => {
+	it('precision 1,2,3,4 decimals', () => {
 		expect(getYAxisFormattedValue('1.2345', 'none', 1)).toBe('1.2');
 		expect(getYAxisFormattedValue('1.2345', 'none', 2)).toBe('1.23');
 		expect(getYAxisFormattedValue('1.2345', 'none', 3)).toBe('1.234');
@@ -345,7 +345,7 @@ describe('getYAxisFormattedValue - precision option tests', () => {
 		expect(getYAxisFormattedValue('0.123456', 'percent', 4)).toBe('0.1235%'); // approximation
 	});
 
-	test('precision full uses up to DEFAULT_SIGNIFICANT_DIGITS significant digits', () => {
+	it('precision full uses up to DEFAULT_SIGNIFICANT_DIGITS significant digits', () => {
 		expect(
 			getYAxisFormattedValue(
 				'0.00002625429914148441',

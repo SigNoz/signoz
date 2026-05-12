@@ -1,13 +1,10 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
-import {
-	Badge,
-	Button,
-	Input,
-	ToggleGroup,
-	ToggleGroupItem,
-} from '@signozhq/ui';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -136,7 +133,7 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<Button variant="ghost" color="destructive" onClick={onRevokeClick}>
+				<Button variant="link" color="destructive" onClick={onRevokeClick}>
 					<Trash2 size={12} />
 					Revoke Key
 				</Button>

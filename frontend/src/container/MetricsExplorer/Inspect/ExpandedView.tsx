@@ -2,12 +2,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Card, Tooltip, Typography } from 'antd';
+import { Card, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
-import { ArrowDownCircle, ArrowRightCircle, Focus } from 'lucide-react';
+import { CircleArrowDown, CircleArrowRight, Focus } from '@signozhq/icons';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import {
@@ -34,10 +35,8 @@ function ExpandedView({
 	metricInspectionAppliedOptions,
 	timeAggregatedSeriesMap,
 }: ExpandedViewProps): JSX.Element {
-	const [
-		selectedTimeSeries,
-		setSelectedTimeSeries,
-	] = useState<InspectMetricsSeries | null>(null);
+	const [selectedTimeSeries, setSelectedTimeSeries] =
+		useState<InspectMetricsSeries | null>(null);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.InspectPointClicked, {
@@ -207,9 +206,9 @@ function ExpandedView({
 											>
 												{title}
 												{selectedTimeSeries?.title === title ? (
-													<ArrowDownCircle color={Color.BG_FOREST_300} size={12} />
+													<CircleArrowDown color={Color.BG_FOREST_300} size={12} />
 												) : (
-													<ArrowRightCircle size={12} />
+													<CircleArrowRight size={12} />
 												)}
 											</div>
 										</Tooltip>
@@ -237,15 +236,15 @@ function ExpandedView({
 											selectedTimeSeries?.values.find(
 												(value) => value?.timestamp >= (options?.timestamp || 0),
 											)?.value ?? options?.value
-									  } is the ${
+										} is the ${
 											TIME_AGGREGATION_OPTIONS[
 												metricInspectionAppliedOptions.timeAggregationOption ??
 													TimeAggregationOptions.SUM
 											]
-									  } of`
-									: selectedTimeSeries?.values.find(
+										} of`
+									: (selectedTimeSeries?.values.find(
 											(value) => value?.timestamp >= (options?.timestamp || 0),
-									  )?.value ?? options?.value}
+										)?.value ?? options?.value)}
 							</Typography.Text>
 						</div>
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import RGL, { WidthProvider } from 'react-grid-layout';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
@@ -98,13 +98,15 @@ function PublicDashboardContainer({
 	const isTimeRangeEnabled = publicDashboard?.timeRangeEnabled || false;
 
 	// Memoize dashboardLayout to prevent array recreation on every render
-	const dashboardLayout = useMemo(() => dashboard?.data?.layout || [], [
-		dashboard?.data?.layout,
-	]);
+	const dashboardLayout = useMemo(
+		() => dashboard?.data?.layout || [],
+		[dashboard?.data?.layout],
+	);
 
-	const currentPanelMap = useMemo(() => dashboard?.data?.panelMap || {}, [
-		dashboard?.data?.panelMap,
-	]);
+	const currentPanelMap = useMemo(
+		() => dashboard?.data?.panelMap || {},
+		[dashboard?.data?.panelMap],
+	);
 
 	const handleTimeChange = (
 		interval: Time | CustomTimeType,

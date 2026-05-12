@@ -2,8 +2,9 @@ package tracefunnel
 
 import (
 	"context"
-	"github.com/SigNoz/signoz/pkg/valuer"
 	"net/http"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 )

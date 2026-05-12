@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import {
-	CheckCircleTwoTone,
-	CloseCircleTwoTone,
-	LoadingOutlined,
-} from '@ant-design/icons';
+import { CircleCheck, CircleX, LoaderCircle } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
 import { QueryParams } from 'constants/query';
@@ -97,10 +93,8 @@ export default function ConnectionStatus(): JSX.Element {
 		'query-key-onboarding-status',
 	);
 
-	const [
-		shouldRetryOnboardingCall,
-		setShouldRetryOnboardingCall,
-	] = useState<boolean>(false);
+	const [shouldRetryOnboardingCall, setShouldRetryOnboardingCall] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		// runs only when the caller is coming from 'kafka' i.e. coming from Messaging Queues - setup helper
@@ -343,12 +337,14 @@ export default function ConnectionStatus(): JSX.Element {
 					<div className="label"> Status </div>
 
 					<div className="status">
-						{isQueryServiceLoading && <LoadingOutlined />}
+						{isQueryServiceLoading && (
+							<LoaderCircle className="animate-spin" size="md" />
+						)}
 						{!isQueryServiceLoading &&
 							isReceivingData &&
 							(getStartedSource !== 'kafka' ? (
 								<>
-									<CheckCircleTwoTone twoToneColor="#52c41a" />
+									<CircleCheck size="md" color="#52c41a" />
 									<span> Success </span>
 								</>
 							) : (
@@ -360,7 +356,7 @@ export default function ConnectionStatus(): JSX.Element {
 							!isReceivingData &&
 							(getStartedSource !== 'kafka' ? (
 								<>
-									<CloseCircleTwoTone twoToneColor="#e84749" />
+									<CircleX size="md" color="#e84749" />
 									<span> Failed </span>
 								</>
 							) : (

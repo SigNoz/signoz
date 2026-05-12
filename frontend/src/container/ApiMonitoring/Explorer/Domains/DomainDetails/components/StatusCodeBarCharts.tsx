@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Card, Skeleton, Typography } from 'antd';
+import { Button, Card, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import {
@@ -57,13 +58,11 @@ function StatusCodeBarCharts({
 	// 1 : Status Code Latency
 	const [currentWidgetInfoIndex, setCurrentWidgetInfoIndex] = useState(0);
 
-	const {
-		data: endPointStatusCodeBarChartsData,
-	} = endPointStatusCodeBarChartsDataQuery;
+	const { data: endPointStatusCodeBarChartsData } =
+		endPointStatusCodeBarChartsDataQuery;
 
-	const {
-		data: endPointStatusCodeLatencyBarChartsData,
-	} = endPointStatusCodeLatencyBarChartsDataQuery;
+	const { data: endPointStatusCodeLatencyBarChartsData } =
+		endPointStatusCodeLatencyBarChartsDataQuery;
 
 	const { startTime: minTime, endTime: maxTime } = timeRange;
 

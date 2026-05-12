@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -23,7 +23,7 @@ import { useZoomOut } from 'hooks/useZoomOut';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { isZoomOutDisabled } from 'lib/zoomOutUtils';
 import { defaultTo, isFunction, noop } from 'lodash-es';
-import { ChevronDown, ChevronUp, ZoomOut } from 'lucide-react';
+import { ChevronDown, ChevronUp, ZoomOut } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -96,10 +96,8 @@ function CustomTimePicker({
 	maxTime,
 	isModalTimeSelection = false,
 }: CustomTimePickerProps): JSX.Element {
-	const [
-		selectedTimePlaceholderValue,
-		setSelectedTimePlaceholderValue,
-	] = useState('Select / Enter Time Range');
+	const [selectedTimePlaceholderValue, setSelectedTimePlaceholderValue] =
+		useState('Select / Enter Time Range');
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<CustomTimePickerInputStatus>(

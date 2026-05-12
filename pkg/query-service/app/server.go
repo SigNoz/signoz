@@ -93,6 +93,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
 		reader,
+		signoz.Flagger,
 	)
 	if err != nil {
 		return nil, err
@@ -114,7 +115,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 
 	s := &Server{
 		config:             config,
-		signoz:       signoz,
+		signoz:             signoz,
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -134,6 +135,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 			Store: signoz.SQLStore,
 			AgentFeatures: []agentConf.AgentFeature{
 				logParsingPipelineController,
+				signoz.Modules.LLMPricingRule,
 			},
 		},
 	)
@@ -296,4 +298,3 @@ func (s *Server) Stop(ctx context.Context) error {
 
 	return nil
 }
-

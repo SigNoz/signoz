@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper, toast } from '@signozhq/ui';
+import { DialogWrapper } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,
@@ -37,10 +38,8 @@ function AddKeyModal(): JSX.Element {
 	const open = isAddKeyOpen && !!accountId;
 
 	const [phase, setPhase] = useState<Phase>(Phase.FORM);
-	const [
-		createdKey,
-		setCreatedKey,
-	] = useState<ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO | null>(null);
+	const [createdKey, setCreatedKey] =
+		useState<ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO | null>(null);
 	const [hasCopied, setHasCopied] = useState(false);
 
 	const {
@@ -67,30 +66,28 @@ function AddKeyModal(): JSX.Element {
 		}
 	}, [open, reset]);
 
-	const {
-		mutate: createKey,
-		isLoading: isSubmitting,
-	} = useCreateServiceAccountKey({
-		mutation: {
-			onSuccess: async (response) => {
-				const keyData = response?.data;
-				if (keyData) {
-					setCreatedKey(keyData);
-					setPhase(Phase.CREATED);
-					if (accountId) {
-						await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+	const { mutate: createKey, isLoading: isSubmitting } =
+		useCreateServiceAccountKey({
+			mutation: {
+				onSuccess: async (response) => {
+					const keyData = response?.data;
+					if (keyData) {
+						setCreatedKey(keyData);
+						setPhase(Phase.CREATED);
+						if (accountId) {
+							await invalidateListServiceAccountKeys(queryClient, { id: accountId });
+						}
 					}
-				}
+				},
+				onError: (error) => {
+					showErrorModal(
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						) as APIError,
+					);
+				},
 			},
-			onError: (error) => {
-				showErrorModal(
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					) as APIError,
-				);
-			},
-		},
-	});
+		});
 
 	function handleCreate({
 		keyName,

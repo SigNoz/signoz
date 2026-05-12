@@ -3,8 +3,6 @@ package signoz
 import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/auditor"
-	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/rulebasednotification"
 	"github.com/SigNoz/signoz/pkg/alertmanager/signozalertmanager"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -12,6 +10,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
+	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/auditor/noopauditor"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
@@ -28,6 +28,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
 	"github.com/SigNoz/signoz/pkg/identn/impersonationidentn"
 	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
+	"github.com/SigNoz/signoz/pkg/meterreporter"
+	"github.com/SigNoz/signoz/pkg/meterreporter/noopmeterreporter"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -195,6 +197,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateAWSAllRegionsFactory(sqlstore),
+		sqlmigration.NewAddServiceAccountManagedRoleTransactionsFactory(sqlstore),
+		sqlmigration.NewAddSpanMapperFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddLLMPricingRulesFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -226,8 +231,6 @@ func NewAlertmanagerProviderFactories(sqlstore sqlstore.SQLStore, orgGetter orga
 		signozalertmanager.NewFactory(sqlstore, orgGetter, nfManager),
 	)
 }
-
-
 
 func NewEmailingProviderFactories() factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]] {
 	return factory.MustNewNamedMap(
@@ -272,6 +275,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			modules.Dashboard,
 			handlers.Dashboard,
 			handlers.MetricsExplorer,
+			handlers.InfraMonitoring,
 			handlers.GatewayHandler,
 			handlers.Fields,
 			handlers.AuthzHandler,
@@ -282,7 +286,10 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
 			handlers.RuleStateHistory,
+			handlers.SpanMapperHandler,
 			handlers.AlertmanagerHandler,
+			handlers.LLMPricingRuleHandler,
+			handlers.TraceDetail,
 			handlers.RulerHandler,
 		),
 	)
@@ -313,6 +320,12 @@ func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[fac
 func NewAuditorProviderFactories() factory.NamedMap[factory.ProviderFactory[auditor.Auditor, auditor.Config]] {
 	return factory.MustNewNamedMap(
 		noopauditor.NewFactory(),
+	)
+}
+
+func NewMeterReporterProviderFactories() factory.NamedMap[factory.ProviderFactory[meterreporter.Reporter, meterreporter.Config]] {
+	return factory.MustNewNamedMap(
+		noopmeterreporter.NewFactory(),
 	)
 }
 

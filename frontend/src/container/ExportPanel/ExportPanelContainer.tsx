@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button, Typography } from 'antd';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import createDashboard from 'api/v1/dashboards/create';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
@@ -34,20 +35,18 @@ function ExportPanelContainer({
 
 	const { showErrorModal } = useErrorModal();
 
-	const {
-		mutate: createNewDashboard,
-		isLoading: createDashboardLoading,
-	} = useMutation(createDashboard, {
-		onSuccess: (data) => {
-			if (data.data) {
-				onExport(data?.data, true);
-			}
-			refetch();
-		},
-		onError: (error) => {
-			showErrorModal(error as APIError);
-		},
-	});
+	const { mutate: createNewDashboard, isLoading: createDashboardLoading } =
+		useMutation(createDashboard, {
+			onSuccess: (data) => {
+				if (data.data) {
+					onExport(data?.data, true);
+				}
+				refetch();
+			},
+			onError: (error) => {
+				showErrorModal(error as APIError);
+			},
+		});
 
 	const options = useMemo(() => getSelectOptions(data?.data || []), [data]);
 

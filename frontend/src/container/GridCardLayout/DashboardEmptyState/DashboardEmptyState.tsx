@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Typography } from 'antd';
+import { Plus } from '@signozhq/icons';
+import { Button } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import SettingsDrawer from 'container/DashboardContainer/DashboardDescription/SettingsDrawer';
@@ -31,9 +32,8 @@ export default function DashboardEmptyState(): JSX.Element {
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
-	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
-		false,
-	);
+	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] =
+		useState<boolean>(false);
 
 	const { user } = useAppContext();
 	let permissions: ComponentTypes[] = ['add_panel'];
@@ -104,7 +104,7 @@ export default function DashboardEmptyState(): JSX.Element {
 								Give it a name, add description, tags and variables
 							</Typography.Text>
 						</div>
-						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the 
+						{/* This Empty State needs to be consolidated. The SettingsDrawer should be global to the
 						whole dashboard page instead of confined to this Empty State */}
 						<Button
 							type="text"
@@ -143,7 +143,7 @@ export default function DashboardEmptyState(): JSX.Element {
 							<Button
 								className="add-panel-btn"
 								onClick={onEmptyWidgetHandler}
-								icon={<PlusOutlined />}
+								icon={<Plus size="md" />}
 								type="primary"
 								data-testid="add-panel"
 							>

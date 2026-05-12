@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Modal, Typography } from 'antd';
+import { Modal } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
 import Spinner from 'components/Spinner';
@@ -14,12 +15,10 @@ function DashboardPage(): JSX.Element {
 
 	const [onModal, Content] = Modal.useModal();
 
-	const {
-		isLoading,
-		isError,
-		isFetching,
-		error,
-	} = useDashboardBootstrap(dashboardId, { confirm: onModal.confirm });
+	const { isLoading, isError, isFetching, error } = useDashboardBootstrap(
+		dashboardId,
+		{ confirm: onModal.confirm },
+	);
 
 	const dashboardTitle = useDashboardStore((s) => s.dashboardData?.data.title);
 

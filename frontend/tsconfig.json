@@ -32,9 +32,11 @@
 			],
 			"@/*": [
 				"./src/*"
+			],
+			"test-mocks/*": [
+				"./__mocks__/*"
 			]
 		},
-		"downlevelIteration": true,
 		"plugins": [
 			{
 				"name": "typescript-plugin-css-modules"
@@ -66,8 +68,6 @@
 		"./vite.config.ts",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts",
-		"./playwright.config.ts",
-		"./e2e/**/*.ts"
+		"./**/*.d.ts"
 	]
 }

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import {
-	Button,
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
-} from '@signozhq/ui';
+} from '@signozhq/ui/radio-group';
 import { Select, Skeleton } from 'antd';
 
 import {
@@ -139,10 +139,10 @@ function PermissionSidePanel({
 		}
 	}, [open, resources, initialConfig]);
 
-	const savedConfig = useMemo(() => buildConfig(resources, initialConfig), [
-		resources,
-		initialConfig,
-	]);
+	const savedConfig = useMemo(
+		() => buildConfig(resources, initialConfig),
+		[resources, initialConfig],
+	);
 
 	const unsavedCount = useMemo(() => {
 		if (configsEqual(config, savedConfig)) {

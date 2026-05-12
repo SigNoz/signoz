@@ -6,11 +6,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addRoleRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/roles", handler.New(provider.authZ.AdminAccess(provider.authzHandler.Create), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Create), handler.OpenAPIDef{
 		ID:                  "CreateRole",
 		Tags:                []string{"role"},
 		Summary:             "Create role",
@@ -27,7 +28,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles", handler.New(provider.authZ.AdminAccess(provider.authzHandler.List), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.List), handler.OpenAPIDef{
 		ID:                  "ListRoles",
 		Tags:                []string{"role"},
 		Summary:             "List roles",
@@ -44,7 +45,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authZ.AdminAccess(provider.authzHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetRole",
 		Tags:                []string{"role"},
 		Summary:             "Get role",
@@ -61,14 +62,14 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relation/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.GetObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.GetObjects), handler.OpenAPIDef{
 		ID:                  "GetObjects",
 		Tags:                []string{"role"},
 		Summary:             "Get objects for a role by relation",
 		Description:         "Gets all objects connected to the specified role via a given relation type",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*authtypes.GettableObjects, 0),
+		Response:            make([]*coretypes.ObjectGroup, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
@@ -78,7 +79,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authZ.AdminAccess(provider.authzHandler.Patch), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Patch), handler.OpenAPIDef{
 		ID:                  "PatchRole",
 		Tags:                []string{"role"},
 		Summary:             "Patch role",
@@ -95,12 +96,12 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}/relation/{relation}/objects", handler.New(provider.authZ.AdminAccess(provider.authzHandler.PatchObjects), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}/relations/{relation}/objects", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.PatchObjects), handler.OpenAPIDef{
 		ID:                  "PatchObjects",
 		Tags:                []string{"role"},
 		Summary:             "Patch objects for a role by relation",
 		Description:         "Patches the objects connected to the specified role via a given relation type",
-		Request:             new(authtypes.PatchableObjects),
+		Request:             new(coretypes.PatchableObjects),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
@@ -112,7 +113,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authZ.AdminAccess(provider.authzHandler.Delete), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authzMiddleware.AdminAccess(provider.authzHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteRole",
 		Tags:                []string{"role"},
 		Summary:             "Delete role",

@@ -1,13 +1,10 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { X } from '@signozhq/icons';
-import {
-	Button,
-	DialogFooter,
-	DialogWrapper,
-	Input,
-	toast,
-} from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { DialogFooter, DialogWrapper } from '@signozhq/ui/dialog';
+import { Input } from '@signozhq/ui/input';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccounts,
@@ -32,6 +29,7 @@ function CreateServiceAccountModal(): JSX.Element {
 		SA_QUERY_PARAMS.CREATE_SA,
 		parseAsBoolean.withDefault(false),
 	);
+	const [, setSelectedAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 
 	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 
@@ -47,29 +45,28 @@ function CreateServiceAccountModal(): JSX.Element {
 		},
 	});
 
-	const {
-		mutate: createServiceAccount,
-		isLoading: isSubmitting,
-	} = useCreateServiceAccount({
-		mutation: {
-			onSuccess: async () => {
-				toast.success('Service account created successfully');
-				reset();
-				await setIsOpen(null);
-				await invalidateListServiceAccounts(queryClient);
+	const { mutate: createServiceAccount, isLoading: isSubmitting } =
+		useCreateServiceAccount({
+			mutation: {
+				onSuccess: async (response) => {
+					toast.success('Service account created successfully');
+					reset();
+					await setIsOpen(null);
+					await invalidateListServiceAccounts(queryClient);
+					await setSelectedAccountId(response.data.id);
+				},
+				onError: (err) => {
+					const errMessage = convertToApiError(
+						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					);
+					showErrorModal(errMessage as APIError);
+				},
 			},
-			onError: (err) => {
-				const errMessage = convertToApiError(
-					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				);
-				showErrorModal(errMessage as APIError);
-			},
-		},
-	});
+		});
 
 	function handleClose(): void {
 		reset();
-		setIsOpen(null);
+		void setIsOpen(null);
 	}
 
 	function handleCreate(values: FormValues): void {

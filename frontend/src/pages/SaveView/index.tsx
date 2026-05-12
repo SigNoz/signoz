@@ -2,8 +2,9 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from '@signozhq/ui';
-import { ColorPicker, Input, Modal, Table, TableProps, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { ColorPicker, Input, Modal, Table, TableProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
 	getViewDetailsUsingViewKey,
@@ -33,7 +34,7 @@ import {
 	Search,
 	Trash2,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
@@ -57,10 +58,8 @@ function SaveView(): JSX.Element {
 	const [color, setColor] = useState(Color.BG_SIENNA_500);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [activeViewName, setActiveViewName] = useState<string>('');
-	const [
-		activeCompositeQuery,
-		setActiveCompositeQuery,
-	] = useState<ICompositeMetricQuery | null>(null);
+	const [activeCompositeQuery, setActiveCompositeQuery] =
+		useState<ICompositeMetricQuery | null>(null);
 	const [searchValue, setSearchValue] = useState<string>('');
 	const [dataSource, setDataSource] = useState<ViewProps[]>([]);
 	const { t } = useTranslation(['explorer']);
@@ -118,10 +117,8 @@ function SaveView(): JSX.Element {
 		setSearchValue('');
 	};
 
-	const {
-		mutateAsync: deleteViewAsync,
-		isLoading: isDeleteLoading,
-	} = useDeleteView(activeViewKey);
+	const { mutateAsync: deleteViewAsync, isLoading: isDeleteLoading } =
+		useDeleteView(activeViewKey);
 
 	const onDeleteHandler = (): void => {
 		deleteViewHandler({
@@ -134,16 +131,14 @@ function SaveView(): JSX.Element {
 		});
 	};
 
-	const {
-		mutateAsync: updateViewAsync,
-		isLoading: isViewUpdating,
-	} = useUpdateView({
-		compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
-		viewKey: activeViewKey,
-		extraData: JSON.stringify({ color }),
-		sourcePage: sourcepage || DataSource.LOGS,
-		viewName: newViewName,
-	});
+	const { mutateAsync: updateViewAsync, isLoading: isViewUpdating } =
+		useUpdateView({
+			compositeQuery: activeCompositeQuery || ({} as ICompositeMetricQuery),
+			viewKey: activeViewKey,
+			extraData: JSON.stringify({ color }),
+			sourcePage: sourcepage || DataSource.LOGS,
+			viewName: newViewName,
+		});
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {

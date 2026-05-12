@@ -2,39 +2,42 @@ package authtypes
 
 import (
 	"encoding/json"
-	"slices"
 
-	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type Transaction struct {
-	ID       valuer.UUID `json:"-"`
-	Relation Relation    `json:"relation" required:"true"`
-	Object   Object      `json:"object" required:"true"`
+	ID       valuer.UUID      `json:"-"`
+	Relation Relation         `json:"relation" required:"true"`
+	Object   coretypes.Object `json:"object" required:"true"`
 }
 
 type GettableTransaction struct {
-	Relation   Relation `json:"relation" required:"true"`
-	Object     Object   `json:"object" required:"true"`
-	Authorized bool     `json:"authorized" required:"true"`
+	Relation   Relation         `json:"relation" required:"true"`
+	Object     coretypes.Object `json:"object" required:"true"`
+	Authorized bool             `json:"authorized" required:"true"`
 }
 
-func NewTransaction(relation Relation, object Object) (*Transaction, error) {
-	if !slices.Contains(TypeableRelations[object.Resource.Type], relation) {
-		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidRelation, "invalid relation %s for type %s", relation.StringValue(), object.Resource.Type.StringValue())
+type TransactionWithAuthorization struct {
+	Transaction *Transaction
+	Authorized  bool
+}
+
+func NewTransaction(relation Relation, object coretypes.Object) (*Transaction, error) {
+	if err := coretypes.ErrIfVerbNotValidForType(relation.Verb, object.Resource.Type); err != nil {
+		return nil, err
 	}
 
 	return &Transaction{ID: valuer.GenerateUUID(), Relation: relation, Object: object}, nil
 }
 
-func NewGettableTransaction(transactions []*Transaction, results map[string]*TupleKeyAuthorization) []*GettableTransaction {
-	gettableTransactions := make([]*GettableTransaction, len(transactions))
-	for i, txn := range transactions {
-		result := results[txn.ID.StringValue()]
+func NewGettableTransaction(results []*TransactionWithAuthorization) []*GettableTransaction {
+	gettableTransactions := make([]*GettableTransaction, len(results))
+	for i, result := range results {
 		gettableTransactions[i] = &GettableTransaction{
-			Relation:   txn.Relation,
-			Object:     txn.Object,
+			Relation:   result.Transaction.Relation,
+			Object:     result.Transaction.Object,
 			Authorized: result.Authorized,
 		}
 	}
@@ -45,7 +48,7 @@ func NewGettableTransaction(transactions []*Transaction, results map[string]*Tup
 func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 	var shadow = struct {
 		Relation Relation
-		Object   Object
+		Object   coretypes.Object
 	}{}
 
 	err := json.Unmarshal(data, &shadow)
@@ -60,4 +63,8 @@ func (transaction *Transaction) UnmarshalJSON(data []byte) error {
 
 	*transaction = *txn
 	return nil
+}
+
+func (transaction *Transaction) TransactionKey() string {
+	return transaction.Relation.StringValue() + ":" + transaction.Object.Resource.Type.StringValue() + ":" + transaction.Object.Resource.Kind.String()
 }

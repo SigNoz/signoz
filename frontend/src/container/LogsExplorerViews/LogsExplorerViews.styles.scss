@@ -263,24 +263,6 @@
 	}
 }
 
-.lightMode {
-	.logs-explorer-views-container {
-		.views-tabs-container {
-			.views-tabs {
-				.selected_view {
-					background: white;
-					color: var(--text-robin-400);
-					border: 1px solid var(--bg-robin-400);
-				}
-
-				.selected_view::before {
-					background: var(--bg-robin-400);
-				}
-			}
-		}
-	}
-}
-
 .order-by-container {
 	display: flex;
 	align-items: center;

@@ -1,6 +1,6 @@
 import { Tag, Tooltip } from 'antd';
 import cx from 'classnames';
-import { Pin, PinOff } from 'lucide-react';
+import { Pin, PinOff } from '@signozhq/icons';
 
 import { SidebarItem } from '../sideNav.types';
 

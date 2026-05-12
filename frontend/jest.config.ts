@@ -24,11 +24,11 @@ const config: Config.InitialOptions = {
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^constants/env$': '<rootDir>/__mocks__/env.ts',
 		'^src/constants/env$': '<rootDir>/__mocks__/env.ts',
-		'^@signozhq/icons$':
-			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
+		'^@signozhq/icons$': '<rootDir>/__mocks__/signozhqIconsMock.tsx',
+		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
-		'^@signozhq/(?!ui$)([^/]+)$':
+		'^@signozhq/(?!ui(?:/|$))([^/]+)$':
 			'<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],

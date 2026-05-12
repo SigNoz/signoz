@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/ui';
+import { toast } from '@signozhq/ui/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useCreateResetPasswordToken,
@@ -34,8 +34,8 @@ jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 	convertToApiError: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui', () => ({
-	...jest.requireActual('@signozhq/ui'),
+jest.mock('@signozhq/ui/drawer', () => ({
+	...jest.requireActual('@signozhq/ui/drawer'),
 	DrawerWrapper: ({
 		children,
 		footer,
@@ -51,6 +51,10 @@ jest.mock('@signozhq/ui', () => ({
 				{footer}
 			</div>
 		) : null,
+}));
+
+jest.mock('@signozhq/ui/dialog', () => ({
+	...jest.requireActual('@signozhq/ui/dialog'),
 	DialogWrapper: ({
 		children,
 		footer,
@@ -71,6 +75,10 @@ jest.mock('@signozhq/ui', () => ({
 	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
 		<div>{children}</div>
 	),
+}));
+
+jest.mock('@signozhq/ui/sonner', () => ({
+	...jest.requireActual('@signozhq/ui/sonner'),
 	toast: {
 		success: jest.fn(),
 		error: jest.fn(),
@@ -361,9 +369,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /delete member/i }));
 
-		expect(
-			await screen.findByText(/are you sure you want to delete/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/are you sure you want to delete/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /delete member/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
@@ -441,9 +449,9 @@ describe('EditMemberDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
 
-		expect(
-			await screen.findByText(/Are you sure you want to revoke the invite/i),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Are you sure you want to revoke the invite/i),
+		).resolves.toBeInTheDocument();
 
 		const confirmBtns = screen.getAllByRole('button', { name: /revoke invite/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);

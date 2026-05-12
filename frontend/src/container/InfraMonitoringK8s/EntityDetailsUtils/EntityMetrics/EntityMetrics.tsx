@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
-import { Card, Col, Row, Skeleton, Typography } from 'antd';
+import { Card, Col, Row, Skeleton } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -76,10 +77,10 @@ function EntityMetrics<T>({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const {
-		visibilities,
-		setElement,
-	} = useMultiIntersectionObserver(entityWidgetInfo.length, { threshold: 0.1 });
+	const { visibilities, setElement } = useMultiIntersectionObserver(
+		entityWidgetInfo.length,
+		{ threshold: 0.1 },
+	);
 
 	const queryPayloads = useMemo(
 		() =>

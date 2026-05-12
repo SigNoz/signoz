@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Radio, Typography } from 'antd';
+import { Button, Divider, Drawer, Radio } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { RadioChangeEvent } from 'antd/lib';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import {
@@ -10,7 +11,7 @@ import {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import GetMinMax from 'lib/getMinMax';
-import { ArrowDown, ArrowUp, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, X } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -51,9 +52,8 @@ function DomainDetails({
 	const [endPointsGroupBy, setEndPointsGroupBy] = useState<
 		IBuilderQuery['groupBy']
 	>([]);
-	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] = useState<
-		IBuilderQuery['filters']
-	>(domainListFilters);
+	const [initialFiltersEndPointStats, setInitialFiltersEndPointStats] =
+		useState<IBuilderQuery['filters']>(domainListFilters);
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
@@ -83,12 +83,14 @@ function DomainDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / TimeRangeOffset), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / TimeRangeOffset), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / TimeRangeOffset),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / TimeRangeOffset),
+		[maxTime],
+	);
 
 	const [selectedInterval, setSelectedInterval] = useState<Time>(
 		(params.selectedInterval as Time) || (selectedTime as Time),

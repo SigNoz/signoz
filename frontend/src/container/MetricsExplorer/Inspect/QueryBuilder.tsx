@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Button, Card } from 'antd';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import { Atom } from 'lucide-react';
+import { Atom } from '@signozhq/icons';
 
 import MetricFilters from './MetricFilters';
 import MetricNameSearch from './MetricNameSearch';
@@ -20,13 +20,22 @@ function QueryBuilder({
 	inspectMetricsTimeSeries,
 	currentQuery,
 	setCurrentQuery,
+	isLoadingQueries,
+	handleCancelQuery,
+	onRunQuery,
 }: QueryBuilderProps): JSX.Element {
 	const applyInspectionOptions = useCallback(() => {
+		onRunQuery?.();
 		setAppliedMetricName(currentMetricName ?? '');
 		dispatchMetricInspectionOptions({
 			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
 		});
-	}, [currentMetricName, setAppliedMetricName, dispatchMetricInspectionOptions]);
+	}, [
+		currentMetricName,
+		setAppliedMetricName,
+		dispatchMetricInspectionOptions,
+		onRunQuery,
+	]);
 
 	return (
 		<div className="inspect-metrics-query-builder">
@@ -39,7 +48,11 @@ function QueryBuilder({
 				>
 					Query Builder
 				</Button>
-				<RunQueryBtn onStageRunQuery={applyInspectionOptions} />
+				<RunQueryBtn
+					onStageRunQuery={applyInspectionOptions}
+					handleCancelQuery={handleCancelQuery}
+					isLoadingQueries={isLoadingQueries}
+				/>
 			</div>
 			<Card className="inspect-metrics-query-builder-content">
 				<MetricNameSearch

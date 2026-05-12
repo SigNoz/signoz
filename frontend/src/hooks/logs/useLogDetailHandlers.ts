@@ -5,7 +5,7 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsTextSelected } from 'hooks/useIsTextSelected';
 import { ILog } from 'types/api/logs/log';
 
-type SelectedTab = typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined;
+type SelectedTab = (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES] | undefined;
 
 type UseLogDetailHandlersParams = {
 	defaultTab?: SelectedTab;
@@ -22,12 +22,8 @@ type UseLogDetailHandlersResult = {
 function useLogDetailHandlers({
 	defaultTab = VIEW_TYPES.OVERVIEW,
 }: UseLogDetailHandlersParams = {}): UseLogDetailHandlersResult {
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-	} = useActiveLog();
+	const { activeLog, onSetActiveLog, onClearActiveLog, onAddToQuery } =
+		useActiveLog();
 	const [selectedTab, setSelectedTab] = useState<SelectedTab>(defaultTab);
 	const isTextSelected = useIsTextSelected();
 

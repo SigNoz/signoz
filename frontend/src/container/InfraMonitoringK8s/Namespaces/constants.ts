@@ -33,13 +33,14 @@ export const k8sNamespaceGetSelectedItemFilters = (
 	],
 });
 
-export const k8sNamespaceDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNamespacesData>[] = [
-	{ label: 'Namespace Name', getValue: (p): string => p.namespaceName },
-	{
-		label: 'Cluster Name',
-		getValue: (p): string => p.meta.k8s_cluster_name,
-	},
-];
+export const k8sNamespaceDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNamespacesData>[] =
+	[
+		{ label: 'Namespace Name', getValue: (p): string => p.namespaceName },
+		{
+			label: 'Cluster Name',
+			getValue: (p): string => p.meta.k8s_cluster_name,
+		},
+	];
 
 export const k8sNamespaceInitialFilters = [
 	QUERY_KEYS.K8S_NAMESPACE_NAME,

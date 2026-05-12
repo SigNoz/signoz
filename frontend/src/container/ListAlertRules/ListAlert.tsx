@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Flex, Input, Typography } from 'antd';
+import { Button, Flex, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Plus } from '@signozhq/icons';
 import type { ColumnsType } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -145,46 +146,45 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		});
 	};
 
-	const onCloneHandler = (
-		originalAlert: RuletypesRuleDTO,
-	) => async (): Promise<void> => {
-		const copyAlert: RuletypesRuleDTO = {
-			...originalAlert,
-			alert: `${originalAlert.alert} - Copy`,
-		};
+	const onCloneHandler =
+		(originalAlert: RuletypesRuleDTO) => async (): Promise<void> => {
+			const copyAlert: RuletypesRuleDTO = {
+				...originalAlert,
+				alert: `${originalAlert.alert} - Copy`,
+			};
 
-		try {
-			setCloneLoader(true);
-			await createRule(copyAlert);
+			try {
+				setCloneLoader(true);
+				await createRule(copyAlert);
 
-			notificationsApi.success({
-				message: 'Success',
-				description: 'Alert cloned successfully',
-			});
-
-			const { data: refetchData, status } = await refetch();
-			const rules = refetchData?.data;
-			if (status === 'success' && rules) {
-				setData(rules);
-				setTimeout(() => {
-					const clonedAlert = rules[rules.length - 1];
-					params.set(QueryParams.ruleId, String(clonedAlert.id));
-					safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
-				}, 2000);
-			}
-			if (status === 'error') {
-				notificationsApi.error({
-					message: t('something_went_wrong'),
+				notificationsApi.success({
+					message: 'Success',
+					description: 'Alert cloned successfully',
 				});
+
+				const { data: refetchData, status } = await refetch();
+				const rules = refetchData?.data;
+				if (status === 'success' && rules) {
+					setData(rules);
+					setTimeout(() => {
+						const clonedAlert = rules[rules.length - 1];
+						params.set(QueryParams.ruleId, String(clonedAlert.id));
+						safeNavigate(`${ROUTES.EDIT_ALERTS}?${params.toString()}`);
+					}, 2000);
+				}
+				if (status === 'error') {
+					notificationsApi.error({
+						message: t('something_went_wrong'),
+					});
+				}
+			} catch (error) {
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+				);
+			} finally {
+				setCloneLoader(false);
 			}
-		} catch (error) {
-			showErrorModal(
-				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
-			);
-		} finally {
-			setCloneLoader(false);
-		}
-	};
+		};
 
 	const handleSearch = useDebouncedFn((e: unknown) => {
 		const value = (e as React.BaseSyntheticEvent).target.value.toLowerCase();
@@ -386,21 +386,19 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 					onChange={handleSearch}
 					defaultValue={searchString}
 				/>
-				<Flex gap={12}>
+				<Flex gap={12} align="center">
 					{addNewAlert && (
-						<Button
-							type="primary"
-							onClick={onClickNewAlertHandler}
-							icon={<PlusOutlined />}
-						>
-							New Alert
+						<Button type="primary" onClick={onClickNewAlertHandler}>
+							<Flex align="center" gap={4}>
+								<Plus size="md" />
+								New Alert
+							</Flex>
 						</Button>
 					)}
 					<TextToolTip
 						{...{
 							text: `More details on how to create alerts`,
-							url:
-								'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
+							url: 'https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts',
 							urlText: 'Learn More',
 						}}
 					/>

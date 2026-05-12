@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Input, Select, Tooltip, Typography } from 'antd';
-import { Info } from 'lucide-react';
+import { Input, Select, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
+import { Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../../context';
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
@@ -18,10 +19,8 @@ function EvaluationCadence(): JSX.Element {
 		isEvaluationCadenceDetailsVisible,
 		setIsEvaluationCadenceDetailsVisible,
 	] = useState(false);
-	const [
-		isCustomScheduleButtonVisible,
-		setIsCustomScheduleButtonVisible,
-	] = useState(true);
+	const [isCustomScheduleButtonVisible, setIsCustomScheduleButtonVisible] =
+		useState(true);
 	const [
 		isEvaluationCadencePreviewVisible,
 		setIsEvaluationCadencePreviewVisible,

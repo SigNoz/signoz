@@ -720,6 +720,10 @@ notifications	-  2050
 	animation: spin 1s linear infinite;
 }
 
+.animate-fast-spin {
+	animation: spin 0.5s linear infinite;
+}
+
 // Custom legend tooltip for immediate display
 .legend-tooltip {
 	position: fixed;
@@ -737,14 +741,6 @@ notifications	-  2050
 	border: 1px solid var(--l1-border);
 	-webkit-font-smoothing: antialiased;
 	letter-spacing: 0.025em;
-}
-
-// Light mode styling for legend tooltip
-.lightMode .legend-tooltip {
-	background: var(--card);
-	color: var(--l1-foreground);
-	border: 1px solid var(--l1-border);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .metrics-application-container,
@@ -798,6 +794,26 @@ notifications	-  2050
 	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
 }
 
+[role='tab'] {
+	color: var(--foreground) !important;
+}
+
+[data-slot='drawer-content'] {
+	background: var(--l1-background) !important;
+	border: 1px solid var(--l1-border) !important;
+
+	[data-slot='drawer-title'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-close'] {
+		color: var(--l1-foreground) !important;
+	}
+
+	[data-slot='drawer-body'] {
+		color: var(--l1-foreground) !important;
+	}
+}
 // overrides
 :root {
 	--input-focus-outline-width: 0;

@@ -5,13 +5,26 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		'Helvetica Neue', sans-serif;
+	font-family:
+		Inter,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		'Helvetica Neue',
+		sans-serif;
 
 	.query-where-clause-editor-container {
 		position: relative;
 		display: flex;
 		flex-direction: row;
+
+		.query-search-initial-scope-label {
+			position: absolute;
+			left: 8px;
+			top: 10px;
+			z-index: 10;
+		}
 
 		.query-where-clause-editor {
 			flex: 1;
@@ -47,6 +60,10 @@
 				}
 			}
 		}
+
+		&.hasInitialExpression .cm-editor .cm-content {
+			padding-left: 22px !important;
+		}
 	}
 
 	.cm-editor {
@@ -62,7 +79,6 @@
 			border-radius: 2px;
 			border: 1px solid var(--l1-border);
 			padding: 0px !important;
-			background-color: var(--l1-background) !important;
 
 			&:focus-within {
 				border-color: var(--l1-border);

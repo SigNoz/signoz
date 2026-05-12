@@ -21,11 +21,11 @@ export const DataSourceDropdown = memo(function DataSourceDropdown(
 		? exploreDataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,
-		  }))
+			}))
 		: dataSourceMap.map((source) => ({
 				label: transformToUpperCase(source),
 				value: source,
-		  }));
+			}));
 
 	return (
 		<Select

@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import {
-	Button,
 	Col,
 	Collapse,
 	DatePicker,
@@ -20,8 +21,8 @@ import {
 	TableProps as AntDTableProps,
 	Tag,
 	Tooltip,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {
@@ -41,6 +42,7 @@ import {
 import { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Tags from 'components/Tags/Tags';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
@@ -48,7 +50,8 @@ import { initialQueryMeterWithType } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlertV2/context/constants';
 import dayjs from 'dayjs';
-import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useGetGlobalConfig } from 'api/generated/services/global';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import { cloneDeep, isNil, isUndefined } from 'lodash-es';
@@ -58,16 +61,15 @@ import {
 	CalendarClock,
 	Check,
 	Copy,
-	Infinity,
+	Infinity as InfinityIcon,
 	Minus,
 	PenLine,
 	Plus,
-	PlusIcon,
 	Search,
 	Trash2,
 	TriangleAlert,
 	X,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -97,9 +99,30 @@ const COUNT_MULTIPLIER = {
 };
 
 const SIGNALS_CONFIG = [
-	{ name: 'logs', usesSize: true, usesCount: false },
-	{ name: 'traces', usesSize: true, usesCount: false },
-	{ name: 'metrics', usesSize: false, usesCount: true },
+	{
+		name: 'logs',
+		usesSize: true,
+		usesCount: false,
+		metricName: 'signoz.meter.log.size',
+		yAxisUnit: UniversalYAxisUnit.BYTES_IEC,
+		thresholdUnit: UniversalYAxisUnit.GIBIBYTES,
+	},
+	{
+		name: 'traces',
+		usesSize: true,
+		usesCount: false,
+		metricName: 'signoz.meter.span.size',
+		yAxisUnit: UniversalYAxisUnit.BYTES_IEC,
+		thresholdUnit: UniversalYAxisUnit.GIBIBYTES,
+	},
+	{
+		name: 'metrics',
+		usesSize: false,
+		usesCount: true,
+		metricName: 'signoz.meter.metric.datapoint.count',
+		yAxisUnit: UniversalYAxisUnit.COUNT,
+		thresholdUnit: UniversalYAxisUnit.COUNT,
+	},
 ];
 
 // Using any type here because antd's DatePicker expects its own internal Dayjs type
@@ -169,10 +192,8 @@ function MultiIngestionSettings(): JSX.Element {
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isEditAddLimitOpen, setIsEditAddLimitOpen] = useState(false);
-	const [
-		activeAPIKey,
-		setActiveAPIKey,
-	] = useState<GatewaytypesIngestionKeyDTO | null>(null);
+	const [activeAPIKey, setActiveAPIKey] =
+		useState<GatewaytypesIngestionKeyDTO | null>(null);
 	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -194,20 +215,16 @@ function MultiIngestionSettings(): JSX.Element {
 		setHasCreateLimitForIngestionKeyError,
 	] = useState(false);
 
-	const [
-		createLimitForIngestionKeyError,
-		setCreateLimitForIngestionKeyError,
-	] = useState<string | null>(null);
+	const [createLimitForIngestionKeyError, setCreateLimitForIngestionKeyError] =
+		useState<string | null>(null);
 
 	const [
 		hasUpdateLimitForIngestionKeyError,
 		setHasUpdateLimitForIngestionKeyError,
 	] = useState(false);
 
-	const [
-		updateLimitForIngestionKeyError,
-		setUpdateLimitForIngestionKeyError,
-	] = useState<string | null>(null);
+	const [updateLimitForIngestionKeyError, setUpdateLimitForIngestionKeyError] =
+		useState<string | null>(null);
 
 	const { t } = useTranslation(['ingestionKeys']);
 
@@ -364,35 +381,27 @@ function MultiIngestionSettings(): JSX.Element {
 		error: globalConfigError,
 	} = useGetGlobalConfig();
 
-	const {
-		mutate: createIngestionKey,
-		isLoading: isLoadingCreateAPIKey,
-	} = useCreateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const globalConfigApiError = convertToApiError(globalConfigError);
 
-	const {
-		mutate: updateAPIKey,
-		isLoading: isLoadingUpdateAPIKey,
-	} = useUpdateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createIngestionKey, isLoading: isLoadingCreateAPIKey } =
+		useCreateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: deleteAPIKey,
-		isLoading: isDeleteingAPIKey,
-	} = useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAPIKey, isLoading: isLoadingUpdateAPIKey } =
+		useUpdateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: createLimitForIngestionKey,
-		isLoading: isLoadingLimitForKey,
-	} = useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: deleteAPIKey, isLoading: isDeleteingAPIKey } =
+		useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+
+	const { mutate: createLimitForIngestionKey, isLoading: isLoadingLimitForKey } =
+		useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const {
 		mutate: updateLimitForIngestionKey,
 		isLoading: isLoadingUpdatedLimitForKey,
 	} = useUpdateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: deleteLimitForKey,
-		isLoading: isDeletingLimit,
-	} = useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: deleteLimitForKey, isLoading: isDeletingLimit } =
+		useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const onDeleteHandler = (): void => {
 		clearSearch();
@@ -407,7 +416,7 @@ function MultiIngestionSettings(): JSX.Element {
 						notifications.success({
 							message: 'Ingestion key deleted successfully',
 						});
-						refetchAPIKeys();
+						void refetchAPIKeys();
 						setIsDeleteModalOpen(false);
 					},
 					onError: (error) => {
@@ -439,7 +448,7 @@ function MultiIngestionSettings(): JSX.Element {
 								notifications.success({
 									message: 'Ingestion key updated successfully',
 								});
-								refetchAPIKeys();
+								void refetchAPIKeys();
 								setIsEditModalOpen(false);
 							},
 							onError: (error) => {
@@ -479,7 +488,7 @@ function MultiIngestionSettings(): JSX.Element {
 								setActiveAPIKey(null);
 								setUpdatedTags([]);
 								hideAddViewModal();
-								refetchAPIKeys();
+								void refetchAPIKeys();
 							},
 							onError: (error) => {
 								showErrorNotification(notifications, error as AxiosError);
@@ -643,13 +652,14 @@ function MultiIngestionSettings(): JSX.Element {
 				onSuccess: () => {
 					notifications.success({
 						message: 'Limit created successfully',
+						description: "Set up an alert to know when you're close to hitting it.",
 					});
 					setActiveSignal(null);
 					setActiveAPIKey(null);
 					setIsEditAddLimitOpen(false);
 					setUpdatedTags([]);
 					hideAddViewModal();
-					refetchAPIKeys();
+					void refetchAPIKeys();
 					setHasCreateLimitForIngestionKeyError(false);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
@@ -746,13 +756,14 @@ function MultiIngestionSettings(): JSX.Element {
 				onSuccess: () => {
 					notifications.success({
 						message: 'Limit updated successfully',
+						description: "Set up an alert to know when you're close to hitting it.",
 					});
 					setActiveSignal(null);
 					setActiveAPIKey(null);
 					setIsEditAddLimitOpen(false);
 					setUpdatedTags([]);
 					hideAddViewModal();
-					refetchAPIKeys();
+					void refetchAPIKeys();
 					setHasUpdateLimitForIngestionKeyError(false);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
@@ -837,7 +848,7 @@ function MultiIngestionSettings(): JSX.Element {
 						});
 						setIsDeleteModalOpen(false);
 						setIsDeleteLimitModalOpen(false);
-						refetchAPIKeys();
+						void refetchAPIKeys();
 					},
 					onError: (error) => {
 						showErrorNotification(notifications, error as AxiosError);
@@ -853,29 +864,22 @@ function MultiIngestionSettings(): JSX.Element {
 		APIKey: GatewaytypesIngestionKeyDTO,
 		signal: LimitProps,
 	): void => {
-		let metricName = '';
-
-		switch (signal.signal) {
-			case 'metrics':
-				metricName = 'signoz.meter.metric.datapoint.count';
-				break;
-			case 'traces':
-				metricName = 'signoz.meter.span.size';
-				break;
-			case 'logs':
-				metricName = 'signoz.meter.log.size';
-				break;
-			default:
-				return;
+		const signalCfg = SIGNALS_CONFIG.find((cfg) => cfg.name === signal.signal);
+		if (!signalCfg) {
+			return;
 		}
 
-		const threshold =
-			signal.signal === 'metrics'
-				? signal.config?.day?.count || 0
-				: signal.config?.day?.size || 0;
+		const { metricName, yAxisUnit, thresholdUnit } = signalCfg;
+
+		// Size signals store the limit in bytes but the user entered GiB; pass the GiB
+		// value so the threshold reads "400 GiB" while the chart Y-axis stays in bytes.
+		const thresholdValue = signalCfg.usesCount
+			? signal.config?.day?.count || 0
+			: bytesToGb(signal.config?.day?.size);
 
 		const query = {
 			...initialQueryMeterWithType,
+			unit: yAxisUnit,
 			builder: {
 				...initialQueryMeterWithType.builder,
 				queryData: [
@@ -900,13 +904,23 @@ function MultiIngestionSettings(): JSX.Element {
 		const stringifiedQuery = JSON.stringify(query);
 
 		const thresholds = cloneDeep(INITIAL_ALERT_THRESHOLD_STATE.thresholds);
-		thresholds[0].thresholdValue = threshold;
+		thresholds[0].thresholdValue = thresholdValue;
+		thresholds[0].unit = thresholdUnit;
+
+		const keyName = APIKey.name?.trim();
+		const ruleName = keyName
+			? `[ingestion][${signal.signal}] ${keyName} has exceeded daily ingestion limit`
+			: `[ingestion][${signal.signal}] ${signal.signal} has exceeded daily ingestion limit`;
 
 		const URL = `${ROUTES.ALERTS_NEW}?${
 			QueryParams.compositeQuery
 		}=${encodeURIComponent(stringifiedQuery)}&${
 			QueryParams.thresholds
-		}=${encodeURIComponent(JSON.stringify(thresholds))}`;
+		}=${encodeURIComponent(JSON.stringify(thresholds))}&${
+			QueryParams.ruleName
+		}=${encodeURIComponent(ruleName)}&${
+			QueryParams.yAxisUnit
+		}=${encodeURIComponent(yAxisUnit)}`;
 
 		history.push(URL);
 	};
@@ -921,7 +935,7 @@ function MultiIngestionSettings(): JSX.Element {
 					? getFormattedTime(
 							dayjs(APIKey.created_at).toISOString(),
 							formatTimezoneAdjustedTimestamp,
-					  )
+						)
 					: '';
 
 				const expiresOn =
@@ -931,13 +945,13 @@ function MultiIngestionSettings(): JSX.Element {
 						: getFormattedTime(
 								dayjs(APIKey?.expires_at).toISOString(),
 								formatTimezoneAdjustedTimestamp,
-						  );
+							);
 
 				const updatedOn = APIKey?.updated_at
 					? getFormattedTime(
 							dayjs(APIKey.updated_at).toISOString(),
 							formatTimezoneAdjustedTimestamp,
-					  )
+						)
 					: '';
 
 				const onCopyKey = (e: React.MouseEvent): void => {
@@ -982,7 +996,7 @@ function MultiIngestionSettings(): JSX.Element {
 
 									<div className="ingestion-key-value">
 										<Typography.Text>
-											{APIKey?.value?.substring(0, 2)}********
+											{APIKey?.value?.slice(0, 2)}********
 											{APIKey?.value
 												?.substring(APIKey?.value?.length ? APIKey.value.length - 2 : 0)
 												?.trim()}
@@ -993,13 +1007,18 @@ function MultiIngestionSettings(): JSX.Element {
 								</div>
 								<div className="action-btn">
 									<Button
-										className="periscope-btn ghost"
-										icon={<PenLine size={14} />}
+										variant="link"
+										size="icon"
+										color="secondary"
+										suffix={<PenLine size={14} />}
+										aria-label="Edit ingestion key"
 										onClick={onEditKey}
 									/>
 									<Button
-										className="periscope-btn ghost"
-										icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+										variant="link"
+										size="icon"
+										color="destructive"
+										suffix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
 										onClick={onDeleteKey}
 									/>
 								</div>
@@ -1030,21 +1049,23 @@ function MultiIngestionSettings(): JSX.Element {
 									</Row>
 								)}
 
-								{APIKey.tags && Array.isArray(APIKey.tags) && APIKey.tags.length > 0 && (
-									<Row>
-										<Col span={6}> Tags </Col>
-										<Col span={12}>
-											<div className="ingestion-key-tags-container">
-												<div className="ingestion-key-tags">
-													{APIKey.tags.map((tag, index) => (
-														// eslint-disable-next-line react/no-array-index-key
-														<Tag key={`${tag}-${index}`}> {tag} </Tag>
-													))}
+								{APIKey.tags &&
+									Array.isArray(APIKey.tags) &&
+									APIKey.tags.length > 0 && (
+										<Row>
+											<Col span={6}> Tags </Col>
+											<Col span={12}>
+												<div className="ingestion-key-tags-container">
+													<div className="ingestion-key-tags">
+														{APIKey.tags.map((tag, index) => (
+															// eslint-disable-next-line react/no-array-index-key
+															<Tag key={`${tag}-${index}`}> {tag} </Tag>
+														))}
+													</div>
 												</div>
-											</div>
-										</Col>
-									</Row>
-								)}
+											</Col>
+										</Row>
+									)}
 
 								<div className="limits-container">
 									<h4 className=""> LIMITS </h4>
@@ -1103,16 +1124,22 @@ function MultiIngestionSettings(): JSX.Element {
 																{hasLimits(signalName) ? (
 																	<>
 																		<Button
-																			className="periscope-btn ghost"
-																			icon={<PenLine size={14} />}
+																			variant="link"
+																			size="icon"
+																			color="secondary"
+																			prefix={<PenLine size={14} />}
+																			aria-label={`Edit ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
 																			onClick={onEditSignalLimit}
 																		/>
 																		<Button
-																			className="periscope-btn ghost"
-																			icon={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			variant="link"
+																			size="icon"
+																			color="destructive"
+																			prefix={<Trash2 color={Color.BG_CHERRY_500} size={14} />}
+																			aria-label={`Delete ${signalName} limit`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1121,10 +1148,10 @@ function MultiIngestionSettings(): JSX.Element {
 																	</>
 																) : (
 																	<Button
-																		className="periscope-btn"
-																		size="small"
-																		shape="round"
-																		icon={<PlusIcon size={14} />}
+																		variant="outlined"
+																		size="sm"
+																		color="secondary"
+																		prefix={<Plus size={12} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
 																	>
@@ -1171,7 +1198,7 @@ function MultiIngestionSettings(): JSX.Element {
 																															enabled: value,
 																														},
 																													},
-																											  }
+																												}
 																											: null,
 																									);
 																								}}
@@ -1201,7 +1228,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1233,7 +1260,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1261,7 +1288,7 @@ function MultiIngestionSettings(): JSX.Element {
 																															enabled: value,
 																														},
 																													},
-																											  }
+																												}
 																											: null,
 																									);
 																								}}
@@ -1291,7 +1318,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1323,7 +1350,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1355,31 +1382,35 @@ function MultiIngestionSettings(): JSX.Element {
 																		activeSignal.signal === signalName &&
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
-																				<Button
-																					type="primary"
-																					className="periscope-btn primary"
-																					size="small"
-																					disabled={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					loading={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					onClick={onSaveSignalLimit}
-																				>
-																					Save
-																				</Button>
-																				<Button
-																					type="default"
-																					className="periscope-btn"
-																					size="small"
-																					disabled={
-																						isLoadingLimitForKey || isLoadingUpdatedLimitForKey
-																					}
-																					onClick={handleDiscardSaveLimit}
-																				>
-																					Discard
-																				</Button>
+																				<div className="signal-limit-save-discard-actions">
+																					<Button
+																						variant="solid"
+																						size="sm"
+																						disabled={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						loading={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						onClick={onSaveSignalLimit}
+																					>
+																						Save
+																					</Button>
+																					<Button
+																						variant="outlined"
+																						color="secondary"
+																						size="sm"
+																						disabled={
+																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
+																						}
+																						onClick={handleDiscardSaveLimit}
+																					>
+																						Discard
+																					</Button>
+																					<span className="signal-limit-alert-helper">
+																						You can set up an alert after saving
+																					</span>
+																				</div>
 																			</div>
 																		)}
 																</Form>
@@ -1408,7 +1439,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1427,7 +1458,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>
@@ -1436,19 +1467,18 @@ function MultiIngestionSettings(): JSX.Element {
 																			limit?.config?.day?.size !== undefined) ||
 																			(signalCfg.usesCount &&
 																				limit?.config?.day?.count !== undefined)) && (
-																			<Tooltip
-																				title="Set alert on this limit"
-																				placement="top"
-																				arrow={false}
+																			<Badge
+																				asChild
+																				color="cherry"
+																				variant="outline"
+																				testId={`set-alert-btn-${signalName}`}
+																				className="set-alert-btn"
 																			>
-																				<Button
-																					icon={<BellPlus size={14} color={Color.BG_CHERRY_400} />}
-																					className="set-alert-btn periscope-btn ghost"
-																					type="text"
-																					data-testid={`set-alert-btn-${signalName}`}
-																					onClick={onCreateSignalAlert}
-																				/>
-																			</Tooltip>
+																				<Button onClick={onCreateSignalAlert} size="sm">
+																					<BellPlus size={12} />
+																					Set alert
+																				</Button>
+																			</Badge>
 																		)}
 																	</div>
 
@@ -1475,7 +1505,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1494,7 +1524,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>
@@ -1618,17 +1648,23 @@ function MultiIngestionSettings(): JSX.Element {
 									title={
 										<div className="ingestion-url-error-content">
 											<Typography.Text className="ingestion-url-error-code">
-												{globalConfigError?.getErrorCode()}
+												{globalConfigApiError?.getErrorCode()}
 											</Typography.Text>
 
 											<Typography.Text className="ingestion-url-error-message">
-												{globalConfigError?.getErrorMessage()}
+												{globalConfigApiError?.getErrorMessage()}
 											</Typography.Text>
 										</div>
 									}
 									placement="topLeft"
 								>
-									<Button type="text" icon={<TriangleAlert size={14} />} />
+									<Button
+										variant="ghost"
+										size="icon"
+										color="secondary"
+										prefix={<TriangleAlert size={14} />}
+										aria-label="Ingestion URL error details"
+									/>
 								</Tooltip>
 							)}
 						</div>
@@ -1644,11 +1680,12 @@ function MultiIngestionSettings(): JSX.Element {
 					/>
 
 					<Button
+						variant="solid"
 						className="add-new-ingestion-key-btn"
-						type="primary"
+						prefix={<Plus size={14} />}
 						onClick={showAddModal}
 					>
-						<Plus size={14} /> New Ingestion key
+						New Ingestion key
 					</Button>
 				</div>
 
@@ -1681,15 +1718,19 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideDeleteViewModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
 						className="delete-btn"
@@ -1717,15 +1758,19 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideDeleteLimitModal}
 						className="cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
 						key="submit"
-						icon={<Trash2 size={16} />}
+						variant="solid"
+						color="destructive"
+						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
 						className="delete-btn"
@@ -1756,18 +1801,18 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideEditViewModal}
-						className="periscope-btn cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
-						className="periscope-btn primary"
 						key="submit"
-						type="primary"
+						variant="solid"
+						prefix={<Check size={14} />}
 						loading={isLoadingUpdateAPIKey}
-						icon={<Check size={14} />}
 						onClick={onUpdateApiKey}
 					>
 						Update Ingestion Key
@@ -1824,18 +1869,18 @@ function MultiIngestionSettings(): JSX.Element {
 				footer={[
 					<Button
 						key="cancel"
+						variant="ghost"
+						color="secondary"
+						prefix={<X size={16} />}
 						onClick={hideAddViewModal}
-						className="periscope-btn cancel-btn"
-						icon={<X size={16} />}
 					>
 						Cancel
 					</Button>,
 					<Button
-						className="periscope-btn primary"
-						test-id="create-new-key"
 						key="submit"
-						type="primary"
-						icon={<Check size={14} />}
+						variant="solid"
+						testId="create-new-key"
+						prefix={<Check size={14} />}
 						loading={isLoadingCreateAPIKey}
 						onClick={onCreateIngestionKey}
 					>
@@ -1869,7 +1914,7 @@ function MultiIngestionSettings(): JSX.Element {
 						]}
 						validateTrigger="onBlur"
 					>
-						<Input placeholder="Enter Ingestion Key name" autoFocus />
+						<Input placeholder="Enter Ingestion Key name" />
 					</Form.Item>
 
 					<Form.Item

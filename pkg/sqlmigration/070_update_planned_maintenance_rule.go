@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"

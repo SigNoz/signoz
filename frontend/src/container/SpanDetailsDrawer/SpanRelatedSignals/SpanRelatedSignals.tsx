@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Color, Spacing } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, RadioChangeEvent, Typography } from 'antd';
+import { Button, Divider, Drawer, RadioChangeEvent } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import LogsIcon from 'assets/AlertHistory/LogsIcon';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { QueryParams } from 'constants/query';
@@ -13,10 +14,11 @@ import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BarChart2, Compass, X } from 'lucide-react';
+import { BarChart, Compass, X } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { RelatedSignalsViews } from '../constants';
 import SpanLogs from '../SpanLogs/SpanLogs';
@@ -44,9 +46,8 @@ function SpanRelatedSignals({
 	onClose,
 	initialView,
 }: SpanRelatedSignalsProps): JSX.Element {
-	const [selectedView, setSelectedView] = useState<RelatedSignalsViews>(
-		initialView,
-	);
+	const [selectedView, setSelectedView] =
+		useState<RelatedSignalsViews>(initialView);
 	const isDarkMode = useIsDarkMode();
 
 	// Extract infrastructure metadata from span attributes
@@ -103,7 +104,7 @@ function SpanRelatedSignals({
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 				),
@@ -158,9 +159,7 @@ function SpanRelatedSignals({
 		searchParams.set(QueryParams.endTime, endTimeMs.toString());
 
 		window.open(
-			`${window.location.origin}${
-				ROUTES.LOGS_EXPLORER
-			}?${searchParams.toString()}`,
+			getAbsoluteUrl(`${ROUTES.LOGS_EXPLORER}?${searchParams.toString()}`),
 			'_blank',
 			'noopener,noreferrer',
 		);

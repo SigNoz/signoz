@@ -1,16 +1,11 @@
-import { RocketOutlined } from '@ant-design/icons';
-import { Style } from '@signozhq/design-tokens';
-import { MenuProps } from 'antd';
-import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
-	BarChart2,
+	BarChart,
 	BellDot,
-	Binoculars,
 	Book,
 	Bot,
 	Boxes,
-	BugIcon,
+	Bug,
 	Building2,
 	ChartArea,
 	Cloudy,
@@ -27,16 +22,22 @@ import {
 	MessageSquareText,
 	Plus,
 	Receipt,
+	Rocket,
 	Route,
 	ScrollText,
 	Settings,
 	Shield,
 	Slack,
+	Sparkles,
 	Unplug,
 	User,
 	UserPlus,
 	Users,
-} from 'lucide-react';
+	Binoculars,
+} from '@signozhq/icons';
+import { Style } from '@signozhq/design-tokens';
+import { MenuProps } from 'antd';
+import ROUTES from 'constants/routes';
 
 import {
 	SecondaryMenuItemKey,
@@ -47,13 +48,13 @@ import {
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const getStartedV3MenuItem = {
 	key: ROUTES.GET_STARTED_WITH_CLOUD,
 	label: 'Get Started',
-	icon: <RocketOutlined rotate={45} />,
+	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 };
 
 export const homeMenuItem = {
@@ -121,7 +122,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		itemKey: 'metrics',
 	},
@@ -165,7 +166,7 @@ const menuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		itemKey: 'exceptions',
 	},
 	{
@@ -238,7 +239,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.METRICS_EXPLORER,
 		label: 'Metrics',
-		icon: <BarChart2 size={16} />,
+		icon: <BarChart size={16} />,
 		isNew: false,
 		isEnabled: true,
 		itemKey: 'metrics',
@@ -261,7 +262,7 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	{
 		key: ROUTES.ALL_ERROR,
 		label: 'Exceptions',
-		icon: <BugIcon size={16} />,
+		icon: <Bug size={16} />,
 		isEnabled: true,
 		itemKey: 'exceptions',
 	},
@@ -337,6 +338,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				isEnabled: false,
 				itemKey: 'integrations',
 			},
+			{
+				key: ROUTES.MCP_SERVER,
+				label: 'MCP Server',
+				icon: <Sparkles size={16} />,
+				isEnabled: false,
+				itemKey: 'mcp-server',
+			},
 		],
 	},
 
@@ -368,7 +376,7 @@ export const settingsNavSections: SettingsNavSection[] = [
 			{
 				key: ROUTES.INGESTION_SETTINGS,
 				label: 'Ingestion',
-				icon: <RocketOutlined rotate={45} />,
+				icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
 				isEnabled: false,
 				itemKey: 'ingestion',
 			},
@@ -504,7 +512,7 @@ export const getUserSettingsDropdownMenuItems = ({
 						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
 						dataTestId: 'manage-license-nav-item',
 					},
-			  ]
+				]
 			: []),
 		{
 			key: 'keyboard-shortcuts',

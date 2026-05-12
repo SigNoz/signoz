@@ -4,8 +4,9 @@ import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { ExclamationCircleOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, FormInstance, Modal, SelectProps, Typography } from 'antd';
+import { BellDot, CircleAlert, ExternalLink, Save } from '@signozhq/icons';
+import { Button, FormInstance, Modal, SelectProps } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -35,7 +36,6 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty, isEqual } from 'lodash-es';
-import { BellDot, ExternalLink } from 'lucide-react';
 import Tabs2 from 'periscope/components/Tabs2';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
@@ -55,6 +55,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
+import { openInNewTab } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -126,9 +127,8 @@ function FormAlertRules({
 		handleSetConfig,
 		redirectWithQueryBuilderData,
 	} = useQueryBuilder();
-	const { matchType, op, target, targetUnit } = usePrefillAlertConditions(
-		stagedQuery,
-	);
+	const { matchType, op, target, targetUnit } =
+		usePrefillAlertConditions(stagedQuery);
 
 	useEffect(() => {
 		handleSetConfig(panelType || PANEL_TYPES.TIME_SERIES, dataSource);
@@ -136,6 +136,19 @@ function FormAlertRules({
 
 	// use query client
 	const ruleCache = useQueryClient();
+	const [isChartQueryCancelled, setIsChartQueryCancelled] = useState(false);
+	const [isLoadingAlertQuery, setIsLoadingAlertQuery] = useState(false);
+
+	useEffect(() => {
+		if (isLoadingAlertQuery) {
+			setIsChartQueryCancelled(false);
+		}
+	}, [isLoadingAlertQuery]);
+
+	const handleCancelAlertQuery = useCallback(() => {
+		ruleCache.cancelQueries(REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW);
+		setIsChartQueryCancelled(true);
+	}, [ruleCache]);
 
 	const isNewRule = !ruleId || isEmpty(ruleId);
 
@@ -158,9 +171,10 @@ function FormAlertRules({
 	}, [currentQuery.unit]);
 
 	// initQuery contains initial query when component was mounted
-	const initQuery = useMemo(() => initialValue.condition.compositeQuery, [
-		initialValue,
-	]);
+	const initQuery = useMemo(
+		() => initialValue.condition.compositeQuery,
+		[initialValue],
+	);
 
 	const queryOptions = useMemo(() => {
 		const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
@@ -356,7 +370,7 @@ function FormAlertRules({
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
 	const onQueryCategoryChange = (val: EQueryType): void => {
-		const element = document.getElementById('top');
+		const element = document.querySelector('#top');
 		if (element) {
 			element.scrollIntoView({ behavior: 'smooth' });
 		}
@@ -621,7 +635,7 @@ function FormAlertRules({
 			</Typography.Text>
 		);
 		Modal.confirm({
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert size="md" />,
 			title: t('confirm_save_title'),
 			centered: true,
 			content,
@@ -702,6 +716,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -720,6 +736,8 @@ function FormAlertRules({
 			yAxisUnit={yAxisUnit || ''}
 			graphType={panelType || PANEL_TYPES.TIME_SERIES}
 			setQueryStatus={setQueryStatus}
+			isCancelled={isChartQueryCancelled}
+			onFetchingStateChange={setIsLoadingAlertQuery}
 		/>
 	);
 
@@ -760,7 +778,7 @@ function FormAlertRules({
 				queryType: currentQuery.queryType,
 				link: url,
 			});
-			window.open(url, '_blank');
+			openInNewTab(url);
 		}
 	}
 
@@ -790,9 +808,10 @@ function FormAlertRules({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
 			?.active || false;
 
-	const source = useMemo(() => urlQuery.get(QueryParams.source) as YAxisSource, [
-		urlQuery,
-	]);
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
 
 	// Only update automatically when creating a new metrics-based alert rule
 	const shouldUpdateYAxisUnit = useMemo(() => {
@@ -902,7 +921,15 @@ function FormAlertRules({
 							queryCategory={currentQuery.queryType}
 							setQueryCategory={onQueryCategoryChange}
 							alertType={alertType || AlertTypes.METRICS_BASED_ALERT}
-							runQuery={(): void => handleRunQuery()}
+							runQuery={(): void => {
+								setIsChartQueryCancelled(false);
+								ruleCache.invalidateQueries([
+									REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
+								]);
+								handleRunQuery();
+							}}
+							isLoadingQueries={isLoadingAlertQuery}
+							handleCancelQuery={handleCancelAlertQuery}
 							alertDef={alertDef}
 							panelType={panelType || PANEL_TYPES.TIME_SERIES}
 							key={currentQuery.queryType}
@@ -927,7 +954,7 @@ function FormAlertRules({
 							loading={loading || false}
 							type="primary"
 							onClick={onSaveHandler}
-							icon={<SaveOutlined />}
+							icon={<Save size="md" />}
 							disabled={
 								isAlertNameMissing ||
 								!isChannelConfigurationValid ||

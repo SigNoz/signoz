@@ -56,6 +56,7 @@ describe('SettingsPage nav sections', () => {
 			'sso',
 			'integrations',
 			'ingestion',
+			'mcp-server',
 		])('renders "%s" element', (id) => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
@@ -84,6 +85,10 @@ describe('SettingsPage nav sections', () => {
 		it.each(['billing', 'roles'])('does not render "%s" element', (id) => {
 			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
 		});
+
+		it('renders "mcp-server" element', () => {
+			expect(screen.getByTestId('mcp-server')).toBeInTheDocument();
+		});
 	});
 
 	describe('Self-hosted Admin', () => {
@@ -95,12 +100,16 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['roles', 'members', 'integrations', 'sso', 'ingestion'])(
-			'renders "%s" element',
-			(id) => {
-				expect(screen.getByTestId(id)).toBeInTheDocument();
-			},
-		);
+		it.each([
+			'roles',
+			'members',
+			'integrations',
+			'sso',
+			'ingestion',
+			'mcp-server',
+		])('renders "%s" element', (id) => {
+			expect(screen.getByTestId(id)).toBeInTheDocument();
+		});
 	});
 
 	describe('section structure', () => {

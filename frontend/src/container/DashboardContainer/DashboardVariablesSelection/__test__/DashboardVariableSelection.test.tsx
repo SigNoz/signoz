@@ -44,7 +44,8 @@ jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
 		const state = {
 			dashboardData: { id: 'dash-1' },
 			setDashboardData: mockSetDashboardData,
-			updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+			updateLocalStorageDashboardVariables:
+				mockUpdateLocalStorageDashboardVariables,
 		};
 		return selector ? selector(state) : state;
 	},
@@ -271,7 +272,7 @@ describe('DashboardVariableSelection', () => {
 				);
 			});
 
-			expect(callOrder).toEqual([
+			expect(callOrder).toStrictEqual([
 				'updateDashboardVariablesStore',
 				'enqueueDescendantsOfVariable',
 			]);

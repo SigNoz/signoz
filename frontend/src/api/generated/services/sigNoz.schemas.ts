@@ -120,6 +120,1412 @@ export interface AlertmanagertypesGettableRoutePolicyDTO {
 	updatedBy?: string | null;
 }
 
+export type AlertmanagertypesPostableChannelDTO =
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  })
+	| (unknown & {
+			/**
+			 * @type array
+			 */
+			discord_configs?: ConfigDiscordConfigDTO[];
+			/**
+			 * @type array
+			 */
+			email_configs?: ConfigEmailConfigDTO[];
+			/**
+			 * @type array
+			 */
+			incidentio_configs?: ConfigIncidentioConfigDTO[];
+			/**
+			 * @type array
+			 */
+			jira_configs?: ConfigJiraConfigDTO[];
+			/**
+			 * @type array
+			 */
+			mattermost_configs?: ConfigMattermostConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteams_configs?: ConfigMSTeamsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			msteamsv2_configs?: ConfigMSTeamsV2ConfigDTO[];
+			/**
+			 * @type string
+			 */
+			name: string;
+			/**
+			 * @type array
+			 */
+			opsgenie_configs?: ConfigOpsGenieConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pagerduty_configs?: ConfigPagerdutyConfigDTO[];
+			/**
+			 * @type array
+			 */
+			pushover_configs?: ConfigPushoverConfigDTO[];
+			/**
+			 * @type array
+			 */
+			rocketchat_configs?: ConfigRocketchatConfigDTO[];
+			/**
+			 * @type array
+			 */
+			slack_configs?: ConfigSlackConfigDTO[];
+			/**
+			 * @type array
+			 */
+			sns_configs?: ConfigSNSConfigDTO[];
+			/**
+			 * @type array
+			 */
+			telegram_configs?: ConfigTelegramConfigDTO[];
+			/**
+			 * @type array
+			 */
+			victorops_configs?: ConfigVictorOpsConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webex_configs?: ConfigWebexConfigDTO[];
+			/**
+			 * @type array
+			 */
+			webhook_configs?: ConfigWebhookConfigDTO[];
+			/**
+			 * @type array
+			 */
+			wechat_configs?: ConfigWechatConfigDTO[];
+	  });
+
 export interface AlertmanagertypesPostableRoutePolicyDTO {
 	/**
 	 * @type array
@@ -165,21 +1571,47 @@ export interface AuthtypesAttributeMappingDTO {
 	role?: string;
 }
 
-export interface AuthtypesAuthDomainConfigDTO {
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
-}
+export type AuthtypesAuthDomainConfigDTO =
+	| (AuthtypesSamlConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesGoogleConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  })
+	| (AuthtypesOIDCConfigDTO & {
+			googleAuthConfig?: AuthtypesGoogleConfigDTO;
+			oidcConfig?: AuthtypesOIDCConfigDTO;
+			roleMapping?: AuthtypesRoleMappingDTO;
+			samlConfig?: AuthtypesSamlConfigDTO;
+			/**
+			 * @type boolean
+			 */
+			ssoEnabled?: boolean;
+			ssoType?: AuthtypesAuthNProviderDTO;
+	  });
 
+export enum AuthtypesAuthNProviderDTO {
+	google_auth = 'google_auth',
+	saml = 'saml',
+	email_password = 'email_password',
+	oidc = 'oidc',
+}
 export interface AuthtypesAuthNProviderInfoDTO {
 	/**
 	 * @type string
@@ -202,10 +1634,7 @@ export interface AuthtypesAuthNSupportDTO {
 }
 
 export interface AuthtypesCallbackAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
+	provider?: AuthtypesAuthNProviderDTO;
 	/**
 	 * @type string
 	 */
@@ -214,12 +1643,12 @@ export interface AuthtypesCallbackAuthNSupportDTO {
 
 export interface AuthtypesGettableAuthDomainDTO {
 	authNProviderInfo?: AuthtypesAuthNProviderInfoDTO;
+	config?: AuthtypesAuthDomainConfigDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
 	createdAt?: Date;
-	googleAuthConfig?: AuthtypesGoogleConfigDTO;
 	/**
 	 * @type string
 	 */
@@ -228,53 +1657,15 @@ export interface AuthtypesGettableAuthDomainDTO {
 	 * @type string
 	 */
 	name?: string;
-	oidcConfig?: AuthtypesOIDCConfigDTO;
 	/**
 	 * @type string
 	 */
 	orgId?: string;
-	roleMapping?: AuthtypesRoleMappingDTO;
-	samlConfig?: AuthtypesSamlConfigDTO;
-	/**
-	 * @type boolean
-	 */
-	ssoEnabled?: boolean;
-	/**
-	 * @type string
-	 */
-	ssoType?: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
 	updatedAt?: Date;
-}
-
-export interface AuthtypesGettableObjectsDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type array
-	 */
-	selectors: string[];
-}
-
-/**
- * @nullable
- */
-export type AuthtypesGettableResourcesDTORelations = {
-	[key: string]: string[];
-} | null;
-
-export interface AuthtypesGettableResourcesDTO {
-	/**
-	 * @type object
-	 * @nullable true
-	 */
-	relations: AuthtypesGettableResourcesDTORelations;
-	/**
-	 * @type array
-	 */
-	resources: AuthtypesResourceDTO[];
 }
 
 export interface AuthtypesGettableTokenDTO {
@@ -301,11 +1692,8 @@ export interface AuthtypesGettableTransactionDTO {
 	 * @type boolean
 	 */
 	authorized: boolean;
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -379,14 +1767,6 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
-export interface AuthtypesObjectDTO {
-	resource: AuthtypesResourceDTO;
-	/**
-	 * @type string
-	 */
-	selector: string;
-}
-
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -401,23 +1781,7 @@ export interface AuthtypesOrgSessionContextDTO {
 }
 
 export interface AuthtypesPasswordAuthNSupportDTO {
-	/**
-	 * @type string
-	 */
-	provider?: string;
-}
-
-export interface AuthtypesPatchableObjectsDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	additions: AuthtypesGettableObjectsDTO[] | null;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	deletions: AuthtypesGettableObjectsDTO[] | null;
+	provider?: AuthtypesAuthNProviderDTO;
 }
 
 export interface AuthtypesPatchableRoleDTO {
@@ -468,17 +1832,15 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
-export interface AuthtypesResourceDTO {
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	type: string;
+export enum AuthtypesRelationDTO {
+	create = 'create',
+	read = 'read',
+	update = 'update',
+	delete = 'delete',
+	list = 'list',
+	assignee = 'assignee',
+	attach = 'attach',
 }
-
 export interface AuthtypesRoleDTO {
 	/**
 	 * @type string
@@ -568,14 +1930,11 @@ export interface AuthtypesSessionContextDTO {
 }
 
 export interface AuthtypesTransactionDTO {
-	object: AuthtypesObjectDTO;
-	/**
-	 * @type string
-	 */
-	relation: string;
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
 }
 
-export interface AuthtypesUpdateableAuthDomainDTO {
+export interface AuthtypesUpdatableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
@@ -795,7 +2154,8 @@ export interface CloudintegrationtypesAccountDTO {
 }
 
 export interface CloudintegrationtypesAccountConfigDTO {
-	aws: CloudintegrationtypesAWSAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -827,6 +2187,86 @@ export interface CloudintegrationtypesAssetsDTO {
 	 * @nullable true
 	 */
 	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesAzureAccountConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	cliCommand: string;
+	/**
+	 * @type string
+	 */
+	cloudPowerShellCommand: string;
+}
+
+export interface CloudintegrationtypesAzureIntegrationConfigDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
+	/**
+	 * @type array
+	 */
+	telemetryCollectionStrategy: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO[];
+}
+
+export interface CloudintegrationtypesAzureLogsCollectionStrategyDTO {
+	/**
+	 * @type array
+	 */
+	categoryGroups: string[];
+}
+
+export interface CloudintegrationtypesAzureMetricsCollectionStrategyDTO {
+	[key: string]: unknown;
+}
+
+export interface CloudintegrationtypesAzureServiceConfigDTO {
+	logs: CloudintegrationtypesAzureServiceLogsConfigDTO;
+	metrics: CloudintegrationtypesAzureServiceMetricsConfigDTO;
+}
+
+export interface CloudintegrationtypesAzureServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAzureTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAzureLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAzureMetricsCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	resourceProvider: string;
+	/**
+	 * @type string
+	 */
+	resourceType: string;
 }
 
 /**
@@ -890,7 +2330,8 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
-	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
+	aws?: CloudintegrationtypesAWSConnectionArtifactDTO;
+	azure?: CloudintegrationtypesAzureConnectionArtifactDTO;
 }
 
 export interface CloudintegrationtypesCredentialsDTO {
@@ -1074,7 +2515,8 @@ export interface CloudintegrationtypesPostableAccountDTO {
 }
 
 export interface CloudintegrationtypesPostableAccountConfigDTO {
-	aws: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	aws?: CloudintegrationtypesAWSPostableAccountConfigDTO;
+	azure?: CloudintegrationtypesAzureAccountConfigDTO;
 }
 
 /**
@@ -1109,7 +2551,8 @@ export interface CloudintegrationtypesPostableAgentCheckInDTO {
 }
 
 export interface CloudintegrationtypesProviderIntegrationConfigDTO {
-	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+	aws?: CloudintegrationtypesAWSIntegrationConfigDTO;
+	azure?: CloudintegrationtypesAzureIntegrationConfigDTO;
 }
 
 export interface CloudintegrationtypesServiceDTO {
@@ -1137,7 +2580,8 @@ export interface CloudintegrationtypesServiceDTO {
 }
 
 export interface CloudintegrationtypesServiceConfigDTO {
-	aws: CloudintegrationtypesAWSServiceConfigDTO;
+	aws?: CloudintegrationtypesAWSServiceConfigDTO;
+	azure?: CloudintegrationtypesAzureServiceConfigDTO;
 }
 
 export enum CloudintegrationtypesServiceIDDTO {
@@ -1154,6 +2598,8 @@ export enum CloudintegrationtypesServiceIDDTO {
 	s3sync = 's3sync',
 	sns = 'sns',
 	sqs = 'sqs',
+	storageaccountsblob = 'storageaccountsblob',
+	cdnprofile = 'cdnprofile',
 }
 export interface CloudintegrationtypesServiceMetadataDTO {
 	/**
@@ -1186,11 +2632,24 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 }
 
 export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
-	aws: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	aws?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
+	azure?: CloudintegrationtypesAzureTelemetryCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
-	config: CloudintegrationtypesAccountConfigDTO;
+	config: CloudintegrationtypesUpdatableAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAccountConfigDTO {
+	aws?: CloudintegrationtypesAWSAccountConfigDTO;
+	azure?: CloudintegrationtypesUpdatableAzureAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableAzureAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	resourceGroups: string[];
 }
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
@@ -2658,6 +4117,52 @@ export interface ConfigWechatConfigDTO {
 	to_user?: string;
 }
 
+export interface CoretypesObjectDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
+export interface CoretypesObjectGroupDTO {
+	resource: CoretypesResourceRefDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+export interface CoretypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: CoretypesObjectGroupDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: CoretypesObjectGroupDTO[] | null;
+}
+
+export interface CoretypesResourceRefDTO {
+	/**
+	 * @type string
+	 */
+	kind: string;
+	type: CoretypesTypeDTO;
+}
+
+export enum CoretypesTypeDTO {
+	user = 'user',
+	serviceaccount = 'serviceaccount',
+	anonymous = 'anonymous',
+	role = 'role',
+	organization = 'organization',
+	metaresource = 'metaresource',
+	metaresources = 'metaresources',
+}
 export interface DashboardtypesDashboardDTO {
 	/**
 	 * @type string
@@ -3024,13 +4529,23 @@ export interface GlobaltypesAPIKeyConfigDTO {
 export interface GlobaltypesConfigDTO {
 	/**
 	 * @type string
+	 * @nullable true
 	 */
-	external_url?: string;
+	ai_assistant_url: string | null;
+	/**
+	 * @type string
+	 */
+	external_url: string;
 	identN?: GlobaltypesIdentNConfigDTO;
 	/**
 	 * @type string
 	 */
-	ingestion_url?: string;
+	ingestion_url: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	mcp_url: string | null;
 }
 
 export interface GlobaltypesIdentNConfigDTO {
@@ -3051,6 +4566,699 @@ export interface GlobaltypesTokenizerConfigDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesClusterRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesClusterRecordDTO {
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterCPUAllocatable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	clusterMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	clusterName: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesClusterRecordDTOMeta;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesClustersDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesClusterRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesHostFilterDTO {
+	/**
+	 * @type string
+	 */
+	expression?: string;
+	filterByStatus?: InframonitoringtypesHostStatusDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesHostRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesHostRecordDTO {
+	/**
+	 * @type integer
+	 */
+	activeHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	cpu: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	diskUsage: number;
+	/**
+	 * @type string
+	 */
+	hostName: string;
+	/**
+	 * @type integer
+	 */
+	inactiveHostCount: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	load15: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	memory: number;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesHostRecordDTOMeta;
+	status: InframonitoringtypesHostStatusDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	wait: number;
+}
+
+export enum InframonitoringtypesHostStatusDTO {
+	active = 'active',
+	inactive = 'inactive',
+	'' = '',
+}
+export interface InframonitoringtypesHostsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesHostRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNamespaceRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesNamespaceRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesNamespaceRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	namespaceMemory: number;
+	/**
+	 * @type string
+	 */
+	namespaceName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNamespacesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesNamespaceRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export enum InframonitoringtypesNodeConditionDTO {
+	ready = 'ready',
+	not_ready = 'not_ready',
+	no_data = 'no_data',
+}
+export interface InframonitoringtypesNodeCountsByReadinessDTO {
+	/**
+	 * @type integer
+	 */
+	notReady: number;
+	/**
+	 * @type integer
+	 */
+	ready: number;
+}
+
+/**
+ * @nullable
+ */
+export type InframonitoringtypesNodeRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesNodeRecordDTO {
+	condition: InframonitoringtypesNodeConditionDTO;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesNodeRecordDTOMeta;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeCPUAllocatable: number;
+	nodeCountsByReadiness: InframonitoringtypesNodeCountsByReadinessDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	nodeMemoryAllocatable: number;
+	/**
+	 * @type string
+	 */
+	nodeName: string;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+}
+
+export interface InframonitoringtypesNodesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesNodeRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPodCountsByPhaseDTO {
+	/**
+	 * @type integer
+	 */
+	failed: number;
+	/**
+	 * @type integer
+	 */
+	pending: number;
+	/**
+	 * @type integer
+	 */
+	running: number;
+	/**
+	 * @type integer
+	 */
+	succeeded: number;
+	/**
+	 * @type integer
+	 */
+	unknown: number;
+}
+
+export enum InframonitoringtypesPodPhaseDTO {
+	pending = 'pending',
+	running = 'running',
+	succeeded = 'succeeded',
+	failed = 'failed',
+	unknown = 'unknown',
+	no_data = 'no_data',
+}
+/**
+ * @nullable
+ */
+export type InframonitoringtypesPodRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesPodRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesPodRecordDTOMeta;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	podAge: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPU: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPULimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podCPURequest: number;
+	podCountsByPhase: InframonitoringtypesPodCountsByPhaseDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemory: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryLimit: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	podMemoryRequest: number;
+	podPhase: InframonitoringtypesPodPhaseDTO;
+	/**
+	 * @type string
+	 */
+	podUID: string;
+}
+
+export interface InframonitoringtypesPodsDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesPodRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
+export interface InframonitoringtypesPostableClustersDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableHostsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: InframonitoringtypesHostFilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNamespacesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostableNodesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesPostablePodsDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface InframonitoringtypesRequiredMetricsCheckDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	missingMetrics: string[] | null;
+}
+
+export enum InframonitoringtypesResponseTypeDTO {
+	list = 'list',
+	grouped_list = 'grouped_list',
+}
+export interface LlmpricingruletypesGettablePricingRulesDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	items: LlmpricingruletypesLLMPricingRuleDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset: number;
+	/**
+	 * @type integer
+	 */
+	total: number;
+}
+
+export interface LlmpricingruletypesLLMPricingCacheCostsDTO {
+	mode: LlmpricingruletypesLLMPricingRuleCacheModeDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	read?: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	write?: number;
+}
+
+export interface LlmpricingruletypesLLMPricingRuleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isOverride: boolean;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	modelPattern: LlmpricingruletypesStringSliceDTO;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 */
+	sourceId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	syncedAt?: Date | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export enum LlmpricingruletypesLLMPricingRuleCacheModeDTO {
+	subtract = 'subtract',
+	additive = 'additive',
+	unknown = 'unknown',
+}
+export enum LlmpricingruletypesLLMPricingRuleUnitDTO {
+	per_million_tokens = 'per_million_tokens',
+}
+export interface LlmpricingruletypesLLMRulePricingDTO {
+	cache?: LlmpricingruletypesLLMPricingCacheCostsDTO;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	input: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	output: number;
+}
+
+/**
+ * @nullable
+ */
+export type LlmpricingruletypesStringSliceDTO = string[] | null;
+
+export interface LlmpricingruletypesUpdatableLLMPricingRuleDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	id?: string | null;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	isOverride?: boolean | null;
+	/**
+	 * @type string
+	 */
+	modelName: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	modelPattern: string[] | null;
+	pricing: LlmpricingruletypesLLMRulePricingDTO;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	sourceId?: string | null;
+	unit: LlmpricingruletypesLLMPricingRuleUnitDTO;
+}
+
+export interface LlmpricingruletypesUpdatableLLMPricingRulesDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	rules: LlmpricingruletypesUpdatableLLMPricingRuleDTO[] | null;
 }
 
 export interface MetricsexplorertypesInspectMetricsRequestDTO {
@@ -3471,10 +5679,7 @@ export interface PromotetypesPromotePathDTO {
 }
 
 export interface PromotetypesWrappedIndexDTO {
-	/**
-	 * @type string
-	 */
-	column_type?: string;
+	fieldDataType?: TelemetrytypesFieldDataTypeDTO;
 	/**
 	 * @type integer
 	 */
@@ -4637,28 +6842,36 @@ export interface RuletypesCumulativeWindowDTO {
 	timezone: string;
 }
 
+export enum RuletypesEvaluationCumulativeDTOKind {
+	cumulative = 'cumulative',
+}
 export interface RuletypesEvaluationCumulativeDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesCumulativeWindowDTO;
+	/**
+	 * @type string
+	 * @enum cumulative
+	 */
+	kind: RuletypesEvaluationCumulativeDTOKind;
+	spec: RuletypesCumulativeWindowDTO;
 }
 
 export type RuletypesEvaluationEnvelopeDTO =
-	| (RuletypesEvaluationRollingDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  })
-	| (RuletypesEvaluationCumulativeDTO & {
-			kind: RuletypesEvaluationKindDTO;
-			spec: unknown;
-	  });
+	| RuletypesEvaluationRollingDTO
+	| RuletypesEvaluationCumulativeDTO;
 
 export enum RuletypesEvaluationKindDTO {
 	rolling = 'rolling',
 	cumulative = 'cumulative',
 }
+export enum RuletypesEvaluationRollingDTOKind {
+	rolling = 'rolling',
+}
 export interface RuletypesEvaluationRollingDTO {
-	kind?: RuletypesEvaluationKindDTO;
-	spec?: RuletypesRollingWindowDTO;
+	/**
+	 * @type string
+	 * @enum rolling
+	 */
+	kind: RuletypesEvaluationRollingDTOKind;
+	spec: RuletypesRollingWindowDTO;
 }
 
 export interface RuletypesGettableTestRuleDTO {
@@ -5013,10 +7226,7 @@ export interface RuletypesRuleConditionDTO {
 	thresholds?: RuletypesRuleThresholdDataDTO;
 }
 
-export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO & {
-	kind: RuletypesThresholdKindDTO;
-	spec: unknown;
-};
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;
 
 export enum RuletypesRuleTypeDTO {
 	threshold_rule = 'threshold_rule',
@@ -5052,9 +7262,16 @@ export enum RuletypesSeasonalityDTO {
 	daily = 'daily',
 	weekly = 'weekly',
 }
+export enum RuletypesThresholdBasicDTOKind {
+	basic = 'basic',
+}
 export interface RuletypesThresholdBasicDTO {
-	kind?: RuletypesThresholdKindDTO;
-	spec?: RuletypesBasicRuleThresholdsDTO;
+	/**
+	 * @type string
+	 * @enum basic
+	 */
+	kind: RuletypesThresholdBasicDTOKind;
+	spec: RuletypesBasicRuleThresholdsDTO;
 }
 
 export enum RuletypesThresholdKindDTO {
@@ -5245,6 +7462,184 @@ export interface Sigv4SigV4ConfigDTO {
 	[key: string]: unknown;
 }
 
+export enum SpantypesFieldContextDTO {
+	attribute = 'attribute',
+	resource = 'resource',
+}
+export interface SpantypesGettableSpanMapperGroupsDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesSpanMapperGroupDTO[];
+}
+
+export interface SpantypesPostableSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesPostableSpanMapperGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface SpantypesSpanMapperDTO {
+	config: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	fieldContext: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	group_id: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+export interface SpantypesSpanMapperConfigDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	sources: SpantypesSpanMapperSourceDTO[] | null;
+}
+
+export interface SpantypesSpanMapperGroupDTO {
+	condition: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	attributes: string[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	resource: string[] | null;
+} | null;
+
+export enum SpantypesSpanMapperOperationDTO {
+	move = 'move',
+	copy = 'copy',
+}
+export interface SpantypesSpanMapperSourceDTO {
+	context: SpantypesFieldContextDTO;
+	/**
+	 * @type string
+	 */
+	key: string;
+	operation: SpantypesSpanMapperOperationDTO;
+	/**
+	 * @type integer
+	 */
+	priority: number;
+}
+
+export interface SpantypesUpdatableSpanMapperDTO {
+	config?: SpantypesSpanMapperConfigDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	fieldContext?: SpantypesFieldContextDTO;
+}
+
+export interface SpantypesUpdatableSpanMapperGroupDTO {
+	condition?: SpantypesSpanMapperGroupConditionDTO;
+	/**
+	 * @type boolean
+	 * @nullable true
+	 */
+	enabled?: boolean | null;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	name?: string | null;
+}
+
 export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
@@ -5333,6 +7728,279 @@ export interface TelemetrytypesTelemetryFieldValuesDTO {
 }
 
 export type TimeDurationDTO = number;
+
+export type TracedetailtypesEventDTOAttributeMap = { [key: string]: unknown };
+
+export interface TracedetailtypesEventDTO {
+	/**
+	 * @type object
+	 */
+	attributeMap?: TracedetailtypesEventDTOAttributeMap;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap =
+	{ [key: string]: number } | null;
+
+export interface TracedetailtypesGettableWaterfallTraceDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationResultDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	endTimestampMillis?: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans?: boolean;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
+	/**
+	 * @type string
+	 */
+	rootServiceEntryPoint?: string;
+	/**
+	 * @type string
+	 */
+	rootServiceName?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	serviceNameToTotalDurationMap?: TracedetailtypesGettableWaterfallTraceDTOServiceNameToTotalDurationMap;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	spans?: TracedetailtypesWaterfallSpanDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalErrorSpansCount?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	totalSpansCount?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface TracedetailtypesPostableWaterfallDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	aggregations?: TracedetailtypesSpanAggregationDTO[] | null;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 */
+	selectedSpanId?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	uncollapsedSpans?: string[] | null;
+}
+
+export interface TracedetailtypesSpanAggregationDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+}
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesSpanAggregationResultDTOValue = {
+	[key: string]: number;
+} | null;
+
+export interface TracedetailtypesSpanAggregationResultDTO {
+	aggregation?: TracedetailtypesSpanAggregationTypeDTO;
+	field?: TelemetrytypesTelemetryFieldKeyDTO;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	value?: TracedetailtypesSpanAggregationResultDTOValue;
+}
+
+export enum TracedetailtypesSpanAggregationTypeDTO {
+	span_count = 'span_count',
+	execution_time_percentage = 'execution_time_percentage',
+	duration = 'duration',
+}
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOAttributes = {
+	[key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type TracedetailtypesWaterfallSpanDTOResource = {
+	[key: string]: string;
+} | null;
+
+export interface TracedetailtypesWaterfallSpanDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	attributes?: TracedetailtypesWaterfallSpanDTOAttributes;
+	/**
+	 * @type string
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 */
+	db_operation?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	duration_nano?: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	events?: TracedetailtypesEventDTO[] | null;
+	/**
+	 * @type string
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 */
+	external_http_url?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	flags?: number;
+	/**
+	 * @type boolean
+	 */
+	has_children?: boolean;
+	/**
+	 * @type boolean
+	 */
+	has_error?: boolean;
+	/**
+	 * @type string
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 */
+	http_url?: string;
+	/**
+	 * @type string
+	 */
+	is_remote?: string;
+	/**
+	 * @type string
+	 */
+	kind_string?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level?: number;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	parent_span_id?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	resource?: TracedetailtypesWaterfallSpanDTOResource;
+	/**
+	 * @type string
+	 */
+	response_status_code?: string;
+	/**
+	 * @type string
+	 */
+	span_id?: string;
+	/**
+	 * @type integer
+	 */
+	status_code?: number;
+	/**
+	 * @type string
+	 */
+	status_code_string?: string;
+	/**
+	 * @type string
+	 */
+	status_message?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	sub_tree_node_count?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	time_unix?: number;
+	/**
+	 * @type string
+	 */
+	trace_id?: string;
+	/**
+	 * @type string
+	 */
+	trace_state?: string;
+}
 
 export interface TypesAlertStatusDTO {
 	/**
@@ -5715,14 +8383,6 @@ export type AuthzCheck200 = {
 	status: string;
 };
 
-export type AuthzResources200 = {
-	data: AuthtypesGettableResourcesDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type ListChannels200 = {
 	/**
 	 * @type array
@@ -5965,8 +8625,8 @@ export type ListAuthDomains200 = {
 	status: string;
 };
 
-export type CreateAuthDomain200 = {
-	data: AuthtypesGettableAuthDomainDTO;
+export type CreateAuthDomain201 = {
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
@@ -5976,6 +8636,17 @@ export type CreateAuthDomain200 = {
 export type DeleteAuthDomainPathParameters = {
 	id: string;
 };
+export type GetAuthDomainPathParameters = {
+	id: string;
+};
+export type GetAuthDomain200 = {
+	data: AuthtypesGettableAuthDomainDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
@@ -6198,6 +8869,41 @@ export type CreateInvite201 = {
 	status: string;
 };
 
+export type ListLLMPricingRulesParams = {
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
+};
+
+export type ListLLMPricingRules200 = {
+	data: LlmpricingruletypesGettablePricingRulesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRulePathParameters = {
+	id: string;
+};
+export type GetLLMPricingRule200 = {
+	data: LlmpricingruletypesLLMPricingRuleDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListPromotedAndIndexedPaths200 = {
 	/**
 	 * @type array
@@ -6302,7 +9008,7 @@ export type GetObjects200 = {
 	/**
 	 * @type array
 	 */
-	data: AuthtypesGettableObjectsDTO[];
+	data: CoretypesObjectGroupDTO[];
 	/**
 	 * @type string
 	 */
@@ -6464,6 +9170,67 @@ export type GetMyServiceAccount200 = {
 	status: string;
 };
 
+export type ListSpanMapperGroupsParams = {
+	/**
+	 * @type boolean
+	 * @nullable true
+	 * @description undefined
+	 */
+	enabled?: boolean | null;
+};
+
+export type ListSpanMapperGroups200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperGroup201 = {
+	data: SpantypesSpanMapperGroupDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type UpdateSpanMapperGroupPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappersPathParameters = {
+	groupId: string;
+};
+export type ListSpanMappers200 = {
+	data: SpantypesGettableSpanMapperGroupsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateSpanMapperPathParameters = {
+	groupId: string;
+};
+export type CreateSpanMapper201 = {
+	data: SpantypesSpanMapperDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
+export type UpdateSpanMapperPathParameters = {
+	groupId: string;
+	mapperId: string;
+};
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
@@ -6632,6 +9399,46 @@ export type Healthz200 = {
 
 export type Healthz503 = {
 	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListClusters200 = {
+	data: InframonitoringtypesClustersDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListHosts200 = {
+	data: InframonitoringtypesHostsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNamespaces200 = {
+	data: InframonitoringtypesNamespacesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListNodes200 = {
+	data: InframonitoringtypesNodesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListPods200 = {
+	data: InframonitoringtypesPodsDTO;
 	/**
 	 * @type string
 	 */
@@ -7254,6 +10061,17 @@ export type GetMyUser200 = {
 
 export type GetHosts200 = {
 	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetWaterfallPathParameters = {
+	traceID: string;
+};
+export type GetWaterfall200 = {
+	data: TracedetailtypesGettableWaterfallTraceDTO;
 	/**
 	 * @type string
 	 */

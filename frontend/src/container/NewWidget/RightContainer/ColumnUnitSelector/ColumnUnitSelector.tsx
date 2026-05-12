@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect } from 'react';
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
 import { isEmpty } from 'lodash-es';
@@ -62,10 +62,13 @@ export function ColumnUnitSelector(
 	};
 
 	useEffect(() => {
-		const newColumnUnits = aggregationQueries.reduce((acc, query) => {
-			acc[query.value] = getValues(query.value);
-			return acc;
-		}, {} as Record<string, string>);
+		const newColumnUnits = aggregationQueries.reduce(
+			(acc, query) => {
+				acc[query.value] = getValues(query.value);
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 		setColumnUnits(newColumnUnits);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [aggregationQueries]);

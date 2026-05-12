@@ -1,11 +1,11 @@
-import {
-	CheckCircleFilled,
-	CloseCircleFilled,
-	ExclamationCircleFilled,
-	LoadingOutlined,
-	MinusCircleFilled,
-} from '@ant-design/icons';
 import { Spin } from 'antd';
+import {
+	CircleMinus,
+	Loader,
+	SolidCheckCircle2,
+	SolidAlertOctagon,
+	SolidXCircle,
+} from '@signozhq/icons';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {
@@ -28,16 +28,21 @@ export function getDeploymentStageIcon(value: string): JSX.Element {
 	switch (value) {
 		case 'in_progress':
 			return (
-				<Spin indicator={<LoadingOutlined style={{ fontSize: 15 }} spin />} />
+				<Spin
+					data-testid="deployment-icon-in-progress"
+					indicator={<Loader style={{ fontSize: 15 }} className="animate-spin" />}
+				/>
 			);
 		case 'deployed':
-			return <CheckCircleFilled />;
+			return (
+				<SolidCheckCircle2 size="md" data-testid="deployment-icon-deployed" />
+			);
 		case 'dirty':
-			return <ExclamationCircleFilled />;
+			return <SolidAlertOctagon size="md" data-testid="deployment-icon-dirty" />;
 		case 'failed':
-			return <CloseCircleFilled />;
+			return <SolidXCircle size="md" data-testid="deployment-icon-failed" />;
 		case 'unknown':
-			return <MinusCircleFilled />;
+			return <CircleMinus size="md" data-testid="deployment-icon-unknown" />;
 		default:
 			return <span />;
 	}

@@ -15,15 +15,6 @@ const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const MANAGED_ROLE_ID = '019c24aa-2248-756f-9833-984f1ab63819';
 
 const rolesApiBase = 'http://localhost/api/v1/roles';
-const authzResourcesUrl = 'http://localhost/api/v1/authz/resources';
-
-const authzResourcesResponse = {
-	status: 'success',
-	data: {
-		relations: { create: ['dashboard'], read: ['dashboard'] },
-		resources: [{ name: 'dashboard', type: 'dashboard' }],
-	},
-};
 
 const emptyObjectsResponse = { status: 'success', data: [] };
 
@@ -45,9 +36,6 @@ function setupDefaultHandlers(roleId = CUSTOM_ROLE_ID): void {
 		rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(roleResponse)),
 		),
-		rest.get(authzResourcesUrl, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(authzResourcesResponse)),
-		),
 	);
 }
 
@@ -65,7 +53,9 @@ describe.skip('RoleDetailsPage', () => {
 			initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}`,
 		});
 
-		expect(await screen.findByText('Role — billing-manager')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Role — billing-manager'),
+		).resolves.toBeInTheDocument();
 
 		// Tab navigation
 		expect(screen.getByText('Overview')).toBeInTheDocument();
@@ -96,7 +86,9 @@ describe.skip('RoleDetailsPage', () => {
 			initialRoute: `/settings/roles/${MANAGED_ROLE_ID}`,
 		});
 
-		expect(await screen.findByText(/Role — signoz-admin/)).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Role — signoz-admin/),
+		).resolves.toBeInTheDocument();
 
 		expect(
 			screen.getByText(
@@ -148,11 +140,11 @@ describe.skip('RoleDetailsPage', () => {
 
 		// Open the edit modal
 		await user.click(screen.getByRole('button', { name: /edit role details/i }));
-		expect(
-			await screen.findByText('Edit Role Details', {
+		await expect(
+			screen.findByText('Edit Role Details', {
 				selector: '.ant-modal-title',
 			}),
-		).toBeInTheDocument();
+		).resolves.toBeInTheDocument();
 
 		// Name field is disabled in edit mode (role rename is not allowed)
 		const nameInput = screen.getByPlaceholderText(
@@ -182,7 +174,9 @@ describe.skip('RoleDetailsPage', () => {
 			).not.toBeInTheDocument(),
 		);
 
-		expect(await screen.findByText('Updated description')).toBeInTheDocument();
+		await expect(
+			screen.findByText('Updated description'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('delete flow: modal shows role name, DELETE called on confirm', async () => {
@@ -206,9 +200,9 @@ describe.skip('RoleDetailsPage', () => {
 
 		await user.click(screen.getByRole('button', { name: /delete role/i }));
 
-		expect(
-			await screen.findByText(/Are you sure you want to delete the role/),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText(/Are you sure you want to delete the role/),
+		).resolves.toBeInTheDocument();
 
 		const dialog = await screen.findByRole('dialog');
 		await user.click(

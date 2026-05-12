@@ -29,7 +29,7 @@ import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
 import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { Info, TriangleAlert } from 'lucide-react';
+import { Info, TriangleAlert } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { TracesAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -290,12 +290,12 @@ function QueryAggregationSelect({
 			}
 
 			const regex = /([a-zA-Z_][\w]*)\s*\(([^)]*)\)/g;
-			const oldMatches = [
-				...tr.startState.doc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
-			const newMatches = [
-				...tr.newDoc.toString().matchAll(regex),
-			].filter((match) => validFunctions.includes(match[1].toLowerCase()));
+			const oldMatches = [...tr.startState.doc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
+			const newMatches = [...tr.newDoc.toString().matchAll(regex)].filter(
+				(match) => validFunctions.includes(match[1].toLowerCase()),
+			);
 
 			if (
 				newMatches.length > oldMatches.length &&
@@ -558,7 +558,7 @@ function QueryAggregationSelect({
 									? availableSuggestions
 									: availableSuggestions.filter((suggestion) =>
 											suggestion.label.toLowerCase().includes(inputText.toLowerCase()),
-									  );
+										);
 
 							return {
 								from: startOfArg,

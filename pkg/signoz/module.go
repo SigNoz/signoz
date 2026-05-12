@@ -8,12 +8,17 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/inframonitoring/implinframonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule"
+	"github.com/SigNoz/signoz/pkg/modules/llmpricingrule/impllmpricingrule"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -26,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/retention"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -35,8 +41,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -58,6 +68,7 @@ type Modules struct {
 	Preference       preference.Module
 	UserSetter       user.Setter
 	UserGetter       user.Getter
+	RetentionGetter  retention.Getter
 	SavedView        savedview.Module
 	Apdex            apdex.Module
 	Dashboard        dashboard.Module
@@ -69,10 +80,14 @@ type Modules struct {
 	Services         services.Module
 	SpanPercentile   spanpercentile.Module
 	MetricsExplorer  metricsexplorer.Module
+	InfraMonitoring  inframonitoring.Module
 	Promote          promote.Module
 	ServiceAccount   serviceaccount.Module
 	CloudIntegration cloudintegration.Module
 	RuleStateHistory rulestatehistory.Module
+	TraceDetail      tracedetail.Module
+	SpanMapper       spanmapper.Module
+	LLMPricingRule   llmpricingrule.Module
 }
 
 func NewModules(
@@ -96,6 +111,8 @@ func NewModules(
 	userRoleStore authtypes.UserRoleStore,
 	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
+	retentionGetter retention.Getter,
+	fl flagger.Flagger,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -111,6 +128,7 @@ func NewModules(
 		Dashboard:        dashboard,
 		UserSetter:       userSetter,
 		UserGetter:       userGetter,
+		RetentionGetter:  retentionGetter,
 		QuickFilter:      quickfilter,
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),
@@ -119,9 +137,13 @@ func NewModules(
 		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
 		Services:         implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		InfraMonitoring:  implinframonitoring.NewModule(telemetryStore, telemetryMetadataStore, querier, providerSettings, config.InfraMonitoring),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:   serviceAccount,
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
+		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
+		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
 	}
 }

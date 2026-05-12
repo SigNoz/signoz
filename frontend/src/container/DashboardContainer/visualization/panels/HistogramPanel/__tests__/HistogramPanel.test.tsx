@@ -125,8 +125,8 @@ function createWidget(overrides: Partial<WidgetLike> = {}): WidgetLike {
 
 describe('HistogramPanel', () => {
 	it('renders Histogram when container has dimensions', () => {
-		const widget = (createWidget() as unknown) as Widgets;
-		const queryResponse = (createQueryResponse() as unknown) as UseQueryResult<
+		const widget = createWidget() as unknown as Widgets;
+		const queryResponse = createQueryResponse() as unknown as UseQueryResult<
 			MetricQueryRangeSuccessResponse,
 			Error
 		>;
@@ -146,10 +146,10 @@ describe('HistogramPanel', () => {
 	});
 
 	it('passes legend position and other props to Histogram', () => {
-		const widget = (createWidget({
+		const widget = createWidget({
 			legendPosition: LegendPosition.RIGHT,
-		}) as unknown) as Widgets;
-		const queryResponse = (createQueryResponse() as unknown) as UseQueryResult<
+		}) as unknown as Widgets;
+		const queryResponse = createQueryResponse() as unknown as UseQueryResult<
 			MetricQueryRangeSuccessResponse,
 			Error
 		>;
@@ -174,10 +174,10 @@ describe('HistogramPanel', () => {
 	});
 
 	it('renders ChartManager in full view when queries are not merged', () => {
-		const widget = (createWidget({
+		const widget = createWidget({
 			mergeAllActiveQueries: false,
-		}) as unknown) as Widgets;
-		const queryResponse = (createQueryResponse() as unknown) as UseQueryResult<
+		}) as unknown as Widgets;
+		const queryResponse = createQueryResponse() as unknown as UseQueryResult<
 			MetricQueryRangeSuccessResponse,
 			Error
 		>;
@@ -197,10 +197,10 @@ describe('HistogramPanel', () => {
 	});
 
 	it('does not render ChartManager when queries are merged', () => {
-		const widget = (createWidget({
+		const widget = createWidget({
 			mergeAllActiveQueries: true,
-		}) as unknown) as Widgets;
-		const queryResponse = (createQueryResponse() as unknown) as UseQueryResult<
+		}) as unknown as Widgets;
+		const queryResponse = createQueryResponse() as unknown as UseQueryResult<
 			MetricQueryRangeSuccessResponse,
 			Error
 		>;

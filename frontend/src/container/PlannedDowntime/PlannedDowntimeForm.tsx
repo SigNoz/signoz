@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
-	Divider,
+	Flex,
 	Form,
 	FormInstance,
 	Input,
@@ -11,8 +11,8 @@ import {
 	Select,
 	SelectProps,
 	Spin,
-	Typography,
 } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -164,7 +164,7 @@ export function PlannedDowntimeForm(
 									values.timezone,
 									shouldKeepLocalTime,
 								),
-						  )
+							)
 						: undefined,
 					recurrence: values.recurrence as RuletypesRecurrenceDTO,
 				},
@@ -216,7 +216,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
-							  )
+								)
 							: undefined,
 						startTime: handleTimeConversion(
 							values.startTime,
@@ -228,7 +228,7 @@ export function PlannedDowntimeForm(
 							? undefined
 							: values.recurrence?.repeatOn,
 						repeatType: values.recurrence?.repeatType,
-				  };
+					};
 
 		const payloadValues = {
 			...values,
@@ -442,11 +442,9 @@ export function PlannedDowntimeForm(
 			centered
 			open={isOpen}
 			className="createDowntimeModal"
-			width={384}
 			onCancel={handleCancel}
 			footer={null}
 		>
-			<Divider plain />
 			<Form<PlannedDowntimeFormData>
 				name={initialValues.editMode ? 'edit-form' : 'create-form'}
 				form={form}
@@ -616,11 +614,14 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<CheckOutlined />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
+							className="downtime-schedule-btn"
 						>
-							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							<Flex align="center" gap={4}>
+								<Check size={16} />
+								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							</Flex>
 						</Button>
 					</ModalButtonWrapper>
 				</Form.Item>

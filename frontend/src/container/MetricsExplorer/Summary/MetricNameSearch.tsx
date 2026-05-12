@@ -19,7 +19,7 @@ import {
 	convertFiltersToExpression,
 } from 'components/QueryBuilderV2/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Search } from 'lucide-react';
+import { Search } from '@signozhq/icons';
 
 function MetricNameSearch({
 	queryFilterExpression,

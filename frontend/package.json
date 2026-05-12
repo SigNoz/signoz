@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "prettify": "oxfmt",
-    "fmt": "echo 'Disabled due to migration' || oxfmt --check",
+    "fmt": "oxfmt --check",
     "lint": "oxlint ./src && stylelint \"src/**/*.scss\"",
     "lint:js": "oxlint ./src",
     "lint:generated": "oxlint ./src/api/generated --fix",
@@ -23,8 +23,7 @@
     "commitlint": "commitlint --edit $1",
     "test": "jest",
     "test:changedsince": "jest --changedSince=main --coverage --silent",
-    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh",
-    "generate:permissions-type": "node scripts/generate-permissions-type.cjs"
+    "generate:api": "orval --config ./orval.config.ts && sh scripts/post-types-generation.sh"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -33,7 +32,6 @@
   "license": "ISC",
   "dependencies": {
     "@ant-design/colors": "6.0.0",
-    "@ant-design/icons": "4.8.0",
     "@codemirror/autocomplete": "6.18.6",
     "@codemirror/lang-javascript": "6.2.3",
     "@dnd-kit/core": "6.1.0",
@@ -44,15 +42,14 @@
     "@mdx-js/loader": "2.3.0",
     "@mdx-js/react": "2.3.0",
     "@monaco-editor/react": "^4.3.1",
-    "@playwright/test": "1.55.1",
     "@radix-ui/react-tabs": "1.0.4",
     "@radix-ui/react-tooltip": "1.0.7",
     "@sentry/react": "8.41.0",
     "@sentry/vite-plugin": "2.22.6",
     "@signozhq/design-tokens": "2.1.4",
-    "@signozhq/icons": "0.1.0",
+    "@signozhq/icons": "0.4.0",
     "@signozhq/resizable": "0.0.2",
-    "@signozhq/ui": "0.0.10",
+    "@signozhq/ui": "0.0.18",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",
@@ -64,7 +61,6 @@
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
     "@vitejs/plugin-react": "5.1.4",
-    "@xstate/react": "^3.0.0",
     "ansi-to-html": "0.7.2",
     "antd": "5.11.0",
     "antd-table-saveas-excel": "2.2.1",
@@ -100,7 +96,6 @@
     "jest": "30.2.0",
     "js-base64": "^3.7.2",
     "lodash-es": "^4.17.21",
-    "lucide-react": "0.498.0",
     "mini-css-extract-plugin": "2.4.5",
     "motion": "12.4.13",
     "nuqs": "2.8.8",
@@ -123,10 +118,12 @@
     "react-helmet-async": "1.3.0",
     "react-hook-form": "7.71.2",
     "react-i18next": "^11.16.1",
+    "react-json-tree": "^0.20.0",
     "react-lottie": "1.2.10",
     "react-markdown": "8.0.7",
     "react-query": "3.39.3",
     "react-redux": "^7.2.2",
+    "react-rnd": "^10.5.3",
     "react-router-dom": "^5.2.0",
     "react-router-dom-v5-compat": "6.27.0",
     "react-syntax-highlighter": "15.5.0",
@@ -147,7 +144,6 @@
     "vite": "npm:rolldown-vite@7.3.1",
     "vite-plugin-html": "3.2.2",
     "web-vitals": "^0.2.4",
-    "xstate": "^4.31.0",
     "zod": "4.3.6",
     "zustand": "5.0.11"
   },
@@ -201,6 +197,7 @@
     "@types/redux-mock-store": "1.0.4",
     "@types/styled-components": "^5.1.4",
     "@types/uuid": "^8.3.1",
+    "@typescript/native-preview": "7.0.0-dev.20260421.2",
     "autoprefixer": "10.4.19",
     "babel-plugin-styled-components": "^1.12.0",
     "eslint-plugin-sonarjs": "4.0.2",
@@ -215,9 +212,9 @@
     "msw": "1.3.2",
     "npm-run-all": "latest",
     "orval": "7.18.0",
-    "oxfmt": "0.41.0",
-    "oxlint": "1.59.0",
-    "oxlint-tsgolint": "0.20.0",
+    "oxfmt": "0.47.0",
+    "oxlint": "1.62.0",
+    "oxlint-tsgolint": "0.22.1",
     "portfinder-sync": "^0.0.2",
     "postcss": "8.5.6",
     "postcss-scss": "4.0.9",
@@ -231,9 +228,10 @@
     "stylelint-scss": "7.0.0",
     "svgo": "4.0.0",
     "ts-api-utils": "2.4.0",
-    "ts-jest": "29.4.6",
+    "ts-jest": "29.4.9",
     "ts-node": "^10.2.1",
     "typescript-plugin-css-modules": "5.2.0",
+    "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
     "vite-plugin-image-optimizer": "2.0.3",
@@ -241,9 +239,14 @@
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
-      "echo 'Disabled due to migration' || oxfmt --check",
-      "oxlint --fix",
-      "sh scripts/typecheck-staged.sh"
+      "sh -c tsgo --noEmit"
+    ],
+    "*.(js|jsx|ts|tsx|scss|css)": [
+      "oxlint --fix --quiet --no-error-on-unmatched-pattern",
+      "oxfmt --write"
+    ],
+    "*.(scss|css)": [
+      "stylelint"
     ]
   },
   "resolutions": {

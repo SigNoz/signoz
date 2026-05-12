@@ -16,7 +16,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { GripVertical } from 'lucide-react';
+import { GripVertical } from '@signozhq/icons';
 import { Filter as FilterType } from 'types/api/quickFilters/getCustomFilters';
 
 function SortableFilter({
@@ -30,13 +30,8 @@ function SortableFilter({
 	allowDrag: boolean;
 	allowRemove: boolean;
 }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: filter.key });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: filter.key });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),

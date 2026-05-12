@@ -153,9 +153,9 @@ function useContextVariables({
 
 	// Helper function to get variable by name
 	const getVariableByName = useMemo(
-		(): ((name: string) => ContextVariable | undefined) => (
-			name: string,
-		): ContextVariable | undefined => allVariables.find((v) => v.name === name),
+		(): ((name: string) => ContextVariable | undefined) =>
+			(name: string): ContextVariable | undefined =>
+				allVariables.find((v) => v.name === name),
 		[allVariables],
 	);
 

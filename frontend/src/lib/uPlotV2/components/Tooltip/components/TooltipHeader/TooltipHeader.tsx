@@ -3,7 +3,7 @@ import cx from 'classnames';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { Pin } from 'lucide-react';
+import { Pin } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import type uPlot from 'uplot';
 
@@ -72,13 +72,15 @@ export default function TooltipHeader({
 			)}
 
 			{activeItem && (
-				<TooltipItem
-					item={activeItem}
-					isItemActive={true}
-					containerTestId="uplot-tooltip-pinned"
-					markerTestId="uplot-tooltip-pinned-marker"
-					contentTestId="uplot-tooltip-pinned-content"
-				/>
+				<div className={Styles.pinnedItem} data-testid="uplot-tooltip-pinned-item">
+					<TooltipItem
+						item={activeItem}
+						isItemActive={true}
+						containerTestId="uplot-tooltip-pinned"
+						markerTestId="uplot-tooltip-pinned-marker"
+						contentTestId="uplot-tooltip-pinned-content"
+					/>
+				</div>
 			)}
 		</div>
 	);

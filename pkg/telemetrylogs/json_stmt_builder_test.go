@@ -8,6 +8,7 @@ import (
 	"time"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -32,9 +33,6 @@ func (t TestExpected) GetQuery() string {
 }
 
 func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
@@ -115,9 +113,6 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
    not a body_promoted.* column. These tests assumed the old coalesce(body_promoted.x, body_v2.x) path.
 
 func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, "user.age", "user.name")
 
 	cases := []struct {
@@ -176,10 +171,6 @@ func TestStmtBuilderTimeSeriesBodyGroupByPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
 	statementBuilder := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
@@ -340,10 +331,6 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
    (direct sub-column access), not a body_promoted.* column.
 
 func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
 	statementBuilder := buildJSONTestStatementBuilder(t, "education", "tags")
 	cases := []struct {
 		name        string
@@ -507,10 +494,6 @@ func TestStatementBuilderListQueryBodyPromoted(t *testing.T) {
 */
 
 func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
 	statementBuilder := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
@@ -816,10 +799,6 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
-
 	statementBuilder := buildJSONTestStatementBuilder(t, true)
 	cases := []struct {
 		name        string
@@ -939,9 +918,6 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_SelectField(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
@@ -1030,9 +1006,6 @@ func TestJSONStmtBuilder_SelectField(t *testing.T) {
 }
 
 func TestJSONStmtBuilder_OrderBy(t *testing.T) {
-	enable, disable := jsonQueryTestUtil(t)
-	enable()
-	defer disable()
 	statementBuilder := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
@@ -1127,9 +1100,12 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 					return entry.Path == path && entry.Type == jsonType
 				})
 				if idx >= 0 {
-					key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
-						Type:             jsonType,
-						ColumnExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
+					key.Indexes = append(key.Indexes, telemetrytypes.TelemetryFieldKeySkipIndex{
+						Name:            path,
+						FieldContext:    telemetrytypes.FieldContextBody,
+						FieldDataType:   fdt,
+						BaseColumn:      LogsV2BodyV2Column,
+						IndexExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
 					})
 				}
 			}
@@ -1148,11 +1124,14 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 }
 
 func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
+	t.Helper()
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
+	fl := flaggertest.WithUseJSONBody(t, true)
+	fm := NewFieldMapper(fl)
+	cb := NewConditionBuilder(fm, fl)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil, fl)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -1162,18 +1141,8 @@ func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryState
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
+		fl,
 	)
 
 	return statementBuilder
-}
-
-func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
-	enable := func() {
-		querybuilder.BodyJSONQueryEnabled = true
-	}
-	disable := func() {
-		querybuilder.BodyJSONQueryEnabled = false
-	}
-
-	return enable, disable
 }

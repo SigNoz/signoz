@@ -19,9 +19,9 @@ import {
 	nodeWidgetInfo,
 } from './constants';
 import {
-	k8sNodesColumns,
+	getK8sNodeItemKey,
+	getK8sNodeRowKey,
 	k8sNodesColumnsConfig,
-	k8sNodesRenderRowData,
 } from './table.config';
 
 function K8sNodesList({
@@ -91,10 +91,10 @@ function K8sNodesList({
 			<K8sBaseList<K8sNodeData>
 				controlListPrefix={controlListPrefix}
 				entity={InfraMonitoringEntity.NODES}
-				tableColumnsDefinitions={k8sNodesColumns}
 				tableColumns={k8sNodesColumnsConfig}
 				fetchListData={fetchListData}
-				renderRowData={k8sNodesRenderRowData}
+				getRowKey={getK8sNodeRowKey}
+				getItemKey={getK8sNodeItemKey}
 				eventCategory={InfraMonitoringEvents.Node}
 			/>
 

@@ -59,7 +59,7 @@ function MessagingQueues(): JSX.Element {
 				history.push(link);
 			}
 		} else {
-			window.open(KAFKA_SETUP_DOC_LINK, '_blank');
+			openInNewTab(KAFKA_SETUP_DOC_LINK);
 		}
 	};
 

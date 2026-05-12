@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { Button } from '@signozhq/ui';
-import { Form, Input, Select, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Form, Input, Select } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
@@ -10,7 +11,7 @@ import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
@@ -60,10 +61,8 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
-	const [
-		sessionsContextLoading,
-		setIsLoadingSessionsContext,
-	] = useState<boolean>(false);
+	const [sessionsContextLoading, setIsLoadingSessionsContext] =
+		useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 
@@ -213,6 +212,7 @@ function Login(): JSX.Element {
 			if (isCallbackAuthN) {
 				const url = form.getFieldValue('url');
 
+				// oxlint-disable-next-line signoz/no-raw-absolute-path
 				window.location.href = url;
 			}
 		} catch (error) {
@@ -312,10 +312,10 @@ function Login(): JSX.Element {
 					<Typography.Title level={4} className="login-form-title">
 						Sign in to your workspace
 					</Typography.Title>
-					<Typography.Paragraph className="login-form-description">
+					<Typography.Text className="login-form-description">
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
-					</Typography.Paragraph>
+					</Typography.Text>
 				</div>
 
 				<div className="login-form-card">
@@ -328,7 +328,6 @@ function Login(): JSX.Element {
 								data-testid="email"
 								required
 								placeholder="e.g. john@signoz.io"
-								autoFocus
 								disabled={versionLoading}
 								className="login-form-input"
 								onPressEnter={onNextHandler}
@@ -363,7 +362,6 @@ function Login(): JSX.Element {
 								<Label htmlFor="Password">Password</Label>
 								<Typography.Link
 									className="forgot-password-link"
-									href="#"
 									onClick={(event): void => {
 										event.preventDefault();
 										handleForgotPasswordClick();

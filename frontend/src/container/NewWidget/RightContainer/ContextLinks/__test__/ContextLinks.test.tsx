@@ -157,7 +157,7 @@ describe('ContextLinks Component', () => {
 
 			// Test the function by calling it with the current state
 			const result = setContextLinksCall(MOCK_EMPTY_CONTEXT_LINKS);
-			expect(result).toEqual({
+			expect(result).toStrictEqual({
 				linksData: [
 					{
 						id: expect.any(String), // ID is generated dynamically

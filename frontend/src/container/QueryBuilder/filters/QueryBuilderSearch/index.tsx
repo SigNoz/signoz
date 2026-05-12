@@ -9,7 +9,8 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Select, Spin, Tag, Tooltip, Typography } from 'antd';
+import { Button, Select, Spin, Tag, Tooltip } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -33,7 +34,7 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,
@@ -80,9 +81,10 @@ function QueryBuilderSearch({
 	entity,
 }: QueryBuilderSearchProps): JSX.Element {
 	const { pathname } = useLocation();
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const [isEditingTag, setIsEditingTag] = useState(false);
 
@@ -186,9 +188,7 @@ function QueryBuilderSearch({
 			<Tag closable={!searchValue && closable} onClose={onCloseHandler}>
 				<Tooltip title={chipValue}>
 					<TypographyText
-						ellipsis
 						$isInNin={isInNin}
-						disabled={isDisabled}
 						$isEnabled={!!searchValue}
 						onClick={(): void => {
 							if (!isDisabled) {
@@ -292,7 +292,7 @@ function QueryBuilderSearch({
 			const computedTagValue =
 				tagValue && Array.isArray(tagValue) && tagValue[tagValue.length - 1] === ''
 					? tagValue?.slice(0, -1)
-					: tagValue ?? '';
+					: (tagValue ?? '');
 
 			return {
 				id: uuid().slice(0, 8),
@@ -502,7 +502,7 @@ function QueryBuilderSearch({
 								/>
 								{option.selected && <StyledCheckOutlined />}
 							</Select.Option>
-					  ))}
+						))}
 			</Select>
 		</div>
 	);

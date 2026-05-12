@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button, Input } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
+import { Input } from '@signozhq/ui/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListUsers } from 'api/generated/services/users';
@@ -141,8 +142,8 @@ function MembersSettings(): JSX.Element {
 		filterMode === FilterMode.All
 			? `All members ⎯ ${totalCount}`
 			: filterMode === FilterMode.Invited
-			? `Pending invites ⎯ ${pendingCount}`
-			: `Deleted ⎯ ${deletedCount}`;
+				? `Pending invites ⎯ ${pendingCount}`
+				: `Deleted ⎯ ${deletedCount}`;
 
 	const handleInviteComplete = useCallback((): void => {
 		refetchUsers();

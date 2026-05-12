@@ -11,6 +11,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type Getter interface {
+	// OnBeforeRoleDelete checks if any service accounts are assigned to the role and rejects deletion if so.
+	OnBeforeRoleDelete(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) error
+}
+
 type Module interface {
 	// Creates a new service account for an organization.
 	Create(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error

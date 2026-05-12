@@ -224,7 +224,11 @@
 							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -249,7 +253,11 @@
 							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -273,7 +281,11 @@
 							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -307,7 +319,11 @@
 							color: var(--l2-foreground);
 							font-variant-numeric: lining-nums tabular-nums stacked-fractions
 								slashed-zero;
-							font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+							font-feature-settings:
+								'dlig' on,
+								'salt' on,
+								'cpsp' on,
+								'case' on;
 							font-family: Inter;
 							font-size: 12px;
 							font-style: normal;
@@ -328,7 +344,11 @@
 			> a {
 				color: var(--l2-foreground);
 				font-variant-numeric: lining-nums tabular-nums slashed-zero;
-				font-feature-settings: 'dlig' on, 'salt' on, 'case' on, 'cpsp' on;
+				font-feature-settings:
+					'dlig' on,
+					'salt' on,
+					'case' on,
+					'cpsp' on;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-normal);
@@ -932,7 +952,11 @@
 								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on,
+									'cpsp' on,
+									'case' on;
 								font-family: Inter;
 								font-size: 12.805px;
 								font-style: normal;
@@ -966,7 +990,11 @@
 									color: var(--l2-foreground);
 									font-variant-numeric: lining-nums tabular-nums stacked-fractions
 										slashed-zero;
-									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+									font-feature-settings:
+										'dlig' on,
+										'salt' on,
+										'cpsp' on,
+										'case' on;
 									font-family: Inter;
 									font-size: 12.805px;
 									font-style: normal;
@@ -988,7 +1016,11 @@
 								color: var(--l2-foreground);
 								font-variant-numeric: lining-nums tabular-nums stacked-fractions
 									slashed-zero;
-								font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+								font-feature-settings:
+									'dlig' on,
+									'salt' on,
+									'cpsp' on,
+									'case' on;
 								font-family: Inter;
 								font-size: 12.805px;
 								font-style: normal;
@@ -1022,7 +1054,11 @@
 									color: var(--l2-foreground);
 									font-variant-numeric: lining-nums tabular-nums stacked-fractions
 										slashed-zero;
-									font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+									font-feature-settings:
+										'dlig' on,
+										'salt' on,
+										'cpsp' on,
+										'case' on;
 									font-family: Inter;
 									font-size: 12.805px;
 									font-style: normal;
@@ -1073,305 +1109,6 @@
 				border-radius: 2px;
 				border: 1px solid var(--l1-border);
 				background: var(--l1-border);
-			}
-		}
-	}
-}
-
-.lightMode {
-	.dashboards-list-container {
-		.dashboards-list-view-content {
-			.title {
-				color: var(--l1-foreground);
-			}
-			.subtitle {
-				color: var(--muted-foreground);
-			}
-
-			.ant-table-row {
-				.ant-table-cell {
-					background: var(--l1-background);
-				}
-
-				&:hover {
-					.ant-table-cell {
-						background: var(--l1-background) !important;
-					}
-				}
-
-				.dashboard-list-item {
-					border: 1px solid var(--l1-border);
-					background: var(--card);
-
-					.dashboard-title {
-						color: var(--l2-foreground);
-
-						.title {
-							color: var(--l1-foreground);
-						}
-					}
-
-					.title-with-action {
-						.dashboard-title {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.action-btn {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-
-					.dashboard-details {
-						.dashboard-tag {
-							background: var(--l3-background);
-							.tag-text {
-								color: var(--l1-foreground);
-							}
-						}
-						.created-by {
-							.dashboard-tag {
-								background: var(--l3-background);
-
-								.tag-text {
-									color: var(--l1-foreground);
-								}
-							}
-							.dashboard-created-by {
-								color: var(--l2-foreground);
-							}
-						}
-
-						.updated-by {
-							.text {
-								color: var(--l2-foreground);
-							}
-
-							.dashboard-tag {
-								background: var(--l3-background);
-
-								.tag-text {
-									color: var(--l1-foreground);
-								}
-							}
-							.dashboard-created-by {
-								color: var(--l2-foreground);
-							}
-						}
-
-						.dashboard-created-by {
-							color: var(--l1-foreground);
-						}
-
-						.dashboard-created-at {
-							.ant-typography {
-								color: var(--l1-foreground);
-							}
-						}
-					}
-				}
-			}
-		}
-		.no-search {
-			.text {
-				color: var(--muted-foreground);
-			}
-		}
-
-		.all-dashboards-header {
-			border: 1px solid var(--l1-border);
-			background: var(--l2-background);
-
-			.typography {
-				color: var(--l2-foreground);
-			}
-
-			.right-actions {
-				color: var(--l2-foreground);
-			}
-		}
-		.dashboard-empty-state {
-			.text {
-				.no-dashboard {
-					color: var(--l2-foreground);
-				}
-				.info {
-					color: var(--l2-foreground);
-				}
-			}
-		}
-		.dashboard-error-state {
-			.error-text {
-				color: var(--muted-foreground);
-			}
-
-			.action-btns {
-				.retry-btn {
-					background: var(--l3-background);
-					color: var(--l1-foreground);
-				}
-			}
-		}
-	}
-
-	.delete-view-modal {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.ant-modal-header {
-				background: var(--card);
-
-				.title {
-					color: var(--l1-foreground);
-				}
-			}
-
-			.ant-modal-body {
-				.ant-typography {
-					color: var(--l1-foreground);
-				}
-
-				.save-view-input {
-					.ant-input {
-						background: var(--l2-background);
-						color: var(--l1-foreground);
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--l3-background);
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-
-	.dashboard-actions {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.dashboard-action-content {
-				.section-1 {
-					.action-btn {
-						color: var(--l2-foreground);
-					}
-				}
-
-				.section-2 {
-					border-top: 1px solid var(--l1-border);
-				}
-			}
-		}
-	}
-
-	.sort-dashboards {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.sort-content {
-				.sort-heading {
-					color: var(--l2-foreground);
-				}
-
-				.sort-btns {
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-
-	.configure-group {
-		.ant-popover-inner {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-			.configure-content {
-				.configure-btn {
-					color: var(--l2-foreground);
-				}
-			}
-		}
-	}
-
-	.configure-metadata-root {
-		.ant-modal-content {
-			border: 1px solid var(--l1-border);
-			background: var(--card);
-
-			.ant-modal-header {
-				background: var(--card);
-				border-bottom: 1px solid var(--l1-border);
-			}
-
-			.ant-modal-body {
-				.configure-content {
-					.configure-preview {
-						border: 0.915px solid var(--l1-border);
-						background: var(--l2-background);
-
-						.header {
-							.title {
-								color: var(--l2-foreground);
-							}
-						}
-
-						.details {
-							.createdAt {
-								.formatted-time {
-									color: var(--l2-foreground);
-								}
-
-								.user {
-									.user-tag {
-										color: var(--l2-foreground);
-										background-color: var(--l3-background);
-									}
-
-									.dashboard-created-by {
-										color: var(--l2-foreground);
-									}
-								}
-							}
-
-							.updatedAt {
-								.formatted-time {
-									color: var(--l2-foreground);
-								}
-
-								.user {
-									.user-tag {
-										color: var(--l2-foreground);
-										background-color: var(--l3-background);
-									}
-
-									.dashboard-created-by {
-										color: var(--l2-foreground);
-									}
-								}
-							}
-						}
-					}
-
-					.metadata-action {
-						.connection-line {
-							border: 1px dashed var(--l1-border);
-						}
-					}
-				}
-			}
-
-			.ant-modal-footer {
-				.save-changes {
-					border: 1px solid var(--l1-border);
-					background: var(--l2-background);
-				}
 			}
 		}
 	}

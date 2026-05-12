@@ -119,41 +119,6 @@
 	}
 }
 
-.lightMode {
-	.main-container {
-		.plot-tag {
-			background: var(--l3-background);
-		}
-	}
-	.ant-modal-content {
-		background-color: var(--l1-foreground);
-		.ant-modal-confirm-title {
-			color: var(--l1-foreground);
-		}
-
-		.ant-modal-confirm-content {
-			.ant-typography {
-				color: var(--l1-foreground);
-			}
-		}
-
-		.ant-modal-confirm-btns {
-			button:nth-of-type(1) {
-				background-color: var(--l3-background);
-				border: none;
-				color: var(--l1-foreground);
-			}
-		}
-	}
-
-	.info-help-btns {
-		.doc-redirection-btn {
-			color: var(--bg-aqua-600) !important;
-			border-color: var(--bg-aqua-600) !important;
-		}
-	}
-}
-
 .create-notification-btn {
 	box-shadow: none;
 }
