@@ -35,15 +35,15 @@ func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretyp
 	return append(matched, created...), nil
 }
 
-func (m *module) LinkToEntity(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error {
+func (m *module) LinkToEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error {
 	if len(tagIDs) == 0 {
 		return nil
 	}
-	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, kind, entityID, tagIDs))
+	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, entityID, tagIDs))
 }
 
-func (m *module) SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error {
-	if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(orgID, kind, entityID, tagIDs)); err != nil {
+func (m *module) SyncLinksForEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error {
+	if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, entityID, tagIDs)); err != nil {
 		return err
 	}
 	return m.store.DeleteRelationsExcept(ctx, kind, entityID, tagIDs)

@@ -13,10 +13,10 @@ type Module interface {
 	CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error)
 
 	// Existing rows are left untouched.
-	LinkToEntity(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error
+	LinkToEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error
 
 	// missing links are inserted, obsolete ones removed.
-	SyncLinksForEntity(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error
+	SyncLinksForEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) error
 
 	ListForEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID) ([]*tagtypes.Tag, error)
 

@@ -12,22 +12,20 @@ type TagRelation struct {
 	Kind     coretypes.Kind `json:"kind" required:"true" bun:"kind,pk,type:text,notnull"`
 	EntityID valuer.UUID    `json:"entityId" required:"true" bun:"entity_id,pk,type:text,notnull"`
 	TagID    valuer.UUID    `json:"tagId" required:"true" bun:"tag_id,pk,type:text,notnull"`
-	OrgID    valuer.UUID    `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
 }
 
-func NewTagRelation(orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagID valuer.UUID) *TagRelation {
+func NewTagRelation(kind coretypes.Kind, entityID valuer.UUID, tagID valuer.UUID) *TagRelation {
 	return &TagRelation{
 		Kind:     kind,
 		EntityID: entityID,
 		TagID:    tagID,
-		OrgID:    orgID,
 	}
 }
 
-func NewTagRelations(orgID valuer.UUID, kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) []*TagRelation {
+func NewTagRelations(kind coretypes.Kind, entityID valuer.UUID, tagIDs []valuer.UUID) []*TagRelation {
 	relations := make([]*TagRelation, 0, len(tagIDs))
 	for _, tagID := range tagIDs {
-		relations = append(relations, NewTagRelation(orgID, kind, entityID, tagID))
+		relations = append(relations, NewTagRelation(kind, entityID, tagID))
 	}
 	return relations
 }
