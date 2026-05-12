@@ -41,6 +41,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanmapper/implspanmapper"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/spanpercentile/implspanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -84,6 +86,7 @@ type Modules struct {
 	CloudIntegration cloudintegration.Module
 	RuleStateHistory rulestatehistory.Module
 	TraceDetail      tracedetail.Module
+	SpanMapper       spanmapper.Module
 	LLMPricingRule   llmpricingrule.Module
 }
 
@@ -140,6 +143,7 @@ func NewModules(
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 		TraceDetail:      impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore), providerSettings, config.TraceDetail),
+		SpanMapper:       implspanmapper.NewModule(implspanmapper.NewStore(sqlstore)),
 		LLMPricingRule:   impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore)),
 	}
 }

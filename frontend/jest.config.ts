@@ -46,7 +46,11 @@ const config: Config.InitialOptions = {
 	},
 	transformIgnorePatterns: [
 		// @chenglou/pretext is ESM-only; @signozhq/ui pulls it in via text-ellipsis.
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@chenglou/pretext|@signozhq/design-tokens|@signozhq/table|@signozhq/calendar|@signozhq/input|@signozhq/popover|@signozhq/*|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs)/)',
+		// Pattern 1: allow .pnpm virtual store through (handled by pattern 2), plus root-level ESM packages.
+		'node_modules/(?!(\\.pnpm|lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@chenglou/pretext|@signozhq/design-tokens|@signozhq|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs|uuid)/)',
+		// Pattern 2: pnpm virtual store — ignore everything except ESM-only packages.
+		// pnpm encodes scoped packages as @scope+name@version, so match on scope prefix.
+		'node_modules/\\.pnpm/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@chenglou|@signozhq|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs|uuid)[^/]*/node_modules)',
 	],
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

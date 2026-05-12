@@ -1,7 +1,7 @@
 /**
  * ! Do not edit manually
  * * The file has been auto-generated using Orval for SigNoz
- * * regenerate with 'yarn generate:api'
+ * * regenerate with 'pnpm generate:api'
  * SigNoz
  */
 export interface AlertmanagertypesChannelDTO {
@@ -5085,6 +5085,34 @@ export interface InframonitoringtypesPostablePodsDTO {
 	start: number;
 }
 
+export interface InframonitoringtypesPostableVolumesDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	groupBy?: Querybuildertypesv5GroupByKeyDTO[] | null;
+	/**
+	 * @type integer
+	 */
+	limit: number;
+	/**
+	 * @type integer
+	 */
+	offset?: number;
+	orderBy?: Querybuildertypesv5OrderByDTO;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
 export interface InframonitoringtypesRequiredMetricsCheckDTO {
 	/**
 	 * @type array
@@ -5097,6 +5125,74 @@ export enum InframonitoringtypesResponseTypeDTO {
 	list = 'list',
 	grouped_list = 'grouped_list',
 }
+/**
+ * @nullable
+ */
+export type InframonitoringtypesVolumeRecordDTOMeta = {
+	[key: string]: string;
+} | null;
+
+export interface InframonitoringtypesVolumeRecordDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	meta: InframonitoringtypesVolumeRecordDTOMeta;
+	/**
+	 * @type string
+	 */
+	persistentVolumeClaimName: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeAvailable: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeCapacity: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodes: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesFree: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeInodesUsed: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	volumeUsage: number;
+}
+
+export interface InframonitoringtypesVolumesDTO {
+	/**
+	 * @type boolean
+	 */
+	endTimeBeforeRetention: boolean;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	records: InframonitoringtypesVolumeRecordDTO[] | null;
+	requiredMetricsCheck: InframonitoringtypesRequiredMetricsCheckDTO;
+	/**
+	 * @type integer
+	 */
+	total: number;
+	type: InframonitoringtypesResponseTypeDTO;
+	warning?: Querybuildertypesv5QueryWarnDataDTO;
+}
+
 export interface LlmpricingruletypesGettablePricingRulesDTO {
 	/**
 	 * @type array
@@ -7479,7 +7575,7 @@ export interface SpantypesPostableSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7487,7 +7583,6 @@ export interface SpantypesPostableSpanMapperDTO {
 }
 
 export interface SpantypesPostableSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type boolean
@@ -7514,7 +7609,7 @@ export interface SpantypesSpanMapperDTO {
 	 * @type boolean
 	 */
 	enabled: boolean;
-	field_context: SpantypesFieldContextDTO;
+	fieldContext: SpantypesFieldContextDTO;
 	/**
 	 * @type string
 	 */
@@ -7547,7 +7642,6 @@ export interface SpantypesSpanMapperConfigDTO {
 }
 
 export interface SpantypesSpanMapperGroupDTO {
-	category: SpantypesSpanMapperGroupCategoryDTO;
 	condition: SpantypesSpanMapperGroupConditionDTO;
 	/**
 	 * @type string
@@ -7585,11 +7679,10 @@ export interface SpantypesSpanMapperGroupDTO {
 	updatedBy?: string;
 }
 
-export interface SpantypesSpanMapperGroupCategoryDTO {
-	[key: string]: unknown;
-}
-
-export interface SpantypesSpanMapperGroupConditionDTO {
+/**
+ * @nullable
+ */
+export type SpantypesSpanMapperGroupConditionDTO = {
 	/**
 	 * @type array
 	 * @nullable true
@@ -7600,7 +7693,7 @@ export interface SpantypesSpanMapperGroupConditionDTO {
 	 * @nullable true
 	 */
 	resource: string[] | null;
-}
+} | null;
 
 export enum SpantypesSpanMapperOperationDTO {
 	move = 'move',
@@ -7626,7 +7719,7 @@ export interface SpantypesUpdatableSpanMapperDTO {
 	 * @nullable true
 	 */
 	enabled?: boolean | null;
-	field_context?: SpantypesFieldContextDTO;
+	fieldContext?: SpantypesFieldContextDTO;
 }
 
 export interface SpantypesUpdatableSpanMapperGroupDTO {
@@ -9175,10 +9268,6 @@ export type GetMyServiceAccount200 = {
 
 export type ListSpanMapperGroupsParams = {
 	/**
-	 * @description undefined
-	 */
-	category?: SpantypesSpanMapperGroupCategoryDTO;
-	/**
 	 * @type boolean
 	 * @nullable true
 	 * @description undefined
@@ -9446,6 +9535,14 @@ export type ListNodes200 = {
 
 export type ListPods200 = {
 	data: InframonitoringtypesPodsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListVolumes200 = {
+	data: InframonitoringtypesVolumesDTO;
 	/**
 	 * @type string
 	 */

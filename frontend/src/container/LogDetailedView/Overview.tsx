@@ -50,15 +50,14 @@ function Overview({
 	const options: EditorProps['options'] = {
 		automaticLayout: true,
 		readOnly: true,
-		height: '40vh',
 		wordWrap: isWrapWord ? 'on' : 'off',
 		minimap: {
 			enabled: false,
 		},
-		fontWeight: 400,
+		fontWeight: '400',
 		fontFamily: 'Geist Mono',
 		fontSize: 13,
-		lineHeight: '18px',
+		lineHeight: 18,
 		colorDecorators: true,
 		scrollBeyondLastLine: false,
 		scrollbar: {
