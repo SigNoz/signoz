@@ -1,4 +1,3 @@
-// Ungate feature flag for all tests in this file
 jest.mock('../../config', () => ({ IS_ROLE_DETAILS_AND_CRUD_ENABLED: true }));
 
 import {
@@ -22,7 +21,7 @@ const allScopeObjectsResponse = {
 	status: 'success',
 	data: [
 		{
-			resource: { name: 'dashboard', type: 'dashboard' },
+			resource: { kind: 'role', type: 'metaresources' },
 			selectors: ['*'],
 		},
 	],
@@ -44,8 +43,7 @@ afterEach(() => {
 	server.resetHandlers();
 });
 
-// Todo: to fixed properly - failing with - due to timeout > 5000ms
-describe.skip('RoleDetailsPage', () => {
+describe('RoleDetailsPage', () => {
 	it('renders custom role header, tabs, description, permissions, and action buttons', async () => {
 		setupDefaultHandlers();
 
@@ -57,20 +55,16 @@ describe.skip('RoleDetailsPage', () => {
 			screen.findByText('Role — billing-manager'),
 		).resolves.toBeInTheDocument();
 
-		// Tab navigation
 		expect(screen.getByText('Overview')).toBeInTheDocument();
 		expect(screen.getByText('Members')).toBeInTheDocument();
 
-		// Role description (OverviewTab)
 		expect(
 			screen.getByText('Custom role for managing billing and invoices.'),
 		).toBeInTheDocument();
 
-		// Permission items derived from mocked authz relations
 		expect(screen.getByText('Create')).toBeInTheDocument();
 		expect(screen.getByText('Read')).toBeInTheDocument();
 
-		// Action buttons present for custom role
 		expect(
 			screen.getByRole('button', { name: /edit role details/i }),
 		).toBeInTheDocument();
@@ -96,14 +90,13 @@ describe.skip('RoleDetailsPage', () => {
 			),
 		).toBeInTheDocument();
 
-		// Action buttons absent for managed role
 		expect(screen.queryByText('Edit Role Details')).not.toBeInTheDocument();
 		expect(
 			screen.queryByRole('button', { name: /delete role/i }),
 		).not.toBeInTheDocument();
 	});
 
-	it('edit flow: modal opens pre-filled and calls PATCH on save and verify', async () => {
+	it('edit flow: modal opens pre-filled and calls PATCH on save', async () => {
 		const patchSpy = jest.fn();
 		let description = customRoleResponse.data.description;
 		server.use(
@@ -138,21 +131,16 @@ describe.skip('RoleDetailsPage', () => {
 
 		await screen.findByText('Role — billing-manager');
 
-		// Open the edit modal
 		await user.click(screen.getByRole('button', { name: /edit role details/i }));
 		await expect(
-			screen.findByText('Edit Role Details', {
-				selector: '.ant-modal-title',
-			}),
+			screen.findByText('Edit Role Details', { selector: '.ant-modal-title' }),
 		).resolves.toBeInTheDocument();
 
-		// Name field is disabled in edit mode (role rename is not allowed)
 		const nameInput = screen.getByPlaceholderText(
 			'Enter role name e.g. : Service Owner',
 		);
 		expect(nameInput).toBeDisabled();
 
-		// Update description and save
 		const descField = screen.getByPlaceholderText(
 			'A helpful description of the role',
 		);
@@ -168,9 +156,7 @@ describe.skip('RoleDetailsPage', () => {
 
 		await waitFor(() =>
 			expect(
-				screen.queryByText('Edit Role Details', {
-					selector: '.ant-modal-title',
-				}),
+				screen.queryByText('Edit Role Details', { selector: '.ant-modal-title' }),
 			).not.toBeInTheDocument(),
 		);
 
@@ -219,20 +205,21 @@ describe.skip('RoleDetailsPage', () => {
 	});
 
 	describe('permission side panel', () => {
+		// Callers must register GET .../relations/:relation/objects before rendering.
 		async function openCreatePanel(
 			user: ReturnType<typeof userEvent.setup>,
 		): Promise<void> {
 			await screen.findByText('Role — billing-manager');
 			await user.click(screen.getByText('Create'));
 			await screen.findByText('Edit Create Permissions');
-			await screen.findByRole('button', { name: /dashboard/i });
+			await screen.findByRole('button', { name: 'Role' });
 		}
 
 		it('Save Changes is disabled until a resource scope is changed', async () => {
 			setupDefaultHandlers();
 			server.use(
 				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
 				),
 			);
@@ -245,18 +232,14 @@ describe.skip('RoleDetailsPage', () => {
 
 			await openCreatePanel(user);
 
-			// No change yet — config matches initial, unsavedCount = 0
 			expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
 
-			// Expand Dashboard and flip to All — now Save is enabled
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			await user.click(screen.getByRole('button', { name: 'Role' }));
 			await user.click(screen.getByText('All'));
 
 			expect(
 				screen.getByRole('button', { name: /save changes/i }),
 			).not.toBeDisabled();
-
-			// check for what shown now - unsavedCount = 1
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 		});
 
@@ -266,11 +249,11 @@ describe.skip('RoleDetailsPage', () => {
 			setupDefaultHandlers();
 			server.use(
 				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
 				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -286,7 +269,7 @@ describe.skip('RoleDetailsPage', () => {
 
 			await openCreatePanel(user);
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			await user.click(screen.getByRole('button', { name: 'Role' }));
 			await user.click(screen.getByText('All'));
 			await user.click(screen.getByRole('button', { name: /save changes/i }));
 
@@ -294,7 +277,7 @@ describe.skip('RoleDetailsPage', () => {
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
+							resource: { kind: 'role', type: 'metaresources' },
 							selectors: ['*'],
 						},
 					],
@@ -309,11 +292,11 @@ describe.skip('RoleDetailsPage', () => {
 			setupDefaultHandlers();
 			server.use(
 				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
 				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -329,11 +312,11 @@ describe.skip('RoleDetailsPage', () => {
 
 			await openCreatePanel(user);
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			await user.click(screen.getByRole('button', { name: 'Role' }));
 
 			const combobox = screen.getByRole('combobox');
 			await user.click(combobox);
-			await user.type(combobox, 'dash-1');
+			await user.type(combobox, 'role-001');
 			await user.keyboard('{Enter}');
 
 			await user.click(screen.getByRole('button', { name: /save changes/i }));
@@ -342,8 +325,8 @@ describe.skip('RoleDetailsPage', () => {
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
-							selectors: ['dash-1'],
+							resource: { kind: 'role', type: 'metaresources' },
+							selectors: ['role-001'],
 						},
 					],
 					deletions: null,
@@ -357,12 +340,12 @@ describe.skip('RoleDetailsPage', () => {
 			setupDefaultHandlers();
 			server.use(
 				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					(_req, res, ctx) =>
 						res(ctx.status(200), ctx.json(allScopeObjectsResponse)),
 				),
 				rest.patch(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					async (req, res, ctx) => {
 						patchSpy(await req.json());
 						return res(ctx.status(200), ctx.json({ status: 'success', data: null }));
@@ -378,18 +361,16 @@ describe.skip('RoleDetailsPage', () => {
 
 			await openCreatePanel(user);
 
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
-
+			await user.click(screen.getByRole('button', { name: 'Role' }));
 			await user.click(screen.getByText('Only selected'));
 			await user.click(screen.getByRole('button', { name: /save changes/i }));
 
-			// Should delete the '*' selector and add nothing
 			await waitFor(() =>
 				expect(patchSpy).toHaveBeenCalledWith({
 					additions: null,
 					deletions: [
 						{
-							resource: { name: 'dashboard', type: 'dashboard' },
+							resource: { kind: 'role', type: 'metaresources' },
 							selectors: ['*'],
 						},
 					],
@@ -401,7 +382,7 @@ describe.skip('RoleDetailsPage', () => {
 			setupDefaultHandlers();
 			server.use(
 				rest.get(
-					`${rolesApiBase}/:id/relation/:relation/objects`,
+					`${rolesApiBase}/:id/relations/:relation/objects`,
 					(_req, res, ctx) => res(ctx.status(200), ctx.json(emptyObjectsResponse)),
 				),
 			);
@@ -414,16 +395,13 @@ describe.skip('RoleDetailsPage', () => {
 
 			await openCreatePanel(user);
 
-			// No unsaved changes indicator yet
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
 
-			// Change dashboard scope to "All"
-			await user.click(screen.getByRole('button', { name: /dashboard/i }));
+			await user.click(screen.getByRole('button', { name: 'Role' }));
 			await user.click(screen.getByText('All'));
 
 			expect(screen.getByText('1 unsaved change')).toBeInTheDocument();
 
-			// Discard reverts to initial config — counter disappears, Save re-disabled
 			await user.click(screen.getByRole('button', { name: /discard/i }));
 
 			expect(screen.queryByText(/unsaved change/)).not.toBeInTheDocument();
