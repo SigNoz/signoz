@@ -1,7 +1,7 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
@@ -237,7 +237,7 @@ export function useFlamegraphDraw(
 	const eventRectsRefInternal = useRef<EventRect[]>([]);
 	const eventRectsRef = eventRectsRefProp ?? eventRectsRefInternal;
 
-	const { colorByField } = useTraceContext();
+	const colorByField = useTraceStore((s) => s.colorByField);
 
 	const filteredSpanIdsSet = useMemo(
 		() => (isFilterActive && filteredSpanIds ? new Set(filteredSpanIds) : null),

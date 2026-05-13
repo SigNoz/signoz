@@ -2,15 +2,10 @@ import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { TraceProvider } from '../../../../contexts/TraceContext';
 import Success from '../Success';
 
 const renderWithTraceProvider: typeof render = (ui, options, customOptions) =>
-	render(
-		<TraceProvider aggregations={undefined}>{ui}</TraceProvider>,
-		options,
-		customOptions,
-	);
+	render(ui, options, customOptions);
 
 // Mock the required hooks with proper typing
 const mockSafeNavigate = jest.fn() as jest.MockedFunction<

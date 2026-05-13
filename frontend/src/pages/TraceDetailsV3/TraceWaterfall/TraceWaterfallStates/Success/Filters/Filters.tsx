@@ -159,8 +159,21 @@ function Filters({
 		expressionRef,
 		runQuery,
 	};
-	const { isHighlightErrors, handleToggle: handleToggleHighlightErrors } =
+	const { isHighlightErrors, handleToggle: toggleHighlightErrors } =
 		useHighlightErrors(filterProps);
+
+	// Auto-expand the filter row when turning Highlight errors ON so the user
+	// can immediately use prev/next navigation. Turning it OFF doesn't auto-
+	// collapse — the user keeps whatever expansion state they had.
+	const handleToggleHighlightErrors = useCallback(
+		(checked: boolean): void => {
+			if (checked && !isExpanded) {
+				onExpand();
+			}
+			toggleHighlightErrors(checked);
+		},
+		[isExpanded, onExpand, toggleHighlightErrors],
+	);
 	const { selectedCategory, categories, handleCategoryChange } =
 		useSpanCategoryFilter(filterProps);
 

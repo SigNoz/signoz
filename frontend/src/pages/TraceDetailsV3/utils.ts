@@ -1,3 +1,5 @@
+import { themeColors } from 'constants/theme';
+import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 /**
@@ -74,4 +76,34 @@ export function isV3PinnedAttribute(entry: string): boolean {
 	} catch {
 		return false;
 	}
+}
+
+/**
+ * Reads the value used to group a span for color-by purposes. Falls back to
+ * `"unknown"` so all unattributed spans share a single colour rather than
+ * appearing as missing data.
+ */
+export function getSpanGroupValue(
+	span: SpanV3,
+	colorByFieldName: string,
+): string {
+	return getSpanAttribute(span, colorByFieldName) || 'unknown';
+}
+
+/**
+ * Resolves the rendering colour for a span. Error spans always get the
+ * semantic destructive colour; everything else is derived deterministically
+ * from its group value via `generateColor`.
+ */
+export function resolveSpanColor(
+	span: SpanV3,
+	colorByFieldName: string,
+): string {
+	if (span.has_error) {
+		return 'var(--destructive)';
+	}
+	return generateColor(
+		getSpanGroupValue(span, colorByFieldName),
+		themeColors.traceDetailColorsV3,
+	);
 }

@@ -45,12 +45,12 @@ func (m *module) createMany(ctx context.Context, orgID valuer.UUID, kind coretyp
 		return []*tagtypes.Tag{}, nil
 	}
 
-	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, kind, postable)
+	toCreate, matched, err := m.resolve(ctx, orgID, kind, postable)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := m.store.Create(ctx, toCreate)
+	created, err := m.store.CreateOrGet(ctx, toCreate)
 	if err != nil {
 		return nil, err
 	}

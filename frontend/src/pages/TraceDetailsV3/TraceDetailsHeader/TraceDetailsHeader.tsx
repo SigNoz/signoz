@@ -1,6 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
 import { Skeleton } from 'antd';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
@@ -9,14 +15,21 @@ import ROUTES from 'constants/routes';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import history from 'lib/history';
-import { ArrowLeft, CalendarClock, Server, Timer } from '@signozhq/icons';
+import {
+	ArrowLeft,
+	CalendarClock,
+	ChartPie,
+	Server,
+	Timer,
+} from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { TraceDetailV2URLProps } from 'types/api/trace/getTraceV2';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSettings from '../components/FieldsSettings/FieldsSettings';
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
+import AnalyticsPanel from '../SpanDetailsPanel/AnalyticsPanel/AnalyticsPanel';
 import Filters from '../TraceWaterfall/TraceWaterfallStates/Success/Filters/Filters';
 import TraceOptionsMenu from './TraceOptionsMenu';
 
@@ -72,7 +85,9 @@ function TraceDetailsHeader({
 	const [showTraceDetails, setShowTraceDetails] = useState(true);
 	const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 	const [isPreviewFieldsOpen, setIsPreviewFieldsOpen] = useState(false);
-	const { previewFields, setPreviewFields } = useTraceContext();
+	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+	const previewFields = useTraceStore((s) => s.previewFields);
+	const setPreviewFields = useTraceStore((s) => s.setPreviewFields);
 
 	const handleSwitchToOldView = useCallback((): void => {
 		setLocalStorageKey(LOCALSTORAGE.TRACE_DETAILS_PREFER_OLD_VIEW, 'true');
@@ -127,6 +142,31 @@ function TraceDetailsHeader({
 				)}
 				{isDataLoaded && (
 					<>
+						{!isFilterExpanded && (
+							<>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<Button
+												variant="ghost"
+												size="icon"
+												color="secondary"
+												className="trace-details-header__analytics-btn"
+												onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
+											>
+												<ChartPie size={14} />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Analytics</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+								<TraceOptionsMenu
+									showTraceDetails={showTraceDetails}
+									onToggleTraceDetails={handleToggleTraceDetails}
+									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
+								/>
+							</>
+						)}
 						<div
 							className={`trace-details-header__filter${
 								isFilterExpanded ? ' trace-details-header__filter--expanded' : ''
@@ -143,22 +183,15 @@ function TraceDetailsHeader({
 							/>
 						</div>
 						{!isFilterExpanded && (
-							<>
-								<Button
-									variant="solid"
-									color="secondary"
-									size="sm"
-									className="trace-details-header__old-view-btn"
-									onClick={handleSwitchToOldView}
-								>
-									Old View
-								</Button>
-								<TraceOptionsMenu
-									showTraceDetails={showTraceDetails}
-									onToggleTraceDetails={handleToggleTraceDetails}
-									onOpenPreviewFields={(): void => setIsPreviewFieldsOpen(true)}
-								/>
-							</>
+							<Button
+								variant="solid"
+								color="secondary"
+								size="sm"
+								className="trace-details-header__old-view-btn"
+								onClick={handleSwitchToOldView}
+							>
+								Legacy View
+							</Button>
 						)}
 					</>
 				)}
@@ -216,6 +249,11 @@ function TraceDetailsHeader({
 					/>
 				</FloatingPanel>
 			)}
+
+			<AnalyticsPanel
+				isOpen={isAnalyticsOpen}
+				onClose={(): void => setIsAnalyticsOpen(false)}
+			/>
 		</div>
 	);
 }

@@ -81,6 +81,22 @@ export const helpSupportMenuItem = {
 	icon: <MessageSquareText size={16} />,
 };
 
+// The AI Assistant route is parameterized as `/ai-assistant/:conversationId`.
+// Sending the user to `/ai-assistant/new` triggers the page's fallback that
+// spawns a fresh conversation and replaces the URL with the real id, so
+// every sidenav click starts a new chat (the in-page history sidebar lets
+// the user resume earlier ones). Using a stable concrete path also lets
+// the active-highlight map below resolve `/ai-assistant/<any id>` back to
+// this menu key.
+const AI_ASSISTANT_NAV_KEY = '/ai-assistant/new';
+
+export const aiAssistantMenuItem = {
+	key: AI_ASSISTANT_NAV_KEY,
+	label: 'AI Assistant',
+	icon: <Sparkles size={16} className="ai-assistant-icon" />,
+	itemKey: 'ai-assistant',
+};
+
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
 	label: 'Keyboard Shortcuts',
@@ -547,6 +563,10 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 		ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 	[ROUTES.API_MONITORING_BASE]: ROUTES.API_MONITORING,
 	[ROUTES.MESSAGING_QUEUES_BASE]: ROUTES.MESSAGING_QUEUES_OVERVIEW,
+	// `getActiveMenuKeyFromPath` strips the URL down to its first segment;
+	// `/ai-assistant/<id>` reduces to `/ai-assistant`, which we point back
+	// to the AI Assistant menu item's concrete key.
+	'/ai-assistant': AI_ASSISTANT_NAV_KEY,
 };
 
 export default menuItems;

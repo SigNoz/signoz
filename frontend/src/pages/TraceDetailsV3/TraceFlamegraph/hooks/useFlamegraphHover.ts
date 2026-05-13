@@ -8,7 +8,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { RESERVED_PREVIEW_KEYS } from 'pages/TraceDetailsV3/SpanHoverCard/SpanHoverCard';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
@@ -138,7 +138,8 @@ export function useFlamegraphHover(
 		null,
 	);
 
-	const { colorByField, previewFields } = useTraceContext();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const previewFields = useTraceStore((s) => s.previewFields);
 
 	const buildPreviewRows = useCallback(
 		(span: FlamegraphSpan): SpanPreviewRowData[] =>
