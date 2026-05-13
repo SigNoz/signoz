@@ -5,8 +5,8 @@ import {
 	TooltipTrigger,
 } from '@signozhq/ui/tooltip';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
-import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useMemo } from 'react';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
@@ -105,7 +105,8 @@ export function SpanHoverCard({
 	spans,
 	traceStartTime,
 }: SpanHoverCardProps): JSX.Element {
-	const { previewFields, resolveSpanColor } = useTraceContext();
+	const previewFields = useTraceStore((s) => s.previewFields);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 
 	const hoverCardData = useMemo(() => {
 		if (!hoveredSpanId) {
@@ -130,7 +131,7 @@ export function SpanHoverCard({
 			anchorTop: idx * rowHeight,
 			tooltip: {
 				spanName: span.name,
-				color: resolveSpanColor(span),
+				color: resolveSpanColor(span, colorByFieldName),
 				hasError: span.has_error,
 				relativeStartMs: span.timestamp - traceStartTime,
 				durationMs: span.duration_nano / 1e6,
@@ -141,7 +142,7 @@ export function SpanHoverCard({
 		hoveredSpanId,
 		spans,
 		previewFields,
-		resolveSpanColor,
+		colorByFieldName,
 		rowHeight,
 		traceStartTime,
 	]);

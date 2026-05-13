@@ -83,7 +83,7 @@ func (s *store) ListByResources(ctx context.Context, orgID valuer.UUID, kind cor
 	return out, nil
 }
 
-func (s *store) Create(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.Tag, error) {
+func (s *store) CreateOrGet(ctx context.Context, tags []*tagtypes.Tag) ([]*tagtypes.Tag, error) {
 	if len(tags) == 0 {
 		return tags, nil
 	}

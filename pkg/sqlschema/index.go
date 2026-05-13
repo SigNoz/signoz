@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	IndexTypeUnique           = IndexType{s: valuer.NewString("uq")}
-	IndexTypeIndex            = IndexType{s: valuer.NewString("ix")}
-	IndexTypePartialUnique    = IndexType{s: valuer.NewString("puq")}
-	IndexTypeFunctionalUnique = IndexType{s: valuer.NewString("fnq")}
+	IndexTypeUnique        = IndexType{s: valuer.NewString("uq")}
+	IndexTypeIndex         = IndexType{s: valuer.NewString("ix")}
+	IndexTypePartialUnique = IndexType{s: valuer.NewString("puq")}
 )
 
 type IndexType struct{ s valuer.String }
@@ -52,9 +51,23 @@ type Index interface {
 	ToDropSQL(fmter SQLFormatter) []byte
 }
 
+// UniqueIndex models a unique index on a table.
+//
+// In the common case the index keys on plain columns: set only ColumnNames and
+// the SQL is emitted with each column identifier-quoted by the formatter
+// (`CREATE UNIQUE INDEX uq_t_a_b ON t (a, b)`).
+//
+// For functional indexes (e.g. case-insensitive uniqueness on `LOWER(col)`),
+// set Expressions to the raw SQL parts and use ColumnNames as metadata for
+// "which columns does this index touch". When Expressions is non-empty, it
+// overrides ColumnNames for SQL emission — each entry is written verbatim, so
+// the caller owns well-formedness — and the auto-generated name uses a hash
+// suffix instead of a readable column join because expressions aren't valid
+// identifier fragments.
 type UniqueIndex struct {
 	TableName   TableName
 	ColumnNames []ColumnName
+	Expressions []string
 	name        string
 }
 
@@ -74,16 +87,28 @@ func (index *UniqueIndex) Name() string {
 		}
 		b.WriteString(string(column))
 	}
+
+	if len(index.Expressions) > 0 {
+		if len(index.ColumnNames) > 0 {
+			b.WriteString("_")
+		}
+		hasher := fnv.New32a()
+		_, _ = hasher.Write([]byte(strings.Join(index.Expressions, "\x00")))
+		fmt.Fprintf(&b, "%08x", hasher.Sum32())
+	}
 	return b.String()
 }
 
 func (index *UniqueIndex) Named(name string) Index {
 	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
 	copy(copyOfColumnNames, index.ColumnNames)
+	copyOfExpressions := make([]string, len(index.Expressions))
+	copy(copyOfExpressions, index.Expressions)
 
 	return &UniqueIndex{
 		TableName:   index.TableName,
 		ColumnNames: copyOfColumnNames,
+		Expressions: copyOfExpressions,
 		name:        name,
 	}
 }
@@ -104,7 +129,18 @@ func (index *UniqueIndex) Equals(other Index) bool {
 	if other.Type() != IndexTypeUnique {
 		return false
 	}
-
+	otherUnique, ok := other.(*UniqueIndex)
+	if !ok {
+		return false
+	}
+	// Plain and functional indexes produce different SQL even if their column
+	// sets overlap; require both shapes to match.
+	if (len(index.Expressions) == 0) != (len(otherUnique.Expressions) == 0) {
+		return false
+	}
+	if len(index.Expressions) > 0 && !slices.Equal(index.Expressions, otherUnique.Expressions) {
+		return false
+	}
 	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns())
 }
 
@@ -117,12 +153,20 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 	sql = fmter.AppendIdent(sql, string(index.TableName))
 	sql = append(sql, " ("...)
 
-	for i, column := range index.ColumnNames {
-		if i > 0 {
-			sql = append(sql, ", "...)
+	if len(index.Expressions) > 0 {
+		for i, expr := range index.Expressions {
+			if i > 0 {
+				sql = append(sql, ", "...)
+			}
+			sql = append(sql, expr...)
 		}
-
-		sql = fmter.AppendIdent(sql, string(column))
+	} else {
+		for i, column := range index.ColumnNames {
+			if i > 0 {
+				sql = append(sql, ", "...)
+			}
+			sql = fmter.AppendIdent(sql, string(column))
+		}
 	}
 
 	sql = append(sql, ")"...)
@@ -228,114 +272,6 @@ func (index *PartialUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 }
 
 func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
-	sql := []byte{}
-
-	sql = append(sql, "DROP INDEX IF EXISTS "...)
-	sql = fmter.AppendIdent(sql, index.Name())
-
-	return sql
-}
-
-// FunctionalUniqueIndex is a unique index whose key parts may be arbitrary SQL
-// expressions (e.g. LOWER(key)) rather than plain column names. The strings in
-// Expressions are emitted into the generated SQL exactly as supplied — they are
-// not identifier-quoted by the formatter — so the caller is responsible for
-// well-formed expressions. Auto-generated names are opaque (`fnq_<table>_<hash>`);
-// prefer calling Named(...) to give the index a readable name.
-//
-// ReferencedColumns is informational: it lets consumers (drift detection,
-// "which columns are indexed" lookups) answer that question without having to
-// parse Expressions. It does not affect the emitted SQL or Equals.
-type FunctionalUniqueIndex struct {
-	TableName         TableName
-	Expressions       []string
-	ReferencedColumns []ColumnName
-	name              string
-}
-
-func (index *FunctionalUniqueIndex) Name() string {
-	if index.name != "" {
-		return index.name
-	}
-
-	// column names can't be used cuz same columns can have different functional indices
-	// and the expressions can't be used directly cuz they will have disallowed characters.
-	hasher := fnv.New32a()
-	_, _ = hasher.Write([]byte(strings.Join(index.Expressions, "\x00")))
-
-	var b strings.Builder
-	b.WriteString(IndexTypeFunctionalUnique.String())
-	b.WriteString("_")
-	b.WriteString(string(index.TableName))
-	b.WriteString("_")
-	fmt.Fprintf(&b, "%08x", hasher.Sum32())
-	return b.String()
-}
-
-func (index *FunctionalUniqueIndex) Named(name string) Index {
-	copyOfExpressions := make([]string, len(index.Expressions))
-	copy(copyOfExpressions, index.Expressions)
-	copyOfReferencedColumns := make([]ColumnName, len(index.ReferencedColumns))
-	copy(copyOfReferencedColumns, index.ReferencedColumns)
-
-	return &FunctionalUniqueIndex{
-		TableName:         index.TableName,
-		Expressions:       copyOfExpressions,
-		ReferencedColumns: copyOfReferencedColumns,
-		name:              name,
-	}
-}
-
-func (index *FunctionalUniqueIndex) IsNamed() bool {
-	return index.name != ""
-}
-
-func (*FunctionalUniqueIndex) Type() IndexType {
-	return IndexTypeFunctionalUnique
-}
-
-// Columns returns the caller-declared ReferencedColumns. Equality of two
-// functional indexes still goes through Equals (which diffs Expressions);
-// Columns is purely informational.
-func (index *FunctionalUniqueIndex) Columns() []ColumnName {
-	return index.ReferencedColumns
-}
-
-func (index *FunctionalUniqueIndex) Equals(other Index) bool {
-	if other.Type() != IndexTypeFunctionalUnique {
-		return false
-	}
-
-	otherFunctional, ok := other.(*FunctionalUniqueIndex)
-	if !ok {
-		return false
-	}
-
-	return index.Name() == other.Name() && index.TableName == otherFunctional.TableName && slices.Equal(index.Expressions, otherFunctional.Expressions) && slices.Equal(index.ReferencedColumns, otherFunctional.ReferencedColumns)
-}
-
-func (index *FunctionalUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
-	sql := []byte{}
-
-	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
-	sql = fmter.AppendIdent(sql, index.Name())
-	sql = append(sql, " ON "...)
-	sql = fmter.AppendIdent(sql, string(index.TableName))
-	sql = append(sql, " ("...)
-
-	for i, expr := range index.Expressions {
-		if i > 0 {
-			sql = append(sql, ", "...)
-		}
-		sql = append(sql, expr...)
-	}
-
-	sql = append(sql, ")"...)
-
-	return sql
-}
-
-func (index *FunctionalUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP INDEX IF EXISTS "...)
