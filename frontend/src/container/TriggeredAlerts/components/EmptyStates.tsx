@@ -15,7 +15,7 @@ export function EmptyState(): JSX.Element {
 
 	return (
 		<div className={styles.emptyState}>
-			<CircleCheck className={styles.emptyStateIcon} />
+			<CircleCheck className={styles.emptyStateIcon} size={16} />
 			<div className={styles.emptyStateTitle}>No alerts firing</div>
 			<div className={styles.emptyStateSubtitle}>
 				All systems are healthy. No alerts are currently triggered.

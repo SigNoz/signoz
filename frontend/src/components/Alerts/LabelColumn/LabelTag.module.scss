@@ -1,0 +1,15 @@
+.labelBadge {
+	cursor: default;
+	font-size: 12px;
+
+	--badge-display: inline;
+
+	max-width: 180px;
+	min-width: 100px;
+	text-overflow: ellipsis;
+}
+
+.labelValue {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
