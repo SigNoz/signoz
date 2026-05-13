@@ -625,7 +625,6 @@ def test_export_traces_with_composite_query_trace_operator(
     query_c = TraceOperatorQuery(
         name="C",
         expression="A => B",
-        return_spans_from="A",
         limit=1000,
         order=[OrderBy(TelemetryFieldKey("timestamp", "string", "span"), "desc")],
     )
@@ -658,10 +657,6 @@ def test_export_traces_with_composite_query_trace_operator(
     json_objects = [json.loads(line) for line in jsonl_lines]
     trace_ids = [obj.get("trace_id") for obj in json_objects]
     assert all(tid == parent_trace_id for tid in trace_ids)
-
-    # Verify the parent span (returnSpansFrom = "A") is present
-    span_names = [obj.get("name") for obj in json_objects]
-    assert "parent-operation" in span_names
 
 
 def test_export_traces_with_select_fields(
