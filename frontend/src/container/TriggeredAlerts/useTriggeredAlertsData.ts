@@ -17,6 +17,7 @@ interface UseTriggeredAlertsDataReturn {
 	isFetching: boolean;
 	isError: boolean;
 	isGrouped: boolean;
+	refetch: () => void;
 }
 
 const TRIGGERED_ALERTS_REFRESH_INTERVAL = 30_000;
@@ -101,5 +102,6 @@ export function useTriggeredAlertsData(
 		isFetching: alertsResponse.isFetching,
 		isError: alertsResponse.isError,
 		isGrouped: selectedGroupBy.length > 0,
+		refetch: alertsResponse.refetch,
 	};
 }

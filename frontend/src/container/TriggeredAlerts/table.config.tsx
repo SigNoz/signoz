@@ -5,9 +5,7 @@ import { SEVERITY_BADGE_COLORS } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { getDurationFromNow, getElapsedMs } from 'utils/timeUtils';
-
-import { AlertStatusTag, LabelColumn, ReasonColumn } from './components';
+import { AlertStatusTag, LabelColumn } from './components';
 import styles from './TriggeredAlerts.module.scss';
 import type { Alert, GroupedAlert } from './types';
 
@@ -57,30 +55,6 @@ export function getAlertColumns(
 			},
 		},
 		{
-			id: 'reason',
-			header: 'Reason',
-			accessorKey: 'annotations',
-			width: { min: 180, default: 250 },
-			enableSort: false,
-			cell: ({ value }): JSX.Element => (
-				<ReasonColumn annotations={value as Record<string, string> | undefined} />
-			),
-		},
-		{
-			id: 'duration',
-			header: 'Duration',
-			accessorFn: (row) => getElapsedMs(row.startsAt),
-			width: { min: 140, default: 140 },
-			enableSort: true,
-			cell: ({ row: alertRow }): JSX.Element => (
-				<TanStackTable.Text>
-					{alertRow.startsAt
-						? getDurationFromNow(new Date(alertRow.startsAt).getTime())
-						: '-'}
-				</TanStackTable.Text>
-			),
-		},
-		{
 			id: 'firingSince',
 			header: 'Firing Since',
 			accessorKey: 'startsAt',
@@ -95,8 +69,8 @@ export function getAlertColumns(
 			),
 		},
 		{
-			id: 'tags',
-			header: 'Tags',
+			id: 'labels',
+			header: 'Labels',
 			accessorKey: 'labels',
 			width: { min: 200, default: 300 },
 			cell: ({ value }): JSX.Element => {

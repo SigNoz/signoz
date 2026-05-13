@@ -9,6 +9,8 @@ import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
+import TextToolTip from 'components/TextToolTip';
+
 import { ActionsMenu, ColumnSelector, EmptyState } from './components';
 import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
@@ -42,11 +44,8 @@ function ListAlertRules(): JSX.Element {
 		limit: DEFAULT_LIMIT,
 	});
 
-	const { filteredRules, isFetching, isError, allRules } = useAlertRulesData(
-		orderBy,
-		debouncedSearch,
-		filterValues ?? [],
-	);
+	const { filteredRules, isFetching, isError, allRules, refetch } =
+		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);
 
 	const { handleEdit, handleNewAlert, handleRowClick, handleRowClickNewTab } =
 		useAlertRulesHandlers(allRules.length);
@@ -117,6 +116,11 @@ function ListAlertRules(): JSX.Element {
 								New Alert
 							</Button>
 						)}
+						<TextToolTip
+							text="More details on how to create alerts"
+							url="https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts"
+							urlText="Learn More"
+						/>
 					</div>
 				</div>
 			)}
@@ -135,9 +139,9 @@ function ListAlertRules(): JSX.Element {
 
 			<div className={styles.tableContainer}>
 				{isError ? (
-					<EmptyState variant="error" />
+					<EmptyState variant="error" onRefresh={refetch} />
 				) : isEmptyNoRules ? (
-					<EmptyState />
+					<EmptyState onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
 					<EmptyState
 						variant="no-search-results"

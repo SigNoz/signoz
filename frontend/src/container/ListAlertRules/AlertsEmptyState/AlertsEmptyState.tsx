@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Plus } from '@signozhq/icons';
-import { Button, Divider, Flex } from 'antd';
+import { Plus, RefreshCw } from '@signozhq/icons';
+import { Button, Divider } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -31,7 +31,13 @@ const alertLogEvents = (
 	void logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
 };
 
-export function AlertsEmptyState(): JSX.Element {
+interface AlertsEmptyStateProps {
+	onRefresh?: () => void;
+}
+
+export function AlertsEmptyState({
+	onRefresh,
+}: AlertsEmptyStateProps): JSX.Element {
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const [addNewAlert] = useComponentPermission(
@@ -76,18 +82,28 @@ export function AlertsEmptyState(): JSX.Element {
 							</div>
 						</section>
 						<div className={styles.actionContainer}>
-							<Button
-								onClick={onClickNewAlertHandler}
-								disabled={!addNewAlert}
-								loading={loading}
-								type="primary"
-								data-testid="add-alert"
-							>
-								<Flex align="center" justify="center" gap={4}>
-									<Plus size="md" />
-									New Alert Rule
-								</Flex>
-							</Button>
+							<div className={styles.buttonGroup}>
+								<Button
+									onClick={onClickNewAlertHandler}
+									disabled={!addNewAlert}
+									loading={loading}
+									type="primary"
+									data-testid="add-alert"
+								>
+									<span className={styles.buttonContent}>
+										<Plus size="md" />
+										New Alert Rule
+									</span>
+								</Button>
+								{onRefresh && (
+									<Button onClick={onRefresh}>
+										<span className={styles.buttonContent}>
+											<RefreshCw size={14} />
+											Refresh
+										</span>
+									</Button>
+								)}
+							</div>
 							<InfoLinkText
 								infoText="Watch a tutorial on creating a sample alert"
 								link="https://youtu.be/xjxNIqiv4_M"

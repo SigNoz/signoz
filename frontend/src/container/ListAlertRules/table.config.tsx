@@ -14,19 +14,6 @@ const STATE_CONFIG: Record<string, { color: BadgeColor; label: string }> = {
 	disabled: { color: 'secondary', label: 'Disabled' },
 };
 
-const ALERT_TYPE_LABELS: Record<string, string> = {
-	METRIC_BASED_ALERT: 'Metrics',
-	LOGS_BASED_ALERT: 'Logs',
-	TRACES_BASED_ALERT: 'Traces',
-	EXCEPTIONS_BASED_ALERT: 'Exceptions',
-};
-
-const RULE_TYPE_LABELS: Record<string, string> = {
-	threshold_rule: 'Threshold',
-	promql_rule: 'PromQL',
-	anomaly_rule: 'Anomaly',
-};
-
 export function getAlertRuleColumns(
 	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
 ): TableColumnDef<AlertRule>[] {
@@ -84,40 +71,6 @@ export function getAlertRuleColumns(
 			},
 		},
 		{
-			id: 'alertType',
-			header: 'Alert Type',
-			accessorKey: 'alertType',
-			width: { min: 140, default: 140 },
-			enableSort: true,
-			cell: ({ value }): JSX.Element => {
-				const alertType = String(value ?? '');
-				const label = ALERT_TYPE_LABELS[alertType] ?? alertType;
-				return <TanStackTable.Text>{label || '-'}</TanStackTable.Text>;
-			},
-		},
-		{
-			id: 'ruleType',
-			header: 'Rule Type',
-			accessorKey: 'ruleType',
-			width: { min: 140, default: 140 },
-			enableSort: true,
-			cell: ({ value }): JSX.Element => {
-				const ruleType = String(value ?? '');
-				const label = RULE_TYPE_LABELS[ruleType] ?? ruleType;
-				return <TanStackTable.Text>{label || '-'}</TanStackTable.Text>;
-			},
-		},
-		{
-			id: 'frequency',
-			header: 'Frequency',
-			accessorKey: 'frequency',
-			width: { min: 140, default: 140 },
-			enableSort: false,
-			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
-			),
-		},
-		{
 			id: 'labels',
 			header: 'Labels',
 			accessorKey: 'labels',
@@ -136,31 +89,6 @@ export function getAlertRuleColumns(
 
 				return <LabelColumn labels={tagKeys} value={labels} color="sakura" />;
 			},
-		},
-		{
-			id: 'preferredChannels',
-			header: 'Channels',
-			accessorKey: 'preferredChannels',
-			width: { min: 120, default: 150 },
-			enableSort: false,
-			cell: ({ value }): JSX.Element => {
-				const channels = value as string[] | undefined;
-				if (!channels || channels.length === 0) {
-					return <TanStackTable.Text>-</TanStackTable.Text>;
-				}
-				return <TanStackTable.Text>{channels.join(', ')}</TanStackTable.Text>;
-			},
-		},
-		{
-			id: 'evalWindow',
-			header: 'Eval Window',
-			accessorKey: 'evalWindow',
-			width: { min: 80, default: 100 },
-			enableSort: false,
-			defaultVisibility: false,
-			cell: ({ value }): JSX.Element => (
-				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
-			),
 		},
 		{
 			id: 'createdAt',

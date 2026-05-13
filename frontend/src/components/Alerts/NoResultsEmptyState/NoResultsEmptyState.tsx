@@ -1,4 +1,4 @@
-import { Search } from '@signozhq/icons';
+import { RefreshCw, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 
 import styles from './NoResultsEmptyState.module.scss';
@@ -8,6 +8,7 @@ interface NoResultsEmptyStateProps {
 	subtitle?: string;
 	onClear?: () => void;
 	clearButtonText?: string;
+	onRefresh?: () => void;
 }
 
 function NoResultsEmptyState({
@@ -15,6 +16,7 @@ function NoResultsEmptyState({
 	subtitle = 'No items match your current filters. Try adjusting your search criteria.',
 	onClear,
 	clearButtonText = 'Clear Filters',
+	onRefresh,
 }: NoResultsEmptyStateProps): JSX.Element {
 	return (
 		<div className={styles.emptyState} data-testid="no-results-empty-state">
@@ -25,15 +27,28 @@ function NoResultsEmptyState({
 			<div className={styles.subtitle} data-testid="no-results-subtitle">
 				{subtitle}
 			</div>
-			{onClear && (
-				<Button
-					variant="outlined"
-					onClick={onClear}
-					data-testid="no-results-clear-button"
-				>
-					{clearButtonText}
-				</Button>
-			)}
+			<div className={styles.actions}>
+				{onClear && (
+					<Button
+						variant="outlined"
+						onClick={onClear}
+						data-testid="no-results-clear-button"
+					>
+						{clearButtonText}
+					</Button>
+				)}
+				{onRefresh && (
+					<Button
+						variant="outlined"
+						color="secondary"
+						prefix={<RefreshCw size={14} />}
+						onClick={onRefresh}
+						data-testid="no-results-refresh-button"
+					>
+						Refresh
+					</Button>
+				)}
+			</div>
 		</div>
 	);
 }

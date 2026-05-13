@@ -29,3 +29,8 @@
 	color: var(--l2-foreground);
 	max-width: 400px;
 }
+
+.emptyStateActions {
+	display: flex;
+	gap: 8px;
+}

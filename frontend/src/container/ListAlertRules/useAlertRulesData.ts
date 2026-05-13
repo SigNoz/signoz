@@ -13,6 +13,7 @@ interface UseAlertRulesDataReturn {
 	filteredRules: AlertRule[];
 	isFetching: boolean;
 	isError: boolean;
+	refetch: () => void;
 }
 
 export function useAlertRulesData(
@@ -49,5 +50,6 @@ export function useAlertRulesData(
 		filteredRules,
 		isFetching: rulesResponse.isFetching,
 		isError: rulesResponse.isError,
+		refetch: rulesResponse.refetch,
 	};
 }

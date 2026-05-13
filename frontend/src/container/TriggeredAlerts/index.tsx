@@ -79,6 +79,7 @@ function TriggeredAlerts(): JSX.Element {
 		isError,
 		isGrouped,
 		allAlerts,
+		refetch,
 	} = useTriggeredAlertsData(
 		selectedFilter,
 		selectedGroupBy,
@@ -182,9 +183,10 @@ function TriggeredAlerts(): JSX.Element {
 					<NoResultsEmptyState
 						title="Failed to load alerts"
 						subtitle="Something went wrong while loading alerts. Please try again later."
+						onRefresh={refetch}
 					/>
 				) : isEmptyNoAlerts ? (
-					<EmptyState />
+					<EmptyState onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
 					<NoResultsEmptyState
 						title="No matching alerts"

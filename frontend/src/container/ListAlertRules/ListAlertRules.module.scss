@@ -10,8 +10,7 @@
 	position: relative;
 	z-index: 10;
 	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
+	justify-content: flex-end;
 	gap: 1rem;
 	flex-shrink: 0;
 	padding: 0 var(--spacing-8);
