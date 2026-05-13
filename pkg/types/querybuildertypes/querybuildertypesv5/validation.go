@@ -11,18 +11,20 @@ import (
 )
 
 const (
-	// MaxFilterExpressionLength bounds a builder filter expression. The compiled SQL
-	// adds wrapper syntax on top of this, so we stay well below ClickHouse's parser
-	// limit (max_query_size, 262144 bytes by default) to leave room for that overhead.
-	MaxFilterExpressionLength = 250_000
-	// MaxClickHouseQueryLength bounds a raw ClickHouse SQL query. ClickHouse's
-	// default max_query_size is 262144 bytes; we leave a small headroom for any
-	// wrapping (CTEs, time filters, etc.) the server adds before sending.
-	MaxClickHouseQueryLength = 260_000
-	// MaxPromQLQueryLength bounds a raw PromQL query string. Picked to match the
-	// other query bounds; PromQL has no equivalent server-side parser cap, but we
-	// reject pathologically large inputs to protect the server.
-	MaxPromQLQueryLength = 260_000
+	// MaxFilterExpressionLength bounds a builder filter expression. The compiled
+	// SQL adds wrapper syntax on top of this; ClickHouse's parser limit
+	// (max_query_size) is raised to 350000 via telemetrystore settings so the
+	// resulting SQL still fits comfortably under that ceiling.
+	MaxFilterExpressionLength = 300_000
+	// MaxClickHouseQueryLength bounds a raw ClickHouse SQL query. The server
+	// runs ClickHouse with max_query_size = 350000 (configured in
+	// telemetrystore settings), so 300000 leaves headroom for any wrapping
+	// (CTEs, time filters) the server adds before sending.
+	MaxClickHouseQueryLength = 300_000
+	// MaxPromQLQueryLength bounds a raw PromQL query string. Picked to match
+	// the other query bounds; PromQL has no equivalent server-side parser cap,
+	// but we reject pathologically large inputs to protect the server.
+	MaxPromQLQueryLength = 300_000
 )
 
 // getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
