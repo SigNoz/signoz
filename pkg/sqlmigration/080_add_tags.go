@@ -73,10 +73,10 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 		Name: "tag_relation",
 		Columns: []*sqlschema.Column{
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "entity_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "resource_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"kind", "entity_id", "tag_id"}},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"kind", "resource_id", "tag_id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 			{
 				ReferencingColumnName: sqlschema.ColumnName("tag_id"),

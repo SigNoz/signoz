@@ -33,7 +33,7 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind
 	return tags, nil
 }
 
-func (s *store) ListByEntity(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID) ([]*tagtypes.Tag, error) {
+func (s *store) ListByResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
 	tags := make([]*tagtypes.Tag, 0)
 	err := s.sqlstore.
 		BunDBCtx(ctx).
@@ -41,7 +41,7 @@ func (s *store) ListByEntity(ctx context.Context, kind coretypes.Kind, entityID 
 		Model(&tags).
 		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
-		Where("tr.entity_id = ?", entityID).
+		Where("tr.resource_id = ?", resourceID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -49,14 +49,14 @@ func (s *store) ListByEntity(ctx context.Context, kind coretypes.Kind, entityID 
 	return tags, nil
 }
 
-func (s *store) ListByEntities(ctx context.Context, kind coretypes.Kind, entityIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
-	if len(entityIDs) == 0 {
+func (s *store) ListByResources(ctx context.Context, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+	if len(resourceIDs) == 0 {
 		return map[valuer.UUID][]*tagtypes.Tag{}, nil
 	}
 
 	type joinedRow struct {
 		tagtypes.Tag `bun:",extend"`
-		EntityID     valuer.UUID `bun:"entity_id"`
+		ResourceID   valuer.UUID `bun:"resource_id"`
 	}
 
 	rows := make([]*joinedRow, 0)
@@ -64,10 +64,10 @@ func (s *store) ListByEntities(ctx context.Context, kind coretypes.Kind, entityI
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&rows).
-		ColumnExpr("tag.*, tr.entity_id").
+		ColumnExpr("tag.*, tr.resource_id").
 		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
-		Where("tr.entity_id IN (?)", bun.In(entityIDs)).
+		Where("tr.resource_id IN (?)", bun.In(resourceIDs)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (s *store) ListByEntities(ctx context.Context, kind coretypes.Kind, entityI
 	out := make(map[valuer.UUID][]*tagtypes.Tag)
 	for _, r := range rows {
 		tag := r.Tag
-		out[r.EntityID] = append(out[r.EntityID], &tag)
+		out[r.ResourceID] = append(out[r.ResourceID], &tag)
 	}
 	return out, nil
 }
@@ -113,18 +113,18 @@ func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRe
 		BunDBCtx(ctx).
 		NewInsert().
 		Model(&relations).
-		On("CONFLICT (kind, entity_id, tag_id) DO NOTHING").
+		On("CONFLICT (kind, resource_id, tag_id) DO NOTHING").
 		Exec(ctx)
 	return err
 }
 
-func (s *store) DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, entityID valuer.UUID, keepTagIDs []valuer.UUID) error {
+func (s *store) DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, keepTagIDs []valuer.UUID) error {
 	q := s.sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
 		Model((*tagtypes.TagRelation)(nil)).
 		Where("kind = ?", kind).
-		Where("entity_id = ?", entityID)
+		Where("resource_id = ?", resourceID)
 	if len(keepTagIDs) > 0 {
 		q = q.Where("tag_id NOT IN (?)", bun.In(keepTagIDs))
 	}
