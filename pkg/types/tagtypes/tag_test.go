@@ -31,6 +31,12 @@ func TestValidatePostableTag(t *testing.T) {
 
 		{name: "slash in key rejected", input: PostableTag{Key: "team/eng", Value: "pulse"}, wantError: true},
 		{name: "slash in value rejected", input: PostableTag{Key: "team", Value: "pulse/events"}, wantError: true},
+
+		{name: "key at the 32-char limit accepted", input: PostableTag{Key: "abcdefghijklmnopabcdefghijklmnop", Value: "pulse"}, wantKey: "abcdefghijklmnopabcdefghijklmnop", wantValue: "pulse"},
+		{name: "value at the 32-char limit accepted", input: PostableTag{Key: "team", Value: "abcdefghijklmnopabcdefghijklmnop"}, wantKey: "team", wantValue: "abcdefghijklmnopabcdefghijklmnop"},
+		{name: "key over the 32-char limit rejected", input: PostableTag{Key: "abcdefghijklmnopabcdefghijklmnopq", Value: "pulse"}, wantError: true},
+		{name: "value over the 32-char limit rejected", input: PostableTag{Key: "team", Value: "abcdefghijklmnopabcdefghijklmnopq"}, wantError: true},
+		{name: "key length counts runes not bytes", input: PostableTag{Key: "🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀", Value: "pulse"}, wantKey: "🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀", wantValue: "pulse"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

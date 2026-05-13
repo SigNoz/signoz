@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -11,6 +12,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
+
+const MAX_LEN_TAG_KEY = 32
+const MAX_LEN_TAG_VALUE = 32
 
 var (
 	ErrCodeTagInvalidKey   = errors.MustNewCode("tag_invalid_key")
@@ -141,6 +145,12 @@ func validatePostableTag(p PostableTag) (string, string, error) {
 	}
 	if strings.ContainsRune(value, '/') {
 		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value %q cannot contain '/'", value)
+	}
+	if utf8.RuneCountInString(key) > MAX_LEN_TAG_KEY {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key %q exceeds the %d-character limit", key, MAX_LEN_TAG_KEY)
+	}
+	if utf8.RuneCountInString(value) > MAX_LEN_TAG_VALUE {
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value %q exceeds the %d-character limit", value, MAX_LEN_TAG_VALUE)
 	}
 	return key, value, nil
 }
