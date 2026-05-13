@@ -29,8 +29,24 @@ func TestValidatePostableTag(t *testing.T) {
 		{name: "whitespace-only key rejected", input: PostableTag{Key: "   ", Value: "pulse"}, wantError: true},
 		{name: "whitespace-only value rejected", input: PostableTag{Key: "team", Value: "   "}, wantError: true},
 
-		{name: "slash in key rejected", input: PostableTag{Key: "team/eng", Value: "pulse"}, wantError: true},
-		{name: "slash in value rejected", input: PostableTag{Key: "team", Value: "pulse/events"}, wantError: true},
+		{name: "slash in key accepted", input: PostableTag{Key: "team/eng", Value: "pulse"}, wantKey: "team/eng", wantValue: "pulse"},
+		{name: "slash in value accepted", input: PostableTag{Key: "team", Value: "pulse/events"}, wantKey: "team", wantValue: "pulse/events"},
+		{name: "colon in key accepted", input: PostableTag{Key: "team:eng", Value: "pulse"}, wantKey: "team:eng", wantValue: "pulse"},
+		{name: "colon in value accepted", input: PostableTag{Key: "team", Value: "env:prod"}, wantKey: "team", wantValue: "env:prod"},
+		{name: "allowed punctuation accepted", input: PostableTag{Key: "a_b.c-d+e=f@g", Value: "v"}, wantKey: "a_b.c-d+e=f@g", wantValue: "v"},
+		{name: "internal space in key rejected", input: PostableTag{Key: "team eng", Value: "pulse"}, wantError: true},
+		{name: "internal space in value rejected", input: PostableTag{Key: "team", Value: "pulse two"}, wantError: true},
+		{name: "unicode letters accepted", input: PostableTag{Key: "チーム", Value: "東京"}, wantKey: "チーム", wantValue: "東京"},
+
+		{name: "disallowed char in key rejected", input: PostableTag{Key: "team!eng", Value: "pulse"}, wantError: true},
+		{name: "disallowed char in value rejected", input: PostableTag{Key: "team", Value: "pulse#one"}, wantError: true},
+		{name: "control char rejected", input: PostableTag{Key: "team\tone", Value: "pulse"}, wantError: true},
+
+		{name: "key at the 32-char limit accepted", input: PostableTag{Key: "abcdefghijklmnopabcdefghijklmnop", Value: "pulse"}, wantKey: "abcdefghijklmnopabcdefghijklmnop", wantValue: "pulse"},
+		{name: "value at the 32-char limit accepted", input: PostableTag{Key: "team", Value: "abcdefghijklmnopabcdefghijklmnop"}, wantKey: "team", wantValue: "abcdefghijklmnopabcdefghijklmnop"},
+		{name: "key over the 32-char limit rejected", input: PostableTag{Key: "abcdefghijklmnopabcdefghijklmnopq", Value: "pulse"}, wantError: true},
+		{name: "value over the 32-char limit rejected", input: PostableTag{Key: "team", Value: "abcdefghijklmnopabcdefghijklmnopq"}, wantError: true},
+		{name: "key length counts runes not bytes", input: PostableTag{Key: "ああああああああああああああああ", Value: "pulse"}, wantKey: "ああああああああああああああああ", wantValue: "pulse"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -160,12 +176,11 @@ func TestResolve(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("propagates slash validation error", func(t *testing.T) {
+	t.Run("propagates regex validation error", func(t *testing.T) {
 		store := &fakeStore{}
 		_, _, err := Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, []PostableTag{
-			{Key: "team/eng", Value: "pulse"},
+			{Key: "team!eng", Value: "pulse"},
 		})
 		require.Error(t, err)
-		assert.True(t, strings.Contains(err.Error(), "/"), "error should reference the disallowed character")
 	})
 }

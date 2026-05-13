@@ -13,31 +13,22 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 		return nil, err
 	}
 
-	// Tag upserts run outside the dashboard transaction by design: a successful
-	// upsert that loses an outer dashboard insert just leaves resolved tag rows
-	// around for the next attempt — preferable to coupling the two.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, coretypes.KindDashboard, postable.Tags)
-	if err != nil {
-		return nil, err
-	}
+	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, nil)
+	var storableDashboard *dashboardtypes.StorableDashboard
 
-	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, resolvedTags)
-
-	storableDashboard, err := dashboard.ToStorableDashboard()
-	if err != nil {
-		return nil, err
-	}
-
-	tagIDs := make([]valuer.UUID, len(resolvedTags))
-	for i, t := range resolvedTags {
-		tagIDs[i] = t.ID
-	}
-
-	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		if err := module.store.Create(ctx, storableDashboard); err != nil {
+	err := module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
+		if err != nil {
 			return err
 		}
-		return module.tagModule.LinkToResource(ctx, coretypes.KindDashboard, dashboard.ID, tagIDs)
+		dashboard.Info.Tags = resolvedTags
+
+		storable, err := dashboard.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+		storableDashboard = storable
+		return module.store.Create(ctx, storable)
 	})
 	if err != nil {
 		return nil, err

@@ -20,7 +20,7 @@ func NewModule(store tagtypes.Store) tag.Module {
 func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, error) {
 	var tags []*tagtypes.Tag
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolved, err := m.CreateMany(ctx, orgID, kind, postable)
+		resolved, err := m.createMany(ctx, orgID, kind, postable)
 		if err != nil {
 			return err
 		}
@@ -28,7 +28,7 @@ func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes
 		for i, t := range resolved {
 			tagIDs[i] = t.ID
 		}
-		if err := m.SyncLinksForResource(ctx, orgID, kind, resourceID, tagIDs); err != nil {
+		if err := m.syncLinksForResource(ctx, orgID, kind, resourceID, tagIDs); err != nil {
 			return err
 		}
 		tags = resolved
@@ -40,7 +40,7 @@ func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes
 	return tags, nil
 }
 
-func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, error) {
+func (m *module) createMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, error) {
 	if len(postable) == 0 {
 		return []*tagtypes.Tag{}, nil
 	}
@@ -58,14 +58,7 @@ func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretyp
 	return append(matched, created...), nil
 }
 
-func (m *module) LinkToResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {
-	if len(tagIDs) == 0 {
-		return nil
-	}
-	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, resourceID, tagIDs))
-}
-
-func (m *module) SyncLinksForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {
+func (m *module) syncLinksForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {
 	return m.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, resourceID, tagIDs)); err != nil {
 			return err
