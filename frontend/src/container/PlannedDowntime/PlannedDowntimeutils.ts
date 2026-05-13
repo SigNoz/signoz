@@ -7,6 +7,7 @@ import {
 	RenderErrorResponseDTO,
 	RuletypesPlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
+	RuletypesRepeatTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -213,6 +214,7 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 ];
 
 export const getEndTime = ({
+	kind,
 	schedule,
 }: Partial<
 	RuletypesPlannedMaintenanceDTO & {
@@ -252,6 +254,7 @@ export function handleTimeConversion(
 	dateValue: string | dayjs.Dayjs,
 	timezoneInit?: string,
 	timezone?: string,
+	shouldKeepLocalTime?: boolean,
 ): string {
 	const timezoneChanged = !isEqual(timezoneInit, timezone);
 	const initialTime = dayjs(dateValue).tz(timezoneInit);
@@ -259,5 +262,5 @@ export function handleTimeConversion(
 	const formattedTime = formatWithTimezone(initialTime, timezone);
 	return timezoneChanged
 		? formattedTime
-		: dayjs(dateValue).tz(timezone).format();
+		: dayjs(dateValue).tz(timezone, shouldKeepLocalTime).format();
 }
