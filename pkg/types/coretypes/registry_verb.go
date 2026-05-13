@@ -20,4 +20,5 @@ var (
 	VerbList     = Verb{valuer.NewString("list"), "listed"}
 	VerbAssignee = Verb{valuer.NewString("assignee"), "assigned"}
 	VerbAttach   = Verb{valuer.NewString("attach"), "attached"}
+	VerbDetach   = Verb{valuer.NewString("detach"), "detached"}
 )
