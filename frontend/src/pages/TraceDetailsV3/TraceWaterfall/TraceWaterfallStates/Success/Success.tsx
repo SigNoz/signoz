@@ -12,7 +12,7 @@ import {
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import {
-	Tooltip,
+	TooltipRoot,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
@@ -112,9 +112,9 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 
 	return (
 		<TooltipProvider>
-			<Tooltip
+			<TooltipRoot
 				open
-				onOpenChange={(open): void => {
+				onOpenChange={(open: boolean): void => {
 					if (!open) {
 						setShowPopover(false);
 					}
@@ -129,7 +129,7 @@ const LazyEventDotPopover = memo(function LazyEventDotPopover({
 						attributeMap={event.attributeMap || {}}
 					/>
 				</TooltipContent>
-			</Tooltip>
+			</TooltipRoot>
 		</TooltipProvider>
 	);
 });
@@ -329,7 +329,7 @@ const SpanOverview = memo(function SpanOverview({
 			{/* Action buttons — shown on hover via CSS, right-aligned */}
 			<span className="span-row-actions">
 				<TooltipProvider delayDuration={200}>
-					<Tooltip>
+					<TooltipRoot>
 						<TooltipTrigger asChild>
 							<Button
 								variant="ghost"
@@ -344,8 +344,8 @@ const SpanOverview = memo(function SpanOverview({
 						<TooltipContent className="span-action-tooltip">
 							Copy Span Link
 						</TooltipContent>
-					</Tooltip>
-					<Tooltip>
+					</TooltipRoot>
+					<TooltipRoot>
 						<TooltipTrigger asChild>
 							<Button
 								variant="ghost"
@@ -360,7 +360,7 @@ const SpanOverview = memo(function SpanOverview({
 						<TooltipContent className="span-action-tooltip">
 							Add to Trace Funnel
 						</TooltipContent>
-					</Tooltip>
+					</TooltipRoot>
 				</TooltipProvider>
 			</span>
 		</div>
