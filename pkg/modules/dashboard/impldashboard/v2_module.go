@@ -53,12 +53,12 @@ func (module *module) ListV2(ctx context.Context, orgID valuer.UUID, userID valu
 	for i, r := range rows {
 		dashboardIDs[i] = r.Dashboard.ID
 	}
-	tagsByEntity, err := module.tagModule.ListForEntities(ctx, dashboardtypes.EntityTypeDashboard, dashboardIDs)
+	tagsByDashboard, err := module.tagModule.ListForResources(ctx, orgID, coretypes.KindDashboard, dashboardIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	return dashboardtypes.NewListableDashboardV2(rows, tagsByEntity, hasMore)
+	return dashboardtypes.NewListableDashboardV2(rows, tagsByDashboard, hasMore)
 }
 
 func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*dashboardtypes.DashboardV2, error) {
