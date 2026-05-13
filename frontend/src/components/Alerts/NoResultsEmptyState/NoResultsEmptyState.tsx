@@ -31,6 +31,7 @@ function NoResultsEmptyState({
 				{onClear && (
 					<Button
 						variant="outlined"
+						color="secondary"
 						onClick={onClear}
 						data-testid="no-results-clear-button"
 					>
