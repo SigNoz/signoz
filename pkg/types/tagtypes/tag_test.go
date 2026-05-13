@@ -86,7 +86,7 @@ func (f *fakeStore) List(_ context.Context, _ valuer.UUID, _ coretypes.Kind) ([]
 	return out, nil
 }
 
-func (f *fakeStore) Create(_ context.Context, tags []*Tag) ([]*Tag, error) {
+func (f *fakeStore) CreateOrGet(_ context.Context, tags []*Tag) ([]*Tag, error) {
 	return tags, nil
 }
 

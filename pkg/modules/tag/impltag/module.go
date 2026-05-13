@@ -50,7 +50,7 @@ func (m *module) createMany(ctx context.Context, orgID valuer.UUID, kind coretyp
 		return nil, err
 	}
 
-	created, err := m.store.Create(ctx, toCreate)
+	created, err := m.store.CreateOrGet(ctx, toCreate)
 	if err != nil {
 		return nil, err
 	}

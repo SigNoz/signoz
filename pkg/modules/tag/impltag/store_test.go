@@ -71,7 +71,7 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 	preIDA := tagA.ID
 	preIDB := tagB.ID
 
-	got, err := s.Create(ctx, []*tagtypes.Tag{tagA, tagB})
+	got, err := s.CreateOrGet(ctx, []*tagtypes.Tag{tagA, tagB})
 	require.NoError(t, err)
 	require.Len(t, got, 2)
 
@@ -97,7 +97,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 
 	// Simulate a concurrent insert: someone else has already inserted "tag:Database".
 	winner := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
-	_, err := s.Create(ctx, []*tagtypes.Tag{winner})
+	_, err := s.CreateOrGet(ctx, []*tagtypes.Tag{winner})
 	require.NoError(t, err)
 	winnerID := winner.ID
 
@@ -108,7 +108,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	loserPreID := loser.ID
 	require.NotEqual(t, winnerID, loserPreID, "pre-generated IDs must differ for this test to be meaningful")
 
-	got, err := s.Create(ctx, []*tagtypes.Tag{loser})
+	got, err := s.CreateOrGet(ctx, []*tagtypes.Tag{loser})
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 
@@ -130,7 +130,7 @@ func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
 
 	orgID := valuer.GenerateUUID()
 	pre := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
-	_, err := s.Create(ctx, []*tagtypes.Tag{pre})
+	_, err := s.CreateOrGet(ctx, []*tagtypes.Tag{pre})
 	require.NoError(t, err)
 	preExistingID := pre.ID
 
@@ -138,7 +138,7 @@ func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
 	fresh := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR")
 	freshPreID := fresh.ID
 
-	got, err := s.Create(ctx, []*tagtypes.Tag{conflict, fresh})
+	got, err := s.CreateOrGet(ctx, []*tagtypes.Tag{conflict, fresh})
 	require.NoError(t, err)
 	require.Len(t, got, 2)
 
