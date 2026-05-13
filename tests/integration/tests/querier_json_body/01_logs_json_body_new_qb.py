@@ -20,7 +20,7 @@ from fixtures.querier import (
 
 
 def _get_bodies(response: requests.Response) -> list[dict[str, Any]]:
-    return [json.loads(row["data"]["body"]) for row in get_rows(response)]
+    return [row["data"]["body"] for row in get_rows(response)]
 
 
 def _run_query_case(signoz: types.SigNoz, token: str, now: datetime, case: dict[str, Any]) -> None:
@@ -1183,7 +1183,7 @@ def test_message_searches(
     token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
 
     def _body_messages(response: requests.Response) -> list[str]:
-        return [json.loads(row["data"]["body"]).get("message", "") for row in get_rows(response)]
+        return [row["data"]["body"].get("message", "") for row in get_rows(response)]
 
     payment_messages = {
         "Payment processed successfully",

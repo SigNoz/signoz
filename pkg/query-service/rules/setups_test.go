@@ -53,6 +53,7 @@ func prepareQuerierForMetrics(t *testing.T, telemetryStore telemetrystore.Teleme
 		nil, // meterStmtBuilder
 		nil, // traceOperatorStmtBuilder
 		nil, // bucketCache
+		flagger,
 	), metadataStore
 }
 
@@ -102,6 +103,7 @@ func prepareQuerierForLogs(t *testing.T, telemetryStore telemetrystore.Telemetry
 		nil,            // meterStmtBuilder
 		nil,            // traceOperatorStmtBuilder
 		nil,            // bucketCache
+		fl,
 	)
 }
 
@@ -146,5 +148,6 @@ func prepareQuerierForTraces(t *testing.T, telemetryStore telemetrystore.Telemet
 		nil,              // meterStmtBuilder
 		nil,              // traceOperatorStmtBuilder
 		nil,              // bucketCache
+		fl,
 	)
 }

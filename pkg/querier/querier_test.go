@@ -7,6 +7,7 @@ import (
 
 	cmock "github.com/srikanthccv/ClickHouse-go-mock"
 
+	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
@@ -44,14 +45,15 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 		providerSettings,
 		nil, // telemetryStore
 		metadataStore,
-		nil, // prometheus
-		nil, // traceStmtBuilder
-		nil, // logStmtBuilder
-		nil, // auditStmtBuilder
-		nil, // metricStmtBuilder
-		nil, // meterStmtBuilder
-		nil, // traceOperatorStmtBuilder
-		nil, // bucketCache
+		nil,                // prometheus
+		nil,                // traceStmtBuilder
+		nil,                // logStmtBuilder
+		nil,                // auditStmtBuilder
+		nil,                // metricStmtBuilder
+		nil,                // meterStmtBuilder
+		nil,                // traceOperatorStmtBuilder
+		nil,                // bucketCache
+		flaggertest.New(t), // flagger
 	)
 
 	req := &qbtypes.QueryRangeRequest{
@@ -116,6 +118,7 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 		nil,                      // meterStmtBuilder
 		nil,                      // traceOperatorStmtBuilder
 		nil,                      // bucketCache
+		flaggertest.New(t),       // flagger
 	)
 
 	req := &qbtypes.QueryRangeRequest{

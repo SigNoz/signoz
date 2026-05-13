@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/bytedance/sonic"
 )
 
 var (
@@ -22,6 +24,8 @@ var (
 	// written clickhouse query. The column alias indcate which value is
 	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
+
+	CodeFailUnmarshalJSONColumn = errors.MustNewCode("fail_unmarshal_json_column")
 )
 
 // consume reads every row and shapes it into the payload expected for the
@@ -393,11 +397,16 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-			// Post-process JSON columns: normalize into String value
+			// Post-process JSON columns: unmarshal bytes into map[string]any
 			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
 				switch x := val.(type) {
 				case []byte:
-					val = string(x)
+					var m map[string]any
+					err := sonic.Unmarshal(x, &m)
+					if err != nil {
+						return nil, errors.WrapInternalf(err, CodeFailUnmarshalJSONColumn, "failed to unmarshal JSON column %s", name)
+					}
+					val = m
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}
