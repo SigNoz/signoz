@@ -5160,7 +5160,6 @@ components:
           type: string
       required:
       - timezone
-      - startTime
       type: object
     RuletypesScheduleType:
       enum:
