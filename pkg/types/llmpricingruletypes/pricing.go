@@ -6,14 +6,34 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
+const (
+	LLMCostFeatureType agentConf.AgentFeatureType = "llm_pricing"
+
+	GenAIRequestModel                  = "gen_ai.request.model"
+	GenAIUsageInputTokens              = "gen_ai.usage.input_tokens"
+	GenAIUsageOutputTokens             = "gen_ai.usage.output_tokens"
+	GenAIUsageCacheReadInputTokens     = "gen_ai.usage.cache_read.input_tokens"
+	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
+
+	SignozGenAICostInput      = "_signoz.gen_ai.cost_input"
+	SignozGenAICostOutput     = "_signoz.gen_ai.cost_output"
+	SignozGenAICostCacheRead  = "_signoz.gen_ai.cost_cache_read"
+	SignozGenAICostCacheWrite = "_signoz.gen_ai.cost_cache_write"
+	SignozGenAITotalCost      = "_signoz.gen_ai.total_cost"
+)
+
 var (
-	ErrCodePricingRuleNotFound     = errors.MustNewCode("pricing_rule_not_found")
-	ErrCodePricingRuleInvalidInput = errors.MustNewCode("pricing_rule_invalid_input")
+	ErrCodePricingRuleAlreadyExists  = errors.MustNewCode("pricing_rule_already_exists")
+	ErrCodePricingRuleNotFound       = errors.MustNewCode("pricing_rule_not_found")
+	ErrCodePricingRuleInvalidInput   = errors.MustNewCode("pricing_rule_invalid_input")
+	ErrCodeInvalidCollectorConfig    = errors.MustNewCode("invalid_collector_config")
+	ErrCodeBuildPricingProcessorConf = errors.MustNewCode("build_pricing_processor_config")
 )
 
 type LLMPricingRuleUnit struct {
@@ -101,7 +121,7 @@ type UpdatableLLMPricingRule struct {
 }
 
 type UpdatableLLMPricingRules struct {
-	Rules []UpdatableLLMPricingRule `json:"rules" required:"true"`
+	Rules []*UpdatableLLMPricingRule `json:"rules" required:"true"`
 }
 
 type ListPricingRulesQuery struct {
@@ -182,4 +202,49 @@ func NewGettableLLMPricingRulesFromLLMPricingRules(items []*LLMPricingRule, tota
 		Offset: offset,
 		Limit:  limit,
 	}
+}
+
+func NewLLMPricingRuleFromUpdatable(u *UpdatableLLMPricingRule, orgID valuer.UUID, userEmail string, now time.Time) *LLMPricingRule {
+	isOverride := true
+	if u.IsOverride != nil {
+		isOverride = *u.IsOverride
+	} else if u.SourceID != nil {
+		isOverride = false
+	}
+
+	return &LLMPricingRule{
+		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{CreatedAt: now, UpdatedAt: now},
+		UserAuditable: types.UserAuditable{CreatedBy: userEmail, UpdatedBy: userEmail},
+		OrgID:         orgID,
+		SourceID:      u.SourceID,
+		Model:         u.Model,
+		Provider:      u.Provider,
+		ModelPattern:  StringSlice(u.ModelPattern),
+		Unit:          u.Unit,
+		Pricing:       u.Pricing,
+		IsOverride:    isOverride,
+		SyncedAt:      &now,
+		Enabled:       u.Enabled,
+	}
+}
+
+func (r *LLMPricingRule) Update(u *UpdatableLLMPricingRule, userEmail string, now time.Time) {
+	if u.IsOverride == nil && r.IsOverride {
+		r.SyncedAt = &now
+		return
+	}
+
+	r.Model = u.Model
+	r.Provider = u.Provider
+	r.ModelPattern = StringSlice(u.ModelPattern)
+	r.Unit = u.Unit
+	r.Pricing = u.Pricing
+	if u.IsOverride != nil {
+		r.IsOverride = *u.IsOverride
+	}
+	r.Enabled = u.Enabled
+	r.SyncedAt = &now
+	r.UpdatedAt = now
+	r.UpdatedBy = userEmail
 }

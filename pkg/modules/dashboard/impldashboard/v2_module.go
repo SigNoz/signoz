@@ -3,6 +3,7 @@ package impldashboard
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -15,7 +16,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 	// Tag upserts run outside the dashboard transaction by design: a successful
 	// upsert that loses an outer dashboard insert just leaves resolved tag rows
 	// around for the next attempt — preferable to coupling the two.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, postable.Tags, createdBy)
+	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, coretypes.KindDashboard, postable.Tags)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 		if err := module.store.Create(ctx, storableDashboard); err != nil {
 			return err
 		}
-		return module.tagModule.LinkToEntity(ctx, orgID, dashboardtypes.EntityTypeDashboard, dashboard.ID, tagIDs)
+		return module.tagModule.LinkToResource(ctx, coretypes.KindDashboard, dashboard.ID, tagIDs)
 	})
 	if err != nil {
 		return nil, err

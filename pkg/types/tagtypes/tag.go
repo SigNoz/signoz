@@ -7,13 +7,15 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 var (
-	ErrCodeTagInvalidName = errors.MustNewCode("tag_invalid_name")
-	ErrCodeTagNotFound    = errors.MustNewCode("tag_not_found")
+	ErrCodeTagInvalidKey   = errors.MustNewCode("tag_invalid_key")
+	ErrCodeTagInvalidValue = errors.MustNewCode("tag_invalid_value")
+	ErrCodeTagNotFound     = errors.MustNewCode("tag_not_found")
 )
 
 type Tag struct {
@@ -21,11 +23,10 @@ type Tag struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	types.UserAuditable
-	Key        string      `json:"key" required:"true" bun:"key,type:text,notnull"`
-	Value      string      `json:"value" required:"true" bun:"value,type:text,notnull"`
-	OrgID      valuer.UUID `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
-	EntityType EntityType  `json:"entityType" required:"true" bun:"entity_type,type:text,notnull"`
+	Key   string         `json:"key" required:"true" bun:"key,type:text,notnull"`
+	Value string         `json:"value" required:"true" bun:"value,type:text,notnull"`
+	OrgID valuer.UUID    `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
+	Kind  coretypes.Kind `json:"kind" required:"true" bun:"kind,type:text,notnull"`
 }
 
 type PostableTag struct {
@@ -59,7 +60,7 @@ func NewPostableTagsFromTags(tags []*Tag) []PostableTag {
 	return out
 }
 
-func NewTag(orgID valuer.UUID, entityType EntityType, key, value, createdBy string) *Tag {
+func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value string) *Tag {
 	now := time.Now()
 	return &Tag{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
@@ -67,14 +68,10 @@ func NewTag(orgID valuer.UUID, entityType EntityType, key, value, createdBy stri
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: createdBy,
-			UpdatedBy: createdBy,
-		},
-		Key:        key,
-		Value:      value,
-		OrgID:      orgID,
-		EntityType: entityType,
+		Key:   key,
+		Value: value,
+		OrgID: orgID,
+		Kind:  kind,
 	}
 }
 
@@ -86,12 +83,12 @@ func NewTag(orgID valuer.UUID, entityType EntityType, key, value, createdBy stri
 //   - toCreate: new Tag rows the caller should insert (with pre-generated IDs)
 //   - matched: existing rows the caller's input already pointed to. They
 //     already carry authoritative IDs from the store.
-func Resolve(ctx context.Context, store Store, orgID valuer.UUID, entityType EntityType, postable []PostableTag, createdBy string) ([]*Tag, []*Tag, error) {
+func Resolve(ctx context.Context, store Store, orgID valuer.UUID, kind coretypes.Kind, postable []PostableTag) ([]*Tag, []*Tag, error) {
 	if len(postable) == 0 {
 		return nil, nil, nil
 	}
 
-	existing, err := store.List(ctx, orgID, entityType)
+	existing, err := store.List(ctx, orgID, kind)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -121,7 +118,7 @@ func Resolve(ctx context.Context, store Store, orgID valuer.UUID, entityType Ent
 			matched = append(matched, existingTag)
 			continue
 		}
-		toCreate = append(toCreate, NewTag(orgID, entityType, key, value, createdBy))
+		toCreate = append(toCreate, NewTag(orgID, kind, key, value))
 	}
 
 	return toCreate, matched, nil
@@ -134,16 +131,16 @@ func validatePostableTag(p PostableTag) (string, string, error) {
 	key := strings.TrimSpace(p.Key)
 	value := strings.TrimSpace(p.Value)
 	if key == "" {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key cannot be empty")
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key cannot be empty")
 	}
 	if value == "" {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value cannot be empty")
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value cannot be empty")
 	}
 	if strings.ContainsRune(key, '/') {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag key %q cannot contain '/'", key)
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key %q cannot contain '/'", key)
 	}
 	if strings.ContainsRune(value, '/') {
-		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidName, "tag value %q cannot contain '/'", value)
+		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value %q cannot contain '/'", value)
 	}
 	return key, value, nil
 }

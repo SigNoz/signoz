@@ -154,7 +154,7 @@ $(GO_BUILD_ARCHS_ENTERPRISE_RACE): go-build-enterprise-race-%: $(TARGET_DIR)
 .PHONY: js-build
 js-build: ## Builds the js frontend
 	@echo ">> building js frontend"
-	@cd $(JS_BUILD_CONTEXT) && CI=1 yarn install && yarn build
+	@cd $(JS_BUILD_CONTEXT) && CI=1 pnpm install && pnpm build
 
 ##############################################################
 # docker commands

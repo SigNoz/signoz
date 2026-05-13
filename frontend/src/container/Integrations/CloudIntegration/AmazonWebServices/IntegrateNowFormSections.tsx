@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Form, Select } from 'antd';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown } from '@signozhq/icons';
 import { Region } from 'utils/regions';
 import { popupContainer } from 'utils/selectPopupContainer';
 

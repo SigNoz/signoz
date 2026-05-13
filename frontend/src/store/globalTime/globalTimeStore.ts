@@ -12,6 +12,7 @@ import {
 	computeRounded5sMinMax,
 	isCustomTimeRange,
 	parseSelectedTime,
+	safeParseSelectedTime,
 } from './utils';
 
 export type GlobalTimeStoreApi = StoreApi<GlobalTimeStore>;
@@ -40,7 +41,7 @@ export function createGlobalTimeStore(
 		refreshInterval,
 		isRefreshEnabled: computeIsRefreshEnabled(selectedTime, refreshInterval),
 		lastRefreshTimestamp: 0,
-		lastComputedMinMax: { minTime: 0, maxTime: 0 },
+		lastComputedMinMax: safeParseSelectedTime(selectedTime),
 
 		setSelectedTime: (
 			time: GlobalTimeSelectedTime,

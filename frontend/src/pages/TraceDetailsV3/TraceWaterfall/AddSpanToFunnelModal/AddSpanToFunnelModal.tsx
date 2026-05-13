@@ -1,5 +1,4 @@
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { LoadingOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input, Spin } from 'antd';
 import cx from 'classnames';
@@ -10,7 +9,7 @@ import {
 	useFunnelsList,
 } from 'hooks/TracesFunnels/useFunnels';
 import { isEqual } from 'lodash-es';
-import { ArrowLeft, Check, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Check, Plus, Search, LoaderCircle } from '@signozhq/icons';
 import FunnelConfiguration from 'pages/TracesFunnelDetails/components/FunnelConfiguration/FunnelConfiguration';
 import { TracesFunnelsContentRenderer } from 'pages/TracesFunnels';
 import CreateFunnel from 'pages/TracesFunnels/components/CreateFunnel/CreateFunnel';
@@ -217,7 +216,7 @@ function AddSpanToFunnelModal({
 					<Spin
 						className="add-span-to-funnel-modal__loading-spinner"
 						spinning={isFunnelDetailsLoading || isFunnelDetailsFetching}
-						indicator={<LoadingOutlined spin />}
+						indicator={<LoaderCircle size={14} className="animate-spin" />}
 					>
 						{selectedFunnelId && funnelDetails?.payload && (
 							<FunnelProvider

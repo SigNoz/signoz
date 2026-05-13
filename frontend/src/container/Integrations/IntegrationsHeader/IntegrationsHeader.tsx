@@ -8,7 +8,7 @@ import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { ArrowRight, Cable, Check } from 'lucide-react';
+import { ArrowRight, Cable, Check } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { routePermission } from 'utils/permission';
 

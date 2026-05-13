@@ -22,6 +22,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      JS_PKG_MANAGER: pnpm
   test:
     if: |
       github.event_name == 'merge_group' ||
@@ -32,6 +33,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      JS_PKG_MANAGER: pnpm
   fmt:
     if: |
       github.event_name == 'merge_group' ||
@@ -42,6 +44,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      JS_PKG_MANAGER: pnpm
   lint:
     if: |
       github.event_name == 'merge_group' ||
@@ -52,6 +55,7 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+      JS_PKG_MANAGER: pnpm
   languages:
     if: |
       github.event_name == 'merge_group' ||
@@ -76,9 +80,13 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
       - name: install-frontend
-        run: cd frontend && yarn install
+        run: cd frontend && pnpm install
       - name: generate-api-clients
         run: |
-          cd frontend && yarn generate:api
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)
+          cd frontend && pnpm generate:api
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)
