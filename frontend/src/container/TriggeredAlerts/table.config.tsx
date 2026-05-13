@@ -19,6 +19,7 @@ export function getAlertColumns(
 			accessorFn: (row) => row.status?.state,
 			width: { min: 120, default: 120 },
 			enableSort: false,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => (
 				<AlertStatusTag state={String(value ?? '')} />
 			),
@@ -29,6 +30,7 @@ export function getAlertColumns(
 			accessorFn: (row) => row.labels?.alertname ?? '',
 			width: { min: 200, default: 330 },
 			enableSort: true,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
 			),
@@ -39,6 +41,7 @@ export function getAlertColumns(
 			accessorFn: (row) => row.labels?.severity ?? '',
 			width: { min: 150, default: 150 },
 			enableSort: true,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const severity = String(value ?? '').toLowerCase();
 				if (!severity) {
@@ -60,6 +63,7 @@ export function getAlertColumns(
 			accessorKey: 'startsAt',
 			width: { min: 280, default: 280 },
 			enableSort: true,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>
 					{value
@@ -73,6 +77,7 @@ export function getAlertColumns(
 			header: 'Labels',
 			accessorKey: 'labels',
 			width: { min: 200, default: 300 },
+			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
@@ -139,6 +144,7 @@ export const groupedColumns: TableColumnDef<GroupedAlert>[] = [
 		header: 'Alerts',
 		accessorFn: (row) => row.alerts.length,
 		width: { min: 80, default: 100 },
+		enableMove: false,
 		cell: ({ value }): JSX.Element => (
 			<TanStackTable.Text>{String(value)}</TanStackTable.Text>
 		),

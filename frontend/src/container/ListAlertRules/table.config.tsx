@@ -25,6 +25,7 @@ export function getAlertRuleColumns(
 			width: { min: 80, default: 100 },
 			enableSort: true,
 			enableRemove: false,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const state = String(value ?? '').toLowerCase();
 				const config = STATE_CONFIG[state] ?? {
@@ -45,6 +46,7 @@ export function getAlertRuleColumns(
 			width: { min: 200, default: 300 },
 			enableSort: true,
 			enableRemove: false,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => (
 				<Typography.Text>{String(value ?? '-')}</Typography.Text>
 			),
@@ -55,6 +57,7 @@ export function getAlertRuleColumns(
 			accessorFn: (row) => row.labels?.severity ?? '',
 			width: { min: 120, default: 120 },
 			enableSort: true,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const severity = String(value ?? '').toLowerCase();
 				if (!severity) {
@@ -76,6 +79,7 @@ export function getAlertRuleColumns(
 			accessorKey: 'labels',
 			width: { min: 150, default: 250 },
 			enableSort: false,
+			enableMove: false,
 			cell: ({ value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
@@ -96,6 +100,7 @@ export function getAlertRuleColumns(
 			accessorKey: 'createdAt',
 			width: { min: 180, default: 200 },
 			enableSort: true,
+			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>
@@ -111,6 +116,7 @@ export function getAlertRuleColumns(
 			accessorKey: 'createdBy',
 			width: { min: 100, default: 120 },
 			enableSort: false,
+			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
@@ -122,6 +128,7 @@ export function getAlertRuleColumns(
 			accessorKey: 'updatedAt',
 			width: { min: 180, default: 200 },
 			enableSort: true,
+			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>
@@ -137,6 +144,7 @@ export function getAlertRuleColumns(
 			accessorKey: 'updatedBy',
 			width: { min: 100, default: 120 },
 			enableSort: false,
+			enableMove: false,
 			defaultVisibility: false,
 			cell: ({ value }): JSX.Element => (
 				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
