@@ -4,6 +4,49 @@
 	gap: 8px;
 }
 
+.header-ai-assistant-btn-container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.header-ai-assistant-btn__prefix {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.header-ai-assistant-btn__badge {
+	flex-shrink: 0;
+	display: inline-flex;
+	line-height: 0;
+	color: var(--accent-primary);
+}
+
+.header-ai-assistant-btn__pulse-dot {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+	animation: header-ai-assistant-dot-pulse 1.5s ease-in-out infinite;
+	transform: scale(0.8);
+	margin-right: -12px;
+}
+
+@keyframes header-ai-assistant-dot-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	50% {
+		opacity: 0.35;
+		transform: scale(0.82);
+	}
+}
+
 .share-modal-content,
 .feedback-modal-container {
 	display: flex;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button, Input, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { CircleX, Trash } from 'lucide-react';
+import { CircleX, Trash } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 import { useCreateAlertState } from '../context';

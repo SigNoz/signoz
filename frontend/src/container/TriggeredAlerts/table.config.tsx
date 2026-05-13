@@ -1,5 +1,6 @@
-import { Badge, Button } from '@signozhq/ui';
-import { BellDot, ChevronDown, ChevronRight } from 'lucide-react';
+import { BellDot, ChevronDown, ChevronRight } from '@signozhq/icons';
+import { Badge } from '@signozhq/ui/badge';
+import { Button } from '@signozhq/ui/button';
 import { SEVERITY_BADGE_COLORS } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';

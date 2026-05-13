@@ -9,7 +9,7 @@ import { formatBytes } from '../commonUtils';
 import { EntityProgressBar, ValidateColumnValueWrapper } from '../components';
 import { InfraMonitoringEntity } from '../constants';
 import { K8sPodsData } from './api';
-import { Container } from 'lucide-react';
+import { Container } from '@signozhq/icons';
 
 export function getK8sPodRowKey(pod: K8sPodsData): string {
 	return pod.podUID || pod.meta.k8s_pod_uid || pod.meta.k8s_pod_name;
@@ -112,7 +112,11 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const cpu = value as number;
 			return (
-				<ValidateColumnValueWrapper value={cpu}>
+				<ValidateColumnValueWrapper
+					value={cpu}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="CPU metric"
+				>
 					<TanStackTable.Text>{cpu}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -165,7 +169,11 @@ export const k8sPodColumnsConfig: TableColumnDef<K8sPodsData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const memory = value as number;
 			return (
-				<ValidateColumnValueWrapper value={memory}>
+				<ValidateColumnValueWrapper
+					value={memory}
+					entity={InfraMonitoringEntity.PODS}
+					attribute="memory metric"
+				>
 					<TanStackTable.Text>{formatBytes(memory)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);

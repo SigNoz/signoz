@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/ui/button';
-import { TooltipSimple } from '@signozhq/ui';
+import { TooltipSimple } from '@signozhq/ui/tooltip';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
-import { Link } from 'lucide-react';
+import { Link } from '@signozhq/icons';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import './SpanLineActionButtons.styles.scss';

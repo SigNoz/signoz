@@ -40,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
+	"github.com/SigNoz/signoz/pkg/types/retentiontypes"
 	chVariables "github.com/SigNoz/signoz/pkg/variables/clickhouse"
 )
 
@@ -419,7 +420,7 @@ func parseTime(param string, r *http.Request) (*time.Time, error) {
 
 }
 
-func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
+func parseTTLParams(r *http.Request) (*retentiontypes.TTLParams, error) {
 
 	// make sure either of the query params are present
 	typeTTL := r.URL.Query().Get("type")
@@ -432,7 +433,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}
 
 	// Validate the type parameter
-	if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
+	if typeTTL != retentiontypes.TraceTTL && typeTTL != retentiontypes.MetricsTTL && typeTTL != retentiontypes.LogsTTL {
 		return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 	}
 
@@ -455,7 +456,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 		}
 	}
 
-	return &model.TTLParams{
+	return &retentiontypes.TTLParams{
 		Type:                  typeTTL,
 		DelDuration:           int64(durationParsed.Seconds()),
 		ColdStorageVolume:     coldStorage,
@@ -463,7 +464,7 @@ func parseTTLParams(r *http.Request) (*model.TTLParams, error) {
 	}, nil
 }
 
-func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
+func parseGetTTL(r *http.Request) (*retentiontypes.GetTTLParams, error) {
 
 	typeTTL := r.URL.Query().Get("type")
 
@@ -471,12 +472,12 @@ func parseGetTTL(r *http.Request) (*model.GetTTLParams, error) {
 		return nil, fmt.Errorf("type param cannot be empty from the query")
 	} else {
 		// Validate the type parameter
-		if typeTTL != baseconstants.TraceTTL && typeTTL != baseconstants.MetricsTTL && typeTTL != baseconstants.LogsTTL {
+		if typeTTL != retentiontypes.TraceTTL && typeTTL != retentiontypes.MetricsTTL && typeTTL != retentiontypes.LogsTTL {
 			return nil, fmt.Errorf("type param should be metrics|traces|logs, got %v", typeTTL)
 		}
 	}
 
-	return &model.GetTTLParams{Type: typeTTL}, nil
+	return &retentiontypes.GetTTLParams{Type: typeTTL}, nil
 }
 
 func parseAggregateAttributeRequest(r *http.Request) (*v3.AggregateAttributeRequest, error) {

@@ -1,6 +1,6 @@
 import { Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { BarChart2, ScrollText } from 'lucide-react';
+import { BarChart, ScrollText } from '@signozhq/icons';
 
 import './IntegrationDetailContentTabs.styles.scss';
 
@@ -68,7 +68,7 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			</div>
 			<div className="metrics-section">
 				<div className="metrics-heading">
-					<BarChart2 size={14} />
+					<BarChart size={14} />
 					<Typography.Text>Metrics</Typography.Text>
 				</div>
 				<Table

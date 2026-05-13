@@ -1,12 +1,15 @@
 .span-logs {
 	margin-inline: 16px;
-	height: calc(100% - 64px - 55px - 56px);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 
 	&-virtuoso {
 		background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 	}
 	&-list-container {
-		height: 100%;
+		flex: 1;
+		min-height: 0;
 
 		.logs-loading-skeleton {
 			height: 100%;
