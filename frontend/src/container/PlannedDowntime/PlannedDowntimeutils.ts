@@ -2,12 +2,11 @@ import { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import {
+import type {
 	DeleteDowntimeScheduleByIDPathParameters,
 	RenderErrorResponseDTO,
 	RuletypesPlannedMaintenanceDTO,
 	RuletypesRecurrenceDTO,
-	RuletypesRepeatTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
@@ -61,15 +60,13 @@ export const getAlertOptionsFromIds = (
 	);
 
 export const recurrenceInfo = (
-	startTime?: string,
-	endTime?: string,
 	recurrence?: RuletypesRecurrenceDTO | null,
 ): string => {
 	if (!recurrence) {
 		return 'No';
 	}
 
-	const { duration, repeatOn, repeatType } = recurrence;
+	const { startTime, duration, repeatOn, repeatType, endTime } = recurrence;
 
 	const formattedStartTime = startTime
 		? formatDateTime(dayjs(startTime).toISOString())
@@ -83,7 +80,7 @@ export const recurrenceInfo = (
 	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
 };
 
-export const defaultInitialValues: Partial<
+export const defautlInitialValues: Partial<
 	RuletypesPlannedMaintenanceDTO & { editMode: boolean }
 > = {
 	name: '',
@@ -213,6 +210,20 @@ export const recurrenceOptionWithSubmenu: Option[] = [
 	recurrenceOptions.monthly,
 ];
 
+export const getRecurrenceOptionFromValue = (
+	value?: string | Option | null,
+): Option | null | undefined => {
+	if (!value) {
+		return null;
+	}
+	if (typeof value === 'string') {
+		return Object.values(recurrenceOptions).find(
+			(option) => option.value === value,
+		);
+	}
+	return value;
+};
+
 export const getEndTime = ({
 	kind,
 	schedule,
@@ -220,8 +231,15 @@ export const getEndTime = ({
 	RuletypesPlannedMaintenanceDTO & {
 		editMode: boolean;
 	}
->): string | dayjs.Dayjs =>
-	schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '';
+>): string | dayjs.Dayjs => {
+	if (kind === 'fixed') {
+		return schedule?.endTime ? dayjs(schedule.endTime).toISOString() : '';
+	}
+
+	return schedule?.recurrence?.endTime
+		? dayjs(schedule.recurrence.endTime).toISOString()
+		: '';
+};
 
 export const isScheduleRecurring = (
 	schedule?: RuletypesPlannedMaintenanceDTO['schedule'] | null,

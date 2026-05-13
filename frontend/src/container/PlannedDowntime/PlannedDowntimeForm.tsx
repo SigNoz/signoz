@@ -70,6 +70,7 @@ interface PlannedDowntimeFormData {
 	endTime: dayjs.Dayjs | string;
 	recurrence?: RuletypesRecurrenceDTO | null;
 	alertRules: DefaultOptionType[];
+	recurrenceSelect?: RuletypesRecurrenceDTO;
 	timezone?: string;
 }
 
@@ -202,16 +203,31 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-        const { recurrence } = values;
 		const recurrenceData =
-			!recurrence || recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
+			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
-						duration: recurrence.duration
-							? `${recurrence.duration}${durationUnit}`
+						duration: values.recurrence?.duration
+							? `${values.recurrence?.duration}${durationUnit}`
 							: undefined,
-						repeatOn: recurrence.repeatOn?.length ? recurrence.repeatOn : undefined,
-						repeatType: recurrence.repeatType,
+						endTime: !isEmpty(values.endTime)
+							? handleTimeConversion(
+									values.endTime,
+									timezoneInitialValue,
+									values.timezone,
+									!isEditMode,
+								)
+							: undefined,
+						startTime: handleTimeConversion(
+							values.startTime,
+							timezoneInitialValue,
+							values.timezone,
+							!isEditMode,
+						),
+						repeatOn: !values.recurrence?.repeatOn?.length
+							? undefined
+							: values.recurrence?.repeatOn,
+						repeatType: values.recurrence?.repeatType,
 					};
 
 		const payloadValues = {
@@ -223,7 +239,7 @@ export function PlannedDowntimeForm(
 
 	const formValidationRules = [
 		{
-			required: true
+			required: true,
 		},
 	];
 
@@ -314,7 +330,16 @@ export function PlannedDowntimeForm(
 	};
 
 	const startTimeText = useMemo((): string => {
-		let startTime = formData?.startTime ? dayjs(formData.startTime).toISOString() : '';
+		let startTime = formData?.startTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			startTime =
+				(formData?.recurrence?.startTime
+					? dayjs(formData.recurrence.startTime).toISOString()
+					: '') ||
+				formData?.startTime ||
+				'';
+		}
+
 		if (!startTime) {
 			return '';
 		}
@@ -366,7 +391,18 @@ export function PlannedDowntimeForm(
 	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
 
 	const endTimeText = useMemo((): string => {
-		let endTime = formData?.endTime ? dayjs(formData.endTime).toISOString() : '';
+		let endTime = formData?.endTime;
+		if (recurrenceType !== recurrenceOptions.doesNotRepeat.value) {
+			endTime =
+				(formData?.recurrence?.endTime
+					? dayjs(formData.recurrence.endTime).toISOString()
+					: '') || '';
+
+			if (!isEditMode && !endTime) {
+				endTime = formData?.endTime || '';
+			}
+		}
+
 		if (!endTime) {
 			return '';
 		}

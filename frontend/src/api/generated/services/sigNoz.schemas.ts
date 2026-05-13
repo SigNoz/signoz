@@ -7248,11 +7248,22 @@ export interface RuletypesRecurrenceDTO {
 	 */
 	duration: string;
 	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	endTime?: Date | null;
+	/**
 	 * @type array
 	 * @nullable true
 	 */
 	repeatOn?: RuletypesRepeatOnDTO[] | null;
 	repeatType: RuletypesRepeatTypeDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	startTime: Date;
 }
 
 export interface RuletypesRenotifyDTO {
