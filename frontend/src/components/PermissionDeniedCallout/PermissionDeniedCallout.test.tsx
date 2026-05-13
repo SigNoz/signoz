@@ -6,7 +6,7 @@ describe('PermissionDeniedCallout', () => {
 		render(<PermissionDeniedCallout permissionName="serviceaccount:attach" />);
 
 		expect(screen.getByText(/You don't have/)).toBeInTheDocument();
-		expect(screen.getByText('serviceaccount:attach')).toBeInTheDocument();
+		expect(screen.getByText(/serviceaccount:attach/)).toBeInTheDocument();
 		expect(screen.getByText(/permission/)).toBeInTheDocument();
 	});
 

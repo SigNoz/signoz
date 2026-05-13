@@ -12,6 +12,8 @@ import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
 import Spinner from 'components/Spinner';
 import type { AuthZObject } from 'hooks/useAuthZ/types';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
+import { buildPermission } from 'hooks/useAuthZ/utils';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
 	PAGE_SIZE,
@@ -56,13 +58,21 @@ function ServiceAccountsSettings(): JSX.Element {
 		parseAsBoolean.withDefault(false),
 	);
 
+	const listPermission = buildPermission(
+		'list',
+		'serviceaccount' as AuthZObject<'list'>,
+	);
+	const { permissions: authZPermissions } = useAuthZ([listPermission]);
+	const hasListPermission =
+		authZPermissions?.[listPermission]?.isGranted ?? false;
+
 	const {
 		data: serviceAccountsData,
 		isLoading,
 		isError,
 		error,
 		refetch: handleCreateSuccess,
-	} = useListServiceAccounts();
+	} = useListServiceAccounts({ query: { enabled: hasListPermission } });
 
 	const allAccounts = useMemo(
 		(): ServiceAccountRow[] =>
