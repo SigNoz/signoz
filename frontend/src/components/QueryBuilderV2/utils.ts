@@ -577,47 +577,76 @@ export const removeKeysFromExpression = (
 	const src = (ctx: ParserRuleContext): string =>
 		expression.slice(ctx.start.start, (ctx.stop ?? ctx.start).stop + 1);
 
-	// Returns null when the entire node should be dropped
-	function visitOrExpression(ctx: OrExpressionContext): string | null {
+	// Returns null when the entire node should be dropped.
+	// isSingle = true means the result is a single, non-compound expression at
+	// this level (no AND/OR between sibling clauses), which lets the paren
+	// visitor decide whether wrapping is still needed.
+	type VisitResult = { text: string; isSingle: boolean } | null;
+
+	function visitOrExpression(ctx: OrExpressionContext): VisitResult {
 		const parts = ctx
 			.andExpression_list()
 			.map(visitAndExpression)
-			.filter((r): r is string => r !== null);
-		return parts.length === 0 ? null : parts.join(' OR ');
+			.filter((r): r is NonNullable<VisitResult> => r !== null);
+		if (parts.length === 0) {
+			return null;
+		}
+		// Single surviving branch — pass its isSingle straight through so the
+		// paren visitor can decide whether to keep the outer parens.
+		if (parts.length === 1) {
+			return parts[0];
+		}
+		return { text: parts.map((p) => p.text).join(' OR '), isSingle: false };
 	}
 
-	function visitAndExpression(ctx: AndExpressionContext): string | null {
+	function visitAndExpression(ctx: AndExpressionContext): VisitResult {
 		const parts = ctx
 			.unaryExpression_list()
 			.map(visitUnaryExpression)
-			.filter((r): r is string => r !== null);
-		return parts.length === 0 ? null : parts.join(' AND ');
+			.filter((r): r is NonNullable<VisitResult> => r !== null);
+		if (parts.length === 0) {
+			return null;
+		}
+		if (parts.length === 1) {
+			return { text: parts[0].text, isSingle: true };
+		}
+		return { text: parts.map((p) => p.text).join(' AND '), isSingle: false };
 	}
 
-	function visitUnaryExpression(ctx: UnaryExpressionContext): string | null {
+	function visitUnaryExpression(ctx: UnaryExpressionContext): VisitResult {
 		const primaryResult = visitPrimary(ctx.primary());
 		if (primaryResult === null) {
 			return null;
 		}
-		return ctx.NOT() ? `NOT ${primaryResult}` : primaryResult;
+		return ctx.NOT()
+			? { text: `NOT ${primaryResult.text}`, isSingle: true }
+			: primaryResult;
 	}
 
-	function visitPrimary(ctx: PrimaryContext): string | null {
+	function visitPrimary(ctx: PrimaryContext): VisitResult {
 		// Parenthesised sub-expression: ( orExpression )
 		const orCtx = ctx.orExpression();
 		if (orCtx) {
 			const inner = visitOrExpression(orCtx);
-			// Drop the paren group entirely when its contents are fully removed
-			return inner === null ? null : `(${inner})`;
+			if (inner === null) {
+				return null;
+			}
+			// Drop redundant parens when the group collapses to a single clause;
+			// keep them when multiple clauses remain (operator-precedence matters).
+			if (inner.isSingle) {
+				return { text: inner.text, isSingle: true };
+			}
+			return { text: `(${inner.text})`, isSingle: true };
 		}
 
 		const compCtx = ctx.comparison();
 		if (compCtx) {
-			return visitComparison(compCtx);
+			const result = visitComparison(compCtx);
+			return result !== null ? { text: result, isSingle: true } : null;
 		}
 
 		// functionCall, fullText, bare key, bare value — keep verbatim
-		return src(ctx);
+		return { text: src(ctx), isSingle: true };
 	}
 
 	function visitComparison(ctx: ComparisonContext): string | null {
@@ -689,7 +718,7 @@ export const removeKeysFromExpression = (
 	}
 
 	const result = visitOrExpression(tree.expression().orExpression());
-	return result ?? '';
+	return result?.text ?? '';
 };
 
 /**

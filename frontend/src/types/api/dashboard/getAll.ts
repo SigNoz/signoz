@@ -61,7 +61,6 @@ export interface IDashboardVariable {
 	defaultValue?: string;
 	dynamicVariablesAttribute?: string;
 	dynamicVariablesSource?: string;
-	dynamicVariablesWidgetIds?: string[];
 	haveCustomValuesSelected?: boolean;
 }
 export interface Dashboard {

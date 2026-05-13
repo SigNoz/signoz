@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@signozhq/ui/sonner';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
 import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useNotifications } from 'hooks/useNotifications';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -50,7 +50,6 @@ export const useDashboardVariableUpdate =
 		);
 		const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 		const updateMutation = useUpdateDashboard();
-		const { notifications } = useNotifications();
 		const { t } = useTranslation('dashboard');
 
 		const onValueUpdate = useCallback(
@@ -185,9 +184,7 @@ export const useDashboardVariableUpdate =
 					(v) => v.name === name,
 				);
 				if (nameExists) {
-					notifications.error({
-						message: t('variable_name_already_exists', { name, ns: 'dashboard' }),
-					});
+					toast.error(t('variable_name_already_exists', { name, ns: 'dashboard' }));
 					return;
 				}
 

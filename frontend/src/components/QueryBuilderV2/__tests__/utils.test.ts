@@ -1248,7 +1248,7 @@ describe('removeKeysFromExpression', () => {
 					['deployment.environment'],
 					true,
 				),
-			).toBe('(service.name = $service.name)');
+			).toBe('service.name = $service.name');
 		});
 
 		it('removes middle clause without disturbing surrounding AND', () => {
@@ -1265,9 +1265,9 @@ describe('removeKeysFromExpression', () => {
 
 		it('drops the empty paren group when its only child is removed', () => {
 			// (a) OR (b) — removing a must not leave () OR (b = '2')
-			// The empty group is dropped; the remaining group keeps its parens (semantically equivalent)
+			// The remaining single-clause group has its redundant parens stripped too
 			expect(removeKeysFromExpression("(a = '1') OR (b = '2')", ['a'])).toBe(
-				"(b = '2')",
+				"b = '2'",
 			);
 		});
 
@@ -1278,7 +1278,7 @@ describe('removeKeysFromExpression', () => {
 					['operation'],
 					true,
 				),
-			).toBe('(service.name = $service.name)');
+			).toBe('service.name = $service.name');
 		});
 	});
 
@@ -1287,6 +1287,12 @@ describe('removeKeysFromExpression', () => {
 			// BETWEEN x AND y — the AND is part of the operator, not a conjunction
 			expect(
 				removeKeysFromExpression("a BETWEEN 1 AND 10 AND b = '2'", ['a']),
+			).toBe("b = '2'");
+		});
+
+		it('removes a NOT BETWEEN clause without treating its AND as a conjunction', () => {
+			expect(
+				removeKeysFromExpression("a NOT BETWEEN 1 AND 10 AND b = '2'", ['a']),
 			).toBe("b = '2'");
 		});
 
@@ -1300,6 +1306,79 @@ describe('removeKeysFromExpression', () => {
 			expect(removeKeysFromExpression("a = '1' AND b NOT EXISTS", ['b'])).toBe(
 				"a = '1'",
 			);
+		});
+
+		it('removes an IN clause correctly', () => {
+			expect(
+				removeKeysFromExpression("service IN ['api', 'web'] AND status = 'ok'", [
+					'service',
+				]),
+			).toBe("status = 'ok'");
+		});
+
+		it('removes a NOT IN clause correctly', () => {
+			expect(
+				removeKeysFromExpression(
+					"service NOT IN ['api', 'web'] AND status = 'ok'",
+					['service'],
+				),
+			).toBe("status = 'ok'");
+		});
+
+		it('removes a CONTAINS clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message CONTAINS 'error' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+
+		it('removes a LIKE clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message LIKE '%error%' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+
+		it('removes a NOT LIKE clause correctly', () => {
+			expect(
+				removeKeysFromExpression("message NOT LIKE '%error%' AND service = 'api'", [
+					'message',
+				]),
+			).toBe("service = 'api'");
+		});
+	});
+
+	describe('ANTLR-based removal — AND/OR precedence combinations', () => {
+		it('handles a AND b AND c OR d: removing b leaves a AND c OR d', () => {
+			// AND binds tighter than OR, so this parses as (a AND b AND c) OR d
+			expect(
+				removeKeysFromExpression("a = '1' AND b = '2' AND c = '3' OR d = '4'", [
+					'b',
+				]),
+			).toBe("a = '1' AND c = '3' OR d = '4'");
+		});
+	});
+
+	describe('ANTLR-based removal — deeply nested expressions', () => {
+		const nestedExpr =
+			"((deployment.environment = $env1 OR deployment.environment = 'default') AND service.name = $svc1)";
+
+		it('removes service.name variable — outer and inner single-child parens both drop', () => {
+			// After removal: inner OR group keeps parens (2 items), outer group drops
+			// parens (1 item remains)
+			expect(removeKeysFromExpression(nestedExpr, ['service.name'], true)).toBe(
+				"(deployment.environment = $env1 OR deployment.environment = 'default')",
+			);
+		});
+
+		it('removes deployment.environment variable — inner OR collapses, outer parens kept', () => {
+			// Only the $env1 variable clause is removed; 'default' literal stays.
+			// Inner paren drops (single item left), outer paren stays (2 AND items remain).
+			expect(
+				removeKeysFromExpression(nestedExpr, ['deployment.environment'], true),
+			).toBe("(deployment.environment = 'default' AND service.name = $svc1)");
 		});
 	});
 });
