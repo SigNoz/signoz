@@ -360,8 +360,7 @@ describe('createGuardedRoute', () => {
 				const obj = payload[0]?.object;
 				const kind = obj?.resource?.kind;
 				const selector = obj?.selector ?? '*';
-				const objectStr =
-					obj?.resource?.type === 'metaresources' ? kind : `${kind}:${selector}`;
+				const objectStr = `${kind}:${selector}`;
 				requestedObjects.push(objectStr ?? '');
 
 				return res(ctx.status(200), ctx.json(authzMockResponse(payload, [true])));

@@ -104,9 +104,6 @@ export function gettableTransactionToPermission(
 	} = item;
 	const resourceName = String(resource.kind);
 	const selectorStr = typeof selector === 'string' ? selector : '*';
-	const objectStr =
-		resource.type === 'metaresources'
-			? resourceName
-			: `${resourceName}${ObjectSeparator}${selectorStr}`;
+	const objectStr = `${resourceName}${ObjectSeparator}${selectorStr}`;
 	return `${relation}${PermissionSeparator}${objectStr}` as BrandedPermission;
 }
