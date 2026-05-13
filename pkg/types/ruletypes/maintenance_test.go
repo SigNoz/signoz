@@ -636,7 +636,8 @@ func TestShouldSkipMaintenance(t *testing.T) {
 					},
 				},
 			},
-			// 2026-04-15 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
+			// 11:00 is inside the fixed range but outside the daily 14:00-16:00 window.
+			// Before the fix this returned true (bug); after fix it returns false.
 			ts:   time.Date(2026, 4, 15, 11, 0, 0, 0, time.UTC),
 			skip: false,
 		},
@@ -653,7 +654,7 @@ func TestShouldSkipMaintenance(t *testing.T) {
 					},
 				},
 			},
-			// 15:00 is inside the daily 14:00-16:00 window. Should skip.
+			// 15:00 is inside the daily 14:00-16:00 window — should skip.
 			ts:   time.Date(2026, 4, 15, 15, 0, 0, 0, time.UTC),
 			skip: true,
 		},

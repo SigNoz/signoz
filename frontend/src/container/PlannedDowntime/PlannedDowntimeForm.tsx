@@ -137,7 +137,7 @@ export function PlannedDowntimeForm(
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
 
-	const saveHandler = useCallback(
+	const saveHanlder = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
 			const data: RuletypesPostablePlannedMaintenanceDTO = {
@@ -202,10 +202,9 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
-		const { recurrence } = values;
+        const { recurrence } = values;
 		const recurrenceData =
-			!recurrence ||
-			recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
+			!recurrence || recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
 						duration: recurrence.duration
@@ -219,12 +218,12 @@ export function PlannedDowntimeForm(
 			...values,
 			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
 		};
-		await saveHandler(payloadValues);
+		await saveHanlder(payloadValues);
 	};
 
 	const formValidationRules = [
 		{
-			required: true,
+			required: true
 		},
 	];
 
@@ -302,6 +301,7 @@ export function PlannedDowntimeForm(
 	const getTimezoneFormattedTime = (
 		time: string | dayjs.Dayjs,
 		timeZone?: string,
+		isEditMode?: boolean,
 		format?: string,
 	): string => {
 		if (!time) {
@@ -310,11 +310,11 @@ export function PlannedDowntimeForm(
 		if (!timeZone) {
 			return dayjs(time).format(format);
 		}
-		return dayjs(time).tz(timeZone).format(format);
+		return dayjs(time).tz(timeZone, isEditMode).format(format);
 	};
 
 	const startTimeText = useMemo((): string => {
-		let startTime = formData.startTime;
+		let startTime = formData?.startTime ? dayjs(formData.startTime).toISOString() : '';
 		if (!startTime) {
 			return '';
 		}
@@ -332,16 +332,21 @@ export function PlannedDowntimeForm(
 		const formattedStartTime = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
+			!isEditMode,
 			TIME_FORMAT,
 		);
+
 		const formattedStartDate = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
+			!isEditMode,
 			DATE_FORMAT,
 		);
+
 		const ordinalFormat = getTimezoneFormattedTime(
 			startTime,
 			formData.timezone,
+			!isEditMode,
 			ORDINAL_FORMAT,
 		);
 
@@ -361,7 +366,7 @@ export function PlannedDowntimeForm(
 	}, [formData, recurrenceType, isEditMode, timezoneInitialValue]);
 
 	const endTimeText = useMemo((): string => {
-		let endTime = formData?.endTime;
+		let endTime = formData?.endTime ? dayjs(formData.endTime).toISOString() : '';
 		if (!endTime) {
 			return '';
 		}
@@ -378,11 +383,14 @@ export function PlannedDowntimeForm(
 		const formattedEndTime = getTimezoneFormattedTime(
 			endTime,
 			formData.timezone,
+			!isEditMode,
 			TIME_FORMAT,
 		);
+
 		const formattedEndDate = getTimezoneFormattedTime(
 			endTime,
 			formData.timezone,
+			!isEditMode,
 			DATE_FORMAT,
 		);
 		return `Scheduled to end maintenance on ${formattedEndDate} at ${formattedEndTime}.`;
