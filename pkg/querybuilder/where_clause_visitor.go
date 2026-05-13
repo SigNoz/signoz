@@ -339,14 +339,9 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return SkipConditionLiteral
 		}
 
-		if v.fullTextColumn == nil {
-			v.errors = append(v.errors, "full text search is not supported")
-			return ErrorConditionLiteral
-		}
 		child := ctx.GetChild(0)
 		var searchText string
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
-			// create a full text search condition on the body field
 			searchText = keyCtx.GetText()
 		} else if valCtx, ok := child.(*grammar.ValueContext); ok {
 			if valCtx.QUOTED_TEXT() != nil {
@@ -362,6 +357,15 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				return ErrorConditionLiteral
 			}
 		}
+
+		if len(v.ftsFieldKeys) > 0 {
+			return v.runSearchFunction(searchText)
+		}
+
+		if v.fullTextColumn == nil {
+			v.errors = append(v.errors, "full text search is not supported")
+			return ErrorConditionLiteral
+		}
 		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
@@ -370,7 +374,6 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 		if v.bodyJSONEnabled && v.fullTextColumn.Name == "body" {
 			v.warnings = append(v.warnings, BodyFullTextSearchDefaultWarning)
 		}
-
 		return cond
 	}
 
@@ -716,6 +719,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		text = ctx.FREETEXT().GetText()
 	}
 
+	if len(v.ftsFieldKeys) > 0 {
+		return v.runSearchFunction(text)
+	}
+
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
@@ -854,6 +861,30 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	return v.builder.Or(conds...)
 }
 
+// runSearchFunction fans a regex match for text across all ftsFieldKeys using OR.
+// Used by both explicit search() calls and implicit bare-expression FTS for logs.
+// Enforces the FTSMaxWindowNs guard so all callers share the same time-window limit.
+func (v *filterExpressionVisitor) runSearchFunction(text string) any {
+	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
+		v.errors = append(v.errors, "full text search is restricted to a maximum of 6-hour time window")
+		return ErrorConditionLiteral
+	}
+
+	formattedText := FormatFullTextSearch(text)
+	var ftsConds []string
+	for _, key := range v.ftsFieldKeys {
+		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
+		if err != nil {
+			continue
+		}
+		ftsConds = append(ftsConds, cond)
+	}
+	if len(ftsConds) == 0 {
+		return ErrorConditionLiteral
+	}
+	return v.builder.Or(ftsConds...)
+}
+
 // visitSearchFunction handles the search() function call.
 // search('value') or search(value) fans out a regex match across all FTS column keys.
 func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallContext) any {
@@ -861,11 +892,6 @@ func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallC
 	// Only log statement builders set FTSFieldKeys; traces/metrics leave it nil.
 	if len(v.ftsFieldKeys) == 0 {
 		v.errors = append(v.errors, "search() is only supported for log queries")
-		return ErrorConditionLiteral
-	}
-
-	if v.endNs > 0 && v.startNs > 0 && (v.endNs-v.startNs) > FTSMaxWindowNs {
-		v.errors = append(v.errors, "search() is restricted to a maximum of 6-hour time window")
 		return ErrorConditionLiteral
 	}
 
@@ -889,22 +915,7 @@ func (v *filterExpressionVisitor) visitSearchFunction(ctx *grammar.FunctionCallC
 		return ErrorConditionLiteral
 	}
 
-	// Apply FormatFullTextSearch: valid regex → used as-is; invalid → escaped literal.
-	// Use FilterOperatorRegexp, consistent with how existing FTS (VisitFullText) works.
-	formattedText := FormatFullTextSearch(searchText)
-
-	var ftsConds []string
-	for _, key := range v.ftsFieldKeys {
-		cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, qbtypes.FilterOperatorRegexp, formattedText, v.builder)
-		if err != nil {
-			continue
-		}
-		ftsConds = append(ftsConds, cond)
-	}
-	if len(ftsConds) == 0 {
-		return ErrorConditionLiteral
-	}
-	return v.builder.Or(ftsConds...)
+	return v.runSearchFunction(searchText)
 }
 
 // VisitFunctionParamList handles the parameter list for function calls.

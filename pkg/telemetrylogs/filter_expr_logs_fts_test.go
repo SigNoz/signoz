@@ -23,6 +23,10 @@ func TestSearchFunctionFTS(t *testing.T) {
 	fm := NewFieldMapper(fl)
 	cb := NewConditionBuilder(fm, fl)
 	keys := buildCompleteFieldKeyMap(releaseTime)
+	for _, field := range IntrinsicFields {
+		f := field
+		keys[field.Name] = append(keys[field.Name], &f)
+	}
 
 	startNs := uint64(releaseTime.Add(-1 * time.Hour).UnixNano())
 	endNs := uint64(releaseTime.Add(1 * time.Hour).UnixNano())
