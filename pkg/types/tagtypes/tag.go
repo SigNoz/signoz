@@ -14,14 +14,15 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const MAX_LEN_TAG_KEY = 32
-const MAX_LEN_TAG_VALUE = 32
-
-// Unicode letters, numbers, and `_ . : / = + - @`. Spaces and other Unicode
-// separators are rejected.
-var tagAllowedRegex = regexp.MustCompile(`^[\p{L}\p{N}_.:/=+@-]*$`)
+const (
+	MAX_LEN_TAG_KEY   = 32
+	MAX_LEN_TAG_VALUE = 32
+)
 
 var (
+	tagKeyRegex   = regexp.MustCompile(`^[a-zA-Z$_@{#][a-zA-Z0-9$_@#{}:/-]*$`)
+	tagValueRegex = regexp.MustCompile(`^[a-zA-Z0-9$_@#{}:.+=/-]*$`)
+
 	ErrCodeTagInvalidKey   = errors.MustNewCode("tag_invalid_key")
 	ErrCodeTagInvalidValue = errors.MustNewCode("tag_invalid_value")
 	ErrCodeTagNotFound     = errors.MustNewCode("tag_not_found")
@@ -145,10 +146,10 @@ func validatePostableTag(p PostableTag) (string, string, error) {
 	if value == "" {
 		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value cannot be empty")
 	}
-	if !tagAllowedRegex.MatchString(key) {
+	if !tagKeyRegex.MatchString(key) {
 		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidKey, "tag key %q contains disallowed characters", key)
 	}
-	if !tagAllowedRegex.MatchString(value) {
+	if !tagValueRegex.MatchString(value) {
 		return "", "", errors.Newf(errors.TypeInvalidInput, ErrCodeTagInvalidValue, "tag value %q contains disallowed characters", value)
 	}
 	if utf8.RuneCountInString(key) > MAX_LEN_TAG_KEY {
