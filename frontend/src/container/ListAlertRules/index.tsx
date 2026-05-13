@@ -17,7 +17,14 @@ import type { AlertRule } from './types';
 import { useAlertRulesData } from './useAlertRulesData';
 import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 
-const QUERY_PARAMS_CONFIG = { orderBy: 'alert_rules_order_by' } as const;
+const QUERY_PARAMS_CONFIG = {
+	orderBy: 'orderBy',
+	page: 'page',
+	limit: 'limit',
+} as const;
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
@@ -30,7 +37,10 @@ function ListAlertRules(): JSX.Element {
 	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
 		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { orderBy } = useTableParams(QUERY_PARAMS_CONFIG);
+	const { orderBy, page, limit } = useTableParams(QUERY_PARAMS_CONFIG, {
+		page: DEFAULT_PAGE,
+		limit: DEFAULT_LIMIT,
+	});
 
 	const { filteredRules, isFetching, isError, allRules } = useAlertRulesData(
 		orderBy,
@@ -50,6 +60,11 @@ function ListAlertRules(): JSX.Element {
 		() => getAlertRuleColumns(formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
+
+	const paginatedRules = useMemo(() => {
+		const start = (page - 1) * limit;
+		return filteredRules.slice(start, start + limit);
+	}, [filteredRules, page, limit]);
 
 	const columnsWithActions = useMemo(() => {
 		if (!action) {
@@ -130,7 +145,7 @@ function ListAlertRules(): JSX.Element {
 					/>
 				) : (
 					<TanStackTable<AlertRule>
-						data={filteredRules}
+						data={paginatedRules}
 						columns={columnsWithActions}
 						isLoading={isFetching}
 						getRowKey={(row): string => row.id ?? ''}
@@ -139,6 +154,13 @@ function ListAlertRules(): JSX.Element {
 						enableQueryParams={QUERY_PARAMS_CONFIG}
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
+						pagination={{
+							total: filteredRules.length,
+							defaultPage: DEFAULT_PAGE,
+							defaultLimit: DEFAULT_LIMIT,
+							showTotalCount: true,
+						}}
+						paginationClassname={styles.paginationContainer}
 					/>
 				)}
 			</div>

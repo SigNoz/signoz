@@ -76,3 +76,8 @@
 	display: flex;
 	justify-content: flex-end;
 }
+
+.paginationContainer {
+	padding-right: var(--spacing-12);
+	height: 62px;
+}

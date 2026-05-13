@@ -151,9 +151,10 @@ function TanStackTableInner<TData>(
 	const setLimit = useCallback(
 		(l: number) => {
 			internalSetLimit(l);
+			internalSetPage(1);
 			pagination?.onLimitChange?.(l);
 		},
-		[internalSetLimit, pagination],
+		[internalSetLimit, internalSetPage, pagination],
 	);
 
 	const setOrderBy = useCallback(
@@ -636,6 +637,7 @@ function TanStackTableInner<TData>(
 							{(pagination.showPageSize ?? true) && (
 								<div className={viewStyles.paginationPageSize}>
 									<ComboboxSimple
+										testId="pagination-page-size"
 										value={limit?.toString()}
 										defaultValue="10"
 										onChange={(value): void => setLimit(+value)}

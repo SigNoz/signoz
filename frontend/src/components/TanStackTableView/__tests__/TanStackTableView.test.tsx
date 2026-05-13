@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
@@ -22,6 +22,14 @@ jest.mock('../TanStackTable.module.scss', () => ({
 		tableViewRowActions: 'tableViewRowActions',
 	},
 }));
+
+beforeAll(() => {
+	window.ResizeObserver = jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+});
 
 describe('TanStackTableView Integration', () => {
 	describe('rendering', () => {
@@ -268,6 +276,38 @@ describe('TanStackTableView Integration', () => {
 			expect(
 				screen.queryByTestId('pagination-total-count'),
 			).not.toBeInTheDocument();
+		});
+
+		it('resets page to 1 when limit changes', async () => {
+			const user = userEvent.setup();
+
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 5 },
+					enableQueryParams: true,
+				},
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page1Button = within(nav).getByRole('button', { name: '1' });
+			const page2Button = within(nav).getByRole('button', { name: '2' });
+
+			expect(page1Button).toHaveAttribute('aria-current', 'page');
+
+			await user.click(page2Button);
+
+			await waitFor(() => {
+				expect(page2Button).toHaveAttribute('aria-current', 'page');
+			});
+
+			await user.click(screen.getByTestId('pagination-page-size'));
+
+			const option10 = await screen.findByRole('option', { name: '10' });
+			await user.click(option10);
+
+			await waitFor(() => {
+				expect(page1Button).toHaveAttribute('aria-current', 'page');
+			});
 		});
 	});
 

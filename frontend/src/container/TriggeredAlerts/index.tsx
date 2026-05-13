@@ -23,7 +23,14 @@ import type { Alert, GroupedAlert } from './types';
 import { useTriggeredAlertsData } from './useTriggeredAlertsData';
 import { useTriggeredAlertsHandlers } from './useTriggeredAlertsHandlers';
 
-const QUERY_PARAMS_CONFIG = { orderBy: 'triggered_alerts_order_by' } as const;
+const QUERY_PARAMS_CONFIG = {
+	orderBy: 'orderBy',
+	page: 'page',
+	limit: 'limit',
+} as const;
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
 
 const severyFilters: ComboboxSimpleItem[] = [
 	{
@@ -54,7 +61,10 @@ function TriggeredAlerts(): JSX.Element {
 	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
 		useUrlSearchState(TRIGGERED_ALERTS_PARAMS.SEARCH);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const { orderBy } = useTableParams(QUERY_PARAMS_CONFIG);
+	const { orderBy, page, limit } = useTableParams(QUERY_PARAMS_CONFIG, {
+		page: DEFAULT_PAGE,
+		limit: DEFAULT_LIMIT,
+	});
 
 	const selectedFilter = useMemo(
 		(): FilterValue[] => (filterValues ?? []).map((v: string) => ({ value: v })),
@@ -97,6 +107,16 @@ function TriggeredAlerts(): JSX.Element {
 		value: label,
 		label,
 	}));
+
+	const paginatedAlerts = useMemo(() => {
+		const start = (page - 1) * limit;
+		return filteredAlerts.slice(start, start + limit);
+	}, [filteredAlerts, page, limit]);
+
+	const paginatedGroupedData = useMemo(() => {
+		const start = (page - 1) * limit;
+		return groupedData.slice(start, start + limit);
+	}, [groupedData, page, limit]);
 
 	const renderExpandedRow = useCallback(
 		(group: GroupedAlert): ReactNode => (
@@ -173,7 +193,7 @@ function TriggeredAlerts(): JSX.Element {
 					/>
 				) : isGrouped ? (
 					<TanStackTable<GroupedAlert>
-						data={groupedData}
+						data={paginatedGroupedData}
 						columns={groupedColumns}
 						isLoading={isFetching}
 						getRowKey={(row): string => row.groupKey}
@@ -182,10 +202,15 @@ function TriggeredAlerts(): JSX.Element {
 						getRowCanExpand={(): boolean => true}
 						columnStorageKey="triggered-alerts-grouped-columns"
 						enableQueryParams={QUERY_PARAMS_CONFIG}
+						pagination={{
+							total: groupedData.length,
+							defaultPage: DEFAULT_PAGE,
+							defaultLimit: DEFAULT_LIMIT,
+						}}
 					/>
 				) : (
 					<TanStackTable<Alert>
-						data={filteredAlerts}
+						data={paginatedAlerts}
 						columns={columns}
 						isLoading={isFetching}
 						getRowKey={(row): string => row.fingerprint ?? ''}
@@ -194,6 +219,13 @@ function TriggeredAlerts(): JSX.Element {
 						onRowClickNewTab={handleRowClickNewTab}
 						columnStorageKey="triggered-alerts-columns"
 						enableQueryParams={QUERY_PARAMS_CONFIG}
+						pagination={{
+							total: filteredAlerts.length,
+							defaultPage: DEFAULT_PAGE,
+							defaultLimit: DEFAULT_LIMIT,
+							showTotalCount: true,
+						}}
+						paginationClassname={styles.paginationContainer}
 					/>
 				)}
 			</div>
