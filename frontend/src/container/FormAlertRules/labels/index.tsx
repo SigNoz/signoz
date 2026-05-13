@@ -1,9 +1,6 @@
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-	CloseCircleFilled,
-	ExclamationCircleOutlined,
-} from '@ant-design/icons';
+import { CircleAlert, CircleX } from '@signozhq/icons';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { map } from 'lodash-es';
@@ -125,7 +122,7 @@ function LabelSelect({
 	const handleClearAll = (): void => {
 		Modal.confirm({
 			title: 'Confirm',
-			icon: <ExclamationCircleOutlined />,
+			icon: <CircleAlert size="md" />,
 			content: t('remove_label_confirm'),
 			onOk() {
 				send('RESET');
@@ -185,7 +182,7 @@ function LabelSelect({
 				{queries.length > 0 || staging.length > 0 || currentVal ? (
 					<Button
 						onClick={handleClearAll}
-						icon={<CloseCircleFilled />}
+						icon={<CircleX size="md" />}
 						type="text"
 					/>
 				) : null}

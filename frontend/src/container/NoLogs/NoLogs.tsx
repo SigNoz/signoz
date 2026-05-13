@@ -1,9 +1,9 @@
-import { Typography } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 import DOCLINKS from 'utils/docLinks';
 import { openInNewTab } from 'utils/navigation';

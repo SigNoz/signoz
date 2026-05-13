@@ -289,6 +289,10 @@
     // Prevents navigator.clipboard - use useCopyToClipboard hook instead (disabled in tests via override)
     "signoz/no-raw-absolute-path": "error",
     // Prevents window.open(path), window.location.origin + path, window.location.href = path
+    "signoz/no-antd-components": "error",
+    // Prevents the usage of specific antd components in favor of our lib
+    "signoz/no-signozhq-ui-barrel": "error",
+    // Forces subpath imports (@signozhq/ui/<component>) instead of the eagerly-loaded barrel
     "no-restricted-globals": [
       "error",
       {
@@ -409,7 +413,7 @@
     "jsx-a11y/media-has-caption": "warn",
     "jsx-a11y/mouse-events-have-key-events": "warn",
     "jsx-a11y/no-access-key": "error",
-    "jsx-a11y/no-autofocus": "warn",
+    "jsx-a11y/no-autofocus": "off",
     "jsx-a11y/no-distracting-elements": "error",
     "jsx-a11y/no-redundant-roles": "warn",
     "jsx-a11y/role-has-required-aria-props": "warn",
@@ -493,7 +497,8 @@
   "overrides": [
     {
       "files": [
-        "src/api/generated/**/*.ts"
+        "src/api/generated/**/*.ts",
+        "src/api/ai-assistant/**/*.ts"
       ],
       "rules": {
         "@typescript-eslint/explicit-function-return-type": "off",

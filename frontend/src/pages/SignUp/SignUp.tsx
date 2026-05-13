@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
-import { Button, Callout, Input } from '@signozhq/ui';
-import { Form, Input as AntdInput, Typography } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Callout } from '@signozhq/ui/callout';
+import { Input } from '@signozhq/ui/input';
+import { Form, Input as AntdInput } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
@@ -8,7 +11,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';
@@ -108,10 +111,10 @@ function SignUp(): JSX.Element {
 					<Typography.Title level={4} className="signup-header-title">
 						Create your account
 					</Typography.Title>
-					<Typography.Paragraph className="signup-header-subtitle">
+					<Typography.Text className="signup-header-subtitle">
 						You&apos;re almost in. Create a password to start monitoring your
 						applications with SigNoz.
-					</Typography.Paragraph>
+					</Typography.Text>
 				</div>
 
 				<FormContainer onFinish={handleSubmit} form={form} className="signup-form">

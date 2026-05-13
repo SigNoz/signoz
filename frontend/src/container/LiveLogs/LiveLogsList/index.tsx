@@ -2,8 +2,9 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/ui';
-import { Card, Typography } from 'antd';
+import { toast } from '@signozhq/ui/sonner';
+import { Card } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
@@ -35,7 +36,7 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
-import { getAbsoluteUrl } from '@/utils/basePath';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import { LiveLogsListProps } from './types';
 

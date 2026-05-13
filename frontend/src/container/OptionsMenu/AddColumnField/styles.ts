@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Trash2 } from '@signozhq/icons';
 import { Card, Select, SelectProps, Space } from 'antd';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';
@@ -34,6 +34,6 @@ export const AddColumnItem = styled(Space)`
 	justify-content: space-between;
 `;
 
-export const DeleteOutlinedIcon = styled(DeleteOutlined)`
+export const DeleteOutlinedIcon = styled(Trash2)`
 	color: red;
 `;

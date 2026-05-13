@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Checkbox, Input, Typography } from 'antd';
+import { Checkbox, Input } from 'antd';
+import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useResizeObserver } from 'hooks/useDimensions';
 import getAxes from 'lib/uPlotLib/utils/getAxes';
 import { getUplotChartDataForAnomalyDetection } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getYAxisScaleForAnomalyDetection } from 'lib/uPlotLib/utils/getYAxisScale';
-import { LineChart } from 'lucide-react';
+import { ChartLine } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 
@@ -297,7 +298,7 @@ function AnomalyAlertEvaluationView({
 					/>
 				) : (
 					<div className="anomaly-alert-evaluation-view-no-data-container">
-						<LineChart size={48} strokeWidth={0.5} />
+						<ChartLine size={48} strokeWidth={0.5} />
 
 						<Typography>No Data</Typography>
 					</div>

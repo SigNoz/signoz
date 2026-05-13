@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@signozhq/ui';
+import { Button } from '@signozhq/ui/button';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
@@ -9,7 +9,7 @@ import {
 	INTEGRATION_TYPES,
 } from 'container/Integrations/constants';
 import { useNotifications } from 'hooks/useNotifications';
-import { Unlink } from 'lucide-react';
+import { Unlink } from '@signozhq/icons';
 
 import './RemoveIntegrationAccount.scss';
 
