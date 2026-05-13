@@ -23,7 +23,7 @@ from fixtures import types
 
 logger = logging.getLogger(__name__)
 
-_GOLDEN_DIR = Path(__file__).resolve().parent / "golden"
+_GOLDEN_DIR = Path(__file__).resolve().parent.parent / "seeder" / "golden"
 METRICS_PATH = _GOLDEN_DIR / "otel-demo-metrics-golden.jsonl"
 TRACES_PATH = _GOLDEN_DIR / "otel-demo-traces-golden.jsonl"
 LOGS_PATH = _GOLDEN_DIR / "otel-demo-logs-golden.jsonl"
