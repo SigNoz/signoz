@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { getGetRuleByIDQueryKey } from 'api/generated/services/rules';
+import { invalidateGetRuleByID } from 'api/generated/services/rules';
 import type {
 	RenderErrorResponseDTO,
 	RuletypesRuleDTO,
@@ -64,7 +64,7 @@ function ToggleAlertState({
 				payload: updatedRule,
 			}));
 
-			queryClient.invalidateQueries(getGetRuleByIDQueryKey({ id }));
+			invalidateGetRuleByID(queryClient, { id });
 
 			notifications.success({
 				message: 'Success',

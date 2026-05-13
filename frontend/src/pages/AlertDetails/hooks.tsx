@@ -12,7 +12,7 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	createRule,
 	deleteRuleByID,
-	getGetRuleByIDQueryKey,
+	invalidateGetRuleByID,
 	updateRuleByID,
 	useGetRuleByID,
 	useListRules,
@@ -409,8 +409,8 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data.data.state);
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
-				queryClient.invalidateQueries(getGetRuleByIDQueryKey({ id: ruleId }));
 				notifications.success({
 					message: `Alert has been ${
 						data.data.state === 'disabled' ? 'disabled' : 'enabled'
@@ -418,8 +418,8 @@ export const useAlertRuleStatusToggle = ({
 				});
 			},
 			onError: (error) => {
+				invalidateGetRuleByID(queryClient, { id: ruleId });
 				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
-				queryClient.invalidateQueries(getGetRuleByIDQueryKey({ id: ruleId }));
 				showErrorModal(
 					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
