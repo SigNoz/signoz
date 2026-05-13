@@ -1,8 +1,7 @@
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
-import { Typography } from '@signozhq/ui/typography';
 import { LabelColumn, SEVERITY_BADGE_COLORS } from 'components/Alerts';
-import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
 import type { AlertRule } from './types';
@@ -48,7 +47,7 @@ export function getAlertRuleColumns(
 			enableRemove: false,
 			enableMove: false,
 			cell: ({ value }): JSX.Element => (
-				<Typography.Text>{String(value ?? '-')}</Typography.Text>
+				<TanStackTable.Text>{String(value ?? '-')}</TanStackTable.Text>
 			),
 		},
 		{

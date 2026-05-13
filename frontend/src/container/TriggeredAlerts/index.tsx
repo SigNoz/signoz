@@ -10,7 +10,8 @@ import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useTimezone } from 'providers/Timezone';
 
-import { EmptyState, ExpandedAlertsTable } from './components';
+import { EmptyState } from './components/EmptyStates';
+import ExpandedAlertsTable from './components/ExpandedAlertsTable';
 
 import {
 	TRIGGERED_ALERTS_PARAMS,
@@ -185,14 +186,14 @@ function TriggeredAlerts(): JSX.Element {
 						subtitle="Something went wrong while loading alerts. Please try again later."
 						onRefresh={refetch}
 					/>
-				) : isEmptyNoAlerts ? (
-					<EmptyState onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
 					<NoResultsEmptyState
 						title="No matching alerts"
 						subtitle="No alerts match your current filters. Try adjusting your search criteria."
 						onClear={handleClearFilters}
 					/>
+				) : isEmptyNoAlerts ? (
+					<EmptyState onRefresh={refetch} />
 				) : isGrouped ? (
 					<TanStackTable<GroupedAlert>
 						data={paginatedGroupedData}

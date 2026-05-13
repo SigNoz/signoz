@@ -28,10 +28,10 @@ function InfoLinkText({
 			}}
 			className={styles.infoLinkContainer}
 		>
-			{leftIconVisible && <CirclePlay size="md" />}
+			{leftIconVisible && <CirclePlay size={16} />}
 			<Typography.Text className={styles.infoText}>{infoText}</Typography.Text>
 			{rightIconVisible && (
-				<ArrowRight size="md" style={{ transform: 'rotate(315deg)' }} />
+				<ArrowRight size={16} style={{ transform: 'rotate(315deg)' }} />
 			)}
 		</Flex>
 	);

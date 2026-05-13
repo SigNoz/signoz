@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Plus, RefreshCw } from '@signozhq/icons';
-import { Button, Divider } from 'antd';
+import { Divider } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
@@ -76,6 +77,7 @@ export function AlertsEmptyState({
 								<Typography.Text className={styles.emptyInfo}>
 									No Alert rules yet.{' '}
 								</Typography.Text>
+								<br />
 								<Typography.Text className={styles.emptyAlertAction}>
 									Create an Alert Rule to get started
 								</Typography.Text>
@@ -87,7 +89,6 @@ export function AlertsEmptyState({
 									onClick={onClickNewAlertHandler}
 									disabled={!addNewAlert}
 									loading={loading}
-									type="primary"
 									data-testid="add-alert"
 								>
 									<span className={styles.buttonContent}>
@@ -96,11 +97,8 @@ export function AlertsEmptyState({
 									</span>
 								</Button>
 								{onRefresh && (
-									<Button onClick={onRefresh}>
-										<span className={styles.buttonContent}>
-											<RefreshCw size={14} />
-											Refresh
-										</span>
+									<Button onClick={onRefresh} prefix={<RefreshCw />} color="secondary">
+										Refresh
 									</Button>
 								)}
 							</div>

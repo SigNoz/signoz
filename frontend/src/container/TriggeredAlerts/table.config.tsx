@@ -5,7 +5,8 @@ import { SEVERITY_BADGE_COLORS } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { AlertStatusTag, LabelColumn } from './components';
+import AlertStatusTag from './components/AlertStatusTag';
+import { LabelColumn } from 'components/Alerts';
 import styles from './TriggeredAlerts.module.scss';
 import type { Alert, GroupedAlert } from './types';
 

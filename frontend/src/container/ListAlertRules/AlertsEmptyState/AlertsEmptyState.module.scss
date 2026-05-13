@@ -167,7 +167,7 @@
 }
 
 .infoText {
-	color: var(--bg-robin-400) !important;
+	color: var(--primary);
 	font-family: Inter;
 	font-size: 12px;
 	font-style: normal;
@@ -175,11 +175,12 @@
 	line-height: 16px;
 	letter-spacing: -0.06px;
 	margin: 0 8px;
+	white-space: nowrap;
 }
 
 .infoLinkContainer {
-	:global(.anticon) {
-		color: var(--bg-robin-400);
+	svg {
+		color: var(--primary);
 	}
 
 	&:hover {

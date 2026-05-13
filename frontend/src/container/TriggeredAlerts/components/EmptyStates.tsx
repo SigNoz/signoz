@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { CircleCheck, Plus, RefreshCw, Search } from '@signozhq/icons';
+import { CircleCheck, Plus, RefreshCw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -44,27 +44,6 @@ export function EmptyState({ onRefresh }: EmptyStateProps): JSX.Element {
 					</Button>
 				)}
 			</div>
-		</div>
-	);
-}
-
-interface NoFilterResultsEmptyStateProps {
-	onClearFilters: () => void;
-}
-
-export function NoFilterResultsEmptyState({
-	onClearFilters,
-}: NoFilterResultsEmptyStateProps): JSX.Element {
-	return (
-		<div className={styles.emptyState}>
-			<Search className={styles.emptyStateIconMuted} size={16} />
-			<div className={styles.emptyStateTitle}>No matching alerts</div>
-			<div className={styles.emptyStateSubtitle}>
-				No alerts match your current filters. Try adjusting your search criteria.
-			</div>
-			<Button variant="outlined" onClick={onClearFilters}>
-				Clear Filters
-			</Button>
 		</div>
 	);
 }

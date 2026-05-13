@@ -140,13 +140,13 @@ function ListAlertRules(): JSX.Element {
 			<div className={styles.tableContainer}>
 				{isError ? (
 					<EmptyState variant="error" onRefresh={refetch} />
-				) : isEmptyNoRules ? (
-					<EmptyState onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
 					<EmptyState
 						variant="no-search-results"
 						onClearSearch={handleClearFilters}
 					/>
+				) : isEmptyNoRules ? (
+					<EmptyState onRefresh={refetch} />
 				) : (
 					<TanStackTable<AlertRule>
 						data={paginatedRules}
