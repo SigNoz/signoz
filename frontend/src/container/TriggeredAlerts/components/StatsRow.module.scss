@@ -1,0 +1,26 @@
+.statsRow {
+	display: flex;
+	gap: 16px;
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.sectionLabel {
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--l2-foreground);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding-left: 2px;
+}
+
+.sectionCards {
+	display: flex;
+	gap: 8px;
+}

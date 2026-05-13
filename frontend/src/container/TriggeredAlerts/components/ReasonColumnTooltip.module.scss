@@ -1,0 +1,27 @@
+.tooltipContent {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-width: 350px;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.label {
+	font-size: 11px;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--l2-foreground-muted);
+}
+
+.value {
+	font-size: 13px;
+	line-height: 1.5;
+	color: var(--l2-foreground);
+	word-break: break-word;
+}

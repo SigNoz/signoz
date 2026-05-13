@@ -1,0 +1,34 @@
+.trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 100%;
+	padding: 4px 8px;
+	border-radius: 4px;
+	color: var(--l2-foreground);
+	font-size: 12px;
+	line-height: 1.4;
+	cursor: default;
+	transition: background 0.15s ease;
+
+	&:hover {
+		background: var(--l2-background-hover);
+	}
+}
+
+.text {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.icon {
+	flex-shrink: 0;
+	opacity: 0.6;
+}
+
+.empty {
+	color: var(--l2-foreground-muted);
+}
