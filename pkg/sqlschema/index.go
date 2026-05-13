@@ -81,19 +81,20 @@ func (index *UniqueIndex) Name() string {
 	b.WriteString("_")
 	b.WriteString(string(index.TableName))
 	b.WriteString("_")
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			b.WriteString("_")
+		}
+		b.WriteString(string(column))
+	}
 
 	if len(index.Expressions) > 0 {
-		// Expressions aren't valid identifier parts — hash them.
+		if len(index.ColumnNames) > 0 {
+			b.WriteString("_")
+		}
 		hasher := fnv.New32a()
 		_, _ = hasher.Write([]byte(strings.Join(index.Expressions, "\x00")))
 		fmt.Fprintf(&b, "%08x", hasher.Sum32())
-	} else {
-		for i, column := range index.ColumnNames {
-			if i > 0 {
-				b.WriteString("_")
-			}
-			b.WriteString(string(column))
-		}
 	}
 	return b.String()
 }
@@ -278,4 +279,3 @@ func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 
 	return sql
 }
-
