@@ -1,5 +1,10 @@
-import { ReactElement, useMemo } from 'react';
-import { Tooltip, TooltipProvider } from '@signozhq/ui/tooltip';
+import { ReactElement, cloneElement, useMemo } from 'react';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@signozhq/ui/tooltip';
 import type {
 	AuthZObject,
 	AuthZRelation,
@@ -81,16 +86,23 @@ function AuthZTooltip({
 
 	return (
 		<TooltipProvider>
-			<Tooltip title={tooltipMessage}>
-				<span className={styles.wrapper}>
-					<fieldset
-						disabled
-						className={styles.disabledFieldset}
-						data-denied-permissions={deniedNames.join(',')}
-					>
-						{children}
-					</fieldset>
-				</span>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<span className={styles.wrapper}>
+						<fieldset
+							disabled
+							className={styles.disabledFieldset}
+							data-denied-permissions={deniedNames.join(',')}
+						>
+							{cloneElement(children, {
+								disabled: true,
+							})}
+						</fieldset>
+					</span>
+				</TooltipTrigger>
+				<TooltipContent className={styles.errorContent}>
+					{tooltipMessage}
+				</TooltipContent>
 			</Tooltip>
 		</TooltipProvider>
 	);

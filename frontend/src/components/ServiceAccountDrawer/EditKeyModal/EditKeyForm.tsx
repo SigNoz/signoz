@@ -7,6 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import AuthZTooltip from 'components/AuthZTooltip/AuthZTooltip';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate, formatLastObservedAt } from '../utils';
@@ -24,6 +25,8 @@ export interface EditKeyFormProps {
 	onClose: () => void;
 	onRevokeClick: () => void;
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string;
+	canUpdate?: boolean;
+	accountId?: string;
 }
 
 function EditKeyForm({
@@ -37,6 +40,8 @@ function EditKeyForm({
 	onClose,
 	onRevokeClick,
 	formatTimezoneAdjustedTimestamp,
+	canUpdate = true,
+	accountId = '',
 }: EditKeyFormProps): JSX.Element {
 	return (
 		<>
@@ -49,6 +54,7 @@ function EditKeyForm({
 						id="edit-key-name"
 						className="edit-key-modal__input"
 						placeholder="Enter key name"
+						disabled={!canUpdate}
 						{...register('name')}
 					/>
 				</div>
@@ -73,21 +79,22 @@ function EditKeyForm({
 								type="single"
 								value={field.value}
 								onChange={(val): void => {
-									if (val) {
+									if (val && canUpdate) {
 										field.onChange(val);
 									}
 								}}
-								size="sm"
 								className="edit-key-modal__expiry-toggle"
 							>
 								<ToggleGroupItem
 									value={ExpiryMode.NONE}
+									disabled={!canUpdate}
 									className="edit-key-modal__expiry-toggle-btn"
 								>
 									No Expiration
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value={ExpiryMode.DATE}
+									disabled={!canUpdate}
 									className="edit-key-modal__expiry-toggle-btn"
 								>
 									Set Expiration Date
@@ -114,6 +121,7 @@ function EditKeyForm({
 										popupClassName="edit-key-modal-datepicker-popup"
 										getPopupContainer={popupContainer}
 										disabledDate={disabledDate}
+										disabled={!canUpdate}
 									/>
 								)}
 							/>
@@ -133,26 +141,40 @@ function EditKeyForm({
 			</form>
 
 			<div className="edit-key-modal__footer">
-				<Button variant="link" color="destructive" onClick={onRevokeClick}>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
+				<AuthZTooltip
+					relation="update"
+					object={`serviceaccount:${accountId}`}
+					permissionName="serviceaccount:update"
+					enabled={!!accountId}
+				>
+					<Button variant="link" color="destructive" onClick={onRevokeClick}>
+						<Trash2 size={12} />
+						Revoke Key
+					</Button>
+				</AuthZTooltip>
 				<div className="edit-key-modal__footer-right">
 					<Button variant="solid" color="secondary" onClick={onClose}>
 						<X size={12} />
 						Cancel
 					</Button>
-					<Button
-						type="submit"
-						// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						loading={isSaving}
-						disabled={!isDirty}
+					<AuthZTooltip
+						relation="update"
+						object={`serviceaccount:${accountId}`}
+						permissionName="serviceaccount:update"
+						enabled={!!accountId}
 					>
-						Save Changes
-					</Button>
+						<Button
+							type="submit"
+							// @ts-expect-error -- form prop not in @signozhq/ui Button type - TODO: Fix this - @SagarRajput
+							form={FORM_ID}
+							variant="solid"
+							color="primary"
+							loading={isSaving}
+							disabled={!isDirty}
+						>
+							Save Changes
+						</Button>
+					</AuthZTooltip>
 				</div>
 			</div>
 		</>

@@ -190,11 +190,6 @@ function ServiceAccountDrawer({
 	const canUpdate =
 		drawerPermissions?.[buildSAUpdatePermission(selectedAccountId ?? '')]
 			?.isGranted ?? true;
-	const canAttachRole =
-		(drawerPermissions?.[buildSAAttachPermission(selectedAccountId ?? '')]
-			?.isGranted &&
-			drawerPermissions?.[RoleAttachWildcardPermission]?.isGranted) ??
-		true;
 
 	const { data: keysData, isLoading: keysLoading } = useListServiceAccountKeys(
 		{ id: selectedAccountId ?? '' },
@@ -462,7 +457,8 @@ function ServiceAccountDrawer({
 				{!isAccountLoading && !isAccountError && selectedAccountId && (
 					<GuardAuthZ
 						relation="read"
-						object={`serviceaccount:${selectedAccountId}`}
+						// object={`serviceaccount:${selectedAccountId}`}
+						object={`serviceaccount:*`}
 						fallbackOnNoPermissions={(): JSX.Element => (
 							<PermissionDeniedCallout permissionName="serviceaccount:read" />
 						)}
@@ -480,7 +476,6 @@ function ServiceAccountDrawer({
 									}}
 									isDisabled={isDeleted}
 									canUpdate={canUpdate}
-									canAttachRole={canAttachRole}
 									availableRoles={availableRoles}
 									rolesLoading={rolesLoading}
 									rolesError={rolesError}

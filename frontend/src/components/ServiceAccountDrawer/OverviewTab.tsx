@@ -21,7 +21,6 @@ interface OverviewTabProps {
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
 	canUpdate?: boolean;
-	canAttachRole?: boolean;
 	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
 	rolesError?: boolean;
@@ -38,7 +37,6 @@ function OverviewTab({
 	onRolesChange,
 	isDisabled,
 	canUpdate = true,
-	canAttachRole: _canAttachRole = true,
 	availableRoles,
 	rolesLoading,
 	rolesError,
@@ -129,7 +127,6 @@ function OverviewTab({
 								permissionName: 'role:attach',
 							},
 						]}
-						enabled={!isDisabled}
 					>
 						<RolesSelect
 							id="sa-roles"

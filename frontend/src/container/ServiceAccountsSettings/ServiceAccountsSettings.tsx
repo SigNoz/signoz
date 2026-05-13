@@ -10,6 +10,7 @@ import CreateServiceAccountModal from 'components/CreateServiceAccountModal/Crea
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { GuardAuthZ } from 'components/GuardAuthZ/GuardAuthZ';
 import PermissionDeniedFullPage from 'components/PermissionDeniedFullPage/PermissionDeniedFullPage';
+import Spinner from 'components/Spinner';
 import type { AuthZObject } from 'hooks/useAuthZ/types';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable, {
@@ -116,9 +117,9 @@ function ServiceAccountsSettings(): JSX.Element {
 
 		const maxPage = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
 		if (currentPage > maxPage) {
-			setPage(maxPage);
+			void setPage(maxPage);
 		} else if (currentPage < 1) {
-			setPage(1);
+			void setPage(1);
 		}
 	}, [filteredAccounts.length, currentPage, setPage]);
 
@@ -134,8 +135,8 @@ function ServiceAccountsSettings(): JSX.Element {
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode(FilterMode.All);
-				setPage(1);
+				void setFilterMode(FilterMode.All);
+				void setPage(1);
 			},
 		},
 		{
@@ -147,8 +148,8 @@ function ServiceAccountsSettings(): JSX.Element {
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode(FilterMode.Active);
-				setPage(1);
+				void setFilterMode(FilterMode.Active);
+				void setPage(1);
 			},
 		},
 		{
@@ -160,8 +161,8 @@ function ServiceAccountsSettings(): JSX.Element {
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode(FilterMode.Deleted);
-				setPage(1);
+				void setFilterMode(FilterMode.Deleted);
+				void setPage(1);
 			},
 		},
 	];
@@ -180,7 +181,7 @@ function ServiceAccountsSettings(): JSX.Element {
 
 	const handleRowClick = useCallback(
 		(row: ServiceAccountRow): void => {
-			setSelectedAccountId(row.id);
+			void setSelectedAccountId(row.id);
 		},
 		[setSelectedAccountId],
 	);
@@ -188,9 +189,9 @@ function ServiceAccountsSettings(): JSX.Element {
 	const handleDrawerSuccess = useCallback(
 		(options?: { closeDrawer?: boolean }): void => {
 			if (options?.closeDrawer) {
-				setSelectedAccountId(null);
+				void setSelectedAccountId(null);
 			}
-			handleCreateSuccess();
+			void handleCreateSuccess();
 		},
 		[handleCreateSuccess, setSelectedAccountId],
 	);
@@ -217,6 +218,7 @@ function ServiceAccountsSettings(): JSX.Element {
 			<GuardAuthZ
 				relation="list"
 				object={'serviceaccount' as AuthZObject<'list'>}
+				fallbackOnLoading={<Spinner height="50vh" />}
 				fallbackOnNoPermissions={(): JSX.Element => (
 					<PermissionDeniedFullPage permissionName="serviceaccount:list" />
 				)}
@@ -248,8 +250,8 @@ function ServiceAccountsSettings(): JSX.Element {
 								placeholder="Search by name or email..."
 								value={searchQuery}
 								onChange={(e): void => {
-									setSearchQuery(e.target.value);
-									setPage(1);
+									void setSearchQuery(e.target.value);
+									void setPage(1);
 								}}
 								className="sa-settings-search-input"
 							/>

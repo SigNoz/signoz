@@ -1,5 +1,4 @@
 .wrapper {
-	display: inline-flex;
 	cursor: not-allowed;
 }
 
@@ -8,4 +7,15 @@
 	margin: 0;
 	padding: 0;
 	display: contents;
+}
+
+.errorContent {
+	background: var(--callout-error-background) !important;
+	border-color: var(--callout-error-border) !important;
+	backdrop-filter: blur(15px);
+	border-radius: 4px !important;
+	color: var(--foreground) !important;
+	font-style: normal;
+	font-weight: 400;
+	white-space: nowrap;
 }

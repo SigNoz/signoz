@@ -16,6 +16,8 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
+import { buildSAUpdatePermission } from 'hooks/useAuthZ/serviceAccountPermissions';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
@@ -68,6 +70,15 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	}, [keyItem?.id, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const expiryMode = watch('expiryMode');
+
+	const { permissions: editPermissions } = useAuthZ(
+		selectedAccountId ? [buildSAUpdatePermission(selectedAccountId)] : [],
+		{ enabled: !!selectedAccountId },
+	);
+
+	const canUpdate =
+		editPermissions?.[buildSAUpdatePermission(selectedAccountId ?? '')]
+			?.isGranted ?? true;
 
 	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
 		mutation: {
@@ -169,6 +180,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 						isRevoking={isRevoking}
 						onCancel={(): void => setIsRevokeConfirmOpen(false)}
 						onConfirm={handleRevoke}
+						accountId={selectedAccountId ?? undefined}
 					/>
 				) : undefined
 			}
@@ -190,6 +202,8 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					onClose={handleClose}
 					onRevokeClick={(): void => setIsRevokeConfirmOpen(true)}
 					formatTimezoneAdjustedTimestamp={formatTimezoneAdjustedTimestamp}
+					canUpdate={canUpdate}
+					accountId={selectedAccountId ?? ''}
 				/>
 			)}
 		</DialogWrapper>

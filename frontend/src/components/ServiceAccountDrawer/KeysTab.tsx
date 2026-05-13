@@ -193,16 +193,23 @@ function KeysTab({
 						Learn more
 					</a>
 				</p>
-				<Button
-					variant="link"
-					color="primary"
-					onClick={async (): Promise<void> => {
-						await setIsAddKeyOpen(true);
-					}}
-					disabled={isDisabled}
+				<AuthZTooltip
+					relation="update"
+					object={`serviceaccount:${accountId}`}
+					permissionName="serviceaccount:update"
+					enabled={!isDisabled && !!accountId}
 				>
-					+ Add your first key
-				</Button>
+					<Button
+						variant="link"
+						color="primary"
+						onClick={async (): Promise<void> => {
+							await setIsAddKeyOpen(true);
+						}}
+						disabled={isDisabled}
+					>
+						+ Add your first key
+					</Button>
+				</AuthZTooltip>
 			</div>
 		);
 	}
