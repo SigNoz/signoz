@@ -40,7 +40,8 @@ import {
 	Link,
 	ListPlus,
 } from '@signozhq/icons';
-import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
+import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
+import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
@@ -212,9 +213,9 @@ const SpanOverview = memo(function SpanOverview({
 }): JSX.Element {
 	const isRootSpan = span.level === 0;
 	const { onSpanCopy } = useCopySpanLink(span);
-	const { resolveSpanColor } = useTraceContext();
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 
-	const color = resolveSpanColor(span);
+	const color = resolveSpanColor(span, colorByFieldName);
 
 	// Smart highlighting logic
 	const {
@@ -389,8 +390,8 @@ export const SpanDuration = memo(function SpanDuration({
 	const leftOffset = ((span.timestamp - traceMetadata.startTime) * 1e2) / spread;
 	const width = (span.duration_nano * 1e2) / (spread * 1e6);
 
-	const { resolveSpanColor } = useTraceContext();
-	const color = resolveSpanColor(span);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
+	const color = resolveSpanColor(span, colorByFieldName);
 	// `resolveSpanColor` returns a CSS variable for errors; `colorToRgb` can't parse it.
 	const rgbColor = span.has_error ? '239, 68, 68' : colorToRgb(color);
 
@@ -585,7 +586,6 @@ function Success(props: ISuccessProps): JSX.Element {
 			setInterestedSpanId({
 				spanId,
 				isUncollapsed: !collapse,
-				scrollToSpan: false,
 			});
 		},
 		[isFullDataLoaded, setLocalUncollapsedNodes, setInterestedSpanId],
@@ -740,15 +740,24 @@ function Success(props: ISuccessProps): JSX.Element {
 		);
 	}, [spans, sidebarWidth]);
 
-	// Scroll to interested span — only when scrollToSpan is true (URL nav, flamegraph click, initial load)
-	// Skip for collapse/uncollapse to avoid jarring scroll jumps
+	// Scroll to the interested span only when it isn't already on screen.
+	// Covers every entry point uniformly: deep-link, flamegraph click,
+	// filter prev/next, browser back/forward all scroll only if needed;
+	// waterfall row clicks and chevron expand/collapse don't yank the viewport
+	// because the affected row is by definition already visible.
 	useEffect(() => {
 		if (interestedSpanId.spanId !== '' && virtualizerRef.current) {
 			const idx = spans.findIndex(
 				(span) => span.span_id === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
-				if (interestedSpanId.scrollToSpan !== false) {
+				const visible = virtualizerRef.current.getVirtualItems();
+				const isOnScreen =
+					visible.length > 0 &&
+					idx >= visible[0].index &&
+					idx <= visible[visible.length - 1].index;
+
+				if (!isOnScreen) {
 					setTimeout(() => {
 						virtualizerRef.current?.scrollToIndex(idx, {
 							align: 'center',

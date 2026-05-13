@@ -221,6 +221,9 @@ export function getAppContextMock(
 		],
 		isFetchingFeatureFlags: false,
 		featureFlagsFetchError: null,
+		hostsData: null,
+		isFetchingHosts: false,
+		hostsFetchError: null,
 		orgPreferences: [
 			{
 				name: ORG_PREFERENCES.ORG_ONBOARDING,
@@ -282,14 +285,14 @@ export function AllTheProviders({
 		<QueryBuilderProvider>{children}</QueryBuilderProvider>
 	);
 
+	const appContextValue = getAppContextMock(roleValue, appContextOverridesValue);
+
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
 			<NuqsAdapter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={mockStored(roleValue)}>
-						<AppContext.Provider
-							value={getAppContextMock(roleValue, appContextOverridesValue)}
-						>
+						<AppContext.Provider value={appContextValue}>
 							<ResourceProvider>
 								<ErrorModalProvider>
 									<TimezoneProvider>

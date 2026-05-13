@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { DropdownMenuSimple as Dropdown } from '@signozhq/ui/dropdown-menu';
 import { Ellipsis } from '@signozhq/icons';
 
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
 
 interface TraceOptionsMenuProps {
 	showTraceDetails: boolean;
@@ -17,8 +17,11 @@ function TraceOptionsMenu({
 	onToggleTraceDetails,
 	onOpenPreviewFields,
 }: TraceOptionsMenuProps): JSX.Element {
-	const { colorByField, setColorByField, availableColorByOptions } =
-		useTraceContext();
+	const colorByField = useTraceStore((s) => s.colorByField);
+	const setColorByField = useTraceStore((s) => s.setColorByField);
+	const availableColorByOptions = useTraceStore(
+		(s) => s.availableColorByOptions,
+	);
 
 	const menuItems: MenuItem[] = useMemo(() => {
 		const items: MenuItem[] = [
@@ -79,11 +82,11 @@ function TraceOptionsMenu({
 	]);
 
 	return (
-		<Dropdown menu={{ items: menuItems }}>
+		<Dropdown menu={{ items: menuItems }} align="start">
 			<Button
-				variant="solid"
+				variant="ghost"
+				size="icon"
 				color="secondary"
-				size="sm"
 				prefix={<Ellipsis size={14} />}
 			/>
 		</Dropdown>
