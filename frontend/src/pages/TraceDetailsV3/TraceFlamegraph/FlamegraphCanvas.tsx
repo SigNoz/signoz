@@ -214,6 +214,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 							hasError={tooltipContent.status === 'error'}
 							relativeStartMs={tooltipContent.startMs}
 							durationMs={tooltipContent.durationMs}
+							previewRows={tooltipContent.previewRows}
 						/>
 					)}
 				</div>,

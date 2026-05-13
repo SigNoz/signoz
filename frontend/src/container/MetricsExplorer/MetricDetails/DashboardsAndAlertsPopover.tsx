@@ -9,7 +9,7 @@ import {
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { Bell, Grid } from 'lucide-react';
+import { Bell, Grid2X2 } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
@@ -137,7 +137,7 @@ function DashboardsAndAlertsPopover({
 						className="dashboards-and-alerts-popover dashboards-popover"
 						style={{ backgroundColor: `${Color.BG_SIENNA_500}33` }}
 					>
-						<Grid size={12} color={Color.BG_SIENNA_500} />
+						<Grid2X2 size={12} color={Color.BG_SIENNA_500} />
 						<Typography.Text>
 							{pluralize(dashboards.length, 'dashboard')}
 						</Typography.Text>

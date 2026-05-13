@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Button, Collapse, Flex, Tag } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { PenLine, Trash2 } from 'lucide-react';
+import { PenLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import { USER_ROLES } from 'types/roles';

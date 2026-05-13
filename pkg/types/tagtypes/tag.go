@@ -23,7 +23,6 @@ type Tag struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	types.UserAuditable
 	Key   string         `json:"key" required:"true" bun:"key,type:text,notnull"`
 	Value string         `json:"value" required:"true" bun:"value,type:text,notnull"`
 	OrgID valuer.UUID    `json:"orgId" required:"true" bun:"org_id,type:text,notnull"`
@@ -61,17 +60,13 @@ func NewPostableTagsFromTags(tags []*Tag) []PostableTag {
 	return out
 }
 
-func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value, createdBy string) *Tag {
+func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value string) *Tag {
 	now := time.Now()
 	return &Tag{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: now,
 			UpdatedAt: now,
-		},
-		UserAuditable: types.UserAuditable{
-			CreatedBy: createdBy,
-			UpdatedBy: createdBy,
 		},
 		Key:   key,
 		Value: value,
@@ -88,7 +83,7 @@ func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value, createdBy string
 //   - toCreate: new Tag rows the caller should insert (with pre-generated IDs)
 //   - matched: existing rows the caller's input already pointed to. They
 //     already carry authoritative IDs from the store.
-func Resolve(ctx context.Context, store Store, orgID valuer.UUID, kind coretypes.Kind, postable []PostableTag, createdBy string) ([]*Tag, []*Tag, error) {
+func Resolve(ctx context.Context, store Store, orgID valuer.UUID, kind coretypes.Kind, postable []PostableTag) ([]*Tag, []*Tag, error) {
 	if len(postable) == 0 {
 		return nil, nil, nil
 	}
@@ -123,7 +118,7 @@ func Resolve(ctx context.Context, store Store, orgID valuer.UUID, kind coretypes
 			matched = append(matched, existingTag)
 			continue
 		}
-		toCreate = append(toCreate, NewTag(orgID, kind, key, value, createdBy))
+		toCreate = append(toCreate, NewTag(orgID, kind, key, value))
 	}
 
 	return toCreate, matched, nil

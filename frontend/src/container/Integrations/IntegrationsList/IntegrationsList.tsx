@@ -5,7 +5,7 @@ import { Button, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetAllIntegrations } from 'hooks/Integrations/useGetAllIntegrations';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { MoveUpRight, RotateCw } from 'lucide-react';
+import { MoveUpRight, RotateCw } from '@signozhq/icons';
 import { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';

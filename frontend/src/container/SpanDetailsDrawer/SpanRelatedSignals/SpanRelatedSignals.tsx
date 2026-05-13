@@ -14,7 +14,7 @@ import InfraMetrics from 'container/LogDetailedView/InfraMetrics/InfraMetrics';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { BarChart2, Compass, X } from 'lucide-react';
+import { BarChart, Compass, X } from '@signozhq/icons';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Span } from 'types/api/trace/getTraceV2';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
@@ -104,7 +104,7 @@ function SpanRelatedSignals({
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 				),

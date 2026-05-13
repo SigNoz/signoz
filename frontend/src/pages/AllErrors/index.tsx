@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useLocation } from 'react-router-dom';
-import { FilterOutlined } from '@ant-design/icons';
+import { Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -81,7 +81,7 @@ function AllErrors(): JSX.Element {
 								!showFilters ? (
 									<Tooltip title="Show Filters">
 										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-											<FilterOutlined />
+											<Filter size="md" />
 										</Button>
 									</Tooltip>
 								) : undefined

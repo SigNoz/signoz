@@ -7,7 +7,7 @@ import TanStackTable, {
 	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
-import { CornerDownRight } from 'lucide-react';
+import { CornerDownRight } from '@signozhq/icons';
 import { useQueryState } from 'nuqs';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';

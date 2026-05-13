@@ -49,9 +49,7 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "org_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "created_by", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "updated_by", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
@@ -72,11 +70,12 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "tag_relation",
 		Columns: []*sqlschema.Column{
+			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "kind", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "entity_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "resource_id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "tag_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
-		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"kind", "entity_id", "tag_id"}},
+		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{ColumnNames: []sqlschema.ColumnName{"id"}},
 		ForeignKeyConstraints: []*sqlschema.ForeignKeyConstraint{
 			{
 				ReferencingColumnName: sqlschema.ColumnName("tag_id"),
@@ -86,6 +85,14 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 		},
 	})
 	sqls = append(sqls, tagRelationsTableSQLs...)
+
+	tagRelationUniqueIndexSQLs := migration.sqlschema.Operator().CreateIndex(
+		&sqlschema.UniqueIndex{
+			TableName:   "tag_relation",
+			ColumnNames: []sqlschema.ColumnName{"kind", "resource_id", "tag_id"},
+		},
+	)
+	sqls = append(sqls, tagRelationUniqueIndexSQLs...)
 
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {

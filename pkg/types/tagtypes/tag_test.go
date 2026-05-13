@@ -68,15 +68,15 @@ func (f *fakeStore) CreateRelations(_ context.Context, _ []*TagRelation) error {
 	return nil
 }
 
-func (f *fakeStore) ListByEntity(_ context.Context, _ coretypes.Kind, _ valuer.UUID) ([]*Tag, error) {
+func (f *fakeStore) ListByResource(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ valuer.UUID) ([]*Tag, error) {
 	return []*Tag{}, nil
 }
 
-func (f *fakeStore) ListByEntities(_ context.Context, _ coretypes.Kind, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
+func (f *fakeStore) ListByResources(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
 	return map[valuer.UUID][]*Tag{}, nil
 }
 
-func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ coretypes.Kind, _ valuer.UUID, _ []valuer.UUID) error {
+func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ valuer.UUID, _ []valuer.UUID) error {
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (f *fakeStore) RunInTx(ctx context.Context, cb func(ctx context.Context) er
 func TestResolve(t *testing.T) {
 	t.Run("empty input does not hit store", func(t *testing.T) {
 		store := &fakeStore{}
-		toCreate, matched, err := Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, nil, "u@signoz.io")
+		toCreate, matched, err := Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, nil)
 		require.NoError(t, err)
 		assert.Empty(t, toCreate)
 		assert.Empty(t, matched)
@@ -96,15 +96,15 @@ func TestResolve(t *testing.T) {
 
 	t.Run("creates missing pairs and reuses existing", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
-		dbTag := NewTag(orgID, testKind, "team", "Pulse", "seed")
-		dbTag2 := NewTag(orgID, testKind, "Database", "redis", "seed")
+		dbTag := NewTag(orgID, testKind, "team", "Pulse")
+		dbTag2 := NewTag(orgID, testKind, "Database", "redis")
 		store := &fakeStore{tags: []*Tag{dbTag, dbTag2}}
 
 		toCreate, matched, err := Resolve(context.Background(), store, orgID, testKind, []PostableTag{
 			{Key: "team", Value: "events"},    // new
 			{Key: "DATABASE", Value: "REDIS"}, // case-only conflict
 			{Key: "Brand", Value: "New"},      // new
-		}, "u@signoz.io")
+		})
 		require.NoError(t, err)
 
 		createdLowerKVs := []string{}
@@ -126,7 +126,7 @@ func TestResolve(t *testing.T) {
 			{Key: "Foo", Value: "Bar"},
 			{Key: "foo", Value: "bar"},
 			{Key: "FOO", Value: "BAR"},
-		}, "u@signoz.io")
+		})
 		require.NoError(t, err)
 
 		require.Empty(t, matched)
@@ -137,12 +137,12 @@ func TestResolve(t *testing.T) {
 
 	t.Run("preserves existing casing on case-only match", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
-		dbTag := NewTag(orgID, testKind, "Team", "Pulse", "seed")
+		dbTag := NewTag(orgID, testKind, "Team", "Pulse")
 		store := &fakeStore{tags: []*Tag{dbTag}}
 
 		toCreate, matched, err := Resolve(context.Background(), store, orgID, testKind, []PostableTag{
 			{Key: "team", Value: "PULSE"},
-		}, "u@signoz.io")
+		})
 		require.NoError(t, err)
 
 		assert.Empty(t, toCreate)
@@ -156,7 +156,7 @@ func TestResolve(t *testing.T) {
 		_, _, err := Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, []PostableTag{
 			{Key: "team", Value: "pulse"},
 			{Key: "", Value: "x"},
-		}, "u@signoz.io")
+		})
 		require.Error(t, err)
 	})
 
@@ -164,7 +164,7 @@ func TestResolve(t *testing.T) {
 		store := &fakeStore{}
 		_, _, err := Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, []PostableTag{
 			{Key: "team/eng", Value: "pulse"},
-		}, "u@signoz.io")
+		})
 		require.Error(t, err)
 		assert.True(t, strings.Contains(err.Error(), "/"), "error should reference the disallowed character")
 	})

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@signozhq/icons';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 

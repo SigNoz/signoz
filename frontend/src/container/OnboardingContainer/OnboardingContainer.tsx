@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { ArrowRight, UserPlus } from '@signozhq/icons';
 import { Button, Card, Form } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -17,7 +17,6 @@ import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/Invi
 import { InviteMemberFormValues } from 'container/OrganizationSettings/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
-import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { isModifierKeyPressed } from 'utils/app';
 
@@ -361,7 +360,7 @@ export default function Onboarding(): JSX.Element {
 					<div className="continue-to-next-step">
 						<Button
 							type="primary"
-							icon={<ArrowRightOutlined />}
+							icon={<ArrowRight size="md" />}
 							onClick={(e): void => handleNext(e)}
 						>
 							{t('get_started')}

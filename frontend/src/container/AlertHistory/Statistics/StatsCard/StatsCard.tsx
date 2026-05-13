@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ArrowDownLeft, ArrowUpRight, Calendar } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Calendar } from '@signozhq/icons';
 import { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
 

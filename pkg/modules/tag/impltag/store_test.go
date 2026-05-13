@@ -66,8 +66,8 @@ func TestStore_Create_PopulatesIDsOnFreshInsert(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	tagA := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database", "u@signoz.io")
-	tagB := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR", "u@signoz.io")
+	tagA := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
+	tagB := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR")
 	preIDA := tagA.ID
 	preIDB := tagB.ID
 
@@ -96,7 +96,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	orgID := valuer.GenerateUUID()
 
 	// Simulate a concurrent insert: someone else has already inserted "tag:Database".
-	winner := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database", "concurrent")
+	winner := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
 	_, err := s.Create(ctx, []*tagtypes.Tag{winner})
 	require.NoError(t, err)
 	winnerID := winner.ID
@@ -104,7 +104,7 @@ func TestStore_Create_ConflictReturnsExistingRowID(t *testing.T) {
 	// Now our request runs with a different pre-generated ID for the same
 	// (key, value) — case differs but the functional unique index collapses
 	// them. RETURNING should overwrite our stale ID with winner's ID.
-	loser := tagtypes.NewTag(orgID, dashboardKind, "TAG", "DATABASE", "u@signoz.io")
+	loser := tagtypes.NewTag(orgID, dashboardKind, "TAG", "DATABASE")
 	loserPreID := loser.ID
 	require.NotEqual(t, winnerID, loserPreID, "pre-generated IDs must differ for this test to be meaningful")
 
@@ -129,13 +129,13 @@ func TestStore_Create_MixedFreshAndConflict(t *testing.T) {
 	s := NewStore(sqlstore)
 
 	orgID := valuer.GenerateUUID()
-	pre := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database", "concurrent")
+	pre := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
 	_, err := s.Create(ctx, []*tagtypes.Tag{pre})
 	require.NoError(t, err)
 	preExistingID := pre.ID
 
-	conflict := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database", "u@signoz.io")
-	fresh := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR", "u@signoz.io")
+	conflict := tagtypes.NewTag(orgID, dashboardKind, "tag", "Database")
+	fresh := tagtypes.NewTag(orgID, dashboardKind, "team", "BLR")
 	freshPreID := fresh.ID
 
 	got, err := s.Create(ctx, []*tagtypes.Tag{conflict, fresh})

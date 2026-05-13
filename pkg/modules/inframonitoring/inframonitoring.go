@@ -14,6 +14,7 @@ type Handler interface {
 	ListNodes(http.ResponseWriter, *http.Request)
 	ListNamespaces(http.ResponseWriter, *http.Request)
 	ListClusters(http.ResponseWriter, *http.Request)
+	ListVolumes(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
@@ -22,4 +23,5 @@ type Module interface {
 	ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error)
 	ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (*inframonitoringtypes.Namespaces, error)
 	ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error)
+	ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error)
 }
