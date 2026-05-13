@@ -53,7 +53,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	tags, err := module.tagModule.ListForEntity(ctx, dashboardtypes.EntityTypeDashboard, id)
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, id)
 	if err != nil {
 		return nil, err
 	}
