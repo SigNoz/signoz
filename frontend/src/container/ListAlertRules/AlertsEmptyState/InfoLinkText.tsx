@@ -3,6 +3,8 @@ import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 
+import styles from './AlertsEmptyState.module.scss';
+
 interface InfoLinkTextProps {
 	infoText: string;
 	link: string;
@@ -24,10 +26,10 @@ function InfoLinkText({
 				onClick();
 				openInNewTab(link);
 			}}
-			className="info-link-container"
+			className={styles.infoLinkContainer}
 		>
 			{leftIconVisible && <PlayCircleFilled />}
-			<Typography.Text className="info-text">{infoText}</Typography.Text>
+			<Typography.Text className={styles.infoText}>{infoText}</Typography.Text>
 			{rightIconVisible && <ArrowRightOutlined rotate={315} />}
 		</Flex>
 	);

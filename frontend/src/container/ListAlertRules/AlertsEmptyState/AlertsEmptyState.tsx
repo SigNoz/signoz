@@ -16,7 +16,7 @@ import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
 import InfoLinkText from './InfoLinkText';
 
-import './AlertsEmptyState.styles.scss';
+import styles from './AlertsEmptyState.module.scss';
 
 const alertLogEvents = (
 	title: string,
@@ -28,7 +28,7 @@ const alertLogEvents = (
 		page: 'Alert empty state page',
 	};
 
-	logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
+	void logEvent(title, dataSource ? { ...attributes, dataSource } : attributes);
 };
 
 export function AlertsEmptyState(): JSX.Element {
@@ -50,34 +50,33 @@ export function AlertsEmptyState(): JSX.Element {
 	);
 
 	return (
-		<div className="alert-list-container">
-			<div className="alert-list-view-content">
-				<div className="alert-list-title-container">
-					<Typography.Title className="title">Alert Rules</Typography.Title>
-					<Typography.Text className="subtitle">
+		<div className={styles.alertListContainer}>
+			<div className={styles.alertListViewContent}>
+				<div>
+					<Typography.Title className={styles.title}>Alert Rules</Typography.Title>
+					<Typography.Text className={styles.subtitle}>
 						Create and manage alert rules for your resources.
 					</Typography.Text>
 				</div>
-				<section className="empty-alert-info-container">
-					<div className="alert-content">
-						<section className="heading">
+				<section className={styles.emptyAlertInfoContainer}>
+					<div className={styles.alertContent}>
+						<section className={styles.heading}>
 							<img
 								src={alertEmojiUrl}
 								alt="alert-header"
 								style={{ height: '32px', width: '32px' }}
 							/>
 							<div>
-								<Typography.Text className="empty-info">
+								<Typography.Text className={styles.emptyInfo}>
 									No Alert rules yet.{' '}
 								</Typography.Text>
-								<Typography.Text className="empty-alert-action">
+								<Typography.Text className={styles.emptyAlertAction}>
 									Create an Alert Rule to get started
 								</Typography.Text>
 							</div>
 						</section>
-						<div className="action-container">
+						<div className={styles.actionContainer}>
 							<Button
-								className="add-alert-btn"
 								onClick={onClickNewAlertHandler}
 								icon={<PlusOutlined />}
 								disabled={!addNewAlert}
@@ -121,11 +120,9 @@ export function AlertsEmptyState(): JSX.Element {
 						})}
 					</div>
 				</section>
-				<div className="get-started-text">
+				<div className={styles.getStartedText}>
 					<Divider>
-						<Typography.Text className="get-started-text">
-							Or get started with these sample alerts
-						</Typography.Text>
+						<Typography.Text>Or get started with these sample alerts</Typography.Text>
 					</Divider>
 				</div>
 
