@@ -13,6 +13,18 @@ import { useOperators } from './useOperators';
 
 export const WHERE_CLAUSE_CUSTOM_SUFFIX = '-custom';
 
+/**
+ * Maps long form operators to short form for InfraMonitoring.
+ */
+const INFRA_OPERATOR_DISPLAY_MAP: Record<string, string> = {
+	NOT_IN: 'NIN',
+	NOT_LIKE: 'NLIKE',
+	NOT_ILIKE: 'NOTILIKE',
+	NOT_REGEX: 'NREGEX',
+	NOT_EXISTS: 'NEXISTS',
+	NOT_CONTAINS: 'NCONTAINS',
+};
+
 export const useOptions = (
 	key: string,
 	keys: BaseAutocompleteData[],
@@ -25,6 +37,7 @@ export const useOptions = (
 	result: string[],
 	isFetching: boolean,
 	whereClauseConfig?: WhereClauseConfig,
+	isInfraMonitoring?: boolean,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Option[] => {
 	const [options, setOptions] = useState<Option[]>([]);
@@ -107,10 +120,16 @@ export const useOptions = (
 						operator.startsWith(partialOperator?.toUpperCase()),
 					)
 				: operators;
-			const operatorsOptions = filteredOperators?.map((operator) => ({
-				value: `${partialKey} ${operator} `,
-				label: `${partialKey} ${operator} `,
-			}));
+			const operatorsOptions = filteredOperators?.map((op) => {
+				const displayOp =
+					isInfraMonitoring && INFRA_OPERATOR_DISPLAY_MAP[op]
+						? INFRA_OPERATOR_DISPLAY_MAP[op]
+						: op;
+				return {
+					value: `${partialKey} ${displayOp} `,
+					label: `${partialKey} ${displayOp} `,
+				};
+			});
 			if (whereClauseConfig) {
 				return [
 					{
@@ -122,7 +141,7 @@ export const useOptions = (
 			}
 			return operatorsOptions;
 		},
-		[operators, searchValue, whereClauseConfig],
+		[isInfraMonitoring, operators, searchValue, whereClauseConfig],
 	);
 
 	useEffect(() => {

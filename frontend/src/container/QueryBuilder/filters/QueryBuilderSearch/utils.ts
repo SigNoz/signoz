@@ -7,10 +7,16 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
 export const tagRegexp =
-	/^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bLIKE\b|\bNOT_LIKE\b|\bILIKE\b|\bNOT_ILIKE\b|\bREGEX\b|\bNOT_REGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
+	/^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bNIN\b|\bLIKE\b|\bNOT_LIKE\b|\bNLIKE\b|\bILIKE\b|\bNOT_ILIKE\b|\bNOTILIKE\b|\bREGEX\b|\bNOT_REGEX\b|\bNREGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bNEXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|\bNCONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
 export function isInNInOperator(value: string): boolean {
-	return value === OPERATORS.IN || value === OPERATORS.NIN;
+	return (
+		value === 'IN' ||
+		value === 'NOT_IN' ||
+		value === 'NIN' ||
+		value === 'in' ||
+		value === 'nin'
+	);
 }
 
 interface ITagToken {
@@ -83,6 +89,19 @@ export function getOperatorValue(op: string): string {
 			return 'contains';
 		case 'NOT_CONTAINS':
 			return 'not contains';
+		// Short form operators (InfraMonitoring)
+		case 'NIN':
+			return 'nin';
+		case 'NLIKE':
+			return 'nlike';
+		case 'NOTILIKE':
+			return 'notilike';
+		case 'NREGEX':
+			return 'nregex';
+		case 'NEXISTS':
+			return 'nexists';
+		case 'NCONTAINS':
+			return 'ncontains';
 		default:
 			return op;
 	}
@@ -114,6 +133,19 @@ export function getOperatorFromValue(op: string): string {
 			return OPERATORS.HAS;
 		case 'not has':
 			return OPERATORS.NHAS;
+		// Short-form operators (InfraMonitoring)
+		case 'nin':
+			return 'NIN';
+		case 'nlike':
+			return 'NLIKE';
+		case 'notilike':
+			return 'NOTILIKE';
+		case 'nregex':
+			return 'NREGEX';
+		case 'nexists':
+			return 'NEXISTS';
+		case 'ncontains':
+			return 'NCONTAINS';
 		default:
 			return op;
 	}
