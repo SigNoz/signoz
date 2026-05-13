@@ -265,9 +265,6 @@ importers:
       react-beautiful-dnd:
         specifier: 13.1.1
         version: 13.1.1(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      react-chartjs-2:
-        specifier: '4'
-        version: 4.3.1(chart.js@3.9.1)(react@18.2.0)
       react-dnd:
         specifier: 16.0.1
         version: 16.0.1(@types/hoist-non-react-statics@3.3.1)(@types/node@16.18.25)(@types/react@18.0.26)(react@18.2.0)
@@ -8698,12 +8695,6 @@ packages:
     peerDependencies:
       react: ^16.8.5 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.5 || ^17.0.0 || ^18.0.0
-
-  react-chartjs-2@4.3.1:
-    resolution: {integrity: sha512-5i3mjP6tU7QSn0jvb8I4hudTzHJqS8l00ORJnVwI2sYu0ihpj83Lv2YzfxunfxTZkscKvZu2F2w9LkwNBhj6xA==}
-    peerDependencies:
-      chart.js: ^3.5.0
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
   react-day-picker@9.9.0:
     resolution: {integrity: sha512-NtkJbuX6cl/VaGNb3sVVhmMA6LSMnL5G3xNL+61IyoZj0mUZFWTg4hmj7PHjIQ8MXN9dHWhUHFoJWG6y60DKSg==}
@@ -20237,11 +20228,6 @@ snapshots:
       use-memo-one: 1.1.3(react@18.2.0)
     transitivePeerDependencies:
       - react-native
-
-  react-chartjs-2@4.3.1(chart.js@3.9.1)(react@18.2.0):
-    dependencies:
-      chart.js: 3.9.1
-      react: 18.2.0
 
   react-day-picker@9.9.0(react@18.2.0):
     dependencies:
