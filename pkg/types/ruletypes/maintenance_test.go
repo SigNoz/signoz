@@ -632,10 +632,12 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
 					Timezone: "UTC",
+					// These fixed fields should be ignored when Recurrence is set.
+					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
 						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC), // daily at 14:00
-						EndTime:    timePtr(time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC)),
-						Duration:   valuer.MustParseTextDuration("2h"), // until 16:00
+						Duration:   valuer.MustParseTextDuration("2h"),           // until 16:00
 						RepeatType: RepeatTypeDaily,
 					},
 				},
@@ -649,10 +651,11 @@ func TestShouldSkipMaintenance(t *testing.T) {
 			name: "recurring-daily-with-fixed-times-inside-daily-window",
 			maintenance: &PlannedMaintenance{
 				Schedule: &Schedule{
-					Timezone: "UTC",
+					Timezone:  "UTC",
+					StartTime: time.Date(2026, 4, 1, 10, 0, 0, 0, time.UTC),
+					EndTime:   time.Date(2026, 4, 30, 18, 0, 0, 0, time.UTC),
 					Recurrence: &Recurrence{
 						StartTime:  time.Date(2026, 4, 1, 14, 0, 0, 0, time.UTC),
-						EndTime:    timePtr(time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC)),
 						Duration:   valuer.MustParseTextDuration("2h"),
 						RepeatType: RepeatTypeDaily,
 					},
