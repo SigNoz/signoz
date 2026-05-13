@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip } from 'antd';
+import { CircleAlert, Trash2 } from '@signozhq/icons';
+import { Flex, Modal, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -57,7 +57,10 @@ export function DeleteButton({
 				</Typography.Title>
 			),
 			icon: (
-				<ExclamationCircleOutlined style={{ color: 'var(--danger-background)' }} />
+				<CircleAlert
+					style={{ color: 'var(--danger-background)', marginInlineEnd: '12px' }}
+					size="3xl"
+				/>
 			),
 			okText: 'Delete',
 			okButtonProps: {
@@ -120,7 +123,9 @@ export function DeleteButton({
 					className="delete-btn"
 					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<DeleteOutlined /> Delete dashboard
+					<Flex align="center" justify="center" gap={4}>
+						<Trash2 size={14} /> Delete dashboard
+					</Flex>
 				</TableLinkText>
 			</Tooltip>
 

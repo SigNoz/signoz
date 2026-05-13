@@ -17,14 +17,20 @@ const editorOptions: EditorProps['options'] = {
 	readOnly: true,
 	wordWrap: 'on',
 	minimap: { enabled: false },
-	fontWeight: 400,
+	fontWeight: '400',
 	fontFamily: 'SF Mono, Geist Mono, Fira Code, monospace',
 	fontSize: 12,
-	lineHeight: '18px',
+	lineHeight: 18,
 	colorDecorators: true,
 	scrollBeyondLastLine: false,
-	decorationsOverviewRuler: false,
-	scrollbar: { vertical: 'hidden', horizontal: 'hidden' },
+	scrollbar: {
+		vertical: 'hidden',
+		horizontal: 'hidden',
+		// Once the editor can't scroll any further, release the wheel event so
+		// the parent container picks it up. Without this Monaco swallows the
+		// event at the boundary and outer scroll feels stuck.
+		alwaysConsumeMouseWheel: false,
+	},
 	folding: false,
 };
 

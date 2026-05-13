@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { Button, Select } from 'antd';
+import { ChevronLeft, ChevronRight } from '@signozhq/icons';
+import { Button, Flex, Select } from 'antd';
 import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -42,7 +42,9 @@ function Controls({
 				disabled={isPreviousDisabled}
 				onClick={handleNavigatePrevious}
 			>
-				<LeftOutlined /> Previous
+				<Flex align="center" gap="4px">
+					<ChevronLeft size={16} /> Previous
+				</Flex>
 			</Button>
 			<Button
 				loading={isLoading}
@@ -51,7 +53,9 @@ function Controls({
 				disabled={isNextDisabled}
 				onClick={handleNavigateNext}
 			>
-				Next <RightOutlined />
+				<Flex align="center" gap="4px">
+					Next <ChevronRight size={16} />
+				</Flex>
 			</Button>
 
 			{showSizeChanger && (
