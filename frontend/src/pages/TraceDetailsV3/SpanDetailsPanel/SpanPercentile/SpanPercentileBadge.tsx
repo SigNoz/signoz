@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 
 import { UseSpanPercentileReturn } from './useSpanPercentile';
@@ -26,7 +26,7 @@ function SpanPercentileBadge({
 	if (loading) {
 		return (
 			<div className="span-percentile-badge__loader">
-				<Loader2 size={14} className="animate-spin" />
+				<Loader size={14} className="animate-spin" />
 			</div>
 		);
 	}

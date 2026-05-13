@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -13,31 +14,22 @@ func (module *module) CreateV2(ctx context.Context, orgID valuer.UUID, createdBy
 		return nil, err
 	}
 
-	// Tag upserts run outside the dashboard transaction by design: a successful
-	// upsert that loses an outer dashboard insert just leaves resolved tag rows
-	// around for the next attempt — preferable to coupling the two.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, postable.Tags, createdBy)
-	if err != nil {
-		return nil, err
-	}
+	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, nil)
+	var storableDashboard *dashboardtypes.StorableDashboard
 
-	dashboard := dashboardtypes.NewDashboardV2(orgID, createdBy, postable, resolvedTags)
-
-	storableDashboard, err := dashboard.ToStorableDashboard()
-	if err != nil {
-		return nil, err
-	}
-
-	tagIDs := make([]valuer.UUID, len(resolvedTags))
-	for i, t := range resolvedTags {
-		tagIDs[i] = t.ID
-	}
-
-	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		if err := module.store.Create(ctx, storableDashboard); err != nil {
+	err := module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, dashboard.ID, postable.Tags)
+		if err != nil {
 			return err
 		}
-		return module.tagModule.LinkToEntity(ctx, orgID, dashboardtypes.EntityTypeDashboard, dashboard.ID, tagIDs)
+		dashboard.Info.Tags = resolvedTags
+
+		storable, err := dashboard.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+		storableDashboard = storable
+		return module.store.Create(ctx, storable)
 	})
 	if err != nil {
 		return nil, err
@@ -53,7 +45,7 @@ func (module *module) GetV2(ctx context.Context, orgID valuer.UUID, id valuer.UU
 		return nil, err
 	}
 
-	tags, err := module.tagModule.ListForEntity(ctx, dashboardtypes.EntityTypeDashboard, id)
+	tags, err := module.tagModule.ListForResource(ctx, orgID, coretypes.KindDashboard, id)
 	if err != nil {
 		return nil, err
 	}
@@ -70,38 +62,27 @@ func (module *module) UpdateV2(ctx context.Context, orgID valuer.UUID, id valuer
 	if err != nil {
 		return nil, err
 	}
-	// safety check before upserting tags. existing.Update also has this checks, but
-	// because existing.Update needs the resolved tags, that method can only be called
-	// after the tags have been resolved.
+	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
 	if err := existing.CanUpdate(); err != nil {
 		return nil, err
 	}
 
-	// Tag upserts run outside the update transaction for the same reason as
-	// Create: a successful upsert that loses the outer transaction just leaves
-	// resolved tag rows around for the next attempt.
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, updateable.Tags, updatedBy)
-	if err != nil {
-		return nil, err
-	}
-	tagIDs := make([]valuer.UUID, len(resolvedTags))
-	for i, t := range resolvedTags {
-		tagIDs[i] = t.ID
-	}
-
-	if err := existing.Update(updateable, updatedBy, resolvedTags); err != nil {
-		return nil, err
-	}
-
-	storable, err := existing.ToStorableDashboard()
-	if err != nil {
-		return nil, err
-	}
-
 	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		if err := module.tagModule.SyncLinksForEntity(ctx, orgID, dashboardtypes.EntityTypeDashboard, id, tagIDs); err != nil {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+		if err != nil {
 			return err
 		}
+
+		err = existing.Update(updateable, updatedBy, resolvedTags)
+		if err != nil {
+			return err
+		}
+
+		storable, err := existing.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+
 		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
 	})
 	if err != nil {

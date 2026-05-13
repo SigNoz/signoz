@@ -1,6 +1,7 @@
 import React from 'react';
-import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 import { PipelineData } from 'types/api/pipeline/def';
+import { Flex } from 'antd';
 
 function TableExpandIcon({
 	expanded,
@@ -14,9 +15,27 @@ function TableExpandIcon({
 	};
 
 	if (expanded) {
-		return <DownOutlined onClick={handleOnExpand} />;
+		return (
+			<Flex
+				align="center"
+				justify="center"
+				data-testid="pipeline-row-collapse"
+				onClick={handleOnExpand}
+			>
+				<ChevronDown size="2xl" />
+			</Flex>
+		);
 	}
-	return <RightOutlined onClick={handleOnExpand} />;
+	return (
+		<Flex
+			align="center"
+			justify="center"
+			data-testid="pipeline-row-expand"
+			onClick={handleOnExpand}
+		>
+			<ChevronRight size="2xl" />
+		</Flex>
+	);
 }
 
 interface TableExpandIconProps {

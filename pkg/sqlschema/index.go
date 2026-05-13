@@ -1,6 +1,8 @@
 package sqlschema
 
 import (
+	"fmt"
+	"hash/fnv"
 	"slices"
 	"strings"
 
@@ -8,9 +10,10 @@ import (
 )
 
 var (
-	IndexTypeUnique        = IndexType{s: valuer.NewString("uq")}
-	IndexTypeIndex         = IndexType{s: valuer.NewString("ix")}
-	IndexTypePartialUnique = IndexType{s: valuer.NewString("puq")}
+	IndexTypeUnique           = IndexType{s: valuer.NewString("uq")}
+	IndexTypeIndex            = IndexType{s: valuer.NewString("ix")}
+	IndexTypePartialUnique    = IndexType{s: valuer.NewString("puq")}
+	IndexTypeFunctionalUnique = IndexType{s: valuer.NewString("fnq")}
 )
 
 type IndexType struct{ s valuer.String }
@@ -225,6 +228,114 @@ func (index *PartialUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 }
 
 func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "DROP INDEX IF EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+
+	return sql
+}
+
+// FunctionalUniqueIndex is a unique index whose key parts may be arbitrary SQL
+// expressions (e.g. LOWER(key)) rather than plain column names. The strings in
+// Expressions are emitted into the generated SQL exactly as supplied — they are
+// not identifier-quoted by the formatter — so the caller is responsible for
+// well-formed expressions. Auto-generated names are opaque (`fnq_<table>_<hash>`);
+// prefer calling Named(...) to give the index a readable name.
+//
+// ReferencedColumns is informational: it lets consumers (drift detection,
+// "which columns are indexed" lookups) answer that question without having to
+// parse Expressions. It does not affect the emitted SQL or Equals.
+type FunctionalUniqueIndex struct {
+	TableName         TableName
+	Expressions       []string
+	ReferencedColumns []ColumnName
+	name              string
+}
+
+func (index *FunctionalUniqueIndex) Name() string {
+	if index.name != "" {
+		return index.name
+	}
+
+	// column names can't be used cuz same columns can have different functional indices
+	// and the expressions can't be used directly cuz they will have disallowed characters.
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(strings.Join(index.Expressions, "\x00")))
+
+	var b strings.Builder
+	b.WriteString(IndexTypeFunctionalUnique.String())
+	b.WriteString("_")
+	b.WriteString(string(index.TableName))
+	b.WriteString("_")
+	fmt.Fprintf(&b, "%08x", hasher.Sum32())
+	return b.String()
+}
+
+func (index *FunctionalUniqueIndex) Named(name string) Index {
+	copyOfExpressions := make([]string, len(index.Expressions))
+	copy(copyOfExpressions, index.Expressions)
+	copyOfReferencedColumns := make([]ColumnName, len(index.ReferencedColumns))
+	copy(copyOfReferencedColumns, index.ReferencedColumns)
+
+	return &FunctionalUniqueIndex{
+		TableName:         index.TableName,
+		Expressions:       copyOfExpressions,
+		ReferencedColumns: copyOfReferencedColumns,
+		name:              name,
+	}
+}
+
+func (index *FunctionalUniqueIndex) IsNamed() bool {
+	return index.name != ""
+}
+
+func (*FunctionalUniqueIndex) Type() IndexType {
+	return IndexTypeFunctionalUnique
+}
+
+// Columns returns the caller-declared ReferencedColumns. Equality of two
+// functional indexes still goes through Equals (which diffs Expressions);
+// Columns is purely informational.
+func (index *FunctionalUniqueIndex) Columns() []ColumnName {
+	return index.ReferencedColumns
+}
+
+func (index *FunctionalUniqueIndex) Equals(other Index) bool {
+	if other.Type() != IndexTypeFunctionalUnique {
+		return false
+	}
+
+	otherFunctional, ok := other.(*FunctionalUniqueIndex)
+	if !ok {
+		return false
+	}
+
+	return index.Name() == other.Name() && index.TableName == otherFunctional.TableName && slices.Equal(index.Expressions, otherFunctional.Expressions) && slices.Equal(index.ReferencedColumns, otherFunctional.ReferencedColumns)
+}
+
+func (index *FunctionalUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+	sql = append(sql, " ON "...)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
+	sql = append(sql, " ("...)
+
+	for i, expr := range index.Expressions {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+		sql = append(sql, expr...)
+	}
+
+	sql = append(sql, ")"...)
+
+	return sql
+}
+
+func (index *FunctionalUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP INDEX IF EXISTS "...)

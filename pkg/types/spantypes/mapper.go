@@ -1,6 +1,8 @@
 package spantypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -54,14 +56,14 @@ type SpanMapper struct {
 	ID           valuer.UUID      `json:"id"            required:"true"`
 	GroupID      valuer.UUID      `json:"group_id"      required:"true"`
 	Name         string           `json:"name"          required:"true"`
-	FieldContext FieldContext     `json:"field_context" required:"true"`
+	FieldContext FieldContext     `json:"fieldContext"  required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"       required:"true"`
 }
 
 type PostableSpanMapper struct {
 	Name         string           `json:"name"          required:"true"`
-	FieldContext FieldContext     `json:"field_context" required:"true"`
+	FieldContext FieldContext     `json:"fieldContext" required:"true"`
 	Config       SpanMapperConfig `json:"config"        required:"true"`
 	Enabled      bool             `json:"enabled"`
 }
@@ -69,9 +71,9 @@ type PostableSpanMapper struct {
 // UpdatableSpanMapper is the HTTP request body for updating a span mapper.
 // All fields are optional; only non-nil fields are applied.
 type UpdatableSpanMapper struct {
-	FieldContext FieldContext      `json:"field_context,omitempty"`
-	Config       *SpanMapperConfig `json:"config,omitempty"`
-	Enabled      *bool             `json:"enabled,omitempty"`
+	FieldContext FieldContext      `json:"fieldContext"`
+	Config       *SpanMapperConfig `json:"config"`
+	Enabled      *bool             `json:"enabled"`
 }
 
 type GettableSpanMapper = SpanMapper
@@ -88,7 +90,52 @@ func (SpanMapperOperation) Enum() []any {
 	return []any{SpanMapperOperationMove, SpanMapperOperationCopy}
 }
 
-func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
+func NewSpanMapper(groupID valuer.UUID, createdBy string, p *PostableSpanMapper) *SpanMapper {
+	now := time.Now()
+	return &SpanMapper{
+		ID:           valuer.GenerateUUID(),
+		GroupID:      groupID,
+		Name:         p.Name,
+		FieldContext: p.FieldContext,
+		Config:       p.Config,
+		Enabled:      p.Enabled,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createdBy,
+			UpdatedBy: createdBy,
+		},
+	}
+}
+
+func (m *SpanMapper) Update(fieldContext FieldContext, config *SpanMapperConfig, enabled *bool, updatedBy string) {
+	m.FieldContext = fieldContext
+	if config != nil {
+		m.Config = *config
+	}
+	if enabled != nil {
+		m.Enabled = *enabled
+	}
+	m.UpdatedAt = time.Now()
+	m.UpdatedBy = updatedBy
+}
+
+func (m *SpanMapper) ToStorable() *StorableSpanMapper {
+	return &StorableSpanMapper{
+		Identifiable:  types.Identifiable{ID: m.ID},
+		TimeAuditable: m.TimeAuditable,
+		UserAuditable: m.UserAuditable,
+		GroupID:       m.GroupID,
+		Name:          m.Name,
+		FieldContext:  m.FieldContext,
+		Config:        m.Config,
+		Enabled:       m.Enabled,
+	}
+}
+
+func (s *StorableSpanMapper) ToSpanMapper() *SpanMapper {
 	return &SpanMapper{
 		TimeAuditable: s.TimeAuditable,
 		UserAuditable: s.UserAuditable,
@@ -101,33 +148,10 @@ func NewSpanMapperFromStorable(s *StorableSpanMapper) *SpanMapper {
 	}
 }
 
-func NewSpanMapperFromPostable(req *PostableSpanMapper) *SpanMapper {
-	return &SpanMapper{
-		Name:         req.Name,
-		FieldContext: req.FieldContext,
-		Config:       req.Config,
-		Enabled:      req.Enabled,
-	}
-}
-
-func NewSpanMapperFromUpdatable(req *UpdatableSpanMapper) *SpanMapper {
-	m := &SpanMapper{}
-	if req.FieldContext != (FieldContext{}) {
-		m.FieldContext = req.FieldContext
-	}
-	if req.Config != nil {
-		m.Config = *req.Config
-	}
-	if req.Enabled != nil {
-		m.Enabled = *req.Enabled
-	}
-	return m
-}
-
-func NewSpanMappersFromStorableSpanMappers(ss []*StorableSpanMapper) []*SpanMapper {
+func NewSpanMappersFromStorable(ss []*StorableSpanMapper) []*SpanMapper {
 	mappers := make([]*SpanMapper, len(ss))
 	for i, s := range ss {
-		mappers[i] = NewSpanMapperFromStorable(s)
+		mappers[i] = s.ToSpanMapper()
 	}
 	return mappers
 }

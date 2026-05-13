@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EllipsisOutlined } from '@ant-design/icons';
+import { Ellipsis } from '@signozhq/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
 
 import './DropDown.styles.scss';
@@ -38,7 +38,7 @@ function DropDown({
 					setDdOpen(true);
 				}}
 			>
-				<EllipsisOutlined className="dropdown-icon" />
+				<Ellipsis className="dropdown-icon" size={16} />
 			</Button>
 		</Dropdown>
 	);

@@ -5,7 +5,7 @@ import SignozModal from 'components/SignozModal/SignozModal';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useSaveFunnelDescription } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 
 import './AddFunnelDescriptionModal.styles.scss';
 

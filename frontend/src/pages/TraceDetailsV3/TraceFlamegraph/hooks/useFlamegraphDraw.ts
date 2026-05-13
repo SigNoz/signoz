@@ -1,7 +1,9 @@
 import React, { RefObject, useCallback, useMemo, useRef } from 'react';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import { useTraceContext } from 'pages/TraceDetailsV3/contexts/TraceContext';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
+import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { ConnectorLine } from '../computeVisualLayout';
 import { EventRect, SpanRect } from '../types';
@@ -10,6 +12,7 @@ import {
 	drawSpanBar,
 	FlamegraphRowMetrics,
 	getFlamegraphRowMetrics,
+	getFlamegraphSpanGroupValue,
 	getSpanColor,
 } from '../utils';
 
@@ -51,6 +54,7 @@ interface DrawLevelArgs {
 	selectedSpanId: string | undefined;
 	hoveredSpanId: string;
 	isDarkMode: boolean;
+	colorByField: TelemetryFieldKey;
 	spanRectsArray: SpanRect[];
 	eventRectsArray: EventRect[];
 	metrics: FlamegraphRowMetrics;
@@ -71,6 +75,7 @@ function drawLevel(args: DrawLevelArgs): void {
 		selectedSpanId,
 		hoveredSpanId,
 		isDarkMode,
+		colorByField,
 		spanRectsArray,
 		eventRectsArray,
 		metrics,
@@ -112,7 +117,8 @@ function drawLevel(args: DrawLevelArgs): void {
 		// Minimum 1px width so tiny spans remain visible
 		width = clamp(width, 1, Infinity);
 
-		const color = getSpanColor({ span, isDarkMode });
+		const groupValue = getFlamegraphSpanGroupValue(span, colorByField);
+		const color = getSpanColor({ span, isDarkMode, groupValue });
 
 		const isDimmedByFilter =
 			!!isFilterActiveInLevel &&
@@ -148,6 +154,7 @@ interface DrawConnectorLinesArgs {
 	cssWidth: number;
 	viewportHeight: number;
 	metrics: FlamegraphRowMetrics;
+	colorByField: TelemetryFieldKey;
 }
 
 function drawConnectorLines(args: DrawConnectorLinesArgs): void {
@@ -160,6 +167,7 @@ function drawConnectorLines(args: DrawConnectorLinesArgs): void {
 		cssWidth,
 		viewportHeight,
 		metrics,
+		colorByField,
 	} = args;
 
 	ctx.save();
@@ -185,10 +193,11 @@ function drawConnectorLines(args: DrawConnectorLinesArgs): void {
 			continue;
 		}
 
-		const color = generateColor(
-			conn.serviceName,
-			themeColors.traceDetailColorsV3,
+		const groupValue = getFlamegraphSpanGroupValue(
+			{ serviceName: conn.serviceName, resource: conn.resource },
+			colorByField,
 		);
+		const color = generateColor(groupValue, themeColors.traceDetailColorsV3);
 		ctx.strokeStyle = color;
 
 		const x = clamp(xFrac * cssWidth, 0, cssWidth);
@@ -228,11 +237,10 @@ export function useFlamegraphDraw(
 	const eventRectsRefInternal = useRef<EventRect[]>([]);
 	const eventRectsRef = eventRectsRefProp ?? eventRectsRefInternal;
 
+	const { colorByField } = useTraceContext();
+
 	const filteredSpanIdsSet = useMemo(
-		() =>
-			isFilterActive && filteredSpanIds && filteredSpanIds.length > 0
-				? new Set(filteredSpanIds)
-				: null,
+		() => (isFilterActive && filteredSpanIds ? new Set(filteredSpanIds) : null),
 		[filteredSpanIds, isFilterActive],
 	);
 
@@ -285,6 +293,7 @@ export function useFlamegraphDraw(
 			cssWidth,
 			viewportHeight,
 			metrics,
+			colorByField,
 		});
 
 		const spanRectsArray: SpanRect[] = [];
@@ -309,6 +318,7 @@ export function useFlamegraphDraw(
 				selectedSpanId,
 				hoveredSpanId,
 				isDarkMode,
+				colorByField,
 				spanRectsArray,
 				eventRectsArray,
 				metrics,
@@ -335,6 +345,7 @@ export function useFlamegraphDraw(
 		hoveredSpanId,
 		hoveredEventKey,
 		isDarkMode,
+		colorByField,
 		filteredSpanIdsSet,
 		isFilterActive,
 	]);

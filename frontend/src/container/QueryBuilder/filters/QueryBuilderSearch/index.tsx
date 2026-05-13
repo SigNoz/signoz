@@ -34,7 +34,7 @@ import {
 	CornerDownLeft,
 	Filter,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import type { BaseSelectRef } from 'rc-select';
 import {
 	BaseAutocompleteData,

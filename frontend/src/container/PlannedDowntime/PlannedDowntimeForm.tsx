@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
+	Flex,
 	Form,
 	FormInstance,
 	Input,
@@ -613,11 +614,14 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<CheckOutlined />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
+							className="downtime-schedule-btn"
 						>
-							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							<Flex align="center" gap={4}>
+								<Check size={16} />
+								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+							</Flex>
 						</Button>
 					</ModalButtonWrapper>
 				</Form.Item>

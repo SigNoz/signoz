@@ -8,7 +8,7 @@ import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
-import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
+import { ArrowLeft, MoveUpRight, RotateCw } from '@signozhq/icons';
 
 import awwSnapUrl from '@/assets/Icons/awwSnap.svg';
 

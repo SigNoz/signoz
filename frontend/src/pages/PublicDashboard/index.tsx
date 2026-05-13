@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
 import { useGetPublicDashboardData } from 'hooks/dashboard/useGetPublicDashboardData';
-import { FrownIcon } from 'lucide-react';
+import { Frown } from '@signozhq/icons';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';
 
@@ -59,7 +59,7 @@ function PublicDashboardPage(): JSX.Element {
 							level={4}
 							className="public-dashboard-error-message-icon"
 						>
-							<FrownIcon size={36} />
+							<Frown size={36} />
 						</Typography.Title>
 						<Typography.Title level={4} className="public-dashboard-error-message">
 							The public dashboard you are looking for does not exist or has been

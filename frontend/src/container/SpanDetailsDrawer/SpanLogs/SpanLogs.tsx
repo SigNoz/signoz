@@ -20,7 +20,7 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import createQueryParams from 'lib/createQueryParams';
-import { Compass } from 'lucide-react';
+import { Compass } from '@signozhq/icons';
 import { ILog } from 'types/api/logs/log';
 import {
 	BaseAutocompleteData,
@@ -218,7 +218,7 @@ function SpanLogs({
 					<Virtuoso
 						className="span-logs-virtuoso"
 						key="span-logs-virtuoso"
-						style={logs.length <= 35 ? { height: `calc(${logs.length} * 22px)` } : {}}
+						style={{ height: '100%' }}
 						data={logs}
 						totalCount={logs.length}
 						itemContent={getItemContent}

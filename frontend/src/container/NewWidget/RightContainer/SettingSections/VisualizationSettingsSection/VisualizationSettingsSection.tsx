@@ -8,7 +8,7 @@ import {
 	PanelTypesWithData,
 } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
 
 import SettingsSection from '../../components/SettingsSection/SettingsSection';

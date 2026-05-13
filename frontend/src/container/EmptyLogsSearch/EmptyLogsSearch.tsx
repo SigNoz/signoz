@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import LearnMore from 'components/LearnMore/LearnMore';
 import { EmptyLogsListConfig } from 'container/LogsExplorerList/utils';
-import { Delete } from 'lucide-react';
+import { Delete } from '@signozhq/icons';
 import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
