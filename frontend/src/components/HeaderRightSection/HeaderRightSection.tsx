@@ -1,8 +1,17 @@
 import { useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button, Popover } from 'antd';
+import { Dot, Sparkles } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import { Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import {
+	openAIAssistant,
+	useAIAssistantStore,
+} from 'container/AIAssistant/store/useAIAssistantStore';
+import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
@@ -29,6 +38,7 @@ function HeaderRightSection({
 	const [openAnnouncementsModal, setOpenAnnouncementsModal] = useState(false);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const handleOpenFeedbackModal = useCallback((): void => {
 		logEvent('Feedback: Clicked', {
@@ -67,9 +77,46 @@ function HeaderRightSection({
 	};
 
 	const isLicenseEnabled = isEnterpriseSelfHostedUser || isCloudUser;
+	const isDrawerOpen = useAIAssistantStore((s) => s.isDrawerOpen);
+	const isModalOpen = useAIAssistantStore((s) => s.isModalOpen);
+	const pendingUserInputCount: number = useAIAssistantStore(
+		selectPendingUserInputStreamCount,
+	);
+	const showHeaderPendingBadge =
+		pendingUserInputCount > 0 && !isDrawerOpen && !isModalOpen;
 
 	return (
 		<div className="header-right-section-container">
+			{isAIAssistantEnabled && !isDrawerOpen && (
+				<div className="header-ai-assistant-btn-container">
+					{showHeaderPendingBadge ? (
+						<span className="header-ai-assistant-btn__badge" aria-hidden>
+							<span className="header-ai-assistant-btn__pulse-dot">
+								<Dot size={36} />
+							</span>
+						</span>
+					) : null}
+
+					<Tooltip title="AI Assistant">
+						<Button
+							variant="solid"
+							color="secondary"
+							onClick={openAIAssistant}
+							aria-label={
+								showHeaderPendingBadge
+									? pendingUserInputCount === 1
+										? 'Open AI Assistant, 1 action needs your response'
+										: `Open AI Assistant, ${pendingUserInputCount} actions need your response`
+									: 'Open AI Assistant'
+							}
+							prefix={<Sparkles size={14} color="var(--primary)" />}
+						>
+							AI Assistant
+						</Button>
+					</Tooltip>
+				</div>
+			)}
+
 			{enableFeedback && isLicenseEnabled && (
 				<Popover
 					rootClassName="header-section-popover-root"
@@ -83,12 +130,13 @@ function HeaderRightSection({
 					onOpenChange={handleOpenFeedbackModalChange}
 				>
 					<Button
-						className="share-feedback-btn periscope-btn ghost"
-						icon={<SquarePen size={14} />}
+						variant="ghost"
+						size="icon"
+						className="share-feedback-btn"
+						aria-label="Feedback"
+						prefix={<SquarePen size={14} />}
 						onClick={handleOpenFeedbackModal}
-					>
-						Feedback
-					</Button>
+					/>
 				</Popover>
 			)}
 
@@ -105,9 +153,10 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
+						variant="ghost"
+						size="icon"
 						aria-label="Announcements"
-						icon={<Inbox size={14} />}
-						className="periscope-btn ghost announcements-btn"
+						prefix={<Inbox size={14} />}
 						onClick={(): void => {
 							logEvent('Announcements: Clicked', {
 								page: location.pathname,
@@ -130,12 +179,12 @@ function HeaderRightSection({
 					onOpenChange={handleOpenShareURLModalChange}
 				>
 					<Button
-						className="share-link-btn periscope-btn ghost"
-						icon={<Globe size={14} />}
+						variant="ghost"
+						size="icon"
+						aria-label="Share"
+						prefix={<Globe size={14} />}
 						onClick={handleOpenShareURLModal}
-					>
-						Share
-					</Button>
+					/>
 				</Popover>
 			)}
 		</div>

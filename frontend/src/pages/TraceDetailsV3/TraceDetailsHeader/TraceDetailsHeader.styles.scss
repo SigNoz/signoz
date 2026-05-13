@@ -23,10 +23,6 @@
 		}
 		min-width: 0;
 
-		&:not(&--expanded) {
-			margin-left: auto;
-		}
-
 		&--expanded {
 			max-width: none;
 			flex: 1;
@@ -35,6 +31,11 @@
 
 	&__old-view-btn {
 		flex-shrink: 0;
+	}
+
+	&__analytics-btn {
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	&__sub-header {

@@ -2,6 +2,7 @@ import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 
 import {
+	AIAssistantPage,
 	AlertHistory,
 	AlertOverview,
 	AlertTypeSelectionPage,
@@ -505,6 +506,13 @@ const routes: AppRoutes[] = [
 		exact: true,
 		component: ApiMonitoring,
 		key: 'API_MONITORING',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.AI_ASSISTANT,
+		exact: true,
+		component: AIAssistantPage,
+		key: 'AI_ASSISTANT',
 		isPrivate: true,
 	},
 ];

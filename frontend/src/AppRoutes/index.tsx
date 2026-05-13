@@ -18,6 +18,7 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
@@ -60,12 +61,20 @@ function App(): JSX.Element {
 		org,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const { hostname, pathname } = window.location;
+	const { hostname } = window.location;
+	const [pathname, setPathname] = useState(history.location.pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
+
+	useEffect(() => {
+		return history.listen((location) => {
+			setPathname(location.pathname);
+		});
+	}, []);
 
 	const enableAnalytics = useCallback(
 		(user: IUser): void => {
@@ -212,6 +221,27 @@ function App(): JSX.Element {
 		activeLicenseFetchError,
 	]);
 
+	useEffect(() => {
+		if (!isLoggedInState) {
+			return;
+		}
+
+		setRoutes((prev) => {
+			const hasAi = prev.some((r) => r.path === ROUTES.AI_ASSISTANT);
+			if (isAIAssistantEnabled === hasAi) {
+				return prev;
+			}
+			if (isAIAssistantEnabled) {
+				const aiRoute = defaultRoutes.find((r) => r.path === ROUTES.AI_ASSISTANT);
+				if (!aiRoute) {
+					return prev;
+				}
+				return [...prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT), aiRoute];
+			}
+			return prev.filter((r) => r.path !== ROUTES.AI_ASSISTANT);
+		});
+	}, [isLoggedInState, isAIAssistantEnabled]);
+
 	const isDarkMode = useIsDarkMode();
 
 	useEffect(() => {
@@ -221,7 +251,8 @@ function App(): JSX.Element {
 	useEffect(() => {
 		if (
 			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/')
+			pathname.startsWith('/public/dashboard/') ||
+			pathname.startsWith('/ai-assistant/')
 		) {
 			window.Pylon?.('hideChatBubble');
 		} else {
