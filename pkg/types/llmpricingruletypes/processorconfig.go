@@ -28,7 +28,6 @@ type LLMPricingRuleProcessorAttrs struct {
 
 // LLMPricingRuleProcessorDefaultPricing holds the pricing unit and the list of model-specific rules.
 type LLMPricingRuleProcessorDefaultPricing struct {
-	Unit  string                    `yaml:"unit" json:"unit"`
 	Rules []LLMPricingRuleProcessor `yaml:"rules" json:"rules"`
 }
 
@@ -87,7 +86,6 @@ func buildProcessorConfig(rules []*LLMPricingRule) *LLMPricingRuleProcessorConfi
 			CacheWrite: GenAIUsageCacheCreationInputTokens,
 		},
 		DefaultPricing: LLMPricingRuleProcessorDefaultPricing{
-			Unit:  UnitPerMillionTokens.StringValue(),
 			Rules: pricingRules,
 		},
 		OutputAttrs: LLMPricingRuleProcessorOutputAttrs{
