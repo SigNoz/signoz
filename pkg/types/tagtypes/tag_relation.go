@@ -1,6 +1,7 @@
 package tagtypes
 
 import (
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -9,16 +10,18 @@ import (
 type TagRelation struct {
 	bun.BaseModel `bun:"table:tag_relation,alias:tag_relation"`
 
-	Kind       coretypes.Kind `json:"kind" required:"true" bun:"kind,pk,type:text,notnull"`
-	ResourceID valuer.UUID    `json:"resourceId" required:"true" bun:"resource_id,pk,type:text,notnull"`
-	TagID      valuer.UUID    `json:"tagId" required:"true" bun:"tag_id,pk,type:text,notnull"`
+	types.Identifiable
+	Kind       coretypes.Kind `json:"kind" required:"true" bun:"kind,type:text,notnull"`
+	ResourceID valuer.UUID    `json:"resourceId" required:"true" bun:"resource_id,type:text,notnull"`
+	TagID      valuer.UUID    `json:"tagId" required:"true" bun:"tag_id,type:text,notnull"`
 }
 
 func NewTagRelation(kind coretypes.Kind, resourceID valuer.UUID, tagID valuer.UUID) *TagRelation {
 	return &TagRelation{
-		Kind:       kind,
-		ResourceID: resourceID,
-		TagID:      tagID,
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		Kind:         kind,
+		ResourceID:   resourceID,
+		TagID:        tagID,
 	}
 }
 
