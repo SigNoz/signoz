@@ -45,26 +45,10 @@ export function useMigratePinnedAttributes(
 			return;
 		}
 
-		// convertedAny → should we write this round (skip no-op API calls).
-		// stillHasV2   → should we keep retrying on future renders.
-		const next: string[] = [];
-		let convertedAny = false;
-		let stillHasV2 = false;
-
-		for (const entry of value) {
-			if (isV3PinnedAttribute(entry)) {
-				next.push(entry);
-				continue;
-			}
-			const path = v2KeyToPath(entry, selectedSpan);
-			if (path) {
-				next.push(serializeKeyPath(path));
-				convertedAny = true;
-			} else {
-				next.push(entry);
-				stillHasV2 = true;
-			}
-		}
+		const { next, convertedAny, stillHasV2 } = migrateV2ToV3Entries(
+			value,
+			selectedSpan,
+		);
 
 		if (!convertedAny) {
 			// Nothing to persist this round. Mark done only when there's nothing
@@ -99,7 +83,15 @@ export function useMigratePinnedAttributes(
 	}, [userPreferences, selectedSpan, updateUserPreferenceInContext, mutate]);
 }
 
-function v2KeyToPath(key: string, span: SpanV3): (string | number)[] | null {
+/**
+ * Find where a V2 flat key lives on a span. Returns the V3 path tuple if
+ * the key is present in `attributes`, `resource`, or as a top-level field,
+ * otherwise `null`.
+ */
+export function v2KeyToPath(
+	key: string,
+	span: SpanV3,
+): (string | number)[] | null {
 	if (span.attributes && key in span.attributes) {
 		return ['attributes', key];
 	}
@@ -110,4 +102,35 @@ function v2KeyToPath(key: string, span: SpanV3): (string | number)[] | null {
 		return [key];
 	}
 	return null;
+}
+
+/**
+ * Pure migration logic — walk `value` once and produce the V3-converted
+ * array plus two flags describing what happened. See the hook above for
+ * how the flags drive write/retry decisions.
+ */
+export function migrateV2ToV3Entries(
+	value: string[],
+	span: SpanV3,
+): { next: string[]; convertedAny: boolean; stillHasV2: boolean } {
+	const next: string[] = [];
+	let convertedAny = false;
+	let stillHasV2 = false;
+
+	for (const entry of value) {
+		if (isV3PinnedAttribute(entry)) {
+			next.push(entry);
+			continue;
+		}
+		const path = v2KeyToPath(entry, span);
+		if (path) {
+			next.push(serializeKeyPath(path));
+			convertedAny = true;
+		} else {
+			next.push(entry);
+			stillHasV2 = true;
+		}
+	}
+
+	return { next, convertedAny, stillHasV2 };
 }

@@ -42,14 +42,7 @@ export function usePinnedAttributes(
 			(p) => p.name === USER_PREFERENCES.SPAN_DETAILS_PINNED_ATTRIBUTES,
 		);
 		const raw = (pref?.value as string[] | undefined) ?? [];
-		const flat = raw.map((entry) => {
-			if (!isV3PinnedAttribute(entry)) {
-				return entry;
-			}
-			const path = deserializeKeyPath(entry);
-			return path && path.length > 0 ? String(path[path.length - 1]) : entry;
-		});
-		return Array.from(new Set(flat));
+		return normalizeRawToV2(raw).value;
 	}, [userPreferences]);
 
 	// On mount: legacy seed + V3 → V2 normalization. Writes the normalized
@@ -91,30 +84,7 @@ export function usePinnedAttributes(
 			return;
 		}
 
-		// Normalize V3 entries to V2-shape, dedupe, and track whether the result
-		// differs from input so we skip the API call on idempotent re-mounts.
-		const normalized = new Set<string>();
-		let changed = false;
-
-		for (const entry of raw) {
-			let key: string;
-			if (isV3PinnedAttribute(entry)) {
-				const path = deserializeKeyPath(entry);
-				if (path && path.length > 0) {
-					key = String(path[path.length - 1]);
-					changed = true; // V3 → V2 conversion happened
-				} else {
-					key = entry;
-				}
-			} else {
-				key = entry;
-			}
-			if (normalized.has(key)) {
-				changed = true; // dedupe trimmed an entry
-				continue;
-			}
-			normalized.add(key);
-		}
+		const { value: nextValue, changed } = normalizeRawToV2(raw);
 
 		if (!changed) {
 			ranRef.current = true;
@@ -122,7 +92,6 @@ export function usePinnedAttributes(
 		}
 
 		if (pref) {
-			const nextValue = Array.from(normalized);
 			const previousValue = pref.value;
 			updateUserPreferenceInContext({ ...pref, value: nextValue });
 			mutate(
@@ -186,6 +155,43 @@ export function usePinnedAttributes(
 		togglePin,
 		isPinned,
 	};
+}
+
+/**
+ * Pure V3 → V2 normalization. Walks `raw` (potentially mixed V2 flat strings
+ * + V3 JSON paths), produces a deduped V2-shape array, and reports whether
+ * the result differs from the input. Used both for the read projection
+ * (where the `changed` flag is ignored) and the on-mount migration write
+ * (where it gates the API call).
+ */
+export function normalizeRawToV2(raw: string[]): {
+	value: string[];
+	changed: boolean;
+} {
+	const normalized = new Set<string>();
+	let changed = false;
+
+	for (const entry of raw) {
+		let key: string;
+		if (isV3PinnedAttribute(entry)) {
+			const path = deserializeKeyPath(entry);
+			if (path && path.length > 0) {
+				key = String(path[path.length - 1]);
+				changed = true; // V3 → V2 conversion happened
+			} else {
+				key = entry;
+			}
+		} else {
+			key = entry;
+		}
+		if (normalized.has(key)) {
+			changed = true; // dedupe trimmed an entry
+			continue;
+		}
+		normalized.add(key);
+	}
+
+	return { value: Array.from(normalized), changed };
 }
 
 function readLegacyLocalStorageEntries(): string[] {
