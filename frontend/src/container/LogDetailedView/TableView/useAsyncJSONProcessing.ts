@@ -10,7 +10,7 @@ const MAX_BODY_BYTES = 100 * 1024; // 100 KB
 
 // Hook for async JSON processing
 const useAsyncJSONProcessing = (
-	value: string | Record<string, unknown>,
+	value: string,
 	shouldProcess: boolean,
 	handleChangeSelectedView?: ChangeViewFunctionType,
 ): {
@@ -40,17 +40,11 @@ const useAsyncJSONProcessing = (
 			return (): void => {};
 		}
 
-		// When value is already a parsed object skip the size check and JSON parsing
-		const parseBody = (): Record<string, unknown> | null => {
-			if (typeof value === 'object' && value !== null) {
-				return value as Record<string, unknown>;
-			}
-			const byteSize = new Blob([value as string]).size;
-			if (byteSize > MAX_BODY_BYTES) {
-				return null;
-			}
-			return recursiveParseJSON(value as string);
-		};
+		// Avoid processing if the json is too large
+		const byteSize = new Blob([value]).size;
+		if (byteSize > MAX_BODY_BYTES) {
+			return (): void => {};
+		}
 
 		processingRef.current = true;
 		setJsonState({ isLoading: true, treeData: null, error: null });
@@ -59,8 +53,8 @@ const useAsyncJSONProcessing = (
 		const processAsync = (): void => {
 			setTimeout(() => {
 				try {
-					const parsedBody = parseBody();
-					if (parsedBody && !isEmpty(parsedBody)) {
+					const parsedBody = recursiveParseJSON(value);
+					if (!isEmpty(parsedBody)) {
 						const treeData = jsonToDataNodes(parsedBody, {
 							isBodyJsonQueryEnabled,
 							handleChangeSelectedView,
@@ -88,8 +82,8 @@ const useAsyncJSONProcessing = (
 					// eslint-disable-next-line sonarjs/no-identical-functions
 					(): void => {
 						try {
-							const parsedBody = parseBody();
-							if (parsedBody && !isEmpty(parsedBody)) {
+							const parsedBody = recursiveParseJSON(value);
+							if (!isEmpty(parsedBody)) {
 								const treeData = jsonToDataNodes(parsedBody, {
 									isBodyJsonQueryEnabled,
 									handleChangeSelectedView,

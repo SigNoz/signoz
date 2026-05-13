@@ -2,10 +2,7 @@ import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import {
-	getBodyDisplayString,
-	getSanitizedLogBody,
-} from 'container/LogDetailedView/utils';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { useTimezone } from 'providers/Timezone';
@@ -90,7 +87,7 @@ export function useLogsTableColumns({
 			? {
 					id: 'body',
 					header: 'Body',
-					accessorFn: (log): string => getBodyDisplayString(log.body),
+					accessorFn: (log): string => log.body,
 					canBeHidden: false,
 					width: { default: '100%', min: 300 },
 					cell: ({ value, isActive }): ReactElement => (

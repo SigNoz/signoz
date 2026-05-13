@@ -19,7 +19,6 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { isArray } from 'lodash-es';
-import { getBodyDisplayString } from 'container/LogDetailedView/utils';
 import {
 	ChevronDown,
 	ChevronLeft,
@@ -179,7 +178,7 @@ export default function Events({
 				(event): EventDataType => ({
 					timestamp: event.timestamp,
 					severity: event.data.severity_text,
-					body: getBodyDisplayString(event.data.body),
+					body: event.data.body,
 					id: event.data.id,
 					key: event.data.id,
 					resources_string: event.data.resources_string,

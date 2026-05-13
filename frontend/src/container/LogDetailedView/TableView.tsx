@@ -106,20 +106,10 @@ function TableView({
 		isListViewPanel,
 	]);
 
-	// When USE_JSON_BODY is enabled, body arrives as a pre-parsed object. Serialize it
-	// back to a string so flattenObject keeps `body` as a single table row instead of
-	// recursively expanding it into dotted sub-keys (body.message, body.foo.bar, …),
-	// which would break the tree view in BodyContent that relies on record.field === 'body'.
-	const flattenLogData: Record<string, string> | null = useMemo(() => {
-		if (!logData) {
-			return null;
-		}
-		const normalizedLog =
-			typeof logData.body === 'object' && logData.body !== null
-				? { ...logData, body: JSON.stringify(logData.body) }
-				: logData;
-		return flattenObject(normalizedLog);
-	}, [logData]);
+	const flattenLogData: Record<string, string> | null = useMemo(
+		() => (logData ? flattenObject(logData) : null),
+		[logData],
+	);
 
 	const handleClick = (
 		operator: string,

@@ -14,7 +14,7 @@ import { ILog } from 'types/api/logs/log';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
-import { getBodyDisplayString, removeEscapeCharacters } from './utils';
+import { removeEscapeCharacters } from './utils';
 
 import './Overview.styles.scss';
 
@@ -112,7 +112,7 @@ function Overview({
 						children: (
 							<div className="logs-body-content">
 								<MEditor
-									value={removeEscapeCharacters(getBodyDisplayString(logData.body))}
+									value={removeEscapeCharacters(logData.body)}
 									language="json"
 									options={options}
 									onChange={(): void => {}}
