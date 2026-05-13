@@ -473,6 +473,7 @@ export const SpanDuration = memo(function SpanDuration({
 const columnDefHelper = createColumnHelper<SpanV3>();
 
 const ROW_HEIGHT = 28;
+const WATERFALL_BOTTOM_PADDING = 100;
 const DEFAULT_SIDEBAR_WIDTH = 450;
 const MIN_SIDEBAR_WIDTH = 240;
 const MAX_SIDEBAR_WIDTH = 900;
@@ -751,11 +752,16 @@ function Success(props: ISuccessProps): JSX.Element {
 				(span) => span.span_id === interestedSpanId.spanId,
 			);
 			if (idx !== -1) {
-				const visible = virtualizerRef.current.getVirtualItems();
+				// Compute visibility from the scroll container's actual scroll
+				// instead of relying on virtualizer's range, which can be inaccurate.
+				const scrollEl = scrollContainerRef.current;
+				const scrollTop = scrollEl?.scrollTop ?? 0;
+				const viewportHeight = scrollEl?.clientHeight ?? 0;
+				const viewportStartIdx = Math.floor(scrollTop / ROW_HEIGHT);
+				const viewportEndIdx =
+					Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) - 1;
 				const isOnScreen =
-					visible.length > 0 &&
-					idx >= visible[0].index &&
-					idx <= visible[visible.length - 1].index;
+					viewportHeight > 0 && idx >= viewportStartIdx && idx <= viewportEndIdx;
 
 				if (!isOnScreen) {
 					setTimeout(() => {
@@ -846,7 +852,9 @@ function Success(props: ISuccessProps): JSX.Element {
 				<div
 					className={styles.splitBody}
 					style={{
-						minHeight: virtualizer.getTotalSize(),
+						// Bottom padding so the last span isn't flush against
+						// the scroll boundary.
+						minHeight: virtualizer.getTotalSize() + WATERFALL_BOTTOM_PADDING,
 						height: '100%',
 					}}
 				>
