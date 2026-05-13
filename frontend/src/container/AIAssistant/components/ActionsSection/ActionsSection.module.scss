@@ -1,5 +1,3 @@
-$radius: 4px;
-
 .section {
 	display: flex;
 	flex-direction: column;
@@ -9,7 +7,7 @@ $radius: 4px;
 	padding: 8px;
 	margin-top: 16px;
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 
 	// Background, padding-x, and rounding are inherited from the parent
 	// bubble — the section sits inside the assistant bubble as its last
@@ -44,7 +42,7 @@ $radius: 4px;
 	gap: 6px;
 	padding: 5px 10px;
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	background: var(--l1-background);
 	color: var(--l1-foreground);
 	font-size: 11px;

@@ -1,13 +1,11 @@
 @use '../../_scrollbar' as *;
 
-$radius: 4px;
-
 .input {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	background: var(--l1-background);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 8px;
 	border: 1px solid var(--l1-border);
 	transition: border-color 0.15s;
@@ -37,7 +35,7 @@ $radius: 4px;
 	font-size: 11px;
 	background: var(--l2-background);
 	border: 1px solid var(--l1-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 4px 6px 4px 8px;
 	color: var(--l1-foreground);
 
@@ -101,7 +99,7 @@ $radius: 4px;
 	gap: 4px;
 	font-size: 11px;
 	background: var(--l3-background);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 2px 6px 2px 8px;
 	color: var(--l2-foreground);
 	max-width: 180px;
@@ -129,7 +127,7 @@ $radius: 4px;
 .composer {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 4px;
 }
 
@@ -194,12 +192,12 @@ $radius: 4px;
 	color: var(--accent-sienna);
 	background: color-mix(in srgb, var(--accent-sienna), transparent 90%);
 	border: 1px solid color-mix(in srgb, var(--accent-sienna), transparent 65%);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 }
 
 .sendBtn {
 	flex-shrink: 0;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 
 	&.stop {
 		background: var(--accent-cherry) !important;
@@ -216,7 +214,7 @@ $radius: 4px;
 	max-width: min(92vw, 480px);
 	margin-left: 16px;
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	background: var(--l1-background);
 	box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
 	padding: 8px;
@@ -252,7 +250,7 @@ $radius: 4px;
 	height: 32px;
 	padding: 0 8px;
 	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	font-size: 12px;
 	font-weight: 550;
 	text-align: left;
@@ -316,7 +314,7 @@ $radius: 4px;
 	gap: 10px;
 	padding: 8px;
 	border: 1px solid color-mix(in srgb, var(--l1-foreground), transparent 96%);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	color: var(--l1-foreground);
 	font-size: 12px;
 	font-weight: 500;

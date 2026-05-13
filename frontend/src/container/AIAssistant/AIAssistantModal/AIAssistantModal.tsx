@@ -37,8 +37,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 		(s) => s.startNewConversation,
 	);
 
-	// ── Keyboard shortcuts ──────────────────────────────────────────────────────
-
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
 			// Cmd+J (Mac) / Ctrl+J (Win/Linux) — toggle modal. Opening
@@ -107,8 +105,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 		},
 		[closeModal],
 	);
-
-	// ── Render ──────────────────────────────────────────────────────────────────
 
 	if (!isOpen) {
 		return null;

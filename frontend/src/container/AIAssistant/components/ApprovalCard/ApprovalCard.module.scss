@@ -1,7 +1,5 @@
 @use '../../_scrollbar' as *;
 
-$radius: 4px;
-
 .card {
 	border: 1px solid var(--l1-border);
 	border-radius: $radius;
