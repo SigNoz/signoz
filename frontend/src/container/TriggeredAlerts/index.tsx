@@ -206,6 +206,7 @@ function TriggeredAlerts(): JSX.Element {
 							defaultPage: DEFAULT_PAGE,
 							defaultLimit: DEFAULT_LIMIT,
 						}}
+						paginationClassname={styles.paginationContainer}
 					/>
 				) : (
 					<TanStackTable<Alert>
