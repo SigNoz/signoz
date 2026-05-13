@@ -1,4 +1,4 @@
-import type { BadgeColor } from '@signozhq/ui';
+import type { BadgeColor } from '@signozhq/ui/badge';
 
 export const STATE_ORDER = ['firing', 'pending', 'inactive', 'disabled'];
 export const SEVERITY_ORDER = ['critical', 'error', 'warning', 'info'];

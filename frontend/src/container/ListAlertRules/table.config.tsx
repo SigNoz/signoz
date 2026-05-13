@@ -1,4 +1,4 @@
-import { Badge, BadgeColor } from '@signozhq/ui';
+import { Badge, BadgeColor } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import { LabelColumn, SEVERITY_BADGE_COLORS } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
