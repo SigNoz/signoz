@@ -138,7 +138,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		{{Relation: authtypes.Relation{Verb: coretypes.VerbDetach}, Resource: coretypes.ResourceServiceAccount, SelectorCallback: serviceAccountInstanceSelectorCallback, Roles: []string{
 			authtypes.SigNozAdminRoleName,
 		}}},
-		{{Relation: authtypes.Relation{Verb: coretypes.VerbDetach}, Resource: coretypes.ResourceRole, SelectorCallback: provider.roleAttachSelectorFromPath, Roles: []string{
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbDetach}, Resource: coretypes.ResourceRole, SelectorCallback: provider.roleDetachSelectorFromPath, Roles: []string{
 			authtypes.SigNozAdminRoleName,
 		}}},
 	}), handler.OpenAPIDef{
@@ -213,8 +213,13 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authzMiddleware.Check(provider.serviceAccountHandler.CreateFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbCreate}, coretypes.ResourceMetaResourceFactorAPIKey, factorAPIKeyCollectionSelectorCallback, []string{
-		authtypes.SigNozAdminRoleName,
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authzMiddleware.CheckAll(provider.serviceAccountHandler.CreateFactorAPIKey, []middleware.AuthZCheckGroup{
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbCreate}, Resource: coretypes.ResourceMetaResourceFactorAPIKey, SelectorCallback: factorAPIKeyCollectionSelectorCallback, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbAttach}, Resource: coretypes.ResourceServiceAccount, SelectorCallback: serviceAccountInstanceSelectorCallback, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
 	}), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
@@ -227,7 +232,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},
 		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbCreate)}),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbCreate), coretypes.ResourceServiceAccount.Scope(coretypes.VerbAttach)}),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -270,8 +275,13 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authzMiddleware.Check(provider.serviceAccountHandler.RevokeFactorAPIKey, authtypes.Relation{Verb: coretypes.VerbDelete}, coretypes.ResourceMetaResourceFactorAPIKey, factorAPIKeyInstanceSelectorCallback, []string{
-		authtypes.SigNozAdminRoleName,
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authzMiddleware.CheckAll(provider.serviceAccountHandler.RevokeFactorAPIKey, []middleware.AuthZCheckGroup{
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbDelete}, Resource: coretypes.ResourceMetaResourceFactorAPIKey, SelectorCallback: factorAPIKeyInstanceSelectorCallback, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
+		{{Relation: authtypes.Relation{Verb: coretypes.VerbDetach}, Resource: coretypes.ResourceServiceAccount, SelectorCallback: serviceAccountInstanceSelectorCallback, Roles: []string{
+			authtypes.SigNozAdminRoleName,
+		}}},
 	}), handler.OpenAPIDef{
 		ID:                  "RevokeServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
@@ -284,7 +294,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
-		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbDelete)}),
+		SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceFactorAPIKey.Scope(coretypes.VerbDelete), coretypes.ResourceServiceAccount.Scope(coretypes.VerbDetach)}),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -292,7 +302,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 	return nil
 }
 
-func (provider *provider) roleAttachSelectorFromPath(req *http.Request, claims authtypes.Claims) ([]coretypes.Selector, error) {
+func (provider *provider) roleDetachSelectorFromPath(req *http.Request, claims authtypes.Claims) ([]coretypes.Selector, error) {
 	roleID, err := valuer.NewUUID(mux.Vars(req)["rid"])
 	if err != nil {
 		return nil, err
