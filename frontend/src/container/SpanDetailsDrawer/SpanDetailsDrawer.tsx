@@ -35,17 +35,17 @@ import useClickOutside from 'hooks/useClickOutside';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import {
 	Anvil,
-	BarChart2,
+	BarChart,
 	Bookmark,
 	Check,
 	ChevronDown,
 	ChevronUp,
 	Link2,
-	Loader2,
+	LoaderCircle,
 	PanelRight,
-	PlusIcon,
+	Plus,
 	Search,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { AnimatePresence, motion } from 'motion/react';
 import { Span } from 'types/api/trace/getTraceV2';
 import { formatEpochTimestamp } from 'utils/timeUtils';
@@ -217,7 +217,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			baseOptions.push({
 				label: (
 					<div className="view-title">
-						<BarChart2 size={14} />
+						<BarChart size={14} />
 						Metrics
 					</div>
 				),
@@ -234,7 +234,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				label: (
 					<Button
 						type="text"
-						icon={<Bookmark size="14" />}
+						icon={<Bookmark size={14} />}
 						className="attributes-tab-btn"
 					>
 						<span className="tab-label">Attributes</span>
@@ -254,7 +254,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			},
 			{
 				label: (
-					<Button type="text" icon={<Anvil size="14" />} className="events-tab-btn">
+					<Button type="text" icon={<Anvil size={14} />} className="events-tab-btn">
 						<span className="tab-label">Events</span>
 						<span className="count-badge">{span.event?.length || 0}</span>
 					</Button>
@@ -272,7 +272,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 				label: (
 					<Button
 						type="text"
-						icon={<Link2 size="14" />}
+						icon={<Link2 size={14} />}
 						className="linked-spans-tab-btn"
 					>
 						<span className="tab-label">Links</span>
@@ -592,7 +592,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 								{loadingSpanPercentilesData && (
 									<div className="loading-spinner-container">
-										<Loader2 size={16} className="animate-spin" />
+										<LoaderCircle size={16} className="animate-spin" />
 									</div>
 								)}
 
@@ -655,7 +655,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 														onClick={(): void => setShowResourceAttributesSelector(false)}
 													/>
 												) : (
-													<PlusIcon
+													<Plus
 														data-testid="plus-icon"
 														size={16}
 														className="cursor-pointer span-percentiles-header-icon"
@@ -729,7 +729,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 														</span>
 													) : (
 														<span className="span-percentile-value-loader">
-															<Loader2 size={12} className="animate-spin" />
+															<LoaderCircle size={12} className="animate-spin" />
 														</span>
 													)}{' '}
 													out of the distribution for this resource evaluated for{' '}

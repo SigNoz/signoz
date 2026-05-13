@@ -8,7 +8,7 @@ import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { useAccountSettingsModal } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
-import { Save } from 'lucide-react';
+import { Save } from '@signozhq/icons';
 
 import logEvent from '../../../../../api/common/logEvent';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';

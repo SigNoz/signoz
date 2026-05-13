@@ -7,7 +7,7 @@ import {
 	Command,
 	CornerDownLeft,
 	Slash,
-} from 'lucide-react';
+} from '@signozhq/icons';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 

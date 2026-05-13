@@ -7,8 +7,9 @@ import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
 import { formatBytes } from '../commonUtils';
 import { ValidateColumnValueWrapper } from '../components';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sVolumesData } from './api';
-import { HardDrive } from 'lucide-react';
+import { HardDrive } from '@signozhq/icons';
 
 export function getK8sVolumeRowKey(volume: K8sVolumesData): string {
 	return (
@@ -92,7 +93,11 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const capacity = value as number;
 			return (
-				<ValidateColumnValueWrapper value={capacity}>
+				<ValidateColumnValueWrapper
+					value={capacity}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="capacity metric"
+				>
 					<TanStackTable.Text>{formatBytes(capacity)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -107,7 +112,11 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const usage = value as number;
 			return (
-				<ValidateColumnValueWrapper value={usage}>
+				<ValidateColumnValueWrapper
+					value={usage}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="utilization metric"
+				>
 					<TanStackTable.Text>{formatBytes(usage)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);
@@ -122,7 +131,11 @@ export const k8sVolumesColumnsConfig: TableColumnDef<K8sVolumesData>[] = [
 		cell: ({ value }): React.ReactNode => {
 			const available = value as number;
 			return (
-				<ValidateColumnValueWrapper value={available}>
+				<ValidateColumnValueWrapper
+					value={available}
+					entity={InfraMonitoringEntity.VOLUMES}
+					attribute="available metric"
+				>
 					<TanStackTable.Text>{formatBytes(available)}</TanStackTable.Text>
 				</ValidateColumnValueWrapper>
 			);

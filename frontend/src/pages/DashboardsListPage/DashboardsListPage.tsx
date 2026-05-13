@@ -2,7 +2,7 @@ import { Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ListOfAllDashboard from 'container/ListOfDashboard';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid } from '@signozhq/icons';
 
 import './DashboardsListPage.styles.scss';
 

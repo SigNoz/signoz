@@ -150,16 +150,6 @@ type RuleResponseItem struct {
 	Data      string    `json:"data" db:"data"`
 }
 
-type TTLStatusItem struct {
-	Id             int       `json:"id" db:"id"`
-	UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
-	CreatedAt      time.Time `json:"created_at" db:"created_at"`
-	TableName      string    `json:"table_name" db:"table_name"`
-	TTL            int       `json:"ttl" db:"ttl"`
-	Status         string    `json:"status" db:"status"`
-	ColdStorageTtl int       `json:"cold_storage_ttl" db:"cold_storage_ttl"`
-}
-
 type ChannelItem struct {
 	Id        int       `json:"id" db:"id"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
@@ -462,33 +452,9 @@ type SpanAggregatesDBResponseItem struct {
 	GroupBy      string    `ch:"groupBy"`
 }
 
-type SetTTLResponseItem struct {
-	Message string `json:"message"`
-}
-
 type DiskItem struct {
 	Name string `json:"name,omitempty" ch:"name"`
 	Type string `json:"type,omitempty" ch:"type"`
-}
-
-type DBResponseTTL struct {
-	EngineFull string `ch:"engine_full"`
-}
-
-type GetTTLResponseItem struct {
-	MetricsTime             int    `json:"metrics_ttl_duration_hrs,omitempty"`
-	MetricsMoveTime         int    `json:"metrics_move_ttl_duration_hrs,omitempty"`
-	TracesTime              int    `json:"traces_ttl_duration_hrs,omitempty"`
-	TracesMoveTime          int    `json:"traces_move_ttl_duration_hrs,omitempty"`
-	LogsTime                int    `json:"logs_ttl_duration_hrs,omitempty"`
-	LogsMoveTime            int    `json:"logs_move_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsTime     int    `json:"expected_metrics_ttl_duration_hrs,omitempty"`
-	ExpectedMetricsMoveTime int    `json:"expected_metrics_move_ttl_duration_hrs,omitempty"`
-	ExpectedTracesTime      int    `json:"expected_traces_ttl_duration_hrs,omitempty"`
-	ExpectedTracesMoveTime  int    `json:"expected_traces_move_ttl_duration_hrs,omitempty"`
-	ExpectedLogsTime        int    `json:"expected_logs_ttl_duration_hrs,omitempty"`
-	ExpectedLogsMoveTime    int    `json:"expected_logs_move_ttl_duration_hrs,omitempty"`
-	Status                  string `json:"status"`
 }
 
 type DBResponseServiceName struct {

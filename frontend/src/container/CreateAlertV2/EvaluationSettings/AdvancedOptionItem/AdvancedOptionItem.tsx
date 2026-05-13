@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Switch, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Info } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import { IAdvancedOptionItemProps } from '../types';
 
