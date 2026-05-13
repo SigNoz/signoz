@@ -1,0 +1,45 @@
+// Minimal expandable row — chevron + label, no icon, no left rail.
+// Matches the tool-call row treatment so consecutive thinking + tool
+// activity reads as one quiet "what the agent did" log.
+.row {
+	width: 100%;
+	font-size: 12px;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 0;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	color: var(--l3-foreground);
+	transition: color 0.12s ease;
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.chevron {
+	flex-shrink: 0;
+	color: inherit;
+}
+
+.label {
+	font-weight: 400;
+}
+
+.body {
+	padding: 4px 0 4px 22px;
+}
+
+.content {
+	font-size: 12px;
+	color: var(--l3-foreground);
+	font-style: italic;
+	margin: 0;
+	white-space: pre-wrap;
+	line-height: 1.5;
+}

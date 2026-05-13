@@ -324,3 +324,10 @@ export const MeterExplorerPage = Loadable(
 	() =>
 		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
 );
+
+export const AIAssistantPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "AI Assistant Page" */ 'pages/AIAssistantPage/AIAssistantPage'
+		),
+);

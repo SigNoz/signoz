@@ -371,7 +371,7 @@
 		// Right-aligns the badge inside so single-digit counts don't push the
 		// icon left of where multi-digit counts would put it.
 		.subtree-count-slot {
-			min-width: 20px;
+			min-width: 34px;
 			flex-shrink: 0;
 			display: inline-flex;
 			align-items: center;

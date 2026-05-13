@@ -26,8 +26,11 @@ export interface SpanAttributeAction {
 	disabled?: boolean;
 	hidden?: boolean;
 	callback: (args: { key: string; value: string; dataType?: string }) => void;
-	/** Returns true if this action should be hidden for the given field key */
-	shouldHide: (key: string) => boolean;
+	/**
+	 * Returns true if this action should be hidden. Receives the leaf key and
+	 * the full path so we can hide based on ancestor segments too.
+	 */
+	shouldHide: (key: string, fieldKeyPath: (string | number)[]) => boolean;
 }
 
 // Keys that should NOT support filter/group-by actions.
@@ -44,7 +47,19 @@ export const NON_FILTERABLE_KEYS = new Set([
 	'timestamp',
 ]);
 
-const shouldHideForKey = (key: string): boolean => NON_FILTERABLE_KEYS.has(key);
+// Keys whose entire subtree is non-queryable. Hides filter/group-by for the
+// key itself AND any descendant leaf. Used for nested data that exists on the
+// span payload but isn't queryable as a trace attribute (e.g. span events, links).
+export const NON_FILTERABLE_ANCESTOR_KEYS = new Set(['events', 'references']);
+
+const shouldHideForKey = (
+	leafKey: string,
+	fieldKeyPath: (string | number)[],
+): boolean =>
+	NON_FILTERABLE_KEYS.has(leafKey) ||
+	fieldKeyPath.some(
+		(seg) => typeof seg === 'string' && NON_FILTERABLE_ANCESTOR_KEYS.has(seg),
+	);
 
 // Action identifiers
 export const SPAN_ACTION = {

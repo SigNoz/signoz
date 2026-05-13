@@ -4,9 +4,10 @@ import { Skeleton } from 'antd';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
-import { useTraceContext } from '../contexts/TraceContext';
+import { useTraceStore } from '../stores/traceStore';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
 import {
 	mergeTelemetryFieldKeys,
@@ -19,11 +20,15 @@ import { useVisualLayoutWorker } from './hooks/useVisualLayoutWorker';
 interface TraceFlamegraphProps {
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
+	selectedSpan: SpanV3 | undefined;
+	totalSpansCount: number;
 }
 
 function TraceFlamegraph({
 	filteredSpanIds,
 	isFilterActive,
+	selectedSpan,
+	totalSpansCount,
 }: TraceFlamegraphProps): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
@@ -50,7 +55,7 @@ function TraceFlamegraph({
 		[history, search],
 	);
 
-	const { previewFields } = useTraceContext();
+	const previewFields = useTraceStore((s) => s.previewFields);
 
 	// Color-by fields baseline + user-picked preview fields. De-duped by `name`,
 	// color-by entries first so their canonical metadata wins on collision.
@@ -63,13 +68,18 @@ function TraceFlamegraph({
 		[previewFields],
 	);
 
+	// Only pass selectedSpanId in sampled mode — for full traces, the span is
+	// already in the loaded flamegraph data and no refetch is needed.
+	const isSampled = totalSpansCount > FLAMEGRAPH_SPAN_LIMIT;
+	const selectedSpanIdForFetch = isSampled ? selectedSpan?.span_id : undefined;
+
 	const {
 		data,
 		isFetching,
 		error: fetchError,
 	} = useGetTraceFlamegraph({
 		traceId,
-		// selectedSpanId: firstSpanAtFetchLevel,
+		selectedSpanId: selectedSpanIdForFetch,
 		limit: FLAMEGRAPH_SPAN_LIMIT,
 		selectFields: flamegraphSelectFields,
 	});
