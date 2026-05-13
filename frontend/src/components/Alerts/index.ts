@@ -1,5 +1,6 @@
 export { default as LabelColumn } from './LabelColumn';
 export type { LabelColumnProps } from './LabelColumn';
+export { default as ErrorEmptyState } from './ErrorEmptyState';
 export { default as NoResultsEmptyState } from './NoResultsEmptyState';
 export {
 	STATE_ORDER,

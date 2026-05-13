@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
-import { NoResultsEmptyState } from 'components/Alerts';
+import { ErrorEmptyState, NoResultsEmptyState } from 'components/Alerts';
 import type { FilterValue } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
@@ -181,11 +181,7 @@ function TriggeredAlerts(): JSX.Element {
 
 			<div className={styles.tableContainer}>
 				{isError ? (
-					<NoResultsEmptyState
-						title="Failed to load alerts"
-						subtitle="Something went wrong while loading alerts. Please try again later."
-						onRefresh={refetch}
-					/>
+					<ErrorEmptyState title="Failed to load alerts" onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
 					<NoResultsEmptyState
 						title="No matching alerts"

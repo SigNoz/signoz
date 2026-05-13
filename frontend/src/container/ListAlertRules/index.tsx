@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { ErrorEmptyState, NoResultsEmptyState } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -11,7 +12,8 @@ import { useTimezone } from 'providers/Timezone';
 
 import TextToolTip from 'components/TextToolTip';
 
-import { ActionsMenu, ColumnSelector, EmptyState } from './components';
+import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
+import { ActionsMenu, ColumnSelector } from './components';
 import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
@@ -139,14 +141,16 @@ function ListAlertRules(): JSX.Element {
 
 			<div className={styles.tableContainer}>
 				{isError ? (
-					<EmptyState variant="error" onRefresh={refetch} />
+					<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
 				) : isEmptyDueToFilters ? (
-					<EmptyState
-						variant="no-search-results"
-						onClearSearch={handleClearFilters}
+					<NoResultsEmptyState
+						title="No matching alert rules"
+						subtitle="No alert rules match your search. Try adjusting your search criteria."
+						onClear={handleClearFilters}
+						clearButtonText="Clear Search"
 					/>
 				) : isEmptyNoRules ? (
-					<EmptyState onRefresh={refetch} />
+					<AlertsEmptyState onRefresh={refetch} />
 				) : (
 					<TanStackTable<AlertRule>
 						data={paginatedRules}

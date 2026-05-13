@@ -20,7 +20,7 @@ function NoResultsEmptyState({
 }: NoResultsEmptyStateProps): JSX.Element {
 	return (
 		<div className={styles.emptyState} data-testid="no-results-empty-state">
-			<Search className={styles.icon} />
+			<Search className={styles.icon} size={16} />
 			<div className={styles.title} data-testid="no-results-title">
 				{title}
 			</div>
