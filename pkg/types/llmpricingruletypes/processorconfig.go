@@ -26,7 +26,7 @@ type LLMPricingRuleProcessorAttrs struct {
 	CacheWrite string `yaml:"cache_write" json:"cache_write"`
 }
 
-// LLMPricingRuleProcessorDefaultPricing holds the pricing unit and the list of model-specific rules.
+// LLMPricingRuleProcessorDefaultPricing holds the list of model-specific rules.
 type LLMPricingRuleProcessorDefaultPricing struct {
 	Rules []LLMPricingRuleProcessor `yaml:"rules" json:"rules"`
 }
