@@ -28,7 +28,7 @@ func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes
 		for i, t := range resolved {
 			tagIDs[i] = t.ID
 		}
-		if err := m.SyncLinksForResource(ctx, kind, resourceID, tagIDs); err != nil {
+		if err := m.SyncLinksForResource(ctx, orgID, kind, resourceID, tagIDs); err != nil {
 			return err
 		}
 		tags = resolved
@@ -65,19 +65,19 @@ func (m *module) LinkToResource(ctx context.Context, kind coretypes.Kind, resour
 	return m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, resourceID, tagIDs))
 }
 
-func (m *module) SyncLinksForResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {
+func (m *module) SyncLinksForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error {
 	return m.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := m.store.CreateRelations(ctx, tagtypes.NewTagRelations(kind, resourceID, tagIDs)); err != nil {
 			return err
 		}
-		return m.store.DeleteRelationsExcept(ctx, kind, resourceID, tagIDs)
+		return m.store.DeleteRelationsExcept(ctx, orgID, kind, resourceID, tagIDs)
 	})
 }
 
-func (m *module) ListForResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
-	return m.store.ListByResource(ctx, kind, resourceID)
+func (m *module) ListForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
+	return m.store.ListByResource(ctx, orgID, kind, resourceID)
 }
 
-func (m *module) ListForResources(ctx context.Context, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
-	return m.store.ListByResources(ctx, kind, resourceIDs)
+func (m *module) ListForResources(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+	return m.store.ListByResources(ctx, orgID, kind, resourceIDs)
 }

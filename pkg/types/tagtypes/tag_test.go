@@ -68,15 +68,15 @@ func (f *fakeStore) CreateRelations(_ context.Context, _ []*TagRelation) error {
 	return nil
 }
 
-func (f *fakeStore) ListByResource(_ context.Context, _ coretypes.Kind, _ valuer.UUID) ([]*Tag, error) {
+func (f *fakeStore) ListByResource(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ valuer.UUID) ([]*Tag, error) {
 	return []*Tag{}, nil
 }
 
-func (f *fakeStore) ListByResources(_ context.Context, _ coretypes.Kind, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
+func (f *fakeStore) ListByResources(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ []valuer.UUID) (map[valuer.UUID][]*Tag, error) {
 	return map[valuer.UUID][]*Tag{}, nil
 }
 
-func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ coretypes.Kind, _ valuer.UUID, _ []valuer.UUID) error {
+func (f *fakeStore) DeleteRelationsExcept(_ context.Context, _ valuer.UUID, _ coretypes.Kind, _ valuer.UUID, _ []valuer.UUID) error {
 	return nil
 }
 

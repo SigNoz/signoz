@@ -33,7 +33,7 @@ func (s *store) List(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind
 	return tags, nil
 }
 
-func (s *store) ListByResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
+func (s *store) ListByResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error) {
 	tags := make([]*tagtypes.Tag, 0)
 	err := s.sqlstore.
 		BunDBCtx(ctx).
@@ -42,6 +42,7 @@ func (s *store) ListByResource(ctx context.Context, kind coretypes.Kind, resourc
 		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id = ?", resourceID).
+		Where("tag.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -49,7 +50,7 @@ func (s *store) ListByResource(ctx context.Context, kind coretypes.Kind, resourc
 	return tags, nil
 }
 
-func (s *store) ListByResources(ctx context.Context, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
+func (s *store) ListByResources(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error) {
 	if len(resourceIDs) == 0 {
 		return map[valuer.UUID][]*tagtypes.Tag{}, nil
 	}
@@ -68,6 +69,7 @@ func (s *store) ListByResources(ctx context.Context, kind coretypes.Kind, resour
 		Join("JOIN tag_relation AS tr ON tr.tag_id = tag.id").
 		Where("tr.kind = ?", kind).
 		Where("tr.resource_id IN (?)", bun.In(resourceIDs)).
+		Where("tag.org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -118,17 +120,26 @@ func (s *store) CreateRelations(ctx context.Context, relations []*tagtypes.TagRe
 	return err
 }
 
-func (s *store) DeleteRelationsExcept(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, keepTagIDs []valuer.UUID) error {
-	q := s.sqlstore.
+func (s *store) DeleteRelationsExcept(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, keepTagIDs []valuer.UUID) error {
+	// Scope the delete to the caller's org via a subquery on tag — bun's
+	// DELETE-with-JOIN syntax isn't uniformly portable across Postgres/SQLite.
+	tagIDsToDelete := s.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("tag").
+		Column("id").
+		Where("org_id = ?", orgID)
+	if len(keepTagIDs) > 0 {
+		tagIDsToDelete = tagIDsToDelete.Where("id NOT IN (?)", bun.In(keepTagIDs))
+	}
+	_, err := s.sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
 		Model((*tagtypes.TagRelation)(nil)).
 		Where("kind = ?", kind).
-		Where("resource_id = ?", resourceID)
-	if len(keepTagIDs) > 0 {
-		q = q.Where("tag_id NOT IN (?)", bun.In(keepTagIDs))
-	}
-	_, err := q.Exec(ctx)
+		Where("resource_id = ?", resourceID).
+		Where("tag_id IN (?)", tagIDsToDelete).
+		Exec(ctx)
 	return err
 }
 

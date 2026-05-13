@@ -16,14 +16,14 @@ type Module interface {
 	LinkToResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error
 
 	// missing links are inserted, obsolete ones removed.
-	SyncLinksForResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error
+	SyncLinksForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, tagIDs []valuer.UUID) error
 
 	// SyncTags resolves the given postable tags (creating new rows as needed)
 	// and reconciles the resource's links to exactly that set, all in one transaction.
 	SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error)
 
-	ListForResource(ctx context.Context, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error)
+	ListForResource(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID) ([]*tagtypes.Tag, error)
 
 	// Resources with no tags are absent from the returned map.
-	ListForResources(ctx context.Context, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error)
+	ListForResources(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceIDs []valuer.UUID) (map[valuer.UUID][]*tagtypes.Tag, error)
 }
