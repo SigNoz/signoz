@@ -4522,6 +4522,45 @@ export interface DashboardtypesGettableDashboardV2DTO {
 	updatedBy?: string;
 }
 
+export interface DashboardtypesGettableDashboardWithPinDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	createdBy?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	info?: DashboardtypesGettableDashboardInfoDTO;
+	/**
+	 * @type boolean
+	 */
+	locked?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type boolean
+	 */
+	pinned?: boolean;
+	publicConfig?: DashboardtypesGettablePublicDasbhboardDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	updatedBy?: string;
+}
+
 export interface DashboardtypesGettablePublicDasbhboardDTO {
 	/**
 	 * @type string
@@ -4596,7 +4635,7 @@ export interface DashboardtypesJSONPatchOperationDTO {
 	 */
 	path: string;
 	/**
-	 * @description Value to add/replace/test against. The expected type depends on the path — a string for /data/display/name, a Panel for /data/panels/<id>, a PostableTag for /tags/-, etc. Required for add/replace/test; ignored for remove/move/copy.
+	 * @description Value to add/replace/test against. The expected type depends on the path. Common shapes (see referenced schemas for the exact field set): /data/panels/<id> takes a DashboardtypesPanel; /data/panels/<id>/spec/queries/N (or /-) takes a DashboardtypesQuery; /data/variables/N takes a DashboardtypesVariable; /data/layouts/N takes a DashboardtypesLayout; /tags/N (or /-) takes a TagtypesPostableTag; /data/display/name and other leaf string fields take a string. Required for add/replace/test; ignored for remove/move/copy.
 	 */
 	value?: unknown;
 }
@@ -4682,6 +4721,18 @@ export interface DashboardtypesListVariableSpecDTO {
 	 * @nullable true
 	 */
 	sort?: string | null;
+}
+
+export interface DashboardtypesListableDashboardV2DTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	dashboards?: DashboardtypesGettableDashboardWithPinDTO[] | null;
+	/**
+	 * @type boolean
+	 */
+	hasMore?: boolean;
 }
 
 export interface DashboardtypesNumberPanelSpecDTO {
@@ -10508,6 +10559,14 @@ export type GetUserPreference200 = {
 export type UpdateUserPreferencePathParameters = {
 	name: string;
 };
+export type ListDashboardsV2200 = {
+	data: DashboardtypesListableDashboardV2DTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type CreateDashboardV2201 = {
 	data: DashboardtypesGettableDashboardV2DTO;
 	/**
@@ -10516,6 +10575,9 @@ export type CreateDashboardV2201 = {
 	status: string;
 };
 
+export type DeleteDashboardV2PathParameters = {
+	id: string;
+};
 export type GetDashboardV2PathParameters = {
 	id: string;
 };
@@ -10553,6 +10615,12 @@ export type UnlockDashboardV2PathParameters = {
 	id: string;
 };
 export type LockDashboardV2PathParameters = {
+	id: string;
+};
+export type UnpinDashboardV2PathParameters = {
+	id: string;
+};
+export type PinDashboardV2PathParameters = {
 	id: string;
 };
 export type CreatePublicDashboardV2PathParameters = {

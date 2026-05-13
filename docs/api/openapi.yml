@@ -2493,6 +2493,33 @@ components:
       required:
       - id
       type: object
+    DashboardtypesGettableDashboardWithPin:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        id:
+          type: string
+        info:
+          $ref: '#/components/schemas/DashboardtypesGettableDashboardInfo'
+        locked:
+          type: boolean
+        orgId:
+          type: string
+        pinned:
+          type: boolean
+        publicConfig:
+          $ref: '#/components/schemas/DashboardtypesGettablePublicDasbhboard'
+        updatedAt:
+          format: date-time
+          type: string
+        updatedBy:
+          type: string
+      required:
+      - id
+      type: object
     DashboardtypesGettablePublicDasbhboard:
       properties:
         defaultTimeRange:
@@ -2633,6 +2660,16 @@ components:
         sort:
           nullable: true
           type: string
+      type: object
+    DashboardtypesListableDashboardV2:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/DashboardtypesGettableDashboardWithPin'
+          nullable: true
+          type: array
+        hasMore:
+          type: boolean
       type: object
     DashboardtypesNumberPanelSpec:
       properties:
@@ -12403,6 +12440,54 @@ paths:
       tags:
       - preferences
   /api/v2/dashboards:
+    get:
+      deprecated: false
+      description: Returns a page of v2-shape dashboards for the calling user's org.
+        Supports a filter DSL (`query`), sort (`updated_at`/`created_at`/`title`),
+        order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). Pinned
+        dashboards float to the top of each page.
+      operationId: ListDashboardsV2
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardtypesListableDashboardV2'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List dashboards (v2)
+      tags:
+      - dashboard
     post:
       deprecated: false
       description: This endpoint creates a v2-shape dashboard with structured metadata,
@@ -12455,6 +12540,50 @@ paths:
       tags:
       - dashboard
   /api/v2/dashboards/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint deletes a v2-shape dashboard along with its tag relations.
+        Locked dashboards are rejected.
+      operationId: DeleteDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - EDITOR
+      - tokenizer:
+        - EDITOR
+      summary: Delete dashboard (v2)
+      tags:
+      - dashboard
     get:
       deprecated: false
       description: This endpoint returns a v2-shape dashboard with its tags and public
@@ -12711,6 +12840,96 @@ paths:
       - tokenizer:
         - EDITOR
       summary: Lock dashboard (v2)
+      tags:
+      - dashboard
+  /api/v2/dashboards/{id}/pins/me:
+    delete:
+      deprecated: false
+      description: Removes the pin for the calling user. Idempotent — unpinning a
+        dashboard that wasn't pinned still returns 204.
+      operationId: UnpinDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Unpin a dashboard for the current user (v2)
+      tags:
+      - dashboard
+    put:
+      deprecated: false
+      description: Pins the dashboard for the calling user. A user can pin at most
+        10 dashboards; pinning when at the limit returns 409. Re-pinning an already-pinned
+        dashboard is a no-op success.
+      operationId: PinDashboardV2
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Pin a dashboard for the current user (v2)
       tags:
       - dashboard
   /api/v2/dashboards/{id}/public:

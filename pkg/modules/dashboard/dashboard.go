@@ -64,6 +64,8 @@ type Module interface {
 
 	PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, patch dashboardtypes.PatchableDashboardV2) (*dashboardtypes.DashboardV2, error)
 
+	DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
+
 	LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error
 
 	CreatePublicV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, postable dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error)
@@ -108,6 +110,8 @@ type Handler interface {
 	UpdateV2(http.ResponseWriter, *http.Request)
 
 	PatchV2(http.ResponseWriter, *http.Request)
+
+	DeleteV2(http.ResponseWriter, *http.Request)
 
 	LockV2(http.ResponseWriter, *http.Request)
 

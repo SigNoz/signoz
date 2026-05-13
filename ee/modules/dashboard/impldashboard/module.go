@@ -215,6 +215,15 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	return module.pkgDashboardModule.PatchV2(ctx, orgID, id, updatedBy, patch)
 }
 
+func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.DeletePublic(ctx, id.String()); err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return err
+		}
+		return module.pkgDashboardModule.DeleteV2(ctx, orgID, id)
+	})
+}
+
 func (module *module) LockUnlockV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	return module.pkgDashboardModule.LockUnlockV2(ctx, orgID, id, updatedBy, isAdmin, lock)
 }

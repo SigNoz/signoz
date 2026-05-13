@@ -154,6 +154,24 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	return existing, nil
 }
 
+func (module *module) DeleteV2(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	existing, err := module.GetV2(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+	if existing.Locked {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "cannot delete a locked dashboard, please unlock the dashboard to delete")
+	}
+
+	return module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		// Syncing to an empty tag set drops every tag link for the dashboard.
+		if _, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, nil); err != nil {
+			return err
+		}
+		return module.store.Delete(ctx, orgID, id)
+	})
+}
+
 // CreatePublicV2 is not supported in the community build.
 func (module *module) CreatePublicV2(_ context.Context, _ valuer.UUID, _ valuer.UUID, _ dashboardtypes.PostablePublicDashboard) (*dashboardtypes.DashboardV2, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
