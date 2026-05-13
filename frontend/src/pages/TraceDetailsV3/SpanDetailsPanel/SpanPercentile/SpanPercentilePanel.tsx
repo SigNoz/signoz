@@ -1,4 +1,5 @@
 import { Checkbox, Input, Select, Skeleton } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
@@ -56,23 +57,26 @@ function SpanPercentilePanel({
 	return (
 		<div className={styles.root}>
 			<div className={styles.header}>
-				<Typography.Text className={styles.headerText} onClick={toggleOpen}>
-					<ChevronDown size={16} /> Span Percentile
-				</Typography.Text>
+				<Button
+					variant="link"
+					color="secondary"
+					onClick={toggleOpen}
+					prefix={<ChevronDown size={16} />}
+				>
+					Span Percentile
+				</Button>
 
-				{showResourceAttributesSelector ? (
-					<Check
-						size={16}
-						className={cx('cursor-pointer', styles.headerIcon)}
-						onClick={(): void => setShowResourceAttributesSelector(false)}
-					/>
-				) : (
-					<Plus
-						size={16}
-						className={cx('cursor-pointer', styles.headerIcon)}
-						onClick={(): void => setShowResourceAttributesSelector(true)}
-					/>
-				)}
+				<Button
+					variant="link"
+					color="secondary"
+					size="icon"
+					onClick={(): void =>
+						setShowResourceAttributesSelector(!showResourceAttributesSelector)
+					}
+					prefix={
+						showResourceAttributesSelector ? <Check size={16} /> : <Plus size={16} />
+					}
+				/>
 			</div>
 
 			{showResourceAttributesSelector && (
