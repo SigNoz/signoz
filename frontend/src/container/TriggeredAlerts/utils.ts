@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	sortByColumn,
 	searchByLabels,
-	computeSeverityStats,
 	filterByLabels,
 } from 'components/Alerts';
 import type { FilterValue } from 'components/Alerts';
@@ -11,7 +10,7 @@ import type { SortState } from 'components/TanStackTableView/types';
 
 import { getElapsedMs } from 'utils/timeUtils';
 
-import type { Alert, AlertStats } from './types';
+import type { Alert } from './types';
 
 export function normalizeAlerts(rawAlerts: Alert[] | undefined): Alert[] {
 	if (!rawAlerts) {
@@ -51,21 +50,6 @@ export function sortAlerts(
 		columnName: 'duration',
 		order: 'asc',
 	});
-}
-
-export function computeStats(alerts: Alert[]): AlertStats {
-	const base = computeSeverityStats(alerts);
-	const byStatus: Record<string, number> = {};
-
-	alerts.forEach((alert) => {
-		const status = alert.status?.state ?? 'unknown';
-		byStatus[status] = (byStatus[status] ?? 0) + 1;
-	});
-
-	return {
-		...base,
-		byStatus,
-	};
 }
 
 export { filterByLabels as filterAlerts, searchByLabels as searchAlerts };

@@ -6,8 +6,8 @@ import type { FilterValue } from 'components/Alerts';
 import type { SortState } from 'components/TanStackTableView/types';
 import { groupBy as lodashGroupBy, isUndefined } from 'lodash-es';
 
-import type { Alert, AlertStats, GroupedAlert } from './types';
-import { computeStats, normalizeAlerts, sortAlerts } from './utils';
+import type { Alert, GroupedAlert } from './types';
+import { normalizeAlerts, sortAlerts } from './utils';
 
 interface UseTriggeredAlertsDataReturn {
 	allAlerts: Alert[];
@@ -17,7 +17,6 @@ interface UseTriggeredAlertsDataReturn {
 	isFetching: boolean;
 	isError: boolean;
 	isGrouped: boolean;
-	stats: AlertStats;
 }
 
 const TRIGGERED_ALERTS_REFRESH_INTERVAL = 30_000;
@@ -50,8 +49,6 @@ export function useTriggeredAlertsData(
 		() => normalizeAlerts(alertsResponse.data?.data),
 		[alertsResponse.data],
 	);
-
-	const stats = useMemo(() => computeStats(allAlerts), [allAlerts]);
 
 	const filteredAlerts = useMemo(() => {
 		let result = filterByLabels(allAlerts, selectedFilter);
@@ -104,6 +101,5 @@ export function useTriggeredAlertsData(
 		isFetching: alertsResponse.isFetching,
 		isError: alertsResponse.isError,
 		isGrouped: selectedGroupBy.length > 0,
-		stats,
 	};
 }

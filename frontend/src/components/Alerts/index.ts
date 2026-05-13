@@ -1,5 +1,3 @@
-export { default as StatCard } from './StatCard';
-export type { StatCardClickEvent } from './StatCard';
 export { default as LabelColumn } from './LabelColumn';
 export type { LabelColumnProps } from './LabelColumn';
 export { default as NoResultsEmptyState } from './NoResultsEmptyState';
@@ -11,10 +9,5 @@ export {
 	SEVERITY_COLORS,
 	SEVERITY_BADGE_COLORS,
 } from './constants';
-export type { FilterValue, AlertStatsBase, AlertWithLabels } from './types';
-export {
-	sortByColumn,
-	searchByLabels,
-	computeSeverityStats,
-	filterByLabels,
-} from './utils';
+export type { FilterValue, AlertWithLabels } from './types';
+export { sortByColumn, searchByLabels, filterByLabels } from './utils';

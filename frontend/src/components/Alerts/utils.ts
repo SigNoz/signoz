@@ -1,7 +1,6 @@
 import type { SortState } from 'components/TanStackTableView/types';
 
-import { SEVERITY_ORDER } from './constants';
-import type { AlertStatsBase, AlertWithLabels, FilterValue } from './types';
+import type { AlertWithLabels, FilterValue } from './types';
 
 /**
  * Generic sort function for alert-like data
@@ -63,30 +62,6 @@ export function searchByLabels<T extends AlertWithLabels>(
 			labelSearchString.includes(value)
 		);
 	});
-}
-
-/**
- * Compute severity stats for alert-like data
- */
-export function computeSeverityStats<T extends AlertWithLabels>(
-	items: T[],
-): Pick<AlertStatsBase, 'total' | 'bySeverity'> {
-	const bySeverity: Record<string, number> = {};
-
-	// Initialize standard severities with 0
-	SEVERITY_ORDER.forEach((severity) => {
-		bySeverity[severity] = 0;
-	});
-
-	items.forEach((item) => {
-		const severity = item.labels?.severity?.toLowerCase() ?? 'unknown';
-		bySeverity[severity] = (bySeverity[severity] ?? 0) + 1;
-	});
-
-	return {
-		total: items.length,
-		bySeverity,
-	};
 }
 
 /**

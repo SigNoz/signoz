@@ -1,12 +1,7 @@
 import type { SortState } from 'components/TanStackTableView/types';
 
 import type { AlertWithLabels, FilterValue } from './types';
-import {
-	computeSeverityStats,
-	filterByLabels,
-	searchByLabels,
-	sortByColumn,
-} from './utils';
+import { filterByLabels, searchByLabels, sortByColumn } from './utils';
 
 interface TestAlert extends AlertWithLabels {
 	name: string;
@@ -185,77 +180,6 @@ describe('searchByLabels', () => {
 		const result = searchByLabels(alerts, '  CPU  ', getAlertName);
 		expect(result).toHaveLength(1);
 		expect(result[0].name).toBe('CPU High');
-	});
-});
-
-describe('computeSeverityStats', () => {
-	it('should compute stats for standard severities', () => {
-		const alerts: TestAlert[] = [
-			createAlert('A1', 1, { severity: 'critical' }),
-			createAlert('A2', 2, { severity: 'critical' }),
-			createAlert('A3', 3, { severity: 'warning' }),
-			createAlert('A4', 4, { severity: 'info' }),
-		];
-
-		const result = computeSeverityStats(alerts);
-
-		expect(result.total).toBe(4);
-		expect(result.bySeverity.critical).toBe(2);
-		expect(result.bySeverity.warning).toBe(1);
-		expect(result.bySeverity.info).toBe(1);
-		expect(result.bySeverity.error).toBe(0);
-	});
-
-	it('should handle mixed case severity', () => {
-		const alerts: TestAlert[] = [
-			createAlert('A1', 1, { severity: 'CRITICAL' }),
-			createAlert('A2', 2, { severity: 'Critical' }),
-			createAlert('A3', 3, { severity: 'critical' }),
-		];
-
-		const result = computeSeverityStats(alerts);
-		expect(result.bySeverity.critical).toBe(3);
-	});
-
-	it('should count unknown severity for missing labels', () => {
-		const alerts: TestAlert[] = [
-			createAlert('A1', 1, {}),
-			createAlert('A2', 2),
-			createAlert('A3', 3, { severity: 'warning' }),
-		];
-
-		const result = computeSeverityStats(alerts);
-		expect(result.bySeverity.unknown).toBe(2);
-		expect(result.bySeverity.warning).toBe(1);
-	});
-
-	it('should handle empty array', () => {
-		const result = computeSeverityStats([]);
-		expect(result.total).toBe(0);
-		expect(result.bySeverity.critical).toBe(0);
-		expect(result.bySeverity.error).toBe(0);
-		expect(result.bySeverity.warning).toBe(0);
-		expect(result.bySeverity.info).toBe(0);
-	});
-
-	it('should handle custom severity values', () => {
-		const alerts: TestAlert[] = [
-			createAlert('A1', 1, { severity: 'custom' }),
-			createAlert('A2', 2, { severity: 'custom' }),
-		];
-
-		const result = computeSeverityStats(alerts);
-		expect(result.bySeverity.custom).toBe(2);
-	});
-
-	it('should initialize standard severities with 0', () => {
-		const alerts: TestAlert[] = [];
-		const result = computeSeverityStats(alerts);
-
-		expect(result.bySeverity).toHaveProperty('critical', 0);
-		expect(result.bySeverity).toHaveProperty('error', 0);
-		expect(result.bySeverity).toHaveProperty('warning', 0);
-		expect(result.bySeverity).toHaveProperty('info', 0);
 	});
 });
 

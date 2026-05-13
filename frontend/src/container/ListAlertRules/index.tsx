@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import type { StatCardClickEvent } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
@@ -10,12 +9,7 @@ import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
-import {
-	ActionsMenu,
-	ColumnSelector,
-	EmptyState,
-	StatsRow,
-} from './components';
+import { ActionsMenu, ColumnSelector, EmptyState } from './components';
 import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
@@ -38,8 +32,11 @@ function ListAlertRules(): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const { orderBy } = useTableParams(QUERY_PARAMS_CONFIG);
 
-	const { filteredRules, isFetching, isError, stats, allRules } =
-		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);
+	const { filteredRules, isFetching, isError, allRules } = useAlertRulesData(
+		orderBy,
+		debouncedSearch,
+		filterValues ?? [],
+	);
 
 	const { handleEdit, handleNewAlert, handleRowClick, handleRowClickNewTab } =
 		useAlertRulesHandlers(allRules.length);
@@ -48,51 +45,6 @@ function ListAlertRules(): JSX.Element {
 		void setFilterValues(null);
 		clearSearch();
 	}, [setFilterValues, clearSearch]);
-
-	const handleStateClick = useCallback(
-		(state: string, event: StatCardClickEvent): void => {
-			const filterKey = `state:${state}`;
-			void setFilterValues((prev: string[]) => {
-				const current = prev ?? [];
-				if (event.exclusive) {
-					const isOnlyFilter = current.length === 1 && current[0] === filterKey;
-					return isOnlyFilter ? null : [filterKey];
-				}
-				if (current.includes(filterKey)) {
-					const next = current.filter((v: string) => v !== filterKey);
-					return next.length ? next : null;
-				}
-				return [...current, filterKey];
-			});
-		},
-		[setFilterValues],
-	);
-
-	const handleSeverityClick = useCallback(
-		(severity: string, event: StatCardClickEvent): void => {
-			const filterKey = `severity:${severity}`;
-			void setFilterValues((prev: string[]) => {
-				const current = prev ?? [];
-				if (event.exclusive) {
-					const isOnlyFilter = current.length === 1 && current[0] === filterKey;
-					return isOnlyFilter ? null : [filterKey];
-				}
-				if (current.includes(filterKey)) {
-					const next = current.filter((v: string) => v !== filterKey);
-					return next.length ? next : null;
-				}
-				return [...current, filterKey];
-			});
-		},
-		[setFilterValues],
-	);
-
-	const handleTotalClick = useCallback(
-		(_event: StatCardClickEvent): void => {
-			void setFilterValues(null);
-		},
-		[setFilterValues],
-	);
 
 	const columns = useMemo(
 		() => getAlertRuleColumns(formatTimezoneAdjustedTimestamp),
@@ -130,20 +82,13 @@ function ListAlertRules(): JSX.Element {
 		!isFetching &&
 		filteredRules.length === 0 &&
 		hasActiveFilters &&
-		stats.total > 0;
-	const isEmptyNoRules = !isFetching && !isError && stats.total === 0;
+		allRules.length > 0;
+	const isEmptyNoRules = !isFetching && !isError && allRules.length === 0;
 
 	return (
 		<div className={styles.container}>
 			{!isEmptyNoRules && (
 				<div className={styles.header}>
-					<StatsRow
-						stats={stats}
-						selectedFilters={filterValues ?? []}
-						onStateClick={handleStateClick}
-						onSeverityClick={handleSeverityClick}
-						onTotalClick={handleTotalClick}
-					/>
 					<div className={styles.refreshRow}>
 						<ColumnSelector columns={columns} storageKey="alert-rules-columns" />
 						{addNewAlert && (

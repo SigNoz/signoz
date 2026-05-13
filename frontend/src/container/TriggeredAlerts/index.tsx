@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { ComboboxSimple, ComboboxSimpleItem } from '@signozhq/ui/combobox';
-import type { StatCardClickEvent } from 'components/Alerts';
 import { NoResultsEmptyState } from 'components/Alerts';
 import type { FilterValue } from 'components/Alerts';
 import TanStackTable from 'components/TanStackTableView';
@@ -11,7 +10,7 @@ import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import { useTimezone } from 'providers/Timezone';
 
-import { EmptyState, ExpandedAlertsTable, StatsRow } from './components';
+import { EmptyState, ExpandedAlertsTable } from './components';
 
 import {
 	TRIGGERED_ALERTS_PARAMS,
@@ -69,7 +68,7 @@ function TriggeredAlerts(): JSX.Element {
 		isFetching,
 		isError,
 		isGrouped,
-		stats,
+		allAlerts,
 	} = useTriggeredAlertsData(
 		selectedFilter,
 		selectedGroupBy,
@@ -82,40 +81,6 @@ function TriggeredAlerts(): JSX.Element {
 			if (Array.isArray(values)) {
 				void setFilterValues(values.length ? values : null);
 			}
-		},
-		[setFilterValues],
-	);
-
-	const handleSeverityClick = useCallback(
-		(severity: string, event: StatCardClickEvent): void => {
-			const filterKey = `severity:${severity}`;
-			void setFilterValues((prev: string[]) => {
-				const current = prev ?? [];
-				if (event.exclusive) {
-					// Alt+click: toggle exclusive selection
-					const isOnlyFilter = current.length === 1 && current[0] === filterKey;
-					return isOnlyFilter ? null : [filterKey];
-				}
-				// Normal click: toggle filter
-				if (current.includes(filterKey)) {
-					const next = current.filter((v: string) => v !== filterKey);
-					return next.length ? next : null;
-				}
-				return [...current, filterKey];
-			});
-		},
-		[setFilterValues],
-	);
-
-	const handleTotalClick = useCallback(
-		(_event: StatCardClickEvent): void => {
-			void setFilterValues((prev: string[]) => {
-				const current = prev ?? [];
-				const withoutSeverity = current.filter(
-					(v: string) => !v.startsWith('severity:'),
-				);
-				return withoutSeverity.length ? withoutSeverity : null;
-			});
 		},
 		[setFilterValues],
 	);
@@ -151,8 +116,8 @@ function TriggeredAlerts(): JSX.Element {
 		!isFetching &&
 		filteredAlerts.length === 0 &&
 		hasActiveFilters &&
-		stats.total > 0;
-	const isEmptyNoAlerts = !isFetching && !isError && stats.total === 0;
+		allAlerts.length > 0;
+	const isEmptyNoAlerts = !isFetching && !isError && allAlerts.length === 0;
 
 	const handleClearFilters = useCallback((): void => {
 		void setFilterValues(null);
@@ -161,15 +126,6 @@ function TriggeredAlerts(): JSX.Element {
 
 	return (
 		<div className={styles.container}>
-			<div className={styles.header}>
-				<StatsRow
-					stats={stats}
-					selectedFilters={filterValues ?? []}
-					onSeverityClick={handleSeverityClick}
-					onTotalClick={handleTotalClick}
-				/>
-			</div>
-
 			<div className={styles.filtersRow}>
 				<Input
 					className={styles.searchInput}

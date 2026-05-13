@@ -5,15 +5,14 @@ import { searchByLabels } from 'components/Alerts';
 import type { SortState } from 'components/TanStackTableView/types';
 import { isUndefined } from 'lodash-es';
 
-import type { AlertRule, AlertRuleStats } from './types';
-import { computeStats, filterRulesByFilters, sortRules } from './utils';
+import type { AlertRule } from './types';
+import { filterRulesByFilters, sortRules } from './utils';
 
 interface UseAlertRulesDataReturn {
 	allRules: AlertRule[];
 	filteredRules: AlertRule[];
 	isFetching: boolean;
 	isError: boolean;
-	stats: AlertRuleStats;
 }
 
 export function useAlertRulesData(
@@ -39,8 +38,6 @@ export function useAlertRulesData(
 		}
 	}, [rulesResponse.data, allRules.length]);
 
-	const stats = useMemo(() => computeStats(allRules), [allRules]);
-
 	const filteredRules = useMemo(() => {
 		const filtered = filterRulesByFilters(allRules, filters);
 		const searched = searchByLabels(filtered, searchText, (r) => r.alert ?? '');
@@ -52,6 +49,5 @@ export function useAlertRulesData(
 		filteredRules,
 		isFetching: rulesResponse.isFetching,
 		isError: rulesResponse.isError,
-		stats,
 	};
 }

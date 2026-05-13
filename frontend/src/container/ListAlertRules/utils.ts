@@ -1,10 +1,10 @@
 import logEvent from 'api/common/logEvent';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { computeSeverityStats, sortByColumn } from 'components/Alerts';
+import { sortByColumn } from 'components/Alerts';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
-import type { AlertRule, AlertRuleStats } from './types';
+import type { AlertRule } from './types';
 
 export const ALERT_RULES_REFRESH_INTERVAL = 30_000;
 
@@ -34,26 +34,6 @@ export const alertActionLogEvent = (
 		action: actionValue,
 	});
 };
-
-export function computeStats(rules: AlertRule[]): AlertRuleStats {
-	const base = computeSeverityStats(rules);
-	const byState: Record<string, number> = {};
-
-	// Initialize standard states
-	byState['firing'] = 0;
-	byState['inactive'] = 0;
-	byState['disabled'] = 0;
-
-	rules.forEach((rule) => {
-		const state = rule.state?.toLowerCase() ?? 'unknown';
-		byState[state] = (byState[state] ?? 0) + 1;
-	});
-
-	return {
-		...base,
-		byState,
-	};
-}
 
 export function getAlertSortValue(
 	rule: AlertRule,
