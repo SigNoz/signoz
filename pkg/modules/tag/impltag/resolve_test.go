@@ -1,4 +1,4 @@
-package tagtypes_test
+package impltag
 
 import (
 	"context"
@@ -15,10 +15,12 @@ import (
 
 var testKind = coretypes.KindDashboard
 
-func TestResolve(t *testing.T) {
+func TestModule_Resolve(t *testing.T) {
 	t.Run("empty input does not hit store", func(t *testing.T) {
 		store := tagtypestest.NewStore()
-		toCreate, matched, err := tagtypes.Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, nil)
+		m := &module{store: store}
+
+		toCreate, matched, err := m.resolve(context.Background(), valuer.GenerateUUID(), testKind, nil)
 		require.NoError(t, err)
 		assert.Empty(t, toCreate)
 		assert.Empty(t, matched)
@@ -31,8 +33,9 @@ func TestResolve(t *testing.T) {
 		dbTag2 := tagtypes.NewTag(orgID, testKind, "Database", "redis")
 		store := tagtypestest.NewStore()
 		store.Tags = []*tagtypes.Tag{dbTag, dbTag2}
+		m := &module{store: store}
 
-		toCreate, matched, err := tagtypes.Resolve(context.Background(), store, orgID, testKind, []tagtypes.PostableTag{
+		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "team", Value: "events"},    // new
 			{Key: "DATABASE", Value: "REDIS"}, // case-only conflict
 			{Key: "Brand", Value: "New"},      // new
@@ -53,8 +56,9 @@ func TestResolve(t *testing.T) {
 	t.Run("dedupes inputs that map to the same lower(key)+lower(value)", func(t *testing.T) {
 		orgID := valuer.GenerateUUID()
 		store := tagtypestest.NewStore()
+		m := &module{store: store}
 
-		toCreate, matched, err := tagtypes.Resolve(context.Background(), store, orgID, testKind, []tagtypes.PostableTag{
+		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "Foo", Value: "Bar"},
 			{Key: "foo", Value: "bar"},
 			{Key: "FOO", Value: "BAR"},
@@ -72,8 +76,9 @@ func TestResolve(t *testing.T) {
 		dbTag := tagtypes.NewTag(orgID, testKind, "Team", "Pulse")
 		store := tagtypestest.NewStore()
 		store.Tags = []*tagtypes.Tag{dbTag}
+		m := &module{store: store}
 
-		toCreate, matched, err := tagtypes.Resolve(context.Background(), store, orgID, testKind, []tagtypes.PostableTag{
+		toCreate, matched, err := m.resolve(context.Background(), orgID, testKind, []tagtypes.PostableTag{
 			{Key: "team", Value: "PULSE"},
 		})
 		require.NoError(t, err)
@@ -86,7 +91,9 @@ func TestResolve(t *testing.T) {
 
 	t.Run("propagates validation error from any input", func(t *testing.T) {
 		store := tagtypestest.NewStore()
-		_, _, err := tagtypes.Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, []tagtypes.PostableTag{
+		m := &module{store: store}
+
+		_, _, err := m.resolve(context.Background(), valuer.GenerateUUID(), testKind, []tagtypes.PostableTag{
 			{Key: "team", Value: "pulse"},
 			{Key: "", Value: "x"},
 		})
@@ -95,7 +102,9 @@ func TestResolve(t *testing.T) {
 
 	t.Run("propagates regex validation error", func(t *testing.T) {
 		store := tagtypestest.NewStore()
-		_, _, err := tagtypes.Resolve(context.Background(), store, valuer.GenerateUUID(), testKind, []tagtypes.PostableTag{
+		m := &module{store: store}
+
+		_, _, err := m.resolve(context.Background(), valuer.GenerateUUID(), testKind, []tagtypes.PostableTag{
 			{Key: "team!eng", Value: "pulse"},
 		})
 		require.Error(t, err)

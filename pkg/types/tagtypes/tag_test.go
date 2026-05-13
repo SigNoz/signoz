@@ -56,7 +56,7 @@ func TestValidatePostableTag(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotKey, gotValue, err := validatePostableTag(tc.input)
+			gotKey, gotValue, err := ValidatePostableTag(tc.input)
 			if tc.wantError {
 				require.Error(t, err)
 				return
