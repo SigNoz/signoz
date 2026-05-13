@@ -68,9 +68,8 @@ interface PlannedDowntimeFormData {
 	name: string;
 	startTime: dayjs.Dayjs | string;
 	endTime: dayjs.Dayjs | string;
-	recurrence?: RuletypesRecurrenceDTO | null;
+	recurrence?: RuletypesRecurrenceDTO;
 	alertRules: DefaultOptionType[];
-	recurrenceSelect?: RuletypesRecurrenceDTO;
 	timezone?: string;
 }
 
@@ -138,35 +137,40 @@ export function PlannedDowntimeForm(
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
 
-	const saveHanlder = useCallback(
+	const saveHandler = useCallback(
 		async (values: PlannedDowntimeFormData) => {
 			const shouldKeepLocalTime = !isEditMode;
+			const { recurrence } = values;
 			const data: RuletypesPostablePlannedMaintenanceDTO = {
 				alertIds: values.alertRules
 					.map((alert) => alert.value)
 					.filter((alert) => alert !== undefined) as string[],
 				name: values.name,
 				schedule: {
-					startTime: new Date(
-						handleTimeConversion(
-							values.startTime,
-							timezoneInitialValue,
-							values.timezone,
-							shouldKeepLocalTime,
-						),
-					),
-					timezone: values.timezone as string,
-					endTime: values.endTime
-						? new Date(
+                    // For recurring windows, `startTime` and `endTime` will be set in `recurrence` instead
+					startTime: recurrence
+						? undefined
+						: new Date(
 								handleTimeConversion(
-									values.endTime,
+									values.startTime,
 									timezoneInitialValue,
 									values.timezone,
 									shouldKeepLocalTime,
 								),
-							)
-						: undefined,
-					recurrence: values.recurrence as RuletypesRecurrenceDTO,
+							),
+					timezone: values.timezone as string,
+					endTime:
+						!recurrence && values.endTime
+							? new Date(
+									handleTimeConversion(
+										values.endTime,
+										timezoneInitialValue,
+										values.timezone,
+										shouldKeepLocalTime,
+									),
+								)
+							: undefined,
+					recurrence,
 				},
 			};
 
@@ -203,12 +207,14 @@ export function PlannedDowntimeForm(
 		],
 	);
 	const onFinish = async (values: PlannedDowntimeFormData): Promise<void> => {
+		const { recurrence } = values;
 		const recurrenceData =
-			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
+			!recurrence ||
+			recurrence.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
-						duration: values.recurrence?.duration
-							? `${values.recurrence?.duration}${durationUnit}`
+						duration: recurrence.duration
+							? `${recurrence.duration}${durationUnit}`
 							: undefined,
 						endTime: !isEmpty(values.endTime)
 							? handleTimeConversion(
@@ -224,24 +230,18 @@ export function PlannedDowntimeForm(
 							values.timezone,
 							!isEditMode,
 						),
-						repeatOn: !values.recurrence?.repeatOn?.length
-							? undefined
-							: values.recurrence?.repeatOn,
-						repeatType: values.recurrence?.repeatType,
+						repeatOn: recurrence.repeatOn?.length ? recurrence.repeatOn : undefined,
+						repeatType: recurrence.repeatType,
 					};
 
 		const payloadValues = {
 			...values,
 			recurrence: recurrenceData as RuletypesRecurrenceDTO | undefined,
 		};
-		await saveHanlder(payloadValues);
+		await saveHandler(payloadValues);
 	};
 
-	const formValidationRules = [
-		{
-			required: true,
-		},
-	];
+	const formValidationRules = [{ required: true }];
 
 	const handleOk = async (): Promise<void> => {
 		await form.validateFields().catch(() => {
