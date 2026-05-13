@@ -3178,7 +3178,7 @@ components:
       type: string
     InframonitoringtypesStatefulSetRecord:
       properties:
-        availablePods:
+        currentPods:
           type: integer
         desiredPods:
           type: integer
@@ -3218,7 +3218,7 @@ components:
       - statefulSetMemoryRequest
       - statefulSetMemoryLimit
       - desiredPods
-      - availablePods
+      - currentPods
       - podCountsByPhase
       - meta
       type: object
@@ -12602,7 +12602,7 @@ paths:
         the statefulset, plus average CPU/memory request and limit utilization (statefulSetCPURequest,
         statefulSetCPULimit, statefulSetMemoryRequest, statefulSetMemoryLimit). Each
         row also reports the latest known desiredPods (k8s.statefulset.desired_pods)
-        and availablePods (k8s.statefulset.current_pods) replica counts and per-group
+        and currentPods (k8s.statefulset.current_pods) replica counts and per-group
         podCountsByPhase ({ pending, running, succeeded, failed, unknown } from each
         pod''s latest k8s.pod.phase value). Each statefulset includes metadata attributes
         (k8s.statefulset.name, k8s.namespace.name, k8s.cluster.name). The response
@@ -12610,11 +12610,11 @@ paths:
         for custom groupBy keys; in both modes every row aggregates pods owned by
         statefulsets in the group. Supports filtering via a filter expression, custom
         groupBy, ordering by cpu / cpu_request / cpu_limit / memory / memory_request
-        / memory_limit / desired_pods / available_pods, and pagination via offset/limit.
+        / memory_limit / desired_pods / current_pods, and pagination via offset/limit.
         Also reports missing required metrics and whether the requested time range
         falls before the data retention boundary. Numeric metric fields (statefulSetCPU,
         statefulSetCPURequest, statefulSetCPULimit, statefulSetMemory, statefulSetMemoryRequest,
-        statefulSetMemoryLimit, desiredPods, availablePods) return -1 as a sentinel
+        statefulSetMemoryLimit, desiredPods, currentPods) return -1 as a sentinel
         when no data is available for that field.'
       operationId: ListStatefulSets
       requestBody:

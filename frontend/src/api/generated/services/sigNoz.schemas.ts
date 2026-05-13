@@ -5269,7 +5269,7 @@ export interface InframonitoringtypesStatefulSetRecordDTO {
 	/**
 	 * @type integer
 	 */
-	availablePods: number;
+	currentPods: number;
 	/**
 	 * @type integer
 	 */

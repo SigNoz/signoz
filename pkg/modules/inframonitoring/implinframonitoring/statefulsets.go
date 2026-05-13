@@ -36,7 +36,7 @@ func buildStatefulSetRecords(
 			StatefulSetMemoryRequest: -1,
 			StatefulSetMemoryLimit:   -1,
 			DesiredPods:              -1,
-			AvailablePods:            -1,
+			CurrentPods:              -1,
 			Meta:                     map[string]string{},
 		}
 
@@ -63,7 +63,7 @@ func buildStatefulSetRecords(
 				record.DesiredPods = int(v)
 			}
 			if v, exists := metrics["I"]; exists {
-				record.AvailablePods = int(v)
+				record.CurrentPods = int(v)
 			}
 		}
 
