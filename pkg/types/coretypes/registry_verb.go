@@ -10,6 +10,7 @@ var Verbs = []Verb{
 	VerbList,
 	VerbAssignee,
 	VerbAttach,
+	VerbDetach,
 }
 
 var (

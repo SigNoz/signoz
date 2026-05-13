@@ -1840,6 +1840,7 @@ export enum AuthtypesRelationDTO {
 	list = 'list',
 	assignee = 'assignee',
 	attach = 'attach',
+	detach = 'detach',
 }
 export interface AuthtypesRoleDTO {
 	/**

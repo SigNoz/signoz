@@ -449,6 +449,7 @@ components:
       - list
       - assignee
       - attach
+      - detach
       type: string
     AuthtypesRole:
       properties:
