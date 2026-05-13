@@ -12,6 +12,7 @@ import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
 import {
@@ -29,6 +30,7 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
+import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -41,6 +43,12 @@ import {
 	panelTypeToExplorerView,
 } from 'utils/explorerUtils';
 
+import {
+	logsAddFilterAction,
+	logsChangeViewAction,
+	logsRunQueryAction,
+	logsSaveViewAction,
+} from './aiActions';
 import { ExplorerViews } from './utils';
 
 import './LogsExplorer.styles.scss';
@@ -67,9 +75,17 @@ function LogsExplorer(): JSX.Element {
 		return true;
 	});
 
-	const { handleRunQuery, handleSetConfig } = useQueryBuilder();
+	const {
+		handleRunQuery,
+		handleSetConfig,
+		currentQuery,
+		handleSetQueryData,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+
+	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
 	const listQueryKeyRef = useRef<any>();
 
@@ -118,6 +134,45 @@ function LogsExplorer(): JSX.Element {
 		},
 		[handleSetConfig, handleExplorerTabChange, setSelectedView],
 	);
+
+	// ─── AI Assistant page actions (only when license feature is on) ───────────
+	const aiActions = useMemo(
+		() =>
+			isAIAssistantEnabled
+				? [
+						logsRunQueryAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						logsAddFilterAction({
+							currentQuery,
+							handleSetQueryData,
+							redirectWithQueryBuilderData,
+						}),
+						logsChangeViewAction({
+							onChangeView: (view) => handleChangeSelectedView(view as ExplorerViews),
+						}),
+						logsSaveViewAction({
+							// POC stub — logs a save request; wire to real API when available
+							onSaveView: async (name) => {
+								// eslint-disable-next-line no-console
+								console.info('[AI Assistant] Save view requested:', name);
+							},
+						}),
+					]
+				: [],
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[
+			isAIAssistantEnabled,
+			currentQuery,
+			handleSetQueryData,
+			redirectWithQueryBuilderData,
+			handleChangeSelectedView,
+		],
+	);
+	usePageActions('logs-explorer', aiActions);
+	// ───────────────────────────────────────────────────────────────────────────
 
 	const handleFilterVisibilityChange = (): void => {
 		setLocalStorageApi(

@@ -10,8 +10,11 @@ import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
-import { useTraceContext } from '../../contexts/TraceContext';
-import { AGGREGATIONS } from '../../utils/aggregations';
+import { useTraceStore } from '../../stores/traceStore';
+import {
+	AGGREGATIONS,
+	getAggregationMap as findAggregationMap,
+} from '../../utils/aggregations';
 
 import './AnalyticsPanel.styles.scss';
 
@@ -29,16 +32,23 @@ function AnalyticsPanel({
 	isOpen,
 	onClose,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const { getAggregationMap } = useTraceContext();
+	const aggregations = useTraceStore((s) => s.aggregations);
+	const colorByFieldName = useTraceStore((s) => s.colorByField.name);
 
 	const execTimePct = useMemo(
-		() => getAggregationMap(AGGREGATIONS.EXEC_TIME_PCT),
-		[getAggregationMap],
+		() =>
+			findAggregationMap(
+				aggregations,
+				AGGREGATIONS.EXEC_TIME_PCT,
+				colorByFieldName,
+			),
+		[aggregations, colorByFieldName],
 	);
 
 	const spanCounts = useMemo(
-		() => getAggregationMap(AGGREGATIONS.SPAN_COUNT),
-		[getAggregationMap],
+		() =>
+			findAggregationMap(aggregations, AGGREGATIONS.SPAN_COUNT, colorByFieldName),
+		[aggregations, colorByFieldName],
 	);
 
 	const execTimeRows = useMemo(() => {

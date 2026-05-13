@@ -2,11 +2,10 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { TraceProvider } from '../../../../contexts/TraceContext';
 import { SpanDuration } from '../Success';
 
 const renderWithTraceProvider: typeof render = (ui, options) =>
-	render(<TraceProvider aggregations={undefined}>{ui}</TraceProvider>, options);
+	render(ui, options);
 
 // Constants to avoid string duplication
 const SPAN_DURATION_TEXT = '1.16 ms';
