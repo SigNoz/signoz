@@ -51,7 +51,7 @@ import {
 	GitCommitVertical,
 	GripVertical,
 	LampDesk,
-	Logs,
+	List,
 	MousePointerClick,
 	PackagePlus,
 	ScrollText,
@@ -1062,7 +1062,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 															setIsReorderShortcutNavItemsModalOpen(true);
 														}}
 													>
-														<Logs size={16} />
+														<List size={16} />
 													</div>
 												</Tooltip>
 											)}
