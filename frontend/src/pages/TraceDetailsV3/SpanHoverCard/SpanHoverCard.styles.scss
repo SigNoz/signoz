@@ -1,26 +1,23 @@
-.span-hover-card-wrapper {
-	display: flex;
-	width: 100%;
-	height: 100%;
-	min-width: 0;
+// Invisible 1 px anchor mounted inside the scrollable waterfall body. Its
+// `top` is updated by the parent to track the hovered row's Y; its `left`
+// is the sidebar/timeline boundary so the popover always opens at the same
+// X regardless of which row is hovered.
+.span-hover-card-anchor {
+	position: absolute;
+	width: 1px;
+	pointer-events: none;
 }
 
 .span-hover-card-popover {
-	// Event-dot tooltip is rendered while the SpanDetailsPanel may be docked as
-	// a FloatingPanel (z-index 999); bump above the default tooltip z-index 50.
+	// Hover card may be rendered while the SpanDetailsPanel is docked as
+	// a FloatingPanel (z-index 999); bump above the default tooltip z-index.
 	--tooltip-z-index: 1000;
-
-	.ant-popover-inner {
-		background-color: var(--l1-background);
-		padding: 8px 12px;
-		border-radius: 4px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-		border: 1px solid var(--l2-border);
-	}
-
-	.ant-popover-inner-content {
-		padding: 0;
-	}
+	background-color: var(--l1-background);
+	padding: 8px 12px;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--l2-border);
+	color: var(--l1-foreground);
 }
 
 // Flamegraph tooltip — rendered as a portal, uses same semantic tokens.

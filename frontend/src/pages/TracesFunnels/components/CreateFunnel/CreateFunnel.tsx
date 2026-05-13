@@ -10,7 +10,7 @@ import ROUTES from 'constants/routes';
 import { useCreateFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Check, X } from 'lucide-react';
+import { Check, X } from '@signozhq/icons';
 
 import '../RenameFunnel/RenameFunnel.styles.scss';
 

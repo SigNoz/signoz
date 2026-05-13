@@ -1,3 +1,6 @@
+// Define the color variable (referencing the theme for consistency)
+$modal-icon-color: #d89614; // Matches themeColors.gamboge
+
 .logs-pipelines-empty-state-centered-container {
 	display: flex;
 	flex-direction: column;
@@ -9,4 +12,13 @@
 	width: min(90vw, 640px);
 	height: min(68vw, 480px);
 	margin-bottom: 1em;
+}
+
+.modal-icon-container {
+	margin-inline-end: 12px;
+	// ant design uses svg icons with currentColor, so we can change the color of the icon by changing the text color of the container
+	color: $modal-icon-color;
+	// ant design add margin to the title of the modal, so we need to add it to the icon container to align the icon with the title.
+	margin-block-end: 0.67em;
+	margin-block-start: 0.67em;
 }

@@ -2,7 +2,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { useNotifications } from 'hooks/useNotifications';
-import { Copy } from 'lucide-react';
+import { Copy } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 

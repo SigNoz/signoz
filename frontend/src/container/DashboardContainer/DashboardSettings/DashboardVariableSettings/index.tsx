@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { GripVertical, PenLine, Plus, Trash2 } from '@signozhq/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -11,7 +11,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, RowProps, Space, Table } from 'antd';
+import { Button, Modal, Row, RowProps, Space, Table, Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
@@ -19,7 +19,6 @@ import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVari
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
-import { PenLine, Trash2 } from 'lucide-react';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -59,11 +58,13 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 						key: 'name-with-drag',
 						children: (
 							<div className="variable-name-drag">
-								<HolderOutlined
-									ref={setActivatorNodeRef}
+								<GripVertical
+									ref={setActivatorNodeRef as unknown as React.Ref<SVGSVGElement>}
 									style={{ touchAction: 'none', cursor: 'move' }}
+									size="md"
 									{...listeners}
 								/>
+
 								{child}
 							</div>
 						),
@@ -438,7 +439,9 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> Add Variable
+							<Flex align="center" justify="center" gap={4}>
+								<Plus size="md" /> Add Variable
+							</Flex>
 						</Button>
 					</Row>
 
