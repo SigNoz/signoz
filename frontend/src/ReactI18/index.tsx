@@ -21,7 +21,7 @@ i18n
 			escapeValue: false, // not needed for react as it escapes by default
 		},
 		backend: {
-			loadPath: (language, namespace) => {
+			loadPath: (language: string, namespace: string): string => {
 				const ns = namespace[0];
 				const pathkey = `/${language}/${ns}`;
 				const hash = cacheBursting[pathkey as keyof typeof cacheBursting] || '';

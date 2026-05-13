@@ -28,14 +28,14 @@ export interface ICreateAlertContextProps {
 	isCreatingAlertRule: boolean;
 	createAlertRule: UseMutateFunction<
 		CreateRule201,
-		ErrorType<unknown>,
+		ErrorType<RenderErrorResponseDTO>,
 		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
 	isTestingAlertRule: boolean;
 	testAlertRule: UseMutateFunction<
 		TestRule200,
-		ErrorType<unknown>,
+		ErrorType<RenderErrorResponseDTO>,
 		{ data: BodyType<RuletypesPostableRuleDTO> },
 		unknown
 	>;
