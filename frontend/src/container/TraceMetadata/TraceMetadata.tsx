@@ -106,7 +106,7 @@ function TraceMetadata(props: ITraceMetadataProps): JSX.Element {
 							className="new-view-btn"
 							onClick={handleSwitchToNewView}
 						>
-							New view
+							Try new experience
 						</Button>
 					)}
 				</div>

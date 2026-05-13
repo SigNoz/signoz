@@ -69,7 +69,7 @@ class BuilderQuery:
 class TraceOperatorQuery:
     name: str
     expression: str
-    return_spans_from: str
+    return_spans_from: str | None = None
     limit: int | None = None
     order: list[OrderBy] | None = None
 
@@ -77,8 +77,9 @@ class TraceOperatorQuery:
         spec: dict[str, Any] = {
             "name": self.name,
             "expression": self.expression,
-            "returnSpansFrom": self.return_spans_from,
         }
+        if self.return_spans_from is not None:
+            spec["returnSpansFrom"] = self.return_spans_from
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:

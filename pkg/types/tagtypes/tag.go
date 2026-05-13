@@ -1,7 +1,6 @@
 package tagtypes
 
 import (
-	"context"
 	"regexp"
 	"strings"
 	"time"
@@ -85,59 +84,11 @@ func NewTag(orgID valuer.UUID, kind coretypes.Kind, key, value string) *Tag {
 	}
 }
 
-// Resolve canonicalizes a batch of user-supplied (key, value) tag pairs against
-// the existing tags for an org. Lookup is case-insensitive on both key and
-// value (matching the storage uniqueness rule); when an existing row matches,
-// its display casing is reused. Inputs are deduped on (LOWER(key), LOWER(value));
-// the first input's casing wins on collisions. Returns:
-//   - toCreate: new Tag rows the caller should insert (with pre-generated IDs)
-//   - matched: existing rows the caller's input already pointed to. They
-//     already carry authoritative IDs from the store.
-func Resolve(ctx context.Context, store Store, orgID valuer.UUID, kind coretypes.Kind, postable []PostableTag) ([]*Tag, []*Tag, error) {
-	if len(postable) == 0 {
-		return nil, nil, nil
-	}
-
-	existing, err := store.List(ctx, orgID, kind)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	lowercaseTagsMap := make(map[string]*Tag, len(existing))
-	for _, t := range existing {
-		mapKey := strings.ToLower(t.Key) + "\x00" + strings.ToLower(t.Value)
-		lowercaseTagsMap[mapKey] = t
-	}
-
-	seenInRequestAlready := make(map[string]struct{}, len(postable)) // postable can have the same tag multiple times
-	toCreate := make([]*Tag, 0)
-	matched := make([]*Tag, 0)
-
-	for _, p := range postable {
-		key, value, err := validatePostableTag(p)
-		if err != nil {
-			return nil, nil, err
-		}
-		lookup := strings.ToLower(key) + "\x00" + strings.ToLower(value)
-		if _, dup := seenInRequestAlready[lookup]; dup {
-			continue
-		}
-		seenInRequestAlready[lookup] = struct{}{}
-
-		if existingTag, ok := lowercaseTagsMap[lookup]; ok {
-			matched = append(matched, existingTag)
-			continue
-		}
-		toCreate = append(toCreate, NewTag(orgID, kind, key, value))
-	}
-
-	return toCreate, matched, nil
-}
-
-// Entity-specific reserved-key checks (e.g. dashboard column names that would
-// collide with the list-query DSL) are the caller's responsibility — perform
-// them before calling into the tag module.
-func validatePostableTag(p PostableTag) (string, string, error) {
+// ValidatePostableTag trims and validates a user-supplied (key, value) pair.
+// Returns the cleaned values on success. Entity-specific reserved-key checks
+// (e.g. dashboard column names that would collide with the list-query DSL) are
+// the caller's responsibility — perform them before calling into the tag module.
+func ValidatePostableTag(p PostableTag) (string, string, error) {
 	key := strings.TrimSpace(p.Key)
 	value := strings.TrimSpace(p.Value)
 	if key == "" {
