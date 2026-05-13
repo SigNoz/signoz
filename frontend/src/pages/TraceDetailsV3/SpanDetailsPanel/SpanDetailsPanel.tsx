@@ -18,7 +18,7 @@ import {
 	ChartColumnBig,
 	Dock,
 	Link2,
-	Logs,
+	List,
 	PanelBottom,
 	ScrollText,
 	Timer,
@@ -393,7 +393,7 @@ function SpanDetailsContent({
 							<ScrollText size={14} /> Events ({selectedSpan.events?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
-							<Logs size={14} /> Logs
+							<List size={14} /> Logs
 						</TabsTrigger>
 						{infraMetadata && (
 							<TabsTrigger value="metrics" variant="secondary">
