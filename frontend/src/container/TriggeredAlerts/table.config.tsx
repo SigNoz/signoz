@@ -1,12 +1,12 @@
 import { BellDot, ChevronDown, ChevronRight } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { SEVERITY_BADGE_COLORS } from 'components/Alerts';
+import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
 import TanStackTable from 'components/TanStackTableView';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import AlertStatusTag from './components/AlertStatusTag';
-import { LabelColumn } from 'components/Alerts';
+import LabelColumn from 'components/Alerts/LabelColumn';
 import styles from './TriggeredAlerts.module.scss';
 import type { Alert, GroupedAlert } from './types';
 

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
 import { useGetAlerts } from 'api/generated/services/alerts';
-import { filterByLabels, searchByLabels } from 'components/Alerts';
-import type { FilterValue } from 'components/Alerts';
+import type { FilterValue } from 'components/Alerts/types';
+import { filterByLabels, searchByLabels } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 import { groupBy as lodashGroupBy, isUndefined } from 'lodash-es';
 

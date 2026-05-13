@@ -1,5 +1,6 @@
 import { Badge, BadgeColor } from '@signozhq/ui/badge';
-import { LabelColumn, SEVERITY_BADGE_COLORS } from 'components/Alerts';
+import { SEVERITY_BADGE_COLORS } from 'components/Alerts/constants';
+import LabelColumn from 'components/Alerts/LabelColumn';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

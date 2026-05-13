@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import type { FilterValue } from 'components/Alerts/types';
 import {
-	sortByColumn,
-	searchByLabels,
 	filterByLabels,
-} from 'components/Alerts';
-import type { FilterValue } from 'components/Alerts';
+	searchByLabels,
+	sortByColumn,
+} from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 
 import { getElapsedMs } from 'utils/timeUtils';

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
 import { useListRules } from 'api/generated/services/rules';
-import { searchByLabels } from 'components/Alerts';
+import { searchByLabels } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 import { isUndefined } from 'lodash-es';
 

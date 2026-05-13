@@ -1,6 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { sortByColumn } from 'components/Alerts';
+import { sortByColumn } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
