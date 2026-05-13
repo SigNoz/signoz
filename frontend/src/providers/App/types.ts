@@ -9,6 +9,7 @@ import {
 import { Organization } from 'types/api/user/getOrganization';
 import { UserResponse as User } from 'types/api/user/getUser';
 import { Info } from 'types/api/v1/version/get';
+import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
 
 export interface IAppContext {
 	user: IUser;
@@ -17,14 +18,17 @@ export interface IAppContext {
 	featureFlags: FeatureFlags[] | null;
 	orgPreferences: OrgPreference[] | null;
 	userPreferences: UserPreference[] | null;
+	hostsData: GetHosts200 | null;
 	isLoggedIn: boolean;
 	org: Organization[] | null;
 	isFetchingUser: boolean;
 	isFetchingActiveLicense: boolean;
+	isFetchingHosts: boolean;
 	isFetchingFeatureFlags: boolean;
 	isFetchingOrgPreferences: boolean;
 	userFetchError: unknown;
 	activeLicenseFetchError: APIError | null;
+	hostsFetchError: unknown;
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
 	changelog: ChangelogSchema | null;

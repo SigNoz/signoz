@@ -1,0 +1,84 @@
+.thread {
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	padding: 16px 0;
+	gap: 14px;
+}
+
+.message {
+	display: flex;
+	padding: 0 16px;
+
+	&.compact {
+		padding: 0 12px;
+	}
+}
+
+.user {
+	justify-content: flex-end;
+}
+
+.assistant {
+	justify-content: flex-start;
+}
+
+.bubble {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	// `width: 100%` (capped by per-role max-width below) forces the bubble
+	// to fill its allotted slot rather than collapsing to the longest line —
+	// otherwise the lines' percent widths cascade into a tiny bubble.
+	width: 100%;
+	border-radius: var(--radius-2);
+	padding: 12px 14px;
+
+	&.user {
+		// Narrower than the assistant bubble so the alternating chat-thread
+		// asymmetry is preserved — but wider than the previous 80% so the
+		// shimmer lines have room to read as a real-looking message.
+		max-width: 75%;
+		// Subtle primary tint so the right-side bubble reads as the user's
+		// message without committing to the full saturated brand color.
+		background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+		border-bottom-right-radius: var(--radius-2);
+		color: var(--l1-foreground);
+	}
+
+	&.assistant {
+		max-width: 95%;
+		background: var(--l2-background);
+		border-bottom-left-radius: var(--radius-2);
+	}
+}
+
+.line {
+	height: 9px;
+	border-radius: 3px;
+	position: relative;
+	overflow: hidden;
+	background: color-mix(in srgb, var(--l1-foreground) 10%, transparent);
+
+	// Shimmer sweep — same pattern used by HistorySidebar's skeleton rows.
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in srgb, var(--l1-foreground) 10%, transparent),
+			transparent
+		);
+		animation: shimmer 1.15s ease-in-out infinite;
+	}
+}
+
+@keyframes shimmer {
+	100% {
+		transform: translateX(100%);
+	}
+}
