@@ -33,6 +33,7 @@ export function useInfiniteEntityLogs({
 } {
 	const reactQueryKey = useMemo(
 		() => [
+			// TODO: remove AUTO_REFRESH_QUERY when migrating to date time selection v3
 			REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
 			queryKey,
 			timeRange.startTime,

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import {
 	GetMetricQueryRange,
@@ -70,7 +71,14 @@ export function useEntityMetrics<T>({
 
 	const queries = useQueries(
 		queryPayloads.map((payload, index) => ({
-			queryKey: [queryKey, payload, ENTITY_VERSION_V5, category],
+			// TODO: remove AUTO_REFRESH_QUERY when migrating to date time selection v3
+			queryKey: [
+				REACT_QUERY_KEY.AUTO_REFRESH_QUERY,
+				queryKey,
+				payload,
+				ENTITY_VERSION_V5,
+				category,
+			],
 			queryFn: ({
 				signal,
 			}: QueryFunctionContext): Promise<
