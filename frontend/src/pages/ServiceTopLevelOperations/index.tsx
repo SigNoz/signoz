@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
-import { SyncOutlined } from '@ant-design/icons';
+import { Histogram, RefreshCw } from '@signozhq/icons';
 import { Alert, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
@@ -11,7 +11,6 @@ import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { BarChart2 } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
@@ -98,7 +97,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 				<Link to={ROUTES.APPLICATION}>
 					<span className="breadcrumb">
 						{' '}
-						<BarChart2 size={12} /> services{' '}
+						<Histogram size={12} /> services{' '}
 					</span>
 				</Link>
 				<div className="divider">/</div>
@@ -114,7 +113,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			{isLoading && (
 				<div className="loading-top-level-operations">
 					<Typography.Title level={5}>
-						<SyncOutlined spin /> Loading ...
+						<RefreshCw className="animate-spin" size="sm" /> Loading ...
 					</Typography.Title>
 				</div>
 			)}

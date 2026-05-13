@@ -6,7 +6,7 @@ import { Form, Select } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { CloudAccount } from 'container/Integrations/types';
-import { Save } from 'lucide-react';
+import { Save } from '@signozhq/icons';
 
 import { useAccountSettingsModal } from '../../../../../hooks/integration/azure/useAccountSettingsModal';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';

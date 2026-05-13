@@ -1,5 +1,5 @@
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
-import { CircleAlert } from 'lucide-react';
+import { CircleAlert } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
 import './AuthError.styles.scss';

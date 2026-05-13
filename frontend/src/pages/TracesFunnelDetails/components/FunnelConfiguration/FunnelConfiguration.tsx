@@ -3,7 +3,7 @@ import { Button, Divider, Tooltip } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useFunnelConfiguration from 'hooks/TracesFunnels/useFunnelConfiguration';
-import { PencilLine } from 'lucide-react';
+import { PencilLine } from '@signozhq/icons';
 import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/FunnelItemPopover';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';

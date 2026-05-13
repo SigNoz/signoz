@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { SolidInfoCircle } from '@signozhq/icons';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { Card } from 'container/GridCardLayout/styles';
@@ -50,7 +50,7 @@ function WidgetGraph({
 			</div>
 			{!isCancelled && queryResponse.error && (
 				<AlertIconContainer color="red" title={queryResponse.error.message}>
-					<InfoCircleOutlined />
+					<SolidInfoCircle size="md" />
 				</AlertIconContainer>
 			)}
 

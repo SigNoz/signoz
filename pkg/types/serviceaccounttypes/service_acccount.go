@@ -245,7 +245,6 @@ type Store interface {
 
 	// Service Account Role
 	CreateServiceAccountRole(context.Context, *ServiceAccountRole) error
-	DeleteServiceAccountRoles(context.Context, valuer.UUID) error
 	DeleteServiceAccountRole(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Service Account Factor API Key

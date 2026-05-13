@@ -5,7 +5,7 @@ import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
-import { CheckCircle2, HandPlatter } from 'lucide-react';
+import { CircleCheckBig, HandPlatter } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 
 import './WaitListFragment.styles.scss';
@@ -62,7 +62,7 @@ export default function WaitlistFragment({
 				loading={isSubmitting}
 				icon={
 					isSuccess ? (
-						<CheckCircle2 size={16} color={Color.BG_FOREST_500} />
+						<CircleCheckBig size={16} color={Color.BG_FOREST_500} />
 					) : (
 						<HandPlatter size={16} />
 					)

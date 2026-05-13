@@ -6,7 +6,7 @@ import path from 'path';
 // .env.local is written by tests/e2e/bootstrap/setup.py when the pytest
 // lifecycle brings the backend up locally; override=true so local-backend
 // coordinates win over any stale .env values. Subprocess-injected env
-// (e.g. when pytest shells out to `yarn test`) still takes priority —
+// (e.g. when pytest shells out to `pnpm test`) still takes priority —
 // dotenv doesn't touch vars that are already set in process.env.
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });

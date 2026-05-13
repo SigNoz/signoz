@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';
 import { useNotifications } from 'hooks/useNotifications';
-import { CreditCard, MessageSquareText, X } from 'lucide-react';
+import { CreditCard, MessageSquareText, X } from '@signozhq/icons';
 import { SuccessResponseV2 } from 'types/api';
 import { CheckoutSuccessPayloadProps } from 'types/api/billing/checkout';
 import APIError from 'types/api/error';

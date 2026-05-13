@@ -1,11 +1,3 @@
-import {
-	AlertFilled,
-	AlignLeftOutlined,
-	ApiFilled,
-	BarChartOutlined,
-	DashboardFilled,
-	SoundFilled,
-} from '@ant-design/icons';
 import { Typography } from '@signozhq/ui/typography';
 import Slack from 'container/SideNav/Slack';
 import store from 'store';
@@ -21,6 +13,14 @@ import railsPngUrl from '@/assets/Logos/rails.png';
 import rustPngUrl from '@/assets/Logos/rust.png';
 
 import { TGetStartedContentSection } from './types';
+import {
+	AlignLeft,
+	BellRing,
+	ChartBar,
+	LayoutDashboard,
+	Volume2,
+	Unplug,
+} from '@signozhq/icons';
 
 export const GetStartedContent = (): TGetStartedContentSection[] => {
 	const {
@@ -102,12 +102,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send metrics to SigNoz',
-					icon: <BarChartOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <ChartBar size="lg" />,
 					url: 'https://signoz.io/docs/userguide/send-metrics/',
 				},
 				{
 					title: 'Create and Manage Dashboards',
-					icon: <DashboardFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <LayoutDashboard size="lg" />,
 					url: 'https://signoz.io/docs/userguide/manage-dashboards-and-panels/',
 				},
 			],
@@ -117,12 +117,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Send your logs to SigNoz',
-					icon: <AlignLeftOutlined style={{ fontSize: '3.5rem' }} />,
+					icon: <AlignLeft size="lg" />,
 					url: 'https://signoz.io/docs/userguide/logs/',
 				},
 				{
 					title: 'Existing log collectors to SigNoz',
-					icon: <ApiFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <Unplug size="lg" />,
 					url: 'https://signoz.io/docs/userguide/fluentbit_to_signoz/',
 				},
 			],
@@ -132,12 +132,12 @@ export const GetStartedContent = (): TGetStartedContentSection[] => {
 			items: [
 				{
 					title: 'Create alert rules on metrics',
-					icon: <AlertFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <BellRing size="lg" />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/',
 				},
 				{
 					title: 'Configure alert notification channels',
-					icon: <SoundFilled style={{ fontSize: '3.5rem' }} />,
+					icon: <Volume2 size="lg" />,
 					url: 'https://signoz.io/docs/userguide/alerts-management/#setting-up-a-notification-channel',
 				},
 			],

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { Info } from 'lucide-react';
+import { Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../../context';
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../../context/constants';
