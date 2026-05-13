@@ -1,0 +1,161 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--l1-background);
+	color: var(--l1-foreground);
+	overflow: hidden;
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.closeIcon {
+	cursor: pointer;
+	color: var(--l2-foreground);
+
+	&:hover {
+		color: var(--l1-foreground);
+	}
+}
+
+.searchInput {
+	background-color: var(--l1-background);
+	height: 40px;
+	border-radius: 0;
+	border-left: none;
+	border-right: none;
+}
+
+.section {
+	display: flex;
+	flex-direction: column;
+}
+
+.sectionAdded {
+	max-height: 40%;
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.sectionOther {
+	flex: 1;
+	min-height: 0;
+}
+
+.sectionHeader {
+	color: var(--muted-foreground);
+	font-size: 11px;
+	font-weight: 500;
+	line-height: 18px;
+	letter-spacing: 0.88px;
+	text-transform: uppercase;
+	padding: 8px 12px;
+}
+
+.addedList {
+	overflow: hidden;
+}
+
+.otherList {
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+
+	// Ant Skeleton.Input rendered inside the loading state — override its
+	// hard-coded width.
+	:global(.ant-skeleton-input) {
+		width: 300px;
+		margin: 8px 12px;
+	}
+}
+
+.noValues {
+	padding: 8px;
+	text-align: center;
+	color: var(--l2-foreground);
+	font-size: 12px;
+}
+
+.limitHint {
+	padding: 8px 12px;
+	text-align: center;
+	color: var(--muted-foreground);
+	font-size: 11px;
+}
+
+.fieldItem {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 12px;
+	border-radius: 4px;
+	user-select: none;
+	font-size: 13px;
+
+	&:hover {
+		background-color: var(--l2-background);
+
+		.removeBtn,
+		.addBtn {
+			opacity: 1;
+		}
+	}
+}
+
+.dragHandle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-grow: 1;
+}
+
+.fieldKey {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.isDragEnabled {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.isDragDisabled {
+	padding: 6px 12px;
+}
+
+.otherFieldItem {
+	height: 32px;
+}
+
+.removeBtn,
+.addBtn {
+	padding: 4px 10px;
+	opacity: 0;
+	transition: opacity 0.15s ease-in-out;
+	flex-shrink: 0;
+}
+
+.footer {
+	display: flex;
+	gap: 12px;
+	padding: 12px;
+	border-top: 1px solid var(--l1-border);
+	justify-content: space-between;
+}

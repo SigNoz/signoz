@@ -211,9 +211,11 @@ describe('Span Click User Flows', () => {
 	const FIRST_SPAN_TEST_ID = 'cell-0-span-1';
 	const FIRST_SPAN_DURATION_TEST_ID = 'cell-1-span-1';
 	const SECOND_SPAN_TEST_ID = 'cell-0-span-2';
-	const SPAN_OVERVIEW_CLASS = '.span-overview';
-	const SPAN_DURATION_CLASS = '.span-duration';
-	const INTERESTED_SPAN_CLASS = 'interested-span';
+	// Class names mirror the camelCase classes in `Success.module.scss`; the css
+	// mock in `__mocks__/cssMock.ts` returns the property name itself.
+	const SPAN_OVERVIEW_CLASS = '.spanOverview';
+	const SPAN_DURATION_CLASS = '.spanDuration';
+	const INTERESTED_SPAN_CLASS = 'isInterested';
 	const SECOND_SPAN_DURATION_TEST_ID = 'cell-1-span-2';
 
 	beforeEach(() => {

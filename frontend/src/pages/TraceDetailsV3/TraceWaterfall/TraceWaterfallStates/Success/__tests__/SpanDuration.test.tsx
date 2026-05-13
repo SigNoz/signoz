@@ -7,13 +7,15 @@ import { SpanDuration } from '../Success';
 const renderWithTraceProvider: typeof render = (ui, options) =>
 	render(ui, options);
 
-// Constants to avoid string duplication
+// Constants to avoid string duplication. Class names mirror the camelCase
+// classes in `Success.module.scss`; the css mock in `__mocks__/cssMock.ts`
+// returns the property name itself, so `styles.spanDuration` === `'spanDuration'`.
 const SPAN_DURATION_TEXT = '1.16 ms';
-const SPAN_DURATION_CLASS = '.span-duration';
-const INTERESTED_SPAN_CLASS = 'interested-span';
-const HIGHLIGHTED_SPAN_CLASS = 'highlighted-span';
-const DIMMED_SPAN_CLASS = 'dimmed-span';
-const SELECTED_NON_MATCHING_SPAN_CLASS = 'selected-non-matching-span';
+const SPAN_DURATION_CLASS = '.spanDuration';
+const INTERESTED_SPAN_CLASS = 'isInterested';
+const HIGHLIGHTED_SPAN_CLASS = 'isHighlighted';
+const DIMMED_SPAN_CLASS = 'isDimmed';
+const SELECTED_NON_MATCHING_SPAN_CLASS = 'isSelectedNonMatching';
 
 jest.mock('components/TimelineV3/TimelineV3', () => ({
 	__esModule: true,

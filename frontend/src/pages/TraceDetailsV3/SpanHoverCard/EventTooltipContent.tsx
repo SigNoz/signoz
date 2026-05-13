@@ -1,8 +1,9 @@
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { Diamond } from '@signozhq/icons';
+import cx from 'classnames';
 import { toFixed } from 'utils/toFixed';
 
-import './EventTooltipContent.styles.scss';
+import styles from './EventTooltipContent.module.scss';
 
 export interface EventTooltipContentProps {
 	eventName: string;
@@ -20,25 +21,25 @@ export function EventTooltipContent({
 	const { time, timeUnitName } = convertTimeToRelevantUnit(timeOffsetMs);
 
 	return (
-		<div className="event-tooltip-content">
-			<div className="event-tooltip-content__header">
+		<div className={styles.root}>
+			<div className={styles.header}>
 				<Diamond size={10} />
 				<span>EVENT DETAILS</span>
 			</div>
-			<div className={`event-tooltip-content__name ${isError ? 'error' : ''}`}>
+			<div className={cx(styles.name, isError && styles.hasError)}>
 				{eventName}
 			</div>
-			<div className="event-tooltip-content__time">
+			<div className={styles.time}>
 				{toFixed(time, 2)} {timeUnitName} since span start
 			</div>
 			{Object.keys(attributeMap).length > 0 && (
 				<>
-					<div className="event-tooltip-content__divider" />
-					<div className="event-tooltip-content__attributes">
+					<div className={styles.divider} />
+					<div className={styles.attributes}>
 						{Object.entries(attributeMap).map(([key, value]) => (
-							<div key={key} className="event-tooltip-content__kv">
-								<span className="event-tooltip-content__key">{key}:</span>{' '}
-								<span className="event-tooltip-content__value">{value}</span>
+							<div key={key} className={styles.kv}>
+								<span className={styles.key}>{key}:</span>{' '}
+								<span className={styles.value}>{value}</span>
 							</div>
 						))}
 					</div>

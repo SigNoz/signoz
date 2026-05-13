@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from 'antd';
+import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
+
+import styles from './FieldsSettings.module.scss';
 
 interface OtherFieldsProps {
 	dataSource: DataSource;
@@ -50,9 +53,9 @@ function OtherFields({
 
 	if (isFetching) {
 		return (
-			<div className="fs-section fs-other">
-				<div className="fs-section-header">OTHER FIELDS</div>
-				<div className="fs-other-list">
+			<div className={cx(styles.section, styles.sectionOther)}>
+				<div className={styles.sectionHeader}>OTHER FIELDS</div>
+				<div className={styles.otherList}>
 					{Array.from({ length: 5 }).map((_, i) => (
 						// eslint-disable-next-line react/no-array-index-key
 						<Skeleton.Input active size="small" key={i} />
@@ -63,20 +66,23 @@ function OtherFields({
 	}
 
 	return (
-		<div className="fs-section fs-other">
-			<div className="fs-section-header">OTHER FIELDS</div>
-			<div className="fs-other-list">
+		<div className={cx(styles.section, styles.sectionOther)}>
+			<div className={styles.sectionHeader}>OTHER FIELDS</div>
+			<div className={styles.otherList}>
 				<OverlayScrollbar>
 					<>
 						{otherFields.length === 0 ? (
-							<div className="fs-no-values">No values found</div>
+							<div className={styles.noValues}>No values found</div>
 						) : (
 							otherFields.map((attr) => (
-								<div key={attr.key} className="fs-field-item other-field-item">
-									<span className="fs-field-key">{attr.key}</span>
+								<div
+									key={attr.key}
+									className={cx(styles.fieldItem, styles.otherFieldItem)}
+								>
+									<span className={styles.fieldKey}>{attr.key}</span>
 									{!isAtLimit && (
 										<Button
-											className="add-field-btn periscope-btn"
+											className={cx(styles.addBtn, 'periscope-btn')}
 											variant="outlined"
 											color="secondary"
 											size="sm"
@@ -88,7 +94,7 @@ function OtherFields({
 								</div>
 							))
 						)}
-						{isAtLimit && <div className="fs-limit-hint">Maximum 10 fields</div>}
+						{isAtLimit && <div className={styles.limitHint}>Maximum 10 fields</div>}
 					</>
 				</OverlayScrollbar>
 			</div>
