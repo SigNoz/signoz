@@ -97,6 +97,7 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 	if err != nil {
 		return nil, err
 	}
+	// Locked-dashboard / state gate — independent of tags, so run it before the tx.
 	if err := existing.CanUpdate(); err != nil {
 		return nil, err
 	}
@@ -106,28 +107,22 @@ func (module *module) PatchV2(ctx context.Context, orgID valuer.UUID, id valuer.
 		return nil, err
 	}
 
-	resolvedTags, err := module.tagModule.CreateMany(ctx, orgID, dashboardtypes.EntityTypeDashboard, updateable.Tags, updatedBy)
-	if err != nil {
-		return nil, err
-	}
-	tagIDs := make([]valuer.UUID, len(resolvedTags))
-	for i, t := range resolvedTags {
-		tagIDs[i] = t.ID
-	}
-
-	if err := existing.Update(*updateable, updatedBy, resolvedTags); err != nil {
-		return nil, err
-	}
-
-	storable, err := existing.ToStorableDashboard()
-	if err != nil {
-		return nil, err
-	}
-
 	err = module.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
-		if err := module.tagModule.SyncLinksForEntity(ctx, orgID, dashboardtypes.EntityTypeDashboard, id, tagIDs); err != nil {
+		resolvedTags, err := module.tagModule.SyncTags(ctx, orgID, coretypes.KindDashboard, id, updateable.Tags)
+		if err != nil {
 			return err
 		}
+
+		err = existing.Update(*updateable, updatedBy, resolvedTags)
+		if err != nil {
+			return err
+		}
+
+		storable, err := existing.ToStorableDashboard()
+		if err != nil {
+			return err
+		}
+
 		return module.store.UpdateV2(ctx, orgID, id, updatedBy, storable.Data)
 	})
 	if err != nil {
