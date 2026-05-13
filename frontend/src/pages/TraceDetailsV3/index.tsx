@@ -12,16 +12,23 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import NoData from 'pages/TraceDetailV2/NoData/NoData';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import {
+	SpanV3,
+	TraceDetailV3URLProps,
+	WaterfallAggregationRequest,
+} from 'types/api/trace/getTraceV3';
 
+import { COLOR_BY_FIELDS } from './constants';
+import { TraceProvider } from './contexts/TraceContext';
+import { AGGREGATIONS } from './utils/aggregations';
 import { SpanDetailVariant } from './SpanDetailsPanel/constants';
 import SpanDetailsPanel from './SpanDetailsPanel/SpanDetailsPanel';
+import type { TraceMetadataForHeader } from './TraceDetailsHeader/TraceDetailsHeader';
 import TraceDetailsHeader from './TraceDetailsHeader/TraceDetailsHeader';
 import { FLAMEGRAPH_SPAN_LIMIT } from './TraceFlamegraph/constants';
 import TraceFlamegraph from './TraceFlamegraph/TraceFlamegraph';
-import TraceWaterfall, {
-	IInterestedSpan,
-} from './TraceWaterfall/TraceWaterfall';
+import TraceWaterfall from './TraceWaterfall/TraceWaterfall';
+import { IInterestedSpan } from './TraceWaterfall/types';
 import { getAncestorSpanIds } from './TraceWaterfall/utils';
 
 import './TraceDetailsV3.styles.scss';
@@ -79,6 +86,17 @@ function TraceDetailsV3(): JSX.Element {
 		});
 	}, [urlQuery]);
 
+	// Hardcoded for now — fetch aggregations for all 3 candidate color-by fields
+	// upfront so a future color-by-field switch doesn't need to refetch.
+	const waterfallAggregationsRequest = useMemo<WaterfallAggregationRequest[]>(
+		() =>
+			COLOR_BY_FIELDS.flatMap((field) => [
+				{ field, aggregation: AGGREGATIONS.EXEC_TIME_PCT },
+				{ field, aggregation: AGGREGATIONS.SPAN_COUNT },
+			]),
+		[],
+	);
+
 	// Once all spans are loaded (frontend mode), freeze query params so
 	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
 	const fullDataLoadedRef = useRef(false);
@@ -86,6 +104,7 @@ function TraceDetailsV3(): JSX.Element {
 		selectedSpanId: interestedSpanId.spanId,
 		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 		uncollapsedSpans: uncollapsedNodes,
+		aggregations: waterfallAggregationsRequest,
 	});
 
 	const queryParams = fullDataLoadedRef.current
@@ -94,6 +113,7 @@ function TraceDetailsV3(): JSX.Element {
 				selectedSpanId: interestedSpanId.spanId,
 				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 				uncollapsedSpans: uncollapsedNodes,
+				aggregations: waterfallAggregationsRequest,
 			};
 
 	const {
@@ -105,6 +125,7 @@ function TraceDetailsV3(): JSX.Element {
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
+		aggregations: queryParams.aggregations,
 	});
 
 	const allSpans = traceData?.payload?.spans || [];
@@ -119,6 +140,7 @@ function TraceDetailsV3(): JSX.Element {
 			selectedSpanId: interestedSpanId.spanId,
 			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
 			uncollapsedSpans: uncollapsedNodes,
+			aggregations: waterfallAggregationsRequest,
 		};
 	}
 
@@ -213,6 +235,23 @@ function TraceDetailsV3(): JSX.Element {
 		],
 	);
 
+	const traceMetadataForHeader = useMemo(():
+		| TraceMetadataForHeader
+		| undefined => {
+		const payload = traceData?.payload;
+		if (!payload) {
+			return undefined;
+		}
+		const rootSpan = payload.spans?.find((s) => s.level === 0);
+		return {
+			startTimestampMillis: payload.startTimestampMillis,
+			endTimestampMillis: payload.endTimestampMillis,
+			rootServiceName: payload.rootServiceName,
+			rootServiceEntryPoint: payload.rootServiceEntryPoint,
+			rootSpanStatusCode: rootSpan?.response_status_code || '',
+		};
+	}, [traceData?.payload]);
+
 	const showNoData =
 		!isFetchingTraceData &&
 		(!!errorFetchingTraceData || !traceData?.payload?.spans?.length);
@@ -246,104 +285,116 @@ function TraceDetailsV3(): JSX.Element {
 	);
 
 	return (
-		<div className="trace-details-v3">
-			<TraceDetailsHeader
-				filterMetadata={filterMetadata}
-				onFilteredSpansChange={handleFilteredSpansChange}
-				noData={showNoData}
-			/>
+		<TraceProvider aggregations={traceData?.payload?.aggregations}>
+			<div className="trace-details-v3">
+				<TraceDetailsHeader
+					filterMetadata={filterMetadata}
+					onFilteredSpansChange={handleFilteredSpansChange}
+					isDataLoaded={!!traceData?.payload?.spans?.length && !showNoData}
+					traceMetadata={traceMetadataForHeader}
+				/>
 
-			{showNoData ? (
-				<NoData />
-			) : (
-				<>
-					<div className="trace-details-v3__content">
-						<Collapse
-							// @ts-expect-error motion is passed through to rc-collapse to disable animation
-							motion={false}
-							activeKey={activeKeys.filter((k) => k === 'flame')}
-							onChange={(): void => handleCollapseChange('flame')}
-							size="small"
-							className="trace-details-v3__flame-collapse"
-							items={[
-								{
-									key: 'flame',
-									label: (
-										<div className="trace-details-v3__collapse-label">
-											<span>Flame Graph</span>
-											{traceData?.payload?.totalSpansCount ? (
-												<span className="trace-details-v3__collapse-count">
-													{traceData.payload.totalSpansCount} spans
-													{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
-														<WarningPopover
-															message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans."
-															placement="bottomRight"
-															autoAdjustOverflow={false}
-														/>
-													)}
-												</span>
-											) : null}
-										</div>
-									),
-									children: (
-										<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
-											<TraceFlamegraph
-												filteredSpanIds={filteredSpanIds}
-												isFilterActive={isFilterActive}
-											/>
-										</ResizableBox>
-									),
-								},
-							]}
-						/>
+				{showNoData ? (
+					<NoData />
+				) : (
+					<>
+						<div className="trace-details-v3__content">
+							<Collapse
+								// @ts-expect-error motion is passed through to rc-collapse to disable animation
+								motion={false}
+								activeKey={activeKeys.filter((k) => k === 'flame')}
+								onChange={(): void => handleCollapseChange('flame')}
+								size="small"
+								className="trace-details-v3__flame-collapse"
+								items={[
+									{
+										key: 'flame',
+										label: (
+											<div className="trace-details-v3__collapse-label">
+												<span>Flame Graph</span>
+												{traceData?.payload?.totalSpansCount ? (
+													<span className="trace-details-v3__collapse-count">
+														<span>Spans: {traceData.payload.totalSpansCount}</span>
+														<span
+															className={
+																traceData.payload.totalErrorSpansCount > 0
+																	? 'trace-details-v3__collapse-count-errors'
+																	: undefined
+															}
+														>
+															Errors: {traceData.payload.totalErrorSpansCount ?? 0}
+														</span>
+														{traceData.payload.totalSpansCount > FLAMEGRAPH_SPAN_LIMIT && (
+															<WarningPopover
+																message="The total span count exceeds the visualization limit. Displaying a sampled subset of spans in flamegraph."
+																placement="bottomRight"
+																autoAdjustOverflow={false}
+															/>
+														)}
+													</span>
+												) : null}
+											</div>
+										),
+										children: (
+											<ResizableBox defaultHeight={300} minHeight={100} maxHeight={400}>
+												<TraceFlamegraph
+													filteredSpanIds={filteredSpanIds}
+													isFilterActive={isFilterActive}
+												/>
+											</ResizableBox>
+										),
+									},
+								]}
+							/>
 
-						<Collapse
-							// @ts-expect-error motion is passed through to rc-collapse to disable animation
-							motion={false}
-							activeKey={activeKeys.filter((k) => k === 'waterfall')}
-							onChange={(): void => handleCollapseChange('waterfall')}
-							size="small"
-							className={`trace-details-v3__waterfall-collapse${
-								isWaterfallDocked ? ' trace-details-v3__waterfall-collapse--docked' : ''
-							}`}
-							items={[
-								{
-									key: 'waterfall',
-									label: 'Waterfall',
-									children: activeKeys.includes('waterfall') ? waterfallChildren : null,
-								},
-							]}
-						/>
+							<Collapse
+								// @ts-expect-error motion is passed through to rc-collapse to disable animation
+								motion={false}
+								activeKey={activeKeys.filter((k) => k === 'waterfall')}
+								onChange={(): void => handleCollapseChange('waterfall')}
+								size="small"
+								className={`trace-details-v3__waterfall-collapse${
+									isWaterfallDocked
+										? ' trace-details-v3__waterfall-collapse--docked'
+										: ''
+								}`}
+								items={[
+									{
+										key: 'waterfall',
+										label: 'Waterfall',
+										children: activeKeys.includes('waterfall') ? waterfallChildren : null,
+									},
+								]}
+							/>
 
-						{panelState.isOpen && isDocked && (
-							<div className="trace-details-v3__docked-span-details">
-								<SpanDetailsPanel
-									panelState={panelState}
-									selectedSpan={selectedSpan}
-									variant={SpanDetailVariant.DOCKED}
-									onVariantChange={handleVariantChange}
-									traceStartTime={traceData?.payload?.startTimestampMillis}
-									traceEndTime={traceData?.payload?.endTimestampMillis}
-									serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
-								/>
-							</div>
+							{panelState.isOpen && isDocked && (
+								<div className="trace-details-v3__docked-span-details">
+									<SpanDetailsPanel
+										panelState={panelState}
+										selectedSpan={selectedSpan}
+										variant={SpanDetailVariant.DOCKED}
+										onVariantChange={handleVariantChange}
+										traceStartTime={traceData?.payload?.startTimestampMillis}
+										traceEndTime={traceData?.payload?.endTimestampMillis}
+									/>
+								</div>
+							)}
+						</div>
+
+						{panelState.isOpen && !isDocked && (
+							<SpanDetailsPanel
+								panelState={panelState}
+								selectedSpan={selectedSpan}
+								variant={SpanDetailVariant.DIALOG}
+								onVariantChange={handleVariantChange}
+								traceStartTime={traceData?.payload?.startTimestampMillis}
+								traceEndTime={traceData?.payload?.endTimestampMillis}
+							/>
 						)}
-					</div>
-
-					{panelState.isOpen && !isDocked && (
-						<SpanDetailsPanel
-							panelState={panelState}
-							selectedSpan={selectedSpan}
-							variant={SpanDetailVariant.DIALOG}
-							onVariantChange={handleVariantChange}
-							traceStartTime={traceData?.payload?.startTimestampMillis}
-							traceEndTime={traceData?.payload?.endTimestampMillis}
-							serviceExecTime={traceData?.payload?.serviceNameToTotalDurationMap}
-						/>
-					)}
-				</>
-			)}
-		</div>
+					</>
+				)}
+			</div>
+		</TraceProvider>
 	);
 }
 

@@ -131,6 +131,24 @@
 		position: relative;
 	}
 
+	// Invisible IntersectionObserver targets pinned at the top and bottom of
+	// the virtualized content. See `useBoundaryPagination`.
+	.waterfall-load-more-sentinel {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 1px;
+		pointer-events: none;
+
+		&--top {
+			top: 0;
+		}
+
+		&--bottom {
+			bottom: 0;
+		}
+	}
+
 	.waterfall-sidebar {
 		overflow-x: auto;
 		overflow-y: hidden;
@@ -243,7 +261,7 @@
 			}
 
 			&.dimmed-span {
-				opacity: 0.4;
+				opacity: 0.15;
 			}
 		}
 	}
@@ -315,12 +333,22 @@
 
 		.tree-connector {
 			position: absolute;
-			width: 11px;
+			width: 14px;
 			height: 50%;
 			border-left: 1px solid var(--l2-border);
 			border-bottom: 1px solid var(--l2-border);
 			border-bottom-left-radius: 6px;
 			pointer-events: none;
+		}
+
+		// Reserved horizontal space for the chevron — present on every row,
+		// filled only when the span has children. Keeps sibling icons aligned.
+		.tree-arrow-slot {
+			width: 18px;
+			flex-shrink: 0;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
 		}
 
 		.tree-arrow {
@@ -337,6 +365,18 @@
 			&:hover {
 				background: var(--l3-background);
 			}
+		}
+
+		// Reserved horizontal space for the subtree-count badge — same reason.
+		// Right-aligns the badge inside so single-digit counts don't push the
+		// icon left of where multi-digit counts would put it.
+		.subtree-count-slot {
+			min-width: 20px;
+			flex-shrink: 0;
+			display: inline-flex;
+			align-items: center;
+			justify-content: flex-end;
+			padding-right: 4px;
 		}
 
 		.subtree-count {
@@ -539,7 +579,7 @@
 	}
 
 	.dimmed-span {
-		opacity: 0.4;
+		opacity: 0.15;
 	}
 	.highlighted-span {
 		opacity: 1;

@@ -41,7 +41,12 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
-import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
+import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
+import {
+	getSpanAttribute,
+	getSpanDisplayData,
+	hasInfraMetadata,
+} from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
@@ -59,6 +64,7 @@ import {
 	VISIBLE_ACTIONS,
 } from './constants';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
+import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
 	LinkedSpansPanel,
 	LinkedSpansToggle,
@@ -77,7 +83,6 @@ interface SpanDetailsPanelProps {
 	onVariantChange?: (variant: SpanDetailVariant) => void;
 	traceStartTime?: number;
 	traceEndTime?: number;
-	serviceExecTime?: Record<string, number>;
 }
 
 function SpanDetailsContent({
@@ -93,6 +98,17 @@ function SpanDetailsContent({
 	const spanAttributeActions = useSpanAttributeActions();
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+
+	// One-time conversion of any V2-format value still living in the
+	// `span_details_pinned_attributes` user pref into V3 nested-path format.
+	useMigratePinnedAttributes(selectedSpan);
+	const { value: pinnedFieldsValue, onChange: onPinnedFieldsChange } =
+		useTracePinnedFields();
+
+	const spanDisplayData = useMemo(
+		() => getSpanDisplayData(selectedSpan),
+		[selectedSpan],
+	);
 
 	// Map span attribute actions to PrettyView actions format.
 	// Use the last key in fieldKeyPath (the actual attribute key), not the full display path.
@@ -391,12 +407,14 @@ function SpanDetailsContent({
 					<div className="span-details-panel__tabs-scroll">
 						<TabsContent value="overview">
 							<DataViewer
-								data={selectedSpan}
+								data={spanDisplayData}
 								drawerKey="trace-details"
 								prettyViewProps={{
 									showPinned: true,
 									actions: prettyViewCustomActions,
 									visibleActions: VISIBLE_ACTIONS,
+									pinnedFieldsValue,
+									onPinnedFieldsChange,
 								}}
 							/>
 						</TabsContent>
@@ -451,7 +469,6 @@ function SpanDetailsPanel({
 	onVariantChange,
 	traceStartTime,
 	traceEndTime,
-	serviceExecTime,
 }: SpanDetailsPanelProps): JSX.Element {
 	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -558,9 +575,6 @@ function SpanDetailsPanel({
 		<AnalyticsPanel
 			isOpen={isAnalyticsOpen}
 			onClose={(): void => setIsAnalyticsOpen(false)}
-			serviceExecTime={serviceExecTime}
-			traceStartTime={traceStartTime}
-			traceEndTime={traceEndTime}
 		/>
 	);
 
@@ -594,6 +608,7 @@ function SpanDetailsPanel({
 				isOpen={panelState.isOpen}
 				className="span-details-panel"
 				width={PANEL_WIDTH}
+				minWidth={480}
 				height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
 				defaultPosition={{
 					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,

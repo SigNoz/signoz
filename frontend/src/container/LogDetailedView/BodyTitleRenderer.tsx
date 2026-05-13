@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { orange } from '@ant-design/colors';
-import { SettingOutlined } from '@ant-design/icons';
+import { Settings } from '@signozhq/icons';
 import { Dropdown, MenuProps } from 'antd';
 import {
 	negateOperator,
@@ -225,7 +225,7 @@ function BodyTitleRenderer({
 							<div data-log-detail-ignore="true">{originNode}</div>
 						)}
 					>
-						<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
+						<Settings style={{ marginRight: 8 }} className="hover-reveal" />
 					</Dropdown>
 				</span>
 			)}

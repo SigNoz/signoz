@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { Globe, Inbox, SquarePen } from 'lucide-react';
+import { Globe, Inbox, SquarePen } from '@signozhq/icons';
 
 import AnnouncementsModal from './AnnouncementsModal';
 import FeedbackModal from './FeedbackModal';
@@ -105,6 +105,7 @@ function HeaderRightSection({
 					onOpenChange={handleOpenAnnouncementsModalChange}
 				>
 					<Button
+						aria-label="Announcements"
 						icon={<Inbox size={14} />}
 						className="periscope-btn ghost announcements-btn"
 						onClick={(): void => {

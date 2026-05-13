@@ -10,16 +10,14 @@ import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
+import { useTraceContext } from '../../contexts/TraceContext';
+import { AGGREGATIONS } from '../../utils/aggregations';
+
 import './AnalyticsPanel.styles.scss';
 
 interface AnalyticsPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
-	serviceExecTime?: Record<string, number>;
-	traceStartTime?: number;
-	traceEndTime?: number;
-	// TODO: Re-enable when backend provides per-service span counts
-	// spans?: Span[];
 }
 
 const PANEL_WIDTH = 350;
@@ -30,41 +28,46 @@ const PANEL_MARGIN_BOTTOM = 50;
 function AnalyticsPanel({
 	isOpen,
 	onClose,
-	serviceExecTime = {},
-	traceStartTime = 0,
-	traceEndTime = 0,
 }: AnalyticsPanelProps): JSX.Element | null {
-	const spread = traceEndTime - traceStartTime;
+	const { getAggregationMap } = useTraceContext();
+
+	const execTimePct = useMemo(
+		() => getAggregationMap(AGGREGATIONS.EXEC_TIME_PCT),
+		[getAggregationMap],
+	);
+
+	const spanCounts = useMemo(
+		() => getAggregationMap(AGGREGATIONS.SPAN_COUNT),
+		[getAggregationMap],
+	);
 
 	const execTimeRows = useMemo(() => {
-		if (spread <= 0) {
+		if (!execTimePct) {
 			return [];
 		}
-		return Object.entries(serviceExecTime)
-			.map(([service, duration]) => ({
-				service,
-				percentage: (duration * 100) / spread,
-				color: generateColor(service, themeColors.traceDetailColorsV3),
+		return Object.entries(execTimePct)
+			.map(([group, percentage]) => ({
+				group,
+				percentage,
+				color: generateColor(group, themeColors.traceDetailColorsV3),
 			}))
 			.sort((a, b) => b.percentage - a.percentage);
-	}, [serviceExecTime, spread]);
+	}, [execTimePct]);
 
-	// const spanCountRows = useMemo(() => {
-	// 	const counts: Record<string, number> = {};
-	// 	for (const span of spans) {
-	// 		const name = span.serviceName || 'unknown';
-	// 		counts[name] = (counts[name] || 0) + 1;
-	// 	}
-	// 	return Object.entries(counts)
-	// 		.map(([service, count]) => ({
-	// 			service,
-	// 			count,
-	// 			color: generateColor(service, themeColors.traceDetailColorsV3),
-	// 		}))
-	// 		.sort((a, b) => b.count - a.count);
-	// }, [spans]);
-
-	// const maxSpanCount = spanCountRows[0]?.count || 1;
+	const spanCountRows = useMemo(() => {
+		if (!spanCounts) {
+			return [];
+		}
+		const max = Math.max(...Object.values(spanCounts), 1);
+		return Object.entries(spanCounts)
+			.map(([group, count]) => ({
+				group,
+				count,
+				max,
+				color: generateColor(group, themeColors.traceDetailColorsV3),
+			}))
+			.sort((a, b) => b.count - a.count);
+	}, [spanCounts]);
 
 	if (!isOpen) {
 		return null;
@@ -103,11 +106,9 @@ function AnalyticsPanel({
 						<TabsTrigger value="exec-time" variant="secondary">
 							% exec time
 						</TabsTrigger>
-						{/* TODO: Enable when backend provides per-service span counts
 						<TabsTrigger value="spans" variant="secondary">
 							Spans
 						</TabsTrigger>
-						*/}
 					</TabsList>
 
 					<div className="analytics-panel__tabs-scroll">
@@ -116,17 +117,17 @@ function AnalyticsPanel({
 								{execTimeRows.map((row) => (
 									<>
 										<div
-											key={`${row.service}-dot`}
+											key={`${row.group}-dot`}
 											className="analytics-panel__dot"
 											style={{ backgroundColor: row.color }}
 										/>
 										<span
-											key={`${row.service}-name`}
+											key={`${row.group}-name`}
 											className="analytics-panel__service-name"
 										>
-											{row.service}
+											{row.group}
 										</span>
-										<div key={`${row.service}-bar`} className="analytics-panel__bar-cell">
+										<div key={`${row.group}-bar`} className="analytics-panel__bar-cell">
 											<div className="analytics-panel__bar">
 												<div
 													className="analytics-panel__bar-fill"
@@ -145,28 +146,27 @@ function AnalyticsPanel({
 							</div>
 						</TabsContent>
 
-						{/* TODO: Enable when backend provides per-service span counts
 						<TabsContent value="spans">
 							<div className="analytics-panel__list">
 								{spanCountRows.map((row) => (
 									<>
 										<div
-											key={`${row.service}-dot`}
+											key={`${row.group}-dot`}
 											className="analytics-panel__dot"
 											style={{ backgroundColor: row.color }}
 										/>
 										<span
-											key={`${row.service}-name`}
+											key={`${row.group}-name`}
 											className="analytics-panel__service-name"
 										>
-											{row.service}
+											{row.group}
 										</span>
-										<div key={`${row.service}-bar`} className="analytics-panel__bar-cell">
+										<div key={`${row.group}-bar`} className="analytics-panel__bar-cell">
 											<div className="analytics-panel__bar">
 												<div
 													className="analytics-panel__bar-fill"
 													style={{
-														width: `${(row.count / maxSpanCount) * 100}%`,
+														width: `${(row.count / row.max) * 100}%`,
 														backgroundColor: row.color,
 													}}
 												/>
@@ -179,7 +179,6 @@ function AnalyticsPanel({
 								))}
 							</div>
 						</TabsContent>
-						*/}
 					</div>
 				</TabsRoot>
 			</div>

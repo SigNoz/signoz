@@ -10,7 +10,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from '@signozhq/icons';
 
 import {
 	operatorOptions,
