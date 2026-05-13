@@ -46,6 +46,10 @@ jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(),
 }));
 
+jest.mock('hooks/useIsAIAssistantEnabled', () => ({
+	useIsAIAssistantEnabled: (): boolean => false,
+}));
+
 const mockLogEvent = logEvent as jest.Mock;
 const mockUseLocation = useLocation as jest.Mock;
 const mockUseGetTenantLicense = useGetTenantLicense as jest.Mock;
