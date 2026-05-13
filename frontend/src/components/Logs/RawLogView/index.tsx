@@ -9,7 +9,10 @@ import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
+import {
+	getBodyDisplayString,
+	getSanitizedLogBody,
+} from 'container/LogDetailedView/utils';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 // hooks
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -99,7 +102,7 @@ function RawLogView({
 		// Check if body is selected
 		const showBody = selectedFields.some((field) => field.name === 'body');
 		if (showBody) {
-			parts.push(`${attributesText} ${data.body}`);
+			parts.push(`${attributesText} ${getBodyDisplayString(data.body)}`);
 		} else {
 			parts.push(attributesText);
 		}

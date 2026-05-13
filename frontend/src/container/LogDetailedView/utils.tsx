@@ -4,7 +4,11 @@ import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';
-import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
+import {
+	ILog,
+	ILogAggregateAttributesResources,
+	ILogBody,
+} from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
@@ -433,3 +437,24 @@ export const getSanitizedLogBody = (
 		return '{}';
 	}
 };
+
+// Returns a plain string for display contexts (Monaco editor, table cells, raw log row).
+export function getBodyDisplayString(body: string | ILogBody): string {
+	return typeof body === 'string' ? body : JSON.stringify(body as ILogBody);
+}
+
+// Returns the primary "message" text for compact log row previews.
+export function getBodyMessage(
+	body: string | ILogBody,
+	isBodyJsonEnabled: boolean,
+): string {
+	if (!isBodyJsonEnabled) {
+		return (body as string) ?? '';
+	}
+	// Feature enabled: body is always a map; message is always a string
+	const msg = (body as ILogBody).message;
+	if (msg) {
+		return msg;
+	}
+	return JSON.stringify(body);
+}

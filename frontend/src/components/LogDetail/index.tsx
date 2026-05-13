@@ -50,6 +50,7 @@ import {
 import { JsonView } from 'periscope/components/JsonView';
 import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
+import { ILogBody } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -217,20 +218,17 @@ function LogDetailInner({
 
 	const logBody = useMemo(() => {
 		if (!isBodyJsonQueryEnabled) {
-			return log?.body || '';
+			return (log?.body as string) ?? '';
 		}
-
-		try {
-			const json = JSON.parse(log?.body || '');
-
-			if (typeof json?.message === 'string' && json.message !== '') {
-				return json.message;
-			}
-
-			return log?.body || '';
-		} catch {
-			return log?.body || '';
+		// Feature enabled: body is always a map; message is always a string
+		const bodyObj = log?.body as ILogBody;
+		if (!bodyObj) {
+			return '';
 		}
+		if (bodyObj.message) {
+			return bodyObj.message;
+		}
+		return JSON.stringify(bodyObj);
 	}, [isBodyJsonQueryEnabled, log?.body]);
 
 	const htmlBody = useMemo(
