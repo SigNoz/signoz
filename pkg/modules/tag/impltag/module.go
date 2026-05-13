@@ -17,10 +17,10 @@ func NewModule(store tagtypes.Store) tag.Module {
 	return &module{store: store}
 }
 
-func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
+func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, resourceID valuer.UUID, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, error) {
 	var tags []*tagtypes.Tag
 	err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		resolved, err := m.CreateMany(ctx, orgID, kind, postable, createdBy)
+		resolved, err := m.CreateMany(ctx, orgID, kind, postable)
 		if err != nil {
 			return err
 		}
@@ -40,12 +40,12 @@ func (m *module) SyncTags(ctx context.Context, orgID valuer.UUID, kind coretypes
 	return tags, nil
 }
 
-func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag, createdBy string) ([]*tagtypes.Tag, error) {
+func (m *module) CreateMany(ctx context.Context, orgID valuer.UUID, kind coretypes.Kind, postable []tagtypes.PostableTag) ([]*tagtypes.Tag, error) {
 	if len(postable) == 0 {
 		return []*tagtypes.Tag{}, nil
 	}
 
-	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, kind, postable, createdBy)
+	toCreate, matched, err := tagtypes.Resolve(ctx, m.store, orgID, kind, postable)
 	if err != nil {
 		return nil, err
 	}
