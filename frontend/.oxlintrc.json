@@ -291,6 +291,8 @@
     // Prevents window.open(path), window.location.origin + path, window.location.href = path
     "signoz/no-antd-components": "error",
     // Prevents the usage of specific antd components in favor of our lib
+    "signoz/no-signozhq-ui-barrel": "error",
+    // Forces subpath imports (@signozhq/ui/<component>) instead of the eagerly-loaded barrel
     "no-restricted-globals": [
       "error",
       {

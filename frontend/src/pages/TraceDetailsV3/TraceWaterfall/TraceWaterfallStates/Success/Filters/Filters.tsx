@@ -10,7 +10,9 @@ import {
 	Search,
 	X,
 } from '@signozhq/icons';
-import { Switch, ToggleGroup, ToggleGroupItem, toast } from '@signozhq/ui';
+import { Switch } from '@signozhq/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui/toggle-group';
+import { toast } from '@signozhq/ui/sonner';
 import { Button } from '@signozhq/ui/button';
 import {
 	Tooltip,
