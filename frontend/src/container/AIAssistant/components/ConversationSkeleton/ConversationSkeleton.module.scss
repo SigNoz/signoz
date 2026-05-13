@@ -32,7 +32,7 @@
 	// to fill its allotted slot rather than collapsing to the longest line —
 	// otherwise the lines' percent widths cascade into a tiny bubble.
 	width: 100%;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 12px 14px;
 
 	&.user {
@@ -43,14 +43,14 @@
 		// Subtle primary tint so the right-side bubble reads as the user's
 		// message without committing to the full saturated brand color.
 		background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
-		border-bottom-right-radius: $radius;
+		border-bottom-right-radius: var(--radius-2);
 		color: var(--l1-foreground);
 	}
 
 	&.assistant {
 		max-width: 95%;
 		background: var(--l2-background);
-		border-bottom-left-radius: $radius;
+		border-bottom-left-radius: var(--radius-2);
 	}
 }
 

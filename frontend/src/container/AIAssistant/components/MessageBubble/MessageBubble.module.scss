@@ -40,7 +40,7 @@
 }
 
 .bubble {
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 8px;
 	font-size: 12px;
 	font-style: normal;
@@ -52,7 +52,7 @@
 	.user & {
 		background: var(--accent-primary);
 		color: var(--primary-foreground);
-		border-bottom-right-radius: $radius;
+		border-bottom-right-radius: var(--radius-2);
 	}
 
 	.assistant & {
@@ -65,7 +65,7 @@
 		align-items: flex-start;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
-		border-bottom-left-radius: $radius;
+		border-bottom-left-radius: var(--radius-2);
 	}
 }
 
@@ -212,7 +212,7 @@
 	code {
 		font-family: 'Geist Mono', 'Fira Code', monospace;
 		font-size: 11.5px;
-		border-radius: $radius;
+		border-radius: var(--radius-2);
 		padding: 1px 4px;
 		background: var(--l3-background);
 		color: var(--l1-foreground);
@@ -230,7 +230,7 @@
 		display: block;
 		padding: 10px;
 		overflow-x: auto;
-		border-radius: $radius;
+		border-radius: var(--radius-2);
 		white-space: pre;
 	}
 
@@ -273,14 +273,14 @@
 .attachmentImage {
 	max-width: 200px;
 	max-height: 160px;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	object-fit: cover;
 }
 
 .attachmentFile {
 	font-size: 11px;
 	padding: 3px 8px;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	background: var(--l3-background);
 	color: var(--l2-foreground);
 	max-width: 180px;

@@ -3,7 +3,7 @@
 	align-items: center;
 	gap: 7px;
 	padding: 6px 8px;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	cursor: pointer;
 	min-width: 0;
 	position: relative;
@@ -91,7 +91,7 @@
 	transform: translateY(-50%);
 	background: var(--l2-background);
 	padding: 1px 2px;
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	pointer-events: var(--actions-pointer, none);
 }
 

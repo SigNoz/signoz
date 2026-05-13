@@ -26,7 +26,7 @@
 	height: 80vh;
 	background: var(--l1-background);
 	border: 1px solid var(--l1-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	overflow: hidden;
 	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
 	animation: modalIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
@@ -69,7 +69,7 @@
 	color: var(--l3-foreground);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 1px 5px;
 	letter-spacing: 0;
 	line-height: 1.6;

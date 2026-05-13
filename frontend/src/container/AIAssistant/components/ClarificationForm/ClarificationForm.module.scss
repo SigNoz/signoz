@@ -1,6 +1,6 @@
 .clarification {
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 10px 12px;
 	background: var(--l2-background);
 	display: flex;
@@ -79,7 +79,7 @@
 .select {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 5px 8px;
 	font-size: 13px;
 	color: var(--l1-foreground);

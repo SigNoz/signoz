@@ -1,7 +1,7 @@
 .block {
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: $radius;
+	border-radius: var(--radius-2);
 	padding: 12px 14px;
 	margin: 8px 0;
 
