@@ -172,22 +172,23 @@ export function useTableParams(
 		[],
 	);
 
-	const orderByDefaultMemoKey = `${orderByDefault?.columnName}${orderByDefault?.order}`;
 	const orderByUrlMemoKey = `${urlOrderBy?.columnName}${urlOrderBy?.order}`;
+	const prevOrderByRef = useRef<string | null>(null);
 
 	useEffect(() => {
-		if (useUrlForPage) {
-			setUrlPage(pageDefault);
-		} else {
-			setLocalPage(pageDefault);
+		// Only reset page when orderBy actually changes, not on initial mount
+		if (
+			prevOrderByRef.current !== null &&
+			prevOrderByRef.current !== orderByUrlMemoKey
+		) {
+			if (useUrlForPage) {
+				setUrlPage(pageDefault);
+			} else {
+				setLocalPage(pageDefault);
+			}
 		}
-	}, [
-		useUrlForPage,
-		orderByDefaultMemoKey,
-		orderByUrlMemoKey,
-		pageDefault,
-		setUrlPage,
-	]);
+		prevOrderByRef.current = orderByUrlMemoKey;
+	}, [useUrlForPage, orderByUrlMemoKey, pageDefault, setUrlPage]);
 
 	return {
 		page: useUrlForPage ? urlPage : localPage,

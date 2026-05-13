@@ -278,6 +278,22 @@ describe('TanStackTableView Integration', () => {
 			).not.toBeInTheDocument();
 		});
 
+		it('preserves page from URL on initial mount', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 100, defaultPage: 1, defaultLimit: 10 },
+					enableQueryParams: true,
+				},
+				queryParams: { page: '3' },
+			});
+
+			const nav = await screen.findByRole('navigation');
+			const page3Button = within(nav).getByRole('button', { name: '3' });
+
+			// Page 3 should be active (from URL), not reset to defaultPage 1
+			expect(page3Button).toHaveAttribute('aria-current', 'page');
+		});
+
 		it('resets page to 1 when limit changes', async () => {
 			const user = userEvent.setup();
 
