@@ -24,15 +24,7 @@ export default {
 			{
 				kind: '{{ .Kind }}',
 				type: '{{ .Type }}',
-{{- if .MultiLineVerbs }}
-				allowedVerbs: [
-{{- range .AllowedVerbs }}
-					'{{ . }}',
-{{- end }}
-				],
-{{- else }}
-				allowedVerbs: [{{ range $i, $v := .AllowedVerbs }}{{ if $i }}, {{ end }}'{{ $v }}'{{ end }}],
-{{- end }}
+{{ .FormattedAllowedVerbs }}
 			},
 {{- end }}
 		],
@@ -51,15 +43,38 @@ type permissionsTypeRelation struct {
 }
 
 type permissionsTypeResource struct {
-	Kind           string
-	Type           string
-	AllowedVerbs   []string
-	MultiLineVerbs bool
+	Kind                  string
+	Type                  string
+	FormattedAllowedVerbs string
 }
 
 type permissionsTypeData struct {
 	Resources []permissionsTypeResource
 	Relations []permissionsTypeRelation
+}
+
+// formatAllowedVerbs returns a prettier-compatible formatted allowedVerbs line.
+// indentLevel is the number of tabs for the property (matching kind/type indent).
+// printWidth is prettier's printWidth; tabWidth is assumed to be 1 (each \t = 1 char).
+func formatAllowedVerbs(verbs []string, indentLevel int, printWidth int) string {
+	quoted := make([]string, len(verbs))
+	for i, v := range verbs {
+		quoted[i] = "'" + v + "'"
+	}
+	indent := strings.Repeat("\t", indentLevel)
+
+	oneLine := indent + "allowedVerbs: [" + strings.Join(quoted, ", ") + "],"
+	if len(oneLine) <= printWidth {
+		return oneLine
+	}
+
+	var b strings.Builder
+	b.WriteString(indent + "allowedVerbs: [\n")
+	for _, q := range quoted {
+		b.WriteString(indent + "\t" + q + ",\n")
+	}
+	b.WriteString(indent + "],")
+	return b.String()
 }
 
 func registerGenerateAuthz(parentCmd *cobra.Command) {
@@ -105,18 +120,10 @@ func runGenerateAuthz(_ context.Context) error {
 		}
 		sort.Strings(allowedVerbStrings)
 
-		quoted := make([]string, len(allowedVerbStrings))
-		for i, v := range allowedVerbStrings {
-			quoted[i] = "'" + v + "'"
-		}
-		oneLine := "allowedVerbs: [" + strings.Join(quoted, ", ") + "],"
-		multiLine := 4+len(oneLine) > 80
-
 		resources = append(resources, permissionsTypeResource{
-			Kind:           ref.Kind.String(),
-			Type:           ref.Type.StringValue(),
-			AllowedVerbs:   allowedVerbStrings,
-			MultiLineVerbs: multiLine,
+			Kind:                  ref.Kind.String(),
+			Type:                  ref.Type.StringValue(),
+			FormattedAllowedVerbs: formatAllowedVerbs(allowedVerbStrings, 4, 80),
 		})
 	}
 
