@@ -13,7 +13,7 @@ import {
 	IntegrationType,
 } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
+import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
 import AzureCloudAccountSetupModal from '../../AzureCloudServices/AddNewAccount/CloudAccountSetupModal';
 import AzureAccountSettingsModal from '../../AzureCloudServices/EditAccount/AccountSettingsModal';

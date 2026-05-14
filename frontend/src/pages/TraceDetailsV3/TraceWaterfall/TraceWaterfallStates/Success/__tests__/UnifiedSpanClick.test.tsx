@@ -4,6 +4,9 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import Success from '../Success';
 
+const renderWithTraceProvider: typeof render = (ui, options, customOptions) =>
+	render(ui, options, customOptions);
+
 // Mock the required hooks with proper typing
 const mockSafeNavigate = jest.fn() as jest.MockedFunction<
 	(params: { search: string }) => void
@@ -222,7 +225,7 @@ describe('Span Click User Flows', () => {
 	it('clicking span updates URL with spanId parameter', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(
+		renderWithTraceProvider(
 			<Success
 				spans={mockSpans}
 				traceMetadata={mockTraceMetadata}
@@ -261,7 +264,7 @@ describe('Span Click User Flows', () => {
 	it('clicking span duration visually selects the span', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestComponent />, undefined, {
+		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
 		});
 
@@ -300,7 +303,7 @@ describe('Span Click User Flows', () => {
 	it('both click areas produce the same visual result', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestComponent />, undefined, {
+		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
 		});
 
@@ -360,7 +363,7 @@ describe('Span Click User Flows', () => {
 	it('clicking different spans updates selection correctly', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<TestComponent />, undefined, {
+		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
 		});
 
@@ -404,7 +407,7 @@ describe('Span Click User Flows', () => {
 		mockUrlQuery.set('existingParam', 'existingValue');
 		mockUrlQuery.set('anotherParam', 'anotherValue');
 
-		render(
+		renderWithTraceProvider(
 			<Success
 				spans={mockSpans}
 				traceMetadata={mockTraceMetadata}

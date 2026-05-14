@@ -2,13 +2,7 @@ import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from '@signozhq/ui/typography';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	BarChart,
-	BarChart2,
-	BarChartHorizontal,
-	Diff,
-	Gauge,
-} from 'lucide-react';
+import { BarChart, ChartBar, Diff, Gauge } from '@signozhq/icons';
 
 import { METRIC_TYPE_VIEW_VALUES_MAP } from './constants';
 
@@ -31,12 +25,12 @@ export function MetricTypeViewRenderer({
 				];
 			case MetrictypesTypeDTO.histogram:
 				return [
-					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
+					<BarChart key={type} size={12} color={Color.BG_SIENNA_500} />,
 					Color.BG_SIENNA_500,
 				];
 			case MetrictypesTypeDTO.summary:
 				return [
-					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
+					<ChartBar key={type} size={12} color={Color.BG_FOREST_500} />,
 					Color.BG_FOREST_500,
 				];
 			case MetrictypesTypeDTO.exponentialhistogram:

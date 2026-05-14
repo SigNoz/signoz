@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import {
 	TabsContent,
@@ -15,11 +15,10 @@ import {
 import {
 	Bookmark,
 	CalendarClock,
-	ChartBar,
 	ChartColumnBig,
 	Dock,
 	Link2,
-	Logs,
+	List,
 	PanelBottom,
 	ScrollText,
 	Timer,
@@ -41,7 +40,12 @@ import Events from 'container/SpanDetailsDrawer/Events/Events';
 import SpanLogs from 'container/SpanDetailsDrawer/SpanLogs/SpanLogs';
 import { useSpanContextLogs } from 'container/SpanDetailsDrawer/SpanLogs/useSpanContextLogs';
 import dayjs from 'dayjs';
-import { getSpanAttribute, hasInfraMetadata } from 'pages/TraceDetailsV3/utils';
+import { useMigratePinnedAttributes } from 'pages/TraceDetailsV3/hooks/useMigratePinnedAttributes';
+import {
+	getSpanAttribute,
+	getSpanDisplayData,
+	hasInfraMetadata,
+} from 'pages/TraceDetailsV3/utils';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
@@ -51,7 +55,6 @@ import { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 
-import AnalyticsPanel from './AnalyticsPanel/AnalyticsPanel';
 import { HIGHLIGHTED_OPTIONS } from './config';
 import {
 	// KEY_ATTRIBUTE_KEYS, // uncomment when key attributes section is re-enabled
@@ -59,6 +62,7 @@ import {
 	VISIBLE_ACTIONS,
 } from './constants';
 import { useSpanAttributeActions } from './hooks/useSpanAttributeActions';
+import { useTracePinnedFields } from './hooks/useTracePinnedFields';
 import {
 	LinkedSpansPanel,
 	LinkedSpansToggle,
@@ -77,7 +81,6 @@ interface SpanDetailsPanelProps {
 	onVariantChange?: (variant: SpanDetailVariant) => void;
 	traceStartTime?: number;
 	traceEndTime?: number;
-	serviceExecTime?: Record<string, number>;
 }
 
 function SpanDetailsContent({
@@ -93,6 +96,17 @@ function SpanDetailsContent({
 	const spanAttributeActions = useSpanAttributeActions();
 	const percentile = useSpanPercentile(selectedSpan);
 	const linkedSpans = useLinkedSpans((selectedSpan as any).references);
+
+	// One-time conversion of any V2-format value still living in the
+	// `span_details_pinned_attributes` user pref into V3 nested-path format.
+	useMigratePinnedAttributes(selectedSpan);
+	const { value: pinnedFieldsValue, onChange: onPinnedFieldsChange } =
+		useTracePinnedFields();
+
+	const spanDisplayData = useMemo(
+		() => getSpanDisplayData(selectedSpan),
+		[selectedSpan],
+	);
 
 	// Map span attribute actions to PrettyView actions format.
 	// Use the last key in fieldKeyPath (the actual attribute key), not the full display path.
@@ -379,7 +393,7 @@ function SpanDetailsContent({
 							<ScrollText size={14} /> Events ({selectedSpan.events?.length || 0})
 						</TabsTrigger>
 						<TabsTrigger value="logs" variant="secondary">
-							<Logs size={14} /> Logs
+							<List size={14} /> Logs
 						</TabsTrigger>
 						{infraMetadata && (
 							<TabsTrigger value="metrics" variant="secondary">
@@ -391,12 +405,14 @@ function SpanDetailsContent({
 					<div className="span-details-panel__tabs-scroll">
 						<TabsContent value="overview">
 							<DataViewer
-								data={selectedSpan}
+								data={spanDisplayData}
 								drawerKey="trace-details"
 								prettyViewProps={{
 									showPinned: true,
 									actions: prettyViewCustomActions,
 									visibleActions: VISIBLE_ACTIONS,
+									pinnedFieldsValue,
+									onPinnedFieldsChange,
 								}}
 							/>
 						</TabsContent>
@@ -451,26 +467,9 @@ function SpanDetailsPanel({
 	onVariantChange,
 	traceStartTime,
 	traceEndTime,
-	serviceExecTime,
 }: SpanDetailsPanelProps): JSX.Element {
-	const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
-
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
-			{
-				key: 'analytics',
-				component: (
-					<Button
-						variant="ghost"
-						size="sm"
-						color="secondary"
-						prefix={<ChartBar size={14} />}
-						onClick={(): void => setIsAnalyticsOpen((prev) => !prev)}
-					>
-						Analytics
-					</Button>
-				),
-			},
 			// TODO: Add back when driven through separate config for different pages
 			// {
 			// 	key: 'view-full-trace',
@@ -554,66 +553,46 @@ function SpanDetailsPanel({
 		</>
 	);
 
-	const analyticsPanel = (
-		<AnalyticsPanel
-			isOpen={isAnalyticsOpen}
-			onClose={(): void => setIsAnalyticsOpen(false)}
-			serviceExecTime={serviceExecTime}
-			traceStartTime={traceStartTime}
-			traceEndTime={traceEndTime}
-		/>
-	);
-
 	if (variant === SpanDetailVariant.DOCKED) {
-		return (
-			<>
-				<div className="span-details-panel">{content}</div>
-				{analyticsPanel}
-			</>
-		);
+		return <div className="span-details-panel">{content}</div>;
 	}
 
 	if (variant === SpanDetailVariant.DRAWER) {
 		return (
-			<>
-				<DetailsPanelDrawer
-					isOpen={panelState.isOpen}
-					onClose={panelState.close}
-					className="span-details-panel"
-				>
-					{content}
-				</DetailsPanelDrawer>
-				{analyticsPanel}
-			</>
+			<DetailsPanelDrawer
+				isOpen={panelState.isOpen}
+				onClose={panelState.close}
+				className="span-details-panel"
+			>
+				{content}
+			</DetailsPanelDrawer>
 		);
 	}
 
 	return (
-		<>
-			<FloatingPanel
-				isOpen={panelState.isOpen}
-				className="span-details-panel"
-				width={PANEL_WIDTH}
-				height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
-				defaultPosition={{
-					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
-					y: PANEL_MARGIN_TOP,
-				}}
-				enableResizing={{
-					top: true,
-					right: true,
-					bottom: true,
-					left: true,
-					topRight: false,
-					bottomRight: false,
-					bottomLeft: false,
-					topLeft: false,
-				}}
-			>
-				{content}
-			</FloatingPanel>
-			{analyticsPanel}
-		</>
+		<FloatingPanel
+			isOpen={panelState.isOpen}
+			className="span-details-panel"
+			width={PANEL_WIDTH}
+			minWidth={480}
+			height={window.innerHeight - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM}
+			defaultPosition={{
+				x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN_RIGHT,
+				y: PANEL_MARGIN_TOP,
+			}}
+			enableResizing={{
+				top: true,
+				right: true,
+				bottom: true,
+				left: true,
+				topRight: false,
+				bottomRight: false,
+				bottomLeft: false,
+				topLeft: false,
+			}}
+		>
+			{content}
+		</FloatingPanel>
 	);
 }
 

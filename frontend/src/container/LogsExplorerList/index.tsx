@@ -38,7 +38,7 @@ import APIError from 'types/api/error';
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { getAbsoluteUrl } from '@/utils/basePath';
+import { getAbsoluteUrl } from 'utils/basePath';
 
 import NoLogs from '../NoLogs/NoLogs';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';

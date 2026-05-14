@@ -13,6 +13,10 @@ type Handler interface {
 	ListPods(http.ResponseWriter, *http.Request)
 	ListNodes(http.ResponseWriter, *http.Request)
 	ListNamespaces(http.ResponseWriter, *http.Request)
+	ListClusters(http.ResponseWriter, *http.Request)
+	ListVolumes(http.ResponseWriter, *http.Request)
+	ListDeployments(http.ResponseWriter, *http.Request)
+	ListStatefulSets(http.ResponseWriter, *http.Request)
 }
 
 type Module interface {
@@ -20,4 +24,8 @@ type Module interface {
 	ListPods(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostablePods) (*inframonitoringtypes.Pods, error)
 	ListNodes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNodes) (*inframonitoringtypes.Nodes, error)
 	ListNamespaces(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableNamespaces) (*inframonitoringtypes.Namespaces, error)
+	ListClusters(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableClusters) (*inframonitoringtypes.Clusters, error)
+	ListVolumes(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableVolumes) (*inframonitoringtypes.Volumes, error)
+	ListDeployments(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableDeployments) (*inframonitoringtypes.Deployments, error)
+	ListStatefulSets(ctx context.Context, orgID valuer.UUID, req *inframonitoringtypes.PostableStatefulSets) (*inframonitoringtypes.StatefulSets, error)
 }
