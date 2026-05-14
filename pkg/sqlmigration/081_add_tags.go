@@ -62,16 +62,16 @@ func (migration *addTags) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tagTableSQLs...)
 
-	// Case-insensitive uniqueness on (org_id, kind, key, value) — both Postgres
-	// and SQLite (modernc 3.50.x) support expression indexes.
-	tagUniqueIndexSQLs := migration.sqlschema.Operator().CreateIndex(
-		(&sqlschema.UniqueIndex{
-			TableName:   "tag",
-			ColumnNames: []sqlschema.ColumnName{"org_id", "kind", "key", "value"},
-			Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
-		}).Named("uq_tag_org_kind_lower_key_lower_value"),
-	)
-	sqls = append(sqls, tagUniqueIndexSQLs...)
+	// // Case-insensitive uniqueness on (org_id, kind, key, value) — both Postgres
+	// // and SQLite (modernc 3.50.x) support expression indexes.
+	// tagUniqueIndexSQLs := migration.sqlschema.Operator().CreateIndex(
+	// 	(&sqlschema.UniqueIndex{
+	// 		TableName:   "tag",
+	// 		ColumnNames: []sqlschema.ColumnName{"org_id", "kind", "key", "value"},
+	// 		Expressions: []string{"org_id", "kind", "LOWER(key)", "LOWER(value)"},
+	// 	}).Named("uq_tag_org_kind_lower_key_lower_value"),
+	// )
+	// sqls = append(sqls, tagUniqueIndexSQLs...)
 
 	tagRelationsTableSQLs := migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "tag_relation",
